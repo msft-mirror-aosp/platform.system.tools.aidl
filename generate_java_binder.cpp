@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string.h>
 
 #include <android-base/macros.h>
 
@@ -331,6 +330,8 @@ static void generate_method(const AidlMethod& method, Class* interface,
 
     realCall->arguments.push_back(v);
   }
+
+  cl = NULL;
 
   // the real call
   Variable* _result = NULL;
