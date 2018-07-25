@@ -29,9 +29,11 @@
 #include "options.h"
 #include "type_java.h"
 
-using std::string;
-
+using android::base::Join;
 using android::base::StringPrintf;
+using std::string;
+using std::unique_ptr;
+using std::vector;
 
 namespace android {
 namespace aidl {
@@ -41,7 +43,7 @@ namespace java {
 class StubClass : public Class {
  public:
   StubClass(const Type* type, const InterfaceType* interfaceType,
-            JavaTypeNamespace* types);
+            JavaTypeNamespace* types, const JavaOptions& options);
   virtual ~StubClass() = default;
 
   Variable* transact_code;
@@ -50,6 +52,7 @@ class StubClass : public Class {
   Variable* transact_flags;
   SwitchStatement* transact_switch;
   StatementBlock* transact_statements;
+  SwitchStatement* code_to_method_name_switch;
 
   // Where onTransact cases should be generated as separate methods.
   bool transact_outline;
@@ -69,13 +72,14 @@ class StubClass : public Class {
                          JavaTypeNamespace* types);
 
   Variable* transact_descriptor;
+  const JavaOptions& options_;
 
   DISALLOW_COPY_AND_ASSIGN(StubClass);
 };
 
 StubClass::StubClass(const Type* type, const InterfaceType* interfaceType,
-                     JavaTypeNamespace* types)
-    : Class() {
+                     JavaTypeNamespace* types, const JavaOptions& options)
+    : Class(), options_(options) {
   transact_descriptor = nullptr;
   transact_outline = false;
   all_method_count = 0;  // Will be set when outlining may be enabled.
@@ -120,6 +124,20 @@ StubClass::StubClass(const Type* type, const InterfaceType* interfaceType,
   asBinder->statements->Add(new ReturnStatement(THIS_VALUE));
   this->elements.push_back(asBinder);
 
+  // getTransactionName
+  if (options_.ShouldGenGetTransactionName()) {
+    Method* getTransactionName = new Method;
+    getTransactionName->modifiers = PUBLIC;
+    getTransactionName->returnType = types->StringType();
+    getTransactionName->name = "getTransactionName";
+    Variable* code = new Variable(types->IntType(), "transactionCode");
+    getTransactionName->parameters.push_back(code);
+    getTransactionName->statements = new StatementBlock;
+    this->code_to_method_name_switch = new SwitchStatement(code);
+    getTransactionName->statements->Add(this->code_to_method_name_switch);
+    this->elements.push_back(getTransactionName);
+  }
+
   // onTransact
   this->transact_code = new Variable(types->IntType(), "code");
   this->transact_data = new Variable(types->ParcelType(), "data");
@@ -150,6 +168,16 @@ void StubClass::finish() {
   transact_switch->cases.push_back(default_case);
 
   transact_statements->Add(this->transact_switch);
+
+  // getTransactionName
+  if (options_.ShouldGenGetTransactionName()) {
+    // Some transaction codes are common, e.g. INTERFACE_TRANSACTION or DUMP_TRANSACTION.
+    // Common transaction codes will not be resolved to a string by getTransactionName. The method
+    // will return NULL in this case.
+    Case* code_switch_default_case = new Case;
+    code_switch_default_case->statements->Add(new ReturnStatement(NULL_VALUE));
+    this->code_to_method_name_switch->cases.push_back(code_switch_default_case);
+  }
 }
 
 // The the expression for the interface's descriptor to be used when
@@ -210,7 +238,7 @@ void StubClass::make_as_interface(const InterfaceType* interfaceType,
   IInterfaceType* iinType = new IInterfaceType(types);
   Variable* iin = new Variable(iinType, "iin");
   VariableDeclaration* iinVd =
-      new VariableDeclaration(iin, queryLocalInterface, NULL);
+      new VariableDeclaration(iin, queryLocalInterface, nullptr);
   m->statements->Add(iinVd);
 
   // Ensure the instance type of the local object is as expected.
@@ -309,16 +337,15 @@ static void generate_create_from_parcel(const Type* t, StatementBlock* addTo,
   t->CreateFromParcel(addTo, v, parcel, cl);
 }
 
-static void generate_int_constant(const AidlIntConstant& constant,
-                                  Class* interface) {
-  IntConstant* decl = new IntConstant(constant.GetName(), constant.GetValue());
+static void generate_int_constant(Class* interface, const std::string& name,
+                                  const std::string& value) {
+  IntConstant* decl = new IntConstant(name, value);
   interface->elements.push_back(decl);
 }
 
-static void generate_string_constant(const AidlStringConstant& constant,
-                                     Class* interface) {
-  StringConstant* decl = new StringConstant(constant.GetName(),
-                                            constant.GetValue());
+static void generate_string_constant(Class* interface, const std::string& name,
+                                     const std::string& value) {
+  StringConstant* decl = new StringConstant(name, value);
   interface->elements.push_back(decl);
 }
 
@@ -344,7 +371,6 @@ static std::unique_ptr<Method> generate_interface_method(
 
 static void generate_stub_code(const AidlInterface& iface,
                                const AidlMethod& method,
-                               const std::string& transactCodeName,
                                bool oneway,
                                Variable* transact_data,
                                Variable* transact_reply,
@@ -364,7 +390,7 @@ static void generate_stub_code(const AidlInterface& iface,
   // args
   VariableFactory stubArgs("_arg");
   {
-    Variable* cl = NULL;
+    Variable* cl = nullptr;
     for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
       const Type* t = arg->GetType().GetLanguageType<Type>();
       Variable* v = stubArgs.Get(t);
@@ -485,7 +511,6 @@ static void generate_stub_case(const AidlInterface& iface,
 
   generate_stub_code(iface,
                      method,
-                     transactCodeName,
                      oneway,
                      stubClass->transact_data,
                      stubClass->transact_reply,
@@ -519,7 +544,6 @@ static void generate_stub_case_outline(const AidlInterface& iface,
 
     generate_stub_code(iface,
                        method,
-                       transactCodeName,
                        oneway,
                        transact_data,
                        transact_reply,
@@ -568,7 +592,7 @@ static std::unique_ptr<Method> generate_proxy_method(
   Variable* _data = new Variable(types->ParcelType(), "_data");
   proxy->statements->Add(new VariableDeclaration(
       _data, new MethodCall(types->ParcelType(), "obtain")));
-  Variable* _reply = NULL;
+  Variable* _reply = nullptr;
   if (!oneway) {
     _reply = new Variable(types->ParcelType(), "_reply");
     proxy->statements->Add(new VariableDeclaration(
@@ -576,7 +600,7 @@ static std::unique_ptr<Method> generate_proxy_method(
   }
 
   // the return value
-  Variable* _result = NULL;
+  Variable* _result = nullptr;
   if (method.GetType().GetName() != "void") {
     _result = new Variable(proxy->returnType, "_result",
                            method.GetType().IsArray() ? 1 : 0);
@@ -625,12 +649,29 @@ static std::unique_ptr<Method> generate_proxy_method(
   }
 
   // the transact call
-  MethodCall* call = new MethodCall(
-      proxyClass->mRemote, "transact", 4,
-      new LiteralExpression("Stub." + transactCodeName), _data,
+  unique_ptr<MethodCall> call(new MethodCall(
+      proxyClass->mRemote, "transact", 4, new LiteralExpression("Stub." + transactCodeName), _data,
       _reply ? _reply : NULL_VALUE,
-          new LiteralExpression(oneway ? "android.os.IBinder.FLAG_ONEWAY" : "0"));
-  tryStatement->statements->Add(call);
+      new LiteralExpression(oneway ? "android.os.IBinder.FLAG_ONEWAY" : "0")));
+  unique_ptr<Variable> _status(new Variable(types->BoolType(), "_status"));
+  tryStatement->statements->Add(new VariableDeclaration(_status.release(), call.release()));
+
+  // If the transaction returns false, which means UNKNOWN_TRANSACTION, fall
+  // back to the local method in the default impl, if set before.
+  vector<string> arg_names;
+  for (const auto& arg : method.GetArguments()) {
+    arg_names.emplace_back(arg->GetName());
+  }
+  bool has_return_type = method.GetType().GetName() != "void";
+  tryStatement->statements->Add(new LiteralStatement(
+      android::base::StringPrintf(has_return_type ? "if (!_status && getDefaultImpl() != null) {\n"
+                                                    "  return getDefaultImpl().%s(%s);\n"
+                                                    "}\n"
+                                                  : "if (!_status && getDefaultImpl() != null) {\n"
+                                                    "  getDefaultImpl().%s(%s);\n"
+                                                    "  return;\n"
+                                                    "}\n",
+                                  method.GetName().c_str(), Join(arg_names, ", ").c_str())));
 
   // throw back exceptions.
   if (_reply) {
@@ -639,9 +680,9 @@ static std::unique_ptr<Method> generate_proxy_method(
   }
 
   // returning and cleanup
-  if (_reply != NULL) {
+  if (_reply != nullptr) {
     Variable* cl = nullptr;
-    if (_result != NULL) {
+    if (_result != nullptr) {
       generate_create_from_parcel(proxy->returnType, tryStatement->statements,
                                   _result, _reply, &cl);
     }
@@ -666,7 +707,7 @@ static std::unique_ptr<Method> generate_proxy_method(
         new LiteralExpression("android.os.Trace.TRACE_TAG_AIDL")));
   }
 
-  if (_result != NULL) {
+  if (_result != nullptr) {
     proxy->statements->Add(new ReturnStatement(_result));
   }
 
@@ -679,7 +720,8 @@ static void generate_methods(const AidlInterface& iface,
                              StubClass* stubClass,
                              ProxyClass* proxyClass,
                              int index,
-                             JavaTypeNamespace* types) {
+                             JavaTypeNamespace* types,
+                             const JavaOptions& options) {
   const bool oneway = proxyClass->mOneWay || method.IsOneway();
 
   // == the TRANSACT_ constant =============================================
@@ -691,6 +733,13 @@ static void generate_methods(const AidlInterface& iface,
   transactCode->value =
       StringPrintf("(android.os.IBinder.FIRST_CALL_TRANSACTION + %d)", index);
   stubClass->elements.push_back(transactCode);
+
+  // getTransactionName
+  if (options.ShouldGenGetTransactionName()) {
+    Case* c = new Case(transactCodeName);
+    c->statements->Add(new ReturnStatement(new StringLiteralExpression(method.GetName())));
+    stubClass->code_to_method_name_switch->cases.push_back(c);
+  }
 
   // == the declaration in the interface ===================================
   Method* decl = generate_interface_method(method, types).release();
@@ -780,6 +829,50 @@ static void compute_outline_methods(const AidlInterface* iface,
   }
 }
 
+static unique_ptr<ClassElement> generate_default_impl_method(const AidlMethod& method) {
+  unique_ptr<Method> default_method(new Method);
+  default_method->comment = method.GetComments();
+  default_method->modifiers = PUBLIC | OVERRIDE;
+  default_method->returnType = method.GetType().GetLanguageType<Type>();
+  default_method->returnTypeDimension = method.GetType().IsArray() ? 1 : 0;
+  default_method->name = method.GetName();
+  default_method->statements = new StatementBlock;
+  for (const auto& arg : method.GetArguments()) {
+    default_method->parameters.push_back(new Variable(
+        arg->GetType().GetLanguageType<Type>(), arg->GetName(), arg->GetType().IsArray() ? 1 : 0));
+  }
+  default_method->exceptions.push_back(
+      method.GetType().GetLanguageType<Type>()->GetTypeNamespace()->RemoteExceptionType());
+
+  if (method.GetType().GetName() != "void") {
+    const string& defaultValue = method.GetType().GetLanguageType<Type>()->DefaultValue();
+    default_method->statements->Add(
+        new LiteralStatement(StringPrintf("return %s;\n", defaultValue.c_str())));
+  }
+  return default_method;
+}
+
+static unique_ptr<Class> generate_default_impl_class(const AidlInterface& iface) {
+  unique_ptr<Class> default_class(new Class);
+  default_class->comment = "/** Default implementation for " + iface.GetName() + ". */";
+  default_class->modifiers = PUBLIC | STATIC;
+  default_class->what = Class::CLASS;
+  default_class->type = iface.GetLanguageType<InterfaceType>()->GetDefaultImpl();
+  default_class->interfaces.emplace_back(iface.GetLanguageType<InterfaceType>());
+
+  for (const auto& m : iface.GetMethods()) {
+    default_class->elements.emplace_back(generate_default_impl_method(*(m.get())).release());
+  }
+
+  default_class->elements.emplace_back(
+      new LiteralClassElement("@Override\n"
+                              "public android.os.IBinder asBinder() {\n"
+                              "  return null;\n"
+                              "}\n"));
+
+  return default_class;
+}
+
 Class* generate_binder_interface_class(const AidlInterface* iface,
                                        JavaTypeNamespace* types,
                                        const JavaOptions& options) {
@@ -793,9 +886,12 @@ Class* generate_binder_interface_class(const AidlInterface* iface,
   interface->type = interfaceType;
   interface->interfaces.push_back(types->IInterfaceType());
 
+  // the default impl class
+  interface->elements.emplace_back(generate_default_impl_class(*iface).release());
+
   // the stub inner class
   StubClass* stub =
-      new StubClass(interfaceType->GetStub(), interfaceType, types);
+      new StubClass(interfaceType->GetStub(), interfaceType, types, options);
   interface->elements.push_back(stub);
 
   compute_outline_methods(iface,
@@ -812,11 +908,22 @@ Class* generate_binder_interface_class(const AidlInterface* iface,
   generate_interface_descriptors(stub, proxy, types);
 
   // all the declared constants of the interface
-  for (const auto& item : iface->GetIntConstants()) {
-    generate_int_constant(*item, interface);
-  }
-  for (const auto& item : iface->GetStringConstants()) {
-    generate_string_constant(*item, interface);
+  for (const auto& constant : iface->GetConstantDeclarations()) {
+    const AidlConstantValue& value = constant->GetValue();
+
+    switch (value.GetType()) {
+      case AidlConstantValue::Type::STRING: {
+        generate_string_constant(interface, constant->GetName(), value.ToString());
+        break;
+      }
+      case AidlConstantValue::Type::INTEGER: {
+        generate_int_constant(interface, constant->GetName(), value.ToString());
+        break;
+      }
+      default: {
+        LOG(FATAL) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
+      }
+    }
   }
 
   // all the declared methods of the interface
@@ -828,8 +935,37 @@ Class* generate_binder_interface_class(const AidlInterface* iface,
                      stub,
                      proxy,
                      item->GetId(),
-                     types);
+                     types,
+                     options);
   }
+
+  // additional static methods for the default impl set/get to the
+  // stub class. Can't add them to the interface as the generated java files
+  // may be compiled with Java < 1.7 where static interface method isn't
+  // supported.
+  // TODO(b/111417145) make this conditional depending on the Java language
+  // version requested
+  const string i_name = interfaceType->JavaType();
+  stub->elements.emplace_back(new LiteralClassElement(
+      StringPrintf("public static boolean setDefaultImpl(%s impl) {\n"
+                   "  if (Stub.Proxy.sDefaultImpl == null && impl != null) {\n"
+                   "    Stub.Proxy.sDefaultImpl = impl;\n"
+                   "    return true;\n"
+                   "  }\n"
+                   "  return false;\n"
+                   "}\n",
+                   i_name.c_str())));
+  stub->elements.emplace_back(
+      new LiteralClassElement(StringPrintf("public static %s getDefaultImpl() {\n"
+                                           "  return Stub.Proxy.sDefaultImpl;\n"
+                                           "}\n",
+                                           i_name.c_str())));
+
+  // the static field is defined in the proxy class, not in the interface class
+  // because all fields in an interface class are by default final.
+  proxy->elements.emplace_back(new LiteralClassElement(
+      StringPrintf("public static %s sDefaultImpl = null;\n", i_name.c_str())));
+
   stub->finish();
 
   return interface;

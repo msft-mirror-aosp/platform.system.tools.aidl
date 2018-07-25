@@ -97,11 +97,12 @@ class TypeNamespace {
   // Load this TypeNamespace with user defined types.
   virtual bool AddParcelableType(const AidlParcelable& p,
                                  const std::string& filename) = 0;
+
   virtual bool AddBinderType(const AidlInterface& b,
                              const std::string& filename) = 0;
   // Add a container type to this namespace.  Returns false only
   // on error. Silently discards requests to add non-container types.
-  virtual bool MaybeAddContainerType(const AidlType& aidl_type) = 0;
+  virtual bool MaybeAddContainerType(const AidlTypeSpecifier& aidl_type) = 0;
 
   // Returns true iff this has a type for |import|.
   virtual bool HasImportType(const AidlImport& import) const = 0;
@@ -111,30 +112,26 @@ class TypeNamespace {
 
   // Returns a pointer to a type corresponding to |raw_type| or nullptr
   // if this is an invalid return type.
-  virtual const ValidatableType* GetReturnType(
-      const AidlType& raw_type,
-      const std::string& filename,
-      const AidlInterface& interface) const;
+  virtual const ValidatableType* GetReturnType(const AidlTypeSpecifier& raw_type,
+                                               const std::string& filename,
+                                               const AidlDefinedType& context) const;
 
   // Returns a pointer to a type corresponding to |a| or nullptr if |a|
   // has an invalid argument type.
-  virtual const ValidatableType* GetArgType(
-      const AidlArgument& a,
-      int arg_index,
-      const std::string& filename,
-      const AidlInterface& interface) const;
+  virtual const ValidatableType* GetArgType(const AidlArgument& a, int arg_index,
+                                            const std::string& filename,
+                                            const AidlDefinedType& context) const;
 
-  // Returns a pointer to a type corresponding to |interface|.
-  virtual const ValidatableType* GetInterfaceType(
-      const AidlInterface& interface) const = 0;
+  // Returns a pointer to a type corresponding to |defined_type|.
+  virtual const ValidatableType* GetDefinedType(const AidlDefinedType& defined_type) const = 0;
 
  protected:
   TypeNamespace() = default;
   virtual ~TypeNamespace() = default;
 
-  virtual const ValidatableType* GetValidatableType(
-      const AidlType& type, std::string* error_msg,
-      const AidlInterface& interface) const = 0;
+  virtual const ValidatableType* GetValidatableType(const AidlTypeSpecifier& type,
+                                                    std::string* error_msg,
+                                                    const AidlDefinedType& context) const = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(TypeNamespace);
@@ -148,7 +145,7 @@ class LanguageTypeNamespace : public TypeNamespace {
 
   // Get a pointer to an existing type.  Searches first by fully-qualified
   // name, and then class name (dropping package qualifiers).
-  const T* Find(const AidlType& aidl_type) const;
+  const T* Find(const AidlTypeSpecifier& aidl_type) const;
 
   // Find a type by its |name|.  If |name| refers to a container type (e.g.
   // List<String>) you must turn it into a canonical name first (e.g.
@@ -160,12 +157,11 @@ class LanguageTypeNamespace : public TypeNamespace {
   bool HasImportType(const AidlImport& import) const override {
     return HasTypeByCanonicalName(import.GetNeededClass());
   }
-  const ValidatableType* GetInterfaceType(
-      const AidlInterface& interface) const override {
-    return FindTypeByCanonicalName(interface.GetCanonicalName());
+  const ValidatableType* GetDefinedType(const AidlDefinedType& defined_type) const override {
+    return FindTypeByCanonicalName(defined_type.GetCanonicalName());
   }
 
-  bool MaybeAddContainerType(const AidlType& aidl_type) override;
+  bool MaybeAddContainerType(const AidlTypeSpecifier& aidl_type) override;
   // We dynamically create container types as we discover them in the parse
   // tree.  Returns false if the contained types cannot be canonicalized.
   virtual bool AddListType(const std::string& contained_type_name) = 0;
@@ -177,17 +173,15 @@ class LanguageTypeNamespace : public TypeNamespace {
 
  private:
   // Returns true iff the name can be canonicalized to a container type.
-  virtual bool CanonicalizeContainerType(
-      const AidlType& aidl_type,
-      std::vector<std::string>* container_class,
-      std::vector<std::string>* contained_type_names) const;
+  virtual bool CanonicalizeContainerType(const AidlTypeSpecifier& aidl_type,
+                                         std::vector<std::string>* container_class,
+                                         std::vector<std::string>* contained_type_names) const;
 
   // Returns true if this is a container type, rather than a normal type.
   bool IsContainerType(const std::string& type_name) const;
 
-  const ValidatableType* GetValidatableType(
-      const AidlType& type, std::string* error_msg,
-      const AidlInterface& interface) const override;
+  const ValidatableType* GetValidatableType(const AidlTypeSpecifier& type, std::string* error_msg,
+                                            const AidlDefinedType& context) const override;
 
   std::vector<std::unique_ptr<const T>> types_;
 
@@ -222,14 +216,14 @@ bool LanguageTypeNamespace<T>::Add(const T* type) {
   return true;
 }
 
-template<typename T>
-const T* LanguageTypeNamespace<T>::Find(const AidlType& aidl_type) const {
+template <typename T>
+const T* LanguageTypeNamespace<T>::Find(const AidlTypeSpecifier& aidl_type) const {
   using std::string;
   using std::vector;
   using android::base::Join;
   using android::base::Trim;
 
-  string name = Trim(aidl_type.GetName());
+  string name = Trim(aidl_type.IsArray() ? aidl_type.GetName() : aidl_type.ToString());
   if (IsContainerType(name)) {
     vector<string> container_class;
     vector<string> contained_type_names;
@@ -267,12 +261,11 @@ const T* LanguageTypeNamespace<T>::FindTypeByCanonicalName(
   return ret;
 }
 
-template<typename T>
-bool LanguageTypeNamespace<T>::MaybeAddContainerType(
-    const AidlType& aidl_type) {
+template <typename T>
+bool LanguageTypeNamespace<T>::MaybeAddContainerType(const AidlTypeSpecifier& aidl_type) {
   using android::base::Join;
 
-  const std::string& type_name = aidl_type.GetName();
+  const std::string& type_name = aidl_type.ToString();
   if (!IsContainerType(type_name)) {
     return true;
   }
@@ -317,35 +310,19 @@ bool LanguageTypeNamespace<T>::IsContainerType(
   return false;
 }
 
-template<typename T>
+template <typename T>
 bool LanguageTypeNamespace<T>::CanonicalizeContainerType(
-    const AidlType& aidl_type,
-    std::vector<std::string>* container_class,
+    const AidlTypeSpecifier& aidl_type, std::vector<std::string>* container_class,
     std::vector<std::string>* contained_type_names) const {
-  using android::base::Trim;
-  using android::base::Split;
+  std::string container = aidl_type.GetName();
+  std::vector<std::string> args;
+  for (auto& type_arg : aidl_type.GetTypeParameters()) {
+    if (type_arg->IsGeneric()) {
+      // nesting is not allowed yet.
+      LOG(ERROR) << "Nested template type '" << aidl_type.ToString() << "'";
+    }
 
-  std::string name = Trim(aidl_type.GetName());
-  const size_t opening_brace = name.find('<');
-  const size_t closing_brace = name.find('>');
-  if (opening_brace == std::string::npos ||
-      closing_brace == std::string::npos) {
-    return false;
-  }
-
-  if (opening_brace != name.rfind('<') ||
-      closing_brace != name.rfind('>') ||
-      closing_brace != name.length() - 1) {
-    // Nested/invalid templates are forbidden.
-    LOG(ERROR) << "Invalid template type '" << name << "'";
-    return false;
-  }
-
-  std::string container = Trim(name.substr(0, opening_brace));
-  std::string remainder = name.substr(opening_brace + 1,
-                                 (closing_brace - opening_brace) - 1);
-  std::vector<std::string> args = Split(remainder, ",");
-  for (auto& type_name: args) {
+    std::string type_name = type_arg->ToString();
     // Here, we are relying on FindTypeByCanonicalName to do its best when
     // given a non-canonical name for non-compound type (i.e. not another
     // container).
@@ -362,6 +339,7 @@ bool LanguageTypeNamespace<T>::CanonicalizeContainerType(
     } else if (aidl_type.IsUtf8InCpp() && type_name == "java.lang.String") {
       type_name = kUtf8InCppStringCanonicalName;
     }
+    args.emplace_back(type_name);
   }
 
   // Map the container name to its canonical form for supported containers.
@@ -378,15 +356,15 @@ bool LanguageTypeNamespace<T>::CanonicalizeContainerType(
     return true;
   }
 
-  LOG(ERROR) << "Unknown find container with name " << container
-             << " and " << args.size() << "contained types.";
+  LOG(ERROR) << "Unknown find container with name " << container << " and " << args.size()
+             << " contained types.";
   return false;
 }
 
-template<typename T>
+template <typename T>
 const ValidatableType* LanguageTypeNamespace<T>::GetValidatableType(
-    const AidlType& aidl_type, std::string* error_msg,
-    const AidlInterface& interface) const {
+    const AidlTypeSpecifier& aidl_type, std::string* error_msg,
+    const AidlDefinedType& context) const {
   using android::base::StringPrintf;
 
   const ValidatableType* type = Find(aidl_type);
@@ -428,8 +406,8 @@ const ValidatableType* LanguageTypeNamespace<T>::GetValidatableType(
     utf8InCpp = false;
   } else if (aidl_type.GetName() == "String" ||
              aidl_type.GetName() == "java.lang.String") {
-    utf8 = utf8 || interface.IsUtf8();
-    utf8InCpp = utf8InCpp || interface.IsUtf8InCpp();
+    utf8 = utf8 || context.IsUtf8();
+    utf8InCpp = utf8InCpp || context.IsUtf8InCpp();
   } else if (utf8 || utf8InCpp) {
     const char* annotation_literal =
         (utf8) ? kUtf8Annotation : kUtf8InCppAnnotation;
@@ -469,7 +447,7 @@ const ValidatableType* LanguageTypeNamespace<T>::GetValidatableType(
     }
   }
 
-  if (interface.IsNullable()) {
+  if (context.IsNullable()) {
     const ValidatableType* nullableType = type->NullableType();
 
     if (nullableType) {

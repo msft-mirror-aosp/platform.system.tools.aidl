@@ -56,7 +56,7 @@ const char* kCompileJavaCommand[] = {
 };
 const char kCompileCommandJavaOutput[] = "directory/ITool.java";
 
-const char kCompileDepFileNinja[] = "-ninja";
+const char kCompileDepFileNinja[] = "--ninja";
 const char* kCompileJavaCommandNinja[] = {
     "aidl",
     "-b",
@@ -120,7 +120,7 @@ TEST(JavaOptionsTests, ParsesPreprocess) {
   const vector<string> expected_input{kPreprocessCommandInput1,
                                       kPreprocessCommandInput2,
                                       kPreprocessCommandInput3};
-  EXPECT_EQ(expected_input, options->files_to_preprocess_);
+  EXPECT_EQ(expected_input, options->input_file_names_);
 }
 
 TEST(JavaOptionsTests, ParsesCompileJava) {

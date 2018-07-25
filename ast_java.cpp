@@ -26,6 +26,12 @@ namespace android {
 namespace aidl {
 namespace java {
 
+std::string AstNode::ToString() {
+  std::string str;
+  Write(CodeWriter::ForString(&str).get());
+  return str;
+}
+
 void WriteModifiers(CodeWriter* to, int mod, int mask) {
   int m = mod & mask;
 
@@ -71,8 +77,8 @@ void Field::Write(CodeWriter* to) const {
     to->Write("%s\n", this->comment.c_str());
   }
   WriteModifiers(to, this->modifiers, SCOPE_MASK | STATIC | FINAL | OVERRIDE);
-  to->Write("%s %s", this->variable->type->JavaType().c_str(),
-            this->variable->name.c_str());
+  this->variable->WriteDeclaration(to);
+
   if (this->value.length() != 0) {
     to->Write(" = %s", this->value.c_str());
   }
@@ -109,26 +115,34 @@ void Variable::WriteDeclaration(CodeWriter* to) const {
 void Variable::Write(CodeWriter* to) const { to->Write("%s", name.c_str()); }
 
 FieldVariable::FieldVariable(Expression* o, const string& n)
-    : object(o), clazz(NULL), name(n) {}
+    : object(o), clazz(nullptr), name(n) {}
 
 FieldVariable::FieldVariable(const Type* c, const string& n)
-    : object(NULL), clazz(c), name(n) {}
+    : object(nullptr), clazz(c), name(n) {}
 
 void FieldVariable::Write(CodeWriter* to) const {
-  if (this->object != NULL) {
+  if (this->object != nullptr) {
     this->object->Write(to);
-  } else if (this->clazz != NULL) {
+  } else if (this->clazz != nullptr) {
     to->Write("%s", this->clazz->JavaType().c_str());
   }
   to->Write(".%s", name.c_str());
 }
 
+LiteralStatement::LiteralStatement(const std::string& value) : value_(value) {}
+
+void LiteralStatement::Write(CodeWriter* to) const {
+  to->Write("%s", value_.c_str());
+}
+
 void StatementBlock::Write(CodeWriter* to) const {
   to->Write("{\n");
+  to->Indent();
   int N = this->statements.size();
   for (int i = 0; i < N; i++) {
     this->statements[i]->Write(to);
   }
+  to->Dedent();
   to->Write("}\n");
 }
 
@@ -148,7 +162,7 @@ void ExpressionStatement::Write(CodeWriter* to) const {
 }
 
 Assignment::Assignment(Variable* l, Expression* r)
-    : lvalue(l), rvalue(r), cast(NULL) {}
+    : lvalue(l), rvalue(r), cast(nullptr) {}
 
 Assignment::Assignment(Variable* l, Expression* r, const Type* c)
     : lvalue(l), rvalue(r), cast(c) {}
@@ -156,7 +170,7 @@ Assignment::Assignment(Variable* l, Expression* r, const Type* c)
 void Assignment::Write(CodeWriter* to) const {
   this->lvalue->Write(to);
   to->Write(" = ");
-  if (this->cast != NULL) {
+  if (this->cast != nullptr) {
     to->Write("(%s)", this->cast->JavaType().c_str());
   }
   this->rvalue->Write(to);
@@ -199,10 +213,10 @@ void MethodCall::init(int n, va_list args) {
 }
 
 void MethodCall::Write(CodeWriter* to) const {
-  if (this->obj != NULL) {
+  if (this->obj != nullptr) {
     this->obj->Write(to);
     to->Write(".");
-  } else if (this->clazz != NULL) {
+  } else if (this->clazz != nullptr) {
     to->Write("%s.", this->clazz->JavaType().c_str());
   }
   to->Write("%s(", this->name.c_str());
@@ -281,9 +295,9 @@ VariableDeclaration::VariableDeclaration(Variable* l) : lvalue(l) {}
 
 void VariableDeclaration::Write(CodeWriter* to) const {
   this->lvalue->WriteDeclaration(to);
-  if (this->rvalue != NULL) {
+  if (this->rvalue != nullptr) {
     to->Write(" = ");
-    if (this->cast != NULL) {
+    if (this->cast != nullptr) {
       to->Write("(%s)", this->cast->JavaType().c_str());
     }
     this->rvalue->Write(to);
@@ -292,13 +306,13 @@ void VariableDeclaration::Write(CodeWriter* to) const {
 }
 
 void IfStatement::Write(CodeWriter* to) const {
-  if (this->expression != NULL) {
+  if (this->expression != nullptr) {
     to->Write("if (");
     this->expression->Write(to);
     to->Write(") ");
   }
   this->statements->Write(to);
-  if (this->elseif != NULL) {
+  if (this->elseif != nullptr) {
     to->Write("else ");
     this->elseif->Write(to);
   }
@@ -322,7 +336,7 @@ CatchStatement::CatchStatement(Variable* e)
 
 void CatchStatement::Write(CodeWriter* to) const {
   to->Write("catch ");
-  if (this->exception != NULL) {
+  if (this->exception != nullptr) {
     to->Write("(");
     this->exception->WriteDeclaration(to);
     to->Write(") ");
@@ -360,10 +374,12 @@ void SwitchStatement::Write(CodeWriter* to) const {
   to->Write("switch (");
   this->expression->Write(to);
   to->Write(")\n{\n");
+  to->Indent();
   int N = this->cases.size();
   for (int i = 0; i < N; i++) {
     this->cases[i]->Write(to);
   }
+  to->Dedent();
   to->Write("}\n");
 }
 
@@ -379,7 +395,7 @@ void Method::Write(CodeWriter* to) const {
   WriteModifiers(to, this->modifiers,
                  SCOPE_MASK | STATIC | ABSTRACT | FINAL | OVERRIDE);
 
-  if (this->returnType != NULL) {
+  if (this->returnType != nullptr) {
     string dim;
     for (i = 0; i < this->returnTypeDimension; i++) {
       dim += "[]";
@@ -409,7 +425,7 @@ void Method::Write(CodeWriter* to) const {
     to->Write("%s", this->exceptions[i]->JavaType().c_str());
   }
 
-  if (this->statements == NULL) {
+  if (this->statements == nullptr) {
     to->Write(";\n");
   } else {
     to->Write("\n");
@@ -417,9 +433,13 @@ void Method::Write(CodeWriter* to) const {
   }
 }
 
+void LiteralClassElement::Write(CodeWriter* to) const {
+  to->Write("%s", element.c_str());
+}
+
 void IntConstant::Write(CodeWriter* to) const {
   WriteModifiers(to, STATIC | FINAL | PUBLIC, ALL_MODIFIERS);
-  to->Write("int %s = %d;\n", name.c_str(), value);
+  to->Write("int %s = %s;\n", name.c_str(), value.c_str());
 }
 
 void StringConstant::Write(CodeWriter* to) const {
@@ -450,7 +470,7 @@ void Class::Write(CodeWriter* to) const {
 
   to->Write("%s", name.c_str());
 
-  if (this->extends != NULL) {
+  if (this->extends != nullptr) {
     to->Write(" extends %s", this->extends->JavaType().c_str());
   }
 
@@ -468,12 +488,14 @@ void Class::Write(CodeWriter* to) const {
 
   to->Write("\n");
   to->Write("{\n");
+  to->Indent();
 
   N = this->elements.size();
   for (i = 0; i < N; i++) {
     this->elements[i]->Write(to);
   }
 
+  to->Dedent();
   to->Write("}\n");
 }
 

@@ -17,6 +17,7 @@
 package android.aidl.tests;
 
 import android.aidl.tests.SimpleParcelable;
+import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.TestFailException;
 import android.aidl.tests.TestLogger;
 import android.app.Activity;
@@ -699,6 +700,75 @@ public class TestServiceClient extends Activity {
         mLog.log("...UTF8 annotations work.");
     }
 
+    private void checkStructuredParcelable(ITestService service) throws TestFailException {
+      final int kDesiredFValue = 17;
+
+      StructuredParcelable parcelable = new StructuredParcelable();
+      parcelable.shouldContainThreeFs = new int[0];
+      parcelable.f = kDesiredFValue;
+      parcelable.shouldBeJerry = "";
+
+      if (!parcelable.stringDefaultsToFoo.equals("foo")) {
+        mLog.logAndThrow(
+            "stringDefaultsToFoo should be 'foo' but is " + parcelable.stringDefaultsToFoo);
+      }
+      if (parcelable.intDefaultsToFive != 5) {
+        mLog.logAndThrow("intDefaultsToFive should be 5 but is " + parcelable.intDefaultsToFive);
+      }
+
+      try {
+        service.FillOutStructuredParcelable(parcelable);
+      } catch (RemoteException ex) {
+        mLog.log(ex.toString());
+        mLog.logAndThrow("Service failed to handle structured parcelable.");
+      }
+
+      if (parcelable.shouldContainThreeFs.length != 3) {
+        mLog.logAndThrow(
+            "shouldContainThreeFs is of length " + parcelable.shouldContainThreeFs.length);
+      }
+      for (int i = 0; i < 3; i++) {
+        if (parcelable.shouldContainThreeFs[i] != kDesiredFValue) {
+          mLog.logAndThrow("shouldContainThreeFs[" + i + "] is "
+              + parcelable.shouldContainThreeFs[i] + " but should be " + kDesiredFValue);
+        }
+      }
+
+      if (!parcelable.shouldBeJerry.equals("Jerry")) {
+        mLog.logAndThrow("shouldBeJerry should be 'Jerry' but is " + parcelable.shouldBeJerry);
+      }
+    }
+
+    private void checkDefaultImpl(ITestService service) throws TestFailException {
+      final int expectedArg = 100;
+      final int expectedReturnValue = 200;
+
+      boolean success = ITestService.Stub.setDefaultImpl(new ITestService.Default() {
+        @Override
+        public int UnimplementedMethod(int arg) throws RemoteException {
+          if (arg != expectedArg) {
+            throw new RemoteException("Argument for UnimplementedMethod is expected "
+                + " to be " + expectedArg + ", but got " + arg);
+          }
+          return expectedReturnValue;
+        }
+      });
+      if (!success) {
+        mLog.logAndThrow("Failed to set default impl for ITestService");
+      }
+
+      try {
+        int ret = service.UnimplementedMethod(expectedArg);
+        if (ret != expectedReturnValue) {
+          mLog.logAndThrow("Return value from UnimplementedMethod is expected "
+              + " to be " + expectedReturnValue + ", but got " + ret);
+        }
+      } catch (RemoteException ex) {
+        mLog.log(ex.toString());
+        mLog.logAndThrow("Failed to call UnimplementedMethod");
+      }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -715,7 +785,9 @@ public class TestServiceClient extends Activity {
           checkFileDescriptorPassing(service);
           checkServiceSpecificExceptions(service);
           checkUtf8Strings(service);
+          checkStructuredParcelable(service);
           new NullableTests(service, mLog).runTests();
+          checkDefaultImpl(service);
 
           mLog.log(mSuccessSentinel);
         } catch (TestFailException e) {

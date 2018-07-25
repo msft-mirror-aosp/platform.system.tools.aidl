@@ -1,6 +1,7 @@
 %{
 #include "aidl_language.h"
 #include "aidl_language_y.h"
+#include <set>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,39 +16,65 @@ int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 %lex-param { void *lex_scanner }
 
 %pure-parser
+%glr-parser
 %skeleton "glr.cc"
+
+%expect-rr 0
+
+%error-verbose
 
 %union {
     AidlToken* token;
     int integer;
     std::string *str;
-    AidlType::Annotation annotation;
-    AidlType::Annotation annotation_list;
-    AidlType* type;
-    AidlType* unannotated_type;
+    AidlAnnotation* annotation;
+    std::set<std::unique_ptr<AidlAnnotation>>* annotation_list;
+    AidlTypeSpecifier* type;
+    AidlTypeSpecifier* unannotated_type;
     AidlArgument* arg;
     AidlArgument::Direction direction;
+    AidlConstantValue* constant_value;
     std::vector<std::unique_ptr<AidlArgument>>* arg_list;
+    AidlVariableDeclaration* variable;
+    std::vector<std::unique_ptr<AidlVariableDeclaration>>* variable_list;
     AidlMethod* method;
     AidlMember* constant;
-    std::vector<std::unique_ptr<AidlMember>>* members;
+    std::vector<std::unique_ptr<AidlMember>>* interface_members;
     AidlQualifiedName* qname;
-    AidlInterface* interface_obj;
+    AidlInterface* interface;
     AidlParcelable* parcelable;
-    AidlDocument* parcelable_list;
+    AidlDefinedType* declaration;
+    AidlDocument* declaration_list;
+    std::vector<std::unique_ptr<AidlTypeSpecifier>>* type_args;
 }
 
-%token<token> IDENTIFIER INTERFACE ONEWAY C_STR HEXVALUE
-%token<integer> INTVALUE
+%token<token> ANNOTATION "annotation"
+%token<token> C_STR "string literal"
+%token<token> HEXVALUE "hex literal"
+%token<token> IDENTIFIER "identifier"
+%token<token> INTERFACE "interface"
+%token<token> ONEWAY "oneway"
+%token<integer> INTVALUE "int literal"
 
 %token '(' ')' ',' '=' '[' ']' '<' '>' '.' '{' '}' ';'
-%token IN OUT INOUT PACKAGE IMPORT PARCELABLE CPP_HEADER CONST INT STRING
-%token ANNOTATION_NULLABLE ANNOTATION_UTF8 ANNOTATION_UTF8_CPP
+%token CONST "const"
+%token UNKNOWN "unrecognized character"
+%token CPP_HEADER "cpp_header"
+%token IMPORT "import"
+%token IN "in"
+%token INOUT "inout"
+%token OUT "out"
+%token PACKAGE "package"
+%token PARCELABLE "parcelable"
 
-%type<parcelable_list> parcelable_decls
+%type<declaration_list> decls
+%type<declaration> decl
+%type<variable_list> variable_decls
+%type<variable> variable_decl
+%type<interface_members> interface_members
+%type<declaration> unannotated_decl
+%type<interface> interface_decl
 %type<parcelable> parcelable_decl
-%type<members> members
-%type<interface_obj> interface_decl
 %type<method> method_decl
 %type<constant> constant_decl
 %type<annotation> annotation
@@ -57,16 +84,16 @@ int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 %type<arg_list> arg_list
 %type<arg> arg
 %type<direction> direction
-%type<str> generic_list
+%type<type_args> type_args
 %type<qname> qualified_name
+%type<constant_value> constant_value
 
 %type<token> identifier error
 %%
 document
- : package imports parcelable_decls
+ : package imports decls
   { ps->SetDocument($3); }
- | package imports interface_decl
-  { ps->SetDocument(new AidlDocument($3)); };
+ ;
 
 /* A couple of tokens that are keywords elsewhere are identifiers when
  * occurring in the identifier position. Therefore identifier is a
@@ -78,10 +105,6 @@ identifier
   { $$ = $1; }
  | CPP_HEADER
   { $$ = new AidlToken("cpp_header", ""); }
- | INT
-  { $$ = new AidlToken("int", ""); }
- | STRING
-  { $$ = new AidlToken("String", ""); }
  ;
 
 package
@@ -108,99 +131,134 @@ qualified_name
     delete $3;
   };
 
-parcelable_decls
- :
+decls
+ : /* empty */
   { $$ = new AidlDocument(); }
- | parcelable_decls parcelable_decl {
+ | decls decl {
    $$ = $1;
-   $$->AddParcelable($2);
+   $$->AddDefinedType($2);
   }
- | parcelable_decls error {
-    fprintf(stderr, "%s:%d: syntax error don't know what to do with \"%s\"\n",
-            ps->FileName().c_str(),
-            @2.begin.line, $2->GetText().c_str());
-    $$ = $1;
-  };
+ ;
+
+decl
+ : annotation_list unannotated_decl
+   {
+    $$ = $2;
+
+    bool is_unstructured_parcelable =
+      $$->AsParcelable() != nullptr && $$->AsStructuredParcelable() == nullptr;
+
+    if (is_unstructured_parcelable && !$1->empty()) {
+      std::cerr << ps->FileName() << ":" << @1 << ": unstructured parcelables cannot be annotated"
+                << std::endl;
+      ps->AddError();
+    }
+
+    $$->Annotate(std::move(*$1));
+    delete $1;
+   }
+ ;
+
+unannotated_decl
+ : parcelable_decl
+  { $$ = $1; }
+ | interface_decl
+  { $$ = $1; }
+ ;
 
 parcelable_decl
  : PARCELABLE qualified_name ';' {
     $$ = new AidlParcelable($2, @2.begin.line, ps->Package());
+    ps->GetTypenames().AddDefinedType($$);
   }
  | PARCELABLE qualified_name CPP_HEADER C_STR ';' {
     $$ = new AidlParcelable($2, @2.begin.line, ps->Package(), $4->GetText());
+    ps->GetTypenames().AddDefinedType($$);
   }
- | PARCELABLE ';' {
-    fprintf(stderr, "%s:%d syntax error in parcelable declaration. Expected type name.\n",
-            ps->FileName().c_str(), @1.begin.line);
-    $$ = NULL;
-  }
+ | PARCELABLE identifier '{' variable_decls '}' {
+    AidlQualifiedName* name = new AidlQualifiedName($2->GetText(), $2->GetComments());
+    $$ = new AidlStructuredParcelable(name, @2.begin.line, ps->Package(), $4);
+    ps->GetTypenames().AddDefinedType($$);
+ }
  | PARCELABLE error ';' {
-    fprintf(stderr, "%s:%d syntax error in parcelable declaration. Expected type name, saw \"%s\".\n",
-            ps->FileName().c_str(), @2.begin.line, $2->GetText().c_str());
+    ps->AddError();
     $$ = NULL;
   };
+
+variable_decls
+ : /* empty */ {
+    $$ = new std::vector<std::unique_ptr<AidlVariableDeclaration>>; }
+ | variable_decls variable_decl {
+    $$ = $1;
+    if ($2 != nullptr) {
+      $$->push_back(std::unique_ptr<AidlVariableDeclaration>($2));
+    }
+ };
+
+variable_decl
+ : type identifier ';' {
+   $$ = new AidlVariableDeclaration($1, $2->GetText(), @2.begin.line);
+ }
+ | type identifier '=' constant_value ';' {
+   $$ = new AidlVariableDeclaration($1, $2->GetText(), @2.begin.line, $4);
+ }
+ | error ';' {
+   ps->AddError();
+   $$ = nullptr;
+ }
 
 interface_decl
- : annotation_list INTERFACE identifier '{' members '}' {
-    $$ = new AidlInterface($3->GetText(), @2.begin.line, $2->GetComments(),
-                           false, $5, ps->Package());
-    $$->Annotate($1);
+ : INTERFACE identifier '{' interface_members '}' {
+    $$ = new AidlInterface($2->GetText(), @1.begin.line, $1->GetComments(),
+                           false, $4, ps->Package());
+    ps->GetTypenames().AddDefinedType($$);
+    delete $1;
+    delete $2;
+  }
+ | ONEWAY INTERFACE identifier '{' interface_members '}' {
+    $$ = new AidlInterface($3->GetText(), @2.begin.line, $1->GetComments(),
+                           true, $5, ps->Package());
+    ps->GetTypenames().AddDefinedType($$);
+    delete $1;
     delete $2;
     delete $3;
   }
- | annotation_list ONEWAY INTERFACE identifier '{' members '}' {
-    $$ = new AidlInterface($4->GetText(), @4.begin.line, $2->GetComments(),
-                           true, $6, ps->Package());
-    $$->Annotate($1);
+ | INTERFACE error '{' interface_members '}' {
+    ps->AddError();
+    $$ = nullptr;
+    delete $1;
     delete $2;
-    delete $3;
     delete $4;
-  }
- | annotation_list INTERFACE error '{' members '}' {
-    fprintf(stderr, "%s:%d: syntax error in interface declaration.  Expected "
-                    "type name, saw \"%s\"\n",
-            ps->FileName().c_str(), @3.begin.line, $3->GetText().c_str());
-    $$ = NULL;
-    delete $2;
-    delete $3;
-    delete $5;
-  }
- | annotation_list INTERFACE error '}' {
-    fprintf(stderr, "%s:%d: syntax error in interface declaration.  Expected "
-                    "type name, saw \"%s\"\n",
-            ps->FileName().c_str(), @3.begin.line, $3->GetText().c_str());
-    $$ = NULL;
-    delete $2;
-    delete $3;
   };
 
-members
+interface_members
  :
   { $$ = new std::vector<std::unique_ptr<AidlMember>>(); }
- | members method_decl
+ | interface_members method_decl
   { $1->push_back(std::unique_ptr<AidlMember>($2)); }
- | members constant_decl
+ | interface_members constant_decl
   { $1->push_back(std::unique_ptr<AidlMember>($2)); }
- | members error ';' {
-    fprintf(stderr, "%s:%d: syntax error before ';' "
-                    "(expected method or constant declaration)\n",
-            ps->FileName().c_str(), @3.begin.line);
+ | interface_members error ';' {
+    ps->AddError();
     $$ = $1;
   };
 
+constant_value
+ : INTVALUE { $$ = AidlConstantValue::LiteralInt($1); }
+ | HEXVALUE {
+    $$ = AidlConstantValue::ParseHex($1->GetText(), @1.begin.line);
+    delete $1;
+  }
+ | C_STR {
+    $$ = AidlConstantValue::ParseString($1->GetText(), @1.begin.line);
+    delete $1;
+  }
+ ;
+
 constant_decl
- : CONST INT identifier '=' INTVALUE ';' {
-    $$ = new AidlIntConstant($3->GetText(), $5);
+ : CONST type identifier '=' constant_value ';' {
+    $$ = new AidlConstantDeclaration($2, $3->GetText(), $5, @3.begin.line);
     delete $3;
-   }
- | CONST INT identifier '=' HEXVALUE ';' {
-    $$ = new AidlIntConstant($3->GetText(), $5->GetText(), @5.begin.line);
-    delete $3;
-   }
- | CONST STRING identifier '=' C_STR ';' {
-    $$ = new AidlStringConstant($3->GetText(), $5->GetText(), @5.begin.line);
-    delete $3;
-    delete $5;
    }
  ;
 
@@ -238,70 +296,81 @@ arg_list
  | arg_list ',' arg {
     $$ = $1;
     $$->push_back(std::unique_ptr<AidlArgument>($3));
-  }
- | error {
-    fprintf(stderr, "%s:%d: syntax error in parameter list\n",
-            ps->FileName().c_str(), @1.begin.line);
-    $$ = new std::vector<std::unique_ptr<AidlArgument>>();
   };
 
 arg
  : direction type identifier {
     $$ = new AidlArgument($1, $2, $3->GetText(), @3.begin.line);
     delete $3;
-  };
+  }
  | type identifier {
     $$ = new AidlArgument($1, $2->GetText(), @2.begin.line);
     delete $2;
+  }
+ | error {
+    ps->AddError();
   };
 
 unannotated_type
  : qualified_name {
-    $$ = new AidlType($1->GetDotName(), @1.begin.line, $1->GetComments(), false);
+    $$ = new AidlTypeSpecifier($1->GetDotName(), false, nullptr, @1.begin.line,
+                               $1->GetComments());
+    ps->DeferResolution($$);
     delete $1;
   }
  | qualified_name '[' ']' {
-    $$ = new AidlType($1->GetDotName(), @1.begin.line, $1->GetComments(),
-                      true);
+    $$ = new AidlTypeSpecifier($1->GetDotName(), true, nullptr, @1.begin.line,
+                               $1->GetComments());
+    ps->DeferResolution($$);
     delete $1;
   }
- | qualified_name '<' generic_list '>' {
-    $$ = new AidlType($1->GetDotName() + "<" + *$3 + ">", @1.begin.line,
-                      $1->GetComments(), false);
+ | qualified_name '<' type_args '>' {
+    $$ = new AidlTypeSpecifier($1->GetDotName(), false, $3, @1.begin.line,
+                               $1->GetComments());
+    ps->DeferResolution($$);
     delete $1;
-    delete $3;
   };
 
 type
  : annotation_list unannotated_type {
     $$ = $2;
-    $2->Annotate($1);
+    $2->Annotate(std::move(*$1));
+    delete $1;
   };
 
-generic_list
- : qualified_name {
-    $$ = new std::string($1->GetDotName());
-    delete $1;
+type_args
+ : unannotated_type {
+    $$ = new std::vector<std::unique_ptr<AidlTypeSpecifier>>();
+    $$->emplace_back($1);
   }
- | generic_list ',' qualified_name {
-    $$ = new std::string(*$1 + "," + $3->GetDotName());
-    delete $1;
-    delete $3;
+ | type_args ',' unannotated_type {
+    $1->emplace_back($3);
   };
 
 annotation_list
  :
-  { $$ = AidlType::AnnotationNone; }
+  { $$ = new std::set<unique_ptr<AidlAnnotation>>(); }
  | annotation_list annotation
-  { $$ = static_cast<AidlType::Annotation>($1 | $2); };
+  {
+    if ($2 != nullptr) {
+      $1->insert(std::unique_ptr<AidlAnnotation>($2));
+    }
+  };
 
 annotation
- : ANNOTATION_NULLABLE
-  { $$ = AidlType::AnnotationNullable; }
- | ANNOTATION_UTF8
-  { $$ = AidlType::AnnotationUtf8; }
- | ANNOTATION_UTF8_CPP
-  { $$ = AidlType::AnnotationUtf8InCpp; };
+ : ANNOTATION
+  {
+    std::string error;
+    AidlAnnotation* annot = new AidlAnnotation($1->GetText(), error);
+    if (error != "") {
+      std::cerr << ps->FileName() << ":" << @1 << ": ";
+      std::cerr << error << std::endl;
+      ps->AddError();
+      $$ = nullptr;
+    } else {
+      $$ = annot;
+    }
+  };
 
 direction
  : IN
@@ -318,5 +387,5 @@ direction
 
 void yy::parser::error(const yy::parser::location_type& l,
                        const std::string& errstr) {
-  ps->ReportError(errstr, l.begin.line);
+  std::cerr << ps->FileName() << ":" << l << ": " << errstr << std::endl;
 }
