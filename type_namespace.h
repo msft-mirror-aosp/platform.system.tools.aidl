@@ -62,7 +62,6 @@ class ValidatableType {
   virtual ~ValidatableType() = default;
 
   virtual bool CanBeArray() const { return ArrayType() != nullptr; }
-  virtual bool CanBeOutParameter() const = 0;
   virtual bool CanWriteToParcel() const = 0;
 
   virtual const ValidatableType* ArrayType() const = 0;
@@ -94,6 +93,8 @@ class TypeNamespace {
   // constructor because many of the useful methods are virtual.
   virtual void Init() = 0;
 
+  bool AddDefinedTypes(vector<AidlDefinedType*>& types, const string& filename);
+
   // Load this TypeNamespace with user defined types.
   virtual bool AddParcelableType(const AidlParcelable& p,
                                  const std::string& filename) = 0;
@@ -107,23 +108,20 @@ class TypeNamespace {
   // Returns true iff this has a type for |import|.
   virtual bool HasImportType(const AidlImport& import) const = 0;
 
-  // Returns true iff |package| is a valid package name.
-  virtual bool IsValidPackage(const std::string& package) const;
-
   // Returns a pointer to a type corresponding to |raw_type| or nullptr
   // if this is an invalid return type.
   virtual const ValidatableType* GetReturnType(const AidlTypeSpecifier& raw_type,
-                                               const std::string& filename,
                                                const AidlDefinedType& context) const;
 
   // Returns a pointer to a type corresponding to |a| or nullptr if |a|
   // has an invalid argument type.
   virtual const ValidatableType* GetArgType(const AidlArgument& a, int arg_index,
-                                            const std::string& filename,
                                             const AidlDefinedType& context) const;
 
   // Returns a pointer to a type corresponding to |defined_type|.
   virtual const ValidatableType* GetDefinedType(const AidlDefinedType& defined_type) const = 0;
+
+  AidlTypenames typenames_;
 
  protected:
   TypeNamespace() = default;

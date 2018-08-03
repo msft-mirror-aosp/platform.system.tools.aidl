@@ -1,6 +1,7 @@
 %{
 #include "aidl_language.h"
 #include "aidl_language_y.h"
+#include "logging.h"
 #include <set>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,9 +9,27 @@
 
 int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 
+AidlLocation loc(const yy::parser::location_type& l) {
+  CHECK(l.begin.filename == l.end.filename);
+  AidlLocation::Point begin {
+    .line = l.begin.line,
+    .column = l.begin.column,
+  };
+  AidlLocation::Point end {
+    .line = l.end.line,
+    .column = l.end.column,
+  };
+  return AidlLocation(*l.begin.filename, begin, end);
+}
+
 #define lex_scanner ps->Scanner()
 
 %}
+
+%initial-action {
+    @$.begin.filename = @$.end.filename =
+        const_cast<std::string *>(&ps->FileName());
+}
 
 %parse-param { Parser* ps }
 %lex-param { void *lex_scanner }
@@ -44,7 +63,6 @@ int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
     AidlInterface* interface;
     AidlParcelable* parcelable;
     AidlDefinedType* declaration;
-    AidlDocument* declaration_list;
     std::vector<std::unique_ptr<AidlTypeSpecifier>>* type_args;
 }
 
@@ -67,7 +85,6 @@ int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 %token PACKAGE "package"
 %token PARCELABLE "parcelable"
 
-%type<declaration_list> decls
 %type<declaration> decl
 %type<variable_list> variable_decls
 %type<variable> variable_decl
@@ -91,9 +108,7 @@ int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 %type<token> identifier error
 %%
 document
- : package imports decls
-  { ps->SetDocument($3); }
- ;
+ : package imports decls {};
 
 /* A couple of tokens that are keywords elsewhere are identifiers when
  * occurring in the identifier position. Therefore identifier is a
@@ -110,7 +125,7 @@ identifier
 package
  : {}
  | PACKAGE qualified_name ';'
-  { ps->SetPackage($2); };
+  { ps->SetPackage(unique_ptr<AidlQualifiedName>($2)); };
 
 imports
  : {}
@@ -118,11 +133,13 @@ imports
 
 import
  : IMPORT qualified_name ';'
-  { ps->AddImport($2, @1.begin.line); };
+  { ps->AddImport(new AidlImport(loc(@2), $2->GetDotName()));
+    delete $2;
+  };
 
 qualified_name
  : identifier {
-    $$ = new AidlQualifiedName($1->GetText(), $1->GetComments());
+    $$ = new AidlQualifiedName(loc(@1), $1->GetText(), $1->GetComments());
     delete $1;
   }
  | qualified_name '.' identifier
@@ -132,25 +149,20 @@ qualified_name
   };
 
 decls
- : /* empty */
-  { $$ = new AidlDocument(); }
- | decls decl {
-   $$ = $1;
-   $$->AddDefinedType($2);
+ : decl {
+    ps->AddDefinedType(unique_ptr<AidlDefinedType>($1));
   }
- ;
+ | decls decl {
+    ps->AddDefinedType(unique_ptr<AidlDefinedType>($2));
+  };
 
 decl
  : annotation_list unannotated_decl
    {
     $$ = $2;
 
-    bool is_unstructured_parcelable =
-      $$->AsParcelable() != nullptr && $$->AsStructuredParcelable() == nullptr;
-
-    if (is_unstructured_parcelable && !$1->empty()) {
-      std::cerr << ps->FileName() << ":" << @1 << ": unstructured parcelables cannot be annotated"
-                << std::endl;
+    if ($$->AsUnstructuredParcelable() != nullptr && !$1->empty()) {
+      AIDL_ERROR($$) << "unstructured parcelables cannot be annotated";
       ps->AddError();
     }
 
@@ -168,17 +180,14 @@ unannotated_decl
 
 parcelable_decl
  : PARCELABLE qualified_name ';' {
-    $$ = new AidlParcelable($2, @2.begin.line, ps->Package());
-    ps->GetTypenames().AddDefinedType($$);
+    $$ = new AidlParcelable(loc(@2), $2, ps->Package());
   }
  | PARCELABLE qualified_name CPP_HEADER C_STR ';' {
-    $$ = new AidlParcelable($2, @2.begin.line, ps->Package(), $4->GetText());
-    ps->GetTypenames().AddDefinedType($$);
+    $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $4->GetText());
   }
  | PARCELABLE identifier '{' variable_decls '}' {
-    AidlQualifiedName* name = new AidlQualifiedName($2->GetText(), $2->GetComments());
-    $$ = new AidlStructuredParcelable(name, @2.begin.line, ps->Package(), $4);
-    ps->GetTypenames().AddDefinedType($$);
+    AidlQualifiedName* name = new AidlQualifiedName(loc(@2), $2->GetText(), $2->GetComments());
+    $$ = new AidlStructuredParcelable(loc(@2), name, ps->Package(), $4);
  }
  | PARCELABLE error ';' {
     ps->AddError();
@@ -197,10 +206,10 @@ variable_decls
 
 variable_decl
  : type identifier ';' {
-   $$ = new AidlVariableDeclaration($1, $2->GetText(), @2.begin.line);
+   $$ = new AidlVariableDeclaration(loc(@2), $1, $2->GetText());
  }
  | type identifier '=' constant_value ';' {
-   $$ = new AidlVariableDeclaration($1, $2->GetText(), @2.begin.line, $4);
+   $$ = new AidlVariableDeclaration(loc(@2), $1, $2->GetText(),  $4);
  }
  | error ';' {
    ps->AddError();
@@ -209,16 +218,12 @@ variable_decl
 
 interface_decl
  : INTERFACE identifier '{' interface_members '}' {
-    $$ = new AidlInterface($2->GetText(), @1.begin.line, $1->GetComments(),
-                           false, $4, ps->Package());
-    ps->GetTypenames().AddDefinedType($$);
+    $$ = new AidlInterface(loc(@1), $2->GetText(), $1->GetComments(), false, $4, ps->Package());
     delete $1;
     delete $2;
   }
  | ONEWAY INTERFACE identifier '{' interface_members '}' {
-    $$ = new AidlInterface($3->GetText(), @2.begin.line, $1->GetComments(),
-                           true, $5, ps->Package());
-    ps->GetTypenames().AddDefinedType($$);
+    $$ = new AidlInterface(loc(@2), $3->GetText(),  $1->GetComments(), true, $5, ps->Package());
     delete $1;
     delete $2;
     delete $3;
@@ -244,44 +249,40 @@ interface_members
   };
 
 constant_value
- : INTVALUE { $$ = AidlConstantValue::LiteralInt($1); }
+ : INTVALUE { $$ = AidlConstantValue::LiteralInt(loc(@1), $1); }
  | HEXVALUE {
-    $$ = AidlConstantValue::ParseHex($1->GetText(), @1.begin.line);
+    $$ = AidlConstantValue::ParseHex(loc(@1), $1->GetText());
     delete $1;
   }
  | C_STR {
-    $$ = AidlConstantValue::ParseString($1->GetText(), @1.begin.line);
+    $$ = AidlConstantValue::ParseString(loc(@1), $1->GetText());
     delete $1;
   }
  ;
 
 constant_decl
  : CONST type identifier '=' constant_value ';' {
-    $$ = new AidlConstantDeclaration($2, $3->GetText(), $5, @3.begin.line);
+    $$ = new AidlConstantDeclaration(loc(@3), $2, $3->GetText(), $5);
     delete $3;
    }
  ;
 
 method_decl
  : type identifier '(' arg_list ')' ';' {
-    $$ = new AidlMethod(false, $1, $2->GetText(), $4, @2.begin.line,
-                        $1->GetComments());
+    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $1->GetComments());
     delete $2;
   }
  | ONEWAY type identifier '(' arg_list ')' ';' {
-    $$ = new AidlMethod(true, $2, $3->GetText(), $5, @3.begin.line,
-                        $1->GetComments());
+    $$ = new AidlMethod(loc(@3), true, $2, $3->GetText(), $5, $1->GetComments());
     delete $1;
     delete $3;
   }
  | type identifier '(' arg_list ')' '=' INTVALUE ';' {
-    $$ = new AidlMethod(false, $1, $2->GetText(), $4, @2.begin.line,
-                        $1->GetComments(), $7);
+    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $1->GetComments(), $7);
     delete $2;
   }
  | ONEWAY type identifier '(' arg_list ')' '=' INTVALUE ';' {
-    $$ = new AidlMethod(true, $2, $3->GetText(), $5, @3.begin.line,
-                        $1->GetComments(), $8);
+    $$ = new AidlMethod(loc(@3), true, $2, $3->GetText(), $5, $1->GetComments(), $8);
     delete $1;
     delete $3;
   };
@@ -300,11 +301,11 @@ arg_list
 
 arg
  : direction type identifier {
-    $$ = new AidlArgument($1, $2, $3->GetText(), @3.begin.line);
+    $$ = new AidlArgument(loc(@3), $1, $2, $3->GetText());
     delete $3;
   }
  | type identifier {
-    $$ = new AidlArgument($1, $2->GetText(), @2.begin.line);
+    $$ = new AidlArgument(loc(@2), $1, $2->GetText());
     delete $2;
   }
  | error {
@@ -313,20 +314,17 @@ arg
 
 unannotated_type
  : qualified_name {
-    $$ = new AidlTypeSpecifier($1->GetDotName(), false, nullptr, @1.begin.line,
-                               $1->GetComments());
+    $$ = new AidlTypeSpecifier(loc(@1), $1->GetDotName(), false, nullptr, $1->GetComments());
     ps->DeferResolution($$);
     delete $1;
   }
  | qualified_name '[' ']' {
-    $$ = new AidlTypeSpecifier($1->GetDotName(), true, nullptr, @1.begin.line,
-                               $1->GetComments());
+    $$ = new AidlTypeSpecifier(loc(@1), $1->GetDotName(), true, nullptr, $1->GetComments());
     ps->DeferResolution($$);
     delete $1;
   }
  | qualified_name '<' type_args '>' {
-    $$ = new AidlTypeSpecifier($1->GetDotName(), false, $3, @1.begin.line,
-                               $1->GetComments());
+    $$ = new AidlTypeSpecifier(loc(@1), $1->GetDotName(), false, $3, $1->GetComments());
     ps->DeferResolution($$);
     delete $1;
   };
@@ -360,15 +358,9 @@ annotation_list
 annotation
  : ANNOTATION
   {
-    std::string error;
-    AidlAnnotation* annot = new AidlAnnotation($1->GetText(), error);
-    if (error != "") {
-      std::cerr << ps->FileName() << ":" << @1 << ": ";
-      std::cerr << error << std::endl;
+    $$ = AidlAnnotation::Parse(loc(@1), $1->GetText());
+    if ($$ == nullptr) {
       ps->AddError();
-      $$ = nullptr;
-    } else {
-      $$ = annot;
     }
   };
 
@@ -385,7 +377,7 @@ direction
 #include <ctype.h>
 #include <stdio.h>
 
-void yy::parser::error(const yy::parser::location_type& l,
-                       const std::string& errstr) {
-  std::cerr << ps->FileName() << ":" << l << ": " << errstr << std::endl;
+void yy::parser::error(const yy::parser::location_type& l, const std::string& errstr) {
+  AIDL_ERROR(loc(l)) << errstr;
+  // parser will return error value
 }

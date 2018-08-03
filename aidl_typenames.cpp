@@ -16,6 +16,7 @@
 
 #include "aidl_typenames.h"
 #include "aidl_language.h"
+#include "logging.h"
 
 #include <android-base/strings.h>
 
@@ -58,18 +59,45 @@ static const map<string, string> kJavaLikeTypeToAidlType = {
   {"java.util.Map", "Map"},
 };
 
-bool AidlTypenames::AddDefinedType(const AidlDefinedType* type) {
+// Package name and type name can't be one of these as they are keywords
+// in Java and C++. Using these names will eventually cause compilation error,
+// so checking this here is not a must have, but early detection of errors
+// is always better.
+static const set<string> kInvalidNames = {
+    "break",  "case",   "catch", "char",     "class",  "continue", "default",
+    "do",     "double", "else",  "enum",     "false",  "float",    "for",
+    "goto",   "if",     "int",   "long",     "new",    "private",  "protected",
+    "public", "return", "short", "static",   "switch", "this",     "throw",
+    "true",   "try",    "void",  "volatile", "while"};
+
+static bool IsValidName(const string& name) {
+  vector<string> pieces = Split(name, ".");
+  for (const auto& piece : pieces) {
+    if (kInvalidNames.find(piece) != kInvalidNames.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool AidlTypenames::AddDefinedType(unique_ptr<AidlDefinedType> type) {
   const string name = type->GetCanonicalName();
   if (defined_types_.find(name) != defined_types_.end()) {
     return false;
   }
-  defined_types_.insert(make_pair(name, type));
+  if (!IsValidName(type->GetPackage()) || !IsValidName(type->GetName())) {
+    return false;
+  }
+  defined_types_.emplace(name, std::move(type));
   return true;
 }
 
 bool AidlTypenames::AddPreprocessedType(unique_ptr<AidlDefinedType> type) {
   const string name = type->GetCanonicalName();
   if (preprocessed_types_.find(name) != preprocessed_types_.end()) {
+    return false;
+  }
+  if (!IsValidName(type->GetPackage()) || !IsValidName(type->GetName())) {
     return false;
   }
   preprocessed_types_.insert(make_pair(name, std::move(type)));
@@ -85,7 +113,7 @@ const AidlDefinedType* AidlTypenames::TryGetDefinedType(const string& type_name)
   // Do the exact match first.
   auto found_def = defined_types_.find(type_name);
   if (found_def != defined_types_.end()) {
-    return found_def->second;
+    return found_def->second.get();
   }
 
   auto found_prep = preprocessed_types_.find(type_name);
@@ -97,7 +125,7 @@ const AidlDefinedType* AidlTypenames::TryGetDefinedType(const string& type_name)
   // types from the preprocessed file.
   for (auto it = defined_types_.begin(); it != defined_types_.end(); it++) {
     if (it->second->GetName() == type_name) {
-      return it->second;
+      return it->second.get();
     }
   }
 
@@ -124,6 +152,31 @@ pair<string, bool> AidlTypenames::ResolveTypename(const string& type_name) const
   } else {
     return make_pair(type_name, false);
   }
+}
+
+// Only T[], List, Map, and Parcelable can be an out parameter.
+bool AidlTypenames::CanBeOutParameter(const AidlTypeSpecifier& type) const {
+  const string& name = type.GetName();
+  if (IsBuiltinTypename(name)) {
+    return type.IsArray() || type.GetName() == "List" || type.GetName() == "Map";
+  }
+  const AidlDefinedType* t = TryGetDefinedType(type.GetName());
+  CHECK(t != nullptr) << "Unrecognized type: '" << type.GetName() << "'";
+  return t->AsParcelable() != nullptr;
+}
+
+void AidlTypenames::IterateTypes(const std::function<void(const AidlDefinedType&)>& body) const {
+  for (const auto& kv : defined_types_) {
+    body(*kv.second);
+  }
+  for (const auto& kv : preprocessed_types_) {
+    body(*kv.second);
+  }
+}
+
+void AidlTypenames::Reset() {
+  defined_types_.clear();
+  preprocessed_types_.clear();
 }
 
 }  // namespace aidl

@@ -69,26 +69,46 @@ class AidlTest : public ::testing::Test {
     cpp_types_.Init();
   }
 
-  unique_ptr<AidlDefinedType> Parse(const string& path, const string& contents,
-                                    TypeNamespace* types, AidlError* error = nullptr) {
+  AidlDefinedType* Parse(const string& path, const string& contents,
+                         TypeNamespace* types, AidlError* error = nullptr) {
     io_delegate_.SetFileContents(path, contents);
-    unique_ptr<AidlDefinedType> ret;
-    std::vector<std::unique_ptr<AidlImport>> imports;
+    vector<string> args;
+    if (types == &java_types_) {
+      args.emplace_back("aidl");
+    } else {
+      args.emplace_back("aidl-cpp");
+    }
+    for (const auto& f : preprocessed_files_) {
+      args.emplace_back("--preprocessed=" + f);
+    }
+    for (const auto& i : import_paths_) {
+      args.emplace_back("--include=" + i);
+    }
+    args.emplace_back(path);
+    Options options = Options::From(args);
+    vector<AidlDefinedType*> defined_types;
+    vector<string> imported_files;
     ImportResolver import_resolver{io_delegate_, import_paths_, {}};
     AidlError actual_error = ::android::aidl::internals::load_and_validate_aidl(
-        preprocessed_files_, import_resolver, path, false, /* generate_traces */
-        io_delegate_, types, &ret, &imports);
+        path, options, io_delegate_, types, &defined_types, &imported_files);
+
     if (error != nullptr) {
       *error = actual_error;
     }
-    return ret;
+
+    if (actual_error != AidlError::OK) {
+      return nullptr;
+    }
+
+    EXPECT_EQ(1ul, defined_types.size());
+
+    return defined_types.front();
   }
 
   FakeIoDelegate io_delegate_;
   vector<string> preprocessed_files_;
   vector<string> import_paths_;
   java::JavaTypeNamespace java_types_;
-  AidlTypenames typenames_;
   cpp::TypeNamespace cpp_types_;
 };
 
@@ -149,6 +169,7 @@ TEST_F(AidlTest, ParsesNullableAnnotation) {
     ASSERT_NE(nullptr, interface);
     ASSERT_FALSE(interface->GetMethods().empty());
     EXPECT_EQ(interface->GetMethods()[0]->GetType().IsNullable(), is_nullable);
+    cpp_types_.typenames_.Reset();
   }
 }
 
@@ -164,6 +185,7 @@ TEST_F(AidlTest, ParsesUtf8Annotations) {
     ASSERT_NE(nullptr, interface);
     ASSERT_FALSE(interface->GetMethods().empty());
     EXPECT_EQ(interface->GetMethods()[0]->GetType().IsUtf8InCpp(), is_utf8);
+    cpp_types_.typenames_.Reset();
   }
 }
 
@@ -181,7 +203,7 @@ TEST_F(AidlTest, ParsesPreprocessedFile) {
   string simple_content = "parcelable a.Foo;\ninterface b.IBar;";
   io_delegate_.SetFileContents("path", simple_content);
   EXPECT_FALSE(java_types_.HasTypeByCanonicalName("a.Foo"));
-  EXPECT_TRUE(parse_preprocessed_file(io_delegate_, "path", &java_types_, typenames_));
+  EXPECT_TRUE(parse_preprocessed_file(io_delegate_, "path", &java_types_, java_types_.typenames_));
   EXPECT_TRUE(java_types_.HasTypeByCanonicalName("a.Foo"));
   EXPECT_TRUE(java_types_.HasTypeByCanonicalName("b.IBar"));
 }
@@ -190,7 +212,7 @@ TEST_F(AidlTest, ParsesPreprocessedFileWithWhitespace) {
   string simple_content = "parcelable    a.Foo;\n  interface b.IBar  ;\t";
   io_delegate_.SetFileContents("path", simple_content);
   EXPECT_FALSE(java_types_.HasTypeByCanonicalName("a.Foo"));
-  EXPECT_TRUE(parse_preprocessed_file(io_delegate_, "path", &java_types_, typenames_));
+  EXPECT_TRUE(parse_preprocessed_file(io_delegate_, "path", &java_types_, java_types_.typenames_));
   EXPECT_TRUE(java_types_.HasTypeByCanonicalName("a.Foo"));
   EXPECT_TRUE(java_types_.HasTypeByCanonicalName("b.IBar"));
 }
@@ -209,7 +231,7 @@ TEST_F(AidlTest, PreferImportToPreprocessed) {
   EXPECT_TRUE(java_types_.HasTypeByCanonicalName("one.IBar"));
   EXPECT_TRUE(java_types_.HasTypeByCanonicalName("another.IBar"));
   // But if we request just "IBar" we should get our imported one.
-  AidlTypeSpecifier ambiguous_type("IBar", false, nullptr, 0, "");
+  AidlTypeSpecifier ambiguous_type(AidlLocation::nowhere(), "IBar", false, nullptr, "");
   const java::Type* type = java_types_.Find(ambiguous_type);
   ASSERT_TRUE(type);
   EXPECT_EQ("one.IBar", type->CanonicalName());
@@ -221,11 +243,13 @@ TEST_F(AidlTest, WritePreprocessedFile) {
   io_delegate_.SetFileContents("one/IBar.aidl", "package one; import p.Outer;"
                                                 "interface IBar {}");
 
-  JavaOptions options;
-  options.output_file_name_ = "preprocessed";
-  options.input_file_names_.resize(2);
-  options.input_file_names_[0] = "p/Outer.aidl";
-  options.input_file_names_[1] = "one/IBar.aidl";
+  vector<string> args {
+    "aidl",
+    "--preprocess",
+    "preprocessed",
+    "p/Outer.aidl",
+    "one/IBar.aidl"};
+  Options options = Options::From(args);
   EXPECT_TRUE(::android::aidl::preprocess_aidl(options, io_delegate_));
 
   string output;
@@ -259,14 +283,13 @@ TEST_F(AidlTest, ParseCompoundParcelableFromPreprocess) {
 }
 
 TEST_F(AidlTest, FailOnParcelable) {
-  JavaOptions options;
-  options.input_file_name_ = "p/IFoo.aidl";
-  io_delegate_.SetFileContents(options.input_file_name_,
-                               "package p; parcelable IFoo;");
+  Options options1 = Options::From("aidl p/IFoo.aidl");
+  io_delegate_.SetFileContents(options1.InputFiles().front(), "package p; parcelable IFoo;");
   // By default, we shouldn't fail on parcelable.
-  EXPECT_EQ(0, ::android::aidl::compile_aidl_to_java(options, io_delegate_));
-  options.fail_on_parcelable_ = true;
-  EXPECT_NE(0, ::android::aidl::compile_aidl_to_java(options, io_delegate_));
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options1, io_delegate_));
+
+  Options options2 = Options::From("aidl -b p/IFoo.aidl");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options2, io_delegate_));
 }
 
 TEST_F(AidlTest, FailOnDuplicateConstantNames) {
@@ -303,7 +326,7 @@ TEST_F(AidlTest, FailOnManyDefinedTypes) {
 TEST_F(AidlTest, FailOnNoDefinedTypes) {
   AidlError reported_error;
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl", R"(package p;)", &cpp_types_, &reported_error));
-  EXPECT_EQ(AidlError::BAD_TYPE, reported_error);
+  EXPECT_EQ(AidlError::PARSE_ERROR, reported_error);
 }
 
 TEST_F(AidlTest, FailOnMalformedConstHexValue) {
@@ -410,16 +433,16 @@ TEST_F(AidlTest, WritesCorrectDependencyFile) {
   // While the in tree build system always gives us an output file name,
   // other android tools take advantage of our ability to infer the intended
   // file name.  This test makes sure we handle this correctly.
-  JavaOptions options;
-  options.input_file_name_ = "p/IFoo.aidl";
-  options.output_base_folder_ = "place/for/output";
-  options.dep_file_name_ = "dep/file/path";
-  io_delegate_.SetFileContents(options.input_file_name_,
-                               "package p; interface IFoo {}");
-  EXPECT_EQ(0, ::android::aidl::compile_aidl_to_java(options, io_delegate_));
+  vector<string> args = {
+    "aidl",
+    "-d dep/file/path",
+    "-o place/for/output",
+    "p/IFoo.aidl"};
+  Options options = Options::From(args);
+  io_delegate_.SetFileContents(options.InputFiles().front(), "package p; interface IFoo {}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
   string actual_dep_file_contents;
-  EXPECT_TRUE(io_delegate_.GetWrittenContents(options.dep_file_name_,
-                                              &actual_dep_file_contents));
+  EXPECT_TRUE(io_delegate_.GetWrittenContents(options.DependencyFile(), &actual_dep_file_contents));
   EXPECT_EQ(actual_dep_file_contents, kExpectedDepFileContents);
 }
 
@@ -427,17 +450,17 @@ TEST_F(AidlTest, WritesCorrectDependencyFileNinja) {
   // While the in tree build system always gives us an output file name,
   // other android tools take advantage of our ability to infer the intended
   // file name.  This test makes sure we handle this correctly.
-  JavaOptions options;
-  options.input_file_name_ = "p/IFoo.aidl";
-  options.output_base_folder_ = "place/for/output";
-  options.dep_file_name_ = "dep/file/path";
-  options.dep_file_ninja_ = true;
-  io_delegate_.SetFileContents(options.input_file_name_,
-                               "package p; interface IFoo {}");
-  EXPECT_EQ(0, ::android::aidl::compile_aidl_to_java(options, io_delegate_));
+  vector<string> args = {
+    "aidl",
+    "-d dep/file/path",
+    "--ninja",
+    "-o place/for/output",
+    "p/IFoo.aidl"};
+  Options options = Options::From(args);
+  io_delegate_.SetFileContents(options.InputFiles().front(), "package p; interface IFoo {}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
   string actual_dep_file_contents;
-  EXPECT_TRUE(io_delegate_.GetWrittenContents(options.dep_file_name_,
-                                              &actual_dep_file_contents));
+  EXPECT_TRUE(io_delegate_.GetWrittenContents(options.DependencyFile(), &actual_dep_file_contents));
   EXPECT_EQ(actual_dep_file_contents, kExpectedNinjaDepFileContents);
 }
 
@@ -447,16 +470,16 @@ TEST_F(AidlTest, WritesTrivialDependencyFileForParcelable) {
   // generated dependency files.  Those that reference .java output files are
   // for interfaces and those that do not are parcelables.  However, for both
   // parcelables and interfaces, we *must* generate a non-empty dependency file.
-  JavaOptions options;
-  options.input_file_name_ = "p/Foo.aidl";
-  options.output_base_folder_ = "place/for/output";
-  options.dep_file_name_ = "dep/file/path";
-  io_delegate_.SetFileContents(options.input_file_name_,
-                               "package p; parcelable Foo;");
-  EXPECT_EQ(0, ::android::aidl::compile_aidl_to_java(options, io_delegate_));
+  vector<string> args = {
+    "aidl",
+    "-o place/for/output",
+    "-d dep/file/path",
+    "p/Foo.aidl"};
+  Options options = Options::From(args);
+  io_delegate_.SetFileContents(options.InputFiles().front(), "package p; parcelable Foo;");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
   string actual_dep_file_contents;
-  EXPECT_TRUE(io_delegate_.GetWrittenContents(options.dep_file_name_,
-                                              &actual_dep_file_contents));
+  EXPECT_TRUE(io_delegate_.GetWrittenContents(options.DependencyFile(), &actual_dep_file_contents));
   EXPECT_EQ(actual_dep_file_contents, kExpectedParcelableDepFileContents);
 }
 
@@ -495,9 +518,13 @@ TEST_F(AidlTest, ApiDump) {
                                "   List<foo.bar.IFoo> b;\n"
                                "}\n");
   io_delegate_.SetFileContents("api.aidl", "");
-  JavaOptions options;
-  options.input_file_names_ = {"foo/bar/IFoo.aidl", "foo/bar/Data.aidl"};
-  options.output_file_name_ = "api.aidl";
+  vector<string> args = {
+    "aidl",
+    "--dumpapi",
+    "api.aidl",
+    "foo/bar/IFoo.aidl",
+    "foo/bar/Data.aidl"};
+  Options options = Options::From(args);
   bool result = dump_api(options, io_delegate_);
   ASSERT_TRUE(result);
   string actual;
@@ -520,6 +547,152 @@ TEST_F(AidlTest, ApiDump) {
 
 }
 )");
+}
+
+TEST_F(AidlTest, CheckNumGenericTypeSecifier) {
+  Options options = Options::From("aidl p/IFoo.aidl IFoo.java");
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+                               "package p; interface IFoo {"
+                               "void foo(List<String, String> a);}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+                               "package p; interface IFoo {"
+                               "void foo(Map<String> a);}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  Options options2 = Options::From("aidl p/Data.aidl Data.java");
+  io_delegate_.SetFileContents(options2.InputFiles().front(),
+                               "package p; parcelable Data {"
+                               "List<String, String> foo;}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options2, io_delegate_));
+
+  io_delegate_.SetFileContents(options2.InputFiles().front(),
+                               "package p; parcelable Data {"
+                               "Map<String> foo;}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options2, io_delegate_));
+}
+
+TEST_F(AidlTest, MultipleTypesInSingleFile) {
+  Options options = Options::From("aidl --lang=java -o out foo/bar/Foo.aidl");
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+      "package foo.bar;\n"
+      "interface IFoo1 { int foo(); }\n"
+      "interface IFoo2 { int foo(); }\n"
+      "parcelable Data { int a; int b;}\n");
+
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  string content;
+  for (const auto file :
+    {"out/foo/bar/IFoo1.java", "out/foo/bar/IFoo2.java", "out/foo/bar/Data.java"}) {
+    content.clear();
+    EXPECT_TRUE(io_delegate_.GetWrittenContents(file, &content));
+    EXPECT_FALSE(content.empty());
+  }
+}
+
+TEST_F(AidlTest, MultipleTypesInSingleFileCpp) {
+  Options options = Options::From("aidl --lang=cpp -o out -h out/include foo/bar/Foo.aidl");
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+      "package foo.bar;\n"
+      "interface IFoo1 { int foo(); }\n"
+      "interface IFoo2 { int foo(); }\n"
+      "parcelable Data { int a; int b;}\n");
+
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  string content;
+  for (const auto file : {
+    "out/IFoo1.cpp", "out/IFoo2.cpp", "out/Data.cpp",
+    "out/include/foo/bar/IFoo1.h", "out/include/foo/bar/IFoo2.h", "out/include/foo/bar/Data.h",
+    "out/include/foo/bar/BpFoo1.h", "out/include/foo/bar/BpFoo2.h", "out/include/foo/bar/BpData.h",
+    "out/include/foo/bar/BnFoo1.h", "out/include/foo/bar/BnFoo2.h", "out/include/foo/bar/BnData.h"}) {
+    content.clear();
+    EXPECT_TRUE(io_delegate_.GetWrittenContents(file, &content));
+    EXPECT_FALSE(content.empty());
+  }
+}
+
+TEST_F(AidlTest, MultipleInputFiles) {
+  Options options = Options::From(
+      "aidl --lang=java -o out foo/bar/IFoo.aidl foo/bar/Data.aidl");
+
+  io_delegate_.SetFileContents(options.InputFiles().at(0),
+      "package foo.bar;\n"
+      "import foo.bar.Data;\n"
+      "interface IFoo { Data getData(); }\n");
+
+  io_delegate_.SetFileContents(options.InputFiles().at(1),
+        "package foo.bar;\n"
+        "import foo.bar.IFoo;\n"
+        "parcelable Data { IFoo foo; }\n");
+
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  string content;
+  for (const auto file : {
+    "out/foo/bar/IFoo.java", "out/foo/bar/Data.java"}) {
+    content.clear();
+    EXPECT_TRUE(io_delegate_.GetWrittenContents(file, &content));
+    EXPECT_FALSE(content.empty());
+  }
+}
+
+TEST_F(AidlTest, MultipleInputFilesCpp) {
+  Options options = Options::From("aidl --lang=cpp -o out -h out/include "
+      "foo/bar/IFoo.aidl foo/bar/Data.aidl");
+
+  io_delegate_.SetFileContents(options.InputFiles().at(0),
+      "package foo.bar;\n"
+      "import foo.bar.Data;\n"
+      "interface IFoo { Data getData(); }\n");
+
+  io_delegate_.SetFileContents(options.InputFiles().at(1),
+        "package foo.bar;\n"
+        "import foo.bar.IFoo;\n"
+        "parcelable Data { IFoo foo; }\n");
+
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  string content;
+  for (const auto file : {
+    "out/IFoo.cpp", "out/Data.cpp",
+    "out/include/foo/bar/IFoo.h", "out/include/foo/bar/Data.h",
+    "out/include/foo/bar/BpFoo.h", "out/include/foo/bar/BpData.h",
+    "out/include/foo/bar/BnFoo.h", "out/include/foo/bar/BnData.h"}) {
+    content.clear();
+    EXPECT_TRUE(io_delegate_.GetWrittenContents(file, &content));
+    EXPECT_FALSE(content.empty());
+  }
+}
+
+TEST_F(AidlTest, ConflictWithMetaTransactions) {
+  Options options = Options::From("aidl --lang=java -o place/for/output p/IFoo.aidl");
+  // int getInterfaceVersion() is one of the meta transactions
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+                               "package p; interface IFoo {"
+                               "int getInterfaceVersion(); }");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  // boolean getInterfaceVersion() is not, but should be prevented
+  // because return type is not part of a method signature
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+                               "package p; interface IFoo {"
+                               "boolean getInterfaceVersion(); }");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  // this is another reserved name
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+                               "package p; interface IFoo {"
+                               "String getTransactionName(int code); }");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  // this is not a meta interface method as it differs type arguments
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+                               "package p; interface IFoo {"
+                               "String getTransactionName(); }");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
 }  // namespace aidl
