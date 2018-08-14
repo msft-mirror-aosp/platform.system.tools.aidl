@@ -712,8 +712,28 @@ public class TestServiceClient extends Activity {
         mLog.logAndThrow(
             "stringDefaultsToFoo should be 'foo' but is " + parcelable.stringDefaultsToFoo);
       }
+      if (parcelable.byteDefaultsToFour != 4) {
+        mLog.logAndThrow("byteDefaultsToFour should be 4 but is " + parcelable.byteDefaultsToFour);
+      }
       if (parcelable.intDefaultsToFive != 5) {
         mLog.logAndThrow("intDefaultsToFive should be 5 but is " + parcelable.intDefaultsToFive);
+      }
+      if (parcelable.longDefaultsToNegativeSeven != -7) {
+        mLog.logAndThrow("longDefaultsToNegativeSeven should be -7 but is "
+            + parcelable.longDefaultsToNegativeSeven);
+      }
+      if (!parcelable.booleanDefaultsToTrue) {
+        mLog.logAndThrow("booleanDefaultsToTrue should be true");
+      }
+      if (parcelable.charDefaultsToC != 'C') {
+        mLog.logAndThrow("charDefaultsToC is " + parcelable.charDefaultsToC);
+      }
+      if (parcelable.floatDefaultsToPi != 3.14f) {
+        mLog.logAndThrow("floatDefaultsToPi is " + parcelable.floatDefaultsToPi);
+      }
+      if (parcelable.doubleWithDefault != -3.14e17) {
+        mLog.logAndThrow(
+            "doubleWithDefault is " + parcelable.doubleWithDefault + " but should be -3.14e17");
       }
 
       try {
