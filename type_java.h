@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef AIDL_TYPE_JAVA_H_
-#define AIDL_TYPE_JAVA_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -106,6 +105,20 @@ class FileDescriptorArrayType : public Type {
 class FileDescriptorType : public Type {
  public:
   explicit FileDescriptorType(const JavaTypeNamespace* types);
+};
+
+class ParcelFileDescriptorArrayType : public Type {
+ public:
+  explicit ParcelFileDescriptorArrayType(const JavaTypeNamespace* types);
+
+  const ValidatableType* NullableType() const override { return this; }
+};
+
+class ParcelFileDescriptorType : public Type {
+ public:
+  explicit ParcelFileDescriptorType(const JavaTypeNamespace* types);
+
+  const ValidatableType* NullableType() const override { return this; }
 };
 
 class BooleanArrayType : public Type {
@@ -235,17 +248,15 @@ class UserDataType : public Type {
 class InterfaceType : public Type {
  public:
   InterfaceType(const JavaTypeNamespace* types, const std::string& package, const std::string& name,
-                bool builtIn, bool oneway, const std::string& declFile, int declLine,
-                const Type* stub, const Type* proxy, const Type* defaultImpl);
+                bool builtIn, const std::string& declFile, int declLine, const Type* stub,
+                const Type* proxy, const Type* defaultImpl);
 
-  bool OneWay() const;
   const ValidatableType* NullableType() const override { return this; }
   const Type* GetStub() const { return stub_; }
   const Type* GetProxy() const { return proxy_; }
   const Type* GetDefaultImpl() const { return defaultImpl_; }
 
  private:
-  bool m_oneway;
   const Type* stub_;
   const Type* proxy_;
   const Type* defaultImpl_;
@@ -330,5 +341,3 @@ extern Expression* FALSE_VALUE;
 }  // namespace java
 }  // namespace aidl
 }  // namespace android
-
-#endif  // AIDL_TYPE_JAVA_H_

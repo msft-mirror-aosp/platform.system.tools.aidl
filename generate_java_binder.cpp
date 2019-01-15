@@ -35,7 +35,6 @@
 using android::base::Join;
 using android::base::StringPrintf;
 
-using std::pair;
 using std::string;
 using std::unique_ptr;
 using std::vector;
@@ -314,7 +313,6 @@ class ProxyClass : public Class {
   virtual ~ProxyClass();
 
   Variable* mRemote;
-  bool mOneWay;
 };
 
 ProxyClass::ProxyClass(const JavaTypeNamespace* types, const Type* type,
@@ -324,8 +322,6 @@ ProxyClass::ProxyClass(const JavaTypeNamespace* types, const Type* type,
   this->what = Class::CLASS;
   this->type = type;
   this->interfaces.push_back(interfaceType);
-
-  mOneWay = interfaceType->OneWay();
 
   // IBinder mRemote
   mRemote = new Variable(types->IBinderType(), "mRemote");
@@ -411,6 +407,7 @@ static std::unique_ptr<Method> generate_interface_method(
   decl->returnType = method.GetType().GetLanguageType<Type>();
   decl->returnTypeDimension = method.GetType().IsArray() ? 1 : 0;
   decl->name = method.GetName();
+  decl->annotations = generate_java_annotations(method.GetType());
 
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
     decl->parameters.push_back(
@@ -766,7 +763,7 @@ static std::unique_ptr<Method> generate_proxy_method(
 static void generate_methods(const AidlInterface& iface, const AidlMethod& method, Class* interface,
                              StubClass* stubClass, ProxyClass* proxyClass, int index,
                              JavaTypeNamespace* types, const Options& options) {
-  const bool oneway = proxyClass->mOneWay || method.IsOneway();
+  const bool oneway = method.IsOneway();
 
   // == the TRANSACT_ constant =============================================
   string transactCodeName = "TRANSACTION_";
@@ -813,7 +810,9 @@ static void generate_methods(const AidlInterface& iface, const AidlMethod& metho
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       Case* c = new Case(transactCodeName);
       std::ostringstream code;
-      code << "reply.writeInt(" << kGetInterfaceVersion << "());\n"
+      code << "data.enforceInterface(descriptor);\n"
+           << "reply.writeNoException();\n"
+           << "reply.writeInt(" << kGetInterfaceVersion << "());\n"
            << "return true;\n";
       c->statements->Add(new LiteralStatement(code.str()));
       stubClass->transact_switch->cases.push_back(c);
@@ -838,6 +837,7 @@ static void generate_methods(const AidlInterface& iface, const AidlMethod& metho
            << "    android.os.Parcel data = android.os.Parcel.obtain();\n"
            << "    android.os.Parcel reply = android.os.Parcel.obtain();\n"
            << "    try {\n"
+           << "      data.writeInterfaceToken(DESCRIPTOR);\n"
            << "      mRemote.transact(Stub." << transactCodeName << ", "
            << "data, reply, 0);\n"
            << "      mCachedVersion = reply.readInt();\n"
@@ -989,6 +989,7 @@ Class* generate_binder_interface_class(const AidlInterface* iface, JavaTypeNames
   interface->what = Class::INTERFACE;
   interface->type = interfaceType;
   interface->interfaces.push_back(types->IInterfaceType());
+  interface->annotations = generate_java_annotations(*iface);
 
   if (options.Version()) {
     std::ostringstream code;
@@ -1029,12 +1030,14 @@ Class* generate_binder_interface_class(const AidlInterface* iface, JavaTypeNames
 
     switch (value.GetType()) {
       case AidlConstantValue::Type::STRING: {
-        generate_string_constant(interface, constant->GetName(), constant->ValueString());
+        generate_string_constant(interface, constant->GetName(),
+                                 constant->ValueString(ConstantValueDecorator));
         break;
       }
       case AidlConstantValue::Type::INTEGRAL:
       case AidlConstantValue::Type::HEXIDECIMAL: {
-        generate_int_constant(interface, constant->GetName(), constant->ValueString());
+        generate_int_constant(interface, constant->GetName(),
+                              constant->ValueString(ConstantValueDecorator));
         break;
       }
       default: {
@@ -1081,7 +1084,7 @@ Class* generate_binder_interface_class(const AidlInterface* iface, JavaTypeNames
   // the static field is defined in the proxy class, not in the interface class
   // because all fields in an interface class are by default final.
   proxy->elements.emplace_back(new LiteralClassElement(
-      StringPrintf("public static %s sDefaultImpl = null;\n", i_name.c_str())));
+      StringPrintf("public static %s sDefaultImpl;\n", i_name.c_str())));
 
   stub->finish();
 

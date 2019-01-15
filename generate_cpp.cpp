@@ -27,6 +27,7 @@
 #include <android-base/stringprintf.h>
 
 #include "aidl_language.h"
+#include "aidl_to_cpp.h"
 #include "ast_cpp.h"
 #include "code_writer.h"
 #include "logging.h"
@@ -89,21 +90,6 @@ unique_ptr<AstNode> ReturnOnStatusNotOk() {
                                                     "!=", new LiteralExpression(kAndroidStatusOk)));
   ret->OnTrue()->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
   return unique_ptr<AstNode>(ret);
-}
-
-string UpperCase(const std::string& s) {
-  string result = s;
-  for (char& c : result)
-    c = toupper(c);
-  return result;
-}
-
-string BuildVarName(const AidlArgument& a) {
-  string prefix = "out_";
-  if (a.GetDirection() & AidlArgument::IN_DIR) {
-    prefix = "in_";
-  }
-  return prefix + a.GetName();
 }
 
 ArgList BuildArgList(const TypeNamespace& types, const AidlMethod& method, bool for_declaration,
@@ -191,26 +177,20 @@ unique_ptr<Declaration> BuildMetaMethodDecl(const AidlMethod& method, const Type
   return nullptr;
 }
 
-unique_ptr<CppNamespace> NestInNamespaces(
-    vector<unique_ptr<Declaration>> decls,
-    const vector<string>& package) {
-  if (package.empty()) {
-    // We should also be checking this before we get this far, but do it again
-    // for the sake of unit tests and meaningful errors.
-    LOG(FATAL) << "C++ generation requires a package declaration "
-                  "for namespacing";
-  }
+std::vector<unique_ptr<Declaration>> NestInNamespaces(vector<unique_ptr<Declaration>> decls,
+                                                      const vector<string>& package) {
   auto it = package.crbegin();  // Iterate over the namespaces inner to outer
-  unique_ptr<CppNamespace> inner{new CppNamespace{*it, std::move(decls)}};
-  ++it;
   for (; it != package.crend(); ++it) {
-    inner.reset(new CppNamespace{*it, std::move(inner)});
+    vector<unique_ptr<Declaration>> inner;
+    inner.emplace_back(unique_ptr<Declaration>{new CppNamespace{*it, std::move(decls)}});
+
+    decls = std::move(inner);
   }
-  return inner;
+  return decls;
 }
 
-unique_ptr<CppNamespace> NestInNamespaces(unique_ptr<Declaration> decl,
-                                          const vector<string>& package) {
+std::vector<unique_ptr<Declaration>> NestInNamespaces(unique_ptr<Declaration> decl,
+                                                      const vector<string>& package) {
   vector<unique_ptr<Declaration>> decls;
   decls.push_back(std::move(decl));
   return NestInNamespaces(std::move(decls), package);
@@ -224,31 +204,6 @@ bool DeclareLocalVariable(const AidlArgument& a, StatementBlock* b) {
 
   b->AddLiteral(type + " " + BuildVarName(a));
   return true;
-}
-
-string ClassName(const AidlDefinedType& defined_type, ClassNames type) {
-  string c_name = defined_type.GetName();
-
-  if (c_name.length() >= 2 && c_name[0] == 'I' && isupper(c_name[1]))
-    c_name = c_name.substr(1);
-
-  switch (type) {
-    case ClassNames::CLIENT:
-      c_name = "Bp" + c_name;
-      break;
-    case ClassNames::SERVER:
-      c_name = "Bn" + c_name;
-      break;
-    case ClassNames::INTERFACE:
-      c_name = "I" + c_name;
-      break;
-    case ClassNames::DEFAULT_IMPL:
-      c_name = "I" + c_name + "Default";
-      break;
-    case ClassNames::BASE:
-      break;
-  }
-  return c_name;
 }
 
 string BuildHeaderGuard(const AidlDefinedType& defined_type, ClassNames header_type) {
@@ -268,6 +223,107 @@ string BuildHeaderGuard(const AidlDefinedType& defined_type, ClassNames header_t
     c = toupper(c);
   }
   return ret;
+}
+
+const string GenLogBeforeExecute(const string className, const AidlMethod& method,
+                                 const TypeNamespace& types, bool isServer) {
+  string code;
+  CodeWriterPtr writer = CodeWriter::ForString(&code);
+  (*writer) << "Json::Value _log_input_args(Json::objectValue);\n";
+
+  (*writer) << "if (" << className << "::logFunc != nullptr) {\n";
+  (*writer).Indent();
+
+  for (const auto& a : method.GetArguments()) {
+    if (a->IsIn()) {
+      string varName = isServer ? BuildVarName(*a) : a->GetName();
+      bool isPointer = a->IsOut() && !isServer;
+      WriteLogFor(
+          {*(writer.get()), types.typenames_, a->GetType(), varName, isPointer, "_log_input_args"});
+    }
+  }
+
+  (*writer).Dedent();
+  (*writer) << "}\n";
+
+  (*writer) << "auto _log_start = std::chrono::steady_clock::now();\n";
+  writer->Close();
+  return code;
+}
+
+const string GenLogAfterExecute(const string className, const AidlInterface& interface,
+                                const AidlMethod& method, const TypeNamespace& types,
+                                const string kReturnVarName, bool isServer) {
+  string code;
+  CodeWriterPtr writer = CodeWriter::ForString(&code);
+
+  (*writer) << "if (" << className << "::logFunc != nullptr) {\n";
+  (*writer).Indent();
+
+  // Write the log as a Json object. For example,
+  //
+  // Json log object for following interface description
+  //
+  // package foo.bar;
+  // interface IFoo {
+  //   String TestMethod(int arg1, inout String[] arg2, out double arg3);
+  // }
+  //
+  // would be:
+  //
+  // {
+  //   duration_ms: 100,
+  //   interface_name: "foo.bar.IFoo",
+  //   method_name: "TestMethod",
+  //   (proxy|stub)_address: "0x12345678",
+  //   input_args: {
+  //     arg1: 30,
+  //     arg2: ["apple", "grape"],
+  //   },
+  //   output_args: {
+  //     arg2: ["mango", "banana"],
+  //     arg3: "10.5",
+  //   },
+  //   _aidl_return: "ok",
+  // }
+  (*writer) << "auto _log_end = std::chrono::steady_clock::now();\n";
+  (*writer) << "Json::Value _log_transaction(Json::objectValue);\n";
+  (*writer) << "_log_transaction[\"duration_ms\"] = "
+            << "std::chrono::duration_cast<std::chrono::milliseconds>(_log_end - "
+               "_log_start).count();\n";
+  (*writer) << "_log_transaction[\"interface_name\"] = "
+            << "Json::Value(\"" << interface.GetCanonicalName() << "\");\n";
+  (*writer) << "_log_transaction[\"method_name\"] = "
+            << "Json::Value(\"" << method.GetName() << "\");\n";
+
+  (*writer) << "_log_transaction[\"" << (isServer ? "stub_address" : "proxy_address") << "\"] = "
+            << "Json::Value(android::base::StringPrintf(\"0x%%p\", this));\n";
+  (*writer) << "_log_transaction[\"input_args\"] = _log_input_args;\n";
+  (*writer) << "Json::Value _log_output_args(Json::objectValue);\n";
+
+  for (const auto& a : method.GetOutArguments()) {
+    string varName = isServer ? BuildVarName(*a) : a->GetName();
+    bool isPointer = !isServer;
+    WriteLogFor(
+        {*(writer.get()), types.typenames_, a->GetType(), varName, isPointer, "_log_output_args"});
+  }
+
+  (*writer) << "_log_transaction[\"output_args\"] = _log_output_args;\n";
+
+  if (method.GetType().GetName() != "void") {
+    WriteLogFor({*(writer.get()), types.typenames_, method.GetType(), kReturnVarName, !isServer,
+                 "_log_transaction"});
+  }
+
+  // call the user-provided function with the Json object for the entire
+  // transaction
+  (*writer) << className << "::logFunc(_log_transaction);\n";
+
+  (*writer).Dedent();
+  (*writer) << "}\n";
+
+  writer->Close();
+  return code;
 }
 
 unique_ptr<Declaration> DefineClientTransaction(const TypeNamespace& types,
@@ -296,6 +352,10 @@ unique_ptr<Declaration> DefineClientTransaction(const TypeNamespace& types,
     b->AddLiteral(
         StringPrintf("ScopedTrace %s(ATRACE_TAG_AIDL, \"%s::%s::cppClient\")",
         kTraceVarName, interface.GetName().c_str(), method.GetName().c_str()));
+  }
+
+  if (options.GenLog()) {
+    b->AddLiteral(GenLogBeforeExecute(bp_name, method, types, false), false /* no semicolon */);
   }
 
   // Add the name of the interface we're hoping to call.
@@ -334,13 +394,12 @@ unique_ptr<Declaration> DefineClientTransaction(const TypeNamespace& types,
   }
 
   // Invoke the transaction on the remote binder and confirm status.
-  string transaction_code = StringPrintf(
-      "%s::%s", i_name.c_str(), UpperCase(method.GetName()).c_str());
+  string transaction_code = GetTransactionIdFor(method);
 
   vector<string> args = {transaction_code, kDataVarName,
                          StringPrintf("&%s", kReplyVarName)};
 
-  if (interface.IsOneway() || method.IsOneway()) {
+  if (method.IsOneway()) {
     args.push_back("::android::IBinder::FLAG_ONEWAY");
   }
 
@@ -368,7 +427,7 @@ unique_ptr<Declaration> DefineClientTransaction(const TypeNamespace& types,
 
   b->AddStatement(GotoErrorOnBadStatus());
 
-  if (!interface.IsOneway() && !method.IsOneway()) {
+  if (!method.IsOneway()) {
     // Strip off the exception header and fail if we see a remote exception.
     // _aidl_ret_status = _aidl_status.readFromParcel(_aidl_reply);
     // if (_aidl_ret_status != ::android::OK) { goto error; }
@@ -424,6 +483,11 @@ unique_ptr<Declaration> DefineClientTransaction(const TypeNamespace& types,
       StringPrintf("%s.setFromStatusT(%s)", kStatusVarName,
                    kAndroidStatusVarName));
 
+  if (options.GenLog()) {
+    b->AddLiteral(GenLogAfterExecute(bp_name, interface, method, types, kReturnVarName, false),
+                  false /* no semicolon */);
+  }
+
   b->AddLiteral(StringPrintf("return %s", kStatusVarName));
 
   return unique_ptr<Declaration>(ret.release());
@@ -443,11 +507,12 @@ unique_ptr<Declaration> DefineClientMetaTransaction(const TypeNamespace&,
     // give write the same value to cached_version_.
     std::ostringstream code;
     code << "int32_t " << proxy << "::" << kGetInterfaceVersion << "() {\n"
-         << "  if (cached_version_ != -1) {\n"
+         << "  if (cached_version_ == -1) {\n"
          << "    ::android::Parcel data;\n"
          << "    ::android::Parcel reply;\n"
-         << "    ::android::status_t err = remote()->transact(" << iface
-         << "::" << UpperCase(kGetInterfaceVersion) << ", data, &reply);\n"
+         << "    data.writeInterfaceToken(getInterfaceDescriptor());\n"
+         << "    ::android::status_t err = remote()->transact(" << GetTransactionIdFor(method)
+         << ", data, &reply);\n"
          << "    if (err == ::android::OK) {\n"
          << "      cached_version_ = reply.readInt32();\n"
          << "    }\n"
@@ -468,6 +533,12 @@ unique_ptr<Document> BuildClientSource(const TypeNamespace& types, const AidlInt
       kParcelHeader,
       kAndroidBaseMacrosHeader
   };
+  if (options.GenLog()) {
+    include_list.emplace_back("chrono");
+    include_list.emplace_back("functional");
+    include_list.emplace_back("json/value.h");
+    include_list.emplace_back("android-base/stringprintf.h");
+  }
   vector<unique_ptr<Declaration>> file_decls;
 
   // The constructor just passes the IBinder instance up to the super
@@ -478,6 +549,16 @@ unique_ptr<Document> BuildClientSource(const TypeNamespace& types, const AidlInt
       ArgList{StringPrintf("const ::android::sp<::android::IBinder>& %s",
                            kImplVarName)},
       { "BpInterface<" + i_name + ">(" + kImplVarName + ")" }}});
+
+  if (options.GenLog()) {
+    string code;
+    ClassName(interface, ClassNames::CLIENT);
+    CodeWriterPtr writer = CodeWriter::ForString(&code);
+    (*writer) << "std::function<void(const Json::Value&)> "
+              << ClassName(interface, ClassNames::CLIENT) << "::logFunc;\n";
+    writer->Close();
+    file_decls.push_back(unique_ptr<Declaration>(new LiteralDecl(code)));
+  }
 
   // Clients define a method per transaction.
   for (const auto& method : interface.GetMethods()) {
@@ -558,7 +639,10 @@ bool HandleServerTransaction(const TypeNamespace& types, const AidlInterface& in
                      interface.GetName().c_str(),
                      method.GetName().c_str())}})));
   }
-
+  const string bn_name = ClassName(interface, ClassNames::SERVER);
+  if (options.GenLog()) {
+    b->AddLiteral(GenLogBeforeExecute(bn_name, method, types, true), false);
+  }
   // Call the actual method.  This is implemented by the subclass.
   vector<unique_ptr<AstNode>> status_args;
   status_args.emplace_back(new MethodCall(
@@ -595,7 +679,10 @@ bool HandleServerTransaction(const TypeNamespace& types, const AidlInterface& in
         ArgList{return_type->WriteCast(kReturnVarName)}}});
     b->AddStatement(BreakOnStatusNotOk());
   }
-
+  if (options.GenLog()) {
+    b->AddLiteral(GenLogAfterExecute(bn_name, interface, method, types, kReturnVarName, true),
+                  false);
+  }
   // Write each out parameter to the reply parcel.
   for (const AidlArgument* a : method.GetOutArguments()) {
     // Serialization looks roughly like:
@@ -621,7 +708,8 @@ bool HandleServerMetaTransaction(const TypeNamespace&, const AidlInterface& inte
 
   if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
     std::ostringstream code;
-    code << "_aidl_reply->writeInt32(" << ClassName(interface, ClassNames::INTERFACE)
+    code << "_aidl_data.checkInterface(this);\n"
+         << "_aidl_reply->writeInt32(" << ClassName(interface, ClassNames::INTERFACE)
          << "::VERSION)";
     b->AddLiteral(code.str());
     return true;
@@ -638,6 +726,12 @@ unique_ptr<Document> BuildServerSource(const TypeNamespace& types, const AidlInt
       HeaderFile(interface, ClassNames::SERVER, false),
       kParcelHeader
   };
+  if (options.GenLog()) {
+    include_list.emplace_back("chrono");
+    include_list.emplace_back("functional");
+    include_list.emplace_back("json/value.h");
+    include_list.emplace_back("android-base/stringprintf.h");
+  }
   unique_ptr<MethodImpl> on_transact{new MethodImpl{
       kAndroidStatusLiteral, bn_name, "onTransact",
       ArgList{{StringPrintf("uint32_t %s", kCodeVarName),
@@ -658,7 +752,7 @@ unique_ptr<Document> BuildServerSource(const TypeNamespace& types, const AidlInt
 
   // The switch statement has a case statement for each transaction code.
   for (const auto& method : interface.GetMethods()) {
-    StatementBlock* b = s->AddCase("Call::" + UpperCase(method->GetName()));
+    StatementBlock* b = s->AddCase(GetTransactionIdFor(*method));
     if (!b) { return nullptr; }
 
     bool success = false;
@@ -695,10 +789,20 @@ unique_ptr<Document> BuildServerSource(const TypeNamespace& types, const AidlInt
   // Finally, the server's onTransact method just returns a status code.
   on_transact->GetStatementBlock()->AddLiteral(
       StringPrintf("return %s", kAndroidStatusVarName));
+  vector<unique_ptr<Declaration>> decls;
+  decls.push_back(std::move(on_transact));
 
-  return unique_ptr<Document>{new CppSource{
-      include_list,
-      NestInNamespaces(std::move(on_transact), interface.GetSplitPackage())}};
+  if (options.GenLog()) {
+    string code;
+    ClassName(interface, ClassNames::SERVER);
+    CodeWriterPtr writer = CodeWriter::ForString(&code);
+    (*writer) << "std::function<void(const Json::Value&)> "
+              << ClassName(interface, ClassNames::SERVER) << "::logFunc;\n";
+    writer->Close();
+    decls.push_back(unique_ptr<Declaration>(new LiteralDecl(code)));
+  }
+  return unique_ptr<Document>{
+      new CppSource{include_list, NestInNamespaces(std::move(decls), interface.GetSplitPackage())}};
 }
 
 unique_ptr<Document> BuildInterfaceSource(const TypeNamespace& types,
@@ -725,13 +829,14 @@ unique_ptr<Document> BuildInterfaceSource(const TypeNamespace& types,
     const AidlConstantValue& value = constant->GetValue();
     if (value.GetType() != AidlConstantValue::Type::STRING) continue;
 
-    unique_ptr<MethodImpl> getter(new MethodImpl(
-        "const ::android::String16&",
-        ClassName(interface, ClassNames::INTERFACE),
-        constant->GetName(),
-        {}));
-    getter->GetStatementBlock()->AddLiteral(StringPrintf(
-        "static const ::android::String16 value(%s)", constant->ValueString().c_str()));
+    std::string cppType = constant->GetType().GetLanguageType<Type>()->CppType();
+
+    unique_ptr<MethodImpl> getter(new MethodImpl("const " + cppType + "&",
+                                                 ClassName(interface, ClassNames::INTERFACE),
+                                                 constant->GetName(), {}));
+    getter->GetStatementBlock()->AddLiteral(
+        StringPrintf("static const %s value(%s)", cppType.c_str(),
+                     constant->ValueString(ConstantValueDecorator).c_str()));
     getter->GetStatementBlock()->AddLiteral("return value");
     decls.push_back(std::move(getter));
   }
@@ -779,6 +884,9 @@ unique_ptr<Document> BuildClientHeader(const TypeNamespace& types, const AidlInt
   const string i_name = ClassName(interface, ClassNames::INTERFACE);
   const string bp_name = ClassName(interface, ClassNames::CLIENT);
 
+  vector<string> includes = {kIBinderHeader, kIInterfaceHeader, "utils/Errors.h",
+                          HeaderFile(interface, ClassNames::INTERFACE, false)};
+
   unique_ptr<ConstructorDecl> constructor{new ConstructorDecl{
       bp_name,
       ArgList{StringPrintf("const ::android::sp<::android::IBinder>& %s",
@@ -802,6 +910,14 @@ unique_ptr<Document> BuildClientHeader(const TypeNamespace& types, const AidlInt
     }
   }
 
+  if (options.GenLog()) {
+    includes.emplace_back("chrono");      // for std::chrono::steady_clock
+    includes.emplace_back("functional");  // for std::function
+    includes.emplace_back("json/value.h");
+    publics.emplace_back(
+        new LiteralDecl{"static std::function<void(const Json::Value&)> logFunc;\n"});
+  }
+
   vector<unique_ptr<Declaration>> privates;
 
   if (options.Version() > 0) {
@@ -815,17 +931,13 @@ unique_ptr<Document> BuildClientHeader(const TypeNamespace& types, const AidlInt
       std::move(privates),
   }};
 
-  return unique_ptr<Document>{new CppHeader{
-      BuildHeaderGuard(interface, ClassNames::CLIENT),
-      {kIBinderHeader,
-       kIInterfaceHeader,
-       "utils/Errors.h",
-       HeaderFile(interface, ClassNames::INTERFACE, false)},
-      NestInNamespaces(std::move(bp_class), interface.GetSplitPackage())}};
+  return unique_ptr<Document>{
+      new CppHeader{BuildHeaderGuard(interface, ClassNames::CLIENT), includes,
+                    NestInNamespaces(std::move(bp_class), interface.GetSplitPackage())}};
 }
 
 unique_ptr<Document> BuildServerHeader(const TypeNamespace& /* types */,
-                                       const AidlInterface& interface, const Options&) {
+                                       const AidlInterface& interface, const Options& options) {
   const string i_name = ClassName(interface, ClassNames::INTERFACE);
   const string bn_name = ClassName(interface, ClassNames::SERVER);
 
@@ -835,13 +947,22 @@ unique_ptr<Document> BuildServerHeader(const TypeNamespace& /* types */,
                StringPrintf("const %s& %s", kAndroidParcelLiteral,
                             kDataVarName),
                StringPrintf("%s* %s", kAndroidParcelLiteral, kReplyVarName),
-               StringPrintf("uint32_t %s = 0", kFlagsVarName)}},
+               StringPrintf("uint32_t %s", kFlagsVarName)}},
       MethodDecl::IS_OVERRIDE
   }};
+  vector<string> includes = {"binder/IInterface.h",
+                             HeaderFile(interface, ClassNames::INTERFACE, false)};
 
-  std::vector<unique_ptr<Declaration>> publics;
+  vector<unique_ptr<Declaration>> publics;
   publics.push_back(std::move(on_transact));
 
+  if (options.GenLog()) {
+    includes.emplace_back("chrono");      // for std::chrono::steady_clock
+    includes.emplace_back("functional");  // for std::function
+    includes.emplace_back("json/value.h");
+    publics.emplace_back(
+        new LiteralDecl{"static std::function<void(const Json::Value&)> logFunc;\n"});
+  }
   unique_ptr<ClassDecl> bn_class{
       new ClassDecl{bn_name,
                     "::android::BnInterface<" + i_name + ">",
@@ -849,11 +970,9 @@ unique_ptr<Document> BuildServerHeader(const TypeNamespace& /* types */,
                     {}
       }};
 
-  return unique_ptr<Document>{new CppHeader{
-      BuildHeaderGuard(interface, ClassNames::SERVER),
-      {"binder/IInterface.h",
-       HeaderFile(interface, ClassNames::INTERFACE, false)},
-      NestInNamespaces(std::move(bn_class), interface.GetSplitPackage())}};
+  return unique_ptr<Document>{
+      new CppHeader{BuildHeaderGuard(interface, ClassNames::SERVER), includes,
+                    NestInNamespaces(std::move(bn_class), interface.GetSplitPackage())}};
 }
 
 unique_ptr<Document> BuildInterfaceHeader(const TypeNamespace& types,
@@ -892,14 +1011,16 @@ unique_ptr<Document> BuildInterfaceHeader(const TypeNamespace& types,
 
     switch (value.GetType()) {
       case AidlConstantValue::Type::STRING: {
-        unique_ptr<Declaration> getter(new MethodDecl(
-            "const ::android::String16&", constant->GetName(), {}, MethodDecl::IS_STATIC));
+        std::string cppType = constant->GetType().GetLanguageType<Type>()->CppType();
+        unique_ptr<Declaration> getter(new MethodDecl("const " + cppType + "&", constant->GetName(),
+                                                      {}, MethodDecl::IS_STATIC));
         string_constants.push_back(std::move(getter));
         break;
       }
       case AidlConstantValue::Type::INTEGRAL:
       case AidlConstantValue::Type::HEXIDECIMAL: {
-        int_constant_enum->AddValue(constant->GetName(), constant->ValueString());
+        int_constant_enum->AddValue(constant->GetName(),
+                                    constant->ValueString(ConstantValueDecorator));
         break;
       }
       default: {
@@ -923,20 +1044,14 @@ unique_ptr<Document> BuildInterfaceHeader(const TypeNamespace& types,
   }
 
   if (!interface.GetMethods().empty()) {
-    unique_ptr<Enum> call_enum{new Enum{"Call"}};
     for (const auto& method : interface.GetMethods()) {
       if (method->IsUserDefined()) {
         // Each method gets an enum entry and pure virtual declaration.
         if_class->AddPublic(BuildMethodDecl(*method, types, true));
-        call_enum->AddValue(
-            UpperCase(method->GetName()),
-            StringPrintf("::android::IBinder::FIRST_CALL_TRANSACTION + %d", method->GetId()));
       } else {
         if_class->AddPublic(BuildMetaMethodDecl(*method, types, options, true));
-        call_enum->AddValue(UpperCase(method->GetName()), std::to_string(method->GetId()));
       }
     }
-    if_class->AddPublic(std::move(call_enum));
   }
 
   vector<unique_ptr<Declaration>> decls;
@@ -984,7 +1099,8 @@ std::unique_ptr<Document> BuildParcelHeader(const TypeNamespace& /*types*/,
     std::ostringstream out;
     out << type->CppType().c_str() << " " << variable->GetName().c_str();
     if (variable->GetDefaultValue()) {
-      out << " = " << type->CppType().c_str() << "(" << variable->ValueString() << ")";
+      out << " = " << type->CppType().c_str() << "("
+          << variable->ValueString(ConstantValueDecorator) << ")";
     }
     out << ";\n";
 
@@ -993,11 +1109,11 @@ std::unique_ptr<Document> BuildParcelHeader(const TypeNamespace& /*types*/,
 
   unique_ptr<MethodDecl> read(new MethodDecl(kAndroidStatusLiteral, "readFromParcel",
                                              ArgList("const ::android::Parcel* _aidl_parcel"),
-                                             MethodDecl::IS_OVERRIDE));
+                                             MethodDecl::IS_OVERRIDE | MethodDecl::IS_FINAL));
   parcel_class->AddPublic(std::move(read));
-  unique_ptr<MethodDecl> write(new MethodDecl(kAndroidStatusLiteral, "writeToParcel",
-                                              ArgList("::android::Parcel* _aidl_parcel"),
-                                              MethodDecl::IS_OVERRIDE | MethodDecl::IS_CONST));
+  unique_ptr<MethodDecl> write(new MethodDecl(
+      kAndroidStatusLiteral, "writeToParcel", ArgList("::android::Parcel* _aidl_parcel"),
+      MethodDecl::IS_OVERRIDE | MethodDecl::IS_CONST | MethodDecl::IS_FINAL));
   parcel_class->AddPublic(std::move(write));
 
   return unique_ptr<Document>{new CppHeader{
@@ -1013,6 +1129,13 @@ std::unique_ptr<Document> BuildParcelSource(const TypeNamespace& /*types*/,
   StatementBlock* read_block = read->GetStatementBlock();
   read_block->AddLiteral(
       StringPrintf("%s %s = %s", kAndroidStatusLiteral, kAndroidStatusVarName, kAndroidStatusOk));
+
+  read_block->AddLiteral(
+      "size_t _aidl_start_pos = _aidl_parcel->dataPosition();\n"
+      "int32_t _aidl_parcelable_raw_size = _aidl_parcel->readInt32();\n"
+      "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n"
+      "size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);\n");
+
   for (const auto& variable : parcel.GetFields()) {
     string method = variable->GetType().GetLanguageType<Type>()->ReadFromParcelMethod();
 
@@ -1020,6 +1143,12 @@ std::unique_ptr<Document> BuildParcelSource(const TypeNamespace& /*types*/,
         kAndroidStatusVarName, new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
                                               ArgList("&" + variable->GetName()))));
     read_block->AddStatement(ReturnOnStatusNotOk());
+    read_block->AddLiteral(StringPrintf(
+        "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
+        "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
+        "  return %s;\n"
+        "}",
+        kAndroidStatusVarName));
   }
   read_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
 
@@ -1029,6 +1158,11 @@ std::unique_ptr<Document> BuildParcelSource(const TypeNamespace& /*types*/,
   StatementBlock* write_block = write->GetStatementBlock();
   write_block->AddLiteral(
       StringPrintf("%s %s = %s", kAndroidStatusLiteral, kAndroidStatusVarName, kAndroidStatusOk));
+
+  write_block->AddLiteral(
+      "auto _aidl_start_pos = _aidl_parcel->dataPosition();\n"
+      "_aidl_parcel->writeInt32(0);");
+
   for (const auto& variable : parcel.GetFields()) {
     string method = variable->GetType().GetLanguageType<Type>()->WriteToParcelMethod();
 
@@ -1037,6 +1171,12 @@ std::unique_ptr<Document> BuildParcelSource(const TypeNamespace& /*types*/,
                                               ArgList(variable->GetName()))));
     write_block->AddStatement(ReturnOnStatusNotOk());
   }
+
+  write_block->AddLiteral(
+      "auto _aidl_end_pos = _aidl_parcel->dataPosition();\n"
+      "_aidl_parcel->setDataPosition(_aidl_start_pos);\n"
+      "_aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);\n"
+      "_aidl_parcel->setDataPosition(_aidl_end_pos);");
   write_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
 
   vector<unique_ptr<Declaration>> file_decls;
@@ -1088,22 +1228,6 @@ bool WriteHeader(const Options& options, const TypeNamespace& types, const AidlI
 
 using namespace internals;
 
-string HeaderFile(const AidlDefinedType& defined_type, ClassNames class_type, bool use_os_sep) {
-  string file_path = defined_type.GetPackage();
-  for (char& c: file_path) {
-    if (c == '.') {
-      c = (use_os_sep) ? OS_PATH_SEPARATOR : '/';
-    }
-  }
-  if (!file_path.empty()) {
-    file_path += (use_os_sep) ? OS_PATH_SEPARATOR : '/';
-  }
-  file_path += ClassName(defined_type, class_type);
-  file_path += ".h";
-
-  return file_path;
-}
-
 bool GenerateCppInterface(const string& output_file, const Options& options,
                           const TypeNamespace& types, const AidlInterface& interface,
                           const IoDelegate& io_delegate) {
@@ -1131,7 +1255,7 @@ bool GenerateCppInterface(const string& output_file, const Options& options,
 
   const bool success = writer->Close();
   if (!success) {
-    io_delegate.RemovePath(options.OutputFile());
+    io_delegate.RemovePath(output_file);
   }
 
   return success;

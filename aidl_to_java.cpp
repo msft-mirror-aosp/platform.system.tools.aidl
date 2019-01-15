@@ -34,12 +34,17 @@ namespace java {
 
 using android::base::Join;
 
-using std::cerr;
 using std::endl;
 using std::function;
 using std::map;
 using std::string;
 using std::vector;
+
+std::string ConstantValueDecorator(const AidlTypeSpecifier& /*type*/,
+                                   const std::string& raw_value) {
+  // no difference
+  return raw_value;
+};
 
 const string& JavaNameOf(const AidlTypeSpecifier& aidl) {
   CHECK(aidl.IsResolved()) << aidl.ToString();
@@ -60,6 +65,7 @@ const string& JavaNameOf(const AidlTypeSpecifier& aidl) {
       {"IBinder", "android.os.IBinder"},
       {"FileDescriptor", "java.io.FileDescriptor"},
       {"CharSequence", "java.lang.CharSequence"},
+      {"ParcelFileDescriptor", "android.os.ParcelFileDescriptor"},
   };
   const string& aidl_name = aidl.GetName();
   if (m.find(aidl_name) != m.end()) {
@@ -107,11 +113,12 @@ static bool IsMarshallingUnsupportedFor(const AidlTypeSpecifier& aidl,
                                         const AidlTypenames& typenames) {
   const string name = aidl.GetName();
 
-  // List<T> is support only for String, Binder and Parcelable.
+  // List<T> is support only for String, Binder, ParcelFileDescriptor and Parcelable.
   if (name == "List" && aidl.IsGeneric()) {
     const string& contained_type = aidl.GetTypeParameters().at(0)->GetName();
     if (AidlTypenames::IsBuiltinTypename(contained_type)) {
-      if (contained_type != "String" && contained_type != "IBinder") {
+      if (contained_type != "String" && contained_type != "IBinder" &&
+          contained_type != "ParcelFileDescriptor") {
         return true;
       }
     } else {
@@ -263,6 +270,26 @@ bool WriteToParcelFor(const CodeGeneratorContext& c) {
       {"FileDescriptor[]",
        [](const CodeGeneratorContext& c) {
          c.writer << c.parcel << ".writeRawFileDescriptorArray(" << c.var << ");\n";
+       }},
+      {"ParcelFileDescriptor",
+       [](const CodeGeneratorContext& c) {
+         // This is same as writeTypedObject which was introduced with SDK 23.
+         // Keeping below code so that the generated code is buildable with older SDK.
+         c.writer << "if ((" << c.var << "!=null)) {\n";
+         c.writer.Indent();
+         c.writer << c.parcel << ".writeInt(1);\n";
+         c.writer << c.var << ".writeToParcel(" << c.parcel << ", " << GetFlagFor(c) << ");\n";
+         c.writer.Dedent();
+         c.writer << "}\n";
+         c.writer << "else {\n";
+         c.writer.Indent();
+         c.writer << c.parcel << ".writeInt(0);\n";
+         c.writer.Dedent();
+         c.writer << "}\n";
+       }},
+      {"ParcelFileDescriptor[]",
+       [](const CodeGeneratorContext& c) {
+         c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << GetFlagFor(c) << ");\n";
        }},
       {"CharSequence",
        [](const CodeGeneratorContext& c) {
@@ -444,6 +471,27 @@ bool CreateFromParcelFor(const CodeGeneratorContext& c) {
        [](const CodeGeneratorContext& c) {
          c.writer << c.var << " = " << c.parcel << ".createRawFileDescriptorArray();\n";
        }},
+      {"ParcelFileDescriptor",
+       [](const CodeGeneratorContext& c) {
+         // This is same as readTypedObject which was introduced with SDK 23.
+         // Keeping below code so that the generated code is buildable with older SDK.
+         c.writer << "if ((0!=" << c.parcel << ".readInt())) {\n";
+         c.writer.Indent();
+         c.writer << c.var << " = " << "android.os.ParcelFileDescriptor.CREATOR.createFromParcel(" << c.parcel
+                  << ");\n";
+         c.writer.Dedent();
+         c.writer << "}\n";
+         c.writer << "else {\n";
+         c.writer.Indent();
+         c.writer << c.var << " = null;\n";
+         c.writer.Dedent();
+         c.writer << "}\n";
+       }},
+      {"ParcelFileDescriptor[]",
+       [](const CodeGeneratorContext& c) {
+         c.writer << c.var << " = " << c.parcel
+                  << ".createTypedArray(android.os.ParcelFileDescriptor.CREATOR);\n";
+       }},
       {"CharSequence",
        [](const CodeGeneratorContext& c) {
          // We have written 0 for null CharSequence.
@@ -568,6 +616,19 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
       {"FileDescriptor[]",
        [](const CodeGeneratorContext& c) {
          c.writer << c.var << " = " << c.parcel << ".createRawFileDescriptorArray();\n";
+       }},
+      {"ParcelFileDescriptor",
+       [](const CodeGeneratorContext& c) {
+         c.writer << "if ((0!=" << c.parcel << ".readInt())) {\n";
+         c.writer.Indent();
+         c.writer << c.var << " = " << "android.os.ParcelFileDescriptor.CREATOR.createFromParcel(" << c.parcel << ");\n";
+         c.writer.Dedent();
+         c.writer << "}\n";
+       }},
+      {"ParcelFileDescriptor[]",
+       [](const CodeGeneratorContext& c) {
+         c.writer << c.parcel << ".readTypedArray(" << c.var
+                  << ", android.os.ParcelFileDescriptor.CREATOR);\n";
        }},
   };
   const string type_name = c.type.GetName() + (c.type.IsArray() ? "[]" : "");

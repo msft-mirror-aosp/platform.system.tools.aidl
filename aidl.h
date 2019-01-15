@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef AIDL_AIDL_H_
-#define AIDL_AIDL_H_
+#pragma once
 
 #include <limits>
 #include <memory>
@@ -41,8 +40,8 @@ enum class AidlError {
   BAD_TYPE,
   BAD_METHOD_ID,
   GENERATION_ERROR,
-  BAD_CONSTANTS,
   BAD_INPUT,
+  NOT_STRUCTURED,
 
   OK = 0,
 };
@@ -67,5 +66,3 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const std::string& f
 
 }  // namespace android
 }  // namespace aidl
-
-#endif  // AIDL_AIDL_H_

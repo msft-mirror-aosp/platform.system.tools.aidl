@@ -37,8 +37,10 @@
 #include <android-base/strings.h>
 
 #include "aidl_language.h"
+#include "aidl_typenames.h"
 #include "generate_cpp.h"
 #include "generate_java.h"
+#include "generate_ndk.h"
 #include "import_resolver.h"
 #include "logging.h"
 #include "options.h"
@@ -55,7 +57,6 @@ using android::base::Join;
 using android::base::Split;
 using std::cerr;
 using std::endl;
-using std::map;
 using std::set;
 using std::string;
 using std::unique_ptr;
@@ -65,16 +66,29 @@ namespace android {
 namespace aidl {
 namespace {
 
-// The following are gotten as the offset from the allowable id's between
-// android.os.IBinder.FIRST_CALL_TRANSACTION=1 and
-// android.os.IBinder.LAST_CALL_TRANSACTION=16777215
-const int kMinUserSetMethodId = 0;
-const int kMaxUserSetMethodId = 0x00ffffff;
+// Copied from android.is.IBinder.[FIRST|LAST]_CALL_TRANSACTION
+const int kFirstCallTransaction = 1;
+const int kLastCallTransaction = 0x00ffffff;
+
+// Following IDs are all offsets from  kFirstCallTransaction
 
 // IDs for meta transactions. Most of the meta transactions are implemented in
 // the framework side (Binder.java or Binder.cpp). But these are the ones that
 // are auto-implemented by the AIDL compiler.
-const int kGetInterfaceVersionId = ('_' << 24) | ('V' << 16) | ('E' << 8) | 'R';
+const int kFirstMetaMethodId = kLastCallTransaction - kFirstCallTransaction;
+const int kGetInterfaceVersionId = kFirstMetaMethodId;
+// Additional meta transactions implemented by AIDL should use
+// kFirstMetaMethodId -1, -2, ...and so on.
+
+// Reserve 100 IDs for meta methods, which is more than enough. If we don't reserve,
+// in the future, a newly added meta transaction ID will have a chance to
+// collide with the user-defined methods that were added in the past. So,
+// let's prevent users from using IDs in this range from the beginning.
+const int kLastMetaMethodId = kFirstMetaMethodId - 99;
+
+// Range of IDs that is allowed for user-defined methods.
+const int kMinUserSetMethodId = 0;
+const int kMaxUserSetMethodId = kLastMetaMethodId - 1;
 
 bool check_filename(const std::string& filename, const AidlDefinedType& defined_type) {
     const char* p;
@@ -137,105 +151,60 @@ bool check_filename(const std::string& filename, const AidlDefinedType& defined_
     return valid;
 }
 
-int check_types(const AidlStructuredParcelable* parcel, TypeNamespace* types) {
-  int err = 0;
+bool register_types(const AidlStructuredParcelable* parcel, TypeNamespace* types) {
   for (const auto& v : parcel->GetFields()) {
-    if (!v->CheckValid()) {
-      err = 1;
-    }
-
     if (!types->MaybeAddContainerType(v->GetType())) {
-      err = 1;  // return type is invalid
+      return false;
     }
 
     const ValidatableType* type = types->GetReturnType(v->GetType(), *parcel);
-    if (!type) {
-      err = 1;
+    if (type == nullptr) {
+      return false;
     }
-
     v->GetMutableType()->SetLanguageType(type);
   }
-
-  return err;
+  return true;
 }
 
-int check_types(const AidlInterface* c, TypeNamespace* types) {
-  int err = 0;
-
-  if (c->IsUtf8() && c->IsUtf8InCpp()) {
-    AIDL_ERROR(c) << "Interface cannot be marked as both @utf8 and @utf8InCpp";
-    err = 1;
-  }
-
-  // Has to be a pointer due to deleting copy constructor. No idea why.
-  map<string, const AidlMethod*> method_names;
+bool register_types(const AidlInterface* c, TypeNamespace* types) {
   for (const auto& m : c->GetMethods()) {
-    bool oneway = m->IsOneway() || c->IsOneway();
-
     if (!types->MaybeAddContainerType(m->GetType())) {
-      err = 1;  // return type is invalid
+      return false;
     }
 
     const ValidatableType* return_type = types->GetReturnType(m->GetType(), *c);
 
-    if (!m->GetType().CheckValid()) {
-      err = 1;
+    if (return_type == nullptr) {
+      return false;
     }
-
-    if (!return_type) {
-      err = 1;
-    }
-
     m->GetMutableType()->SetLanguageType(return_type);
 
-    if (oneway && m->GetType().GetName() != "void") {
-      AIDL_ERROR(m) << "oneway method '" << m->GetName() << "' cannot return a value";
-      err = 1;
-    }
+    set<string> argument_names;
 
     int index = 1;
     for (const auto& arg : m->GetArguments()) {
       if (!types->MaybeAddContainerType(arg->GetType())) {
-        err = 1;
-      }
-
-      if (!arg->GetType().CheckValid()) {
-        err = 1;
+        return false;
       }
 
       const ValidatableType* arg_type = types->GetArgType(*arg, index, *c);
-
-      if (!arg_type) {
-        err = 1;
+      if (arg_type == nullptr) {
+        return false;
       }
-
       arg->GetMutableType()->SetLanguageType(arg_type);
-
-      if (oneway && arg->IsOut()) {
-        AIDL_ERROR(m) << "oneway method '" << m->GetName() << "' cannot have out parameters";
-        err = 1;
-      }
-    }
-
-    auto it = method_names.find(m->GetName());
-    // prevent duplicate methods
-    if (it == method_names.end()) {
-      method_names[m->GetName()] = m.get();
-    } else {
-      AIDL_ERROR(m) << "attempt to redefine method " << m->GetName() << ":";
-      AIDL_ERROR(it->second) << "previously defined here.";
-      err = 1;
-    }
-
-    static set<string> reserved_methods{"asBinder()", "getInterfaceVersion()",
-                                        "getTransactionName(int)"};
-
-    if (reserved_methods.find(m->Signature()) != reserved_methods.end()) {
-      AIDL_ERROR(m) << " method " << m->Signature() << " is reserved for internal use." << endl;
-      err = 1;
     }
   }
-  return err;
+
+  for (const std::unique_ptr<AidlConstantDeclaration>& constant : c->GetConstantDeclarations()) {
+    AidlTypeSpecifier* specifier = constant->GetMutableType();
+    const ValidatableType* return_type = types->GetReturnType(*specifier, *c);
+    if (return_type == nullptr) {
+      return false;
+    }
+    specifier->SetLanguageType(return_type);
+  }
+
+  return true;
 }
 
 bool write_dep_file(const Options& options, const AidlDefinedType& defined_type,
@@ -275,7 +244,7 @@ bool write_dep_file(const Options& options, const AidlDefinedType& defined_type,
     }
   }
 
-  if (options.TargetLanguage() == Options::Language::CPP) {
+  if (options.IsCppOutput()) {
     if (!options.DependencyFileNinja()) {
       using ::android::aidl::cpp::ClassNames;
       using ::android::aidl::cpp::HeaderFile;
@@ -317,7 +286,7 @@ string generate_outputFileName(const Options& options, const AidlDefinedType& de
   result.append(name, 0, name.find('.'));
   if (options.TargetLanguage() == Options::Language::JAVA) {
     result += ".java";
-  } else if (options.TargetLanguage() == Options::Language::CPP) {
+  } else if (options.IsCppOutput()) {
     result += ".cpp";
   } else {
     LOG(FATAL) << "Should not reach here" << endl;
@@ -379,21 +348,6 @@ bool check_and_assign_method_ids(const std::vector<std::unique_ptr<AidlMethod>>&
     }
   }
   return true;
-}
-
-bool validate_constants(const AidlInterface& interface) {
-  bool success = true;
-  set<string> names;
-  for (const std::unique_ptr<AidlConstantDeclaration>& constant :
-       interface.GetConstantDeclarations()) {
-    if (names.count(constant->GetName()) > 0) {
-      LOG(ERROR) << "Found duplicate constant name '" << constant->GetName() << "'";
-      success = false;
-    }
-    names.insert(constant->GetName());
-    success = success && constant->CheckValid();
-  }
-  return success;
 }
 
 // TODO: Remove this in favor of using the YACC parser b/25479378
@@ -475,14 +429,15 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const string& filena
     AidlLocation location = AidlLocation(filename, point, point);
 
     if (decl == "parcelable") {
-      AidlParcelable* doc =
-          new AidlParcelable(location, new AidlQualifiedName(location, class_name, ""), package);
+      AidlParcelable* doc = new AidlParcelable(
+          location, new AidlQualifiedName(location, class_name, ""), package, "" /* comments */);
       types->AddParcelableType(*doc, filename);
       typenames.AddPreprocessedType(unique_ptr<AidlParcelable>(doc));
     } else if (decl == "structured_parcelable") {
       auto temp = new std::vector<std::unique_ptr<AidlVariableDeclaration>>();
-      AidlStructuredParcelable* doc = new AidlStructuredParcelable(
-          location, new AidlQualifiedName(location, class_name, ""), package, temp);
+      AidlStructuredParcelable* doc =
+          new AidlStructuredParcelable(location, new AidlQualifiedName(location, class_name, ""),
+                                       package, "" /* comments */, temp);
       types->AddParcelableType(*doc, filename);
       typenames.AddPreprocessedType(unique_ptr<AidlStructuredParcelable>(doc));
     } else if (decl == "interface") {
@@ -534,29 +489,53 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   }
 
   // Find files to import and parse them
-  vector<string> imports;
-  ImportResolver import_resolver{io_delegate, options.ImportPaths(), options.InputFiles()};
+  vector<string> import_paths;
+  ImportResolver import_resolver{io_delegate, input_file_name, options.ImportDirs(),
+                                 options.InputFiles()};
+
+  set<string> type_from_import_statements;
   for (const auto& import : main_parser->GetImports()) {
-    if (types->HasImportType(*import)) {
+    if (!AidlTypenames::IsBuiltinTypename(import->GetNeededClass())) {
+      type_from_import_statements.emplace(import->GetNeededClass());
+    }
+  }
+
+  // When referencing a type using fully qualified name it should be imported
+  // without the import statement. To support that, add all unresolved
+  // typespecs encountered during the parsing to the import_candidates list.
+  // Note that there is no guarantee that the typespecs are all fully qualified.
+  // It will be determined by calling FindImportFile().
+  set<string> unresolved_types;
+  for (const auto type : main_parser->GetUnresolvedTypespecs()) {
+    if (!AidlTypenames::IsBuiltinTypename(type->GetName())) {
+      unresolved_types.emplace(type->GetName());
+    }
+  }
+  set<string> import_candidates(type_from_import_statements);
+  import_candidates.insert(unresolved_types.begin(), unresolved_types.end());
+  for (const auto& import : import_candidates) {
+    if (types->HasImportType(import)) {
       // There are places in the Android tree where an import doesn't resolve,
       // but we'll pick the type up through the preprocessed types.
       // This seems like an error, but legacy support demands we support it...
       continue;
     }
-    string import_path = import_resolver.FindImportFile(import->GetNeededClass());
+    string import_path = import_resolver.FindImportFile(import);
     if (import_path.empty()) {
-      AIDL_ERROR(import) << "couldn't find import for class " << import->GetNeededClass();
-      err = AidlError::BAD_IMPORT;
+      if (type_from_import_statements.find(import) != type_from_import_statements.end()) {
+        // Complain only when the import from the import statement has failed.
+        AIDL_ERROR(import) << "couldn't find import for class " << import;
+        err = AidlError::BAD_IMPORT;
+      }
       continue;
     }
 
-    imports.emplace_back(import_path);
+    import_paths.emplace_back(import_path);
 
     std::unique_ptr<Parser> import_parser =
         Parser::Parse(import_path, io_delegate, types->typenames_);
     if (import_parser == nullptr) {
-      cerr << "error while importing " << import_path << " for " << import->GetNeededClass()
-           << endl;
+      cerr << "error while importing " << import_path << " for " << import << endl;
       err = AidlError::BAD_IMPORT;
       continue;
     }
@@ -568,21 +547,24 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     return err;
   }
 
-  //////////////////////////////////////////////////////////////////////////
-  // Validation phase
-  //////////////////////////////////////////////////////////////////////////
+  for (const auto& imported_file : options.ImportFiles()) {
+    import_paths.emplace_back(imported_file);
+
+    std::unique_ptr<Parser> import_parser =
+        Parser::Parse(imported_file, io_delegate, types->typenames_);
+    if (import_parser == nullptr) {
+      AIDL_ERROR(imported_file) << "error while importing " << imported_file;
+      err = AidlError::BAD_IMPORT;
+      continue;
+    }
+    if (!types->AddDefinedTypes(import_parser->GetDefinedTypes(), imported_file)) {
+      return AidlError::BAD_TYPE;
+    }
+  }
+  if (err != AidlError::OK) {
+    return err;
+  }
   const bool is_check_api = options.GetTask() == Options::Task::CHECK_API;
-
-  if (is_check_api && !main_parser->IsApiDump()) {
-    AIDL_ERROR(input_file_name) << "Input is not an API dump";
-    return AidlError::BAD_INPUT;
-  }
-
-  if (!is_check_api && main_parser->IsApiDump()) {
-    AIDL_ERROR(input_file_name) << "Input is not AIDL source code, but "
-                                << "an AIDL dump file";
-    return AidlError::BAD_INPUT;
-  }
 
   // Resolve the unresolved type references found from the input file
   if (!is_check_api && !main_parser->Resolve()) {
@@ -590,64 +572,67 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     // using fully qualified names.
     return AidlError::BAD_TYPE;
   }
+  if (!is_check_api) {
+    for (const auto defined_type : main_parser->GetDefinedTypes()) {
+      AidlInterface* interface = defined_type->AsInterface();
+      AidlStructuredParcelable* parcelable = defined_type->AsStructuredParcelable();
 
-  // Make sure that there is no unstructured parcelable in the input file,
-  // because we can generate code only for structured parcelables.
-  bool has_only_unstructured_parcelables = true;
-  for (const auto defined_type : main_parser->GetDefinedTypes()) {
-    if (defined_type->AsStructuredParcelable() != nullptr ||
-        defined_type->AsInterface() != nullptr) {
-      has_only_unstructured_parcelables = false;
+      // Link the AIDL type with the type of the target language. This will
+      // be removed when the migration to AidlTypenames is done.
+      defined_type->SetLanguageType(types->GetDefinedType(*defined_type));
+
+      if (interface != nullptr) {
+        if (!register_types(interface, types)) {
+          return AidlError::BAD_TYPE;
+        }
+      }
+      if (parcelable != nullptr) {
+        if (!register_types(parcelable, types)) {
+          return AidlError::BAD_TYPE;
+        }
+      }
     }
   }
-  if (has_only_unstructured_parcelables) {
-    LOG(ERROR) << "Refusing to generate code with unstructured parcelables.";
 
-    // return this so that dependency file can be created
-    if (defined_types != nullptr) {
-      *defined_types = main_parser->GetDefinedTypes();
-    }
+  //////////////////////////////////////////////////////////////////////////
+  // Validation phase
+  //////////////////////////////////////////////////////////////////////////
 
-    return AidlError::FOUND_PARCELABLE;
-  }
+  AidlTypenames& typenames = types->typenames_;
+
+  // For legacy reasons, by default, compiling an unstructured parcelable (which contains no output)
+  // is allowed. This must not be returned as an error until the very end of this procedure since
+  // this may be considered a success, and we should first check that there are not other, more
+  // serious failures.
+  bool contains_unstructured_parcelable = false;
 
   const int num_defined_types = main_parser->GetDefinedTypes().size();
   for (const auto defined_type : main_parser->GetDefinedTypes()) {
+    CHECK(defined_type != nullptr);
+    AidlParcelable* unstructuredParcelable = defined_type->AsUnstructuredParcelable();
+    if (unstructuredParcelable != nullptr) {
+      AIDL_ERROR(unstructuredParcelable)
+          << "Refusing to generate code with unstructured parcelables. Declared parcelables should "
+             "be in their own file and/or cannot be used with --structured interfaces.";
+      contains_unstructured_parcelable = true;
+      continue;
+    }
+
     // Ensure that a type is either an interface or a structured parcelable
     AidlInterface* interface = defined_type->AsInterface();
     AidlStructuredParcelable* parcelable = defined_type->AsStructuredParcelable();
     CHECK(interface != nullptr || parcelable != nullptr);
 
     // Ensure that foo.bar.IFoo is defined in <some_path>/foo/bar/IFoo.aidl
-    // Do this only when there is only one type defined in the input file.
-    // When there are multiple types in a file, we can't satisfy the convention.
-    if (!is_check_api && num_defined_types == 1 &&
-        !check_filename(input_file_name, *defined_type)) {
+    if (num_defined_types == 1 && !check_filename(input_file_name, *defined_type)) {
       return AidlError::BAD_PACKAGE;
-    }
-
-    // Link the AIDL type with the type of the target language. This will
-    // be removed when the migration to AidlTypenames is done.
-    defined_type->SetLanguageType(types->GetDefinedType(*defined_type));
-
-    // TODO(b/112014138): AIDL compiler has been rejecting empty package
-    // only when the target language is C++. The rejection shouldn't be based
-    // on the target language, otherwise we can't share the same AIDL across
-    // Java and C++. However, for now, let's respect the old-but-weird behavior.
-    if (options.TargetLanguage() == Options::Language::CPP) {
-      if (defined_type->GetPackage().empty()) {
-        return AidlError::BAD_PACKAGE;
-      }
     }
 
     // Check the referenced types in parsed_doc to make sure we've imported them
     if (!is_check_api) {
       // No need to do this for check api because all typespecs are already
       // using fully qualified name and we don't import in AIDL files.
-      if (interface != nullptr && check_types(interface, types) != 0) {
-        return AidlError::BAD_TYPE;
-      }
-      if (parcelable != nullptr && check_types(parcelable, types) != 0) {
+      if (!defined_type->CheckValid(typenames)) {
         return AidlError::BAD_TYPE;
       }
     }
@@ -657,6 +642,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       if (options.Version() > 0) {
         AidlTypeSpecifier* ret =
             new AidlTypeSpecifier(AIDL_LOCATION_HERE, "int", false, nullptr, "");
+        ret->Resolve(typenames);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         AidlMethod* method =
             new AidlMethod(AIDL_LOCATION_HERE, false, ret, "getInterfaceVersion", args, "",
@@ -666,16 +652,13 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       if (!check_and_assign_method_ids(interface->GetMethods())) {
         return AidlError::BAD_METHOD_ID;
       }
-      if (!validate_constants(*interface)) {
-        return AidlError::BAD_CONSTANTS;
-      }
     }
   }
 
   if (options.IsStructured()) {
-    types->typenames_.IterateTypes([&](const AidlDefinedType& type) {
+    typenames.IterateTypes([&](const AidlDefinedType& type) {
       if (type.AsUnstructuredParcelable() != nullptr) {
-        err = AidlError::BAD_TYPE;
+        err = AidlError::NOT_STRUCTURED;
         LOG(ERROR) << type.GetCanonicalName()
                    << " is not structured, but this is a structured interface.";
       }
@@ -690,7 +673,12 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   }
 
   if (imported_files != nullptr) {
-    *imported_files = imports;
+    *imported_files = import_paths;
+  }
+
+  if (contains_unstructured_parcelable) {
+    // Considered a success for the legacy case, so this must be returned last.
+    return AidlError::FOUND_PARCELABLE;
   }
 
   return AidlError::OK;
@@ -711,7 +699,7 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
     java_types.Init();
 
     TypeNamespace* types;
-    if (lang == Options::Language::CPP) {
+    if (options.IsCppOutput()) {
       types = &cpp_types;
     } else if (lang == Options::Language::JAVA) {
       types = &java_types;
@@ -760,6 +748,10 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
       if (lang == Options::Language::CPP) {
         success =
             cpp::GenerateCpp(output_file_name, options, cpp_types, *defined_type, io_delegate);
+      } else if (lang == Options::Language::NDK) {
+        ndk::GenerateNdk(output_file_name, options, cpp_types.typenames_, *defined_type,
+                         io_delegate);
+        success = true;
       } else if (lang == Options::Language::JAVA) {
         success = java::generate_java(output_file_name, input_file, defined_type, &java_types,
                                       io_delegate, options);
@@ -794,51 +786,33 @@ bool preprocess_aidl(const Options& options, const IoDelegate& io_delegate) {
   return writer->Close();
 }
 
-bool dump_api(const Options& options, const IoDelegate& io_delegate) {
-  map<string, vector<AidlDefinedType*>> types_by_package;
+static string GetApiDumpPathFor(const AidlDefinedType& defined_type, const Options& options) {
+  string package_as_path = Join(Split(defined_type.GetPackage(), "."), OS_PATH_SEPARATOR);
+  CHECK(!options.OutputDir().empty() && options.OutputDir().back() == '/');
+  return options.OutputDir() + package_as_path + OS_PATH_SEPARATOR + defined_type.GetName() +
+         ".aidl";
+}
 
-  // This vector is to keep namespaces for each input file so that
-  // AidlDefinedType objects created are not deleted after the final printout.
-  vector<unique_ptr<java::JavaTypeNamespace>> namespaces;
+bool dump_api(const Options& options, const IoDelegate& io_delegate) {
   for (const auto& file : options.InputFiles()) {
-    java::JavaTypeNamespace* ns = new java::JavaTypeNamespace();
-    ns->Init();
-    namespaces.emplace_back(ns);
+    java::JavaTypeNamespace ns;
+    ns.Init();
     vector<AidlDefinedType*> defined_types;
-    if (internals::load_and_validate_aidl(file, options, io_delegate, ns, &defined_types,
+    if (internals::load_and_validate_aidl(file, options, io_delegate, &ns, &defined_types,
                                           nullptr) == AidlError::OK) {
       for (const auto type : defined_types) {
-        // group them by package name
-        string package = type->GetPackage();
-        types_by_package[package].emplace_back(type);
+        unique_ptr<CodeWriter> writer =
+            io_delegate.GetCodeWriter(GetApiDumpPathFor(*type, options));
+        if (!type->GetPackage().empty()) {
+          (*writer) << "package " << type->GetPackage() << ";\n";
+        }
+        type->Write(writer.get());
       }
     } else {
       return false;
     }
   }
-
-  // sort types within a package by their name. packages are already sorted.
-  for (auto it = types_by_package.begin(); it != types_by_package.end(); it++) {
-    auto& list = it->second;
-    std::sort(list.begin(), list.end(), [](const auto& lhs, const auto& rhs) {
-      return lhs->GetName().compare(rhs->GetName());
-    });
-  }
-
-  // print
-  unique_ptr<CodeWriter> writer = io_delegate.GetCodeWriter(options.OutputFile());
-  for (auto it = types_by_package.begin(); it != types_by_package.end(); it++) {
-    writer->Write("package %s {\n", it->first.c_str());
-    writer->Indent();
-    for (const auto& type : it->second) {
-      type->Write(writer.get());
-      writer->Write("\n");
-    }
-    writer->Dedent();
-    writer->Write("}\n");
-  }
-
-  return writer->Close();
+  return true;
 }
 
 }  // namespace android

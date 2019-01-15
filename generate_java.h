@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef AIDL_GENERATE_JAVA_H_
-#define AIDL_GENERATE_JAVA_H_
+#pragma once
 
 #include "aidl_language.h"
 #include "ast_java.h"
@@ -41,8 +40,8 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
                                                   java::JavaTypeNamespace* types,
                                                   const Options& options);
 
+std::vector<std::string> generate_java_annotations(const AidlAnnotatable& a);
+
 }  // namespace java
 }  // namespace android
 }  // namespace aidl
-
-#endif // AIDL_GENERATE_JAVA_H_

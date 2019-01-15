@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef AIDL_TYPE_NAMESPACE_H_
-#define AIDL_TYPE_NAMESPACE_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -32,11 +31,9 @@ namespace aidl {
 
 // Special reserved type names.
 extern const char kAidlReservedTypePackage[];
-extern const char kUtf8StringClass[];  // UTF8 wire format string
 extern const char kUtf8InCppStringClass[];  // UTF16 wire format, UTF8 in C++
 
 // Helpful aliases defined to be <kAidlReservedTypePackage>.<class name>
-extern const char kUtf8StringCanonicalName[];
 extern const char kUtf8InCppStringCanonicalName[];
 
 // We sometimes special case this class.
@@ -44,7 +41,6 @@ extern const char kStringCanonicalName[];
 
 // Note that these aren't the strings recognized by the parser, we just keep
 // here for the sake of logging a common string constant.
-extern const char kUtf8Annotation[];
 extern const char kUtf8InCppAnnotation[];
 
 class ValidatableType {
@@ -106,7 +102,7 @@ class TypeNamespace {
   virtual bool MaybeAddContainerType(const AidlTypeSpecifier& aidl_type) = 0;
 
   // Returns true iff this has a type for |import|.
-  virtual bool HasImportType(const AidlImport& import) const = 0;
+  virtual bool HasImportType(const std::string& import) const = 0;
 
   // Returns a pointer to a type corresponding to |raw_type| or nullptr
   // if this is an invalid return type.
@@ -152,8 +148,8 @@ class LanguageTypeNamespace : public TypeNamespace {
   bool HasTypeByCanonicalName(const std::string& type_name) const {
     return FindTypeByCanonicalName(type_name) != nullptr;
   }
-  bool HasImportType(const AidlImport& import) const override {
-    return HasTypeByCanonicalName(import.GetNeededClass());
+  bool HasImportType(const std::string& import) const override {
+    return HasTypeByCanonicalName(import);
   }
   const ValidatableType* GetDefinedType(const AidlDefinedType& defined_type) const override {
     return FindTypeByCanonicalName(defined_type.GetCanonicalName());
@@ -332,9 +328,7 @@ bool LanguageTypeNamespace<T>::CanonicalizeContainerType(
     // Now get the canonical names for these contained types, remapping them if
     // necessary.
     type_name = arg_type->CanonicalName();
-    if (aidl_type.IsUtf8() && type_name == "java.lang.String") {
-      type_name = kUtf8StringCanonicalName;
-    } else if (aidl_type.IsUtf8InCpp() && type_name == "java.lang.String") {
+    if (aidl_type.IsUtf8InCpp() && type_name == "java.lang.String") {
       type_name = kUtf8InCppStringCanonicalName;
     }
     args.emplace_back(type_name);
@@ -376,8 +370,7 @@ const ValidatableType* LanguageTypeNamespace<T>::GetValidatableType(
       *error_msg = "void type cannot be an array";
       return nullptr;
     }
-    if (aidl_type.IsNullable() || aidl_type.IsUtf8() ||
-        aidl_type.IsUtf8InCpp()) {
+    if (aidl_type.IsNullable() || aidl_type.IsUtf8InCpp()) {
       *error_msg = "void type cannot be annotated";
       return nullptr;
     }
@@ -385,14 +378,6 @@ const ValidatableType* LanguageTypeNamespace<T>::GetValidatableType(
     return type;
   }
 
-  // No type may be annotated with both these annotations.
-  if (aidl_type.IsUtf8() && aidl_type.IsUtf8InCpp()) {
-    *error_msg = StringPrintf("Type cannot be marked as both %s and %s.",
-                              kUtf8Annotation, kUtf8InCppAnnotation);
-    return nullptr;
-  }
-
-  bool utf8 = aidl_type.IsUtf8();
   bool utf8InCpp = aidl_type.IsUtf8InCpp();
 
   // Strings inside containers get remapped to appropriate utf8 versions when
@@ -400,34 +385,24 @@ const ValidatableType* LanguageTypeNamespace<T>::GetValidatableType(
   // type.  However, for non-compound types (i.e. those not in a container) we
   // must patch them up here.
   if (IsContainerType(type->CanonicalName())) {
-    utf8 = false;
     utf8InCpp = false;
   } else if (aidl_type.GetName() == "String" ||
              aidl_type.GetName() == "java.lang.String") {
-    utf8 = utf8 || context.IsUtf8();
     utf8InCpp = utf8InCpp || context.IsUtf8InCpp();
-  } else if (utf8 || utf8InCpp) {
-    const char* annotation_literal =
-        (utf8) ? kUtf8Annotation : kUtf8InCppAnnotation;
-    *error_msg = StringPrintf("type '%s' may not be annotated as %s.",
-                              aidl_type.GetName().c_str(),
-                              annotation_literal);
+  } else if (utf8InCpp) {
+    *error_msg = StringPrintf("type '%s' may not be annotated as %s.", aidl_type.GetName().c_str(),
+                              kUtf8InCppAnnotation);
     return nullptr;
   }
 
-  if (utf8) {
-    type = FindTypeByCanonicalName(kUtf8StringCanonicalName);
-  } else if (utf8InCpp) {
+  if (utf8InCpp) {
     type = FindTypeByCanonicalName(kUtf8InCppStringCanonicalName);
   }
 
   // One of our UTF8 transforms made type null
   if (type == nullptr) {
-    const char* annotation_literal =
-        (utf8) ? kUtf8Annotation : kUtf8InCppAnnotation;
-    *error_msg = StringPrintf(
-        "%s is unsupported when generating code for this language.",
-        annotation_literal);
+    *error_msg = StringPrintf("%s is unsupported when generating code for this language.",
+                              kUtf8InCppAnnotation);
     return nullptr;
   }
 
@@ -468,5 +443,3 @@ const ValidatableType* LanguageTypeNamespace<T>::GetValidatableType(
 
 }  // namespace aidl
 }  // namespace android
-
-#endif  // AIDL_TYPE_NAMESPACE_H_

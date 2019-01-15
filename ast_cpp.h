@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef AIDL_AST_CPP_H_
-#define AIDL_AST_CPP_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -117,7 +116,7 @@ class ArgList : public AstNode {
   explicit ArgList(const std::string& single_argument);
   explicit ArgList(const std::vector<std::string>& arg_list);
   explicit ArgList(std::vector<std::unique_ptr<AstNode>> arg_list);
-  ArgList(ArgList&& arg_list);
+  ArgList(ArgList&& arg_list) noexcept;
   virtual ~ArgList() = default;
 
   void Write(CodeWriter* to) const override;
@@ -176,6 +175,7 @@ class MethodDecl : public Declaration {
     IS_OVERRIDE = 1 << 2,
     IS_PURE_VIRTUAL = 1 << 3,
     IS_STATIC = 1 << 4,
+    IS_FINAL = 1 << 5,
   };
 
   MethodDecl(const std::string& return_type,
@@ -198,6 +198,7 @@ class MethodDecl : public Declaration {
   bool is_override_ = false;
   bool is_pure_virtual_ = false;
   bool is_static_ = true;
+  bool is_final_ = false;
 
   DISALLOW_COPY_AND_ASSIGN(MethodDecl);
 };  // class MethodDecl
@@ -393,22 +394,21 @@ class CppNamespace : public Declaration {
 class Document : public AstNode {
  public:
   Document(const std::vector<std::string>& include_list,
-           std::unique_ptr<CppNamespace> a_namespace);
+           std::vector<std::unique_ptr<Declaration>> declarations);
 
   void Write(CodeWriter* to) const override;
 
  private:
   std::vector<std::string> include_list_;
-  std::unique_ptr<CppNamespace> namespace_;
+  std::vector<std::unique_ptr<Declaration>> declarations_;
 
   DISALLOW_COPY_AND_ASSIGN(Document);
 };  // class Document
 
 class CppHeader final : public Document {
  public:
-  CppHeader(const std::string& include_guard,
-            const std::vector<std::string>& include_list,
-            std::unique_ptr<CppNamespace> a_namespace);
+  CppHeader(const std::string& include_guard, const std::vector<std::string>& include_list,
+            std::vector<std::unique_ptr<Declaration>> declarations);
   void Write(CodeWriter* to) const override;
 
  private:
@@ -420,7 +420,7 @@ class CppHeader final : public Document {
 class CppSource final : public Document {
  public:
   CppSource(const std::vector<std::string>& include_list,
-            std::unique_ptr<CppNamespace> a_namespace);
+            std::vector<std::unique_ptr<Declaration>> declarations);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(CppSource);
@@ -429,5 +429,3 @@ class CppSource final : public Document {
 }  // namespace cpp
 }  // namespace aidl
 }  // namespace android
-
-#endif // AIDL_AST_CPP_H_

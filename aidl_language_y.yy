@@ -47,12 +47,12 @@ AidlLocation loc(const yy::parser::location_type& l) {
     char character;
     std::string *str;
     AidlAnnotation* annotation;
-    std::set<std::unique_ptr<AidlAnnotation>>* annotation_list;
+    std::vector<AidlAnnotation>* annotation_list;
     AidlTypeSpecifier* type;
-    AidlTypeSpecifier* unannotated_type;
     AidlArgument* arg;
     AidlArgument::Direction direction;
     AidlConstantValue* constant_value;
+    std::vector<std::unique_ptr<AidlConstantValue>>* constant_value_list;
     std::vector<std::unique_ptr<AidlArgument>>* arg_list;
     AidlVariableDeclaration* variable;
     std::vector<std::unique_ptr<AidlVariableDeclaration>>* variable_list;
@@ -70,6 +70,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token<token> C_STR "string literal"
 %token<token> IDENTIFIER "identifier"
 %token<token> INTERFACE "interface"
+%token<token> PARCELABLE "parcelable"
 %token<token> ONEWAY "oneway"
 
 %token<character> CHARVALUE "char literal"
@@ -86,7 +87,6 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token INOUT "inout"
 %token OUT "out"
 %token PACKAGE "package"
-%token PARCELABLE "parcelable"
 %token TRUE_LITERAL "true"
 %token FALSE_LITERAL "false"
 
@@ -102,38 +102,20 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<annotation> annotation
 %type<annotation_list>annotation_list
 %type<type> type
-%type<unannotated_type> unannotated_type
+%type<type> unannotated_type
 %type<arg_list> arg_list
 %type<arg> arg
 %type<direction> direction
 %type<type_args> type_args
 %type<qname> qualified_name
 %type<constant_value> constant_value
+%type<constant_value_list> constant_value_list
+%type<constant_value_list> constant_value_non_empty_list
 
 %type<token> identifier error
 %%
 document
- : api_dump { ps->SetAsApiDump(); }
- | source {};
-
-source
  : package imports decls {};
-
-api_dump
- : package_groups {};
-
-package_groups
- : package_group {}
- | package_groups package_group {};
-
-package_group
- : package_decl '{' decls '}' {};
-
-package_decl
- : PACKAGE qualified_name
-  {
-    ps->SetPackage(unique_ptr<AidlQualifiedName>($2));
-  };
 
 /* A couple of tokens that are keywords elsewhere are identifiers when
  * occurring in the identifier position. Therefore identifier is a
@@ -191,6 +173,11 @@ decl
       ps->AddError();
     }
 
+    if ($1->size() > 0) {
+      // copy comments from annotation to decl
+      $2->SetComments($1->begin()->GetComments());
+    }
+
     $$->Annotate(std::move(*$1));
     delete $1;
    }
@@ -205,14 +192,14 @@ unannotated_decl
 
 parcelable_decl
  : PARCELABLE qualified_name ';' {
-    $$ = new AidlParcelable(loc(@2), $2, ps->Package());
+    $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments());
   }
  | PARCELABLE qualified_name CPP_HEADER C_STR ';' {
-    $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $4->GetText());
+    $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments(), $4->GetText());
   }
  | PARCELABLE identifier '{' variable_decls '}' {
     AidlQualifiedName* name = new AidlQualifiedName(loc(@2), $2->GetText(), $2->GetComments());
-    $$ = new AidlStructuredParcelable(loc(@2), name, ps->Package(), $4);
+    $$ = new AidlStructuredParcelable(loc(@2), name, ps->Package(), $1->GetComments(), $4);
  }
  | PARCELABLE error ';' {
     ps->AddError();
@@ -221,7 +208,8 @@ parcelable_decl
 
 variable_decls
  : /* empty */ {
-    $$ = new std::vector<std::unique_ptr<AidlVariableDeclaration>>; }
+    $$ = new std::vector<std::unique_ptr<AidlVariableDeclaration>>;
+ }
  | variable_decls variable_decl {
     $$ = $1;
     if ($2 != nullptr) {
@@ -293,6 +281,30 @@ constant_value
     $$ = AidlConstantValue::String(loc(@1), $1->GetText());
     delete $1;
   }
+ | '{' constant_value_list '}' {
+    $$ = AidlConstantValue::Array(loc(@1), $2);
+    delete $2;
+  }
+ ;
+
+constant_value_list
+ : /* empty */ {
+    $$ = new std::vector<std::unique_ptr<AidlConstantValue>>;
+ }
+ | constant_value_non_empty_list {
+    $$ = $1;
+ }
+ ;
+
+constant_value_non_empty_list
+ : constant_value {
+    $$ = new std::vector<std::unique_ptr<AidlConstantValue>>;
+    $$->push_back(std::unique_ptr<AidlConstantValue>($1));
+ }
+ | constant_value_non_empty_list ',' constant_value {
+    $$ = $1;
+    $$->push_back(std::unique_ptr<AidlConstantValue>($3));
+ }
  ;
 
 constant_decl
@@ -367,6 +379,10 @@ unannotated_type
 type
  : annotation_list unannotated_type {
     $$ = $2;
+    if ($1->size() > 0) {
+      // copy comments from annotation to type
+      $2->SetComments($1->begin()->GetComments());
+    }
     $2->Annotate(std::move(*$1));
     delete $1;
   };
@@ -382,11 +398,12 @@ type_args
 
 annotation_list
  :
-  { $$ = new std::set<unique_ptr<AidlAnnotation>>(); }
+  { $$ = new std::vector<AidlAnnotation>(); }
  | annotation_list annotation
   {
     if ($2 != nullptr) {
-      $1->insert(std::unique_ptr<AidlAnnotation>($2));
+      $1->emplace_back(std::move(*$2));
+      delete $2;
     }
   };
 
@@ -397,6 +414,7 @@ annotation
     if ($$ == nullptr) {
       ps->AddError();
     }
+    $$->SetComments($1->GetComments());
   };
 
 direction

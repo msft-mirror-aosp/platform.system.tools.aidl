@@ -34,9 +34,10 @@ cc_defaults {
 }
 
 // Logic shared between aidl and its unittests
-cc_library_host_static {
+cc_library_static {
     name: "libaidl-common",
     defaults: ["aidl_defaults"],
+    host_supported: true,
 
     srcs: [
         "aidl.cpp",
@@ -45,11 +46,15 @@ cc_library_host_static {
         "aidl_language_l.ll",
         "aidl_language_y.yy",
         "aidl_typenames.cpp",
+        "aidl_to_cpp.cpp",
         "aidl_to_java.cpp",
+        "aidl_to_ndk.cpp",
         "ast_cpp.cpp",
         "ast_java.cpp",
         "code_writer.cpp",
         "generate_cpp.cpp",
+        "aidl_to_cpp_common.cpp",
+        "generate_ndk.cpp",
         "generate_java.cpp",
         "generate_java_binder.cpp",
         "import_resolver.cpp",
@@ -85,8 +90,11 @@ cc_binary_host {
 }
 
 // Unit tests
-cc_test_host {
+cc_test {
     name: "aidl_unittests",
+    host_supported: true,
+
+    test_suites: ["device-tests"],
 
     cflags: [
         "-Wall",
@@ -119,8 +127,18 @@ cc_test_host {
         "libaidl-common",
         "libbase",
         "libcutils",
-        "libgmock_host",
     ],
+    target: {
+        host: {
+            static_libs: ["libgmock_host"],
+        },
+        android: {
+            static_libs: [
+                "libgmock",
+                "liblog",
+            ],
+        },
+    },
 }
 
 //
@@ -218,5 +236,21 @@ android_app {
             "system/tools/aidl/tests/",
             "frameworks/native/aidl/binder",
         ],
+    },
+}
+
+aidl_interface {
+    name: "aidl_test_interface",
+    local_include_dir: "tests",
+    srcs: [
+        "tests/android/aidl/tests/LoggableInterface.aidl",
+    ],
+    backend: {
+        cpp: {
+            gen_log: true,
+        },
+        ndk: {
+            enabled: false,
+        },
     },
 }

@@ -28,6 +28,10 @@ type ccProperties struct {
 	Shared_libs               []string
 	Export_shared_lib_headers []string
 	Export_generated_headers  []string
+	Sdk_version               *string
+	Stl                       *string
+	Cpp_std                   *string
+	Cflags                    []string
 }
 
 type javaProperties struct {

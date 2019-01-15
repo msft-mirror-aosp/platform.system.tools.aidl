@@ -21,6 +21,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -44,12 +45,14 @@ string Options::GetUsage() const {
        << myname_ << " --preprocess OUTPUT INPUT..." << endl
        << "   Create an AIDL file having declarations of AIDL file(s)." << endl
        << endl
-       << myname_ << " --dumpapi OUTPUT INPUT..." << endl
-       << "   Dump API signature of AIDL file(s)." << endl
+#ifndef _WIN32
+       << myname_ << " --dumpapi --out=DIR INPUT..." << endl
+       << "   Dump API signature of AIDL file(s) to DIR." << endl
        << endl
-       << myname_ << " --checkapi OLD NEW" << endl
-       << "   Checkes whether API dump NEW is backwards compatible extension " << endl
-       << "   of the API dump OLD." << endl
+       << myname_ << " --checkapi OLD_DIR NEW_DIR" << endl
+       << "   Checkes whether API dump NEW_DIR is backwards compatible extension " << endl
+       << "   of the API dump OLD_DIR." << endl
+#endif
        << endl;
 
   // Legacy option formats
@@ -66,6 +69,8 @@ string Options::GetUsage() const {
   sstr << "OPTION:" << endl
        << "  -I DIR, --include=DIR" << endl
        << "          Use DIR as a search path for import statements." << endl
+       << "  -m FILE, --import=FILE" << endl
+       << "          Import FILE directly without searching in the search paths." << endl
        << "  -p FILE, --preprocessed=FILE" << endl
        << "          Include FILE which is created by --preprocess." << endl
        << "  -d FILE, --dep=FILE" << endl
@@ -94,6 +99,9 @@ string Options::GetUsage() const {
        << "  -v VER, --version=VER" << endl
        << "          Set the version of the interface and parcelable to VER." << endl
        << "          VER must be an interger greater than 0." << endl
+       << "  --log" << endl
+       << "          Information about the transaction, e.g., method name, argument" << endl
+       << "          values, execution time, etc., is provided via callback." << endl
        << "  --help" << endl
        << "          Show this help." << endl
        << endl
@@ -140,9 +148,12 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
     static struct option long_options[] = {
         {"lang", required_argument, 0, 'l'},
         {"preprocess", no_argument, 0, 's'},
+#ifndef _WIN32
         {"dumpapi", no_argument, 0, 'u'},
         {"checkapi", no_argument, 0, 'A'},
+#endif
         {"include", required_argument, 0, 'I'},
+        {"import", required_argument, 0, 'm'},
         {"preprocessed", required_argument, 0, 'p'},
         {"dep", required_argument, 0, 'd'},
         {"out", required_argument, 0, 'o'},
@@ -152,11 +163,12 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         {"trace", no_argument, 0, 't'},
         {"transaction_names", no_argument, 0, 'c'},
         {"version", required_argument, 0, 'v'},
+        {"log", no_argument, 0, 'L'},
         {"help", no_argument, 0, 'e'},
         {0, 0, 0, 0},
     };
-    const int c =
-        getopt_long(argc, const_cast<char* const*>(argv), "I:p:d:o:h:abtv:", long_options, nullptr);
+    const int c = getopt_long(argc, const_cast<char* const*>(argv),
+                              "I:m:p:d:o:h:abtv:", long_options, nullptr);
     if (c == -1) {
       // no more options
       break;
@@ -177,6 +189,9 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
           } else if (lang == "cpp") {
             language_ = Options::Language::CPP;
             task_ = Options::Task::COMPILE;
+          } else if (lang == "ndk") {
+            language_ = Options::Language::NDK;
+            task_ = Options::Task::COMPILE;
           } else {
             error_message_ << "Unsupported language: '" << lang << "'" << endl;
             return;
@@ -188,6 +203,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
           task_ = Options::Task::PREPROCESS;
         }
         break;
+#ifndef _WIN32
       case 'u':
         if (task_ != Options::Task::UNSPECIFIED) {
           task_ = Options::Task::DUMP_API;
@@ -200,9 +216,15 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
           structured_ = true;
         }
         break;
-      case 'I':
-        import_paths_.emplace_back(Trim(optarg));
+#endif
+      case 'I': {
+        import_dirs_.emplace(Trim(optarg));
         break;
+      }
+      case 'm': {
+        import_files_.emplace(Trim(optarg));
+        break;
+      }
       case 'p':
         preprocessed_files_.emplace_back(Trim(optarg));
         break;
@@ -251,6 +273,9 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         }
         break;
       }
+      case 'L':
+        gen_log_ = true;
+        break;
       case 'e':
         std::cerr << GetUsage();
         exit(0);
@@ -284,7 +309,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
           output_file_ = output_dir_ + output_file_;
         }
       }
-    } else if (language_ == Options::Language::CPP) {
+    } else if (IsCppOutput()) {
       input_files_.emplace_back(argv[optind++]);
       if (argc - optind < 2) {
         error_message_ << "No HEADER_DIR or OUTPUT." << endl;
@@ -305,7 +330,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
     }
   } else {
     // the new arguments format
-    if (task_ == Options::Task::COMPILE) {
+    if (task_ == Options::Task::COMPILE || task_ == Options::Task::DUMP_API) {
       if (argc - optind < 1) {
         error_message_ << "No input file." << endl;
         return;
@@ -326,14 +351,8 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
   }
 
   // filter out invalid combinations
-  for (const string& input : input_files_) {
-    if (!android::base::EndsWith(input, ".aidl")) {
-      error_message_ << "Expected .aidl file for input but got '" << input << "'" << endl;
-      return;
-    }
-  }
   if (lang_option_found) {
-    if (language_ == Options::Language::CPP && task_ == Options::Task::COMPILE) {
+    if (IsCppOutput() && task_ == Options::Task::COMPILE) {
       if (output_dir_.empty()) {
         error_message_ << "Output directory is not set. Set with --out." << endl;
         return;
@@ -357,6 +376,12 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
     }
   }
   if (task_ == Options::Task::COMPILE) {
+    for (const string& input : input_files_) {
+      if (!android::base::EndsWith(input, ".aidl")) {
+        error_message_ << "Expected .aidl file for input but got '" << input << "'" << endl;
+        return;
+      }
+    }
     if (!output_file_.empty() && input_files_.size() > 1) {
       error_message_ << "Multiple AIDL files can't be compiled to a single "
                      << "output file '" << output_file_ << "'. "
@@ -370,6 +395,10 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
                      << "file." << endl;
       return;
     }
+    if (gen_log_ && language_ != Options::Language::CPP) {
+      error_message_ << "--log is currently supported only for --lang=cpp" << endl;
+      return;
+    }
   }
   if (task_ == Options::Task::PREPROCESS) {
     if (version_ > 0) {
@@ -381,6 +410,12 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
     if (input_files_.size() != 2) {
       error_message_ << "--checkapi requires two inputs for comparing, "
                      << "but got " << input_files_.size() << "." << endl;
+      return;
+    }
+  }
+  if (task_ == Options::Task::DUMP_API) {
+    if (output_dir_.empty()) {
+      error_message_ << "--dump_api requires output directory. Use --out." << endl;
       return;
     }
   }

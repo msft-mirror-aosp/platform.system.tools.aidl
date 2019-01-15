@@ -39,6 +39,8 @@ interface ITestService {
   const String STRING_TEST_CONSTANT = "foo";
   const String STRING_TEST_CONSTANT2 = "bar";
 
+  const @utf8InCpp String STRING_TEST_CONSTANT_UTF8 = "baz";
+
   // Test that primitives work as parameters and return types.
   boolean RepeatBoolean(boolean token);
   byte RepeatByte(byte token);
@@ -83,6 +85,10 @@ interface ITestService {
   FileDescriptor[] ReverseFileDescriptorArray(in FileDescriptor[] input,
                                               out FileDescriptor[] repeated);
 
+  ParcelFileDescriptor RepeatParcelFileDescriptor(in ParcelFileDescriptor read);
+  ParcelFileDescriptor[] ReverseParcelFileDescriptorArray(in ParcelFileDescriptor[] input,
+                                              out ParcelFileDescriptor[] repeated);
+
   // Test that service specific exceptions work correctly.
   void ThrowServiceException(int code);
 
@@ -115,7 +121,8 @@ interface ITestService {
 
   @nullable INamedCallback GetCallback(boolean return_null);
 
-  // This is not a well designed API and should not be taken as an example
+  // Since this paracelable has clearly defined default values, it would be
+  // inefficient to use an IPC to fill it out in practice.
   void FillOutStructuredParcelable(inout StructuredParcelable parcel);
 
   // This is to emulate a method that is added after the service is implemented.

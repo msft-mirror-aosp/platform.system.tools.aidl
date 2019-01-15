@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AIDL_AIDL_TO_JAVA_H_
-#define AIDL_AIDL_TO_JAVA_H_
+#pragma once
 
 #include "aidl_language.h"
 #include "aidl_typenames.h"
@@ -38,7 +37,9 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
-// This header provides functions that translate AIDL thing to Java thing.
+// This header provides functions that translate AIDL things to Java things.
+
+std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value);
 
 // Returns the corresponding Java type name for an AIDL type spec
 // This excludes generic type parameters and array modifiers.
@@ -101,5 +102,3 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c);
 }  // namespace java
 }  // namespace aidl
 }  // namespace android
-
-#endif  // AIDL_AIDL_TO_JAVA_H_

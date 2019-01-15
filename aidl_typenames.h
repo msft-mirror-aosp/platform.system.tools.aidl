@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AIDL_AIDL_TYPENAMES_H_
-#define AIDL_AIDL_TYPENAMES_H_
+#pragma once
 
 #include <functional>
 #include <map>
@@ -55,6 +54,7 @@ class AidlTypenames final {
   bool AddDefinedType(unique_ptr<AidlDefinedType> type);
   bool AddPreprocessedType(unique_ptr<AidlDefinedType> type);
   static bool IsBuiltinTypename(const string& type_name);
+  static bool IsPrimitiveTypename(const string& type_name);
   const AidlDefinedType* TryGetDefinedType(const string& type_name) const;
   pair<string, bool> ResolveTypename(const string& type_name) const;
   bool CanBeOutParameter(const AidlTypeSpecifier& type) const;
@@ -69,5 +69,3 @@ class AidlTypenames final {
 
 }  // namespace aidl
 }  // namespace android
-
-#endif  // AIDL_AIDL_TYPENAMES_H_

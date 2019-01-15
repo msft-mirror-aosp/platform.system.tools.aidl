@@ -106,7 +106,7 @@ public interface IStringConstants extends android.os.IInterface
       {
         return DESCRIPTOR;
       }
-      public static android.os.IStringConstants sDefaultImpl = null;
+      public static android.os.IStringConstants sDefaultImpl;
     }
     public static boolean setDefaultImpl(android.os.IStringConstants impl) {
       if (Stub.Proxy.sDefaultImpl == null && impl != null) {
@@ -170,7 +170,7 @@ namespace os {
 IMPLEMENT_META_INTERFACE(StringConstants, "android.os.IStringConstants")
 
 const ::android::String16& IStringConstants::EXAMPLE_CONSTANT() {
-  static const ::android::String16 value("foo");
+  static const ::android::String16 value(::android::String16("foo"));
   return value;
 }
 
@@ -224,7 +224,7 @@ namespace os {
 )";
 
 const char kExpectedJavaOutputWithVersion[] =
-R"(/*
+    R"(/*
  * This file is auto-generated.  DO NOT MODIFY.
  * Original file: android/os/IStringConstants.aidl
  */
@@ -290,6 +290,8 @@ public interface IStringConstants extends android.os.IInterface
         }
         case TRANSACTION_getInterfaceVersion:
         {
+          data.enforceInterface(descriptor);
+          reply.writeNoException();
           reply.writeInt(getInterfaceVersion());
           return true;
         }
@@ -321,6 +323,7 @@ public interface IStringConstants extends android.os.IInterface
           android.os.Parcel data = android.os.Parcel.obtain();
           android.os.Parcel reply = android.os.Parcel.obtain();
           try {
+            data.writeInterfaceToken(DESCRIPTOR);
             mRemote.transact(Stub.TRANSACTION_getInterfaceVersion, data, reply, 0);
             mCachedVersion = reply.readInt();
           } finally {
@@ -330,9 +333,9 @@ public interface IStringConstants extends android.os.IInterface
         }
         return mCachedVersion;
       }
-      public static android.os.IStringConstants sDefaultImpl = null;
+      public static android.os.IStringConstants sDefaultImpl;
     }
-    static final int TRANSACTION_getInterfaceVersion = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1599489362);
+    static final int TRANSACTION_getInterfaceVersion = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16777214);
     public static boolean setDefaultImpl(android.os.IStringConstants impl) {
       if (Stub.Proxy.sDefaultImpl == null && impl != null) {
         Stub.Proxy.sDefaultImpl = impl;
@@ -369,9 +372,6 @@ public:
   const int32_t VERSION = 10;
   static const ::android::String16& EXAMPLE_CONSTANT();
   virtual int32_t getInterfaceVersion() = 0;
-  enum Call {
-    GETINTERFACEVERSION = 1599489362,
-  };
 };  // class IStringConstants
 
 class IStringConstantsDefault : public IStringConstants {
@@ -389,7 +389,7 @@ public:
 )";
 
 const char kExpectedCppOutputWithVersion[] =
-R"(#include <android/os/IStringConstants.h>
+    R"(#include <android/os/IStringConstants.h>
 #include <android/os/BpStringConstants.h>
 
 namespace android {
@@ -399,7 +399,7 @@ namespace os {
 IMPLEMENT_META_INTERFACE(StringConstants, "android.os.IStringConstants")
 
 const ::android::String16& IStringConstants::EXAMPLE_CONSTANT() {
-  static const ::android::String16 value("foo");
+  static const ::android::String16 value(::android::String16("foo"));
   return value;
 }
 
@@ -427,10 +427,11 @@ BpStringConstants::BpStringConstants(const ::android::sp<::android::IBinder>& _a
 }
 
 int32_t BpStringConstants::getInterfaceVersion() {
-  if (cached_version_ != -1) {
+  if (cached_version_ == -1) {
     ::android::Parcel data;
     ::android::Parcel reply;
-    ::android::status_t err = remote()->transact(IStringConstants::GETINTERFACEVERSION, data, &reply);
+    data.writeInterfaceToken(getInterfaceDescriptor());
+    ::android::status_t err = remote()->transact(16777214 /* getInterfaceVersion */, data, &reply);
     if (err == ::android::OK) {
       cached_version_ = reply.readInt32();
     }
@@ -451,8 +452,9 @@ namespace os {
 ::android::status_t BnStringConstants::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
   ::android::status_t _aidl_ret_status = ::android::OK;
   switch (_aidl_code) {
-  case Call::GETINTERFACEVERSION:
+  case 16777214 /* getInterfaceVersion */:
   {
+    _aidl_data.checkInterface(this);
     _aidl_reply->writeInt32(IStringConstants::VERSION);
   }
   break;

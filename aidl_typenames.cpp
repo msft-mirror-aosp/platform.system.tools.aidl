@@ -27,10 +27,7 @@
 #include <utility>
 #include <vector>
 
-using android::base::EndsWith;
-using android::base::Join;
 using android::base::Split;
-using android::base::Trim;
 
 using std::make_pair;
 using std::map;
@@ -45,9 +42,12 @@ namespace aidl {
 
 // The built-in AIDL types..
 static const set<string> kBuiltinTypes = {
-    "void",           "boolean",      "byte",           "char",         "int", "long",
-    "float",          "double",       "String",         "List",         "Map", "IBinder",
-    "FileDescriptor", "CharSequence"};
+    "void", "boolean", "byte",           "char",         "int",
+    "long", "float",   "double",         "String",       "List",
+    "Map",  "IBinder", "FileDescriptor", "CharSequence", "ParcelFileDescriptor"};
+
+static const set<string> kPrimitiveTypes = {"void", "boolean", "byte",  "char",
+                                            "int",  "long",    "float", "double"};
 
 // Note: these types may look wrong because they look like Java
 // types, but they have long been supported from the time when Java
@@ -55,8 +55,9 @@ static const set<string> kBuiltinTypes = {
 // backwards compatibility, but we internally treat them as List and Map,
 // respectively.
 static const map<string, string> kJavaLikeTypeToAidlType = {
-  {"java.util.List", "List"},
-  {"java.util.Map", "Map"},
+    {"java.util.List", "List"},
+    {"java.util.Map", "Map"},
+    {"android.os.ParcelFileDescriptor", "ParcelFileDescriptor"},
 };
 
 // Package name and type name can't be one of these as they are keywords
@@ -109,6 +110,10 @@ bool AidlTypenames::IsBuiltinTypename(const string& type_name) {
       kJavaLikeTypeToAidlType.find(type_name) != kJavaLikeTypeToAidlType.end();
 }
 
+bool AidlTypenames::IsPrimitiveTypename(const string& type_name) {
+  return kPrimitiveTypes.find(type_name) != kPrimitiveTypes.end();
+}
+
 const AidlDefinedType* AidlTypenames::TryGetDefinedType(const string& type_name) const {
   // Do the exact match first.
   auto found_def = defined_types_.find(type_name);
@@ -154,11 +159,12 @@ pair<string, bool> AidlTypenames::ResolveTypename(const string& type_name) const
   }
 }
 
-// Only T[], List, Map, and Parcelable can be an out parameter.
+// Only T[], List, Map, ParcelFileDescriptor and Parcelable can be an out parameter.
 bool AidlTypenames::CanBeOutParameter(const AidlTypeSpecifier& type) const {
   const string& name = type.GetName();
   if (IsBuiltinTypename(name)) {
-    return type.IsArray() || type.GetName() == "List" || type.GetName() == "Map";
+    return type.IsArray() || type.GetName() == "List" || type.GetName() == "Map" ||
+           type.GetName() == "ParcelFileDescriptor";
   }
   const AidlDefinedType* t = TryGetDefinedType(type.GetName());
   CHECK(t != nullptr) << "Unrecognized type: '" << type.GetName() << "'";

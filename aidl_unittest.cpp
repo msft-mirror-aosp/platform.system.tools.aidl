@@ -25,6 +25,7 @@
 #include "aidl.h"
 #include "aidl_apicheck.h"
 #include "aidl_language.h"
+#include "aidl_to_cpp.h"
 #include "tests/fake_io_delegate.h"
 #include "type_cpp.h"
 #include "type_java.h"
@@ -61,6 +62,66 @@ R"( : \
 p/Foo.aidl :
 )";
 
+const char kExepectedJavaParcelableOutputContests[] =
+    R"(/*
+ * This file is auto-generated.  DO NOT MODIFY.
+ * Original file: Rect.aidl
+ */
+@android.annotation.SystemApi
+public class Rect implements android.os.Parcelable
+{
+  // Comment
+
+  @android.annotation.SystemApi
+  public int x = 5;
+
+  @android.annotation.UnsupportedAppUsage
+  @android.annotation.SystemApi
+  public int y;
+  public static final android.os.Parcelable.Creator<Rect> CREATOR = new android.os.Parcelable.Creator<Rect>() {
+    @Override
+    public Rect createFromParcel(android.os.Parcel _aidl_source) {
+      Rect _aidl_out = new Rect();
+      _aidl_out.readFromParcel(_aidl_source);
+      return _aidl_out;
+    }
+    @Override
+    public Rect[] newArray(int _aidl_size) {
+      return new Rect[_aidl_size];
+    }
+  };
+  @Override public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag)
+  {
+    int _aidl_start_pos = _aidl_parcel.dataPosition();
+    _aidl_parcel.writeInt(0);
+    _aidl_parcel.writeInt(x);
+    _aidl_parcel.writeInt(y);
+    int _aidl_end_pos = _aidl_parcel.dataPosition();
+    _aidl_parcel.setDataPosition(_aidl_start_pos);
+    _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
+    _aidl_parcel.setDataPosition(_aidl_end_pos);
+  }
+  public final void readFromParcel(android.os.Parcel _aidl_parcel)
+  {
+    int _aidl_start_pos = _aidl_parcel.dataPosition();
+    int _aidl_parcelable_size = _aidl_parcel.readInt();
+    if (_aidl_parcelable_size < 0) return;
+    try {
+      x = _aidl_parcel.readInt();
+      if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+      y = _aidl_parcel.readInt();
+      if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+    } finally {
+      _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    }
+  }
+  @Override public int describeContents()
+  {
+    return 0;
+  }
+}
+)";
+
 }  // namespace
 
 class AidlTest : public ::testing::Test {
@@ -70,8 +131,9 @@ class AidlTest : public ::testing::Test {
     cpp_types_.Init();
   }
 
-  AidlDefinedType* Parse(const string& path, const string& contents,
-                         TypeNamespace* types, AidlError* error = nullptr) {
+  AidlDefinedType* Parse(const string& path, const string& contents, TypeNamespace* types,
+                         AidlError* error = nullptr,
+                         const vector<string> additional_arguments = {}) {
     io_delegate_.SetFileContents(path, contents);
     vector<string> args;
     if (types == &java_types_) {
@@ -79,17 +141,20 @@ class AidlTest : public ::testing::Test {
     } else {
       args.emplace_back("aidl-cpp");
     }
-    for (const auto& f : preprocessed_files_) {
+    for (const string& s : additional_arguments) {
+      args.emplace_back(s);
+    }
+    for (const string& f : preprocessed_files_) {
       args.emplace_back("--preprocessed=" + f);
     }
-    for (const auto& i : import_paths_) {
+    for (const string& i : import_paths_) {
       args.emplace_back("--include=" + i);
     }
     args.emplace_back(path);
     Options options = Options::From(args);
     vector<AidlDefinedType*> defined_types;
     vector<string> imported_files;
-    ImportResolver import_resolver{io_delegate_, import_paths_, {}};
+    ImportResolver import_resolver{io_delegate_, path, import_paths_, {}};
     AidlError actual_error = ::android::aidl::internals::load_and_validate_aidl(
         path, options, io_delegate_, types, &defined_types, &imported_files);
 
@@ -108,17 +173,18 @@ class AidlTest : public ::testing::Test {
 
   FakeIoDelegate io_delegate_;
   vector<string> preprocessed_files_;
-  vector<string> import_paths_;
+  set<string> import_paths_;
   java::JavaTypeNamespace java_types_;
   cpp::TypeNamespace cpp_types_;
 };
 
-TEST_F(AidlTest, JavaAcceptsMissingPackage) {
+TEST_F(AidlTest, AcceptMissingPackage) {
   EXPECT_NE(nullptr, Parse("IFoo.aidl", "interface IFoo { }", &java_types_));
+  EXPECT_NE(nullptr, Parse("IFoo.aidl", "interface IFoo { }", &cpp_types_));
 }
 
 TEST_F(AidlTest, RejectsArraysOfBinders) {
-  import_paths_.push_back("");
+  import_paths_.emplace("");
   io_delegate_.SetFileContents("bar/IBar.aidl",
                                "package bar; interface IBar {}");
   string path = "foo/IFoo.aidl";
@@ -127,12 +193,6 @@ TEST_F(AidlTest, RejectsArraysOfBinders) {
                     "interface IFoo { void f(in IBar[] input); }";
   EXPECT_EQ(nullptr, Parse(path, contents, &java_types_));
   EXPECT_EQ(nullptr, Parse(path, contents, &cpp_types_));
-}
-
-TEST_F(AidlTest, CppRejectsMissingPackage) {
-  EXPECT_EQ(nullptr, Parse("IFoo.aidl", "interface IFoo { }", &cpp_types_));
-  EXPECT_NE(nullptr,
-            Parse("a/IFoo.aidl", "package a; interface IFoo { }", &cpp_types_));
 }
 
 TEST_F(AidlTest, RejectsOnewayOutParameters) {
@@ -156,6 +216,12 @@ TEST_F(AidlTest, RejectsNullablePrimitive) {
   string oneway_method = "package a; interface IFoo { @nullable int f(); }";
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", oneway_method, &cpp_types_));
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", oneway_method, &java_types_));
+}
+
+TEST_F(AidlTest, RejectsDuplicatedArgumentNames) {
+  string method = "package a; interface IFoo { void f(int a, int a); }";
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, &cpp_types_));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, &java_types_));
 }
 
 TEST_F(AidlTest, ParsesNullableAnnotation) {
@@ -223,7 +289,7 @@ TEST_F(AidlTest, PreferImportToPreprocessed) {
   io_delegate_.SetFileContents("one/IBar.aidl", "package one; "
                                                 "interface IBar {}");
   preprocessed_files_.push_back("preprocessed");
-  import_paths_.push_back("");
+  import_paths_.emplace("");
   auto parse_result = Parse(
       "p/IFoo.aidl", "package p; import one.IBar; interface IFoo {}",
       &java_types_);
@@ -258,10 +324,31 @@ TEST_F(AidlTest, WritePreprocessedFile) {
   EXPECT_EQ("parcelable p.Outer.Inner;\ninterface one.IBar;\n", output);
 }
 
+TEST_F(AidlTest, JavaParcelableOutput) {
+  io_delegate_.SetFileContents("Rect.aidl",
+                               "@SystemApi\n"
+                               "parcelable Rect {\n"
+                               "  // Comment\n"
+                               "  @SystemApi\n"
+                               "  int x=5;\n"
+                               "  @SystemApi\n"
+                               "  @UnsupportedAppUsage\n"
+                               "  int y;\n"
+                               "}");
+
+  vector<string> args{"aidl", "Rect.aidl"};
+  Options options = Options::From(args);
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  string output;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("Rect.java", &output));
+  EXPECT_EQ(kExepectedJavaParcelableOutputContests, output);
+}
+
 TEST_F(AidlTest, RequireOuterClass) {
   io_delegate_.SetFileContents("p/Outer.aidl",
                                "package p; parcelable Outer.Inner;");
-  import_paths_.push_back("");
+  import_paths_.emplace("");
   auto parse_result = Parse(
       "p/IFoo.aidl",
       "package p; import p.Outer; interface IFoo { void f(in Inner c); }",
@@ -284,13 +371,35 @@ TEST_F(AidlTest, ParseCompoundParcelableFromPreprocess) {
 }
 
 TEST_F(AidlTest, FailOnParcelable) {
-  Options options1 = Options::From("aidl p/IFoo.aidl");
-  io_delegate_.SetFileContents(options1.InputFiles().front(), "package p; parcelable IFoo;");
+  io_delegate_.SetFileContents("p/IFoo.aidl", "package p; parcelable IFoo;");
+
   // By default, we shouldn't fail on parcelable.
+  Options options1 = Options::From("aidl p/IFoo.aidl");
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options1, io_delegate_));
 
+  // -b considers this an error
   Options options2 = Options::From("aidl -b p/IFoo.aidl");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options2, io_delegate_));
+
+  io_delegate_.SetFileContents("p/IBar.aidl", "package p; parcelable Foo; interface IBar{}");
+
+  // Regardless of '-b', a parcelable and an interface should fail.
+  Options options3 = Options::From("aidl p/IBar.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options3, io_delegate_));
+  Options options4 = Options::From("aidl -b p/IBar.aidl");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options4, io_delegate_));
+}
+
+TEST_F(AidlTest, StructuredFailOnUnstructuredParcelable) {
+  io_delegate_.SetFileContents("o/WhoKnowsWhat.aidl", "package o; parcelable WhoKnowsWhat;");
+  import_paths_.emplace("");
+  AidlError reported_error;
+  auto parse_result =
+      Parse("p/IFoo.aidl",
+            "package p; import o.WhoKnowsWhat; interface IFoo { void f(in WhoKnowsWhat thisIs); }",
+            &java_types_, &reported_error, {"--structured"});
+  EXPECT_EQ(nullptr, parse_result);
+  EXPECT_EQ(AidlError::NOT_STRUCTURED, reported_error);
 }
 
 TEST_F(AidlTest, FailOnDuplicateConstantNames) {
@@ -305,7 +414,7 @@ TEST_F(AidlTest, FailOnDuplicateConstantNames) {
                    )",
                    &cpp_types_,
                    &reported_error));
-  EXPECT_EQ(AidlError::BAD_CONSTANTS, reported_error);
+  EXPECT_EQ(AidlError::BAD_TYPE, reported_error);
 }
 
 TEST_F(AidlTest, FailOnManyDefinedTypes) {
@@ -341,7 +450,7 @@ TEST_F(AidlTest, FailOnMalformedConstHexValue) {
                    )",
                    &cpp_types_,
                    &reported_error));
-  EXPECT_EQ(AidlError::BAD_CONSTANTS, reported_error);
+  EXPECT_EQ(AidlError::BAD_TYPE, reported_error);
 }
 
 TEST_F(AidlTest, ParsePositiveConstHexValue) {
@@ -361,7 +470,7 @@ TEST_F(AidlTest, ParsePositiveConstHexValue) {
   const auto& cpp_constants = interface->GetConstantDeclarations();
   EXPECT_EQ((size_t)1, cpp_constants.size());
   EXPECT_EQ("POSITIVE_HEX_VALUE", cpp_constants[0]->GetName());
-  EXPECT_EQ("245", cpp_constants[0]->ValueString());
+  EXPECT_EQ("245", cpp_constants[0]->ValueString(cpp::ConstantValueDecorator));
 }
 
 TEST_F(AidlTest, ParseNegativeConstHexValue) {
@@ -381,14 +490,14 @@ TEST_F(AidlTest, ParseNegativeConstHexValue) {
   const auto& cpp_constants = interface->GetConstantDeclarations();
   EXPECT_EQ((size_t)1, cpp_constants.size());
   EXPECT_EQ("NEGATIVE_HEX_VALUE", cpp_constants[0]->GetName());
-  EXPECT_EQ("-1", cpp_constants[0]->ValueString());
+  EXPECT_EQ("-1", cpp_constants[0]->ValueString(cpp::ConstantValueDecorator));
 }
 
 TEST_F(AidlTest, UnderstandsNestedParcelables) {
   io_delegate_.SetFileContents(
       "p/Outer.aidl",
       "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
-  import_paths_.push_back("");
+  import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; import p.Outer; interface IFoo"
                        " { Outer.Inner get(); }";
@@ -405,7 +514,7 @@ TEST_F(AidlTest, UnderstandsNativeParcelables) {
   io_delegate_.SetFileContents(
       "p/Bar.aidl",
       "package p; parcelable Bar cpp_header \"baz/header\";");
-  import_paths_.push_back("");
+  import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; import p.Bar; interface IFoo { }";
 
@@ -500,52 +609,96 @@ TEST_F(AidlTest, ApiDump) {
       "foo/bar/IFoo.aidl",
       "package foo.bar;\n"
       "import foo.bar.Data;\n"
+      "// comment\n"
       "interface IFoo {\n"
       "    int foo(out int[] a, String b, boolean c, inout List<String>  d);\n"
       "    int foo2(@utf8InCpp String x, inout List<String>  y);\n"
       "    IFoo foo3(IFoo foo);\n"
       "    Data getData();\n"
+      "    const int A = 1;\n"
+      "    const String STR = \"Hello\";\n"
       "}\n");
   io_delegate_.SetFileContents("foo/bar/Data.aidl",
                                "package foo.bar;\n"
                                "import foo.bar.IFoo;\n"
                                "parcelable Data {\n"
-                               "   int x;\n"
+                               "   int x = 10;\n"
                                "   int y;\n"
                                "   IFoo foo;\n"
                                "   List<IFoo> a;\n"
                                "   List<foo.bar.IFoo> b;\n"
+                               "   @nullable String[] c;\n"
                                "}\n");
   io_delegate_.SetFileContents("api.aidl", "");
-  vector<string> args = {
-    "aidl",
-    "--dumpapi",
-    "api.aidl",
-    "foo/bar/IFoo.aidl",
-    "foo/bar/Data.aidl"};
+  vector<string> args = {"aidl", "--dumpapi", "--out=dump", "foo/bar/IFoo.aidl",
+                         "foo/bar/Data.aidl"};
   Options options = Options::From(args);
   bool result = dump_api(options, io_delegate_);
   ASSERT_TRUE(result);
   string actual;
-  EXPECT_TRUE(io_delegate_.GetWrittenContents("api.aidl", &actual));
-  EXPECT_EQ(actual, R"(package foo.bar {
-  parcelable Data {
-    int x;
-    int y;
-    foo.bar.IFoo foo;
-    List<foo.bar.IFoo> a;
-    List<foo.bar.IFoo> b;
-  }
-
-  interface IFoo {
-    int foo(out int[] a, String b, boolean c, inout List<String> d);
-    int foo2(@utf8InCpp String x, inout List<String> y);
-    foo.bar.IFoo foo3(foo.bar.IFoo foo);
-    foo.bar.Data getData();
-  }
-
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/IFoo.aidl", &actual));
+  EXPECT_EQ(actual, R"(package foo.bar;
+interface IFoo {
+  int foo(out int[] a, String b, boolean c, inout List<String> d);
+  int foo2(@utf8InCpp String x, inout List<String> y);
+  foo.bar.IFoo foo3(foo.bar.IFoo foo);
+  foo.bar.Data getData();
+  const int A = 1;
+  const String STR = "Hello";
 }
 )");
+
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Data.aidl", &actual));
+  EXPECT_EQ(actual, R"(package foo.bar;
+parcelable Data {
+  int x = 10;
+  int y;
+  foo.bar.IFoo foo;
+  List<foo.bar.IFoo> a;
+  List<foo.bar.IFoo> b;
+  @nullable String[] c;
+}
+)");
+}
+
+TEST_F(AidlTest, ApiDumpWithManualIds) {
+  io_delegate_.SetFileContents(
+      "foo/bar/IFoo.aidl",
+      "package foo.bar;\n"
+      "interface IFoo {\n"
+      "    int foo() = 1;\n"
+      "    int bar() = 2;\n"
+      "    int baz() = 10;\n"
+      "}\n");
+
+  vector<string> args = {"aidl", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
+  Options options = Options::From(args);
+  bool result = dump_api(options, io_delegate_);
+  ASSERT_TRUE(result);
+  string actual;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/IFoo.aidl", &actual));
+  EXPECT_EQ(actual, R"(package foo.bar;
+interface IFoo {
+  int foo() = 1;
+  int bar() = 2;
+  int baz() = 10;
+}
+)");
+}
+
+TEST_F(AidlTest, ApiDumpWithManualIdsOnlyOnSomeMethods) {
+  io_delegate_.SetFileContents(
+      "foo/bar/IFoo.aidl",
+      "package foo.bar;\n"
+      "interface IFoo {\n"
+      "    int foo() = 1;\n"
+      "    int bar();\n"
+      "    int baz() = 10;\n"
+      "}\n");
+
+  vector<string> args = {"aidl", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
+  Options options = Options::From(args);
+  EXPECT_FALSE(dump_api(options, io_delegate_));
 }
 
 TEST_F(AidlTest, CheckNumGenericTypeSecifier) {
@@ -694,289 +847,430 @@ TEST_F(AidlTest, ConflictWithMetaTransactions) {
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
-TEST_F(AidlTest, RejectsApiDumpFileForCompilation) {
-  Options options = Options::From("aidl --lang=java -o out p/IFoo.aidl");
-  io_delegate_.SetFileContents(options.InputFiles().front(),
-                               "package p {"
-                               "interface IFoo { int getFoo(); }}");
-  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
-}
+TEST_F(AidlTest, DiffrentOrderAnnotationsInCheckAPI) {
+  Options options = Options::From("aidl --checkapi old new");
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p; interface IFoo{ @utf8InCpp @nullable String foo();}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p; interface IFoo{ @nullable @utf8InCpp String foo();}");
 
-TEST_F(AidlTest, RejectsSourceFileForApiCheck) {
-  Options options = Options::From("aidl --checkapi p/IFoo.aidl p/IBar.aidl");
-  io_delegate_.SetFileContents("p/IFoo.aidl", "package p; interface IFoo{}");
-  io_delegate_.SetFileContents("p/IBar.aidl", "package p; interface IBar{}");
-
-  EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
 }
 
 TEST_F(AidlTest, SuccessOnIdenticalApiDumps) {
-  Options options = Options::From("aidl --checkapi old.aidl new.aidl");
-  io_delegate_.SetFileContents("old.aidl", "package p {interface IFoo{}}");
-  io_delegate_.SetFileContents("new.aidl", "package p {interface IFoo{}}");
+  Options options = Options::From("aidl --checkapi old new");
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{ void foo();}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "package p; interface IFoo{ void foo();}");
 
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
 }
 
 TEST_F(AidlTest, SuccessOnCompatibleChanges) {
-  Options options = Options::From("aidl --checkapi old.aidl new.aidl");
-  io_delegate_.SetFileContents("old.aidl",
-                               "package p {"
+  Options options = Options::From("aidl --checkapi old new");
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(int a);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
-                               "}"
                                "}");
 
   // new type
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(int a);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/IBar.aidl",
+                               "package p;"
                                "interface IBar {"
                                "  void bar();"
-                               "}"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
+  io_delegate_.SetFileContents("new/p/IBar.aidl", "");
 
   // new method
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(int a);"
                                "  void bar();"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
-                               "}"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // new field
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(int a);"
-                               "  void bar();"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar;"
-                               "}"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // new package
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(int a);"
-                               "  void bar();"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
-                               "  int bar;"
-                               "}"
-                               "}"
-                               "package q {"
+                               "}");
+  io_delegate_.SetFileContents("new/q/IFoo.aidl",
+                               "package q;"
                                "interface IFoo {"
-                               "  void foo();"
-                               "  void bar();"
-                               "}"
+                               "  void foo(int a);"
+                               "}");
+  io_delegate_.SetFileContents("new/q/Data.aidl",
+                               "package q;"
                                "parcelable Data {"
                                "  int foo;"
-                               "  int bar;"
-                               "}"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
+  io_delegate_.SetFileContents("new/q/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/q/Data.aidl", "");
 
   // arg name change
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(int b);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
-                               "}"
                                "}");
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
+
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("old/p/Data.aidl", "");
+
+  // added const value
+  io_delegate_.SetFileContents("old/p/I.aidl",
+                               "package p; interface I {"
+                               "const int A = 1; }");
+  io_delegate_.SetFileContents("new/p/I.aidl",
+                               "package p ; interface I {"
+                               "const int A = 1; const int B = 2;}");
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("old/p/I.aidl", "");
+  io_delegate_.SetFileContents("new/p/I.aidl", "");
+
+  // changed const value order
+  io_delegate_.SetFileContents("old/p/I.aidl",
+                               "package p; interface I {"
+                               "const int A = 1; const int B = 2;}");
+  io_delegate_.SetFileContents("new/p/I.aidl",
+                               "package p ; interface I {"
+                               "const int B = 2; const int A = 1;}");
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
 }
 
 TEST_F(AidlTest, FailOnIncompatibleChanges) {
-  Options options = Options::From("aidl --checkapi old.aidl new.aidl");
-  io_delegate_.SetFileContents("old.aidl",
-                               "package p {"
+  Options options = Options::From("aidl --checkapi old new");
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar;"
-                               "}"
                                "}");
 
   // removed type
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
 
   // removed method
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(in String[] str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar;"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // removed field
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // renamed method
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar2(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar;"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // renamed field
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar2;"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // renamed type
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo2.aidl",
+                               "package p;"
                                "interface IFoo2 {"
                                "  void foo(in String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar;"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo2.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // reorderd method
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void bar(@utf8InCpp String str);"
                                "  void foo(in String[] str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar;"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // reorderd field
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
                                "  int bar;"
                                "  int foo;"
-                               "}"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // changed direction specifier
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
                                "  void foo(out String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
-                               "  int bar;"
                                "  int foo;"
-                               "}"
+                               "  int bar;"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // added annotation
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
-                               "  void foo(out @utf8InCpp String[] str);"
+                               "  void foo(in @utf8InCpp String[] str);"
                                "  void bar(@utf8InCpp String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
-                               "  int bar;"
                                "  int foo;"
-                               "}"
+                               "  int bar;"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // removed annotation
-  io_delegate_.SetFileContents("new.aidl",
-                               "package p {"
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
                                "interface IFoo {"
-                               "  void foo(out @utf8InCpp String[] str);"
+                               "  void foo(in String[] str);"
                                "  void bar(String str);"
-                               "}"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
                                "parcelable Data {"
-                               "  int bar;"
                                "  int foo;"
-                               "}"
+                               "  int bar;"
                                "}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/Data.aidl", "");
 
   // removed package
-  io_delegate_.SetFileContents("old.aidl",
-                               "package p { interface IFoo{}}"
-                               "package q { interface IFoo{}}");
-  io_delegate_.SetFileContents("new.aidl", "package p { interface IFoo{}}");
+  io_delegate_.SetFileContents("old/p/Data.aidl", "");
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{}");
+  io_delegate_.SetFileContents("old/q/IFoo.aidl", "package q; interface IFoo{}");
+
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "package p; interface IFoo{}");
   EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "");
+  io_delegate_.SetFileContents("old/q/IFoo.aidl", "");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+
+  // changed default value
+  io_delegate_.SetFileContents("old/p/D.aidl", "package p; parcelable D { int a = 1; }");
+  io_delegate_.SetFileContents("new/p/D.aidl", "package p; parcelable D { int a = 2; }");
+  EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("old/p/D.aidl", "");
+  io_delegate_.SetFileContents("new/p/D.aidl", "");
+
+  // removed const value
+  io_delegate_.SetFileContents("old/p/I.aidl",
+                               "package p; interface I {"
+                               "const int A = 1; const int B = 2;}");
+  io_delegate_.SetFileContents("new/p/I.aidl", "package p; interface I { const int A = 1; }");
+  EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("old/p/I.aidl", "");
+  io_delegate_.SetFileContents("new/p/I.aidl", "");
+
+  // changed const value
+  io_delegate_.SetFileContents("old/p/I.aidl", "package p; interface I { const int A = 1; }");
+  io_delegate_.SetFileContents("new/p/I.aidl", "package p; interface I { const int A = 2; }");
+  EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  io_delegate_.SetFileContents("old/p/I.aidl", "");
+  io_delegate_.SetFileContents("new/p/I.aidl", "");
+}
+
+TEST_F(AidlTest, RejectAmbiguousImports) {
+  Options options = Options::From("aidl --lang=java -o out -I dir1 -I dir2 p/IFoo.aidl");
+  io_delegate_.SetFileContents("p/IFoo.aidl", "package p; import q.IBar; interface IFoo{}");
+  io_delegate_.SetFileContents("dir1/q/IBar.aidl", "package q; interface IBar{}");
+  io_delegate_.SetFileContents("dir2/q/IBar.aidl", "package q; interface IBar{}");
+
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, HandleManualIdAssignments) {
+  Options options = Options::From("aidl --checkapi old new");
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{ void foo() = 10;}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "package p; interface IFoo{ void foo() = 10;}");
+
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "package p; interface IFoo{ void foo() = 11;}");
+  EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+}
+
+TEST_F(AidlTest, ParcelFileDescriptorIsBuiltinType) {
+  Options javaOptions = Options::From("aidl --lang=java -o out p/IFoo.aidl");
+  Options cppOptions = Options::From("aidl --lang=cpp -h out -o out p/IFoo.aidl");
+
+  // use without import
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p; interface IFoo{ void foo(in ParcelFileDescriptor fd);}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(javaOptions, io_delegate_));
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(cppOptions, io_delegate_));
+
+  // use without impot but with full name
+  io_delegate_.SetFileContents(
+      "p/IFoo.aidl",
+      "package p; interface IFoo{ void foo(in android.os.ParcelFileDescriptor fd);}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(javaOptions, io_delegate_));
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(cppOptions, io_delegate_));
+
+  // use with import (as before)
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p;"
+                               "import android.os.ParcelFileDescriptor;"
+                               "interface IFoo{"
+                               "  void foo(in ParcelFileDescriptor fd);"
+                               "}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(javaOptions, io_delegate_));
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(cppOptions, io_delegate_));
 }
 
 }  // namespace aidl

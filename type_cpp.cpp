@@ -25,14 +25,9 @@
 
 #include "logging.h"
 
-using std::cerr;
-using std::endl;
-using std::set;
 using std::string;
-using std::unique_ptr;
 using std::vector;
 
-using android::base::Split;
 using android::base::Join;
 using android::base::StringPrintf;
 
@@ -464,6 +459,22 @@ void TypeNamespace::Init() {
       {"android-base/unique_fd.h"}, "::android::base::unique_fd",
       "readUniqueFileDescriptor", "writeUniqueFileDescriptor",
       fd_vector_type));
+
+  Type* pfd_vector_type =
+      new CppArrayType(ValidatableType::KIND_BUILT_IN, "android.os", "ParcelFileDescriptor",
+                       "binder/ParcelFileDescriptor.h", "::android::os::ParcelFileDescriptor",
+                       "::android::os::ParcelFileDescriptor", "readParcelableVector",
+                       "writeParcelableVector", false);
+
+  Type* nullable_pfd_type =
+      new Type(ValidatableType::KIND_BUILT_IN, "android.os", "ParcelFileDescriptor",
+               {"memory", "binder/ParcelFileDescriptor.h"},
+               "::std::unique_ptr<::android::os::ParcelFileDescriptor>", "readParcelable",
+               "writeNullableParcelable");
+
+  Add(new Type(ValidatableType::KIND_BUILT_IN, "android.os", "ParcelFileDescriptor",
+               {"binder/ParcelFileDescriptor.h"}, "::android::os::ParcelFileDescriptor",
+               "readParcelable", "writeParcelable", pfd_vector_type, nullable_pfd_type));
 
   void_type_ = new class VoidType();
   Add(void_type_);

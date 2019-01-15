@@ -69,10 +69,11 @@ AidlError::AidlError(bool fatal) : os_(std::cerr), fatal_(fatal) {
 }
 
 static const string kNullable("nullable");
-static const string kUtf8("utf8");
 static const string kUtf8InCpp("utf8InCpp");
+static const string kUnsupportedAppUsage("UnsupportedAppUsage");
+static const string kSystemApi("SystemApi");
 
-static const set<string> kAnnotationNames{kNullable, kUtf8, kUtf8InCpp};
+static const set<string> kAnnotationNames{kNullable, kUtf8InCpp, kUnsupportedAppUsage, kSystemApi};
 
 AidlAnnotation* AidlAnnotation::Parse(const AidlLocation& location, const string& name) {
   if (kAnnotationNames.find(name) == kAnnotationNames.end()) {
@@ -92,18 +93,13 @@ AidlAnnotation* AidlAnnotation::Parse(const AidlLocation& location, const string
 AidlAnnotation::AidlAnnotation(const AidlLocation& location, const string& name)
     : AidlNode(location), name_(name) {}
 
-static bool HasAnnotation(const set<unique_ptr<AidlAnnotation>>& annotations, const string& name) {
+static bool HasAnnotation(const vector<AidlAnnotation>& annotations, const string& name) {
   for (const auto& a : annotations) {
-    if (a->GetName() == name) {
+    if (a.GetName() == name) {
       return true;
     }
   }
   return false;
-}
-
-bool operator==(const unique_ptr<AidlAnnotation>& lhs,
-                const unique_ptr<AidlAnnotation>& rhs) {
-  return lhs->GetName() == rhs->GetName();
 }
 
 AidlAnnotatable::AidlAnnotatable(const AidlLocation& location) : AidlNode(location) {}
@@ -112,18 +108,22 @@ bool AidlAnnotatable::IsNullable() const {
   return HasAnnotation(annotations_, kNullable);
 }
 
-bool AidlAnnotatable::IsUtf8() const {
-  return HasAnnotation(annotations_, kUtf8);
-}
-
 bool AidlAnnotatable::IsUtf8InCpp() const {
   return HasAnnotation(annotations_, kUtf8InCpp);
+}
+
+bool AidlAnnotatable::IsUnsupportedAppUsage() const {
+  return HasAnnotation(annotations_, kUnsupportedAppUsage);
+}
+
+bool AidlAnnotatable::IsSystemApi() const {
+  return HasAnnotation(annotations_, kSystemApi);
 }
 
 string AidlAnnotatable::ToString() const {
   vector<string> ret;
   for (const auto& a : annotations_) {
-    ret.emplace_back(a->ToString());
+    ret.emplace_back(a.ToString());
   }
   std::sort(ret.begin(), ret.end());
   return Join(ret, " ");
@@ -138,6 +138,14 @@ AidlTypeSpecifier::AidlTypeSpecifier(const AidlLocation& location, const string&
       is_array_(is_array),
       type_params_(type_params),
       comments_(comments) {}
+
+AidlTypeSpecifier AidlTypeSpecifier::ArrayBase() const {
+  AIDL_FATAL_IF(!is_array_, this);
+
+  AidlTypeSpecifier arrayBase = *this;
+  arrayBase.is_array_ = false;
+  return arrayBase;
+}
 
 string AidlTypeSpecifier::ToString() const {
   string ret = GetName();
@@ -172,25 +180,52 @@ bool AidlTypeSpecifier::Resolve(android::aidl::AidlTypenames& typenames) {
   return result.second;
 }
 
-bool AidlTypeSpecifier::CheckValid() const {
+bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
   if (IsGeneric()) {
     const string& type_name = GetName();
     const int num = GetTypeParameters().size();
     if (type_name == "List") {
       if (num > 1) {
-        cerr << " List cannot have type parameters more than one, but got "
-             << "'" << ToString() << "'" << endl;
+        AIDL_ERROR(this) << " List cannot have type parameters more than one, but got "
+                         << "'" << ToString() << "'";
         return false;
       }
     } else if (type_name == "Map") {
       if (num != 0 && num != 2) {
-        cerr << "Map must have 0 or 2 type parameters, but got "
-             << "'" << ToString() << "'" << endl;
+        AIDL_ERROR(this) << "Map must have 0 or 2 type parameters, but got "
+                         << "'" << ToString() << "'";
         return false;
       }
     }
   }
+
+  if (GetName() == "void") {
+    if (IsArray() || IsNullable() || IsUtf8InCpp()) {
+      AIDL_ERROR(this) << "void type cannot be an array or nullable or utf8 string";
+      return false;
+    }
+  }
+
+  if (IsArray()) {
+    const auto definedType = typenames.TryGetDefinedType(GetName());
+    if (definedType != nullptr && definedType->AsInterface() != nullptr) {
+      AIDL_ERROR(this) << "Binder type cannot be an array";
+      return false;
+    }
+  }
+
+  if (IsNullable()) {
+    if (AidlTypenames::IsPrimitiveTypename(GetName()) && !IsArray()) {
+      AIDL_ERROR(this) << "Primitive type cannot get nullable annotation";
+      return false;
+    }
+  }
   return true;
+}
+
+std::string AidlConstantValueDecorator(const AidlTypeSpecifier& /*type*/,
+                                       const std::string& raw_value) {
+  return raw_value;
 }
 
 AidlVariableDeclaration::AidlVariableDeclaration(const AidlLocation& location,
@@ -202,22 +237,22 @@ AidlVariableDeclaration::AidlVariableDeclaration(const AidlLocation& location,
                                                  AidlConstantValue* default_value)
     : AidlNode(location), type_(type), name_(name), default_value_(default_value) {}
 
-bool AidlVariableDeclaration::CheckValid() const {
+bool AidlVariableDeclaration::CheckValid(const AidlTypenames& typenames) const {
   bool valid = true;
-  valid &= type_->CheckValid();
+  valid &= type_->CheckValid(typenames);
 
-  if (default_value_ == nullptr) return true;
+  if (default_value_ == nullptr) return valid;
   valid &= default_value_->CheckValid();
 
   if (!valid) return false;
 
-  return !ValueString().empty();
+  return !ValueString(AidlConstantValueDecorator).empty();
 }
 
 string AidlVariableDeclaration::ToString() const {
-  string ret = type_->ToString() + " " + name_;
+  string ret = type_->Signature() + " " + name_;
   if (default_value_ != nullptr) {
-    ret += " = " + ValueString();
+    ret += " = " + ValueString(AidlConstantValueDecorator);
   }
   return ret;
 }
@@ -226,8 +261,12 @@ string AidlVariableDeclaration::Signature() const {
   return type_->Signature() + " " + name_;
 }
 
-std::string AidlVariableDeclaration::ValueString() const {
-  return GetDefaultValue()->As(GetType());
+std::string AidlVariableDeclaration::ValueString(const ConstantValueDecorator& decorator) const {
+  if (default_value_ != nullptr) {
+    return GetDefaultValue()->As(GetType(), decorator);
+  } else {
+    return "";
+  }
 }
 
 AidlArgument::AidlArgument(const AidlLocation& location, AidlArgument::Direction direction,
@@ -280,7 +319,12 @@ AidlConstantValue::AidlConstantValue(const AidlLocation& location, Type type,
                                      const std::string& checked_value)
     : AidlNode(location), type_(type), value_(checked_value) {
   CHECK(!value_.empty() || type_ == Type::ERROR);
+  CHECK(type_ != Type::ARRAY);
 }
+
+AidlConstantValue::AidlConstantValue(const AidlLocation& location, Type type,
+                                     std::vector<std::unique_ptr<AidlConstantValue>>* values)
+    : AidlNode(location), type_(type), values_(std::move(*values)) {}
 
 static bool isValidLiteralChar(char c) {
   return !(c <= 0x1f ||  // control characters are < 0x20
@@ -314,6 +358,11 @@ AidlConstantValue* AidlConstantValue::Integral(const AidlLocation& location,
   return new AidlConstantValue(location, Type::INTEGRAL, value);
 }
 
+AidlConstantValue* AidlConstantValue::Array(
+    const AidlLocation& location, std::vector<std::unique_ptr<AidlConstantValue>>* values) {
+  return new AidlConstantValue(location, Type::ARRAY, values);
+}
+
 AidlConstantValue* AidlConstantValue::String(const AidlLocation& location,
                                              const std::string& value) {
   for (size_t i = 0; i < value.length(); ++i) {
@@ -340,15 +389,43 @@ static string TrimIfSuffix(const string& str, const string& suffix) {
   return str;
 }
 
-string AidlConstantValue::As(const AidlTypeSpecifier& type) const {
-  const std::string type_string = type.ToString();
+string AidlConstantValue::As(const AidlTypeSpecifier& type,
+                             const ConstantValueDecorator& decorator) const {
+  if (type.IsGeneric()) {
+    AIDL_ERROR(type) << "Generic type cannot be specified with a constant literal.";
+    return "";
+  }
+
+  const std::string& type_string = type.GetName();
+
+  if ((type_ == Type::ARRAY) != type.IsArray()) {
+    goto mismatch_error;
+  }
 
   switch (type_) {
+    case AidlConstantValue::Type::ARRAY: {
+      vector<string> raw_values;
+      raw_values.reserve(values_.size());
+
+      bool success = true;
+      for (const auto& value : values_) {
+        const AidlTypeSpecifier& array_base = type.ArrayBase();
+        const std::string raw_value = value->As(array_base, decorator);
+
+        success &= !raw_value.empty();
+        raw_values.push_back(decorator(array_base, raw_value));
+      }
+      if (!success) {
+        AIDL_ERROR(this) << "Default value must be a literal array of " << type_string << ".";
+        return "";
+      }
+      return decorator(type, "{" + Join(raw_values, ", ") + "}");
+    }
     case AidlConstantValue::Type::BOOLEAN:
-      if (type_string == "boolean") return value_;
+      if (type_string == "boolean") return decorator(type, value_);
       goto mismatch_error;
     case AidlConstantValue::Type::CHARACTER:
-      if (type_string == "char") return value_;
+      if (type_string == "char") return decorator(type, value_);
       goto mismatch_error;
     case AidlConstantValue::Type::FLOATING: {
       bool is_float_literal = value_.back() == 'f';
@@ -357,12 +434,12 @@ string AidlConstantValue::As(const AidlTypeSpecifier& type) const {
       if (type_string == "double") {
         double parsed_value;
         if (!android::base::ParseDouble(raw_value, &parsed_value)) goto parse_error;
-        return std::to_string(parsed_value);
+        return decorator(type, std::to_string(parsed_value));
       }
       if (is_float_literal && type_string == "float") {
         float parsed_value;
         if (!android::base::ParseFloat(raw_value, &parsed_value)) goto parse_error;
-        return std::to_string(parsed_value) + "f";
+        return decorator(type, std::to_string(parsed_value) + "f");
       }
       goto mismatch_error;
     }
@@ -372,42 +449,42 @@ string AidlConstantValue::As(const AidlTypeSpecifier& type) const {
       if (type_string == "byte") {
         uint8_t unsigned_value;
         if (!android::base::ParseUint<uint8_t>(value_, &unsigned_value)) goto parse_error;
-        return std::to_string((int8_t)unsigned_value);
+        return decorator(type, std::to_string((int8_t)unsigned_value));
       }
       if (type_string == "int") {
         uint32_t unsigned_value;
         if (!android::base::ParseUint<uint32_t>(value_, &unsigned_value)) goto parse_error;
-        return std::to_string((int32_t)unsigned_value);
+        return decorator(type, std::to_string((int32_t)unsigned_value));
       }
       if (type_string == "long") {
         uint64_t unsigned_value;
         if (!android::base::ParseUint<uint64_t>(value_, &unsigned_value)) goto parse_error;
-        return std::to_string((int64_t)unsigned_value);
+        return decorator(type, std::to_string((int64_t)unsigned_value));
       }
       goto mismatch_error;
     case AidlConstantValue::Type::INTEGRAL:
       if (type_string == "byte") {
         if (!android::base::ParseInt<int8_t>(value_, nullptr)) goto parse_error;
-        return value_;
+        return decorator(type, value_);
       }
       if (type_string == "int") {
         if (!android::base::ParseInt<int32_t>(value_, nullptr)) goto parse_error;
-        return value_;
+        return decorator(type, value_);
       }
       if (type_string == "long") {
         if (!android::base::ParseInt<int64_t>(value_, nullptr)) goto parse_error;
-        return value_;
+        return decorator(type, value_);
       }
       goto mismatch_error;
     case AidlConstantValue::Type::STRING:
-      if (type_string == "String") return value_;
+      if (type_string == "String") return decorator(type, value_);
       goto mismatch_error;
     default:
       AIDL_FATAL(this) << "Unrecognized constant value type";
   }
 
 mismatch_error:
-  AIDL_ERROR(this) << "Type is declared " << type_string << " but constant is " << ToString(type_);
+  AIDL_ERROR(this) << "Expecting type " << type_string << " but constant is " << ToString(type_);
   return "";
 parse_error:
   AIDL_ERROR(this) << "Could not parse " << value_ << " as " << type_string;
@@ -416,6 +493,8 @@ parse_error:
 
 string AidlConstantValue::ToString(Type type) {
   switch (type) {
+    case Type::ARRAY:
+      return "a literal array";
     case Type::BOOLEAN:
       return "a literal boolean";
     case Type::CHARACTER:
@@ -430,6 +509,7 @@ string AidlConstantValue::ToString(Type type) {
       return "a literal string";
     case Type::ERROR:
       LOG(FATAL) << "aidl internal error: error type failed to halt program";
+      return "";
     default:
       LOG(FATAL) << "aidl internal error: unknown constant type: " << static_cast<int>(type);
       return "";  // not reached
@@ -441,9 +521,9 @@ AidlConstantDeclaration::AidlConstantDeclaration(const AidlLocation& location,
                                                  AidlConstantValue* value)
     : AidlMember(location), type_(type), name_(name), value_(value) {}
 
-bool AidlConstantDeclaration::CheckValid() const {
+bool AidlConstantDeclaration::CheckValid(const AidlTypenames& typenames) const {
   bool valid = true;
-  valid &= type_->CheckValid();
+  valid &= type_->CheckValid(typenames);
   valid &= value_->CheckValid();
   if (!valid) return false;
 
@@ -453,7 +533,16 @@ bool AidlConstantDeclaration::CheckValid() const {
     return false;
   }
 
-  return !ValueString().empty();
+  return !ValueString(AidlConstantValueDecorator).empty();
+}
+
+string AidlConstantDeclaration::ToString() const {
+  return "const " + type_->ToString() + " " + name_ + " = " +
+         ValueString(AidlConstantValueDecorator);
+}
+
+string AidlConstantDeclaration::Signature() const {
+  return type_->Signature() + " " + name_;
 }
 
 AidlMethod::AidlMethod(const AidlLocation& location, bool oneway, AidlTypeSpecifier* type,
@@ -496,7 +585,12 @@ string AidlMethod::ToString() const {
   for (const auto& arg : GetArguments()) {
     arg_strings.emplace_back(arg->Signature());
   }
-  return GetType().Signature() + " " + GetName() + "(" + Join(arg_strings, ", ") + ")";
+  string ret = (IsOneway() ? "oneway " : "") + GetType().Signature() + " " + GetName() + "(" +
+               Join(arg_strings, ", ") + ")";
+  if (HasId()) {
+    ret += " = " + std::to_string(GetId());
+  }
+  return ret;
 }
 
 AidlDefinedType::AidlDefinedType(const AidlLocation& location, const std::string& name,
@@ -516,9 +610,9 @@ std::string AidlDefinedType::GetCanonicalName() const {
 }
 
 AidlParcelable::AidlParcelable(const AidlLocation& location, AidlQualifiedName* name,
-                               const std::vector<std::string>& package,
+                               const std::vector<std::string>& package, const std::string& comments,
                                const std::string& cpp_header)
-    : AidlDefinedType(location, name->GetDotName(), "" /*comments*/, package),
+    : AidlDefinedType(location, name->GetDotName(), comments, package),
       name_(name),
       cpp_header_(cpp_header) {
   // Strip off quotation marks if we actually have a cpp header.
@@ -533,25 +627,35 @@ void AidlParcelable::Write(CodeWriter* writer) const {
 
 AidlStructuredParcelable::AidlStructuredParcelable(
     const AidlLocation& location, AidlQualifiedName* name, const std::vector<std::string>& package,
-    std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables)
-    : AidlParcelable(location, name, package, "" /*cpp_header*/),
+    const std::string& comments, std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables)
+    : AidlParcelable(location, name, package, comments, "" /*cpp_header*/),
       variables_(std::move(*variables)) {}
 
 void AidlStructuredParcelable::Write(CodeWriter* writer) const {
   writer->Write("parcelable %s {\n", GetName().c_str());
   writer->Indent();
   for (const auto& field : GetFields()) {
-    writer->Write("%s;\n", field->Signature().c_str());
+    writer->Write("%s;\n", field->ToString().c_str());
   }
   writer->Dedent();
   writer->Write("}\n");
+}
+
+bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
+  for (const auto& v : GetFields()) {
+    if (!(v->CheckValid(typenames))) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 AidlInterface::AidlInterface(const AidlLocation& location, const std::string& name,
                              const std::string& comments, bool oneway,
                              std::vector<std::unique_ptr<AidlMember>>* members,
                              const std::vector<std::string>& package)
-    : AidlDefinedType(location, name, comments, package), oneway_(oneway) {
+    : AidlDefinedType(location, name, comments, package) {
   for (auto& member : *members) {
     AidlMember* local = member.release();
     AidlMethod* method = local->AsMethod();
@@ -560,6 +664,7 @@ AidlInterface::AidlInterface(const AidlLocation& location, const std::string& na
     CHECK(method == nullptr || constant == nullptr);
 
     if (method) {
+      method->ApplyInterfaceOneway(oneway);
       methods_.emplace_back(method);
     } else if (constant) {
       constants_.emplace_back(constant);
@@ -577,8 +682,77 @@ void AidlInterface::Write(CodeWriter* writer) const {
   for (const auto& method : GetMethods()) {
     writer->Write("%s;\n", method->ToString().c_str());
   }
+  for (const auto& constdecl : GetConstantDeclarations()) {
+    writer->Write("%s;\n", constdecl->ToString().c_str());
+  }
   writer->Dedent();
   writer->Write("}\n");
+}
+
+bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
+  // Has to be a pointer due to deleting copy constructor. No idea why.
+  map<string, const AidlMethod*> method_names;
+  for (const auto& m : GetMethods()) {
+    if (!m->GetType().CheckValid(typenames)) {
+      return false;
+    }
+
+    if (m->IsOneway() && m->GetType().GetName() != "void") {
+      AIDL_ERROR(m) << "oneway method '" << m->GetName() << "' cannot return a value";
+      return false;
+    }
+
+    set<string> argument_names;
+    for (const auto& arg : m->GetArguments()) {
+      auto it = argument_names.find(arg->GetName());
+      if (it != argument_names.end()) {
+        AIDL_ERROR(m) << "method '" << m->GetName() << "' has duplicate argument name '"
+                      << arg->GetName() << "'";
+        return false;
+      }
+      argument_names.insert(arg->GetName());
+
+      if (!arg->GetType().CheckValid(typenames)) {
+        return false;
+      }
+
+      if (m->IsOneway() && arg->IsOut()) {
+        AIDL_ERROR(m) << "oneway method '" << m->GetName() << "' cannot have out parameters";
+        return false;
+      }
+    }
+
+    auto it = method_names.find(m->GetName());
+    // prevent duplicate methods
+    if (it == method_names.end()) {
+      method_names[m->GetName()] = m.get();
+    } else {
+      AIDL_ERROR(m) << "attempt to redefine method " << m->GetName() << ":";
+      AIDL_ERROR(it->second) << "previously defined here.";
+      return false;
+    }
+
+    static set<string> reserved_methods{"asBinder()", "getInterfaceVersion()",
+                                        "getTransactionName(int)"};
+
+    if (reserved_methods.find(m->Signature()) != reserved_methods.end()) {
+      AIDL_ERROR(m) << " method " << m->Signature() << " is reserved for internal use." << endl;
+      return false;
+    }
+  }
+
+  bool success = true;
+  set<string> constant_names;
+  for (const std::unique_ptr<AidlConstantDeclaration>& constant : GetConstantDeclarations()) {
+    if (constant_names.count(constant->GetName()) > 0) {
+      LOG(ERROR) << "Found duplicate constant name '" << constant->GetName() << "'";
+      success = false;
+    }
+    constant_names.insert(constant->GetName());
+    success = success && constant->CheckValid(typenames);
+  }
+
+  return success;
 }
 
 AidlQualifiedName::AidlQualifiedName(const AidlLocation& location, const std::string& term,

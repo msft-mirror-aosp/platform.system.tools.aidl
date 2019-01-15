@@ -67,8 +67,9 @@ using android::aidl::tests::BnNamedCallback;
 using android::aidl::tests::BnTestService;
 using android::aidl::tests::INamedCallback;
 using android::aidl::tests::SimpleParcelable;
-using android::os::PersistableBundle;
 using android::binder::Map;
+using android::os::ParcelFileDescriptor;
+using android::os::PersistableBundle;
 
 // Standard library
 using std::map;
@@ -315,6 +316,27 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
+  Status RepeatParcelFileDescriptor(const ParcelFileDescriptor& read,
+                                    ParcelFileDescriptor* _aidl_return) override {
+    ALOGE("Repeating parcel file descriptor");
+    _aidl_return->reset(unique_fd(dup(read.get())));
+    return Status::ok();
+  }
+
+  Status ReverseParcelFileDescriptorArray(const vector<ParcelFileDescriptor>& input,
+                                          vector<ParcelFileDescriptor>* repeated,
+                                          vector<ParcelFileDescriptor>* _aidl_return) override {
+    ALOGI("Reversing parcel descriptor array of length %zu", input.size());
+    for (const auto& item : input) {
+      repeated->push_back(ParcelFileDescriptor(unique_fd(dup(item.get()))));
+    }
+
+    for (auto i = input.rbegin(); i != input.rend(); i++) {
+      _aidl_return->push_back(ParcelFileDescriptor(unique_fd(dup(i->get()))));
+    }
+    return Status::ok();
+  }
+
   Status ThrowServiceException(int code) override {
     return Status::fromServiceSpecificError(code);
   }
@@ -451,7 +473,7 @@ class NativeService : public BnTestService {
 
   android::status_t onTransact(uint32_t code, const Parcel& data, Parcel* reply,
                                uint32_t flags) override {
-    if (code == Call::UNIMPLEMENTEDMETHOD) {
+    if (code == ::android::IBinder::FIRST_CALL_TRANSACTION + 45 /* UnimplementedMethod */) {
       // pretend that UnimplementedMethod isn't implemented by this service.
       return android::UNKNOWN_TRANSACTION;
     } else {
