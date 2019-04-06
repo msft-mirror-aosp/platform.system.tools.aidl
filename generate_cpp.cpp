@@ -225,21 +225,38 @@ string BuildHeaderGuard(const AidlDefinedType& defined_type, ClassNames header_t
   return ret;
 }
 
+void WriteLogForArguments(CodeWriterPtr& writer, const AidlArgument& a, const TypeNamespace& types,
+                          bool isServer, string logVarName) {
+  if (!CanWriteLog(a.GetType())) {
+    return;
+  }
+  string logElementVarName = "_log_arg_element";
+  (*writer) << "{\n";
+  (*writer).Indent();
+  (*writer) << "Json::Value " << logElementVarName << "(Json::objectValue);\n";
+  string varName = isServer ? BuildVarName(a) : a.GetName();
+  (*writer) << logElementVarName << "[\"name\"] = \"" << varName << "\";\n";
+
+  bool isPointer = a.IsOut() && !isServer;
+  WriteLogFor({*(writer.get()), types.typenames_, a.GetType(), varName, isPointer,
+               logElementVarName + "[\"value\"]"});
+  (*writer) << logVarName << ".append(" << logElementVarName << ");\n";
+  (*writer) << "}\n";
+  (*writer).Dedent();
+}
+
 const string GenLogBeforeExecute(const string className, const AidlMethod& method,
                                  const TypeNamespace& types, bool isServer) {
   string code;
   CodeWriterPtr writer = CodeWriter::ForString(&code);
-  (*writer) << "Json::Value _log_input_args(Json::objectValue);\n";
+  (*writer) << "Json::Value _log_input_args(Json::arrayValue);\n";
 
   (*writer) << "if (" << className << "::logFunc != nullptr) {\n";
   (*writer).Indent();
 
   for (const auto& a : method.GetArguments()) {
     if (a->IsIn()) {
-      string varName = isServer ? BuildVarName(*a) : a->GetName();
-      bool isPointer = a->IsOut() && !isServer;
-      WriteLogFor(
-          {*(writer.get()), types.typenames_, a->GetType(), varName, isPointer, "_log_input_args"});
+      WriteLogForArguments(writer, *a, types, isServer, "_log_input_args");
     }
   }
 
@@ -277,14 +294,14 @@ const string GenLogAfterExecute(const string className, const AidlInterface& int
   //   interface_name: "foo.bar.IFoo",
   //   method_name: "TestMethod",
   //   (proxy|stub)_address: "0x12345678",
-  //   input_args: {
-  //     arg1: 30,
-  //     arg2: ["apple", "grape"],
-  //   },
-  //   output_args: {
-  //     arg2: ["mango", "banana"],
-  //     arg3: "10.5",
-  //   },
+  //   input_args: [
+  //     {name: "arg1", value: 30,},
+  //     {name: "arg2", value: ["apple", "grape"],},
+  //   ],
+  //   output_args: [
+  //     {name: "arg2", value: ["mango", "banana"],},
+  //     {name: "arg3", value: "10.5",},
+  //   ],
   //   _aidl_return: "ok",
   //   binder_status: {
   //     exception_code: -8,
@@ -306,7 +323,7 @@ const string GenLogAfterExecute(const string className, const AidlInterface& int
   (*writer) << "_log_transaction[\"" << (isServer ? "stub_address" : "proxy_address") << "\"] = "
             << "Json::Value(android::base::StringPrintf(\"0x%%p\", this));\n";
   (*writer) << "_log_transaction[\"input_args\"] = _log_input_args;\n";
-  (*writer) << "Json::Value _log_output_args(Json::objectValue);\n";
+  (*writer) << "Json::Value _log_output_args(Json::arrayValue);\n";
 
   (*writer) << "Json::Value _log_status(Json::objectValue);\n";
   (*writer) << "_log_status[\"exception_code\"] = Json::Value(" << statusVarName
@@ -321,17 +338,14 @@ const string GenLogAfterExecute(const string className, const AidlInterface& int
   (*writer) << "_log_transaction[\"binder_status\"] = _log_status;\n";
 
   for (const auto& a : method.GetOutArguments()) {
-    string varName = isServer ? BuildVarName(*a) : a->GetName();
-    bool isPointer = !isServer;
-    WriteLogFor(
-        {*(writer.get()), types.typenames_, a->GetType(), varName, isPointer, "_log_output_args"});
+    WriteLogForArguments(writer, *a, types, isServer, "_log_output_args");
   }
 
   (*writer) << "_log_transaction[\"output_args\"] = _log_output_args;\n";
 
   if (method.GetType().GetName() != "void") {
     WriteLogFor({*(writer.get()), types.typenames_, method.GetType(), returnVarName, !isServer,
-                 "_log_transaction"});
+                 "_log_transaction[\"" + returnVarName + "\"]"});
   }
 
   // call the user-provided function with the Json object for the entire
@@ -830,7 +844,7 @@ unique_ptr<Document> BuildServerSource(const TypeNamespace& types, const AidlInt
 unique_ptr<Document> BuildInterfaceSource(const TypeNamespace& types,
                                           const AidlInterface& interface, const Options& options) {
   vector<string> include_list{
-      HeaderFile(interface, ClassNames::INTERFACE, false),
+      HeaderFile(interface, ClassNames::RAW, false),
       HeaderFile(interface, ClassNames::CLIENT, false),
   };
 
@@ -907,7 +921,7 @@ unique_ptr<Document> BuildClientHeader(const TypeNamespace& types, const AidlInt
   const string bp_name = ClassName(interface, ClassNames::CLIENT);
 
   vector<string> includes = {kIBinderHeader, kIInterfaceHeader, "utils/Errors.h",
-                          HeaderFile(interface, ClassNames::INTERFACE, false)};
+                             HeaderFile(interface, ClassNames::RAW, false)};
 
   unique_ptr<ConstructorDecl> constructor{new ConstructorDecl{
       bp_name,
@@ -972,8 +986,7 @@ unique_ptr<Document> BuildServerHeader(const TypeNamespace& /* types */,
                StringPrintf("uint32_t %s", kFlagsVarName)}},
       MethodDecl::IS_OVERRIDE
   }};
-  vector<string> includes = {"binder/IInterface.h",
-                             HeaderFile(interface, ClassNames::INTERFACE, false)};
+  vector<string> includes = {"binder/IInterface.h", HeaderFile(interface, ClassNames::RAW, false)};
 
   vector<unique_ptr<Declaration>> publics;
   publics.push_back(std::move(on_transact));
@@ -1219,6 +1232,7 @@ bool WriteHeader(const Options& options, const TypeNamespace& types, const AidlI
   switch (header_type) {
     case ClassNames::INTERFACE:
       header = BuildInterfaceHeader(types, interface, options);
+      header_type = ClassNames::RAW;
       break;
     case ClassNames::CLIENT:
       header = BuildClientHeader(types, interface, options);
@@ -1293,7 +1307,7 @@ bool GenerateCppParcel(const string& output_file, const Options& options,
     return false;
   }
 
-  const string header_path = options.OutputHeaderDir() + HeaderFile(parcelable, ClassNames::BASE);
+  const string header_path = options.OutputHeaderDir() + HeaderFile(parcelable, ClassNames::RAW);
   unique_ptr<CodeWriter> header_writer(io_delegate.GetCodeWriter(header_path));
   header->Write(header_writer.get());
   CHECK(header_writer->Close());
