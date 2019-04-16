@@ -57,6 +57,7 @@ cc_library_static {
         "generate_ndk.cpp",
         "generate_java.cpp",
         "generate_java_binder.cpp",
+        "generate_aidl_mappings.cpp",
         "import_resolver.cpp",
         "line_reader.cpp",
         "io_delegate.cpp",
@@ -65,6 +66,10 @@ cc_library_static {
         "type_java.cpp",
         "type_namespace.cpp",
     ],
+    yacc: {
+        gen_location_hh: true,
+        gen_position_hh: true,
+    },
 }
 
 // aidl executable
@@ -239,7 +244,7 @@ aidl_interface {
     name: "aidl_test_loggable_interface",
     local_include_dir: "tests",
     srcs: [
-        "tests/android/aidl/loggable/LoggableInterface.aidl",
+        "tests/android/aidl/loggable/ILoggableInterface.aidl",
     ],
     backend: {
         cpp: {

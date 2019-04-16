@@ -36,13 +36,13 @@ namespace android {
 namespace aidl {
 namespace java {
 
-bool generate_java_interface(const string& filename, const string& original_src,
-                             const AidlInterface* iface, JavaTypeNamespace* types,
-                             const IoDelegate& io_delegate, const Options& options) {
+bool generate_java_interface(const string& filename, const AidlInterface* iface,
+                             JavaTypeNamespace* types, const IoDelegate& io_delegate,
+                             const Options& options) {
   Class* cl = generate_binder_interface_class(iface, types, options);
 
   Document* document =
-      new Document("" /* no comment */, iface->GetPackage(), original_src, unique_ptr<Class>(cl));
+      new Document("" /* no comment */, iface->GetPackage(), unique_ptr<Class>(cl));
 
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
   document->Write(code_writer.get());
@@ -50,13 +50,12 @@ bool generate_java_interface(const string& filename, const string& original_src,
   return true;
 }
 
-bool generate_java_parcel(const std::string& filename, const std::string& original_src,
-                          const AidlStructuredParcelable* parcel, JavaTypeNamespace* types,
-                          const IoDelegate& io_delegate, const Options& options) {
-  Class* cl = generate_parcel_class(parcel, types, options);
+bool generate_java_parcel(const std::string& filename, const AidlStructuredParcelable* parcel,
+                          AidlTypenames& typenames, const IoDelegate& io_delegate) {
+  Class* cl = generate_parcel_class(parcel, typenames);
 
   Document* document =
-      new Document("" /* no comment */, parcel->GetPackage(), original_src, unique_ptr<Class>(cl));
+      new Document("" /* no comment */, parcel->GetPackage(), unique_ptr<Class>(cl));
 
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
   document->Write(code_writer.get());
@@ -72,12 +71,12 @@ bool generate_java_parcel_declaration(const std::string& filename, const IoDeleg
   return true;
 }
 
-bool generate_java(const std::string& filename, const std::string& original_src,
-                   const AidlDefinedType* defined_type, JavaTypeNamespace* types,
-                   const IoDelegate& io_delegate, const Options& options) {
+bool generate_java(const std::string& filename, const AidlDefinedType* defined_type,
+                   JavaTypeNamespace* types, const IoDelegate& io_delegate,
+                   const Options& options) {
   const AidlStructuredParcelable* parcelable = defined_type->AsStructuredParcelable();
   if (parcelable != nullptr) {
-    return generate_java_parcel(filename, original_src, parcelable, types, io_delegate, options);
+    return generate_java_parcel(filename, parcelable, types->typenames_, io_delegate);
   }
 
   const AidlParcelable* parcelable_decl = defined_type->AsParcelable();
@@ -87,7 +86,7 @@ bool generate_java(const std::string& filename, const std::string& original_src,
 
   const AidlInterface* interface = defined_type->AsInterface();
   if (interface != nullptr) {
-    return generate_java_interface(filename, original_src, interface, types, io_delegate, options);
+    return generate_java_interface(filename, interface, types, io_delegate, options);
   }
 
   CHECK(false) << "Unrecognized type sent for cpp generation.";
@@ -95,16 +94,13 @@ bool generate_java(const std::string& filename, const std::string& original_src,
 }
 
 android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable* parcel,
-                                                  java::JavaTypeNamespace* types,
-                                                  const Options& /*options*/) {
-  const ParcelType* parcelType = parcel->GetLanguageType<ParcelType>();
-
+                                                  AidlTypenames& typenames) {
   Class* parcel_class = new Class;
   parcel_class->comment = parcel->GetComments();
   parcel_class->modifiers = PUBLIC;
   parcel_class->what = Class::CLASS;
-  parcel_class->type = parcelType;
-  parcel_class->interfaces.push_back(types->ParcelableInterfaceType());
+  parcel_class->type = parcel->GetCanonicalName();
+  parcel_class->interfaces.push_back("android.os.Parcelable");
   parcel_class->annotations = generate_java_annotations(*parcel);
 
   for (const auto& variable : parcel->GetFields()) {
@@ -146,7 +142,7 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
 
   Method* write_method = new Method;
   write_method->modifiers = PUBLIC | OVERRIDE | FINAL;
-  write_method->returnType = new Type(types, "void", 0, false);
+  write_method->returnType = "void";
   write_method->name = "writeToParcel";
   write_method->parameters.push_back(parcel_variable);
   write_method->parameters.push_back(flag_variable);
@@ -162,7 +158,7 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
     CodeWriterPtr writer = CodeWriter::ForString(&code);
     CodeGeneratorContext context{
         .writer = *(writer.get()),
-        .typenames = types->typenames_,
+        .typenames = typenames,
         .type = field->GetType(),
         .var = field->GetName(),
         .parcel = parcel_variable->name,
@@ -185,7 +181,7 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
 
   Method* read_method = new Method;
   read_method->modifiers = PUBLIC | FINAL;
-  read_method->returnType = new Type(types, "void", 0, false);
+  read_method->returnType = "void";
   read_method->name = "readFromParcel";
   read_method->parameters.push_back(parcel_variable);
   read_method->statements = new StatementBlock();
@@ -210,7 +206,7 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
     CodeWriterPtr writer = CodeWriter::ForString(&code);
     CodeGeneratorContext context{
         .writer = *(writer.get()),
-        .typenames = types->typenames_,
+        .typenames = typenames,
         .type = field->GetType(),
         .var = field->GetName(),
         .parcel = parcel_variable->name,
@@ -235,7 +231,7 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
 
   Method* describe_contents_method = new Method;
   describe_contents_method->modifiers = PUBLIC | OVERRIDE;
-  describe_contents_method->returnType = types->IntType();
+  describe_contents_method->returnType = "int";
   describe_contents_method->name = "describeContents";
   describe_contents_method->statements = new StatementBlock();
   describe_contents_method->statements->Add(new LiteralStatement("return 0;\n"));

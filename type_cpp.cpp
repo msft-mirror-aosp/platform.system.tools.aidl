@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include <android-base/stringprintf.h>
@@ -46,7 +47,7 @@ class VoidType : public Type {
  public:
   VoidType() : Type(ValidatableType::KIND_BUILT_IN, kNoPackage, "void",
                     {}, "void", kNoValidMethod, kNoValidMethod) {}
-  virtual ~VoidType() = default;
+  ~VoidType() override = default;
   bool CanWriteToParcel() const override { return false; }
 };  // class VoidType
 
@@ -116,7 +117,7 @@ class PrimitiveType : public Type {
                               read_array_method, write_array_method,
                               false)) {}
 
-  virtual ~PrimitiveType() = default;
+  ~PrimitiveType() override = default;
   bool IsCppPrimitive() const override { return true; }
 
  private:
@@ -136,7 +137,7 @@ class ByteType : public Type {
                               "readByteVector", "writeByteVector",
                               false)) {}
 
-  virtual ~ByteType() = default;
+  ~ByteType() override = default;
   bool IsCppPrimitive() const override { return true; }
 
  private:
@@ -156,7 +157,7 @@ class BinderType : public Type {
                    new BinderType(interface, src_file_name, kNoNullableType,
                                   "readNullableStrongBinder"),
                    "readStrongBinder") {}
-  virtual ~BinderType() = default;
+  ~BinderType() override = default;
 
   string WriteCast(const string& val) const override {
     return write_cast_ + "(" + val + ")";
@@ -197,7 +198,7 @@ class NullableParcelableType : public Type {
       : Type(ValidatableType::KIND_PARCELABLE, parcelable.GetPackage(), parcelable.GetName(),
              {cpp_header}, GetCppName(parcelable), "readParcelable", "writeNullableParcelable",
              kNoArrayType, kNoNullableType, src_file_name) {}
-  virtual ~NullableParcelableType() = default;
+  ~NullableParcelableType() override = default;
 
  private:
   static string GetCppName(const AidlParcelable& parcelable) {
@@ -217,7 +218,7 @@ class ParcelableType : public Type {
                               GetCppName(parcelable), "readParcelableVector",
                               "writeParcelableVector", false, src_file_name),
              new NullableParcelableType(parcelable, cpp_header, src_file_name), src_file_name) {}
-  virtual ~ParcelableType() = default;
+  ~ParcelableType() override = default;
 
  private:
   static string GetCppName(const AidlParcelable& parcelable) {
@@ -234,7 +235,7 @@ class NullableMap : public Type {
              {"binder/Map.h", "binder/Value.h"},
              "::std::unique_ptr<::android::binder::Map>",
              "readNullableMap", "writeNullableMap") {}
-  virtual ~NullableMap() = default;
+  ~NullableMap() override = default;
 };
 
 
@@ -248,7 +249,7 @@ class MapType : public Type {
              "readMap", "writeMap",
              kNoArrayType,
              new NullableMap() ) {}
-  virtual ~MapType() = default;
+  ~MapType() override = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MapType);
@@ -262,7 +263,7 @@ class NullableStringListType : public Type {
              {"utils/String16.h", "memory", "vector"},
              "::std::unique_ptr<::std::vector<std::unique_ptr<::android::String16>>>",
              "readString16Vector", "writeString16Vector") {}
-  virtual ~NullableStringListType() = default;
+  ~NullableStringListType() override = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NullableStringListType);
@@ -277,7 +278,7 @@ class StringListType : public Type {
              "::std::vector<::android::String16>",
              "readString16Vector", "writeString16Vector",
              kNoArrayType, new NullableStringListType()) {}
-  virtual ~StringListType() = default;
+  ~StringListType() override = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(StringListType);
@@ -291,7 +292,7 @@ class NullableUtf8InCppStringListType : public Type {
              {"memory", "string", "vector"},
              "::std::unique_ptr<::std::vector<std::unique_ptr<::std::string>>>",
              "readUtf8VectorFromUtf16Vector", "writeUtf8VectorAsUtf16Vector") {}
-  virtual ~NullableUtf8InCppStringListType() = default;
+  ~NullableUtf8InCppStringListType() override = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NullableUtf8InCppStringListType);
@@ -306,7 +307,7 @@ class Utf8InCppStringListType : public Type {
              "::std::vector<::std::string>",
              "readUtf8VectorFromUtf16Vector", "writeUtf8VectorAsUtf16Vector",
              kNoArrayType, new NullableUtf8InCppStringListType()) {}
-  virtual ~Utf8InCppStringListType() = default;
+  ~Utf8InCppStringListType() override = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Utf8InCppStringListType);
@@ -319,7 +320,7 @@ class NullableBinderListType : public Type {
              "List<android.os.IBinder>", {"binder/IBinder.h", "vector"},
              "::std::unique_ptr<::std::vector<::android::sp<::android::IBinder>>>",
              "readStrongBinderVector", "writeStrongBinderVector") {}
-  virtual ~NullableBinderListType() = default;
+  ~NullableBinderListType() override = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NullableBinderListType);
@@ -333,7 +334,7 @@ class BinderListType : public Type {
              "::std::vector<::android::sp<::android::IBinder>>",
              "readStrongBinderVector", "writeStrongBinderVector",
              kNoArrayType, new NullableBinderListType()) {}
-  virtual ~BinderListType() = default;
+  ~BinderListType() override = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(BinderListType);
@@ -364,32 +365,20 @@ Type::Type(int kind,
 bool Type::CanWriteToParcel() const { return true; }
 
 void TypeNamespace::Init() {
-  Add(new ByteType());
-  Add(new PrimitiveType(
-      "int",
-      "cstdint", "int32_t", "readInt32", "writeInt32",
-      "readInt32Vector", "writeInt32Vector"));
-  Add(new PrimitiveType(
-      "long",
-      "cstdint", "int64_t", "readInt64", "writeInt64",
-      "readInt64Vector", "writeInt64Vector"));
-  Add(new PrimitiveType(
-      "float",
-      kNoHeader, "float", "readFloat", "writeFloat",
-      "readFloatVector", "writeFloatVector"));
-  Add(new PrimitiveType(
-      "double",
-      kNoHeader, "double", "readDouble", "writeDouble",
-      "readDoubleVector", "writeDoubleVector"));
-  Add(new PrimitiveType(
-      "boolean",
-      kNoHeader, "bool", "readBool", "writeBool",
-      "readBoolVector", "writeBoolVector"));
+  Add(std::make_unique<ByteType>());
+  Add(std::make_unique<PrimitiveType>("int", "cstdint", "int32_t", "readInt32", "writeInt32",
+                                      "readInt32Vector", "writeInt32Vector"));
+  Add(std::make_unique<PrimitiveType>("long", "cstdint", "int64_t", "readInt64", "writeInt64",
+                                      "readInt64Vector", "writeInt64Vector"));
+  Add(std::make_unique<PrimitiveType>("float", kNoHeader, "float", "readFloat", "writeFloat",
+                                      "readFloatVector", "writeFloatVector"));
+  Add(std::make_unique<PrimitiveType>("double", kNoHeader, "double", "readDouble", "writeDouble",
+                                      "readDoubleVector", "writeDoubleVector"));
+  Add(std::make_unique<PrimitiveType>("boolean", kNoHeader, "bool", "readBool", "writeBool",
+                                      "readBoolVector", "writeBoolVector"));
   // C++11 defines the char16_t type as a built in for Unicode characters.
-  Add(new PrimitiveType(
-      "char",
-      kNoHeader, "char16_t", "readChar", "writeChar",
-      "readCharVector", "writeCharVector"));
+  Add(std::make_unique<PrimitiveType>("char", kNoHeader, "char16_t", "readChar", "writeChar",
+                                      "readCharVector", "writeCharVector"));
 
   Type* string_array_type = new CppArrayType(
       ValidatableType::KIND_BUILT_IN, "java.lang", "String",
@@ -402,11 +391,11 @@ void TypeNamespace::Init() {
                {"memory", "utils/String16.h"}, "::std::unique_ptr<::android::String16>",
                "readString16", "writeString16");
 
-  string_type_ = new Type(ValidatableType::KIND_BUILT_IN, "java.lang", "String",
-                          {"utils/String16.h"}, "::android::String16",
-                          "readString16", "writeString16",
-                          string_array_type, nullable_string_type);
-  Add(string_type_);
+  AddAndSetMember(&string_type_,
+                  std::make_unique<Type>(ValidatableType::KIND_BUILT_IN, "java.lang", "String",
+                                         std::vector<std::string>{"utils/String16.h"},
+                                         "::android::String16", "readString16", "writeString16",
+                                         string_array_type, nullable_string_type));
 
   using ::android::aidl::kAidlReservedTypePackage;
   using ::android::aidl::kUtf8InCppStringClass;
@@ -419,33 +408,31 @@ void TypeNamespace::Init() {
       "string", "::std::string", "::std::unique_ptr<::std::string>",
       "readUtf8VectorFromUtf16Vector", "writeUtf8VectorAsUtf16Vector",
       false);
-  Type* nullable_cpp_utf8_string_type = new Type(
-      ValidatableType::KIND_BUILT_IN,
-      kAidlReservedTypePackage, kUtf8InCppStringClass,
-      {"string", "memory"}, "::std::unique_ptr<::std::string>",
-      "readUtf8FromUtf16", "writeUtf8AsUtf16");
-  Add(new Type(
-      ValidatableType::KIND_BUILT_IN,
-      kAidlReservedTypePackage, kUtf8InCppStringClass,
-      {"string"}, "::std::string", "readUtf8FromUtf16", "writeUtf8AsUtf16",
-      cpp_utf8_string_array, nullable_cpp_utf8_string_type));
+  Type* nullable_cpp_utf8_string_type =
+      new Type(ValidatableType::KIND_BUILT_IN, kAidlReservedTypePackage, kUtf8InCppStringClass,
+               std::vector<std::string>{"string", "memory"}, "::std::unique_ptr<::std::string>",
+               "readUtf8FromUtf16", "writeUtf8AsUtf16");
+  Add(std::make_unique<Type>(ValidatableType::KIND_BUILT_IN, kAidlReservedTypePackage,
+                             kUtf8InCppStringClass, std::vector<std::string>{"string"},
+                             "::std::string", "readUtf8FromUtf16", "writeUtf8AsUtf16",
+                             cpp_utf8_string_array, nullable_cpp_utf8_string_type));
 
   Type* nullable_ibinder = new Type(
       ValidatableType::KIND_BUILT_IN, "android.os", "IBinder",
       {"binder/IBinder.h"}, "::android::sp<::android::IBinder>",
       "readNullableStrongBinder", "writeStrongBinder");
-  ibinder_type_ = new Type(
-      ValidatableType::KIND_BUILT_IN, "android.os", "IBinder",
-      {"binder/IBinder.h"}, "::android::sp<::android::IBinder>",
-      "readStrongBinder", "writeStrongBinder",
-      kNoArrayType, nullable_ibinder);
-  Add(ibinder_type_);
 
-  Add(new MapType());
+  AddAndSetMember(&ibinder_type_,
+                  std::make_unique<Type>(ValidatableType::KIND_BUILT_IN, "android.os", "IBinder",
+                                         std::vector<std::string>{"binder/IBinder.h"},
+                                         "::android::sp<::android::IBinder>", "readStrongBinder",
+                                         "writeStrongBinder", kNoArrayType, nullable_ibinder));
 
-  Add(new BinderListType());
-  Add(new StringListType());
-  Add(new Utf8InCppStringListType());
+  Add(std::make_unique<MapType>());
+
+  Add(std::make_unique<BinderListType>());
+  Add(std::make_unique<StringListType>());
+  Add(std::make_unique<Utf8InCppStringListType>());
 
   Type* fd_vector_type = new CppArrayType(
       ValidatableType::KIND_BUILT_IN, kNoPackage, "FileDescriptor",
@@ -454,11 +441,10 @@ void TypeNamespace::Init() {
       "readUniqueFileDescriptorVector", "writeUniqueFileDescriptorVector",
       false);
 
-  Add(new Type(
-      ValidatableType::KIND_BUILT_IN, kNoPackage, "FileDescriptor",
-      {"android-base/unique_fd.h"}, "::android::base::unique_fd",
-      "readUniqueFileDescriptor", "writeUniqueFileDescriptor",
-      fd_vector_type));
+  Add(std::make_unique<Type>(ValidatableType::KIND_BUILT_IN, kNoPackage, "FileDescriptor",
+                             std::vector<std::string>{"android-base/unique_fd.h"},
+                             "::android::base::unique_fd", "readUniqueFileDescriptor",
+                             "writeUniqueFileDescriptor", fd_vector_type));
 
   Type* pfd_vector_type =
       new CppArrayType(ValidatableType::KIND_BUILT_IN, "android.os", "ParcelFileDescriptor",
@@ -468,16 +454,17 @@ void TypeNamespace::Init() {
 
   Type* nullable_pfd_type =
       new Type(ValidatableType::KIND_BUILT_IN, "android.os", "ParcelFileDescriptor",
-               {"memory", "binder/ParcelFileDescriptor.h"},
+               std::vector<std::string>{"memory", "binder/ParcelFileDescriptor.h"},
                "::std::unique_ptr<::android::os::ParcelFileDescriptor>", "readParcelable",
                "writeNullableParcelable");
 
-  Add(new Type(ValidatableType::KIND_BUILT_IN, "android.os", "ParcelFileDescriptor",
-               {"binder/ParcelFileDescriptor.h"}, "::android::os::ParcelFileDescriptor",
-               "readParcelable", "writeParcelable", pfd_vector_type, nullable_pfd_type));
+  Add(std::make_unique<Type>(ValidatableType::KIND_BUILT_IN, "android.os", "ParcelFileDescriptor",
+                             std::vector<std::string>{"binder/ParcelFileDescriptor.h"},
+                             "::android::os::ParcelFileDescriptor", "readParcelable",
+                             "writeParcelable", pfd_vector_type, nullable_pfd_type));
 
-  void_type_ = new class VoidType();
-  Add(void_type_);
+  // Qualify VoidType so we don't get collisions with the VoidType method
+  AddAndSetMember(&void_type_, std::make_unique<class VoidType>());
 }
 
 bool TypeNamespace::AddParcelableType(const AidlParcelable& p, const std::string& filename) {
@@ -488,12 +475,12 @@ bool TypeNamespace::AddParcelableType(const AidlParcelable& p, const std::string
     return false;
   }
 
-  Add(new ParcelableType(p, cpp_header, filename));
+  Add(std::make_unique<ParcelableType>(p, cpp_header, filename));
   return true;
 }
 
 bool TypeNamespace::AddBinderType(const AidlInterface& b, const std::string& filename) {
-  Add(new BinderType(b, filename));
+  Add(std::make_unique<BinderType>(b, filename));
   return true;
 }
 

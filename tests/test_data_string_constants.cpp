@@ -34,7 +34,6 @@ const char kJavaOutputPath[] = "some/path/to/output.java";
 const char kExpectedJavaOutput[] =
     R"(/*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: android/os/IStringConstants.aidl
  */
 package android.os;
 public interface IStringConstants extends android.os.IInterface
@@ -226,7 +225,6 @@ namespace os {
 const char kExpectedJavaOutputWithVersion[] =
     R"(/*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: android/os/IStringConstants.aidl
  */
 package android.os;
 public interface IStringConstants extends android.os.IInterface
@@ -468,6 +466,10 @@ namespace os {
     _aidl_ret_status = ::android::binder::Status::fromExceptionCode(::android::binder::Status::EX_NULL_POINTER).writeToParcel(_aidl_reply);
   }
   return _aidl_ret_status;
+}
+
+int32_t BnStringConstants::getInterfaceVersion() {
+  return IStringConstants::VERSION;
 }
 
 }  // namespace os

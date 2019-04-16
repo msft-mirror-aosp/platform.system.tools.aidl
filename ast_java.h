@@ -16,10 +16,12 @@
 
 #pragma once
 
-#include <memory>
 #include <stdarg.h>
 #include <stdio.h>
+#include <memory>
+#include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 enum {
@@ -47,8 +49,6 @@ class CodeWriter;
 namespace android {
 namespace aidl {
 namespace java {
-
-class Type;
 
 // Write the modifiers that are set in both mod and mask
 void WriteModifiers(CodeWriter* to, int mod, int mask);
@@ -101,12 +101,11 @@ struct Variable : public Expression {
 };
 
 struct FieldVariable : public Expression {
-  Expression* object;
-  const Type* clazz;
+  std::variant<Expression*, std::string> receiver;
   std::string name;
 
   FieldVariable(Expression* object, const std::string& name);
-  FieldVariable(const Type* clazz, const std::string& name);
+  FieldVariable(const std::string& clazz, const std::string& name);
   virtual ~FieldVariable() = default;
 
   void Write(CodeWriter* to) const;
@@ -162,17 +161,16 @@ struct ExpressionStatement : public Statement {
 struct Assignment : public Expression {
   Variable* lvalue;
   Expression* rvalue;
-  const Type* cast;
+  std::optional<std::string> cast = std::nullopt;
 
   Assignment(Variable* lvalue, Expression* rvalue);
-  Assignment(Variable* lvalue, Expression* rvalue, const Type* cast);
+  Assignment(Variable* lvalue, Expression* rvalue, std::string cast);
   virtual ~Assignment() = default;
   void Write(CodeWriter* to) const override;
 };
 
 struct MethodCall : public Expression {
-  Expression* obj = nullptr;
-  const Type* clazz = nullptr;
+  std::variant<std::monostate, Expression*, std::string> receiver;
   std::string name;
   std::vector<Expression*> arguments;
   std::vector<std::string> exceptions;
@@ -180,9 +178,9 @@ struct MethodCall : public Expression {
   explicit MethodCall(const std::string& name);
   MethodCall(const std::string& name, int argc, ...);
   MethodCall(Expression* obj, const std::string& name);
-  MethodCall(const Type* clazz, const std::string& name);
+  MethodCall(const std::string& clazz, const std::string& name);
   MethodCall(Expression* obj, const std::string& name, int argc, ...);
-  MethodCall(const Type* clazz, const std::string& name, int argc, ...);
+  MethodCall(const std::string&, const std::string& name, int argc, ...);
   virtual ~MethodCall() = default;
   void Write(CodeWriter* to) const override;
 
@@ -201,11 +199,11 @@ struct Comparison : public Expression {
 };
 
 struct NewExpression : public Expression {
-  const Type* type;
+  const std::string instantiableName;
   std::vector<Expression*> arguments;
 
-  explicit NewExpression(const Type* type);
-  NewExpression(const Type* type, int argc, ...);
+  explicit NewExpression(const std::string& name);
+  NewExpression(const std::string& name, int argc, ...);
   virtual ~NewExpression() = default;
   void Write(CodeWriter* to) const override;
 
@@ -214,32 +212,30 @@ struct NewExpression : public Expression {
 };
 
 struct NewArrayExpression : public Expression {
-  const Type* type;
+  const std::string type;
   Expression* size;
 
-  NewArrayExpression(const Type* type, Expression* size);
+  NewArrayExpression(const std::string& type, Expression* size);
   virtual ~NewArrayExpression() = default;
   void Write(CodeWriter* to) const override;
 };
 
 struct Cast : public Expression {
-  const Type* type = nullptr;
+  const std::string type;
   Expression* expression = nullptr;
 
   Cast() = default;
-  Cast(const Type* type, Expression* expression);
+  Cast(const std::string& type, Expression* expression);
   virtual ~Cast() = default;
   void Write(CodeWriter* to) const override;
 };
 
 struct VariableDeclaration : public Statement {
   Variable* lvalue = nullptr;
-  const Type* cast = nullptr;
   Expression* rvalue = nullptr;
 
   explicit VariableDeclaration(Variable* lvalue);
-  VariableDeclaration(Variable* lvalue, Expression* rvalue,
-                      const Type* cast = nullptr);
+  VariableDeclaration(Variable* lvalue, Expression* rvalue);
   virtual ~VariableDeclaration() = default;
   void Write(CodeWriter* to) const override;
 };
@@ -301,11 +297,11 @@ struct Method : public ClassElement {
   std::string comment;
   std::vector<std::string> annotations;
   int modifiers = 0;
-  const Type* returnType = nullptr;  // nullptr means constructor
+  std::optional<std::string> returnType = std::nullopt;  // nullopt means constructor
   size_t returnTypeDimension = 0;
   std::string name;
   std::vector<Variable*> parameters;
-  std::vector<const Type*> exceptions;
+  std::vector<std::string> exceptions;
   StatementBlock* statements = nullptr;
 
   Method() = default;
@@ -330,9 +326,9 @@ struct Class : public ClassElement {
   std::vector<std::string> annotations;
   int modifiers = 0;
   int what = CLASS;  // CLASS or INTERFACE
-  const Type* type = nullptr;
-  const Type* extends = nullptr;
-  std::vector<const Type*> interfaces;
+  std::string type;
+  std::optional<std::string> extends = std::nullopt;
+  std::vector<std::string> interfaces;
   std::vector<ClassElement*> elements;
 
   Class() = default;
@@ -345,7 +341,6 @@ class Document : public AstNode {
  public:
   Document(const std::string& comment,
            const std::string& package,
-           const std::string& original_src,
            std::unique_ptr<Class> clazz);
   virtual ~Document() = default;
   void Write(CodeWriter* to) const override;
@@ -353,7 +348,6 @@ class Document : public AstNode {
  private:
   std::string comment_;
   std::string package_;
-  std::string original_src_;
   std::unique_ptr<Class> clazz_;
 };
 

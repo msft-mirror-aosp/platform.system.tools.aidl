@@ -28,17 +28,16 @@ namespace android {
 namespace aidl {
 namespace java {
 
-bool generate_java(const std::string& filename, const std::string& original_src,
-                   const AidlDefinedType* iface, java::JavaTypeNamespace* types,
-                   const IoDelegate& io_delegate, const Options& options);
+bool generate_java(const std::string& filename, const AidlDefinedType* iface,
+                   java::JavaTypeNamespace* types, const IoDelegate& io_delegate,
+                   const Options& options);
 
 android::aidl::java::Class* generate_binder_interface_class(const AidlInterface* iface,
                                                             java::JavaTypeNamespace* types,
                                                             const Options& options);
 
 android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable* parcel,
-                                                  java::JavaTypeNamespace* types,
-                                                  const Options& options);
+                                                  AidlTypenames& typenames);
 
 std::vector<std::string> generate_java_annotations(const AidlAnnotatable& a);
 

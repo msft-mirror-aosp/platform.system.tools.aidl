@@ -21,6 +21,7 @@
 #include <sstream>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 
 namespace android {
@@ -69,6 +70,15 @@ bool CodeWriter::Write(const char* format, ...) {
   return !ostream_->fail();
 }
 
+void CodeWriter::Indent() {
+  indent_level_++;
+}
+void CodeWriter::Dedent() {
+  CHECK(indent_level_ > 0);
+
+  indent_level_--;
+}
+
 bool CodeWriter::Close() {
   if (ostream_.get()->rdbuf() != std::cout.rdbuf()) {
     // if the steam is for file (not stdout), do the close.
@@ -107,7 +117,7 @@ CodeWriterPtr CodeWriter::ForString(std::string* buf) {
    public:
     StringCodeWriter(std::string* buf)
         : CodeWriter(std::unique_ptr<std::ostream>(new std::stringstream())), buf_(buf) {}
-    ~StringCodeWriter() { Close(); }
+    ~StringCodeWriter() override { Close(); }
     bool Close() override {
       // extract whats written to the stringstream to the external buffer.
       // we are sure that ostream_ is indeed stringstream.
