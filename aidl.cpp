@@ -250,7 +250,7 @@ bool write_dep_file(const Options& options, const AidlDefinedType& defined_type,
       using ::android::aidl::cpp::ClassNames;
       using ::android::aidl::cpp::HeaderFile;
       vector<string> headers;
-      for (ClassNames c : {ClassNames::CLIENT, ClassNames::SERVER, ClassNames::INTERFACE}) {
+      for (ClassNames c : {ClassNames::CLIENT, ClassNames::SERVER, ClassNames::RAW}) {
         headers.push_back(options.OutputHeaderDir() +
                           HeaderFile(defined_type, c, false /* use_os_sep */));
       }
@@ -312,7 +312,10 @@ bool check_and_assign_method_ids(const std::vector<std::unique_ptr<AidlMethod>>&
     // transactions must be stable during the entire lifetime of an interface.
     // In other words, their IDs must be the same even when new user-defined
     // methods are added.
-    if (item->HasId() && item->IsUserDefined()) {
+    if (!item->IsUserDefined()) {
+      continue;
+    }
+    if (item->HasId()) {
       hasAssignedIds = true;
       // Ensure that the user set id is not duplicated.
       if (usedIds.find(item->GetId()) != usedIds.end()) {
@@ -430,6 +433,12 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const string& filena
     AidlLocation location = AidlLocation(filename, point, point);
 
     if (decl == "parcelable") {
+      // ParcelFileDescriptor is treated as a built-in type, but it's also in the framework.aidl.
+      // So aidl should ignore built-in types in framework.aidl to prevent duplication.
+      // (b/130899491)
+      if (AidlTypenames::IsBuiltinTypename(class_name)) {
+        continue;
+      }
       AidlParcelable* doc = new AidlParcelable(
           location, new AidlQualifiedName(location, class_name, ""), package, "" /* comments */);
       types->AddParcelableType(*doc, filename);

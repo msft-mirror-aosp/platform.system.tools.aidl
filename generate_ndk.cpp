@@ -38,8 +38,7 @@ using cpp::ClassNames;
 void GenerateNdkInterface(const string& output_file, const Options& options,
                           const AidlTypenames& types, const AidlInterface& defined_type,
                           const IoDelegate& io_delegate) {
-  const string i_header =
-      options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::INTERFACE);
+  const string i_header = options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::RAW);
   unique_ptr<CodeWriter> i_writer(io_delegate.GetCodeWriter(i_header));
   GenerateInterfaceHeader(*i_writer, types, defined_type, options);
   CHECK(i_writer->Close());
@@ -65,7 +64,7 @@ void GenerateNdkParcel(const string& output_file, const Options& options,
                        const AidlTypenames& types, const AidlStructuredParcelable& defined_type,
                        const IoDelegate& io_delegate) {
   const string header_path =
-      options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::BASE);
+      options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::RAW);
   unique_ptr<CodeWriter> header_writer(io_delegate.GetCodeWriter(header_path));
   GenerateParcelHeader(*header_writer, types, defined_type, options);
   CHECK(header_writer->Close());
@@ -146,8 +145,7 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
 
     if (other_defined_type.AsInterface() != nullptr) {
       out << "#include <"
-          << NdkHeaderFile(other_defined_type, ClassNames::INTERFACE, false /*use_os_sep*/)
-          << ">\n";
+          << NdkHeaderFile(other_defined_type, ClassNames::RAW, false /*use_os_sep*/) << ">\n";
     } else if (other_defined_type.AsStructuredParcelable() != nullptr) {
       out << "#include <"
           << NdkHeaderFile(other_defined_type, ClassNames::BASE, false /*use_os_sep*/) << ">\n";
@@ -166,8 +164,8 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
           << ">\n";
       out << "#include <" << NdkHeaderFile(a_defined_type, ClassNames::SERVER, false /*use_os_sep*/)
           << ">\n";
-      out << "#include <"
-          << NdkHeaderFile(a_defined_type, ClassNames::INTERFACE, false /*use_os_sep*/) << ">\n";
+      out << "#include <" << NdkHeaderFile(a_defined_type, ClassNames::RAW, false /*use_os_sep*/)
+          << ">\n";
     }
   });
 }
@@ -235,9 +233,11 @@ static std::string MethodId(const AidlMethod& m) {
   return "(FIRST_CALL_TRANSACTION + " + std::to_string(m.GetId()) + " /*" + m.GetName() + "*/)";
 }
 
-static void GenerateClientMethodDefinition(
-    CodeWriter& out, const AidlTypenames& types, const AidlInterface& defined_type,
-    const AidlMethod& method, const std::optional<std::string> return_value_cached_to) {
+static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames& types,
+                                           const AidlInterface& defined_type,
+                                           const AidlMethod& method,
+                                           const std::optional<std::string> return_value_cached_to,
+                                           const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::CLIENT);
 
   out << NdkMethodDecl(types, method, clazz) << " {\n";
@@ -257,6 +257,11 @@ static void GenerateClientMethodDefinition(
   out << "::ndk::ScopedAParcel _aidl_in;\n";
   out << "::ndk::ScopedAParcel _aidl_out;\n";
   out << "\n";
+
+  if (options.GenLog()) {
+    out << cpp::GenLogBeforeExecute(ClassName(defined_type, ClassNames::CLIENT), method,
+                                    false /* isServer */, true /* isNdk */);
+  }
 
   out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
   StatusCheckGoto(out);
@@ -322,14 +327,19 @@ static void GenerateClientMethodDefinition(
 
   out << "_aidl_error:\n";
   out << "_aidl_status.set(AStatus_fromStatus(_aidl_ret_status));\n";
+  if (options.GenLog()) {
+    out << cpp::GenLogAfterExecute(ClassName(defined_type, ClassNames::CLIENT), defined_type,
+                                   method, "_aidl_status", "_aidl_return", false /* isServer */,
+                                   true /* isNdk */);
+  }
   out << "return _aidl_status;\n";
   out.Dedent();
   out << "}\n";
 }
 
 static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& types,
-                                         const AidlInterface& /*defined_type*/,
-                                         const AidlMethod& method) {
+                                         const AidlInterface& defined_type,
+                                         const AidlMethod& method, const Options& options) {
   out << "case " << MethodId(method) << ": {\n";
   out.Indent();
   for (const auto& arg : method.GetArguments()) {
@@ -353,10 +363,18 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
       out << "_aidl_ret_status = ::ndk::AParcel_resizeVector(_aidl_in, &" << var_name << ");\n";
     }
   }
-
+  if (options.GenLog()) {
+    out << cpp::GenLogBeforeExecute(ClassName(defined_type, ClassNames::SERVER), method,
+                                    true /* isServer */, true /* isNdk */);
+  }
   out << "::ndk::ScopedAStatus _aidl_status = _aidl_impl->" << method.GetName() << "("
       << NdkArgList(types, method, FormatArgForCall) << ");\n";
 
+  if (options.GenLog()) {
+    out << cpp::GenLogAfterExecute(ClassName(defined_type, ClassNames::SERVER), defined_type,
+                                   method, "_aidl_status", "_aidl_return", true /* isServer */,
+                                   true /* isNdk */);
+  }
   if (method.IsOneway()) {
     // For a oneway transaction, the kernel will have already returned a result. This is for the
     // in-process case when a oneway transaction is parceled/unparceled in the same process.
@@ -380,14 +398,13 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
       StatusCheckBreak(out);
     }
   }
-
   out << "break;\n";
   out.Dedent();
   out << "}\n";
 }
 
 void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
-                         const AidlInterface& defined_type, const Options& /*options*/) {
+                         const AidlInterface& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::INTERFACE);
   const std::string bn_clazz = ClassName(defined_type, ClassNames::SERVER);
 
@@ -407,7 +424,7 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
     out << "switch (_aidl_code) {\n";
     out.Indent();
     for (const auto& method : defined_type.GetMethods()) {
-      GenerateServerCaseDefinition(out, types, defined_type, *method);
+      GenerateServerCaseDefinition(out, types, defined_type, *method, options);
     }
     out.Dedent();
     out << "}\n";
@@ -428,6 +445,9 @@ void GenerateClientSource(CodeWriter& out, const AidlTypenames& types,
 
   out << clazz << "::" << clazz << "(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
+  if (options.GenLog()) {
+    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+  }
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
     // Only getInterfaceVersion can use cache.
@@ -435,7 +455,8 @@ void GenerateClientSource(CodeWriter& out, const AidlTypenames& types,
                            options.Version() > 0;
     const auto return_value_cached_to =
         cacheable ? std::make_optional<std::string>(kCacheVariable) : std::nullopt;
-    GenerateClientMethodDefinition(out, types, defined_type, *method, return_value_cached_to);
+    GenerateClientMethodDefinition(out, types, defined_type, *method, return_value_cached_to,
+                                   options);
   }
 }
 void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
@@ -446,7 +467,9 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
   out << "// Source for " << clazz << "\n";
   out << clazz << "::" << clazz << "() {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
-
+  if (options.GenLog()) {
+    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+  }
   out << "::ndk::SpAIBinder " << clazz << "::createBinder() {\n";
   out.Indent();
   out << "AIBinder* binder = AIBinder_new(" << kClazz << ", static_cast<void*>(this));\n";
@@ -583,10 +606,16 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   const std::string clazz = ClassName(defined_type, ClassNames::CLIENT);
 
   out << "#pragma once\n\n";
-  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::INTERFACE, false /*use_os_sep*/)
+  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
       << "\"\n";
   out << "\n";
   out << "#include <android/binder_ibinder.h>\n";
+  if (options.GenLog()) {
+    out << "#include <json/value.h>\n";
+    out << "#include <functional>\n";
+    out << "#include <chrono>\n";
+    out << "#include <sstream>\n";
+  }
   out << "\n";
   EnterNdkNamespace(out, defined_type);
   out << "class " << clazz << " : public ::ndk::BpCInterface<"
@@ -603,7 +632,9 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   if (options.Version() > 0) {
     out << "int32_t " << kCacheVariable << " = -1;\n";
   }
-
+  if (options.GenLog()) {
+    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+  }
   out.Dedent();
   out << "};\n";
   LeaveNdkNamespace(out, defined_type);
@@ -614,7 +645,7 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
   const std::string iface = ClassName(defined_type, ClassNames::INTERFACE);
 
   out << "#pragma once\n\n";
-  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::INTERFACE, false /*use_os_sep*/)
+  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
       << "\"\n";
   out << "\n";
   out << "#include <android/binder_ibinder.h>\n";
@@ -637,7 +668,9 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
       AIDL_FATAL(defined_type) << "Meta method '" << method->GetName() << "' is unimplemented.";
     }
   }
-
+  if (options.GenLog()) {
+    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+  }
   out.Dedent();
   out << "protected:\n";
   out.Indent();
@@ -655,6 +688,12 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
 
   out << "#pragma once\n\n";
   out << "#include <android/binder_interface_utils.h>\n";
+  if (options.GenLog()) {
+    out << "#include <json/value.h>\n";
+    out << "#include <functional>\n";
+    out << "#include <chrono>\n";
+    out << "#include <sstream>\n";
+  }
   out << "\n";
 
   GenerateHeaderIncludes(out, types, defined_type);
@@ -750,7 +789,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
                           const Options& /*options*/) {
   const std::string clazz = ClassName(defined_type, ClassNames::BASE);
 
-  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::BASE, false /*use_os_sep*/)
+  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
       << "\"\n";
   out << "\n";
   GenerateSourceIncludes(out, types, defined_type);

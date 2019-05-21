@@ -74,7 +74,7 @@ public class Rect implements android.os.Parcelable
   @android.annotation.SystemApi
   public int x = 5;
 
-  @android.annotation.UnsupportedAppUsage
+  @dalvik.annotation.compat.UnsupportedAppUsage
   @android.annotation.SystemApi
   public int y;
   public static final android.os.Parcelable.Creator<Rect> CREATOR = new android.os.Parcelable.Creator<Rect>() {
@@ -1270,6 +1270,57 @@ TEST_F(AidlTest, ParcelFileDescriptorIsBuiltinType) {
                                "}");
   EXPECT_EQ(0, ::android::aidl::compile_aidl(javaOptions, io_delegate_));
   EXPECT_EQ(0, ::android::aidl::compile_aidl(cppOptions, io_delegate_));
+}
+
+TEST_F(AidlTest, ManualIds) {
+  Options options = Options::From("aidl --lang=java -o out IFoo.aidl");
+  io_delegate_.SetFileContents("IFoo.aidl",
+                               "interface IFoo {\n"
+                               "  void foo() = 0;\n"
+                               "  void bar() = 1;\n"
+                               "}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, ManualIdsWithMetaTransactions) {
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
+  io_delegate_.SetFileContents("IFoo.aidl",
+                               "interface IFoo {\n"
+                               "  void foo() = 0;\n"
+                               "  void bar() = 1;\n"
+                               "}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, FailOnDuplicatedIds) {
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
+  io_delegate_.SetFileContents("IFoo.aidl",
+                               "interface IFoo {\n"
+                               "  void foo() = 3;\n"
+                               "  void bar() = 3;\n"
+                               "}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, FailOnOutOfRangeIds) {
+  // 16777115 is kLastMetaMethodId + 1
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
+  io_delegate_.SetFileContents("IFoo.aidl",
+                               "interface IFoo {\n"
+                               "  void foo() = 3;\n"
+                               "  void bar() = 16777115;\n"
+                               "}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, FailOnPartiallyAssignedIds) {
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
+  io_delegate_.SetFileContents("IFoo.aidl",
+                               "interface IFoo {\n"
+                               "  void foo() = 3;\n"
+                               "  void bar();\n"
+                               "}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
 }  // namespace aidl
