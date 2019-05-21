@@ -94,6 +94,11 @@ var (
 		CommandDeps: []string{"${aidlCmd}"},
 		Description: "AIDL CHECK API: ${new} against ${old}",
 	}, "old", "new")
+
+	aidlDiffApiRule = pctx.StaticRule("aidlDiffApiRule", blueprint.RuleParams{
+		Command:     `diff -r ${old} ${new} && touch ${out}`,
+		Description: "Check equality of ${new} and ${old}",
+	}, "old", "new")
 )
 
 func init() {
@@ -416,6 +421,24 @@ func (m *aidlApi) checkCompatibility(ctx android.ModuleContext, oldApiDir androi
 	return timestampFile
 }
 
+func (m *aidlApi) checkEquality(ctx android.ModuleContext, oldApiDir android.Path, oldApiFiles android.Paths, newApiDir android.Path, newApiFiles android.Paths) android.WritablePath {
+	newVersion := newApiDir.Base()
+	timestampFile := android.PathForModuleOut(ctx, "checkapi_"+newVersion+".timestamp")
+	var allApiFiles android.Paths
+	allApiFiles = append(allApiFiles, oldApiFiles...)
+	allApiFiles = append(allApiFiles, newApiFiles...)
+	ctx.ModuleBuild(pctx, android.ModuleBuildParams{
+		Rule:      aidlDiffApiRule,
+		Implicits: allApiFiles,
+		Output:    timestampFile,
+		Args: map[string]string{
+			"old": oldApiDir.String(),
+			"new": newApiDir.String(),
+		},
+	})
+	return timestampFile
+}
+
 func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	currentVersion := m.validateCurrentVersion(ctx)
 
@@ -436,14 +459,28 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	apiDirs[currentVersion] = currentDumpDir
 	apiFiles[currentVersion] = currentApiFiles.Paths()
 
-	// Check that version X is backward compatible with version X-1, and that the currentVersion (ToT)
-	// is backwards compatible with latest frozen version.
-	for i, newVersion := range append(m.properties.Versions, currentVersion) {
+	// Check that version X is backward compatible with version X-1
+	for i, newVersion := range m.properties.Versions {
 		if i != 0 {
 			oldVersion := m.properties.Versions[i-1]
 			checkApiTimestamp := m.checkCompatibility(ctx, apiDirs[oldVersion], apiFiles[oldVersion], apiDirs[newVersion], apiFiles[newVersion])
 			m.checkApiTimestamps = append(m.checkApiTimestamps, checkApiTimestamp)
 		}
+	}
+
+	// ... and that the currentVersion (ToT) is backwards compatible with or
+	// equal to the latest frozen version
+	if len(m.properties.Versions) >= 1 {
+		latestVersion := m.properties.Versions[len(m.properties.Versions)-1]
+		var checkApiTimestamp android.WritablePath
+		if ctx.Config().DefaultAppTargetSdkInt() != android.FutureApiLevel {
+			// If API is frozen, don't allow any change to the API
+			checkApiTimestamp = m.checkEquality(ctx, apiDirs[latestVersion], apiFiles[latestVersion], apiDirs[currentVersion], apiFiles[currentVersion])
+		} else {
+			// If not, allow backwards compatible changes to the API
+			checkApiTimestamp = m.checkCompatibility(ctx, apiDirs[latestVersion], apiFiles[latestVersion], apiDirs[currentVersion], apiFiles[currentVersion])
+		}
+		m.checkApiTimestamps = append(m.checkApiTimestamps, checkApiTimestamp)
 	}
 }
 
@@ -522,6 +559,10 @@ type aidlInterfaceProperties struct {
 			// Whether to generate C++ code using NDK binder APIs
 			// Default: true
 			Enabled *bool
+			// Whether to generate additional code for gathering information
+			// about the transactions
+			// Default: false
+			Gen_log *bool
 		}
 	}
 }
@@ -714,6 +755,8 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	genLog := false
 	if lang == langCpp {
 		genLog = proptools.Bool(i.properties.Backend.Cpp.Gen_log)
+	} else if lang == langNdk || lang == langNdkPlatform {
+		genLog = proptools.Bool(i.properties.Backend.Ndk.Gen_log)
 	}
 
 	mctx.CreateModule(android.ModuleFactoryAdaptor(aidlGenFactory), &nameProperties{
@@ -730,25 +773,30 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 
 	importExportDependencies := wrap("", i.properties.Imports, "-"+lang)
 	var libJSONCppDependency []string
+	var staticLibDependency []string
 	var sdkVersion *string
 	var stl *string
 	var cpp_std *string
-
 	if lang == langCpp {
 		importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
 		if genLog {
 			libJSONCppDependency = []string{"libjsoncpp"}
-			importExportDependencies = append(importExportDependencies, "libbase")
 		}
 		sdkVersion = nil
 		stl = nil
 		cpp_std = nil
 	} else if lang == langNdk {
 		importExportDependencies = append(importExportDependencies, "libbinder_ndk")
+		if genLog {
+			staticLibDependency = []string{"libjsoncpp_ndk"}
+		}
 		sdkVersion = proptools.StringPtr("current")
 		stl = proptools.StringPtr("c++_shared")
 	} else if lang == langNdkPlatform {
 		importExportDependencies = append(importExportDependencies, "libbinder_ndk")
+		if genLog {
+			libJSONCppDependency = []string{"libjsoncpp"}
+		}
 	} else {
 		panic("Unrecognized language: " + lang)
 	}
@@ -763,6 +811,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		Export_generated_headers:  []string{cppSourceGen},
 		Static:                    staticLib{Whole_static_libs: libJSONCppDependency},
 		Shared:                    sharedLib{Shared_libs: libJSONCppDependency, Export_shared_lib_headers: libJSONCppDependency},
+		Static_libs:               staticLibDependency,
 		Shared_libs:               importExportDependencies,
 		Export_shared_lib_headers: importExportDependencies,
 		Sdk_version:               sdkVersion,

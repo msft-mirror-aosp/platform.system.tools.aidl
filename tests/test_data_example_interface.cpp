@@ -122,7 +122,7 @@ const char kExpectedJavaOutput[] =
  * This file is auto-generated.  DO NOT MODIFY.
  */
 package android.test;
-@android.annotation.UnsupportedAppUsage
+@dalvik.annotation.compat.UnsupportedAppUsage
 @android.annotation.SystemApi
 public interface IExampleInterface extends android.os.IInterface
 {
@@ -564,7 +564,7 @@ public interface IExampleInterface extends android.os.IInterface
   public int getState() throws android.os.RemoteException;
   public java.lang.String getAddress() throws android.os.RemoteException;
   /* Test long comment */
-  @android.annotation.UnsupportedAppUsage
+  @dalvik.annotation.compat.UnsupportedAppUsage
   @android.annotation.SystemApi
   public android.foo.ExampleParcelable[] getParcelables() throws android.os.RemoteException;
   // Test short comment
@@ -584,7 +584,7 @@ const char kExpectedJavaOutputWithTransactionNames[] =
  * This file is auto-generated.  DO NOT MODIFY.
  */
 package android.test;
-@android.annotation.UnsupportedAppUsage
+@dalvik.annotation.compat.UnsupportedAppUsage
 @android.annotation.SystemApi
 public interface IExampleInterface extends android.os.IInterface
 {
@@ -664,6 +664,7 @@ public interface IExampleInterface extends android.os.IInterface
     {
       return this;
     }
+    /** @hide */
     public static java.lang.String getDefaultTransactionName(int transactionCode)
     {
       switch (transactionCode)
@@ -710,6 +711,7 @@ public interface IExampleInterface extends android.os.IInterface
         }
       }
     }
+    /** @hide */
     public java.lang.String getTransactionName(int transactionCode)
     {
       return this.getDefaultTransactionName(transactionCode);
@@ -1076,7 +1078,7 @@ public interface IExampleInterface extends android.os.IInterface
   public int getState() throws android.os.RemoteException;
   public java.lang.String getAddress() throws android.os.RemoteException;
   /* Test long comment */
-  @android.annotation.UnsupportedAppUsage
+  @dalvik.annotation.compat.UnsupportedAppUsage
   @android.annotation.SystemApi
   public android.foo.ExampleParcelable[] getParcelables() throws android.os.RemoteException;
   // Test short comment
@@ -1096,7 +1098,7 @@ const char kExpectedJavaOutputWithTrace[] =
  * This file is auto-generated.  DO NOT MODIFY.
  */
 package android.test;
-@android.annotation.UnsupportedAppUsage
+@dalvik.annotation.compat.UnsupportedAppUsage
 @android.annotation.SystemApi
 public interface IExampleInterface extends android.os.IInterface
 {
@@ -1618,7 +1620,7 @@ public interface IExampleInterface extends android.os.IInterface
   public int getState() throws android.os.RemoteException;
   public java.lang.String getAddress() throws android.os.RemoteException;
   /* Test long comment */
-  @android.annotation.UnsupportedAppUsage
+  @dalvik.annotation.compat.UnsupportedAppUsage
   @android.annotation.SystemApi
   public android.foo.ExampleParcelable[] getParcelables() throws android.os.RemoteException;
   // Test short comment
@@ -2516,6 +2518,7 @@ public interface IExampleInterface extends android.os.IInterface
           try {
             data.writeInterfaceToken(DESCRIPTOR);
             mRemote.transact(Stub.TRANSACTION_getInterfaceVersion, data, reply, 0);
+            reply.readException();
             mCachedVersion = reply.readInt();
           } finally {
             reply.recycle();
