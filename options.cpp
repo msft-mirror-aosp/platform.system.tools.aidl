@@ -110,6 +110,9 @@ string Options::GetUsage() const {
        << "  --log" << endl
        << "          Information about the transaction, e.g., method name, argument" << endl
        << "          values, execution time, etc., is provided via callback." << endl
+       << "  --parcelable-to-string" << endl
+       << "          Generates an implementation of toString() for Java parcelables," << endl
+       << "          and ostream& operator << for C++ parcelables." << endl
        << "  --help" << endl
        << "          Show this help." << endl
        << endl
@@ -173,6 +176,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         {"transaction_names", no_argument, 0, 'c'},
         {"version", required_argument, 0, 'v'},
         {"log", no_argument, 0, 'L'},
+        {"parcelable-to-string", no_argument, 0, 'P'},
         {"help", no_argument, 0, 'e'},
         {0, 0, 0, 0},
     };
@@ -292,6 +296,9 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         output_file_ = Trim(optarg);
         task_ = Task::DUMP_MAPPINGS;
         break;
+      case 'P':
+        gen_parcelable_to_string_ = true;
+        break;
       default:
         std::cerr << GetUsage();
         exit(1);
@@ -309,18 +316,17 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
       input_files_.emplace_back(argv[optind++]);
       if (argc - optind >= 1) {
         output_file_ = argv[optind++];
-      } else {
-        // when output is omitted, output is by default set to the input
-        // file path with .aidl is replaced to .java.
+      } else if (output_dir_.empty()) {
+        // when output is omitted and -o option isn't set, the output is by
+        // default set to the input file path with .aidl is replaced to .java.
+        // If -o option is set, the output path is calculated by
+        // generate_outputFileName which returns "<output_dir>/<package/name>/
+        // <typename>.java"
         output_file_ = input_files_.front();
         if (android::base::EndsWith(output_file_, ".aidl")) {
           output_file_ = output_file_.substr(0, output_file_.length() - strlen(".aidl"));
         }
         output_file_ += ".java";
-
-        if (!output_dir_.empty()) {
-          output_file_ = output_dir_ + output_file_;
-        }
       }
     } else if (IsCppOutput()) {
       input_files_.emplace_back(argv[optind++]);

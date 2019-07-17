@@ -74,7 +74,7 @@ public class Rect implements android.os.Parcelable
   @android.annotation.SystemApi
   public int x = 5;
 
-  @dalvik.annotation.compat.UnsupportedAppUsage
+  @dalvik.annotation.compat.UnsupportedAppUsage(expectedSignature = "dummy", implicitMember = "dummy", maxTargetSdk = 28, publicAlternatives = "dummy", trackingBug = 42)
   @android.annotation.SystemApi
   public int y;
   public static final android.os.Parcelable.Creator<Rect> CREATOR = new android.os.Parcelable.Creator<Rect>() {
@@ -194,6 +194,16 @@ TEST_F(AidlTest, RejectsArraysOfBinders) {
   EXPECT_EQ(nullptr, Parse(path, contents, &cpp_types_));
 }
 
+TEST_F(AidlTest, SupportOnlyOutParameters) {
+  string interface_list = "package a; interface IBar { void f(out List bar); }";
+  string interface_ibinder = "package a; interface IBaz { void f(out IBinder bar); }";
+  // List without type isn't supported in cpp.
+  EXPECT_EQ(nullptr, Parse("a/IBar.aidl", interface_list, &cpp_types_));
+  EXPECT_NE(nullptr, Parse("a/IBar.aidl", interface_list, &java_types_));
+  EXPECT_EQ(nullptr, Parse("a/IBaz.aidl", interface_ibinder, &cpp_types_));
+  EXPECT_EQ(nullptr, Parse("a/IBaz.aidl", interface_ibinder, &java_types_));
+}
+
 TEST_F(AidlTest, RejectsOnewayOutParameters) {
   string oneway_interface =
       "package a; oneway interface IFoo { void f(out int bar); }";
@@ -219,6 +229,12 @@ TEST_F(AidlTest, RejectsNullablePrimitive) {
 
 TEST_F(AidlTest, RejectsDuplicatedArgumentNames) {
   string method = "package a; interface IFoo { void f(int a, int a); }";
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, &cpp_types_));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, &java_types_));
+}
+
+TEST_F(AidlTest, RejectsDuplicatedAnnotationParams) {
+  string method = "package a; interface IFoo { @UnsupportedAppUsage(foo=1, foo=2)void f(); }";
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, &cpp_types_));
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, &java_types_));
 }
@@ -253,6 +269,17 @@ TEST_F(AidlTest, ParsesUtf8Annotations) {
     EXPECT_EQ(interface->GetMethods()[0]->GetType().IsUtf8InCpp(), is_utf8);
     cpp_types_.typenames_.Reset();
   }
+}
+
+TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
+  Options java_options = Options::From("aidl -o out --structured a/Foo.aidl");
+  Options cpp_options =
+      Options::From("aidl --lang=cpp --structured -o out -h out/include a/Foo.aidl");
+  io_delegate_.SetFileContents(
+      "a/Foo.aidl", StringPrintf("package a; @JavaOnlyStableParcelable parcelable Foo;"));
+
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+  EXPECT_NE(0, ::android::aidl::compile_aidl(cpp_options, io_delegate_));
 }
 
 TEST_F(AidlTest, AcceptsOneway) {
@@ -324,16 +351,19 @@ TEST_F(AidlTest, WritePreprocessedFile) {
 }
 
 TEST_F(AidlTest, JavaParcelableOutput) {
-  io_delegate_.SetFileContents("Rect.aidl",
-                               "@SystemApi\n"
-                               "parcelable Rect {\n"
-                               "  // Comment\n"
-                               "  @SystemApi\n"
-                               "  int x=5;\n"
-                               "  @SystemApi\n"
-                               "  @UnsupportedAppUsage\n"
-                               "  int y;\n"
-                               "}");
+  io_delegate_.SetFileContents(
+      "Rect.aidl",
+      "@SystemApi\n"
+      "parcelable Rect {\n"
+      "  // Comment\n"
+      "  @SystemApi\n"
+      "  int x=5;\n"
+      "  @SystemApi\n"
+      "  @UnsupportedAppUsage(maxTargetSdk = 28, trackingBug = 42, implicitMember = \"dummy\", "
+      "expectedSignature = \"dummy\", publicAlternatives = \"d\" \n + \"u\" + \n \"m\" \n + \"m\" "
+      "+ \"y\")\n"
+      "  int y;\n"
+      "}");
 
   vector<string> args{"aidl", "Rect.aidl"};
   Options options = Options::From(args);
@@ -1321,6 +1351,55 @@ TEST_F(AidlTest, FailOnPartiallyAssignedIds) {
                                "  void bar();\n"
                                "}");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, AllowDuplicatedImportPaths) {
+  Options options = Options::From("aidl --lang=java -I dir -I dir IFoo.aidl");
+  io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
+  io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, FailOnAmbiguousImports) {
+  Options options = Options::From("aidl --lang=java -I dir -I dir2 IFoo.aidl");
+  io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
+  io_delegate_.SetFileContents("dir2/IBar.aidl", "interface IBar{}");
+  io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+class AidlOutputPathTest : public AidlTest {
+ protected:
+  void SetUp() override {
+    AidlTest::SetUp();
+    io_delegate_.SetFileContents("sub/dir/foo/bar/IFoo.aidl", "package foo.bar; interface IFoo {}");
+  }
+
+  void Test(const Options& options, const std::string expected_output_path) {
+    EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+    // check the existence
+    EXPECT_TRUE(io_delegate_.GetWrittenContents(expected_output_path, nullptr));
+  }
+};
+
+TEST_F(AidlOutputPathTest, OutDirWithNoOutputFile) {
+  // <out_dir> / <package_name> / <type_name>.java
+  Test(Options::From("aidl -o out sub/dir/foo/bar/IFoo.aidl"), "out/foo/bar/IFoo.java");
+}
+
+TEST_F(AidlOutputPathTest, OutDirWithOutputFile) {
+  // when output file is explicitly set, it is always respected. -o option is
+  // ignored.
+  Test(Options::From("aidl -o out sub/dir/foo/bar/IFoo.aidl output/IFoo.java"), "output/IFoo.java");
+}
+
+TEST_F(AidlOutputPathTest, NoOutDirWithOutputFile) {
+  Test(Options::From("aidl -o out sub/dir/foo/bar/IFoo.aidl output/IFoo.java"), "output/IFoo.java");
+}
+
+TEST_F(AidlOutputPathTest, NoOutDirWithNoOutputFile) {
+  // output is the same as the input file except for the suffix
+  Test(Options::From("aidl sub/dir/foo/bar/IFoo.aidl"), "sub/dir/foo/bar/IFoo.java");
 }
 
 }  // namespace aidl

@@ -227,34 +227,6 @@ class ParcelableType : public Type {
   }
 };
 
-class NullableMap : public Type {
- public:
-  NullableMap()
-      : Type(ValidatableType::KIND_BUILT_IN,
-             "java.util", "Map",
-             {"binder/Map.h", "binder/Value.h"},
-             "::std::unique_ptr<::android::binder::Map>",
-             "readNullableMap", "writeNullableMap") {}
-  ~NullableMap() override = default;
-};
-
-
-class MapType : public Type {
- public:
-  MapType()
-      : Type(ValidatableType::KIND_BUILT_IN,
-             "java.util", "Map",
-             {"binder/Map.h","binder/Value.h"},
-             "::android::binder::Map",
-             "readMap", "writeMap",
-             kNoArrayType,
-             new NullableMap() ) {}
-  ~MapType() override = default;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(MapType);
-};  // class MapType
-
 class NullableStringListType : public Type {
  public:
   NullableStringListType()
@@ -428,8 +400,6 @@ void TypeNamespace::Init() {
                                          "::android::sp<::android::IBinder>", "readStrongBinder",
                                          "writeStrongBinder", kNoArrayType, nullable_ibinder));
 
-  Add(std::make_unique<MapType>());
-
   Add(std::make_unique<BinderListType>());
   Add(std::make_unique<StringListType>());
   Add(std::make_unique<Utf8InCppStringListType>());
@@ -469,7 +439,10 @@ void TypeNamespace::Init() {
 
 bool TypeNamespace::AddParcelableType(const AidlParcelable& p, const std::string& filename) {
   const std::string cpp_header = p.AsStructuredParcelable() ? GetCppHeader(p) : p.GetCppHeader();
-
+  if (p.IsStableParcelable()) {
+    AIDL_ERROR(p) << "@JavaOnlyStableParcelable supports only Java target.";
+    return false;
+  }
   if (cpp_header.empty()) {
     AIDL_ERROR(p) << "Parcelable " << p.GetCanonicalName() << " has no C++ header defined.";
     return false;
