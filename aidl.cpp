@@ -484,6 +484,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   if (main_parser == nullptr) {
     return AidlError::PARSE_ERROR;
   }
+  if (main_parser->GetDefinedTypes().size() != 1) {
+    AIDL_ERROR(input_file_name) << "You must declare only one type per a file.";
+    return AidlError::BAD_TYPE;
+  }
   if (!types->AddDefinedTypes(main_parser->GetDefinedTypes(), input_file_name)) {
     return AidlError::BAD_TYPE;
   }
@@ -762,8 +766,8 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
 
       bool success = false;
       if (lang == Options::Language::CPP) {
-        success =
-            cpp::GenerateCpp(output_file_name, options, cpp_types, *defined_type, io_delegate);
+        success = cpp::GenerateCpp(output_file_name, options, cpp_types.typenames_, *defined_type,
+                                   io_delegate);
       } else if (lang == Options::Language::NDK) {
         ndk::GenerateNdk(output_file_name, options, cpp_types.typenames_, *defined_type,
                          io_delegate);
@@ -859,5 +863,5 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
   return true;
 }
 
-}  // namespace android
 }  // namespace aidl
+}  // namespace android
