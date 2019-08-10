@@ -160,13 +160,14 @@ func isRelativePath(path string) bool {
 }
 
 type aidlGenProperties struct {
-	Srcs     []string `android:"path"`
-	AidlRoot string   // base directory for the input aidl file
-	Imports  []string
-	Lang     string // target language [java|cpp|ndk]
-	BaseName string
-	GenLog   bool
-	Version  string
+	Srcs      []string `android:"path"`
+	AidlRoot  string   // base directory for the input aidl file
+	Imports   []string
+	Stability *string
+	Lang      string // target language [java|cpp|ndk]
+	BaseName  string
+	GenLog    bool
+	Version   string
 }
 
 type aidlGenRule struct {
@@ -281,6 +282,10 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 
 		if g.properties.GenLog {
 			optionalFlags = append(optionalFlags, "--log")
+		}
+
+		if g.properties.Stability != nil {
+			optionalFlags = append(optionalFlags, "--stability", *g.properties.Stability)
 		}
 
 		aidlLang := g.properties.Lang
@@ -575,6 +580,14 @@ type aidlInterfaceProperties struct {
 	// Directory where API dumps are. Default is "api".
 	Api_dir *string
 
+	// Stability promise. Currently only supports "vintf".
+	// If this is unset, this corresponds to an interface with stability within
+	// this compilation context (so an interface loaded here can only be used
+	// with things compiled together, e.g. on the system.img).
+	// If this is set to "vintf", this corresponds to a stability promise: the
+	// interface must be kept stable as long as it is used.
+	Stability *string
+
 	// Previous API versions that are now frozen. The version that is last in
 	// the list is considered as the most recent version.
 	Versions []string
@@ -650,6 +663,25 @@ func (i *aidlInterface) checkImports(mctx android.LoadHookContext) {
 	}
 }
 
+func (i *aidlInterface) checkStability(mctx android.LoadHookContext) {
+	if i.properties.Stability == nil {
+		return
+	}
+
+	// TODO(b/136027762): should we allow more types of stability (e.g. for APEX) or
+	// should we switch this flag to be something like "vintf { enabled: true }"
+	if *i.properties.Stability != "vintf" {
+		mctx.PropertyErrorf("stability", "must be empty or \"vintf\"")
+	}
+
+	// TODO(b/136027762): need some global way to understand AOSP interfaces. Also,
+	// need the implementation for vendor extensions to be merged. For now, restrict
+	// where this can be defined
+	if !filepath.HasPrefix(mctx.ModuleDir(), "hardware/interfaces/") {
+		mctx.PropertyErrorf("stability", "can only be set in hardware/interfaces")
+	}
+}
+
 func (i *aidlInterface) versionedName(version string) string {
 	name := i.ModuleBase.Name()
 	if version != futureVersion && version != "" {
@@ -692,6 +724,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 	i.properties.Full_import_paths = importPaths
 
 	i.checkImports(mctx)
+	i.checkStability(mctx)
 
 	if mctx.Failed() {
 		return
@@ -762,13 +795,14 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	mctx.CreateModule(android.ModuleFactoryAdaptor(aidlGenFactory), &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
 	}, &aidlGenProperties{
-		Srcs:     srcs,
-		AidlRoot: base,
-		Imports:  concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
-		Lang:     lang,
-		BaseName: i.ModuleBase.Name(),
-		GenLog:   genLog,
-		Version:  version,
+		Srcs:      srcs,
+		AidlRoot:  base,
+		Imports:   concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
+		Stability: i.properties.Stability,
+		Lang:      lang,
+		BaseName:  i.ModuleBase.Name(),
+		GenLog:    genLog,
+		Version:   version,
 	})
 
 	importExportDependencies := wrap("", i.properties.Imports, "-"+lang)
@@ -839,12 +873,13 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	mctx.CreateModule(android.ModuleFactoryAdaptor(aidlGenFactory), &nameProperties{
 		Name: proptools.StringPtr(javaSourceGen),
 	}, &aidlGenProperties{
-		Srcs:     srcs,
-		AidlRoot: base,
-		Imports:  concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
-		Lang:     langJava,
-		BaseName: i.ModuleBase.Name(),
-		Version:  version,
+		Srcs:      srcs,
+		AidlRoot:  base,
+		Imports:   concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
+		Stability: i.properties.Stability,
+		Lang:      langJava,
+		BaseName:  i.ModuleBase.Name(),
+		Version:   version,
 	})
 
 	mctx.CreateModule(android.ModuleFactoryAdaptor(java.LibraryFactory), &javaProperties{
