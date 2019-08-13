@@ -184,9 +184,14 @@ class AidlAnnotatable : public AidlNode {
   AidlAnnotatable(AidlAnnotatable&&) = default;
   virtual ~AidlAnnotatable() = default;
 
-  void Annotate(vector<AidlAnnotation>&& annotations) { annotations_ = std::move(annotations); }
+  void Annotate(vector<AidlAnnotation>&& annotations) {
+    for (auto& annotation : annotations) {
+      annotations_.emplace_back(std::move(annotation));
+    }
+  }
   bool IsNullable() const;
   bool IsUtf8InCpp() const;
+  bool IsVintfStability() const;
   bool IsSystemApi() const;
   bool IsStableParcelable() const;
 
@@ -227,7 +232,7 @@ class AidlTypeSpecifier final : public AidlAnnotatable {
   }
 
   // Returns string representation of this type specifier.
-  // This is GetBaseTypeName() + array modifieir or generic type parameters
+  // This is GetBaseTypeName() + array modifier or generic type parameters
   string ToString() const;
 
   std::string Signature() const;
@@ -235,6 +240,8 @@ class AidlTypeSpecifier final : public AidlAnnotatable {
   const string& GetUnresolvedName() const { return unresolved_name_; }
 
   const string& GetComments() const { return comments_; }
+
+  const std::vector<std::string> GetSplitName() const { return split_name_; }
 
   void SetComments(const string& comment) { comments_ = comment; }
 
@@ -269,6 +276,7 @@ class AidlTypeSpecifier final : public AidlAnnotatable {
   const shared_ptr<vector<unique_ptr<AidlTypeSpecifier>>> type_params_;
   string comments_;
   const android::aidl::ValidatableType* language_type_ = nullptr;
+  vector<string> split_name_;
 };
 
 

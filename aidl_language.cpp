@@ -75,16 +75,15 @@ AidlError::AidlError(bool fatal) : os_(std::cerr), fatal_(fatal) {
 
 static const string kNullable("nullable");
 static const string kUtf8InCpp("utf8InCpp");
+static const string kVintfStability("VintfStability");
 static const string kUnsupportedAppUsage("UnsupportedAppUsage");
 static const string kSystemApi("SystemApi");
 static const string kStableParcelable("JavaOnlyStableParcelable");
 
-static const set<string> kAnnotationNames{kNullable, kUtf8InCpp, kUnsupportedAppUsage, kSystemApi,
-                                          kStableParcelable};
-
 static const std::map<string, std::map<std::string, std::string>> kAnnotationParameters{
     {kNullable, {}},
     {kUtf8InCpp, {}},
+    {kVintfStability, {}},
     {kUnsupportedAppUsage,
      {{"expectedSignature", "String"},
       {"implicitMember", "String"},
@@ -97,12 +96,12 @@ static const std::map<string, std::map<std::string, std::string>> kAnnotationPar
 AidlAnnotation* AidlAnnotation::Parse(
     const AidlLocation& location, const string& name,
     std::map<std::string, std::shared_ptr<AidlConstantValue>>* parameter_list) {
-  if (kAnnotationNames.find(name) == kAnnotationNames.end()) {
+  if (kAnnotationParameters.find(name) == kAnnotationParameters.end()) {
     std::ostringstream stream;
     stream << "'" << name << "' is not a recognized annotation. ";
     stream << "It must be one of:";
-    for (const string& kv : kAnnotationNames) {
-      stream << " " << kv;
+    for (const auto& kv : kAnnotationParameters) {
+      stream << " " << kv.first;
     }
     stream << ".";
     AIDL_ERROR(location) << stream.str();
@@ -199,6 +198,10 @@ bool AidlAnnotatable::IsUtf8InCpp() const {
   return HasAnnotation(annotations_, kUtf8InCpp);
 }
 
+bool AidlAnnotatable::IsVintfStability() const {
+  return HasAnnotation(annotations_, kVintfStability);
+}
+
 const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
   return GetAnnotation(annotations_, kUnsupportedAppUsage);
 }
@@ -217,6 +220,7 @@ bool AidlAnnotatable::CheckValidAnnotations() const {
       return false;
     }
   }
+
   return true;
 }
 
@@ -237,7 +241,8 @@ AidlTypeSpecifier::AidlTypeSpecifier(const AidlLocation& location, const string&
       unresolved_name_(unresolved_name),
       is_array_(is_array),
       type_params_(type_params),
-      comments_(comments) {}
+      comments_(comments),
+      split_name_(Split(unresolved_name, ".")) {}
 
 AidlTypeSpecifier AidlTypeSpecifier::ArrayBase() const {
   AIDL_FATAL_IF(!is_array_, this);
@@ -276,6 +281,7 @@ bool AidlTypeSpecifier::Resolve(android::aidl::AidlTypenames& typenames) {
   pair<string, bool> result = typenames.ResolveTypename(unresolved_name_);
   if (result.second) {
     fully_qualified_name_ = result.first;
+    split_name_ = Split(fully_qualified_name_, ".");
   }
   return result.second;
 }

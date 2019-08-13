@@ -484,6 +484,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   if (main_parser == nullptr) {
     return AidlError::PARSE_ERROR;
   }
+  if (main_parser->GetDefinedTypes().size() != 1) {
+    AIDL_ERROR(input_file_name) << "You must declare only one type per a file.";
+    return AidlError::BAD_TYPE;
+  }
   if (!types->AddDefinedTypes(main_parser->GetDefinedTypes(), input_file_name)) {
     return AidlError::BAD_TYPE;
   }
@@ -642,6 +646,13 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       continue;
     }
 
+    if (defined_type->IsVintfStability() &&
+        (options.GetStability() != Options::Stability::VINTF || !options.IsStructured())) {
+      AIDL_ERROR(defined_type)
+          << "Must compile @VintfStability type w/ aidl_interface 'stability: \"vintf\"'";
+      return AidlError::NOT_STRUCTURED;
+    }
+
     // Ensure that a type is either an interface or a structured parcelable
     AidlInterface* interface = defined_type->AsInterface();
     AidlStructuredParcelable* parcelable = defined_type->AsStructuredParcelable();
@@ -679,16 +690,20 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
   }
 
-  if (options.IsStructured()) {
-    typenames.IterateTypes([&](const AidlDefinedType& type) {
-      if (type.AsUnstructuredParcelable() != nullptr &&
-          !type.AsUnstructuredParcelable()->IsStableParcelable()) {
-        err = AidlError::NOT_STRUCTURED;
-        LOG(ERROR) << type.GetCanonicalName()
-                   << " is not structured, but this is a structured interface.";
-      }
-    });
-  }
+  typenames.IterateTypes([&](const AidlDefinedType& type) {
+    if (options.IsStructured() && type.AsUnstructuredParcelable() != nullptr &&
+        !type.AsUnstructuredParcelable()->IsStableParcelable()) {
+      err = AidlError::NOT_STRUCTURED;
+      LOG(ERROR) << type.GetCanonicalName()
+                 << " is not structured, but this is a structured interface.";
+    }
+    if (options.GetStability() == Options::Stability::VINTF && !type.IsVintfStability()) {
+      err = AidlError::NOT_STRUCTURED;
+      LOG(ERROR) << type.GetCanonicalName()
+                 << " does not have VINTF level stability, but this interface requires it.";
+    }
+  });
+
   if (err != AidlError::OK) {
     return err;
   }
@@ -762,8 +777,8 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
 
       bool success = false;
       if (lang == Options::Language::CPP) {
-        success =
-            cpp::GenerateCpp(output_file_name, options, cpp_types, *defined_type, io_delegate);
+        success = cpp::GenerateCpp(output_file_name, options, cpp_types.typenames_, *defined_type,
+                                   io_delegate);
       } else if (lang == Options::Language::NDK) {
         ndk::GenerateNdk(output_file_name, options, cpp_types.typenames_, *defined_type,
                          io_delegate);
@@ -859,5 +874,5 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
   return true;
 }
 
-}  // namespace android
 }  // namespace aidl
+}  // namespace android
