@@ -305,6 +305,7 @@ bool check_and_assign_method_ids(const std::vector<std::unique_ptr<AidlMethod>>&
   set<int> usedIds;
   bool hasUnassignedIds = false;
   bool hasAssignedIds = false;
+  int newId = kMinUserSetMethodId;
   for (const auto& item : items) {
     // However, meta transactions that are added by the AIDL compiler are
     // exceptions. They have fixed IDs but allowed to be with user-defined
@@ -317,40 +318,34 @@ bool check_and_assign_method_ids(const std::vector<std::unique_ptr<AidlMethod>>&
     }
     if (item->HasId()) {
       hasAssignedIds = true;
-      // Ensure that the user set id is not duplicated.
-      if (usedIds.find(item->GetId()) != usedIds.end()) {
-        // We found a duplicate id, so throw an error.
-        AIDL_ERROR(item) << "Found duplicate method id (" << item->GetId() << ") for method "
-                         << item->GetName();
-        return false;
-      }
-      // Ensure that the user set id is within the appropriate limits
-      if (item->GetId() < kMinUserSetMethodId || item->GetId() > kMaxUserSetMethodId) {
-        AIDL_ERROR(item) << "Found out of bounds id (" << item->GetId() << ") for method "
-                         << item->GetName() << ". Value for id must be between "
-                         << kMinUserSetMethodId << " and " << kMaxUserSetMethodId << " inclusive.";
-        return false;
-      }
-      usedIds.insert(item->GetId());
     } else {
+      item->SetId(newId++);
       hasUnassignedIds = true;
     }
+
     if (hasAssignedIds && hasUnassignedIds) {
       AIDL_ERROR(item) << "You must either assign id's to all methods or to none of them.";
       return false;
     }
-  }
 
-  // In the case that all methods have unassigned id's, set a unique id for them.
-  if (hasUnassignedIds) {
-    int newId = kMinUserSetMethodId;
-    for (const auto& item : items) {
-      assert(newId <= kMaxUserSetMethoId);
-      if (item->IsUserDefined()) {
-        item->SetId(newId++);
-      }
+    // Ensure that the user set id is not duplicated.
+    if (usedIds.find(item->GetId()) != usedIds.end()) {
+      // We found a duplicate id, so throw an error.
+      AIDL_ERROR(item) << "Found duplicate method id (" << item->GetId() << ") for method "
+                       << item->GetName();
+      return false;
+    }
+    usedIds.insert(item->GetId());
+
+    // Ensure that the user set id is within the appropriate limits
+    if (item->GetId() < kMinUserSetMethodId || item->GetId() > kMaxUserSetMethodId) {
+      AIDL_ERROR(item) << "Found out of bounds id (" << item->GetId() << ") for method "
+                       << item->GetName() << ". Value for id must be between "
+                       << kMinUserSetMethodId << " and " << kMaxUserSetMethodId << " inclusive.";
+      return false;
     }
   }
+
   return true;
 }
 
@@ -483,6 +478,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       Parser::Parse(input_file_name, io_delegate, types->typenames_);
   if (main_parser == nullptr) {
     return AidlError::PARSE_ERROR;
+  }
+  if (main_parser->GetDefinedTypes().size() != 1) {
+    AIDL_ERROR(input_file_name) << "You must declare only one type per a file.";
+    return AidlError::BAD_TYPE;
   }
   if (!types->AddDefinedTypes(main_parser->GetDefinedTypes(), input_file_name)) {
     return AidlError::BAD_TYPE;
@@ -642,6 +641,13 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       continue;
     }
 
+    if (defined_type->IsVintfStability() &&
+        (options.GetStability() != Options::Stability::VINTF || !options.IsStructured())) {
+      AIDL_ERROR(defined_type)
+          << "Must compile @VintfStability type w/ aidl_interface 'stability: \"vintf\"'";
+      return AidlError::NOT_STRUCTURED;
+    }
+
     // Ensure that a type is either an interface or a structured parcelable
     AidlInterface* interface = defined_type->AsInterface();
     AidlStructuredParcelable* parcelable = defined_type->AsStructuredParcelable();
@@ -679,16 +685,20 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
   }
 
-  if (options.IsStructured()) {
-    typenames.IterateTypes([&](const AidlDefinedType& type) {
-      if (type.AsUnstructuredParcelable() != nullptr &&
-          !type.AsUnstructuredParcelable()->IsStableParcelable()) {
-        err = AidlError::NOT_STRUCTURED;
-        LOG(ERROR) << type.GetCanonicalName()
-                   << " is not structured, but this is a structured interface.";
-      }
-    });
-  }
+  typenames.IterateTypes([&](const AidlDefinedType& type) {
+    if (options.IsStructured() && type.AsUnstructuredParcelable() != nullptr &&
+        !type.AsUnstructuredParcelable()->IsStableParcelable()) {
+      err = AidlError::NOT_STRUCTURED;
+      LOG(ERROR) << type.GetCanonicalName()
+                 << " is not structured, but this is a structured interface.";
+    }
+    if (options.GetStability() == Options::Stability::VINTF && !type.IsVintfStability()) {
+      err = AidlError::NOT_STRUCTURED;
+      LOG(ERROR) << type.GetCanonicalName()
+                 << " does not have VINTF level stability, but this interface requires it.";
+    }
+  });
+
   if (err != AidlError::OK) {
     return err;
   }
@@ -762,15 +772,15 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
 
       bool success = false;
       if (lang == Options::Language::CPP) {
-        success =
-            cpp::GenerateCpp(output_file_name, options, cpp_types, *defined_type, io_delegate);
+        success = cpp::GenerateCpp(output_file_name, options, cpp_types.typenames_, *defined_type,
+                                   io_delegate);
       } else if (lang == Options::Language::NDK) {
         ndk::GenerateNdk(output_file_name, options, cpp_types.typenames_, *defined_type,
                          io_delegate);
         success = true;
       } else if (lang == Options::Language::JAVA) {
-        success =
-            java::generate_java(output_file_name, defined_type, &java_types, io_delegate, options);
+        success = java::generate_java(output_file_name, defined_type, java_types.typenames_,
+                                      io_delegate, options);
       } else {
         LOG(FATAL) << "Should not reach here" << endl;
         return 1;
@@ -859,5 +869,5 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
   return true;
 }
 
-}  // namespace android
 }  // namespace aidl
+}  // namespace android

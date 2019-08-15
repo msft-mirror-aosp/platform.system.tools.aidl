@@ -149,8 +149,9 @@ cc_test {
 //
 // Everything below here is used for integration testing of generated AIDL code.
 //
-cc_binary {
+cc_test {
     name: "aidl_test_sentinel_searcher",
+    gtest: false,
     srcs: ["tests/aidl_test_sentinel_searcher.cpp"],
     cflags: [
         "-Wall",
@@ -174,7 +175,13 @@ cc_defaults {
     ],
 }
 
-cc_library_shared {
+filegroup {
+    name: "libaidl-integration-test-files",
+    srcs: ["tests/android/aidl/tests/*.aidl"],
+    path: "tests",
+}
+
+cc_library_static {
     name: "libaidl-integration-test",
     defaults: ["aidl_test_defaults"],
     aidl: {
@@ -183,22 +190,24 @@ cc_library_shared {
         include_dirs: ["frameworks/native/aidl/binder"],
     },
     srcs: [
-        "tests/android/aidl/tests/*.aidl",
+        ":libaidl-integration-test-files",
         "tests/simple_parcelable.cpp",
     ],
 }
 
-cc_binary {
+cc_test {
     name: "aidl_test_service",
+    gtest: false,
     defaults: ["aidl_test_defaults"],
-    shared_libs: ["libaidl-integration-test"],
+    static_libs: ["libaidl-integration-test"],
     srcs: ["tests/aidl_test_service.cpp"],
 }
 
-cc_binary {
+cc_test {
     name: "aidl_test_client",
+    gtest: false,
     defaults: ["aidl_test_defaults"],
-    shared_libs: ["libaidl-integration-test"],
+    static_libs: ["libaidl-integration-test"],
     srcs: [
         "tests/aidl_test_client.cpp",
         "tests/aidl_test_client_file_descriptors.cpp",

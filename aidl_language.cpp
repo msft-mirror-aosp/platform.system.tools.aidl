@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
-#include <cassert>
 #include <iostream>
 #include <set>
 #include <sstream>
@@ -18,7 +17,6 @@
 
 #include "aidl_language_y.h"
 #include "logging.h"
-#include "type_java.h"
 #include "type_namespace.h"
 
 #ifdef _WIN32
@@ -76,30 +74,99 @@ AidlError::AidlError(bool fatal) : os_(std::cerr), fatal_(fatal) {
 
 static const string kNullable("nullable");
 static const string kUtf8InCpp("utf8InCpp");
+static const string kVintfStability("VintfStability");
 static const string kUnsupportedAppUsage("UnsupportedAppUsage");
 static const string kSystemApi("SystemApi");
 static const string kStableParcelable("JavaOnlyStableParcelable");
 
-static const set<string> kAnnotationNames{kNullable, kUtf8InCpp, kUnsupportedAppUsage, kSystemApi,
-                                          kStableParcelable};
+static const std::map<string, std::map<std::string, std::string>> kAnnotationParameters{
+    {kNullable, {}},
+    {kUtf8InCpp, {}},
+    {kVintfStability, {}},
+    {kUnsupportedAppUsage,
+     {{"expectedSignature", "String"},
+      {"implicitMember", "String"},
+      {"maxTargetSdk", "int"},
+      {"publicAlternatives", "String"},
+      {"trackingBug", "long"}}},
+    {kSystemApi, {}},
+    {kStableParcelable, {}}};
 
-AidlAnnotation* AidlAnnotation::Parse(const AidlLocation& location, const string& name) {
-  if (kAnnotationNames.find(name) == kAnnotationNames.end()) {
+AidlAnnotation* AidlAnnotation::Parse(
+    const AidlLocation& location, const string& name,
+    std::map<std::string, std::shared_ptr<AidlConstantValue>>* parameter_list) {
+  if (kAnnotationParameters.find(name) == kAnnotationParameters.end()) {
     std::ostringstream stream;
     stream << "'" << name << "' is not a recognized annotation. ";
     stream << "It must be one of:";
-    for (const string& kv : kAnnotationNames) {
-      stream << " " << kv;
+    for (const auto& kv : kAnnotationParameters) {
+      stream << " " << kv.first;
     }
     stream << ".";
     AIDL_ERROR(location) << stream.str();
     return nullptr;
   }
-  return new AidlAnnotation(location, name);
+  if (parameter_list == nullptr) {
+    return new AidlAnnotation(location, name);
+  }
+
+  return new AidlAnnotation(location, name, std::move(*parameter_list));
 }
 
 AidlAnnotation::AidlAnnotation(const AidlLocation& location, const string& name)
-    : AidlNode(location), name_(name) {}
+    : AidlAnnotation(location, name, {}) {}
+
+AidlAnnotation::AidlAnnotation(
+    const AidlLocation& location, const string& name,
+    std::map<std::string, std::shared_ptr<AidlConstantValue>>&& parameters)
+    : AidlNode(location), name_(name), parameters_(std::move(parameters)) {}
+
+bool AidlAnnotation::CheckValid() const {
+  auto supported_params_iterator = kAnnotationParameters.find(GetName());
+  if (supported_params_iterator == kAnnotationParameters.end()) {
+    AIDL_ERROR(this) << GetName() << " annotation does not have any supported parameters.";
+    return false;
+  }
+  const auto& supported_params = supported_params_iterator->second;
+  for (const auto& name_and_param : parameters_) {
+    const std::string& param_name = name_and_param.first;
+    const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
+    auto parameter_mapping_it = supported_params.find(param_name);
+    if (parameter_mapping_it == supported_params.end()) {
+      std::ostringstream stream;
+      stream << "Parameter " << param_name << " not supported ";
+      stream << "for annotation " << GetName() << ".";
+      stream << "It must be one of:";
+      for (const auto& kv : supported_params) {
+        stream << " " << kv.first;
+      }
+      AIDL_ERROR(this) << stream.str();
+      return false;
+    }
+    AidlTypeSpecifier type{AIDL_LOCATION_HERE, parameter_mapping_it->second, false, nullptr, ""};
+    const std::string param_value = param->As(type, AidlConstantValueDecorator);
+    // Assume error on empty string.
+    if (param_value == "") {
+      AIDL_ERROR(this) << "Invalid value for parameter " << param_name << " on annotation "
+                       << GetName() << ".";
+      return false;
+    }
+  }
+  return true;
+}
+
+std::map<std::string, std::string> AidlAnnotation::AnnotationParams(
+    const ConstantValueDecorator& decorator) const {
+  std::map<std::string, std::string> raw_params;
+  const auto& supported_params = kAnnotationParameters.at(GetName());
+  for (const auto& name_and_param : parameters_) {
+    const std::string& param_name = name_and_param.first;
+    const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
+    AidlTypeSpecifier type{AIDL_LOCATION_HERE, supported_params.at(param_name), false, nullptr, ""};
+    raw_params.emplace(param_name, param->As(type, decorator));
+  }
+  return raw_params;
+}
 
 static bool HasAnnotation(const vector<AidlAnnotation>& annotations, const string& name) {
   for (const auto& a : annotations) {
@@ -108,6 +175,16 @@ static bool HasAnnotation(const vector<AidlAnnotation>& annotations, const strin
     }
   }
   return false;
+}
+
+static const AidlAnnotation* GetAnnotation(const vector<AidlAnnotation>& annotations,
+                                           const string& name) {
+  for (const auto& a : annotations) {
+    if (a.GetName() == name) {
+      return &a;
+    }
+  }
+  return nullptr;
 }
 
 AidlAnnotatable::AidlAnnotatable(const AidlLocation& location) : AidlNode(location) {}
@@ -120,8 +197,12 @@ bool AidlAnnotatable::IsUtf8InCpp() const {
   return HasAnnotation(annotations_, kUtf8InCpp);
 }
 
-bool AidlAnnotatable::IsUnsupportedAppUsage() const {
-  return HasAnnotation(annotations_, kUnsupportedAppUsage);
+bool AidlAnnotatable::IsVintfStability() const {
+  return HasAnnotation(annotations_, kVintfStability);
+}
+
+const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
+  return GetAnnotation(annotations_, kUnsupportedAppUsage);
 }
 
 bool AidlAnnotatable::IsSystemApi() const {
@@ -130,6 +211,16 @@ bool AidlAnnotatable::IsSystemApi() const {
 
 bool AidlAnnotatable::IsStableParcelable() const {
   return HasAnnotation(annotations_, kStableParcelable);
+}
+
+bool AidlAnnotatable::CheckValidAnnotations() const {
+  for (const auto& annotation : GetAnnotations()) {
+    if (!annotation.CheckValid()) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 string AidlAnnotatable::ToString() const {
@@ -149,7 +240,8 @@ AidlTypeSpecifier::AidlTypeSpecifier(const AidlLocation& location, const string&
       unresolved_name_(unresolved_name),
       is_array_(is_array),
       type_params_(type_params),
-      comments_(comments) {}
+      comments_(comments),
+      split_name_(Split(unresolved_name, ".")) {}
 
 AidlTypeSpecifier AidlTypeSpecifier::ArrayBase() const {
   AIDL_FATAL_IF(!is_array_, this);
@@ -184,15 +276,19 @@ string AidlTypeSpecifier::Signature() const {
 }
 
 bool AidlTypeSpecifier::Resolve(android::aidl::AidlTypenames& typenames) {
-  assert(!IsResolved());
+  CHECK(!IsResolved());
   pair<string, bool> result = typenames.ResolveTypename(unresolved_name_);
   if (result.second) {
     fully_qualified_name_ = result.first;
+    split_name_ = Split(fully_qualified_name_, ".");
   }
   return result.second;
 }
 
 bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
+  if (!CheckValidAnnotations()) {
+    return false;
+  }
   if (IsGeneric()) {
     const string& type_name = GetName();
     const int num = GetTypeParameters().size();
@@ -635,6 +731,9 @@ AidlParcelable::AidlParcelable(const AidlLocation& location, AidlQualifiedName* 
 
 bool AidlParcelable::CheckValid(const AidlTypenames&) const {
   static const std::set<string> allowed{kStableParcelable};
+  if (!CheckValidAnnotations()) {
+    return false;
+  }
   for (const auto& v : GetAnnotations()) {
     if (allowed.find(v.GetName()) == allowed.end()) {
       std::ostringstream stream;
@@ -720,6 +819,9 @@ void AidlInterface::Write(CodeWriter* writer) const {
 }
 
 bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
+  if (!CheckValidAnnotations()) {
+    return false;
+  }
   // Has to be a pointer due to deleting copy constructor. No idea why.
   map<string, const AidlMethod*> method_names;
   for (const auto& m : GetMethods()) {
