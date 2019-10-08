@@ -16,10 +16,17 @@
 
 package android.aidl.tests;
 
+import android.aidl.tests.ByteEnum;
+import android.aidl.tests.IntEnum;
+import android.aidl.tests.LongEnum;
+
 parcelable StructuredParcelable {
     int[] shouldContainThreeFs;
     int f;
     @utf8InCpp String shouldBeJerry;
+    ByteEnum shouldBeByteBar;
+    IntEnum shouldBeIntBar;
+    LongEnum shouldBeLongBar;
 
     String stringDefaultsToFoo = "foo";
     byte byteDefaultsToFour = 4;
@@ -36,4 +43,10 @@ parcelable StructuredParcelable {
     double checkDoubleFromFloat = 3.14f;
     String[] checkStringArray1 = { "a", "b" };
     @utf8InCpp String[] checkStringArray2 = { "a", "b" };
+
+    // Add test to verify corner cases
+    int int32_min = -2147483648;
+    int int32_max =  2147483647;
+    long int64_max =  9223372036854775807;
+    int hexInt32_neg_1 = 0xffffffff;
 }

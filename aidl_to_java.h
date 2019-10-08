@@ -42,15 +42,15 @@ using std::vector;
 std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value);
 
 // Returns the Java type signature of the AIDL type spec
-// This includes generic type parameters, but excludes array modifiers.
-string JavaSignatureOf(const AidlTypeSpecifier& aidl);
+// This includes generic type parameters with array modifiers.
+string JavaSignatureOf(const AidlTypeSpecifier& aidl, const AidlTypenames& typenames);
 
 // Returns the instantiable Jva type signature of the AIDL type spec
 // This includes generic type parameters, but excludes array modifiers.
-string InstantiableJavaSignatureOf(const AidlTypeSpecifier& aidl);
+string InstantiableJavaSignatureOf(const AidlTypeSpecifier& aidl, const AidlTypenames& typenames);
 
 // Returns the default Java value of the AIDL type spec
-string DefaultJavaValueOf(const AidlTypeSpecifier& aidl);
+string DefaultJavaValueOf(const AidlTypeSpecifier& aidl, const AidlTypenames& typenames);
 
 // This carries information that is required to generate code for
 // marshalling and unmarshalling a method argument or a parcelable field
