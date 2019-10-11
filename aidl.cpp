@@ -173,7 +173,14 @@ bool write_dep_file(const Options& options, const AidlDefinedType& defined_type,
   }
 
   // Encode that the output file depends on aidl input files.
-  writer->Write("%s : \\\n", output_file.c_str());
+  if (defined_type.AsUnstructuredParcelable() != nullptr &&
+      options.TargetLanguage() == Options::Language::JAVA) {
+    // Legacy behavior. For parcelable declarations in Java, don't emit output file as
+    // the dependency target. b/141372861
+    writer->Write(" : \\\n");
+  } else {
+    writer->Write("%s : \\\n", output_file.c_str());
+  }
   writer->Write("  %s", Join(source_aidl, " \\\n  ").c_str());
   writer->Write("\n");
 
@@ -513,6 +520,30 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     // using fully qualified names.
     return AidlError::BAD_TYPE;
   }
+
+  typenames->IterateTypes([&](const AidlDefinedType& type) {
+    AidlEnumDeclaration* enum_decl = const_cast<AidlEnumDeclaration*>(type.AsEnumDeclaration());
+    if (enum_decl != nullptr) {
+      // BackingType is filled in for all known enums, including imported enums,
+      // because other types that may use enums, such as Interface or
+      // StructuredParcelable, need to know the enum BackingType when
+      // generating code.
+      if (auto backing_type = enum_decl->BackingType(*typenames); backing_type != nullptr) {
+        enum_decl->SetBackingType(std::unique_ptr<const AidlTypeSpecifier>(backing_type));
+      } else {
+        // Default to byte type for enums.
+        auto byte_type =
+            std::make_unique<AidlTypeSpecifier>(AIDL_LOCATION_HERE, "byte", false, nullptr, "");
+        byte_type->Resolve(*typenames);
+        enum_decl->SetBackingType(std::move(byte_type));
+      }
+
+      // TODO(b/139877950): Support autofilling enumerators, and ensure that
+      // autofilling does not cause any enumerators to have a value larger than
+      // allowed by the backing type.
+    }
+  });
+
   //////////////////////////////////////////////////////////////////////////
   // Validation phase
   //////////////////////////////////////////////////////////////////////////
@@ -562,10 +593,12 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       return AidlError::NOT_STRUCTURED;
     }
 
-    // Ensure that a type is either an interface or a structured parcelable
+    // Ensure that a type is either an interface, structured parcelable, or
+    // enum.
     AidlInterface* interface = defined_type->AsInterface();
     AidlStructuredParcelable* parcelable = defined_type->AsStructuredParcelable();
-    CHECK(interface != nullptr || parcelable != nullptr);
+    AidlEnumDeclaration* enum_decl = defined_type->AsEnumDeclaration();
+    CHECK(!!interface + !!parcelable + !!enum_decl == 1);
 
     // Ensure that foo.bar.IFoo is defined in <some_path>/foo/bar/IFoo.aidl
     if (num_defined_types == 1 && !check_filename(input_file_name, *defined_type)) {
@@ -703,7 +736,7 @@ bool dump_mappings(const Options& options, const IoDelegate& io_delegate) {
       continue;
     }
     for (const auto defined_type : defined_types) {
-      auto mappings = mappings::generate_mappings(defined_type);
+      auto mappings = mappings::generate_mappings(defined_type, typenames);
       all_mappings.insert(mappings.begin(), mappings.end());
     }
   }
