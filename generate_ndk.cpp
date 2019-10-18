@@ -171,9 +171,9 @@ static void StatusCheckReturn(CodeWriter& out) {
 static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
                                    const AidlDefinedType& defined_type) {
   out << "#include <android/binder_parcel_utils.h>\n";
-  out << "#ifndef __ANDROID_NDK__\n";
+  out << "#ifdef BINDER_STABILITY_SUPPORT\n";
   out << "#include <android/binder_stability.h>\n";
-  out << "#endif  // __ANDROID_NDK__\n";
+  out << "#endif  // BINDER_STABILITY_SUPPORT\n";
 
   types.IterateTypes([&](const AidlDefinedType& other_defined_type) {
     if (&other_defined_type == &defined_type) return;
@@ -211,6 +211,8 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
 static void GenerateConstantDeclarations(CodeWriter& out, const AidlInterface& interface) {
   for (const auto& constant : interface.GetConstantDeclarations()) {
     const AidlConstantValue& value = constant->GetValue();
+    CHECK(value.GetType() != AidlConstantValue::Type::UNARY &&
+          value.GetType() != AidlConstantValue::Type::BINARY);
     if (value.GetType() == AidlConstantValue::Type::STRING) {
       out << "static const char* " << constant->GetName() << ";\n";
     }
@@ -220,8 +222,11 @@ static void GenerateConstantDeclarations(CodeWriter& out, const AidlInterface& i
   bool hasIntegralConstant = false;
   for (const auto& constant : interface.GetConstantDeclarations()) {
     const AidlConstantValue& value = constant->GetValue();
-    if (value.GetType() == AidlConstantValue::Type::HEXIDECIMAL ||
-        value.GetType() == AidlConstantValue::Type::INTEGRAL) {
+    CHECK(value.GetType() != AidlConstantValue::Type::UNARY &&
+          value.GetType() != AidlConstantValue::Type::BINARY);
+    if (value.GetType() == AidlConstantValue::Type::BOOLEAN ||
+        value.GetType() == AidlConstantValue::Type::INT8 ||
+        value.GetType() == AidlConstantValue::Type::INT32) {
       hasIntegralConstant = true;
       break;
     }
@@ -232,8 +237,9 @@ static void GenerateConstantDeclarations(CodeWriter& out, const AidlInterface& i
     out.Indent();
     for (const auto& constant : interface.GetConstantDeclarations()) {
       const AidlConstantValue& value = constant->GetValue();
-      if (value.GetType() == AidlConstantValue::Type::HEXIDECIMAL ||
-          value.GetType() == AidlConstantValue::Type::INTEGRAL) {
+      if (value.GetType() == AidlConstantValue::Type::BOOLEAN ||
+          value.GetType() == AidlConstantValue::Type::INT8 ||
+          value.GetType() == AidlConstantValue::Type::INT32) {
         out << constant->GetName() << " = " << constant->ValueString(ConstantValueDecorator)
             << ",\n";
       }
@@ -247,6 +253,8 @@ static void GenerateConstantDefinitions(CodeWriter& out, const AidlInterface& in
 
   for (const auto& constant : interface.GetConstantDeclarations()) {
     const AidlConstantValue& value = constant->GetValue();
+    CHECK(value.GetType() != AidlConstantValue::Type::UNARY &&
+          value.GetType() != AidlConstantValue::Type::BINARY);
     if (value.GetType() == AidlConstantValue::Type::STRING) {
       out << "const char* " << clazz << "::" << constant->GetName() << " = "
           << constant->ValueString(ConstantValueDecorator) << ";\n";
@@ -324,7 +332,11 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << MethodId(method) << ",\n";
   out << "_aidl_in.getR(),\n";
   out << "_aidl_out.getR(),\n";
-  out << (method.IsOneway() ? "FLAG_ONEWAY" : "0") << ");\n";
+  out << (method.IsOneway() ? "FLAG_ONEWAY" : "0") << "\n";
+  out << "#ifdef BINDER_STABILITY_SUPPORT\n";
+  out << "| FLAG_PRIVATE_LOCAL\n";
+  out << "#endif  // BINDER_STABILITY_SUPPORT\n";
+  out << ");\n";
   out.Dedent();
 
   // If the method is not implmented in the server side but the client has
@@ -512,13 +524,13 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
   out.Indent();
   out << "AIBinder* binder = AIBinder_new(" << kClazz << ", static_cast<void*>(this));\n";
 
-  out << "#ifndef __ANDROID_NDK__\n";
+  out << "#ifdef BINDER_STABILITY_SUPPORT\n";
   if (defined_type.IsVintfStability()) {
     out << "AIBinder_markVintfStability(binder);\n";
   } else {
     out << "AIBinder_markCompilationUnitStability(binder);\n";
   }
-  out << "#endif  // __ANDROID_NDK__\n";
+  out << "#endif  // BINDER_STABILITY_SUPPORT\n";
 
   out << "return ::ndk::SpAIBinder(binder);\n";
   out.Dedent();
