@@ -212,10 +212,14 @@ qualified_name
 
 decls
  : decl {
-    ps->AddDefinedType(unique_ptr<AidlDefinedType>($1));
+    if ($1 != nullptr) {
+      ps->AddDefinedType(unique_ptr<AidlDefinedType>($1));
+    }
   }
  | decls decl {
-    ps->AddDefinedType(unique_ptr<AidlDefinedType>($2));
+    if ($2 != nullptr) {
+      ps->AddDefinedType(unique_ptr<AidlDefinedType>($2));
+    }
   };
 
 decl
@@ -223,12 +227,12 @@ decl
    {
     $$ = $2;
 
-    if ($1->size() > 0) {
+    if ($1->size() > 0 && $$ != nullptr) {
       // copy comments from annotation to decl
-      $2->SetComments($1->begin()->GetComments());
+      $$->SetComments($1->begin()->GetComments());
+      $$->Annotate(std::move(*$1));
     }
 
-    $$->Annotate(std::move(*$1));
     delete $1;
    }
  ;
@@ -307,7 +311,6 @@ interface_decl
     ps->AddError();
     $$ = nullptr;
     delete $1;
-    delete $2;
     delete $4;
   };
 
@@ -430,10 +433,9 @@ const_expr
   }
  | '(' error ')'
    {
-     std::cerr << "ERROR: invalid const expression within parenthesis: "
-               << $2->GetText() << " at " << @1 << ".\n";
-     // to avoid segfaults
+     std::cerr << "ERROR: invalid const expression within parenthesis at " << @1 << ".\n";
      ps->AddError();
+     // to avoid segfaults
      $$ = AidlConstantValue::Integral(loc(@1), "0");
    }
  ;
