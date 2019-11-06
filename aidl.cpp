@@ -538,9 +538,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         enum_decl->SetBackingType(std::move(byte_type));
       }
 
-      // TODO(b/139877950): Support autofilling enumerators, and ensure that
-      // autofilling does not cause any enumerators to have a value larger than
-      // allowed by the backing type.
+      enum_decl->Autofill();
     }
   });
 
@@ -629,6 +627,32 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       if (!check_and_assign_method_ids(interface->GetMethods())) {
         return AidlError::BAD_METHOD_ID;
       }
+
+      // Verify and resolve the constant declarations
+      for (const auto& constant : interface->GetConstantDeclarations()) {
+        switch (constant->GetValue().GetType()) {
+          case AidlConstantValue::Type::STRING:    // fall-through
+          case AidlConstantValue::Type::INT8:      // fall-through
+          case AidlConstantValue::Type::INT32:     // fall-through
+          case AidlConstantValue::Type::INT64:     // fall-through
+          case AidlConstantValue::Type::FLOATING:  // fall-through
+          case AidlConstantValue::Type::UNARY:     // fall-through
+          case AidlConstantValue::Type::BINARY: {
+            bool success = constant->CheckValid(*typenames);
+            if (!success) {
+              return AidlError::BAD_TYPE;
+            }
+            if (constant->ValueString(cpp::ConstantValueDecorator).empty()) {
+              return AidlError::BAD_TYPE;
+            }
+            break;
+          }
+          default:
+            LOG(FATAL) << "Unrecognized constant type: "
+                       << static_cast<int>(constant->GetValue().GetType());
+            break;
+        }
+      }
     }
   }
 
@@ -708,8 +732,13 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
         ndk::GenerateNdk(output_file_name, options, typenames, *defined_type, io_delegate);
         success = true;
       } else if (lang == Options::Language::JAVA) {
-        success =
-            java::generate_java(output_file_name, defined_type, typenames, io_delegate, options);
+        if (defined_type->AsUnstructuredParcelable() != nullptr) {
+          // Legacy behavior. For parcelable declarations in Java, don't generate output file.
+          success = true;
+        } else {
+          success =
+              java::generate_java(output_file_name, defined_type, typenames, io_delegate, options);
+        }
       } else {
         LOG(FATAL) << "Should not reach here" << endl;
         return 1;

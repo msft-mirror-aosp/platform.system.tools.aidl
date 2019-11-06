@@ -34,6 +34,8 @@
 #include "aidl_language_y.h"
 #include "logging.h"
 
+#include "aidl.h"
+
 #ifdef _WIN32
 int isatty(int  fd)
 {
@@ -164,6 +166,11 @@ bool AidlAnnotation::CheckValid() const {
   for (const auto& name_and_param : parameters_) {
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
+    if (!param->CheckValid()) {
+      AIDL_ERROR(this) << "Invalid value for parameter " << param_name << " on annotation "
+                       << GetName() << ".";
+      return false;
+    }
     auto parameter_mapping_it = supported_params.find(param_name);
     if (parameter_mapping_it == supported_params.end()) {
       std::ostringstream stream;
@@ -177,7 +184,7 @@ bool AidlAnnotation::CheckValid() const {
       return false;
     }
     AidlTypeSpecifier type{AIDL_LOCATION_HERE, parameter_mapping_it->second, false, nullptr, ""};
-    const std::string param_value = param->As(type, AidlConstantValueDecorator);
+    const std::string param_value = param->ValueString(type, AidlConstantValueDecorator);
     // Assume error on empty string.
     if (param_value == "") {
       AIDL_ERROR(this) << "Invalid value for parameter " << param_name << " on annotation "
@@ -196,7 +203,14 @@ std::map<std::string, std::string> AidlAnnotation::AnnotationParams(
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
     AidlTypeSpecifier type{AIDL_LOCATION_HERE, supported_params.at(param_name), false, nullptr, ""};
-    raw_params.emplace(param_name, param->As(type, decorator));
+    if (!param->CheckValid()) {
+      AIDL_ERROR(this) << "Invalid value for parameter " << param_name << " on annotation "
+                       << GetName() << ".";
+      raw_params.clear();
+      return raw_params;
+    }
+
+    raw_params.emplace(param_name, param->ValueString(type, decorator));
   }
   return raw_params;
 }
@@ -438,7 +452,7 @@ string AidlVariableDeclaration::Signature() const {
 
 std::string AidlVariableDeclaration::ValueString(const ConstantValueDecorator& decorator) const {
   if (default_value_ != nullptr) {
-    return GetDefaultValue()->As(GetType(), decorator);
+    return default_value_->ValueString(GetType(), decorator);
   } else {
     return "";
   }
@@ -507,7 +521,7 @@ bool AidlConstantDeclaration::CheckValid(const AidlTypenames& typenames) const {
     return false;
   }
 
-  return !ValueString(AidlConstantValueDecorator).empty();
+  return true;
 }
 
 string AidlConstantDeclaration::ToString() const {
@@ -722,7 +736,7 @@ bool AidlEnumerator::CheckValid(const AidlTypeSpecifier& enum_backing_type) cons
   if (!GetValue()->CheckValid()) {
     return false;
   }
-  if (GetValue()->As(enum_backing_type, AidlConstantValueDecorator).empty()) {
+  if (GetValue()->ValueString(enum_backing_type, AidlConstantValueDecorator).empty()) {
     AIDL_ERROR(this) << "Enumerator type differs from enum backing type.";
     return false;
   }
@@ -731,7 +745,7 @@ bool AidlEnumerator::CheckValid(const AidlTypeSpecifier& enum_backing_type) cons
 
 string AidlEnumerator::ValueString(const AidlTypeSpecifier& backing_type,
                                    const ConstantValueDecorator& decorator) const {
-  return GetValue()->As(backing_type, decorator);
+  return GetValue()->ValueString(backing_type, decorator);
 }
 
 AidlEnumDeclaration::AidlEnumDeclaration(const AidlLocation& location, const std::string& name,
@@ -742,6 +756,27 @@ AidlEnumDeclaration::AidlEnumDeclaration(const AidlLocation& location, const std
 
 void AidlEnumDeclaration::SetBackingType(std::unique_ptr<const AidlTypeSpecifier> type) {
   backing_type_ = std::move(type);
+}
+
+void AidlEnumDeclaration::Autofill() {
+  const AidlEnumerator* previous = nullptr;
+  for (const auto& enumerator : enumerators_) {
+    if (enumerator->GetValue() == nullptr) {
+      if (previous == nullptr) {
+        enumerator->SetValue(std::unique_ptr<AidlConstantValue>(
+            AidlConstantValue::Integral(AIDL_LOCATION_HERE, "0")));
+      } else {
+        enumerator->SetValue(std::make_unique<AidlBinaryConstExpression>(
+            AIDL_LOCATION_HERE,
+            std::unique_ptr<AidlConstantValue>(
+                AidlConstantValue::ShallowIntegralCopy(*previous->GetValue())),
+            "+",
+            std::unique_ptr<AidlConstantValue>(
+                AidlConstantValue::Integral(AIDL_LOCATION_HERE, "1"))));
+      }
+    }
+    previous = enumerator.get();
+  }
 }
 
 bool AidlEnumDeclaration::CheckValid(const AidlTypenames&) const {
@@ -761,8 +796,6 @@ void AidlEnumDeclaration::Write(CodeWriter* writer) const {
   writer->Write("enum %s {\n", GetName().c_str());
   writer->Indent();
   for (const auto& enumerator : GetEnumerators()) {
-    // TODO(b/123321528): After autofilling is supported, determine if we want
-    // to leave out the assigned value for enumerators that were autofilled.
     writer->Write("%s = %s,\n", enumerator->GetName().c_str(),
                   enumerator->ValueString(GetBackingType(), AidlConstantValueDecorator).c_str());
   }

@@ -592,7 +592,7 @@ TEST_F(AidlTest, FailOnMalformedConstHexValue) {
                       }
                    )",
                            typenames_, Options::Language::CPP, &reported_error));
-  EXPECT_EQ(AidlError::BAD_TYPE, reported_error);
+  EXPECT_EQ(AidlError::PARSE_ERROR, reported_error);
 }
 
 TEST_F(AidlTest, ParsePositiveConstHexValue) {
@@ -610,6 +610,7 @@ TEST_F(AidlTest, ParsePositiveConstHexValue) {
   const auto& cpp_constants = interface->GetConstantDeclarations();
   EXPECT_EQ((size_t)1, cpp_constants.size());
   EXPECT_EQ("POSITIVE_HEX_VALUE", cpp_constants[0]->GetName());
+  EXPECT_TRUE(cpp_constants[0]->CheckValid(typenames_));
   EXPECT_EQ("245", cpp_constants[0]->ValueString(cpp::ConstantValueDecorator));
 }
 
@@ -628,6 +629,7 @@ TEST_F(AidlTest, ParseNegativeConstHexValue) {
   const auto& cpp_constants = interface->GetConstantDeclarations();
   EXPECT_EQ((size_t)1, cpp_constants.size());
   EXPECT_EQ("NEGATIVE_HEX_VALUE", cpp_constants[0]->GetName());
+  EXPECT_EQ(true, cpp_constants[0]->CheckValid(typenames_));
   EXPECT_EQ("-1", cpp_constants[0]->ValueString(cpp::ConstantValueDecorator));
 }
 
@@ -751,6 +753,19 @@ TEST_F(AidlTest, WritesDependencyFileForStructuredParcelable) {
   string actual_dep_file_contents;
   EXPECT_TRUE(io_delegate_.GetWrittenContents(options.DependencyFile(), &actual_dep_file_contents));
   EXPECT_EQ(actual_dep_file_contents, kExpectedStructuredParcelableDepFileContents);
+}
+
+TEST_F(AidlTest, NoJavaOutputForParcelableDeclaration) {
+ vector<string> args = {
+    "aidl",
+    "--lang=java",
+    "-o place/for/output",
+    "p/Foo.aidl"};
+  Options options = Options::From(args);
+  io_delegate_.SetFileContents(options.InputFiles().front(), "package p; parcelable Foo;");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  string output_file_contents;
+  EXPECT_FALSE(io_delegate_.GetWrittenContents(options.OutputFile(), &output_file_contents));
 }
 
 /* not working until type_namespace.h is fixed
@@ -1583,7 +1598,7 @@ TEST_F(AidlTest, FailOnOutOfBoundsInt64MaxConstInt) {
                               }
                              )",
                            typenames_, Options::Language::CPP, &reported_error));
-  EXPECT_EQ(AidlError::BAD_TYPE, reported_error);
+  EXPECT_EQ(AidlError::PARSE_ERROR, reported_error);
 }
 
 TEST_F(AidlTest, FailOnOutOfBoundsInt64MinConstInt) {
@@ -1592,6 +1607,20 @@ TEST_F(AidlTest, FailOnOutOfBoundsInt64MinConstInt) {
                            R"(package p;
                               interface IFoo {
                                 const long int64_min_oob = -21474836509999999999999999;
+                              }
+                             )",
+                           typenames_, Options::Language::CPP, &reported_error));
+  EXPECT_EQ(AidlError::PARSE_ERROR, reported_error);
+}
+
+TEST_F(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
+  AidlError reported_error;
+  EXPECT_EQ(nullptr, Parse("p/TestEnum.aidl",
+                           R"(package p;
+                              @Backing(type="byte")
+                              enum TestEnum {
+                                FOO = 127,
+                                BAR,
                               }
                              )",
                            typenames_, Options::Language::CPP, &reported_error));
