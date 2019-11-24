@@ -138,6 +138,7 @@ class AidlError {
 
 #define AIDL_ERROR(CONTEXT) ::AidlError(false /*fatal*/, (CONTEXT)).os_
 #define AIDL_FATAL(CONTEXT) ::AidlError(true /*fatal*/, (CONTEXT)).os_
+#define AIDL_FATAL_IF_NOT(CONDITION, CONTEXT) AIDL_FATAL_IF(!(CONDITION), CONTEXT)
 #define AIDL_FATAL_IF(CONDITION, CONTEXT) \
   if (CONDITION) AIDL_FATAL(CONTEXT) << "Bad internal state: " << #CONDITION << ": "
 
@@ -825,10 +826,6 @@ class Parser {
   void AddImport(AidlImport* import);
   const std::vector<std::unique_ptr<AidlImport>>& GetImports() {
     return imports_;
-  }
-  void ReleaseImports(std::vector<std::unique_ptr<AidlImport>>* ret) {
-    *ret = std::move(imports_);
-    imports_.clear();
   }
 
   void SetPackage(unique_ptr<AidlQualifiedName> name) { package_ = std::move(name); }
