@@ -15,6 +15,7 @@
  */
 
 #include "aidl_language.h"
+#include "aidl_typenames.h"
 #include "logging.h"
 
 #include <stdlib.h>
@@ -195,11 +196,12 @@ AidlConstantValue* AidlConstantValue::Boolean(const AidlLocation& location, bool
 }
 
 AidlConstantValue* AidlConstantValue::Character(const AidlLocation& location, char value) {
+  const std::string explicit_value = string("'") + value + "'";
   if (!isValidLiteralChar(value)) {
     AIDL_ERROR(location) << "Invalid character literal " << value;
-    return new AidlConstantValue(location, Type::ERROR, "");
+    return new AidlConstantValue(location, Type::ERROR, explicit_value);
   }
-  return new AidlConstantValue(location, Type::CHARACTER, string("'") + value + "'");
+  return new AidlConstantValue(location, Type::CHARACTER, explicit_value);
 }
 
 AidlConstantValue* AidlConstantValue::Floating(const AidlLocation& location,
@@ -299,7 +301,7 @@ AidlConstantValue* AidlConstantValue::String(const AidlLocation& location, const
     if (!isValidLiteralChar(value[i])) {
       AIDL_ERROR(location) << "Found invalid character at index " << i << " in string constant '"
                            << value << "'";
-      return new AidlConstantValue(location, Type::ERROR, "");
+      return new AidlConstantValue(location, Type::ERROR, value);
     }
   }
 
@@ -310,10 +312,7 @@ AidlConstantValue* AidlConstantValue::ShallowIntegralCopy(const AidlConstantValu
   // TODO(b/142894901): Perform full proper copy
   AidlTypeSpecifier type = AidlTypeSpecifier(AIDL_LOCATION_HERE, "long", false, nullptr, "");
   // TODO(b/142722772) CheckValid() should be called before ValueString()
-  if (!other.CheckValid()) {
-    AIDL_FATAL(other) << "Invalid value for ShallowIntegralCopy";
-  }
-  if (!other.evaluate(type)) {
+  if (!other.CheckValid() || !other.evaluate(type)) {
     AIDL_ERROR(other) << "Failed to parse expression as integer: " << other.value_;
     return nullptr;
   }
@@ -466,6 +465,8 @@ bool AidlConstantValue::CheckValid() const {
     case Type::BINARY:
       is_valid_ = true;
       break;
+    case Type::ERROR:
+      return false;
     default:
       AIDL_FATAL(this) << "Unrecognized constant value type: " << ToString(type_);
       return false;
@@ -591,7 +592,7 @@ bool AidlUnaryConstExpression::CheckValid() const {
     return false;
   }
 
-  return true;
+  return AidlConstantValue::CheckValid();
 }
 
 bool AidlUnaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
@@ -631,29 +632,6 @@ bool AidlUnaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
               is_valid_ = false; return false;)
 }
 
-string AidlUnaryConstExpression::ValueString(const AidlTypeSpecifier& type,
-                                             const ConstantValueDecorator& decorator) const {
-  if (type.IsGeneric()) {
-    AIDL_ERROR(type) << "Generic type cannot be specified with a constant literal.";
-    return "";
-  }
-  if (!is_evaluated_) {
-    // TODO(b/142722772) CheckValid() should be called before ValueString()
-    bool success = CheckValid();
-    success &= evaluate(type);
-    if (!success) {
-      // A detailed error message shall be printed in evaluate()
-      return "";
-    }
-  }
-  if (!is_valid_) {
-    AIDL_ERROR(this) << "Invalid constant unary expression";
-    return "";
-  }
-
-  return AidlConstantValue::ValueString(type, decorator);
-}
-
 bool AidlBinaryConstExpression::CheckValid() const {
   bool success = false;
   if (is_evaluated_) return is_valid_;
@@ -678,7 +656,7 @@ bool AidlBinaryConstExpression::CheckValid() const {
   }
 
   is_valid_ = true;
-  return true;
+  return AidlConstantValue::CheckValid();
 }
 
 bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
@@ -804,36 +782,11 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
   return false;
 }
 
-string AidlBinaryConstExpression::ValueString(const AidlTypeSpecifier& type,
-                                              const ConstantValueDecorator& decorator) const {
-  if (type.IsGeneric()) {
-    AIDL_ERROR(type) << "Generic type cannot be specified with a constant literal.";
-    return "";
-  }
-  if (!is_evaluated_) {
-    // TODO(b/142722772) CheckValid() should be called before ValueString()
-    bool success = CheckValid();
-    success &= evaluate(type);
-    if (!success) {
-      AIDL_ERROR(this) << "Invalid constant binary expression";
-      return "";
-    }
-  }
-  if (!is_valid_) {
-    AIDL_ERROR(this) << "Invalid constant binary expression";
-    return "";
-  }
-
-  return AidlConstantValue::ValueString(type, decorator);
-}
-
 AidlConstantValue::AidlConstantValue(const AidlLocation& location, Type parsed_type,
                                      int64_t parsed_value, const string& checked_value)
     : AidlNode(location),
       type_(parsed_type),
       value_(checked_value),
-      is_valid_(true),
-      is_evaluated_(true),
       final_type_(parsed_type),
       final_value_(parsed_value) {
   CHECK(!value_.empty() || type_ == Type::ERROR);
@@ -845,8 +798,6 @@ AidlConstantValue::AidlConstantValue(const AidlLocation& location, Type type,
     : AidlNode(location),
       type_(type),
       value_(checked_value),
-      is_valid_(false),
-      is_evaluated_(false),
       final_type_(type) {
   CHECK(!value_.empty() || type_ == Type::ERROR);
   switch (type_) {
