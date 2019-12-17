@@ -27,17 +27,23 @@
 
 int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 
+AidlLocation loc(const yy::parser::location_type& begin, const yy::parser::location_type& end) {
+  CHECK(begin.begin.filename == begin.end.filename);
+  CHECK(begin.end.filename == end.begin.filename);
+  CHECK(end.begin.filename == end.end.filename);
+  AidlLocation::Point begin_point {
+    .line = begin.begin.line,
+    .column = begin.begin.column,
+  };
+  AidlLocation::Point end_point {
+    .line = end.end.line,
+    .column = end.end.column,
+  };
+  return AidlLocation(*begin.begin.filename, begin_point, end_point);
+}
+
 AidlLocation loc(const yy::parser::location_type& l) {
-  CHECK(l.begin.filename == l.end.filename);
-  AidlLocation::Point begin {
-    .line = l.begin.line,
-    .column = l.begin.column,
-  };
-  AidlLocation::Point end {
-    .line = l.end.line,
-    .column = l.end.column,
-  };
-  return AidlLocation(*l.begin.filename, begin, end);
+  return loc(l, l);
 }
 
 #define lex_scanner ps->Scanner()
@@ -87,6 +93,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
     AidlParcelable* parcelable;
     AidlDefinedType* declaration;
     std::vector<std::unique_ptr<AidlTypeSpecifier>>* type_args;
+    std::vector<std::string>* type_params;
 }
 
 %destructor { } <character>
@@ -163,6 +170,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<arg> arg
 %type<direction> direction
 %type<type_args> type_args
+%type<type_params> type_params
 %type<qname> qualified_name
 %type<const_expr> const_expr
 %type<constant_value_list> constant_value_list
@@ -247,11 +255,26 @@ unannotated_decl
   { $$ = $1; }
  ;
 
+type_params
+ : identifier {
+    $$ = new std::vector<std::string>();
+    $$->emplace_back($1->GetText());
+  }
+ | type_params ',' identifier {
+    $1->emplace_back($3->GetText());
+    $$ = $1;
+  };
+
+
 parcelable_decl
  : PARCELABLE qualified_name ';' {
     $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments());
     delete $1;
   }
+ | PARCELABLE qualified_name '<' type_params '>' ';' {
+    $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments(), "", $4);
+    delete $1;
+ }
  | PARCELABLE qualified_name CPP_HEADER C_STR ';' {
     $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments(), $4->GetText());
     delete $1;
@@ -661,7 +684,7 @@ annotation
     delete $1;
   };
  | ANNOTATION '(' parameter_list ')' {
-    $$ = AidlAnnotation::Parse(loc(@1), $1->GetText(), $3);
+    $$ = AidlAnnotation::Parse(loc(@1, @4), $1->GetText(), $3);
     if ($$) {
       $$->SetComments($1->GetComments());
     } else {

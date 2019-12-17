@@ -82,7 +82,7 @@ public class Rect implements android.os.Parcelable
   @android.annotation.SystemApi
   public int x = 5;
 
-  @dalvik.annotation.compat.UnsupportedAppUsage(expectedSignature = "dummy", implicitMember = "dummy", maxTargetSdk = 28, publicAlternatives = "dummy", trackingBug = 42L)
+  @dalvik.annotation.compat.UnsupportedAppUsage(expectedSignature = "dummy", implicitMember = "dummy", maxTargetSdk = 28, publicAlternatives = "dummy", trackingBug = 42L, overrideSourcePosition="Rect.aidl:7:1:10:14")
   @android.annotation.SystemApi
   public int y;
 
@@ -782,6 +782,26 @@ Options::Language::CPP));
 }
 */
 
+// TODO(b/136048684)
+TEST_F(AidlTest, PrimitiveList) {
+  string primitive_interface =
+      "package a; interface IFoo {\n"
+      "  List<int> foo(); }";
+  string primitive_parcelable =
+      "package a; parcelable IData {\n"
+      "  List<int> foo;}";
+  EXPECT_EQ(nullptr,
+            Parse("a/IFoo.aidl", primitive_interface, typenames_, Options::Language::JAVA));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_interface, typenames_, Options::Language::CPP));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_interface, typenames_, Options::Language::NDK));
+  EXPECT_EQ(nullptr,
+            Parse("a/IFoo.aidl", primitive_parcelable, typenames_, Options::Language::JAVA));
+  EXPECT_EQ(nullptr,
+            Parse("a/IFoo.aidl", primitive_parcelable, typenames_, Options::Language::CPP));
+  EXPECT_EQ(nullptr,
+            Parse("a/IFoo.aidl", primitive_parcelable, typenames_, Options::Language::NDK));
+}
+
 TEST_F(AidlTest, ApiDump) {
   io_delegate_.SetFileContents(
       "foo/bar/IFoo.aidl",
@@ -808,8 +828,8 @@ TEST_F(AidlTest, ApiDump) {
                                "   @nullable String[] c;\n"
                                "}\n");
   io_delegate_.SetFileContents("api.aidl", "");
-  vector<string> args = {"aidl", "--dumpapi", "--out=dump", "foo/bar/IFoo.aidl",
-                         "foo/bar/Data.aidl"};
+  vector<string> args = {"aidl", "--dumpapi", "--out=dump", "--include=.",
+                         "foo/bar/IFoo.aidl", "foo/bar/Data.aidl"};
   Options options = Options::From(args);
   bool result = dump_api(options, io_delegate_);
   ASSERT_TRUE(result);
@@ -903,6 +923,35 @@ TEST_F(AidlTest, CheckNumGenericTypeSecifier) {
   EXPECT_NE(0, ::android::aidl::compile_aidl(options2, io_delegate_));
 }
 
+TEST_F(AidlTest, WrongGenericType) {
+  Options options = Options::From("aidl p/IFoo.aidl IFoo.java");
+  io_delegate_.SetFileContents(options.InputFiles().front(),
+                               "package p; interface IFoo {"
+                               "String<String> foo(); }");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, UserDefinedUnstructuredGenericParcelableType) {
+  Options optionsForParcelable = Options::From("aidl -I p p/Bar.aidl");
+  io_delegate_.SetFileContents("p/Bar.aidl", "package p; parcelable Bar<T, T>;");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(optionsForParcelable, io_delegate_));
+
+  Options options = Options::From("aidl -I p p/IFoo.aidl");
+  io_delegate_.SetFileContents("p/Bar.aidl", "package p; parcelable Bar;");
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p; interface IFoo {"
+                               "Bar<String, String> foo();}");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  io_delegate_.SetFileContents("p/Bar.aidl", "package p; parcelable Bar<T>;");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  io_delegate_.SetFileContents("p/Bar.aidl", "package p; parcelable Bar<T, V>;");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p; interface IFoo {"
+                               "Bar<String, ParcelFileDescriptor> foo();}");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
 TEST_F(AidlTest, FailOnMultipleTypesInSingleFile) {
   std::vector<std::string> rawOptions{"aidl --lang=java -o out foo/bar/Foo.aidl",
                                       "aidl --lang=cpp -o out -h out/include foo/bar/Foo.aidl"};
@@ -935,7 +984,7 @@ TEST_F(AidlTest, FailOnMultipleTypesInSingleFile) {
 
 TEST_F(AidlTest, MultipleInputFiles) {
   Options options = Options::From(
-      "aidl --lang=java -o out foo/bar/IFoo.aidl foo/bar/Data.aidl");
+      "aidl --lang=java -o out -I . foo/bar/IFoo.aidl foo/bar/Data.aidl");
 
   io_delegate_.SetFileContents(options.InputFiles().at(0),
       "package foo.bar;\n"
@@ -960,7 +1009,7 @@ TEST_F(AidlTest, MultipleInputFiles) {
 
 TEST_F(AidlTest, MultipleInputFilesCpp) {
   Options options = Options::From("aidl --lang=cpp -o out -h out/include "
-      "foo/bar/IFoo.aidl foo/bar/Data.aidl");
+      "-I . foo/bar/IFoo.aidl foo/bar/Data.aidl");
 
   io_delegate_.SetFileContents(options.InputFiles().at(0),
       "package foo.bar;\n"

@@ -731,9 +731,8 @@ unique_ptr<Document> BuildInterfaceSource(const AidlTypenames& typenames,
   vector<unique_ptr<Declaration>> decls;
 
   unique_ptr<MacroDecl> meta_if{new MacroDecl{
-      "IMPLEMENT_META_INTERFACE",
-      ArgList{vector<string>{ClassName(interface, ClassNames::BASE),
-                             '"' + fq_name + '"'}}}};
+      "DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE",
+      ArgList{vector<string>{ClassName(interface, ClassNames::BASE), '"' + fq_name + '"'}}}};
   decls.push_back(std::move(meta_if));
 
   for (const auto& constant : interface.GetConstantDeclarations()) {
@@ -1054,7 +1053,7 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
   parcel_class->AddPublic(std::move(write));
 
   return unique_ptr<Document>{new CppHeader{
-      BuildHeaderGuard(parcel, ClassNames::BASE), vector<string>(includes.begin(), includes.end()),
+      BuildHeaderGuard(parcel, ClassNames::RAW), vector<string>(includes.begin(), includes.end()),
       NestInNamespaces(std::move(parcel_class), parcel.GetSplitPackage())}};
 }
 std::unique_ptr<Document> BuildParcelSource(const AidlTypenames& typenames,
@@ -1174,7 +1173,7 @@ std::unique_ptr<Document> BuildEnumHeader(const AidlTypenames& typenames,
       unique_ptr<Declaration>(new LiteralDecl(GenerateEnumToString(typenames, enum_decl))));
 
   return unique_ptr<Document>{
-      new CppHeader{BuildHeaderGuard(enum_decl, ClassNames::BASE),
+      new CppHeader{BuildHeaderGuard(enum_decl, ClassNames::RAW),
                     vector<string>(includes.begin(), includes.end()),
                     NestInNamespaces(std::move(decls), enum_decl.GetSplitPackage())}};
 }

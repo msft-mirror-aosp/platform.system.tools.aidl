@@ -95,9 +95,16 @@ std::ostream& operator<<(std::ostream& os, const AidlLocation& l) {
 
 AidlNode::AidlNode(const AidlLocation& location) : location_(location) {}
 
-std::string AidlNode::PrintLocation() const {
+std::string AidlNode::PrintLine() const {
   std::stringstream ss;
   ss << location_.file_ << ":" << location_.begin_.line;
+  return ss.str();
+}
+
+std::string AidlNode::PrintLocation() const {
+  std::stringstream ss;
+  ss << location_.file_ << ":" << location_.begin_.line << ":" << location_.begin_.column << ":"
+     << location_.end_.line << ":" << location_.end_.column;
   return ss.str();
 }
 
@@ -313,14 +320,16 @@ AidlTypeSpecifier::AidlTypeSpecifier(const AidlLocation& location, const string&
                                      vector<unique_ptr<AidlTypeSpecifier>>* type_params,
                                      const string& comments)
     : AidlAnnotatable(location),
+      AidlParameterizable<unique_ptr<AidlTypeSpecifier>>(type_params),
       unresolved_name_(unresolved_name),
       is_array_(is_array),
-      type_params_(type_params),
       comments_(comments),
       split_name_(Split(unresolved_name, ".")) {}
 
 AidlTypeSpecifier AidlTypeSpecifier::ArrayBase() const {
   AIDL_FATAL_IF(!is_array_, this);
+  // Declaring array of generic type cannot happen, it is grammar error.
+  AIDL_FATAL_IF(IsGeneric(), this);
 
   AidlTypeSpecifier arrayBase = *this;
   arrayBase.is_array_ = false;
@@ -366,8 +375,21 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
     return false;
   }
   if (IsGeneric()) {
+    auto& types = GetTypeParameters();
+    // TODO(b/136048684) Allow them when it supports primitive type somewhere.
+    if (std::any_of(types.begin(), types.end(), [](auto& type_ptr) {
+          return AidlTypenames::IsPrimitiveTypename(type_ptr->GetName());
+        })) {
+      AIDL_ERROR(this) << "A generic type cannot has any primitive type parameters.";
+      return false;
+    }
     const string& type_name = GetName();
-    const int num = GetTypeParameters().size();
+    const auto definedType = typenames.TryGetDefinedType(type_name);
+    const auto parameterizable =
+        definedType != nullptr ? definedType->AsParameterizable() : nullptr;
+    const bool isUserDefinedGenericType =
+        parameterizable != nullptr && parameterizable->IsGeneric();
+    const size_t num = GetTypeParameters().size();
     if (type_name == "List") {
       if (num > 1) {
         AIDL_ERROR(this) << " List cannot have type parameters more than one, but got "
@@ -380,6 +402,16 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
                          << "'" << ToString() << "'";
         return false;
       }
+    } else if (isUserDefinedGenericType) {
+      const size_t allowed = parameterizable->GetTypeParameters().size();
+      if (num != allowed) {
+        AIDL_ERROR(this) << type_name << " must have " << allowed << " type parameters, but got "
+                         << num;
+        return false;
+      }
+    } else {
+      AIDL_ERROR(this) << type_name << " is not a generic type.";
+      return false;
     }
   }
 
@@ -429,6 +461,12 @@ AidlVariableDeclaration::AidlVariableDeclaration(const AidlLocation& location,
 bool AidlVariableDeclaration::CheckValid(const AidlTypenames& typenames) const {
   bool valid = true;
   valid &= type_->CheckValid(typenames);
+
+  if (type_->GetName() == "void") {
+    AIDL_ERROR(this) << "Declaration " << name_
+                     << " is void, but declarations cannot be of void type.";
+    valid = false;
+  }
 
   if (default_value_ == nullptr) return valid;
   valid &= default_value_->CheckValid();
@@ -599,8 +637,9 @@ std::string AidlDefinedType::GetCanonicalName() const {
 
 AidlParcelable::AidlParcelable(const AidlLocation& location, AidlQualifiedName* name,
                                const std::vector<std::string>& package, const std::string& comments,
-                               const std::string& cpp_header)
+                               const std::string& cpp_header, std::vector<std::string>* type_params)
     : AidlDefinedType(location, name->GetDotName(), comments, package),
+      AidlParameterizable<std::string>(type_params),
       name_(name),
       cpp_header_(cpp_header) {
   // Strip off quotation marks if we actually have a cpp header.
@@ -608,10 +647,38 @@ AidlParcelable::AidlParcelable(const AidlLocation& location, AidlQualifiedName* 
     cpp_header_ = cpp_header_.substr(1, cpp_header_.length() - 2);
   }
 }
+template <typename T>
+AidlParameterizable<T>::AidlParameterizable(const AidlParameterizable& other) {
+  // Copying is not supported if it has type parameters.
+  // It doesn't make a problem because only ArrayBase() makes a copy,
+  // and it can be called only if a type is not generic.
+  CHECK(!other.IsGeneric());
+}
+
+template <typename T>
+bool AidlParameterizable<T>::CheckValid() const {
+  return true;
+};
+
+template <>
+bool AidlParameterizable<std::string>::CheckValid() const {
+  if (!IsGeneric()) {
+    return true;
+  }
+  std::unordered_set<std::string> set(GetTypeParameters().begin(), GetTypeParameters().end());
+  if (set.size() != GetTypeParameters().size()) {
+    AIDL_ERROR(this->AsAidlNode()) << "Every type parameter should be unique.";
+    return false;
+  }
+  return true;
+}
 
 bool AidlParcelable::CheckValid(const AidlTypenames&) const {
   static const std::set<string> allowed{kStableParcelable};
   if (!CheckValidAnnotations()) {
+    return false;
+  }
+  if (!AidlParameterizable<std::string>::CheckValid()) {
     return false;
   }
   for (const auto& v : GetAnnotations()) {
@@ -678,11 +745,16 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const
           AIDL_ERROR(this) << "List in cpp supports only string and IBinder for now.";
           return false;
         }
-      } else if (lang == Options::Language::NDK) {
-        AIDL_ERROR(this) << "NDK backend does not support List yet.";
-        return false;
+      } else if (lang == Options::Language::JAVA) {
+        const string& contained_type = this->GetTypeParameters()[0]->GetName();
+        if (AidlTypenames::IsBuiltinTypename(contained_type)) {
+          if (contained_type != "String" && contained_type != "IBinder" &&
+              contained_type != "ParcelFileDescriptor") {
+            AIDL_ERROR(this) << "List<" << contained_type << "> isn't supported in Java";
+            return false;
+          }
+        }
       }
-
     } else if (this->GetName() == "Map") {
       if (lang != Options::Language::JAVA) {
         AIDL_ERROR(this) << "Currently, only Java backend supports Map.";
@@ -690,6 +762,17 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const
       }
     }
   }
+  if (lang == Options::Language::JAVA) {
+    const string name = this->GetName();
+    // List[], Map[], CharSequence[] are not supported.
+    if (AidlTypenames::IsBuiltinTypename(name) && this->IsArray()) {
+      if (name == "List" || name == "Map" || name == "CharSequence") {
+        AIDL_ERROR(this) << "List[], Map[], CharSequence[] are not supported.";
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 
@@ -758,7 +841,7 @@ void AidlEnumDeclaration::SetBackingType(std::unique_ptr<const AidlTypeSpecifier
   backing_type_ = std::move(type);
 }
 
-void AidlEnumDeclaration::Autofill() {
+bool AidlEnumDeclaration::Autofill() {
   const AidlEnumerator* previous = nullptr;
   for (const auto& enumerator : enumerators_) {
     if (enumerator->GetValue() == nullptr) {
@@ -766,17 +849,20 @@ void AidlEnumDeclaration::Autofill() {
         enumerator->SetValue(std::unique_ptr<AidlConstantValue>(
             AidlConstantValue::Integral(AIDL_LOCATION_HERE, "0")));
       } else {
+        auto prev_value = std::unique_ptr<AidlConstantValue>(
+            AidlConstantValue::ShallowIntegralCopy(*previous->GetValue()));
+        if (prev_value == nullptr) {
+          return false;
+        }
         enumerator->SetValue(std::make_unique<AidlBinaryConstExpression>(
-            AIDL_LOCATION_HERE,
-            std::unique_ptr<AidlConstantValue>(
-                AidlConstantValue::ShallowIntegralCopy(*previous->GetValue())),
-            "+",
+            AIDL_LOCATION_HERE, std::move(prev_value), "+",
             std::unique_ptr<AidlConstantValue>(
                 AidlConstantValue::Integral(AIDL_LOCATION_HERE, "1"))));
       }
     }
     previous = enumerator.get();
   }
+  return true;
 }
 
 bool AidlEnumDeclaration::CheckValid(const AidlTypenames&) const {

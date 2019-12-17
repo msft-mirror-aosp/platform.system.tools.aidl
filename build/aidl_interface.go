@@ -35,6 +35,7 @@ import (
 
 var (
 	aidlInterfaceSuffix = "_interface"
+	aidlApiDir          = "aidl_api"
 	aidlApiSuffix       = "-api"
 	langCpp             = "cpp"
 	langJava            = "java"
@@ -363,7 +364,6 @@ type aidlApiProperties struct {
 	Srcs     []string `android:"path"`
 	AidlRoot string   // base directory for the input aidl file
 	Imports  []string
-	Api_dir  *string
 	Versions []string
 }
 
@@ -380,11 +380,7 @@ type aidlApi struct {
 }
 
 func (m *aidlApi) apiDir() string {
-	if m.properties.Api_dir != nil {
-		return *(m.properties.Api_dir)
-	} else {
-		return "api"
-	}
+	return filepath.Join(aidlApiDir, m.properties.BaseName)
 }
 
 // Version of the interface at ToT if it is frozen
@@ -637,9 +633,6 @@ type aidlInterfaceProperties struct {
 	// Used by gen dependency to fill out aidl include path
 	Full_import_paths []string `blueprint:"mutated"`
 
-	// Directory where API dumps are. Default is "api".
-	Api_dir *string
-
 	// Stability promise. Currently only supports "vintf".
 	// If this is unset, this corresponds to an interface with stability within
 	// this compilation context (so an interface loaded here can only be used
@@ -659,6 +652,9 @@ type aidlInterfaceProperties struct {
 			// Set to the version of the sdk to compile against
 			// Default: system_current
 			Sdk_version *string
+			// Whether to compile against platform APIs instead of
+			// an SDK.
+			Platform_apis *bool
 		}
 		// Backend of the compiler generating code for C++ clients using
 		// libbinder (unstable C++ interface)
@@ -696,9 +692,16 @@ func (i *aidlInterface) shouldGenerateNdkBackend() bool {
 	return i.properties.Backend.Ndk.Enabled == nil || *i.properties.Backend.Ndk.Enabled
 }
 
-func (i *aidlInterface) checkImports(mctx android.LoadHookContext) {
+func (i *aidlInterface) gatherInterface(mctx android.BaseModuleContext) {
+	aidlInterfaces := aidlInterfaces(mctx.Config())
+	aidlInterfaceMutex.Lock()
+	defer aidlInterfaceMutex.Unlock()
+	*aidlInterfaces = append(*aidlInterfaces, i)
+}
+
+func (i *aidlInterface) checkImports(mctx android.BaseModuleContext) {
 	for _, anImport := range i.properties.Imports {
-		other := lookupInterface(anImport)
+		other := lookupInterface(anImport, mctx.Config())
 
 		if other == nil {
 			mctx.PropertyErrorf("imports", "Import does not exist: "+anImport)
@@ -730,13 +733,6 @@ func (i *aidlInterface) checkStability(mctx android.LoadHookContext) {
 	// should we switch this flag to be something like "vintf { enabled: true }"
 	if *i.properties.Stability != "vintf" {
 		mctx.PropertyErrorf("stability", "must be empty or \"vintf\"")
-	}
-
-	// TODO(b/136027762): need some global way to understand AOSP interfaces. Also,
-	// need the implementation for vendor extensions to be merged. For now, restrict
-	// where this can be defined
-	if !filepath.HasPrefix(mctx.ModuleDir(), "hardware/interfaces/") {
-		mctx.PropertyErrorf("stability", "can only be set in hardware/interfaces")
 	}
 }
 
@@ -819,13 +815,7 @@ func (i *aidlInterface) srcsForVersion(mctx android.LoadHookContext, version str
 	if i.isCurrentVersion(mctx, version) {
 		return i.properties.Srcs, i.properties.Local_include_dir
 	} else {
-		var apiDir string
-		if i.properties.Api_dir != nil {
-			apiDir = *(i.properties.Api_dir)
-		} else {
-			apiDir = "api"
-		}
-		aidlRoot = filepath.Join(apiDir, version)
+		aidlRoot = filepath.Join(aidlApiDir, i.ModuleBase.Name(), version)
 		full_paths, err := mctx.GlobWithDeps(filepath.Join(mctx.ModuleDir(), aidlRoot, "**/*.aidl"), nil)
 		if err != nil {
 			panic(err)
@@ -848,7 +838,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 
 	i.properties.Full_import_paths = importPaths
 
-	i.checkImports(mctx)
+	i.gatherInterface(mctx)
 	i.checkStability(mctx)
 
 	if mctx.Failed() {
@@ -1014,7 +1004,11 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		return ""
 	}
 
-	sdkVersion := proptools.StringDefault(i.properties.Backend.Java.Sdk_version, "system_current")
+	sdkVersion := i.properties.Backend.Java.Sdk_version
+	if !proptools.Bool(i.properties.Backend.Java.Platform_apis) && sdkVersion == nil {
+		// platform apis requires no default
+		sdkVersion = proptools.StringPtr("system_current")
+	}
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(javaSourceGen),
@@ -1029,12 +1023,13 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	})
 
 	mctx.CreateModule(java.LibraryFactory, &javaProperties{
-		Name:        proptools.StringPtr(javaModuleGen),
-		Installable: proptools.BoolPtr(true),
-		Defaults:    []string{"aidl-java-module-defaults"},
-		Sdk_version: proptools.StringPtr(sdkVersion),
-		Static_libs: wrap("", i.properties.Imports, "-java"),
-		Srcs:        []string{":" + javaSourceGen},
+		Name:          proptools.StringPtr(javaModuleGen),
+		Installable:   proptools.BoolPtr(true),
+		Defaults:      []string{"aidl-java-module-defaults"},
+		Sdk_version:   sdkVersion,
+		Platform_apis: i.properties.Backend.Java.Platform_apis,
+		Static_libs:   wrap("", i.properties.Imports, "-java"),
+		Srcs:          []string{":" + javaSourceGen},
 	})
 
 	return javaModuleGen
@@ -1050,7 +1045,6 @@ func addApiModule(mctx android.LoadHookContext, i *aidlInterface) string {
 		Srcs:     srcs,
 		AidlRoot: aidlRoot,
 		Imports:  concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
-		Api_dir:  i.properties.Api_dir,
 		Versions: i.properties.Versions,
 	})
 	return apiModule
@@ -1062,26 +1056,30 @@ func (i *aidlInterface) Name() string {
 func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 }
 func (i *aidlInterface) DepsMutator(ctx android.BottomUpMutatorContext) {
+	i.checkImports(ctx)
 }
 
-var aidlInterfaceMutex sync.Mutex
-var aidlInterfaces []*aidlInterface
+var (
+	aidlInterfacesKey  = android.NewOnceKey("aidlInterfaces")
+	aidlInterfaceMutex sync.Mutex
+)
+
+func aidlInterfaces(config android.Config) *[]*aidlInterface {
+	return config.Once(aidlInterfacesKey, func() interface{} {
+		return &[]*aidlInterface{}
+	}).(*[]*aidlInterface)
+}
 
 func aidlInterfaceFactory() android.Module {
 	i := &aidlInterface{}
 	i.AddProperties(&i.properties)
 	android.InitAndroidModule(i)
 	android.AddLoadHook(i, func(ctx android.LoadHookContext) { aidlInterfaceHook(ctx, i) })
-
-	aidlInterfaceMutex.Lock()
-	aidlInterfaces = append(aidlInterfaces, i)
-	aidlInterfaceMutex.Unlock()
-
 	return i
 }
 
-func lookupInterface(name string) *aidlInterface {
-	for _, i := range aidlInterfaces {
+func lookupInterface(name string, config android.Config) *aidlInterface {
+	for _, i := range *aidlInterfaces(config) {
 		if i.ModuleBase.Name() == name {
 			return i
 		}
