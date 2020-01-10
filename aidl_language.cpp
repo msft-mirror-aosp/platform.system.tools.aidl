@@ -109,8 +109,12 @@ std::string AidlNode::PrintLocation() const {
 }
 
 AidlError::AidlError(bool fatal) : os_(std::cerr), fatal_(fatal) {
+  sHadError = true;
+
   os_ << "ERROR: ";
 }
+
+bool AidlError::sHadError = false;
 
 static const string kNullable("nullable");
 static const string kUtf8InCpp("utf8InCpp");
@@ -763,11 +767,12 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const
           }
         }
       }
-    } else if (this->GetName() == "Map") {
-      if (lang != Options::Language::JAVA) {
-        AIDL_ERROR(this) << "Currently, only Java backend supports Map.";
-        return false;
-      }
+    }
+  }
+  if (this->GetName() == "Map") {
+    if (lang != Options::Language::JAVA) {
+      AIDL_ERROR(this) << "Currently, only Java backend supports Map.";
+      return false;
     }
   }
   if (lang == Options::Language::JAVA) {
