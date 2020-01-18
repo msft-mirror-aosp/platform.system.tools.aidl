@@ -620,7 +620,6 @@ type aidlInterfaceProperties struct {
 	// TODO(b/128940869): remove it if aidl_interface can depend on framework.aidl
 	Include_dirs []string
 	// Relative path for includes. By default assumes AIDL path is relative to current directory.
-	// TODO(b/111117220): automatically compute by letting AIDL parse multiple files simultaneously
 	Local_include_dir string
 
 	// List of .aidl files which compose this interface.
@@ -864,7 +863,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 	}
 
 	if i.shouldGenerateNdkBackend() {
-		// TODO(b/119771576): inherit properties and export 'is vendor' computation from cc.go
 		if !proptools.Bool(i.properties.Vendor_available) {
 			libs = append(libs, addCppLibrary(mctx, i, currentVersion, langNdk))
 			for _, version := range versionsForCpp {
