@@ -16,8 +16,9 @@
 
 %{
 #include "aidl_language.h"
-#include "aidl_language_y.h"
+#include "aidl_language_y-module.h"
 #include "logging.h"
+#include <android-base/parseint.h>
 #include <set>
 #include <map>
 #include <stdio.h>
@@ -26,17 +27,23 @@
 
 int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 
+AidlLocation loc(const yy::parser::location_type& begin, const yy::parser::location_type& end) {
+  CHECK(begin.begin.filename == begin.end.filename);
+  CHECK(begin.end.filename == end.begin.filename);
+  CHECK(end.begin.filename == end.end.filename);
+  AidlLocation::Point begin_point {
+    .line = begin.begin.line,
+    .column = begin.begin.column,
+  };
+  AidlLocation::Point end_point {
+    .line = end.end.line,
+    .column = end.end.column,
+  };
+  return AidlLocation(*begin.begin.filename, begin_point, end_point);
+}
+
 AidlLocation loc(const yy::parser::location_type& l) {
-  CHECK(l.begin.filename == l.end.filename);
-  AidlLocation::Point begin {
-    .line = l.begin.line,
-    .column = l.begin.column,
-  };
-  AidlLocation::Point end {
-    .line = l.end.line,
-    .column = l.end.column,
-  };
-  return AidlLocation(*l.begin.filename, begin, end);
+  return loc(l, l);
 }
 
 #define lex_scanner ps->Scanner()
@@ -51,13 +58,13 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %parse-param { Parser* ps }
 %lex-param { void *lex_scanner }
 
-%pure-parser
 %glr-parser
 %skeleton "glr.cc"
 
 %expect-rr 0
 
-%error-verbose
+%define parse.error verbose
+%locations
 
 %union {
     AidlToken* token;
@@ -86,6 +93,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
     AidlParcelable* parcelable;
     AidlDefinedType* declaration;
     std::vector<std::unique_ptr<AidlTypeSpecifier>>* type_args;
+    std::vector<std::string>* type_params;
 }
 
 %destructor { } <character>
@@ -99,6 +107,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token<token> PARCELABLE "parcelable"
 %token<token> ONEWAY "oneway"
 %token<token> ENUM "enum"
+%token<token> CONST "const"
 
 %token<character> CHARVALUE "char literal"
 %token<token> FLOATVALUE "float literal"
@@ -106,7 +115,6 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token<token> INTVALUE "int literal"
 
 %token '(' ')' ',' '=' '[' ']' '.' '{' '}' ';'
-%token CONST "const"
 %token UNKNOWN "unrecognized character"
 %token CPP_HEADER "cpp_header"
 %token IMPORT "import"
@@ -158,10 +166,11 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<annotation_list>annotation_list
 %type<type> type
 %type<type> unannotated_type
-%type<arg_list> arg_list
+%type<arg_list> arg_list arg_non_empty_list
 %type<arg> arg
 %type<direction> direction
 %type<type_args> type_args
+%type<type_params> type_params
 %type<qname> qualified_name
 %type<const_expr> const_expr
 %type<constant_value_list> constant_value_list
@@ -195,7 +204,7 @@ imports
 
 import
  : IMPORT qualified_name ';'
-  { ps->AddImport(new AidlImport(loc(@2), $2->GetDotName()));
+  { ps->AddImport(std::make_unique<AidlImport>(loc(@2), $2->GetDotName()));
     delete $2;
   };
 
@@ -212,10 +221,14 @@ qualified_name
 
 decls
  : decl {
-    ps->AddDefinedType(unique_ptr<AidlDefinedType>($1));
+    if ($1 != nullptr) {
+      ps->AddDefinedType(unique_ptr<AidlDefinedType>($1));
+    }
   }
  | decls decl {
-    ps->AddDefinedType(unique_ptr<AidlDefinedType>($2));
+    if ($2 != nullptr) {
+      ps->AddDefinedType(unique_ptr<AidlDefinedType>($2));
+    }
   };
 
 decl
@@ -223,12 +236,12 @@ decl
    {
     $$ = $2;
 
-    if ($1->size() > 0) {
+    if ($1->size() > 0 && $$ != nullptr) {
       // copy comments from annotation to decl
-      $2->SetComments($1->begin()->GetComments());
+      $$->SetComments($1->begin()->GetComments());
+      $$->Annotate(std::move(*$1));
     }
 
-    $$->Annotate(std::move(*$1));
     delete $1;
    }
  ;
@@ -242,11 +255,28 @@ unannotated_decl
   { $$ = $1; }
  ;
 
+type_params
+ : identifier {
+    $$ = new std::vector<std::string>();
+    $$->emplace_back($1->GetText());
+    delete $1;
+  }
+ | type_params ',' identifier {
+    $1->emplace_back($3->GetText());
+    $$ = $1;
+    delete $3;
+  };
+
+
 parcelable_decl
  : PARCELABLE qualified_name ';' {
     $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments());
     delete $1;
   }
+ | PARCELABLE qualified_name '<' type_params '>' ';' {
+    $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments(), "", $4);
+    delete $1;
+ }
  | PARCELABLE qualified_name CPP_HEADER C_STR ';' {
     $$ = new AidlParcelable(loc(@2), $2, ps->Package(), $1->GetComments(), $4->GetText());
     delete $1;
@@ -307,7 +337,6 @@ interface_decl
     ps->AddError();
     $$ = nullptr;
     delete $1;
-    delete $2;
     delete $4;
   };
 
@@ -430,10 +459,9 @@ const_expr
   }
  | '(' error ')'
    {
-     std::cerr << "ERROR: invalid const expression within parenthesis: "
-               << $2->GetText() << " at " << @1 << ".\n";
-     // to avoid segfaults
+     std::cerr << "ERROR: invalid const expression within parenthesis at " << @1 << ".\n";
      ps->AddError();
+     // to avoid segfaults
      $$ = AidlConstantValue::Integral(loc(@1), "0");
    }
  ;
@@ -460,15 +488,20 @@ constant_value_non_empty_list
 
 constant_decl
  : CONST type identifier '=' const_expr ';' {
+    $2->SetComments($1->GetComments());
     $$ = new AidlConstantDeclaration(loc(@3), $2, $3->GetText(), $5);
+    delete $1;
     delete $3;
    }
  ;
 
-// TODO(b/139877950): Support autofilling enumerator values
 enumerator
  : identifier '=' const_expr {
     $$ = new AidlEnumerator(loc(@1), $1->GetText(), $3, $1->GetComments());
+    delete $1;
+   }
+ | identifier {
+    $$ = new AidlEnumerator(loc(@1), $1->GetText(), nullptr, $1->GetComments());
     delete $1;
    }
  ;
@@ -512,13 +545,23 @@ method_decl
     delete $4;
   }
  | type identifier '(' arg_list ')' '=' INTVALUE ';' {
-    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $1->GetComments(), std::stoi($7->GetText()));
+    int32_t serial = 0;
+    if (!android::base::ParseInt($7->GetText(), &serial)) {
+        AIDL_ERROR(loc(@7)) << "Could not parse int value: " << $7->GetText();
+        ps->AddError();
+    }
+    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $1->GetComments(), serial);
     delete $2;
     delete $7;
   }
  | annotation_list ONEWAY type identifier '(' arg_list ')' '=' INTVALUE ';' {
     const std::string& comments = ($1->size() > 0) ? $1->begin()->GetComments() : $2->GetComments();
-    $$ = new AidlMethod(loc(@4), true, $3, $4->GetText(), $6, comments, std::stoi($9->GetText()));
+    int32_t serial = 0;
+    if (!android::base::ParseInt($9->GetText(), &serial)) {
+        AIDL_ERROR(loc(@9)) << "Could not parse int value: " << $9->GetText();
+        ps->AddError();
+    }
+    $$ = new AidlMethod(loc(@4), true, $3, $4->GetText(), $6, comments, serial);
     $3->Annotate(std::move(*$1));
     delete $1;
     delete $2;
@@ -526,17 +569,21 @@ method_decl
     delete $9;
   };
 
-arg_list
- :
-  { $$ = new std::vector<std::unique_ptr<AidlArgument>>(); }
- | arg {
+arg_non_empty_list
+ : arg {
     $$ = new std::vector<std::unique_ptr<AidlArgument>>();
     $$->push_back(std::unique_ptr<AidlArgument>($1));
   }
- | arg_list ',' arg {
+ | arg_non_empty_list ',' arg {
     $$ = $1;
     $$->push_back(std::unique_ptr<AidlArgument>($3));
   };
+
+arg_list
+ : /*empty*/
+   { $$ = new std::vector<std::unique_ptr<AidlArgument>>(); }
+ | arg_non_empty_list { $$ = $1; }
+ ;
 
 arg
  : direction type identifier {
@@ -633,18 +680,20 @@ annotation
  : ANNOTATION
   {
     $$ = AidlAnnotation::Parse(loc(@1), $1->GetText(), nullptr);
-    if ($$ == nullptr) {
+    if ($$) {
+      $$->SetComments($1->GetComments());
+    } else {
       ps->AddError();
     }
-    $$->SetComments($1->GetComments());
     delete $1;
   };
  | ANNOTATION '(' parameter_list ')' {
-    $$ = AidlAnnotation::Parse(loc(@1), $1->GetText(), $3);
-    if ($$ == nullptr) {
+    $$ = AidlAnnotation::Parse(loc(@1, @4), $1->GetText(), $3);
+    if ($$) {
+      $$->SetComments($1->GetComments());
+    } else {
       ps->AddError();
     }
-    $$->SetComments($1->GetComments());
     delete $1;
     delete $3;
  }

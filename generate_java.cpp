@@ -64,14 +64,6 @@ bool generate_java_parcel(const std::string& filename, const AidlStructuredParce
   return true;
 }
 
-bool generate_java_parcel_declaration(const std::string& filename, const IoDelegate& io_delegate) {
-  CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
-  *code_writer
-      << "// This file is intentionally left blank as placeholder for parcel declaration.\n";
-
-  return true;
-}
-
 bool generate_java_enum_declaration(const std::string& filename,
                                     const AidlEnumDeclaration* enum_decl,
                                     const AidlTypenames& typenames, const IoDelegate& io_delegate) {
@@ -86,11 +78,6 @@ bool generate_java(const std::string& filename, const AidlDefinedType* defined_t
   if (const AidlStructuredParcelable* parcelable = defined_type->AsStructuredParcelable();
       parcelable != nullptr) {
     return generate_java_parcel(filename, parcelable, typenames, io_delegate);
-  }
-
-  if (const AidlParcelable* parcelable_decl = defined_type->AsParcelable();
-      parcelable_decl != nullptr) {
-    return generate_java_parcel_declaration(filename, io_delegate);
   }
 
   if (const AidlEnumDeclaration* enum_decl = defined_type->AsEnumDeclaration();
@@ -261,12 +248,12 @@ void generate_enum(const CodeWriterPtr& code_writer, const AidlEnumDeclaration* 
   code_writer->Write("package %s;\n", enum_decl->GetPackage().c_str());
   code_writer->Write("%s\n", enum_decl->GetComments().c_str());
   for (const std::string& annotation : generate_java_annotations(*enum_decl)) {
-    code_writer->Write(annotation.c_str());
+    code_writer->Write("%s", annotation.c_str());
   }
   code_writer->Write("public @interface %s {\n", enum_decl->GetName().c_str());
   code_writer->Indent();
   for (const auto& enumerator : enum_decl->GetEnumerators()) {
-    code_writer->Write(enumerator->GetComments().c_str());
+    code_writer->Write("%s", enumerator->GetComments().c_str());
     code_writer->Write(
         "public static final %s %s = %s;\n",
         JavaSignatureOf(enum_decl->GetBackingType(), typenames).c_str(),
@@ -277,17 +264,19 @@ void generate_enum(const CodeWriterPtr& code_writer, const AidlEnumDeclaration* 
   code_writer->Write("}\n");
 }
 
-std::string generate_java_annotation_parameters(const AidlAnnotation& a) {
+std::string dump_location(const AidlNode& method) {
+  return method.PrintLocation();
+}
+
+std::string generate_java_unsupportedappusage_parameters(const AidlAnnotation& a) {
   const std::map<std::string, std::string> params = a.AnnotationParams(ConstantValueDecorator);
-  if (params.empty()) {
-    return "";
-  }
   std::vector<string> parameters_decl;
   for (const auto& name_and_param : params) {
     const std::string& param_name = name_and_param.first;
     const std::string& param_value = name_and_param.second;
     parameters_decl.push_back(param_name + " = " + param_value);
   }
+  parameters_decl.push_back("overrideSourcePosition=\"" + dump_location(a) + "\"");
   return "(" + base::Join(parameters_decl, ", ") + ")";
 }
 
@@ -295,8 +284,8 @@ std::vector<std::string> generate_java_annotations(const AidlAnnotatable& a) {
   std::vector<std::string> result;
   const AidlAnnotation* unsupported_app_usage = a.UnsupportedAppUsage();
   if (unsupported_app_usage != nullptr) {
-    result.emplace_back("@dalvik.annotation.compat.UnsupportedAppUsage" +
-                        generate_java_annotation_parameters(*unsupported_app_usage));
+    result.emplace_back("@android.compat.annotation.UnsupportedAppUsage" +
+                        generate_java_unsupportedappusage_parameters(*unsupported_app_usage));
   }
   if (a.IsSystemApi()) {
     result.emplace_back("@android.annotation.SystemApi");

@@ -75,6 +75,7 @@ const int kLastCallTransaction = 0x00ffffff;
 // are auto-implemented by the AIDL compiler.
 const int kFirstMetaMethodId = kLastCallTransaction - kFirstCallTransaction;
 const int kGetInterfaceVersionId = kFirstMetaMethodId;
+const int kGetInterfaceHashId = kFirstMetaMethodId - 1;
 // Additional meta transactions implemented by AIDL should use
 // kFirstMetaMethodId -1, -2, ...and so on.
 
@@ -357,7 +358,7 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const string& filena
   }
 
   string line;
-  unsigned lineno = 1;
+  int lineno = 1;
   for ( ; line_reader->ReadLine(&line); ++lineno) {
     if (line.empty() || line.compare(0, 2, "//") == 0) {
       // skip comments and empty lines
@@ -449,10 +450,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   ImportResolver import_resolver{io_delegate, input_file_name, options.ImportDirs(),
                                  options.InputFiles()};
 
-  set<string> type_from_import_statements;
+  vector<string> type_from_import_statements;
   for (const auto& import : main_parser->GetImports()) {
     if (!AidlTypenames::IsBuiltinTypename(import->GetNeededClass())) {
-      type_from_import_statements.emplace(import->GetNeededClass());
+      type_from_import_statements.emplace_back(import->GetNeededClass());
     }
   }
 
@@ -467,8 +468,9 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       unresolved_types.emplace(type->GetName());
     }
   }
-  set<string> import_candidates(type_from_import_statements);
-  import_candidates.insert(unresolved_types.begin(), unresolved_types.end());
+  vector<string> import_candidates(type_from_import_statements);
+  import_candidates.insert(import_candidates.end(), unresolved_types.begin(),
+                           unresolved_types.end());
   for (const auto& import : import_candidates) {
     if (typenames->IsIgnorableImport(import)) {
       // There are places in the Android tree where an import doesn't resolve,
@@ -478,7 +480,16 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
     string import_path = import_resolver.FindImportFile(import);
     if (import_path.empty()) {
-      if (type_from_import_statements.find(import) != type_from_import_statements.end()) {
+      if (typenames->ResolveTypename(import).second) {
+        // Couldn't find the *.aidl file for the type from the include paths, but we
+        // have the type already resolved. This could happen when the type is
+        // from the preprocessed aidl file. In that case, use the type from the
+        // preprocessed aidl file as a last resort.
+        continue;
+      }
+
+      if (std::find(type_from_import_statements.begin(), type_from_import_statements.end(),
+                    import) != type_from_import_statements.end()) {
         // Complain only when the import from the import statement has failed.
         AIDL_ERROR(import) << "couldn't find import for class " << import;
         err = AidlError::BAD_IMPORT;
@@ -538,11 +549,14 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         enum_decl->SetBackingType(std::move(byte_type));
       }
 
-      // TODO(b/139877950): Support autofilling enumerators, and ensure that
-      // autofilling does not cause any enumerators to have a value larger than
-      // allowed by the backing type.
+      if (!enum_decl->Autofill()) {
+        err = AidlError::BAD_TYPE;
+      }
     }
   });
+  if (err != AidlError::OK) {
+    return err;
+  }
 
   //////////////////////////////////////////////////////////////////////////
   // Validation phase
@@ -568,7 +582,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       if (!unstructuredParcelable->CheckValid(*typenames)) {
         return AidlError::BAD_TYPE;
       }
-      bool isStable = unstructuredParcelable->IsStableParcelable();
+      bool isStable = unstructuredParcelable->IsStableApiParcelable(options.TargetLanguage());
       if (options.IsStructured() && !isStable) {
         AIDL_ERROR(unstructuredParcelable)
             << "Cannot declared parcelable in a --structured interface. Parcelable must be defined "
@@ -626,6 +640,16 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
                            kGetInterfaceVersionId, false /* is_user_defined */);
         interface->GetMutableMethods().emplace_back(method);
       }
+      // add the meta-method 'string getInterfaceHash()' if hash is specified.
+      if (!options.Hash().empty()) {
+        AidlTypeSpecifier* ret =
+            new AidlTypeSpecifier(AIDL_LOCATION_HERE, "String", false, nullptr, "");
+        ret->Resolve(*typenames);
+        vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
+        AidlMethod* method = new AidlMethod(AIDL_LOCATION_HERE, false, ret, kGetInterfaceHash, args,
+                                            "", kGetInterfaceHashId, false /* is_user_defined */);
+        interface->GetMutableMethods().emplace_back(method);
+      }
       if (!check_and_assign_method_ids(interface->GetMethods())) {
         return AidlError::BAD_METHOD_ID;
       }
@@ -660,7 +684,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
 
   typenames->IterateTypes([&](const AidlDefinedType& type) {
     if (options.IsStructured() && type.AsUnstructuredParcelable() != nullptr &&
-        !type.AsUnstructuredParcelable()->IsStableParcelable()) {
+        !type.AsUnstructuredParcelable()->IsStableApiParcelable(options.TargetLanguage())) {
       err = AidlError::NOT_STRUCTURED;
       LOG(ERROR) << type.GetCanonicalName()
                  << " is not structured, but this is a structured interface.";
@@ -734,8 +758,13 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
         ndk::GenerateNdk(output_file_name, options, typenames, *defined_type, io_delegate);
         success = true;
       } else if (lang == Options::Language::JAVA) {
-        success =
-            java::generate_java(output_file_name, defined_type, typenames, io_delegate, options);
+        if (defined_type->AsUnstructuredParcelable() != nullptr) {
+          // Legacy behavior. For parcelable declarations in Java, don't generate output file.
+          success = true;
+        } else {
+          success =
+              java::generate_java(output_file_name, defined_type, typenames, io_delegate, options);
+        }
       } else {
         LOG(FATAL) << "Should not reach here" << endl;
         return 1;
@@ -813,7 +842,7 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
         if (!type->GetPackage().empty()) {
           (*writer) << "package " << type->GetPackage() << ";\n";
         }
-        type->Write(writer.get());
+        type->Dump(writer.get());
       }
     } else {
       return false;

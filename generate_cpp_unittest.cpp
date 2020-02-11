@@ -76,7 +76,7 @@ public:
   ::android::binder::Status NullableBinder(::android::sp<::foo::IFooType>* _aidl_return) override;
   ::android::binder::Status StringListMethod(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* output, ::std::vector<::android::String16>* _aidl_return) override;
   ::android::binder::Status BinderListMethod(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* output, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) override;
-  ::android::binder::Status TakesAFileDescriptor(const ::android::base::unique_fd& f, ::android::base::unique_fd* _aidl_return) override;
+  ::android::binder::Status TakesAFileDescriptor(::android::base::unique_fd f, ::android::base::unique_fd* _aidl_return) override;
   ::android::binder::Status TakesAFileDescriptorArray(const ::std::vector<::android::base::unique_fd>& f, ::std::vector<::android::base::unique_fd>* _aidl_return) override;
 };  // class BpComplexTypeInterface
 
@@ -325,7 +325,7 @@ BpComplexTypeInterface::BpComplexTypeInterface(const ::android::sp<::android::IB
   return _aidl_status;
 }
 
-::android::binder::Status BpComplexTypeInterface::TakesAFileDescriptor(const ::android::base::unique_fd& f, ::android::base::unique_fd* _aidl_return) {
+::android::binder::Status BpComplexTypeInterface::TakesAFileDescriptor(::android::base::unique_fd f, ::android::base::unique_fd* _aidl_return) {
   ::android::Parcel _aidl_data;
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
@@ -340,7 +340,7 @@ BpComplexTypeInterface::BpComplexTypeInterface(const ::android::sp<::android::IB
   }
   _aidl_ret_status = remote()->transact(::android::IBinder::FIRST_CALL_TRANSACTION + 6 /* TakesAFileDescriptor */, _aidl_data, &_aidl_reply);
   if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IComplexTypeInterface::getDefaultImpl())) {
-     return IComplexTypeInterface::getDefaultImpl()->TakesAFileDescriptor(f, _aidl_return);
+     return IComplexTypeInterface::getDefaultImpl()->TakesAFileDescriptor(std::move(f), _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -646,7 +646,7 @@ BpComplexTypeInterface::BpComplexTypeInterface(const ::android::sp<::android::IB
   return _aidl_status;
 }
 
-::android::binder::Status BpComplexTypeInterface::TakesAFileDescriptor(const ::android::base::unique_fd& f, ::android::base::unique_fd* _aidl_return) {
+::android::binder::Status BpComplexTypeInterface::TakesAFileDescriptor(::android::base::unique_fd f, ::android::base::unique_fd* _aidl_return) {
   ::android::Parcel _aidl_data;
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
@@ -662,7 +662,7 @@ BpComplexTypeInterface::BpComplexTypeInterface(const ::android::sp<::android::IB
   }
   _aidl_ret_status = remote()->transact(::android::IBinder::FIRST_CALL_TRANSACTION + 6 /* TakesAFileDescriptor */, _aidl_data, &_aidl_reply);
   if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IComplexTypeInterface::getDefaultImpl())) {
-     return IComplexTypeInterface::getDefaultImpl()->TakesAFileDescriptor(f, _aidl_return);
+     return IComplexTypeInterface::getDefaultImpl()->TakesAFileDescriptor(std::move(f), _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -945,7 +945,7 @@ BnComplexTypeInterface::BnComplexTypeInterface()
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
-    ::android::binder::Status _aidl_status(TakesAFileDescriptor(in_f, &_aidl_return));
+    ::android::binder::Status _aidl_status(TakesAFileDescriptor(std::move(in_f), &_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -1211,7 +1211,7 @@ BnComplexTypeInterface::BnComplexTypeInterface()
       break;
     }
     atrace_begin(ATRACE_TAG_AIDL, "IComplexTypeInterface::TakesAFileDescriptor::cppServer");
-    ::android::binder::Status _aidl_status(TakesAFileDescriptor(in_f, &_aidl_return));
+    ::android::binder::Status _aidl_status(TakesAFileDescriptor(std::move(in_f), &_aidl_return));
     atrace_end(ATRACE_TAG_AIDL);
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -1302,23 +1302,40 @@ public:
   virtual ::android::binder::Status NullableBinder(::android::sp<::foo::IFooType>* _aidl_return) = 0;
   virtual ::android::binder::Status StringListMethod(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* output, ::std::vector<::android::String16>* _aidl_return) = 0;
   virtual ::android::binder::Status BinderListMethod(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* output, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) = 0;
-  virtual ::android::binder::Status TakesAFileDescriptor(const ::android::base::unique_fd& f, ::android::base::unique_fd* _aidl_return) = 0;
+  virtual ::android::binder::Status TakesAFileDescriptor(::android::base::unique_fd f, ::android::base::unique_fd* _aidl_return) = 0;
   virtual ::android::binder::Status TakesAFileDescriptorArray(const ::std::vector<::android::base::unique_fd>& f, ::std::vector<::android::base::unique_fd>* _aidl_return) = 0;
 };  // class IComplexTypeInterface
 
 class IComplexTypeInterfaceDefault : public IComplexTypeInterface {
 public:
-  ::android::IBinder* onAsBinder() override;
-  ::android::binder::Status Send(const ::std::unique_ptr<::std::vector<int32_t>>& goes_in, ::std::vector<double>* goes_in_and_out, ::std::vector<bool>* goes_out, ::std::vector<int32_t>* _aidl_return) override;
-  ::android::binder::Status Piff(int32_t times) override;
-  ::android::binder::Status TakesABinder(const ::android::sp<::foo::IFooType>& f, ::android::sp<::foo::IFooType>* _aidl_return) override;
-  ::android::binder::Status NullableBinder(::android::sp<::foo::IFooType>* _aidl_return) override;
-  ::android::binder::Status StringListMethod(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* output, ::std::vector<::android::String16>* _aidl_return) override;
-  ::android::binder::Status BinderListMethod(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* output, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) override;
-  ::android::binder::Status TakesAFileDescriptor(const ::android::base::unique_fd& f, ::android::base::unique_fd* _aidl_return) override;
-  ::android::binder::Status TakesAFileDescriptorArray(const ::std::vector<::android::base::unique_fd>& f, ::std::vector<::android::base::unique_fd>* _aidl_return) override;
-
-};
+  ::android::IBinder* onAsBinder() override {
+    return nullptr;
+  }
+  ::android::binder::Status Send(const ::std::unique_ptr<::std::vector<int32_t>>&, ::std::vector<double>*, ::std::vector<bool>*, ::std::vector<int32_t>*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status Piff(int32_t) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status TakesABinder(const ::android::sp<::foo::IFooType>&, ::android::sp<::foo::IFooType>*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status NullableBinder(::android::sp<::foo::IFooType>*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status StringListMethod(const ::std::vector<::android::String16>&, ::std::vector<::android::String16>*, ::std::vector<::android::String16>*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status BinderListMethod(const ::std::vector<::android::sp<::android::IBinder>>&, ::std::vector<::android::sp<::android::IBinder>>*, ::std::vector<::android::sp<::android::IBinder>>*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status TakesAFileDescriptor(::android::base::unique_fd, ::android::base::unique_fd*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status TakesAFileDescriptorArray(const ::std::vector<::android::base::unique_fd>&, ::std::vector<::android::base::unique_fd>*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+};  // class IComplexTypeInterfaceDefault
 
 }  // namespace os
 
@@ -1335,43 +1352,7 @@ namespace android {
 
 namespace os {
 
-IMPLEMENT_META_INTERFACE(ComplexTypeInterface, "android.os.IComplexTypeInterface")
-
-::android::IBinder* IComplexTypeInterfaceDefault::onAsBinder() {
-  return nullptr;
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::Send(const ::std::unique_ptr<::std::vector<int32_t>>&, ::std::vector<double>*, ::std::vector<bool>*, ::std::vector<int32_t>* ) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::Piff(int32_t) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::TakesABinder(const ::android::sp<::foo::IFooType>&, ::android::sp<::foo::IFooType>* ) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::NullableBinder(::android::sp<::foo::IFooType>* ) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::StringListMethod(const ::std::vector<::android::String16>&, ::std::vector<::android::String16>*, ::std::vector<::android::String16>* ) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::BinderListMethod(const ::std::vector<::android::sp<::android::IBinder>>&, ::std::vector<::android::sp<::android::IBinder>>*, ::std::vector<::android::sp<::android::IBinder>>* ) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::TakesAFileDescriptor(const ::android::base::unique_fd&, ::android::base::unique_fd* ) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
-
-::android::binder::Status IComplexTypeInterfaceDefault::TakesAFileDescriptorArray(const ::std::vector<::android::base::unique_fd>&, ::std::vector<::android::base::unique_fd>* ) {
-  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-}
+DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(ComplexTypeInterface, "android.os.IComplexTypeInterface")
 
 }  // namespace os
 
@@ -1380,31 +1361,103 @@ IMPLEMENT_META_INTERFACE(ComplexTypeInterface, "android.os.IComplexTypeInterface
 
 const string kEnumAIDL = R"(package android.os;
 enum TestEnum {
-  FOO = 1,
-  BAR = 2,
+  ZERO,
+  ONE,
+  THREE = 3,
+  FOUR = 3 + 1,
+  FIVE,
+  SIX,
+  SEVEN,
+  EIGHT = 16 / 2,
+  NINE,
+  TEN,
 })";
 
+// clang-format off
 const char kExpectedEnumHeaderOutput[] =
     R"(#ifndef AIDL_GENERATED_ANDROID_OS_TEST_ENUM_H_
 #define AIDL_GENERATED_ANDROID_OS_TEST_ENUM_H_
 
+#include <array>
+#include <binder/Enums.h>
 #include <cstdint>
+#include <string>
 
 namespace android {
 
 namespace os {
 
 enum class TestEnum : int8_t {
-  FOO = 1,
-  BAR = 2,
+  ZERO = 0,
+  ONE = 1,
+  THREE = 3,
+  FOUR = 4,
+  FIVE = 5,
+  SIX = 6,
+  SEVEN = 7,
+  EIGHT = 8,
+  NINE = 9,
+  TEN = 10,
 };
 
+static inline std::string toString(TestEnum val) {
+  switch(val) {
+  case TestEnum::ZERO:
+    return "ZERO";
+  case TestEnum::ONE:
+    return "ONE";
+  case TestEnum::THREE:
+    return "THREE";
+  case TestEnum::FOUR:
+    return "FOUR";
+  case TestEnum::FIVE:
+    return "FIVE";
+  case TestEnum::SIX:
+    return "SIX";
+  case TestEnum::SEVEN:
+    return "SEVEN";
+  case TestEnum::EIGHT:
+    return "EIGHT";
+  case TestEnum::NINE:
+    return "NINE";
+  case TestEnum::TEN:
+    return "TEN";
+  default:
+    return std::to_string(static_cast<int8_t>(val));
+  }
+}
+
 }  // namespace os
+
+}  // namespace android
+namespace android {
+
+namespace internal {
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template <>
+constexpr inline std::array<::android::os::TestEnum, 10> enum_values<::android::os::TestEnum> = {
+  ::android::os::TestEnum::ZERO,
+  ::android::os::TestEnum::ONE,
+  ::android::os::TestEnum::THREE,
+  ::android::os::TestEnum::FOUR,
+  ::android::os::TestEnum::FIVE,
+  ::android::os::TestEnum::SIX,
+  ::android::os::TestEnum::SEVEN,
+  ::android::os::TestEnum::EIGHT,
+  ::android::os::TestEnum::NINE,
+  ::android::os::TestEnum::TEN,
+};
+#pragma clang diagnostic pop
+
+}  // namespace internal
 
 }  // namespace android
 
 #endif  // AIDL_GENERATED_ANDROID_OS_TEST_ENUM_H_
 )";
+// clang-format on
 
 const string kEnumWithBackingTypeAIDL = R"(package android.os;
 @Backing(type="long")
@@ -1413,11 +1466,15 @@ enum TestEnum {
   BAR = 2,
 })";
 
+// clang-format off
 const char kExpectedEnumWithBackingTypeHeaderOutput[] =
     R"(#ifndef AIDL_GENERATED_ANDROID_OS_TEST_ENUM_H_
 #define AIDL_GENERATED_ANDROID_OS_TEST_ENUM_H_
 
+#include <array>
+#include <binder/Enums.h>
 #include <cstdint>
+#include <string>
 
 namespace android {
 
@@ -1428,12 +1485,40 @@ enum class TestEnum : int64_t {
   BAR = 2L,
 };
 
+static inline std::string toString(TestEnum val) {
+  switch(val) {
+  case TestEnum::FOO:
+    return "FOO";
+  case TestEnum::BAR:
+    return "BAR";
+  default:
+    return std::to_string(static_cast<int64_t>(val));
+  }
+}
+
 }  // namespace os
+
+}  // namespace android
+namespace android {
+
+namespace internal {
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template <>
+constexpr inline std::array<::android::os::TestEnum, 2> enum_values<::android::os::TestEnum> = {
+  ::android::os::TestEnum::FOO,
+  ::android::os::TestEnum::BAR,
+};
+#pragma clang diagnostic pop
+
+}  // namespace internal
 
 }  // namespace android
 
 #endif  // AIDL_GENERATED_ANDROID_OS_TEST_ENUM_H_
 )";
+// clang-format on
 
 }  // namespace
 

@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "aidl_language.h"
-#include "aidl_language_y.h"
+#include "aidl_language_y-module.h"
 
 #define YY_USER_ACTION yylloc->columns(yyleng);
 %}
@@ -32,7 +32,7 @@
 %option bison-bridge
 %option bison-locations
 
-%x COPYING LONG_COMMENT
+%x LONG_COMMENT
 
 identifier  [_a-zA-Z][_a-zA-Z0-9]*
 whitespace  ([ \t\r]+)
@@ -46,12 +46,6 @@ floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
   std::string extra_text;
   yylloc->step();
 %}
-
-
-\%\%\{                { extra_text += "/**"; BEGIN(COPYING); }
-<COPYING>\}\%\%       { extra_text += "**/"; yylloc->step(); BEGIN(INITIAL); }
-<COPYING>.*           { extra_text += yytext; }
-<COPYING>\n+          { extra_text += yytext; yylloc->lines(yyleng); }
 
 \/\*                  { extra_text += yytext; BEGIN(LONG_COMMENT); }
 <LONG_COMMENT>\*+\/   { extra_text += yytext; yylloc->step(); BEGIN(INITIAL);  }
@@ -100,9 +94,6 @@ floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
 ">="                  { return(yy::parser::token::GEQ); }
 "=="                  { return(yy::parser::token::EQUALITY); }
 "!="                  { return(yy::parser::token::NEQ); }
-"?"                   { return('?'); }
-"@"                   { return('@'); }
-"#"                   { return('#'); }
 
     /* annotations */
 @{identifier}         { yylval->token = new AidlToken(yytext + 1, extra_text);
@@ -119,7 +110,8 @@ in                    { return yy::parser::token::IN; }
 out                   { return yy::parser::token::OUT; }
 inout                 { return yy::parser::token::INOUT; }
 cpp_header            { return yy::parser::token::CPP_HEADER; }
-const                 { return yy::parser::token::CONST; }
+const                 { yylval->token = new AidlToken("const", extra_text);
+                        return yy::parser::token::CONST; }
 true                  { return yy::parser::token::TRUE_LITERAL; }
 false                 { return yy::parser::token::FALSE_LITERAL; }
 

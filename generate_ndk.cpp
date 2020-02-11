@@ -30,7 +30,10 @@ namespace ndk {
 static constexpr const char* kClazz = "_g_aidl_clazz";
 static constexpr const char* kDescriptor = "descriptor";
 static constexpr const char* kVersion = "version";
-static constexpr const char* kCacheVariable = "_aidl_cached_value";
+static constexpr const char* kHash = "hash";
+static constexpr const char* kCachedVersion = "_aidl_cached_version";
+static constexpr const char* kCachedHash = "_aidl_cached_hash";
+static constexpr const char* kCachedHashMutex = "_aidl_cached_hash_mutex";
 
 using namespace internals;
 using cpp::ClassNames;
@@ -170,7 +173,11 @@ static void StatusCheckReturn(CodeWriter& out) {
 
 static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
                                    const AidlDefinedType& defined_type) {
-  out << "#include <android/binder_parcel_utils.h>\n";
+  out << "#include <cstdint>\n";
+  out << "#include <memory>\n";
+  out << "#include <optional>\n";
+  out << "#include <string>\n";
+  out << "#include <vector>\n";
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
   out << "#include <android/binder_stability.h>\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
@@ -183,12 +190,12 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
           << NdkHeaderFile(other_defined_type, ClassNames::RAW, false /*use_os_sep*/) << ">\n";
     } else if (other_defined_type.AsStructuredParcelable() != nullptr) {
       out << "#include <"
-          << NdkHeaderFile(other_defined_type, ClassNames::BASE, false /*use_os_sep*/) << ">\n";
+          << NdkHeaderFile(other_defined_type, ClassNames::RAW, false /*use_os_sep*/) << ">\n";
     } else if (other_defined_type.AsParcelable() != nullptr) {
       out << "#include \"" << other_defined_type.AsParcelable()->GetCppHeader() << "\"\n";
     } else if (other_defined_type.AsEnumDeclaration() != nullptr) {
       out << "#include <"
-          << NdkHeaderFile(other_defined_type, ClassNames::BASE, false /*use_os_sep*/) << ">\n";
+          << NdkHeaderFile(other_defined_type, ClassNames::RAW, false /*use_os_sep*/) << ">\n";
     } else {
       AIDL_FATAL(defined_type) << "Unrecognized type.";
     }
@@ -196,6 +203,8 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
 }
 static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
                                    const AidlDefinedType& /*defined_type*/) {
+  out << "#include <android/binder_parcel_utils.h>\n";
+
   types.IterateTypes([&](const AidlDefinedType& a_defined_type) {
     if (a_defined_type.AsInterface() != nullptr) {
       out << "#include <" << NdkHeaderFile(a_defined_type, ClassNames::CLIENT, false /*use_os_sep*/)
@@ -282,7 +291,6 @@ static std::string MethodId(const AidlMethod& m) {
 static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames& types,
                                            const AidlInterface& defined_type,
                                            const AidlMethod& method,
-                                           const std::optional<std::string> return_value_cached_to,
                                            const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::CLIENT);
 
@@ -291,10 +299,19 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << "binder_status_t _aidl_ret_status = STATUS_OK;\n";
   out << "::ndk::ScopedAStatus _aidl_status;\n";
 
-  if (return_value_cached_to) {
-    out << "if (" << *return_value_cached_to << " != -1) {\n";
+  if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+    out << "const std::lock_guard<std::mutex> lock(" << kCachedHashMutex << ");\n";
+    out << "if (" << kCachedHash << " != \"-1\") {\n";
     out.Indent();
-    out << "*_aidl_return = " << *return_value_cached_to << ";\n"
+    out << "*_aidl_return = " << kCachedHash << ";\n"
+        << "_aidl_status.set(AStatus_fromStatus(_aidl_ret_status));\n"
+        << "return _aidl_status;\n";
+    out.Dedent();
+    out << "}\n";
+  } else if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    out << "if (" << kCachedVersion << " != -1) {\n";
+    out.Indent();
+    out << "*_aidl_return = " << kCachedVersion << ";\n"
         << "_aidl_status.set(AStatus_fromStatus(_aidl_ret_status));\n"
         << "return _aidl_status;\n";
     out.Dedent();
@@ -364,8 +381,10 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     ReadFromParcelFor({out, types, method.GetType(), "_aidl_out.get()", "_aidl_return"});
     out << ";\n";
     StatusCheckGoto(out);
-    if (return_value_cached_to) {
-      out << *return_value_cached_to << " = *_aidl_return;\n";
+    if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+      out << kCachedHash << " = *_aidl_return;\n";
+    } else if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
+      out << kCachedVersion << " = *_aidl_return;\n";
     }
   }
   for (const AidlArgument* arg : method.GetOutArguments()) {
@@ -500,13 +519,7 @@ void GenerateClientSource(CodeWriter& out, const AidlTypenames& types,
   }
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
-    // Only getInterfaceVersion can use cache.
-    const bool cacheable = !method->IsUserDefined() && method->GetName() == kGetInterfaceVersion &&
-                           options.Version() > 0;
-    const auto return_value_cached_to =
-        cacheable ? std::make_optional<std::string>(kCacheVariable) : std::nullopt;
-    GenerateClientMethodDefinition(out, types, defined_type, *method, return_value_cached_to,
-                                   options);
+    GenerateClientMethodDefinition(out, types, defined_type, *method, options);
   }
 }
 void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
@@ -545,6 +558,14 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
       out << NdkMethodDecl(types, *method, clazz) << " {\n";
       out.Indent();
       out << "*_aidl_return = " << iface << "::" << kVersion << ";\n";
+      out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
+      out.Dedent();
+      out << "}\n";
+    }
+    if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+      out << NdkMethodDecl(types, *method, clazz) << " {\n";
+      out.Indent();
+      out << "*_aidl_return = " << iface << "::" << kHash << ";\n";
       out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
       out.Dedent();
       out << "}\n";
@@ -644,6 +665,15 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
         out.Dedent();
         out << "}\n";
       }
+      if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+        out << "::ndk::ScopedAStatus " << defaultClazz << "::" << method->GetName() << "("
+            << "std::string* _aidl_return) {\n";
+        out.Indent();
+        out << "*_aidl_return = \"\";\n";
+        out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
+        out.Dedent();
+        out << "}\n";
+      }
     }
   }
 
@@ -689,7 +719,12 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   }
 
   if (options.Version() > 0) {
-    out << "int32_t " << kCacheVariable << " = -1;\n";
+    out << "int32_t " << kCachedVersion << " = -1;\n";
+  }
+
+  if (!options.Hash().empty()) {
+    out << "std::string " << kCachedHash << " = \"-1\";\n";
+    out << "std::mutex " << kCachedHashMutex << ";\n";
   }
   if (options.GenLog()) {
     out << "static std::function<void(const Json::Value&)> logFunc;\n";
@@ -722,6 +757,8 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
       continue;
     }
     if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+      out << NdkMethodDecl(types, *method) << " final override;\n";
+    } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
       out << NdkMethodDecl(types, *method) << " final override;\n";
     } else {
       AIDL_FATAL(defined_type) << "Meta method '" << method->GetName() << "' is unimplemented.";
@@ -771,6 +808,9 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
     out << "static const int32_t " << kVersion << " = " << std::to_string(options.Version())
         << ";\n";
   }
+  if (!options.Hash().empty()) {
+    out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
+  }
   out << "\n";
   out << "static std::shared_ptr<" << clazz << "> fromBinder(const ::ndk::SpAIBinder& binder);\n";
   out << "static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<" << clazz
@@ -803,6 +843,8 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
       out << NdkMethodDecl(types, *method) << " override;\n";
     } else if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
       out << NdkMethodDecl(types, *method) << " override;\n";
+    } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+      out << NdkMethodDecl(types, *method) << " override;\n";
     }
   }
   out << "::ndk::SpAIBinder asBinder() override;\n";
@@ -815,7 +857,7 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
 void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
                           const AidlStructuredParcelable& defined_type,
                           const Options& /*options*/) {
-  const std::string clazz = ClassName(defined_type, ClassNames::BASE);
+  const std::string clazz = ClassName(defined_type, ClassNames::RAW);
 
   out << "#pragma once\n";
   out << "#include <android/binder_interface_utils.h>\n";
@@ -846,7 +888,7 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
                           const AidlStructuredParcelable& defined_type,
                           const Options& /*options*/) {
-  const std::string clazz = ClassName(defined_type, ClassNames::BASE);
+  const std::string clazz = ClassName(defined_type, ClassNames::RAW);
 
   out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
       << "\"\n";
@@ -860,21 +902,11 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
 
   out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* parcel) {\n";
   out.Indent();
-  out << "std::string _aidl_descriptor;\n";
-  out << "binder_status_t _aidl_ret_status;\n";
-
-  out << "int32_t _aidl_null;\n";
   out << "int32_t _aidl_parcelable_size;\n";
-  out << "int32_t _aidl_start_pos;\n";
-  out << "_aidl_ret_status = AParcel_readInt32(parcel, &_aidl_null);\n";
-  StatusCheckReturn(out);
-  out << "_aidl_start_pos = AParcel_getDataPosition(parcel);\n";
-  out << "_aidl_ret_status = AParcel_readInt32(parcel, &_aidl_parcelable_size);\n";
+  out << "int32_t _aidl_start_pos = AParcel_getDataPosition(parcel);\n";
+  out << "binder_status_t _aidl_ret_status = AParcel_readInt32(parcel, &_aidl_parcelable_size);\n";
   out << "if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;\n";
   StatusCheckReturn(out);
-
-  // TODO(b/117281836)
-  out << "if (_aidl_null == 0) return STATUS_UNEXPECTED_NULL;\n\n";
 
   for (const auto& variable : defined_type.GetFields()) {
     out << "_aidl_ret_status = ";
@@ -895,9 +927,6 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   out.Indent();
   out << "binder_status_t _aidl_ret_status;\n";
 
-  // non-null
-  out << "_aidl_ret_status = AParcel_writeInt32(parcel, 1);\n";
-  StatusCheckReturn(out);
   out << "size_t _aidl_start_pos = AParcel_getDataPosition(parcel);\n";
   out << "_aidl_ret_status = AParcel_writeInt32(parcel, 0);\n";
   StatusCheckReturn(out);
@@ -920,12 +949,41 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   LeaveNdkNamespace(out, defined_type);
 }
 
+std::string GenerateEnumToString(const AidlTypenames& typenames,
+                                 const AidlEnumDeclaration& enum_decl) {
+  std::ostringstream code;
+  code << "static inline std::string toString(" << enum_decl.GetName() << " val) {\n";
+  code << "  switch(val) {\n";
+  std::set<std::string> unique_cases;
+  for (const auto& enumerator : enum_decl.GetEnumerators()) {
+    std::string c = enumerator->ValueString(enum_decl.GetBackingType(), ConstantValueDecorator);
+    // Only add a case if its value has not yet been used in the switch
+    // statement. C++ does not allow multiple cases with the same value, but
+    // enums does allow this. In this scenario, the first declared
+    // enumerator with the given value is printed.
+    if (unique_cases.count(c) == 0) {
+      unique_cases.insert(c);
+      code << "  case " << enum_decl.GetName() << "::" << enumerator->GetName() << ":\n";
+      code << "    return \"" << enumerator->GetName() << "\";\n";
+    }
+  }
+  code << "  default:\n";
+  code << "    return std::to_string(static_cast<"
+       << NdkNameOf(typenames, enum_decl.GetBackingType(), StorageMode::STACK) << ">(val));\n";
+  code << "  }\n";
+  code << "}\n";
+  return code.str();
+}
+
 void GenerateEnumHeader(CodeWriter& out, const AidlTypenames& types,
                         const AidlEnumDeclaration& enum_decl, const Options& /*options*/) {
   out << "#pragma once\n";
   out << "\n";
 
   GenerateHeaderIncludes(out, types, enum_decl);
+  // enum specific headers
+  out << "#include <array>\n";
+  out << "#include <android/binder_enums.h>\n";
 
   EnterNdkNamespace(out, enum_decl);
   out << "enum class " << enum_decl.GetName() << " : "
@@ -937,7 +995,15 @@ void GenerateEnumHeader(CodeWriter& out, const AidlTypenames& types,
   }
   out.Dedent();
   out << "};\n";
+  out << "\n";
+  out << GenerateEnumToString(types, enum_decl);
   LeaveNdkNamespace(out, enum_decl);
+
+  out << "namespace ndk {\n";
+  out << "namespace internal {\n";
+  out << cpp::GenerateEnumValues(enum_decl, {"aidl"});
+  out << "}  // namespace internal\n";
+  out << "}  // namespace android\n";
 }
 
 }  // namespace internals
