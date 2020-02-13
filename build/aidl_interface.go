@@ -636,10 +636,12 @@ func aidlApiFactory() android.Module {
 type CommonBackendProperties struct {
 	// Whether to generate code in the corresponding backend.
 	// Default: true
-	Enabled *bool
+	Enabled        *bool
+	Apex_available []string
 }
 
 type CommonNativeBackendProperties struct {
+	CommonBackendProperties
 	// Whether to generate additional code for gathering information
 	// about the transactions.
 	// Default: false
@@ -701,13 +703,11 @@ type aidlInterfaceProperties struct {
 		// Backend of the compiler generating code for C++ clients using
 		// libbinder (unstable C++ interface)
 		Cpp struct {
-			CommonBackendProperties
 			CommonNativeBackendProperties
 		}
 		// Backend of the compiler generating code for C++ clients using
 		// libbinder_ndk (stable C interface to system's libbinder)
 		Ndk struct {
-			CommonBackendProperties
 			CommonNativeBackendProperties
 		}
 	}
@@ -1010,9 +1010,21 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		panic("Unrecognized language: " + lang)
 	}
 
+	vendorAvailable := i.properties.Vendor_available
+	if lang == langCpp && "vintf" == proptools.String(i.properties.Stability) {
+		// Vendors cannot use the libbinder (cpp) backend of AIDL in a way that is stable.
+		// So, in order to prevent accidental usage of these library by vendor, forcibly
+		// disabling this version of the library.
+		//
+		// It may be the case in the future that we will want to enable this (if some generic
+		// helper should be used by both libbinder vendor things using /dev/vndbinder as well
+		// as those things using /dev/binder + libbinder_ndk to talk to stable interfaces).
+		vendorAvailable = proptools.BoolPtr(false)
+	}
+
 	mctx.CreateModule(cc.LibraryFactory, &ccProperties{
 		Name:                      proptools.StringPtr(cppModuleGen),
-		Vendor_available:          i.properties.Vendor_available,
+		Vendor_available:          vendorAvailable,
 		Host_supported:            host_supported,
 		Defaults:                  []string{"aidl-cpp-module-defaults"},
 		Generated_sources:         []string{cppSourceGen},
@@ -1028,6 +1040,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		Cpp_std:                   cpp_std,
 		Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror"),
 		Stem:                      proptools.StringPtr(cppOutputGen),
+		Apex_available:            commonProperties.Apex_available,
 	}, &i.properties.VndkProperties, &commonProperties.VndkProperties)
 
 	return cppModuleGen
@@ -1066,13 +1079,14 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	})
 
 	mctx.CreateModule(java.LibraryFactory, &javaProperties{
-		Name:          proptools.StringPtr(javaModuleGen),
-		Installable:   proptools.BoolPtr(true),
-		Defaults:      []string{"aidl-java-module-defaults"},
-		Sdk_version:   sdkVersion,
-		Platform_apis: i.properties.Backend.Java.Platform_apis,
-		Static_libs:   wrap("", i.properties.Imports, "-java"),
-		Srcs:          []string{":" + javaSourceGen},
+		Name:           proptools.StringPtr(javaModuleGen),
+		Installable:    proptools.BoolPtr(true),
+		Defaults:       []string{"aidl-java-module-defaults"},
+		Sdk_version:    sdkVersion,
+		Platform_apis:  i.properties.Backend.Java.Platform_apis,
+		Static_libs:    wrap("", i.properties.Imports, "-java"),
+		Srcs:           []string{":" + javaSourceGen},
+		Apex_available: i.properties.Backend.Java.Apex_available,
 	})
 
 	return javaModuleGen
