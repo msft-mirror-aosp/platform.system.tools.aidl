@@ -128,7 +128,6 @@ static const string kNullable("nullable");
 static const string kUtf8InCpp("utf8InCpp");
 static const string kVintfStability("VintfStability");
 static const string kUnsupportedAppUsage("UnsupportedAppUsage");
-static const string kSystemApi("SystemApi");
 static const string kJavaStableParcelable("JavaOnlyStableParcelable");
 static const string kBacking("Backing");
 
@@ -142,7 +141,6 @@ static const std::map<string, std::map<std::string, std::string>> kAnnotationPar
       {"maxTargetSdk", "int"},
       {"publicAlternatives", "String"},
       {"trackingBug", "long"}}},
-    {kSystemApi, {}},
     {kJavaStableParcelable, {}},
     {kBacking, {{"type", "String"}}}};
 
@@ -300,12 +298,14 @@ const AidlTypeSpecifier* AidlAnnotatable::BackingType(const AidlTypenames& typen
   return nullptr;
 }
 
-bool AidlAnnotatable::IsSystemApi() const {
-  return HasAnnotation(annotations_, kSystemApi);
-}
-
 bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
   return HasAnnotation(annotations_, kJavaStableParcelable) && lang == Options::Language::JAVA;
+}
+
+void AidlAnnotatable::DumpAnnotations(CodeWriter* writer) const {
+  if (annotations_.empty()) return;
+
+  writer->Write("%s\n", AidlAnnotatable::ToString().c_str());
 }
 
 bool AidlAnnotatable::CheckValidAnnotations() const {
@@ -677,6 +677,13 @@ std::string AidlDefinedType::GetCanonicalName() const {
   return GetPackage() + "." + GetName();
 }
 
+void AidlDefinedType::DumpHeader(CodeWriter* writer) const {
+  if (this->IsHidden()) {
+    AddHideComment(writer);
+  }
+  DumpAnnotations(writer);
+}
+
 AidlParcelable::AidlParcelable(const AidlLocation& location, AidlQualifiedName* name,
                                const std::vector<std::string>& package, const std::string& comments,
                                const std::string& cpp_header, std::vector<std::string>* type_params)
@@ -740,6 +747,7 @@ bool AidlParcelable::CheckValid(const AidlTypenames&) const {
 }
 
 void AidlParcelable::Dump(CodeWriter* writer) const {
+  DumpHeader(writer);
   writer->Write("parcelable %s ;\n", GetName().c_str());
 }
 
@@ -750,9 +758,7 @@ AidlStructuredParcelable::AidlStructuredParcelable(
       variables_(std::move(*variables)) {}
 
 void AidlStructuredParcelable::Dump(CodeWriter* writer) const {
-  if (this->IsHidden()) {
-    AddHideComment(writer);
-  }
+  DumpHeader(writer);
   writer->Write("parcelable %s {\n", GetName().c_str());
   writer->Indent();
   for (const auto& field : GetFields()) {
@@ -927,7 +933,7 @@ bool AidlEnumDeclaration::CheckValid(const AidlTypenames&) const {
 }
 
 void AidlEnumDeclaration::Dump(CodeWriter* writer) const {
-  writer->Write("%s\n", AidlAnnotatable::ToString().c_str());
+  DumpHeader(writer);
   writer->Write("enum %s {\n", GetName().c_str());
   writer->Indent();
   for (const auto& enumerator : GetEnumerators()) {
@@ -979,9 +985,7 @@ AidlInterface::AidlInterface(const AidlLocation& location, const std::string& na
 }
 
 void AidlInterface::Dump(CodeWriter* writer) const {
-  if (this->IsHidden()) {
-    AddHideComment(writer);
-  }
+  DumpHeader(writer);
   writer->Write("interface %s {\n", GetName().c_str());
   writer->Indent();
   for (const auto& method : GetMethods()) {
