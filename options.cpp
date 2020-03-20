@@ -33,11 +33,16 @@ using android::base::Trim;
 using std::endl;
 using std::string;
 
+#ifndef PLATFORM_SDK_VERSION
+#define PLATFORM_SDK_VERSION "<UNKNOWN>"
+#endif
+
 namespace android {
 namespace aidl {
 
 string Options::GetUsage() const {
   std::ostringstream sstr;
+  sstr << "AIDL Compiler: built for platform SDK version " << PLATFORM_SDK_VERSION << endl;
   sstr << "usage:" << endl
        << myname_ << " --lang={java|cpp|ndk} [OPTION]... INPUT..." << endl
        << "   Generate Java or C++ files for AIDL file(s)." << endl
@@ -109,6 +114,8 @@ string Options::GetUsage() const {
        << "  -v VER, --version=VER" << endl
        << "          Set the version of the interface and parcelable to VER." << endl
        << "          VER must be an interger greater than 0." << endl
+       << "  --hash=HASH" << endl
+       << "          Set the interface hash to HASH." << endl
        << "  --log" << endl
        << "          Information about the transaction, e.g., method name, argument" << endl
        << "          values, execution time, etc., is provided via callback." << endl
@@ -188,6 +195,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         {"version", required_argument, 0, 'v'},
         {"log", no_argument, 0, 'L'},
         {"parcelable-to-string", no_argument, 0, 'P'},
+        {"hash", required_argument, 0, 'H'},
         {"help", no_argument, 0, 'e'},
         {0, 0, 0, 0},
     };
@@ -306,6 +314,9 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         }
         break;
       }
+      case 'H':
+        hash_ = Trim(optarg);
+        break;
       case 'L':
         gen_log_ = true;
         break;

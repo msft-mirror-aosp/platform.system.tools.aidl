@@ -120,7 +120,6 @@ TypeInfo InterfaceTypeInfo(const AidlInterface& type) {
           TypeInfo::Aspect{
               .cpp_name = "std::shared_ptr<" + clazz + ">",
               .value_is_cheap = false,
-              // TODO(b/111445392): these should be non-null
               .read_func = StandardRead(clazz + "::readFromParcel"),
               .write_func = StandardWrite(clazz + "::writeToParcel"),
           },
@@ -152,7 +151,12 @@ TypeInfo ParcelableTypeInfo(const AidlParcelable& type) {
           .read_func = StandardRead("::ndk::AParcel_readVector"),
           .write_func = StandardWrite("::ndk::AParcel_writeVector"),
       }),
-      .nullable = nullptr,
+      .nullable = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
+          .cpp_name = "std::optional<" + clazz + ">",
+          .value_is_cheap = false,
+          .read_func = StandardRead("::ndk::AParcel_readNullableParcelable"),
+          .write_func = StandardWrite("::ndk::AParcel_writeNullableParcelable"),
+      }),
       .nullable_array = nullptr,
   };
 }
@@ -284,7 +288,6 @@ static map<std::string, TypeInfo> kNdkTypeInfoMap = {
          }),
          .nullable_array = nullptr,
      }},
-    // TODO(b/111445392) {"FileDescriptor", ""},
     {"ParcelFileDescriptor",
      TypeInfo{
          .raw =
@@ -308,7 +311,6 @@ static map<std::string, TypeInfo> kNdkTypeInfoMap = {
          }),
          .nullable_array = nullptr,
      }},
-    // TODO(b/111445392) {"CharSequence", ""},
 };
 
 static TypeInfo::Aspect GetTypeAspect(const AidlTypenames& types, const AidlTypeSpecifier& aidl) {
@@ -335,7 +337,7 @@ static TypeInfo::Aspect GetTypeAspect(const AidlTypenames& types, const AidlType
     return GetTypeAspect(types, array_type);
   }
 
-  // TODO(b/112664205): this is okay for some types
+  // All generic types should be handled above.
   AIDL_FATAL_IF(aidl.IsGeneric(), aidl);
 
   if (AidlTypenames::IsBuiltinTypename(aidl_name)) {

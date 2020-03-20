@@ -89,46 +89,8 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 			symbol_file: "libbinder_ndk.map.txt",
 			first_version: "29",
 		}
-		ndk_prebuilt_shared_stl {
-			name: "ndk_libc++_shared",
-		}
-		ndk_prebuilt_static_stl {
-			name: "ndk_libunwind",
-		}
-		ndk_prebuilt_object {
-			name: "ndk_crtbegin_dynamic.27",
-			sdk_version: "27",
-		}
-		ndk_prebuilt_object {
-			name: "ndk_crtbegin_so.27",
-			sdk_version: "27",
-		}
-		ndk_prebuilt_object {
-			name: "ndk_crtbegin_static.27",
-			sdk_version: "27",
-		}
-		ndk_prebuilt_object {
-			name: "ndk_crtend_android.27",
-			sdk_version: "27",
-		}
-		ndk_prebuilt_object {
-			name: "ndk_crtend_so.27",
-			sdk_version: "27",
-		}
-		ndk_library {
-			name: "libc",
-			symbol_file: "libc.map.txt",
-			first_version: "9",
-		}
-		ndk_library {
-			name: "libm",
-			symbol_file: "libm.map.txt",
-			first_version: "9",
-		}
-		ndk_library {
-			name: "libdl",
-			symbol_file: "libdl.map.txt",
-			first_version: "9",
+		aidl_interfaces_metadata {
+			name: "aidl_metadata_json",
 		}
 	`
 	fs := map[string][]byte{
@@ -138,18 +100,12 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 		"framework/aidl/a.aidl":                      nil,
 		"IFoo.aidl":                                  nil,
 		"libbinder_ndk.map.txt":                      nil,
-		"libc.map.txt":                               nil,
-		"libdl.map.txt":                              nil,
-		"libm.map.txt":                               nil,
-		"prebuilts/ndk/current/platforms/android-27/arch-arm/usr/lib/ndk_crtbegin_so.so":       nil,
-		"prebuilts/ndk/current/platforms/android-27/arch-arm64/usr/lib/ndk_crtbegin_dynamic.o": nil,
-		"prebuilts/ndk/current/platforms/android-27/arch-arm64/usr/lib/ndk_crtbegin_so.so":     nil,
-		"prebuilts/ndk/current/platforms/android-27/arch-arm64/usr/lib/ndk_crtbegin_static.a":  nil,
-		"prebuilts/ndk/current/platforms/android-27/arch-arm64/usr/lib/ndk_crtend.so":          nil,
-		"prebuilts/ndk/current/sources/cxx-stl/llvm-libc++/libs/ndk_libc++_shared.so":          nil,
-		"system/tools/aidl/build/api_preamble.txt":                                             nil,
-		"system/tools/aidl/build/message_check_compatibility.txt":                              nil,
+		"system/tools/aidl/build/message_check_compatibility.txt": nil,
+		"system/tools/aidl/build/message_check_equality.txt":      nil,
+		"system/tools/aidl/build/message_check_integrity.txt":     nil,
 	}
+
+	cc.GatherRequiredFilesForTest(fs)
 
 	for _, c := range customizers {
 		// The fs now needs to be populated before creating the config, call customizers twice
@@ -170,35 +126,19 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 	}
 
 	ctx := android.NewTestArchContext()
-
+	cc.RegisterRequiredBuildComponentsForTest(ctx)
 	ctx.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
+	ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
 	ctx.RegisterModuleType("android_app", java.AndroidAppFactory)
-	ctx.RegisterModuleType("cc_defaults", func() android.Module {
-		return cc.DefaultsFactory()
-	})
-	ctx.RegisterModuleType("cc_library", cc.LibraryFactory)
-	ctx.RegisterModuleType("cc_object", cc.ObjectFactory)
 	ctx.RegisterModuleType("java_defaults", func() android.Module {
 		return java.DefaultsFactory()
 	})
 	ctx.RegisterModuleType("java_library_static", java.LibraryStaticFactory)
 	ctx.RegisterModuleType("java_library", java.LibraryFactory)
 	ctx.RegisterModuleType("java_system_modules", java.SystemModulesFactory)
-	ctx.RegisterModuleType("llndk_library", cc.LlndkLibraryFactory)
 	ctx.RegisterModuleType("ndk_library", cc.NdkLibraryFactory)
-	ctx.RegisterModuleType("ndk_prebuilt_object", cc.NdkPrebuiltObjectFactory)
-	ctx.RegisterModuleType("ndk_prebuilt_shared_stl", cc.NdkPrebuiltSharedStlFactory)
-	ctx.RegisterModuleType("ndk_prebuilt_static_stl", cc.NdkPrebuiltStaticStlFactory)
-	ctx.RegisterModuleType("toolchain_library", cc.ToolchainLibraryFactory)
 
 	ctx.PreArchMutators(android.RegisterDefaultsPreArchMutators)
-	ctx.PreDepsMutators(func(ctx android.RegisterMutatorsContext) {
-		ctx.BottomUp("link", cc.LinkageMutator).Parallel()
-		ctx.BottomUp("vndk", cc.VndkMutator).Parallel()
-		ctx.BottomUp("ndk_api", cc.NdkApiMutator).Parallel()
-		ctx.BottomUp("version", cc.VersionMutator).Parallel()
-		ctx.BottomUp("begin", cc.BeginMutator).Parallel()
-	})
 	ctx.PostDepsMutators(android.RegisterOverridePostDepsMutators)
 
 	ctx.Register(config)
@@ -290,6 +230,7 @@ func TestCreatesModulesWithFrozenVersions(t *testing.T) {
 		}
 	`, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
 	}))
 
 	// For alias for the latest frozen version (=1)
@@ -351,7 +292,9 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 		}
 	`, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
 		"aidl_api/foo/2/foo.2.aidl": nil,
+		"aidl_api/foo/2/.hash":      nil,
 	}))
 
 	// alias for the latest frozen version (=2)

@@ -283,12 +283,12 @@ std::string generate_java_unsupportedappusage_parameters(const AidlAnnotation& a
 std::vector<std::string> generate_java_annotations(const AidlAnnotatable& a) {
   std::vector<std::string> result;
   const AidlAnnotation* unsupported_app_usage = a.UnsupportedAppUsage();
-  if (unsupported_app_usage != nullptr) {
-    result.emplace_back("@dalvik.annotation.compat.UnsupportedAppUsage" +
-                        generate_java_unsupportedappusage_parameters(*unsupported_app_usage));
+  if (a.IsHide()) {
+    result.emplace_back("@android.annotation.Hide");
   }
-  if (a.IsSystemApi()) {
-    result.emplace_back("@android.annotation.SystemApi");
+  if (unsupported_app_usage != nullptr) {
+    result.emplace_back("@android.compat.annotation.UnsupportedAppUsage" +
+                        generate_java_unsupportedappusage_parameters(*unsupported_app_usage));
   }
   return result;
 }

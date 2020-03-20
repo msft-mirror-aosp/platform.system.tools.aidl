@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "aidl_language.h"
-#include "aidl_language_y.h"
+#include "aidl_language_y-module.h"
 
 #define YY_USER_ACTION yylloc->columns(yyleng);
 %}
@@ -110,7 +110,8 @@ in                    { return yy::parser::token::IN; }
 out                   { return yy::parser::token::OUT; }
 inout                 { return yy::parser::token::INOUT; }
 cpp_header            { return yy::parser::token::CPP_HEADER; }
-const                 { return yy::parser::token::CONST; }
+const                 { yylval->token = new AidlToken("const", extra_text);
+                        return yy::parser::token::CONST; }
 true                  { return yy::parser::token::TRUE_LITERAL; }
 false                 { return yy::parser::token::FALSE_LITERAL; }
 

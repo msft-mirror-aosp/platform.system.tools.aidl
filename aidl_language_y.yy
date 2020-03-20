@@ -16,7 +16,7 @@
 
 %{
 #include "aidl_language.h"
-#include "aidl_language_y.h"
+#include "aidl_language_y-module.h"
 #include "logging.h"
 #include <android-base/parseint.h>
 #include <set>
@@ -58,13 +58,13 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %parse-param { Parser* ps }
 %lex-param { void *lex_scanner }
 
-%pure-parser
 %glr-parser
 %skeleton "glr.cc"
 
 %expect-rr 0
 
-%error-verbose
+%define parse.error verbose
+%locations
 
 %union {
     AidlToken* token;
@@ -107,6 +107,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token<token> PARCELABLE "parcelable"
 %token<token> ONEWAY "oneway"
 %token<token> ENUM "enum"
+%token<token> CONST "const"
 
 %token<character> CHARVALUE "char literal"
 %token<token> FLOATVALUE "float literal"
@@ -114,7 +115,6 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token<token> INTVALUE "int literal"
 
 %token '(' ')' ',' '=' '[' ']' '.' '{' '}' ';'
-%token CONST "const"
 %token UNKNOWN "unrecognized character"
 %token CPP_HEADER "cpp_header"
 %token IMPORT "import"
@@ -204,7 +204,7 @@ imports
 
 import
  : IMPORT qualified_name ';'
-  { ps->AddImport(new AidlImport(loc(@2), $2->GetDotName()));
+  { ps->AddImport(std::make_unique<AidlImport>(loc(@2), $2->GetDotName()));
     delete $2;
   };
 
@@ -488,7 +488,9 @@ constant_value_non_empty_list
 
 constant_decl
  : CONST type identifier '=' const_expr ';' {
+    $2->SetComments($1->GetComments());
     $$ = new AidlConstantDeclaration(loc(@3), $2, $3->GetText(), $5);
+    delete $1;
     delete $3;
    }
  ;
@@ -543,7 +545,7 @@ method_decl
     delete $4;
   }
  | type identifier '(' arg_list ')' '=' INTVALUE ';' {
-    int32_t serial;
+    int32_t serial = 0;
     if (!android::base::ParseInt($7->GetText(), &serial)) {
         AIDL_ERROR(loc(@7)) << "Could not parse int value: " << $7->GetText();
         ps->AddError();
@@ -554,7 +556,7 @@ method_decl
   }
  | annotation_list ONEWAY type identifier '(' arg_list ')' '=' INTVALUE ';' {
     const std::string& comments = ($1->size() > 0) ? $1->begin()->GetComments() : $2->GetComments();
-    int32_t serial;
+    int32_t serial = 0;
     if (!android::base::ParseInt($9->GetText(), &serial)) {
         AIDL_ERROR(loc(@9)) << "Could not parse int value: " << $9->GetText();
         ps->AddError();
