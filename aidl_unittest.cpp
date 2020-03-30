@@ -223,10 +223,9 @@ TEST_F(AidlTest, RejectsArraysOfBinders) {
 }
 
 TEST_F(AidlTest, SupportOnlyOutParameters) {
-  string interface_list = "package a; interface IBar { void f(out List bar); }";
+  string interface_list = "package a; interface IBar { void f(out List<String> bar); }";
   string interface_ibinder = "package a; interface IBaz { void f(out IBinder bar); }";
-  // List without type isn't supported in cpp.
-  EXPECT_EQ(nullptr, Parse("a/IBar.aidl", interface_list, typenames_, Options::Language::CPP));
+  EXPECT_NE(nullptr, Parse("a/IBar.aidl", interface_list, typenames_, Options::Language::CPP));
   typenames_.Reset();
   EXPECT_NE(nullptr, Parse("a/IBar.aidl", interface_list, typenames_, Options::Language::JAVA));
   typenames_.Reset();
@@ -1527,6 +1526,7 @@ TEST_F(AidlTestIncompatibleChanges, ReorderedField) {
 }
 
 TEST_F(AidlTestIncompatibleChanges, ChangedDirectionSpecifier) {
+  const string expected_stderr = "ERROR: new/p/IFoo.aidl:1.33-37: Direction changed: in to out.\n";
   io_delegate_.SetFileContents("old/p/IFoo.aidl",
                                "package p;"
                                "interface IFoo {"
@@ -1539,7 +1539,9 @@ TEST_F(AidlTestIncompatibleChanges, ChangedDirectionSpecifier) {
                                "  void foo(out String[] str);"
                                "  void bar(@utf8InCpp String str);"
                                "}");
+  CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 TEST_F(AidlTestIncompatibleChanges, AddedAnnotation) {
