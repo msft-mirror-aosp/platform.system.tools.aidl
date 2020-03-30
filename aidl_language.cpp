@@ -567,13 +567,13 @@ string AidlArgument::GetDirectionSpecifier() const {
   if (direction_specified_) {
     switch(direction_) {
     case AidlArgument::IN_DIR:
-      ret += "in ";
+      ret += "in";
       break;
     case AidlArgument::OUT_DIR:
-      ret += "out ";
+      ret += "out";
       break;
     case AidlArgument::INOUT_DIR:
-      ret += "inout ";
+      ret += "inout";
       break;
     }
   }
@@ -581,7 +581,11 @@ string AidlArgument::GetDirectionSpecifier() const {
 }
 
 string AidlArgument::ToString() const {
-  return GetDirectionSpecifier() + AidlVariableDeclaration::ToString();
+  if (direction_specified_) {
+    return GetDirectionSpecifier() + " " + AidlVariableDeclaration::ToString();
+  } else {
+    return AidlVariableDeclaration::ToString();
+  }
 }
 
 std::string AidlArgument::Signature() const {
@@ -591,7 +595,11 @@ std::string AidlArgument::Signature() const {
   class AidlStructuredParcelable;
   class AidlParcelable;
   class AidlStructuredParcelable;
-  return GetDirectionSpecifier() + AidlVariableDeclaration::Signature();
+  if (direction_specified_) {
+    return GetDirectionSpecifier() + " " + AidlVariableDeclaration::Signature();
+  } else {
+    return AidlVariableDeclaration::Signature();
+  }
 }
 
 AidlMember::AidlMember(const AidlLocation& location) : AidlNode(location) {}
@@ -824,9 +832,10 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const
         return false;
       }
       if (lang == Options::Language::CPP) {
-        auto& name = this->GetTypeParameters()[0]->GetName();
-        if (!(name == "String" || name == "IBinder")) {
-          AIDL_ERROR(this) << "List in cpp supports only string and IBinder for now.";
+        const string& contained_type = this->GetTypeParameters()[0]->GetName();
+        if (!(contained_type == "String" || contained_type == "IBinder")) {
+          AIDL_ERROR(this) << "List<" << contained_type
+                           << "> is not supported. List in cpp supports only String and IBinder.";
           return false;
         }
       } else if (lang == Options::Language::JAVA) {
@@ -834,7 +843,9 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const
         if (AidlTypenames::IsBuiltinTypename(contained_type)) {
           if (contained_type != "String" && contained_type != "IBinder" &&
               contained_type != "ParcelFileDescriptor") {
-            AIDL_ERROR(this) << "List<" << contained_type << "> isn't supported in Java";
+            AIDL_ERROR(this) << "List<" << contained_type
+                             << "> is not supported. List in Java supports only String, IBinder, "
+                                "and ParcelFileDescriptor.";
             return false;
           }
         }
