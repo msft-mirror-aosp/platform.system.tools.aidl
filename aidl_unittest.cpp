@@ -380,16 +380,28 @@ TEST_F(AidlTest, ParsesUtf8Annotations) {
 
 TEST_F(AidlTest, VintfRequiresStructuredAndStability) {
   AidlError error;
+  const string expected_stderr =
+      "ERROR: IFoo.aidl:1.16-26: Must compile @VintfStability type w/ aidl_interface 'stability: "
+      "\"vintf\"'\n"
+      "ERROR: IFoo.aidl:1.16-26: Must compile @VintfStability type w/ aidl_interface "
+      "--structured\n";
+  CaptureStderr();
   auto parse_result = Parse("IFoo.aidl", "@VintfStability interface IFoo {}", typenames_,
                             Options::Language::CPP, &error);
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
   ASSERT_EQ(AidlError::NOT_STRUCTURED, error);
   ASSERT_EQ(nullptr, parse_result);
 }
 
 TEST_F(AidlTest, VintfRequiresStructured) {
   AidlError error;
+  const string expected_stderr =
+      "ERROR: IFoo.aidl:1.16-26: Must compile @VintfStability type w/ aidl_interface "
+      "--structured\n";
+  CaptureStderr();
   auto parse_result = Parse("IFoo.aidl", "@VintfStability interface IFoo {}", typenames_,
                             Options::Language::CPP, &error, {"--stability", "vintf"});
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
   ASSERT_EQ(AidlError::NOT_STRUCTURED, error);
   ASSERT_EQ(nullptr, parse_result);
 }
@@ -1374,6 +1386,7 @@ class AidlTestIncompatibleChanges : public AidlTest {
 };
 
 TEST_F(AidlTestIncompatibleChanges, RemovedType) {
+  const string expected_stderr = "ERROR: new: API files have been removed: old/p/IFoo.aidl\n";
   io_delegate_.SetFileContents("old/p/IFoo.aidl",
                                "package p;"
                                "interface IFoo {"
@@ -1381,7 +1394,9 @@ TEST_F(AidlTestIncompatibleChanges, RemovedType) {
                                "  void bar(@utf8InCpp String str);"
                                "}");
   io_delegate_.SetFileContents("new/p/IFoo.aidl", "");
+  CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 TEST_F(AidlTestIncompatibleChanges, RemovedMethod) {
@@ -1801,6 +1816,11 @@ TEST_F(AidlTest, FailOnOutOfBoundsInt64MinConstInt) {
 
 TEST_F(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
   AidlError reported_error;
+  const string expected_stderr =
+      "ERROR: p/TestEnum.aidl:3.35-44: Invalid type specifier for an int32 "
+      "literal: byte\n"
+      "ERROR: p/TestEnum.aidl:5.1-36: Enumerator type differs from enum backing type.\n";
+  CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/TestEnum.aidl",
                            R"(package p;
                               @Backing(type="byte")
@@ -1811,6 +1831,7 @@ TEST_F(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
                              )",
                            typenames_, Options::Language::CPP, &reported_error));
   EXPECT_EQ(AidlError::BAD_TYPE, reported_error);
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 }  // namespace aidl
