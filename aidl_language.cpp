@@ -47,7 +47,6 @@ using android::aidl::IoDelegate;
 using android::base::Join;
 using android::base::Split;
 using std::cerr;
-using std::endl;
 using std::pair;
 using std::set;
 using std::string;
@@ -93,11 +92,14 @@ AidlLocation::AidlLocation(const std::string& file, Point begin, Point end, Sour
     : file_(file), begin_(begin), end_(end), source_(source) {}
 
 std::ostream& operator<<(std::ostream& os, const AidlLocation& l) {
-  os << l.file_ << ":" << l.begin_.line << "." << l.begin_.column << "-";
-  if (l.begin_.line != l.end_.line) {
-    os << l.end_.line << ".";
+  os << l.file_;
+  if (l.LocationKnown()) {
+    os << ":" << l.begin_.line << "." << l.begin_.column << "-";
+    if (l.begin_.line != l.end_.line) {
+      os << l.end_.line << ".";
+    }
+    os << l.end_.column;
   }
-  os << l.end_.column;
   return os;
 }
 
@@ -116,15 +118,11 @@ std::string AidlNode::PrintLocation() const {
   return ss.str();
 }
 
-AidlErrorLog::AidlErrorLog(bool fatal) : os_(std::cerr), fatal_(fatal) {
+AidlErrorLog::AidlErrorLog(bool fatal, const AidlLocation& location)
+    : os_(std::cerr), fatal_(fatal), location_(location) {
   sHadError = true;
 
   os_ << "ERROR: ";
-}
-
-AidlErrorLog::AidlErrorLog(bool fatal, const AidlLocation& location) : AidlErrorLog(fatal) {
-  CHECK(!location.IsInternal())
-      << "Logging an internal location should not happen. Offending location: " << location;
   os_ << location << ": ";
 }
 
@@ -424,7 +422,7 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
       if (std::any_of(types.begin(), types.end(), [](auto& type_ptr) {
             return AidlTypenames::IsPrimitiveTypename(type_ptr->GetName());
           })) {
-        AIDL_ERROR(this) << "A generic type cannot has any primitive type parameters.";
+        AIDL_ERROR(this) << "A generic type cannot have any primitive type parameters.";
         return false;
       }
     }
@@ -1130,7 +1128,7 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
                                         "getTransactionName(int)"};
 
     if (reserved_methods.find(m->Signature()) != reserved_methods.end()) {
-      AIDL_ERROR(m) << " method " << m->Signature() << " is reserved for internal use." << endl;
+      AIDL_ERROR(m) << " method " << m->Signature() << " is reserved for internal use.";
       return false;
     }
   }
@@ -1139,7 +1137,7 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
   set<string> constant_names;
   for (const std::unique_ptr<AidlConstantDeclaration>& constant : GetConstantDeclarations()) {
     if (constant_names.count(constant->GetName()) > 0) {
-      LOG(ERROR) << "Found duplicate constant name '" << constant->GetName() << "'";
+      AIDL_ERROR(constant) << "Found duplicate constant name '" << constant->GetName() << "'";
       success = false;
     }
     constant_names.insert(constant->GetName());
