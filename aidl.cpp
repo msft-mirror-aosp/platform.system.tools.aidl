@@ -429,11 +429,11 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   for (AidlDefinedType* type : main_parser->GetDefinedTypes()) {
     if (type->AsInterface() != nullptr || type->AsStructuredParcelable() != nullptr) {
       num_interfaces_or_structured_parcelables++;
+      if (num_interfaces_or_structured_parcelables > 1) {
+        AIDL_ERROR(*type) << "You must declare only one type per file.";
+        return AidlError::BAD_TYPE;
+      }
     }
-  }
-  if (num_interfaces_or_structured_parcelables > 1) {
-    AIDL_ERROR(input_file_name) << "You must declare only one type per a file.";
-    return AidlError::BAD_TYPE;
   }
 
   // Import the preprocessed file
@@ -492,7 +492,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       if (std::find(type_from_import_statements.begin(), type_from_import_statements.end(),
                     import) != type_from_import_statements.end()) {
         // Complain only when the import from the import statement has failed.
-        AIDL_ERROR(import) << "couldn't find import for class " << import;
+        AIDL_ERROR(input_file_name) << "Couldn't find import for class " << import;
         err = AidlError::BAD_IMPORT;
       }
       continue;
@@ -695,13 +695,13 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     if (options.IsStructured() && type.AsUnstructuredParcelable() != nullptr &&
         !type.AsUnstructuredParcelable()->IsStableApiParcelable(options.TargetLanguage())) {
       err = AidlError::NOT_STRUCTURED;
-      LOG(ERROR) << type.GetCanonicalName()
-                 << " is not structured, but this is a structured interface.";
+      AIDL_ERROR(type) << type.GetCanonicalName()
+                       << " is not structured, but this is a structured interface.";
     }
     if (options.GetStability() == Options::Stability::VINTF && !type.IsVintfStability()) {
       err = AidlError::NOT_STRUCTURED;
-      LOG(ERROR) << type.GetCanonicalName()
-                 << " does not have VINTF level stability, but this interface requires it.";
+      AIDL_ERROR(type) << type.GetCanonicalName()
+                       << " does not have VINTF level stability, but this interface requires it.";
     }
   });
 
@@ -796,8 +796,7 @@ bool dump_mappings(const Options& options, const IoDelegate& io_delegate) {
     AidlError aidl_err = internals::load_and_validate_aidl(
         input_file, options, io_delegate, &typenames, &defined_types, &imported_files);
     if (aidl_err != AidlError::OK) {
-      LOG(WARNING) << "AIDL file is invalid.\n";
-      continue;
+      return false;
     }
     for (const auto defined_type : defined_types) {
       auto mappings = mappings::generate_mappings(defined_type, typenames);
@@ -861,6 +860,8 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
 }
 
 int aidl_entry(const Options& options, const IoDelegate& io_delegate) {
+  AidlErrorLog::clearError();
+
   int ret = 1;
   switch (options.GetTask()) {
     case Options::Task::COMPILE:
