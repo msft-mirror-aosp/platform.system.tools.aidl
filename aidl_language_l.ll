@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2016, The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 %{
 #include <string.h>
 #include <stdlib.h>
@@ -36,9 +20,9 @@
 
 identifier  [_a-zA-Z][_a-zA-Z0-9]*
 whitespace  ([ \t\r]+)
-intvalue    [0-9]+[lL]?
+intvalue    [-+]?(0|[1-9][0-9]*)
 hexvalue    0[x|X][0-9a-fA-F]+
-floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
+floatvalue  [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
 
 %%
 %{
@@ -62,44 +46,25 @@ floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
 \"[^\"]*\"            { yylval->token = new AidlToken(yytext, extra_text);
                         return yy::parser::token::C_STR; }
 
-\/\/.*                { extra_text += yytext; extra_text += "\n"; }
+\/\/.*\n              { extra_text += yytext; yylloc->lines(1); yylloc->step(); }
 
 \n+                   { yylloc->lines(yyleng); yylloc->step(); }
 {whitespace}          {}
 <<EOF>>               { yyterminate(); }
 
     /* symbols */
-"("                   { return('('); }
-")"                   { return(')'); }
-"<"                   { return('<'); }
-">"                   { return('>'); }
-"{"                   { return('{'); }
-"}"                   { return('}'); }
-"["                   { return('['); }
-"]"                   { return(']'); }
-":"                   { return(':'); }
-";"                   { return(';'); }
-","                   { return(','); }
-"."                   { return('.'); }
-"="                   { return('='); }
-"+"                   { return('+'); }
-"-"                   { return('-'); }
-"*"                   { return('*'); }
-"/"                   { return('/'); }
-"%"                   { return('%'); }
-"&"                   { return('&'); }
-"|"                   { return('|'); }
-"^"                   { return('^'); }
-"<<"                  { return(yy::parser::token::LSHIFT); }
-">>"                  { return(yy::parser::token::RSHIFT); }
-"&&"                  { return(yy::parser::token::LOGICAL_AND); }
-"||"                  { return(yy::parser::token::LOGICAL_OR);  }
-"!"                   { return('!'); }
-"~"                   { return('~'); }
-"<="                  { return(yy::parser::token::LEQ); }
-">="                  { return(yy::parser::token::GEQ); }
-"=="                  { return(yy::parser::token::EQUALITY); }
-"!="                  { return(yy::parser::token::NEQ); }
+;                     { return ';'; }
+\{                    { return '{'; }
+\}                    { return '}'; }
+=                     { return '='; }
+,                     { return ','; }
+\.                    { return '.'; }
+\(                    { return '('; }
+\)                    { return ')'; }
+\[                    { return '['; }
+\]                    { return ']'; }
+\<                    { return '<'; }
+\>                    { return '>'; }
 
     /* annotations */
 @{identifier}         { yylval->token = new AidlToken(yytext + 1, extra_text);
@@ -125,9 +90,6 @@ interface             { yylval->token = new AidlToken("interface", extra_text);
                       }
 oneway                { yylval->token = new AidlToken("oneway", extra_text);
                         return yy::parser::token::ONEWAY;
-                      }
-enum                  { yylval->token = new AidlToken("enum", extra_text);
-                        return yy::parser::token::ENUM;
                       }
 
     /* scalars */
