@@ -480,8 +480,7 @@ func (m *aidlApi) nextVersion(ctx android.ModuleContext) string {
 
 		i, err := strconv.Atoi(latestVersion)
 		if err != nil {
-			ctx.PropertyErrorf("versions", "%q is not an integer", latestVersion)
-			return ""
+			panic(err)
 		}
 
 		return strconv.Itoa(i + 1)
@@ -767,6 +766,11 @@ type CommonBackendProperties struct {
 	// Default: true
 	Enabled        *bool
 	Apex_available []string
+
+	// The minimum version of the sdk that the compiled artifacts will run against
+	// For native modules, the property needs to be set when a module is a part of mainline modules(APEX).
+	// Forwarded to generated java/native module.
+	Min_sdk_version *string
 }
 
 type CommonNativeBackendProperties struct {
@@ -933,6 +937,15 @@ func (i *aidlInterface) checkStability(mctx android.LoadHookContext) {
 		mctx.PropertyErrorf("versions", "must be set(need to be frozen) when stability is \"vintf\" and PLATFORM_VERSION_CODENAME is REL.")
 	}
 }
+func (i *aidlInterface) checkVersions(mctx android.LoadHookContext) {
+	for _, ver := range i.properties.Versions {
+		_, err := strconv.Atoi(ver)
+		if err != nil {
+			mctx.PropertyErrorf("versions", "%q is not an integer", ver)
+			continue
+		}
+	}
+}
 
 func (i *aidlInterface) currentVersion(ctx android.LoadHookContext) string {
 	if !i.hasVersion() {
@@ -941,8 +954,7 @@ func (i *aidlInterface) currentVersion(ctx android.LoadHookContext) string {
 		ver := i.latestVersion()
 		i, err := strconv.Atoi(ver)
 		if err != nil {
-			ctx.PropertyErrorf("versions", "%q is not an integer", ver)
-			return ""
+			panic(err)
 		}
 
 		return strconv.Itoa(i + 1)
@@ -1035,6 +1047,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 
 	i.gatherInterface(mctx)
 	i.checkStability(mctx)
+	i.checkVersions(mctx)
 
 	if mctx.Failed() {
 		return
@@ -1186,6 +1199,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	var libJSONCppDependency []string
 	var staticLibDependency []string
 	var sdkVersion *string
+	var minSdkVersion *string
 	var stl *string
 	var cpp_std *string
 	var hostSupported *bool
@@ -1200,6 +1214,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 			importExportDependencies = append(importExportDependencies, "libcutils")
 		}
 		hostSupported = i.properties.Host_supported
+		minSdkVersion = i.properties.Backend.Cpp.Min_sdk_version
 	} else if lang == langNdk {
 		importExportDependencies = append(importExportDependencies, "libbinder_ndk")
 		if genLog {
@@ -1207,6 +1222,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		}
 		sdkVersion = proptools.StringPtr("current")
 		stl = proptools.StringPtr("c++_shared")
+		minSdkVersion = i.properties.Backend.Ndk.Min_sdk_version
 	} else if lang == langNdkPlatform {
 		importExportDependencies = append(importExportDependencies, "libbinder_ndk")
 		if genLog {
@@ -1214,6 +1230,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		}
 		hostSupported = i.properties.Host_supported
 		addCflags = append(addCflags, "-DBINDER_STABILITY_SUPPORT")
+		minSdkVersion = i.properties.Backend.Ndk.Min_sdk_version
 	} else {
 		panic("Unrecognized language: " + lang)
 	}
@@ -1249,6 +1266,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror"),
 		Stem:                      proptools.StringPtr(cppOutputGen),
 		Apex_available:            commonProperties.Apex_available,
+		Min_sdk_version:           minSdkVersion,
 	}, &i.properties.VndkProperties, &commonProperties.VndkProperties, &overrideVndkProperties)
 
 	return cppModuleGen
@@ -1288,14 +1306,15 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	})
 
 	mctx.CreateModule(java.LibraryFactory, &javaProperties{
-		Name:           proptools.StringPtr(javaModuleGen),
-		Installable:    proptools.BoolPtr(true),
-		Defaults:       []string{"aidl-java-module-defaults"},
-		Sdk_version:    sdkVersion,
-		Platform_apis:  i.properties.Backend.Java.Platform_apis,
-		Static_libs:    wrap("", i.properties.Imports, "-java"),
-		Srcs:           []string{":" + javaSourceGen},
-		Apex_available: i.properties.Backend.Java.Apex_available,
+		Name:            proptools.StringPtr(javaModuleGen),
+		Installable:     proptools.BoolPtr(true),
+		Defaults:        []string{"aidl-java-module-defaults"},
+		Sdk_version:     sdkVersion,
+		Platform_apis:   i.properties.Backend.Java.Platform_apis,
+		Static_libs:     wrap("", i.properties.Imports, "-java"),
+		Srcs:            []string{":" + javaSourceGen},
+		Apex_available:  i.properties.Backend.Java.Apex_available,
+		Min_sdk_version: i.properties.Backend.Java.Min_sdk_version,
 	})
 
 	return javaModuleGen
