@@ -924,17 +924,15 @@ func (i *aidlInterface) checkStability(mctx android.LoadHookContext) {
 		return
 	}
 
+	if proptools.Bool(i.properties.Unstable) {
+		mctx.PropertyErrorf("stability", "must be empty when \"unstable\" is true")
+	}
+
 	// TODO(b/136027762): should we allow more types of stability (e.g. for APEX) or
 	// should we switch this flag to be something like "vintf { enabled: true }"
 	isVintf := "vintf" == proptools.String(i.properties.Stability)
 	if !isVintf {
 		mctx.PropertyErrorf("stability", "must be empty or \"vintf\"")
-	}
-
-	// TODO(b/152655544): might need to change the condition
-	sdkIsFinal := mctx.Config().DefaultAppTargetSdkInt() != android.FutureApiLevel
-	if sdkIsFinal && !i.hasVersion() && isVintf && i.Owner() == "" {
-		mctx.PropertyErrorf("versions", "must be set(need to be frozen) when stability is \"vintf\" and PLATFORM_VERSION_CODENAME is REL.")
 	}
 }
 func (i *aidlInterface) checkVersions(mctx android.LoadHookContext) {
@@ -1129,6 +1127,10 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 			mctx.ModuleErrorf("unstable:true and stability:%q cannot happen at the same time", i.properties.Stability)
 		}
 	} else {
+		sdkIsFinal := mctx.Config().DefaultAppTargetSdkInt() != android.FutureApiLevel
+		if sdkIsFinal && !i.hasVersion() && i.Owner() == "" {
+			mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false and PLATFORM_VERSION_CODENAME is REL.")
+		}
 		addApiModule(mctx, i)
 	}
 
@@ -1196,8 +1198,10 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	})
 
 	importExportDependencies := wrap("", i.properties.Imports, "-"+lang)
+	var sharedLibDependency []string
 	var libJSONCppDependency []string
 	var staticLibDependency []string
+	var headerLibs []string
 	var sdkVersion *string
 	var minSdkVersion *string
 	var stl *string
@@ -1211,7 +1215,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 			libJSONCppDependency = []string{"libjsoncpp"}
 		}
 		if genTrace {
-			importExportDependencies = append(importExportDependencies, "libcutils")
+			sharedLibDependency = append(sharedLibDependency, "libcutils")
 		}
 		hostSupported = i.properties.Host_supported
 		minSdkVersion = i.properties.Backend.Cpp.Min_sdk_version
@@ -1220,6 +1224,9 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		if genLog {
 			staticLibDependency = []string{"libjsoncpp_ndk"}
 		}
+		if genTrace {
+			sharedLibDependency = append(sharedLibDependency, "libandroid")
+		}
 		sdkVersion = proptools.StringPtr("current")
 		stl = proptools.StringPtr("c++_shared")
 		minSdkVersion = i.properties.Backend.Ndk.Min_sdk_version
@@ -1227,6 +1234,10 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		importExportDependencies = append(importExportDependencies, "libbinder_ndk")
 		if genLog {
 			libJSONCppDependency = []string{"libjsoncpp"}
+		}
+		if genTrace {
+			headerLibs = append(headerLibs, "libandroid_aidltrace")
+			sharedLibDependency = append(sharedLibDependency, "libcutils")
 		}
 		hostSupported = i.properties.Host_supported
 		addCflags = append(addCflags, "-DBINDER_STABILITY_SUPPORT")
@@ -1258,7 +1269,8 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		Static:                    staticLib{Whole_static_libs: libJSONCppDependency},
 		Shared:                    sharedLib{Shared_libs: libJSONCppDependency, Export_shared_lib_headers: libJSONCppDependency},
 		Static_libs:               staticLibDependency,
-		Shared_libs:               importExportDependencies,
+		Shared_libs:               append(importExportDependencies, sharedLibDependency...),
+		Header_libs:               headerLibs,
 		Export_shared_lib_headers: importExportDependencies,
 		Sdk_version:               sdkVersion,
 		Stl:                       stl,

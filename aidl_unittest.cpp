@@ -927,6 +927,37 @@ TEST_P(AidlTest, PrimitiveList) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, RejectsPrimitiveListInStableAidl) {
+  AidlError error;
+  string expected_stderr =
+      "ERROR: a/IFoo.aidl:2.7-11: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
+  if (GetLanguage() != Options::Language::JAVA) {
+    expected_stderr =
+        "ERROR: a/IFoo.aidl:2.1-7: "
+        "Currently, only the Java backend supports non-generic List.\n";
+  }
+
+  const string primitive_interface =
+      "package a; interface IFoo {\n"
+      "  List foo(); }";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_interface, typenames_, GetLanguage(), &error,
+                           {"--structured"}));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  typenames_.Reset();
+
+  string primitive_parcelable =
+      "package a; parcelable IFoo {\n"
+      "  List foo;}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_parcelable, typenames_, GetLanguage(), &error,
+                           {"--structured"}));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTest, ApiDump) {
   io_delegate_.SetFileContents(
       "foo/bar/IFoo.aidl",
@@ -1339,6 +1370,7 @@ TEST_F(AidlTestCompatibleChanges, NewMethod) {
                                "interface IFoo {"
                                "  void foo(int a);"
                                "  void bar();"
+                               "  void baz(in List<IFoo> arg);"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
@@ -1354,6 +1386,7 @@ TEST_F(AidlTestCompatibleChanges, NewField) {
                                "parcelable Data {"
                                "  int foo;"
                                "  int bar = 0;"
+                               "  @nullable List<Data> list;"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
@@ -1494,6 +1527,52 @@ TEST_F(AidlTestIncompatibleChanges, RemovedMethod) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTestIncompatibleChanges, UntypedListInInterface) {
+  const string expected_stderr =
+      "ERROR: new/p/IFoo.aidl:1.61-65: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: new/p/IFoo.aidl: Failed to read.\n";
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {"
+                               "  void foo(in String[] str);"
+                               "}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {"
+                               "  void foo(in String[] str);"
+                               "  void bar(in List arg);"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestCompatibleChanges, UntypedListInParcelable) {
+  const string expected_stderr =
+      "ERROR: new/p/Data.aidl:1.54-59: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: new/p/Data.aidl: Failed to read.\n";
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int foo;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int foo;"
+                               "  @nullable List list;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTestIncompatibleChanges, RemovedField) {
   const string expected_stderr =
       "ERROR: new/p/Data.aidl:1.21-26: Number of fields in p.Data is reduced from 2 to 1.\n";
@@ -1546,25 +1625,6 @@ TEST_F(AidlTestIncompatibleChanges, RenamedMethod) {
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar2(@utf8InCpp String str);"
-                               "}");
-  CaptureStderr();
-  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
-}
-
-TEST_F(AidlTestIncompatibleChanges, RenamedField) {
-  const string expected_stderr = "ERROR: new/p/Data.aidl:1.21-26: Renamed field: bar to bar2.\n";
-  io_delegate_.SetFileContents("old/p/Data.aidl",
-                               "package p;"
-                               "parcelable Data {"
-                               "  int foo;"
-                               "  int bar;"
-                               "}");
-  io_delegate_.SetFileContents("new/p/Data.aidl",
-                               "package p;"
-                               "parcelable Data {"
-                               "  int foo;"
-                               "  int bar2;"
                                "}");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
@@ -1635,8 +1695,8 @@ TEST_F(AidlTestIncompatibleChanges, ReorderedMethod) {
 
 TEST_F(AidlTestIncompatibleChanges, ReorderedField) {
   const string expected_stderr =
-      "ERROR: new/p/Data.aidl:1.21-26: Renamed field: foo to bar.\n"
-      "ERROR: new/p/Data.aidl:1.21-26: Renamed field: bar to foo.\n";
+      "ERROR: new/p/Data.aidl:1.33-37: Reordered bar from 1 to 0.\n"
+      "ERROR: new/p/Data.aidl:1.43-47: Reordered foo from 0 to 1.\n";
   io_delegate_.SetFileContents("old/p/Data.aidl",
                                "package p;"
                                "parcelable Data {"
