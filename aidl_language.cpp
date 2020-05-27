@@ -200,7 +200,7 @@ bool AidlAnnotation::CheckValid() const {
     if (parameter_mapping_it == schema_.supported_parameters.end()) {
       std::ostringstream stream;
       stream << "Parameter " << param_name << " not supported ";
-      stream << "for annotation " << GetName() << ".";
+      stream << "for annotation " << GetName() << ". ";
       stream << "It must be one of:";
       for (const auto& kv : schema_.supported_parameters) {
         stream << " " << kv.first;
@@ -226,13 +226,23 @@ std::map<std::string, std::string> AidlAnnotation::AnnotationParams(
   for (const auto& name_and_param : parameters_) {
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
+    if (schema_.supported_parameters.find(param_name) == schema_.supported_parameters.end()) {
+      std::ostringstream stream;
+      stream << "Parameter " << param_name << " not supported ";
+      stream << "for annotation " << GetName() << ". ";
+      stream << "It must be one of:";
+      for (const auto& kv : schema_.supported_parameters) {
+        stream << " " << kv.first;
+      }
+      AIDL_ERROR(this) << stream.str();
+      continue;
+    }
     AidlTypeSpecifier type{AIDL_LOCATION_HERE, schema_.supported_parameters.at(param_name), false,
                            nullptr, ""};
     if (!param->CheckValid()) {
       AIDL_ERROR(this) << "Invalid value for parameter " << param_name << " on annotation "
                        << GetName() << ".";
-      raw_params.clear();
-      return raw_params;
+      continue;
     }
 
     raw_params.emplace(param_name, param->ValueString(type, decorator));
@@ -396,12 +406,12 @@ string AidlTypeSpecifier::Signature() const {
 
 bool AidlTypeSpecifier::Resolve(const AidlTypenames& typenames) {
   CHECK(!IsResolved());
-  pair<string, bool> result = typenames.ResolveTypename(unresolved_name_);
-  if (result.second) {
-    fully_qualified_name_ = result.first;
+  AidlTypenames::ResolvedTypename result = typenames.ResolveTypename(unresolved_name_);
+  if (result.is_resolved) {
+    fully_qualified_name_ = result.canonical_name;
     split_name_ = Split(fully_qualified_name_, ".");
   }
-  return result.second;
+  return result.is_resolved;
 }
 
 std::set<AidlAnnotation::Type> AidlTypeSpecifier::GetSupportedAnnotations() const {
@@ -822,7 +832,24 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
 }
 
 // TODO: we should treat every backend all the same in future.
-bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const {
+bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typenames,
+                                                   Options::Language lang) const {
+  if (lang == Options::Language::NDK && IsArray() && GetName() == "IBinder") {
+    AIDL_ERROR(this) << "The NDK backend does not support array of IBinder";
+    return false;
+  }
+  if (lang == Options::Language::NDK && IsArray() && IsNullable()) {
+    if (GetName() == "ParcelFileDescriptor") {
+      AIDL_ERROR(this) << "The NDK backend does not support nullable array of ParcelFileDescriptor";
+      return false;
+    }
+
+    const auto defined_type = typenames.TryGetDefinedType(GetName());
+    if (defined_type != nullptr && defined_type->AsParcelable() != nullptr) {
+      AIDL_ERROR(this) << "The NDK backend does not support nullable array of parcelable";
+      return false;
+    }
+  }
   if (lang != Options::Language::JAVA) {
     if (this->GetName() == "List" && !this->IsGeneric()) {
       AIDL_ERROR(this) << "Currently, only the Java backend supports non-generic List.";
@@ -881,7 +908,8 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const
 }
 
 // TODO: we should treat every backend all the same in future.
-bool AidlParcelable::LanguageSpecificCheckValid(Options::Language lang) const {
+bool AidlParcelable::LanguageSpecificCheckValid(const AidlTypenames& /*typenames*/,
+                                                Options::Language lang) const {
   if (lang != Options::Language::JAVA) {
     const AidlParcelable* unstructured_parcelable = this->AsUnstructuredParcelable();
     if (unstructured_parcelable != nullptr) {
@@ -896,12 +924,13 @@ bool AidlParcelable::LanguageSpecificCheckValid(Options::Language lang) const {
 }
 
 // TODO: we should treat every backend all the same in future.
-bool AidlStructuredParcelable::LanguageSpecificCheckValid(Options::Language lang) const {
-  if (!AidlParcelable::LanguageSpecificCheckValid(lang)) {
+bool AidlStructuredParcelable::LanguageSpecificCheckValid(const AidlTypenames& typenames,
+                                                          Options::Language lang) const {
+  if (!AidlParcelable::LanguageSpecificCheckValid(typenames, lang)) {
     return false;
   }
   for (const auto& v : this->GetFields()) {
-    if (!v->GetType().LanguageSpecificCheckValid(lang)) {
+    if (!v->GetType().LanguageSpecificCheckValid(typenames, lang)) {
       return false;
     }
   }
@@ -997,13 +1026,14 @@ void AidlEnumDeclaration::Dump(CodeWriter* writer) const {
 }
 
 // TODO: we should treat every backend all the same in future.
-bool AidlInterface::LanguageSpecificCheckValid(Options::Language lang) const {
+bool AidlInterface::LanguageSpecificCheckValid(const AidlTypenames& typenames,
+                                               Options::Language lang) const {
   for (const auto& m : this->GetMethods()) {
-    if (!m->GetType().LanguageSpecificCheckValid(lang)) {
+    if (!m->GetType().LanguageSpecificCheckValid(typenames, lang)) {
       return false;
     }
     for (const auto& arg : m->GetArguments()) {
-      if (!arg->GetType().LanguageSpecificCheckValid(lang)) {
+      if (!arg->GetType().LanguageSpecificCheckValid(typenames, lang)) {
         return false;
       }
     }

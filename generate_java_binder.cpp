@@ -419,10 +419,29 @@ static void generate_stub_code(const AidlInterface& iface, const AidlMethod& met
                                std::shared_ptr<Variable> transact_data,
                                std::shared_ptr<Variable> transact_reply,
                                const AidlTypenames& typenames,
-                               std::shared_ptr<StatementBlock> statements,
+                               std::shared_ptr<StatementBlock> statement_block,
                                std::shared_ptr<StubClass> stubClass, const Options& options) {
-  std::shared_ptr<TryStatement> tryStatement;
-  std::shared_ptr<FinallyStatement> finallyStatement;
+  // try and finally
+  auto tryStatement = std::make_shared<TryStatement>();
+  auto finallyStatement = std::make_shared<FinallyStatement>();
+  auto& statements = statement_block;
+
+  if (options.GenTraces()) {
+    statements->Add(tryStatement);
+    statements->Add(finallyStatement);
+    statements = tryStatement->statements;
+    tryStatement->statements->Add(std::make_shared<MethodCall>(
+        std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
+        std::vector<std::shared_ptr<Expression>>{
+            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
+            std::make_shared<StringLiteralExpression>("AIDL::java::" + iface.GetName() +
+                                                      "::" + method.GetName() + "::server")}));
+    finallyStatement->statements->Add(std::make_shared<MethodCall>(
+        std::make_shared<LiteralExpression>("android.os.Trace"), "traceEnd",
+        std::vector<std::shared_ptr<Expression>>{
+            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")}));
+  }
+
   auto realCall = std::make_shared<MethodCall>(THIS_VALUE, method.GetName());
 
   // interface token validation is the very first thing we do
@@ -467,33 +486,9 @@ static void generate_stub_code(const AidlInterface& iface, const AidlMethod& met
     }
   }
 
-  if (options.GenTraces()) {
-    // try and finally, but only when generating trace code
-    tryStatement = std::make_shared<TryStatement>();
-    finallyStatement = std::make_shared<FinallyStatement>();
-
-    tryStatement->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
-            std::make_shared<StringLiteralExpression>(iface.GetName() + "::" + method.GetName() +
-                                                      "::server")}));
-
-    finallyStatement->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceEnd",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")}));
-  }
-
   // the real call
   if (method.GetType().GetName() == "void") {
-    if (options.GenTraces()) {
-      statements->Add(tryStatement);
-      tryStatement->statements->Add(realCall);
-      statements->Add(finallyStatement);
-    } else {
-      statements->Add(realCall);
-    }
+    statements->Add(realCall);
 
     if (!oneway) {
       // report that there were no exceptions
@@ -503,14 +498,7 @@ static void generate_stub_code(const AidlInterface& iface, const AidlMethod& met
   } else {
     auto _result =
         std::make_shared<Variable>(JavaSignatureOf(method.GetType(), typenames), "_result");
-    if (options.GenTraces()) {
-      statements->Add(std::make_shared<VariableDeclaration>(_result));
-      statements->Add(tryStatement);
-      tryStatement->statements->Add(std::make_shared<Assignment>(_result, realCall));
-      statements->Add(finallyStatement);
-    } else {
       statements->Add(std::make_shared<VariableDeclaration>(_result, realCall));
-    }
 
     if (!oneway) {
       // report that there were no exceptions
@@ -631,8 +619,8 @@ static std::shared_ptr<Method> generate_proxy_method(
         std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
         std::vector<std::shared_ptr<Expression>>{
             std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
-            std::make_shared<StringLiteralExpression>(iface.GetName() + "::" + method.GetName() +
-                                                      "::client")}));
+            std::make_shared<StringLiteralExpression>("AIDL::java::" + iface.GetName() +
+                                                      "::" + method.GetName() + "::client")}));
   }
 
   // the interface identifier token: the DESCRIPTOR constant, marshalled as a
@@ -868,7 +856,7 @@ static void generate_methods(const AidlInterface& iface, const AidlMethod& metho
            << "public synchronized String " << kGetInterfaceHash << "()"
            << " throws "
            << "android.os.RemoteException {\n"
-           << "  if (mCachedHash == \"-1\") {\n"
+           << "  if (\"-1\".equals(mCachedHash)) {\n"
            << "    android.os.Parcel data = android.os.Parcel.obtain();\n"
            << "    android.os.Parcel reply = android.os.Parcel.obtain();\n"
            << "    try {\n"
@@ -1141,7 +1129,13 @@ std::unique_ptr<Class> generate_binder_interface_class(const AidlInterface* ifac
   const string i_name = iface->GetCanonicalName();
   stub->elements.emplace_back(std::make_shared<LiteralClassElement>(
       StringPrintf("public static boolean setDefaultImpl(%s impl) {\n"
-                   "  if (Stub.Proxy.sDefaultImpl == null && impl != null) {\n"
+                   "  // Only one user of this interface can use this function\n"
+                   "  // at a time. This is a heuristic to detect if two different\n"
+                   "  // users in the same process use this function.\n"
+                   "  if (Stub.Proxy.sDefaultImpl != null) {\n"
+                   "    throw new IllegalStateException(\"setDefaultImpl() called twice\");\n"
+                   "  }\n"
+                   "  if (impl != null) {\n"
                    "    Stub.Proxy.sDefaultImpl = impl;\n"
                    "    return true;\n"
                    "  }\n"

@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <android-base/stringprintf.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "aidl.h"
@@ -451,6 +452,24 @@ TEST_P(AidlTest, AcceptsAnnotatedOnewayMethod) {
   EXPECT_NE(nullptr, Parse("a/IFoo.aidl", oneway_method, typenames_, GetLanguage()));
 }
 
+TEST_P(AidlTest, AnnotationsInMultiplePlaces) {
+  const string oneway_method =
+      "package a; interface IFoo { @UnsupportedAppUsage oneway @Hide void f(int a); }";
+  const AidlDefinedType* defined = Parse("a/IFoo.aidl", oneway_method, typenames_, GetLanguage());
+  ASSERT_NE(nullptr, defined);
+  const AidlInterface* iface = defined->AsInterface();
+  ASSERT_NE(nullptr, iface);
+
+  const auto& methods = iface->GetMethods();
+  ASSERT_EQ(1u, methods.size());
+  const auto& method = methods[0];
+  const AidlTypeSpecifier& ret_type = method->GetType();
+
+  // TODO(b/151102494): these annotations should be on the method
+  ASSERT_NE(nullptr, ret_type.UnsupportedAppUsage());
+  ASSERT_TRUE(ret_type.IsHide());
+}
+
 TEST_P(AidlTest, WritesComments) {
   string foo_interface =
       "package a; /* foo */ interface IFoo {"
@@ -471,20 +490,20 @@ TEST_P(AidlTest, WritesComments) {
 TEST_F(AidlTest, ParsesPreprocessedFile) {
   string simple_content = "parcelable a.Foo;\ninterface b.IBar;";
   io_delegate_.SetFileContents("path", simple_content);
-  EXPECT_FALSE(typenames_.ResolveTypename("a.Foo").second);
+  EXPECT_FALSE(typenames_.ResolveTypename("a.Foo").is_resolved);
   EXPECT_TRUE(parse_preprocessed_file(io_delegate_, "path", &typenames_));
-  EXPECT_TRUE(typenames_.ResolveTypename("a.Foo").second);
-  EXPECT_TRUE(typenames_.ResolveTypename("b.IBar").second);
+  EXPECT_TRUE(typenames_.ResolveTypename("a.Foo").is_resolved);
+  EXPECT_TRUE(typenames_.ResolveTypename("b.IBar").is_resolved);
 }
 
 TEST_F(AidlTest, ParsesPreprocessedFileWithWhitespace) {
   string simple_content = "parcelable    a.Foo;\n  interface b.IBar  ;\t";
   io_delegate_.SetFileContents("path", simple_content);
 
-  EXPECT_FALSE(typenames_.ResolveTypename("a.Foo").second);
+  EXPECT_FALSE(typenames_.ResolveTypename("a.Foo").is_resolved);
   EXPECT_TRUE(parse_preprocessed_file(io_delegate_, "path", &typenames_));
-  EXPECT_TRUE(typenames_.ResolveTypename("a.Foo").second);
-  EXPECT_TRUE(typenames_.ResolveTypename("b.IBar").second);
+  EXPECT_TRUE(typenames_.ResolveTypename("a.Foo").is_resolved);
+  EXPECT_TRUE(typenames_.ResolveTypename("b.IBar").is_resolved);
 }
 
 TEST_P(AidlTest, PreferImportToPreprocessed) {
@@ -498,8 +517,8 @@ TEST_P(AidlTest, PreferImportToPreprocessed) {
   EXPECT_NE(nullptr, parse_result);
 
   // We expect to know about both kinds of IBar
-  EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").second);
-  EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").second);
+  EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").is_resolved);
+  EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").is_resolved);
   // But if we request just "IBar" we should get our imported one.
   AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, "");
   ambiguous_type.Resolve(typenames_);
@@ -520,8 +539,8 @@ TEST_P(AidlTest, B147918827) {
   EXPECT_NE(nullptr, parse_result);
 
   // We expect to know about both kinds of IBar
-  EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").second);
-  EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").second);
+  EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").is_resolved);
+  EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").is_resolved);
   // But if we request just "IBar" we should get our imported one.
   AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, "");
   ambiguous_type.Resolve(typenames_);
@@ -761,8 +780,7 @@ TEST_P(AidlTest, UnderstandsNestedParcelables) {
   auto parse_result = Parse(input_path, input, typenames_, GetLanguage());
   EXPECT_NE(nullptr, parse_result);
 
-  auto pair = typenames_.ResolveTypename("p.Outer.Inner");
-  EXPECT_TRUE(pair.second);
+  EXPECT_TRUE(typenames_.ResolveTypename("p.Outer.Inner").is_resolved);
   // C++ uses "::" instead of "." to refer to a inner class.
   AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", false, nullptr, "");
   EXPECT_EQ("::p::Outer::Inner", cpp::CppNameOf(nested_type, typenames_));
@@ -777,8 +795,7 @@ TEST_P(AidlTest, UnderstandsNativeParcelables) {
   const string input = "package p; import p.Bar; interface IFoo { }";
   auto parse_result = Parse(input_path, input, typenames_, GetLanguage());
   EXPECT_NE(nullptr, parse_result);
-  auto pair = typenames_.ResolveTypename("p.Bar");
-  EXPECT_TRUE(pair.second);
+  EXPECT_TRUE(typenames_.ResolveTypename("p.Bar").is_resolved);
   AidlTypeSpecifier native_type(AIDL_LOCATION_HERE, "p.Bar", false, nullptr, "");
   native_type.Resolve(typenames_);
 
@@ -908,6 +925,37 @@ TEST_P(AidlTest, PrimitiveList) {
       "  List<int> foo;}";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_parcelable, typenames_, GetLanguage()));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, RejectsPrimitiveListInStableAidl) {
+  AidlError error;
+  string expected_stderr =
+      "ERROR: a/IFoo.aidl:2.7-11: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
+  if (GetLanguage() != Options::Language::JAVA) {
+    expected_stderr =
+        "ERROR: a/IFoo.aidl:2.1-7: "
+        "Currently, only the Java backend supports non-generic List.\n";
+  }
+
+  const string primitive_interface =
+      "package a; interface IFoo {\n"
+      "  List foo(); }";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_interface, typenames_, GetLanguage(), &error,
+                           {"--structured"}));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  typenames_.Reset();
+
+  string primitive_parcelable =
+      "package a; parcelable IFoo {\n"
+      "  List foo;}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_parcelable, typenames_, GetLanguage(), &error,
+                           {"--structured"}));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
@@ -1323,6 +1371,7 @@ TEST_F(AidlTestCompatibleChanges, NewMethod) {
                                "interface IFoo {"
                                "  void foo(int a);"
                                "  void bar();"
+                               "  void baz(in List<IFoo> arg);"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
@@ -1337,7 +1386,8 @@ TEST_F(AidlTestCompatibleChanges, NewField) {
                                "package p;"
                                "parcelable Data {"
                                "  int foo;"
-                               "  int bar;"
+                               "  int bar = 0;"
+                               "  @nullable List<Data> list;"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
@@ -1478,6 +1528,52 @@ TEST_F(AidlTestIncompatibleChanges, RemovedMethod) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTestIncompatibleChanges, UntypedListInInterface) {
+  const string expected_stderr =
+      "ERROR: new/p/IFoo.aidl:1.61-65: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: new/p/IFoo.aidl: Failed to read.\n";
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {"
+                               "  void foo(in String[] str);"
+                               "}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {"
+                               "  void foo(in String[] str);"
+                               "  void bar(in List arg);"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestCompatibleChanges, UntypedListInParcelable) {
+  const string expected_stderr =
+      "ERROR: new/p/Data.aidl:1.54-59: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: new/p/Data.aidl: Failed to read.\n";
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int foo;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int foo;"
+                               "  @nullable List list;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTestIncompatibleChanges, RemovedField) {
   const string expected_stderr =
       "ERROR: new/p/Data.aidl:1.21-26: Number of fields in p.Data is reduced from 2 to 1.\n";
@@ -1530,25 +1626,6 @@ TEST_F(AidlTestIncompatibleChanges, RenamedMethod) {
                                "interface IFoo {"
                                "  void foo(in String[] str);"
                                "  void bar2(@utf8InCpp String str);"
-                               "}");
-  CaptureStderr();
-  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
-}
-
-TEST_F(AidlTestIncompatibleChanges, RenamedField) {
-  const string expected_stderr = "ERROR: new/p/Data.aidl:1.21-26: Renamed field: bar to bar2.\n";
-  io_delegate_.SetFileContents("old/p/Data.aidl",
-                               "package p;"
-                               "parcelable Data {"
-                               "  int foo;"
-                               "  int bar;"
-                               "}");
-  io_delegate_.SetFileContents("new/p/Data.aidl",
-                               "package p;"
-                               "parcelable Data {"
-                               "  int foo;"
-                               "  int bar2;"
                                "}");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
@@ -1619,8 +1696,8 @@ TEST_F(AidlTestIncompatibleChanges, ReorderedMethod) {
 
 TEST_F(AidlTestIncompatibleChanges, ReorderedField) {
   const string expected_stderr =
-      "ERROR: new/p/Data.aidl:1.21-26: Renamed field: foo to bar.\n"
-      "ERROR: new/p/Data.aidl:1.21-26: Renamed field: bar to foo.\n";
+      "ERROR: new/p/Data.aidl:1.33-37: Reordered bar from 1 to 0.\n"
+      "ERROR: new/p/Data.aidl:1.43-47: Reordered foo from 0 to 1.\n";
   io_delegate_.SetFileContents("old/p/Data.aidl",
                                "package p;"
                                "parcelable Data {"
@@ -1708,7 +1785,7 @@ TEST_F(AidlTestIncompatibleChanges, RemovedPackage) {
 }
 
 TEST_F(AidlTestIncompatibleChanges, ChangedDefaultValue) {
-  const string expected_stderr = "ERROR: new/p/D.aidl:1.22-24: Changed default value: 1 to 2.\n";
+  const string expected_stderr = "ERROR: new/p/D.aidl:1.30-32: Changed default value: 1 to 2.\n";
   io_delegate_.SetFileContents("old/p/D.aidl", "package p; parcelable D { int a = 1; }");
   io_delegate_.SetFileContents("new/p/D.aidl", "package p; parcelable D { int a = 2; }");
   CaptureStderr();
@@ -1885,6 +1962,26 @@ TEST_F(AidlTest, FailOnAmbiguousImports) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTest, UnusedImportDoesNotContributeInclude) {
+  io_delegate_.SetFileContents("a/b/IFoo.aidl",
+                               "package a.b;\n"
+                               "import a.b.IBar;\n"
+                               "import a.b.IQux;\n"
+                               "interface IFoo { IQux foo(); }\n");
+  io_delegate_.SetFileContents("a/b/IBar.aidl", "package a.b; interface IBar { void foo(); }");
+  io_delegate_.SetFileContents("a/b/IQux.aidl", "package a.b; interface IQux { void foo(); }");
+
+  Options options = Options::From("aidl --lang=ndk a/b/IFoo.aidl -I . -o out -h out/include");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  string output;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/include/aidl/a/b/IFoo.h", &output));
+  // IBar was imported but wasn't used. include is not expected.
+  EXPECT_THAT(output, Not(testing::HasSubstr("#include <aidl/a/b/IBar.h>")));
+  // IBar was imported and used. include is expected.
+  EXPECT_THAT(output, (testing::HasSubstr("#include <aidl/a/b/IQux.h>")));
+}
+
 class AidlOutputPathTest : public AidlTest {
  protected:
   void SetUp() override {
@@ -1995,6 +2092,27 @@ TEST_P(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
                               @Backing(type="byte")
                               enum TestEnum {
                                 FOO = 127,
+                                BAR,
+                              }
+                             )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, UnsupportedBackingAnnotationParam) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/TestEnum.aidl:2.1-51: Parameter foo not supported for annotation Backing. It must "
+      "be one of: type\n"
+      "ERROR: p/TestEnum.aidl:2.1-51: Parameter foo not supported for annotation Backing. It must "
+      "be one of: type\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/TestEnum.aidl",
+                           R"(package p;
+                              @Backing(foo="byte")
+                              enum TestEnum {
+                                FOO = 1,
                                 BAR,
                               }
                              )",

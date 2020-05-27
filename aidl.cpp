@@ -481,7 +481,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
     string import_path = import_resolver.FindImportFile(import);
     if (import_path.empty()) {
-      if (typenames->ResolveTypename(import).second) {
+      if (typenames->ResolveTypename(import).is_resolved) {
         // Couldn't find the *.aidl file for the type from the include paths, but we
         // have the type already resolved. This could happen when the type is
         // from the preprocessed aidl file. In that case, use the type from the
@@ -574,7 +574,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     CHECK(defined_type != nullptr);
 
     // Language specific validation
-    if (!defined_type->LanguageSpecificCheckValid(options.TargetLanguage())) {
+    if (!defined_type->LanguageSpecificCheckValid(*typenames, options.TargetLanguage())) {
       return AidlError::BAD_TYPE;
     }
 
@@ -702,6 +702,35 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       err = AidlError::NOT_STRUCTURED;
       AIDL_ERROR(type) << type.GetCanonicalName()
                        << " does not have VINTF level stability, but this interface requires it.";
+    }
+
+    // Ensure that untyped List/Map is not used in stable AIDL.
+    if (options.IsStructured()) {
+      const AidlInterface* iface = type.AsInterface();
+      const AidlStructuredParcelable* parcelable = type.AsStructuredParcelable();
+
+      auto check = [&err](const AidlTypeSpecifier& type, const AidlNode* node) {
+        if (!type.IsGeneric() && (type.GetName() == "List" || type.GetName() == "Map")) {
+          err = AidlError::BAD_TYPE;
+          AIDL_ERROR(node)
+              << "Encountered an untyped List or Map. The use of untyped List/Map is prohibited "
+              << "because it is not guaranteed that the objects in the list are recognizable in "
+              << "the receiving side. Consider switching to an array or a generic List/Map.";
+        }
+      };
+
+      if (iface != nullptr) {
+        for (const auto& method : iface->GetMethods()) {
+          check(method->GetType(), method.get());
+          for (const auto& arg : method->GetArguments()) {
+            check(arg->GetType(), method.get());
+          }
+        }
+      } else if (parcelable != nullptr) {
+        for (const auto& field : parcelable->GetFields()) {
+          check(field->GetType(), field.get());
+        }
+      }
     }
   });
 
