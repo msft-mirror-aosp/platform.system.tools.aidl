@@ -71,6 +71,7 @@ filegroup {
 // contagious.
 aidl_interface {
     name: "test-variants",
+    unstable: true,
     local_include_dir: "tests_1",
     vendor_available: true,
     host_supported: true,
@@ -104,6 +105,12 @@ aidl_interface {
     imports: [
         "test-piece-1",
     ],
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+    },
+    gen_trace: true,
     versions: ["1"],
 }
 
@@ -116,6 +123,12 @@ aidl_interface {
     imports: [
         "test-piece-2",
     ],
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+    },
+    gen_trace: true,
     versions: ["1"],
 }
 
@@ -128,6 +141,12 @@ aidl_interface {
     imports: [
         "test-piece-1",
     ],
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+    },
+    gen_trace: true,
     versions: ["1"],
 }
 
@@ -139,6 +158,12 @@ aidl_interface {
     imports: [
         "test-piece-2",
     ],
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+    },
+    gen_trace: true,
     versions: [
         "1",
         "2",

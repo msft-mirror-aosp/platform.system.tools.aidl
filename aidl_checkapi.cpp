@@ -34,12 +34,35 @@ using std::set;
 using std::string;
 using std::vector;
 
+static set<AidlAnnotation> get_strict_annotations(const AidlAnnotatable& node) {
+  // This must be symmetrical (if you can add something, you must be able to
+  // remove it). The reason is that we have no way of knowing which interface a
+  // server serves and which interface a client serves (e.g. a callback
+  // interface). Note that this is being overly lenient. It makes sense for
+  // newer code to start accepting nullable things. However, here, we don't know
+  // if the client of an interface or the server of an interface is newer.
+  //
+  // Here are two examples to demonstrate this:
+  // - a new implementation might change so that it no longer returns null
+  // values (remove @nullable)
+  // - a new implementation might start accepting null values (add @nullable)
+  static const set<AidlAnnotation::Type> kIgnoreAnnotations{
+      AidlAnnotation::Type::NULLABLE,
+  };
+  set<AidlAnnotation> annotations;
+  for (const AidlAnnotation& annotation : node.GetAnnotations()) {
+    if (kIgnoreAnnotations.find(annotation.GetType()) == kIgnoreAnnotations.end()) {
+      annotations.insert(annotation);
+    }
+  }
+  return annotations;
+}
+
 static bool have_compatible_annotations(const AidlAnnotatable& older,
                                         const AidlAnnotatable& newer) {
-  set<AidlAnnotation> olderAnnotations(older.GetAnnotations().begin(),
-                                       older.GetAnnotations().end());
-  set<AidlAnnotation> newerAnnotations(newer.GetAnnotations().begin(),
-                                       newer.GetAnnotations().end());
+  set<AidlAnnotation> olderAnnotations = get_strict_annotations(older);
+  set<AidlAnnotation> newerAnnotations = get_strict_annotations(newer);
+
   if (olderAnnotations != newerAnnotations) {
     const string from = older.ToString().empty() ? "(empty)" : older.ToString();
     const string to = newer.ToString().empty() ? "(empty)" : newer.ToString();
@@ -142,6 +165,19 @@ static bool are_compatible_interfaces(const AidlInterface& older, const AidlInte
   return compatible;
 }
 
+// returns whether the given type when defaulted will be accepted by
+// unmarshalling code
+static bool has_usable_nil_type(const AidlTypeSpecifier& specifier) {
+  // TODO(b/155238508): fix for primitives
+
+  // This technically only applies in C++, but even if both the client and the
+  // server of an interface are in Java at a particular point in time, where
+  // null is currently always acceptable, we want to make sure that versions
+  // of this service can work in native and future backends without a problem.
+  // Also, in that case, adding nullable does not hurt.
+  return specifier.IsNullable();
+}
+
 static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
                                        const AidlStructuredParcelable& newer) {
   const auto& old_fields = older.GetFields();
@@ -159,19 +195,62 @@ static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
     const auto& new_field = new_fields.at(i);
     compatible &= are_compatible_types(old_field->GetType(), new_field->GetType());
 
-    // Note: unlike method argument names, field name change is an incompatible
-    // change, otherwise, we can't detect
-    // parcelable Point {int x; int y;} -> parcelable Point {int y; int x;}
-    if (old_field->GetName() != new_field->GetName()) {
-      AIDL_ERROR(newer) << "Renamed field: " << old_field->GetName() << " to "
-                        << new_field->GetName() << ".";
-      compatible = false;
-    }
-
     const string old_value = old_field->ValueString(AidlConstantValueDecorator);
     const string new_value = new_field->ValueString(AidlConstantValueDecorator);
     if (old_value != new_value) {
-      AIDL_ERROR(newer) << "Changed default value: " << old_value << " to " << new_value << ".";
+      AIDL_ERROR(new_field) << "Changed default value: " << old_value << " to " << new_value << ".";
+      compatible = false;
+    }
+  }
+
+  // Reordering of fields is an incompatible change.
+  for (size_t i = 0; i < new_fields.size(); i++) {
+    const auto& new_field = new_fields.at(i);
+    auto found = std::find_if(old_fields.begin(), old_fields.end(), [&new_field](const auto& f) {
+      return new_field->GetName() == f->GetName();
+    });
+    if (found != old_fields.end()) {
+      size_t old_index = std::distance(old_fields.begin(), found);
+      if (old_index != i) {
+        AIDL_ERROR(new_field) << "Reordered " << new_field->GetName() << " from " << old_index
+                              << " to " << i << ".";
+        compatible = false;
+      }
+    }
+  }
+
+  for (size_t i = old_fields.size(); i < new_fields.size(); i++) {
+    const auto& new_field = new_fields.at(i);
+    if (!new_field->GetDefaultValue() && !has_usable_nil_type(new_field->GetType())) {
+      // Old API versions may suffer from the issue presented here. There is
+      // only a finite number in Android, which we must allow indefinitely.
+      struct HistoricalException {
+        std::string canonical;
+        std::string field;
+      };
+      static std::vector<HistoricalException> exceptions = {
+          {"android.net.DhcpResultsParcelable", "serverHostName"},
+          {"android.net.ProvisioningConfigurationParcelable", "enablePreconnection"},
+          {"android.net.ResolverParamsParcel", "resolverOptions"},
+      };
+      bool excepted = false;
+      for (const HistoricalException& exception : exceptions) {
+        if (older.GetCanonicalName() == exception.canonical &&
+            new_field->GetName() == exception.field) {
+          excepted = true;
+          break;
+        }
+      }
+      if (excepted) continue;
+
+      AIDL_ERROR(new_field)
+          << "Field '" << new_field->GetName()
+          << "' does not have a useful default in some backends. Please either provide a default "
+             "value for this field or mark the field as @nullable. This value or a null value will "
+             "be used automatically when an old version of this parcelable is sent to a process "
+             "which understands a new version of this parcelable. In order to make sure your code "
+             "continues to be backwards compatible, make sure the default or null value does not "
+             "cause a semantic change to this parcelable.";
       compatible = false;
     }
   }

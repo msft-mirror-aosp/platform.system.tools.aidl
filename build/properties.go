@@ -39,24 +39,27 @@ type ccProperties struct {
 	Shared_libs               []string
 	Export_shared_lib_headers []string
 	Export_generated_headers  []string
+	Header_libs               []string
 	Sdk_version               *string
 	Stl                       *string
 	Cpp_std                   *string
 	Cflags                    []string
 	Stem                      *string
 	Apex_available            []string
+	Min_sdk_version           *string
 }
 
 type javaProperties struct {
-	Name           *string
-	Owner          *string
-	Defaults       []string
-	Installable    *bool
-	Sdk_version    *string
-	Platform_apis  *bool
-	Srcs           []string
-	Static_libs    []string
-	Apex_available []string
+	Name            *string
+	Owner           *string
+	Defaults        []string
+	Installable     *bool
+	Sdk_version     *string
+	Platform_apis   *bool
+	Srcs            []string
+	Static_libs     []string
+	Apex_available  []string
+	Min_sdk_version *string
 }
 
 type phonyProperties struct {

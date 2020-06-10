@@ -49,7 +49,6 @@ public interface IStringConstants extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.os.IStringConstants
   {
-    private static final java.lang.String DESCRIPTOR = "android.os.IStringConstants";
     /** Construct the stub at attach it to the interface. */
     public Stub()
     {
@@ -108,7 +107,13 @@ public interface IStringConstants extends android.os.IInterface
       public static android.os.IStringConstants sDefaultImpl;
     }
     public static boolean setDefaultImpl(android.os.IStringConstants impl) {
-      if (Stub.Proxy.sDefaultImpl == null && impl != null) {
+      // Only one user of this interface can use this function
+      // at a time. This is a heuristic to detect if two different
+      // users in the same process use this function.
+      if (Stub.Proxy.sDefaultImpl != null) {
+        throw new IllegalStateException("setDefaultImpl() called twice");
+      }
+      if (impl != null) {
         Stub.Proxy.sDefaultImpl = impl;
         return true;
       }
@@ -118,6 +123,7 @@ public interface IStringConstants extends android.os.IInterface
       return Stub.Proxy.sDefaultImpl;
     }
   }
+  public static final java.lang.String DESCRIPTOR = "android.os.IStringConstants";
   public static final String EXAMPLE_CONSTANT = "foo";
 }
 )";
@@ -259,7 +265,6 @@ public interface IStringConstants extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.os.IStringConstants
   {
-    private static final java.lang.String DESCRIPTOR = "android.os.IStringConstants";
     /** Construct the stub at attach it to the interface. */
     public Stub()
     {
@@ -355,7 +360,7 @@ public interface IStringConstants extends android.os.IInterface
       }
       @Override
       public synchronized String getInterfaceHash() throws android.os.RemoteException {
-        if (mCachedHash == "-1") {
+        if ("-1".equals(mCachedHash)) {
           android.os.Parcel data = android.os.Parcel.obtain();
           android.os.Parcel reply = android.os.Parcel.obtain();
           try {
@@ -380,7 +385,13 @@ public interface IStringConstants extends android.os.IInterface
     static final int TRANSACTION_getInterfaceVersion = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16777214);
     static final int TRANSACTION_getInterfaceHash = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16777213);
     public static boolean setDefaultImpl(android.os.IStringConstants impl) {
-      if (Stub.Proxy.sDefaultImpl == null && impl != null) {
+      // Only one user of this interface can use this function
+      // at a time. This is a heuristic to detect if two different
+      // users in the same process use this function.
+      if (Stub.Proxy.sDefaultImpl != null) {
+        throw new IllegalStateException("setDefaultImpl() called twice");
+      }
+      if (impl != null) {
         Stub.Proxy.sDefaultImpl = impl;
         return true;
       }
@@ -390,6 +401,7 @@ public interface IStringConstants extends android.os.IInterface
       return Stub.Proxy.sDefaultImpl;
     }
   }
+  public static final java.lang.String DESCRIPTOR = "android.os.IStringConstants";
   public static final String EXAMPLE_CONSTANT = "foo";
   public int getInterfaceVersion() throws android.os.RemoteException;
   public String getInterfaceHash() throws android.os.RemoteException;
