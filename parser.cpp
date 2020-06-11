@@ -46,22 +46,6 @@ std::unique_ptr<Parser> Parser::Parse(const std::string& filename,
   return parser;
 }
 
-std::vector<std::string> Parser::Package() const {
-  if (!package_) {
-    return {};
-  }
-  return package_->GetTerms();
-}
-
-void Parser::AddImport(std::unique_ptr<AidlImport>&& import) {
-  for (const auto& i : imports_) {
-    if (i->GetNeededClass() == import->GetNeededClass()) {
-      return;
-    }
-  }
-  imports_.emplace_back(std::move(import));
-}
-
 bool Parser::Resolve() {
   bool success = true;
   for (AidlTypeSpecifier* typespec : unresolved_typespecs_) {

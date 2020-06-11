@@ -301,8 +301,8 @@ bool check_and_assign_method_ids(const std::vector<std::unique_ptr<AidlMethod>>&
 }
 
 // TODO: Remove this in favor of using the YACC parser b/25479378
-bool ParsePreprocessedLine(const string& line, string* decl,
-                           vector<string>* package, string* class_name) {
+bool ParsePreprocessedLine(const string& line, string* decl, std::string* package,
+                           string* class_name) {
   // erase all trailing whitespace and semicolons
   const size_t end = line.find_last_not_of(" ;\t");
   if (end == string::npos) {
@@ -336,7 +336,7 @@ bool ParsePreprocessedLine(const string& line, string* decl,
   size_t dot_pos = type.rfind('.');
   if (dot_pos != string::npos) {
     *class_name = type.substr(dot_pos + 1);
-    *package = Split(type.substr(0, dot_pos), ".");
+    *package = type.substr(0, dot_pos);
   } else {
     *class_name = type;
     package->clear();
@@ -368,7 +368,7 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const string& filena
     }
 
     string decl;
-    vector<string> package;
+    std::string package;
     string class_name;
     if (!ParsePreprocessedLine(line, &decl, &package, &class_name)) {
       success = false;
@@ -385,14 +385,12 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const string& filena
       if (AidlTypenames::IsBuiltinTypename(class_name)) {
         continue;
       }
-      AidlParcelable* doc = new AidlParcelable(
-          location, new AidlQualifiedName(location, class_name, ""), package, "" /* comments */);
+      AidlParcelable* doc = new AidlParcelable(location, class_name, package, "" /* comments */);
       typenames->AddPreprocessedType(unique_ptr<AidlParcelable>(doc));
     } else if (decl == "structured_parcelable") {
       auto temp = new std::vector<std::unique_ptr<AidlVariableDeclaration>>();
       AidlStructuredParcelable* doc =
-          new AidlStructuredParcelable(location, new AidlQualifiedName(location, class_name, ""),
-                                       package, "" /* comments */, temp);
+          new AidlStructuredParcelable(location, class_name, package, "" /* comments */, temp);
       typenames->AddPreprocessedType(unique_ptr<AidlStructuredParcelable>(doc));
     } else if (decl == "interface") {
       auto temp = new std::vector<std::unique_ptr<AidlMember>>();
@@ -427,7 +425,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     return AidlError::PARSE_ERROR;
   }
   int num_interfaces_or_structured_parcelables = 0;
-  for (AidlDefinedType* type : main_parser->GetDefinedTypes()) {
+  for (AidlDefinedType* type : main_parser->Document().DefinedTypes()) {
     if (type->AsInterface() != nullptr || type->AsStructuredParcelable() != nullptr) {
       num_interfaces_or_structured_parcelables++;
       if (num_interfaces_or_structured_parcelables > 1) {
@@ -453,7 +451,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
                                  options.InputFiles()};
 
   vector<string> type_from_import_statements;
-  for (const auto& import : main_parser->GetImports()) {
+  for (const auto& import : main_parser->Document().Imports()) {
     if (!AidlTypenames::IsBuiltinTypename(import->GetNeededClass())) {
       type_from_import_statements.emplace_back(import->GetNeededClass());
     }
@@ -570,8 +568,9 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   // serious failures.
   bool contains_unstructured_parcelable = false;
 
-  const int num_defined_types = main_parser->GetDefinedTypes().size();
-  for (const auto defined_type : main_parser->GetDefinedTypes()) {
+  const auto& types = main_parser->Document().DefinedTypes();
+  const int num_defined_types = types.size();
+  for (const auto defined_type : types) {
     CHECK(defined_type != nullptr);
 
     // Language specific validation
@@ -740,7 +739,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   }
 
   if (defined_types != nullptr) {
-    *defined_types = main_parser->GetDefinedTypes();
+    *defined_types = main_parser->Document().DefinedTypes();
   }
 
   if (imported_files != nullptr) {
@@ -850,7 +849,7 @@ bool preprocess_aidl(const Options& options, const IoDelegate& io_delegate) {
     std::unique_ptr<Parser> p = Parser::Parse(file, io_delegate, typenames);
     if (p == nullptr) return false;
 
-    for (const auto& defined_type : p->GetDefinedTypes()) {
+    for (const auto& defined_type : p->Document().DefinedTypes()) {
       if (!writer->Write("%s %s;\n", defined_type->GetPreprocessDeclarationName().c_str(),
                          defined_type->GetCanonicalName().c_str())) {
         return false;
