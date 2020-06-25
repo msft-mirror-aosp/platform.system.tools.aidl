@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <android-base/stringprintf.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "aidl.h"
@@ -295,7 +296,7 @@ TEST_P(AidlTest, RejectUnsupportedInterfaceAnnotations) {
   const string method = "package a; @nullable interface IFoo { int f(); }";
   const string expected_stderr =
       "ERROR: a/IFoo.aidl:1.21-31: 'nullable' is not a supported annotation for this node. "
-      "It must be one of: Hide, UnsupportedAppUsage, VintfStability\n";
+      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -307,7 +308,7 @@ TEST_P(AidlTest, RejectUnsupportedTypeAnnotations) {
   const string method = "package a; interface IFoo { @JavaOnlyStableParcelable int f(); }";
   const string expected_stderr =
       "ERROR: a/IFoo.aidl:1.54-58: 'JavaOnlyStableParcelable' is not a supported annotation "
-      "for this node. It must be one of: Hide, UnsupportedAppUsage, nullable, utf8InCpp\n";
+      "for this node. It must be one of: Hide, UnsupportedAppUsage, nullable, utf8InCpp, JavaPassthrough\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -319,7 +320,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableAnnotations) {
   const string method = "package a; @nullable parcelable IFoo cpp_header \"IFoo.h\";";
   const string expected_stderr =
       "ERROR: a/Foo.aidl:1.32-37: 'nullable' is not a supported annotation for this node. "
-      "It must be one of: Hide, JavaOnlyStableParcelable, UnsupportedAppUsage, VintfStability\n";
+      "It must be one of: Hide, JavaOnlyStableParcelable, UnsupportedAppUsage, VintfStability, JavaPassthrough\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -331,7 +332,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableDefineAnnotations) {
   const string method = "package a; @nullable parcelable Foo { String a; String b; }";
   const string expected_stderr =
       "ERROR: a/Foo.aidl:1.32-36: 'nullable' is not a supported annotation for this node. "
-      "It must be one of: Hide, UnsupportedAppUsage, VintfStability\n";
+      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -729,6 +730,32 @@ TEST_P(AidlTest, FailOnMalformedConstHexValue) {
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
 }
 
+TEST_P(AidlTest, FailOnMalformedQualifiedNameAsIdentifier) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:1.25-26: syntax error, unexpected ';', expecting identifier or "
+      "cpp_header (which can also be used as an identifier)\n";
+  CaptureStderr();
+  // Notice the trailing dot(.) in the name, which isn't a correct name
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl", R"(package p; parcelable A.; )", typenames_,
+                           GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnMalformedQualifiedNameAsPackage) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:1.11-12: syntax error, unexpected ';', expecting identifier or "
+      "cpp_header (which can also be used as an identifier)\n";
+  CaptureStderr();
+  // Notice the trailing dot(.) in the package name
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl", R"(package p.; parcelable A; )", typenames_,
+                           GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
 TEST_P(AidlTest, ParsePositiveConstHexValue) {
   AidlError error;
   auto parse_result = Parse("p/IFoo.aidl",
@@ -956,6 +983,42 @@ TEST_P(AidlTest, RejectsPrimitiveListInStableAidl) {
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", primitive_parcelable, typenames_, GetLanguage(), &error,
                            {"--structured"}));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, ExtensionTest) {
+  string extendable_parcelable =
+      "package a; parcelable Data {\n"
+      "  ParcelableHolder extension;\n"
+      "  ParcelableHolder extension2;\n"
+      "}";
+  EXPECT_NE(nullptr,
+            Parse("a/Data.aidl", extendable_parcelable, typenames_, Options::Language::JAVA));
+  EXPECT_EQ(nullptr,
+            Parse("a/Data.aidl", extendable_parcelable, typenames_, Options::Language::CPP));
+  EXPECT_EQ(nullptr,
+            Parse("a/Data.aidl", extendable_parcelable, typenames_, Options::Language::NDK));
+
+  string parcelableholder_return_interface =
+      "package a; interface IFoo {\n"
+      "  ParcelableHolder foo();\n"
+      "}";
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_,
+                           Options::Language::JAVA));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_,
+                           Options::Language::CPP));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_,
+                           Options::Language::NDK));
+
+  string extendable_parcelable_arg_interface =
+      "package a; interface IFoo {\n"
+      "  void foo(in ParcelableHolder ph);\n"
+      "}";
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_,
+                           Options::Language::JAVA));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_,
+                           Options::Language::CPP));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_,
+                           Options::Language::NDK));
 }
 
 TEST_F(AidlTest, ApiDump) {
@@ -1961,6 +2024,51 @@ TEST_F(AidlTest, FailOnAmbiguousImports) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTest, UnusedImportDoesNotContributeInclude) {
+  io_delegate_.SetFileContents("a/b/IFoo.aidl",
+                               "package a.b;\n"
+                               "import a.b.IBar;\n"
+                               "import a.b.IQux;\n"
+                               "interface IFoo { IQux foo(); }\n");
+  io_delegate_.SetFileContents("a/b/IBar.aidl", "package a.b; interface IBar { void foo(); }");
+  io_delegate_.SetFileContents("a/b/IQux.aidl", "package a.b; interface IQux { void foo(); }");
+
+  Options options = Options::From("aidl --lang=ndk a/b/IFoo.aidl -I . -o out -h out/include");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  string output;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/include/aidl/a/b/IFoo.h", &output));
+  // IBar was imported but wasn't used. include is not expected.
+  EXPECT_THAT(output, Not(testing::HasSubstr("#include <aidl/a/b/IBar.h>")));
+  // IBar was imported and used. include is expected.
+  EXPECT_THAT(output, (testing::HasSubstr("#include <aidl/a/b/IQux.h>")));
+}
+
+TEST_F(AidlTest, ParseJavaPassthroughAnnotation) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @JavaPassthrough(annotation="@com.android.Alice(arg=com.android.Alice.Value.A) ")
+    interface IFoo {
+        @JavaPassthrough(annotation="@com.android.Bob")
+        void foo(@JavaPassthrough(annotation="@com.android.Cat") int x);
+    })");
+
+  Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+
+  string java_out;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/IFoo.java", &java_out));
+  EXPECT_THAT(java_out, testing::HasSubstr("@com.android.Alice(arg=com.android.Alice.Value.A)"));
+  EXPECT_THAT(java_out, testing::HasSubstr("@com.android.Bob"));
+  EXPECT_THAT(java_out, testing::HasSubstr("@com.android.Cat"));
+
+  // Other backends shouldn't be bothered
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/IFoo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(cpp_options, io_delegate_));
+
+  Options ndk_options = Options::From("aidl --lang=ndk -o out -h out a/IFoo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(ndk_options, io_delegate_));
+}
+
 class AidlOutputPathTest : public AidlTest {
  protected:
   void SetUp() override {
@@ -2071,6 +2179,27 @@ TEST_P(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
                               @Backing(type="byte")
                               enum TestEnum {
                                 FOO = 127,
+                                BAR,
+                              }
+                             )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, UnsupportedBackingAnnotationParam) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/TestEnum.aidl:2.1-51: Parameter foo not supported for annotation Backing. It must "
+      "be one of: type\n"
+      "ERROR: p/TestEnum.aidl:2.1-51: Parameter foo not supported for annotation Backing. It must "
+      "be one of: type\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/TestEnum.aidl",
+                           R"(package p;
+                              @Backing(foo="byte")
+                              enum TestEnum {
+                                FOO = 1,
                                 BAR,
                               }
                              )",

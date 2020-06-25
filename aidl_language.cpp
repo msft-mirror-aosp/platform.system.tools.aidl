@@ -16,6 +16,7 @@
 
 #include "aidl_language.h"
 #include "aidl_typenames.h"
+#include "parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,13 +78,6 @@ inline bool HasHideComment(const std::string& comment) {
 }
 }  // namespace
 
-void yylex_init(void **);
-void yylex_destroy(void *);
-void yyset_in(FILE *f, void *);
-int yyparse(Parser*);
-YY_BUFFER_STATE yy_scan_buffer(char *, size_t, void *);
-void yy_delete_buffer(YY_BUFFER_STATE, void *);
-
 AidlToken::AidlToken(const std::string& text, const std::string& comments)
     : text_(text),
       comments_(comments) {}
@@ -142,7 +136,9 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
         {"trackingBug", "long"}}},
       {AidlAnnotation::Type::JAVA_STABLE_PARCELABLE, "JavaOnlyStableParcelable", {}},
       {AidlAnnotation::Type::HIDE, "Hide", {}},
-      {AidlAnnotation::Type::BACKING, "Backing", {{"type", "String"}}}};
+      {AidlAnnotation::Type::BACKING, "Backing", {{"type", "String"}}},
+      {AidlAnnotation::Type::JAVA_PASSTHROUGH, "JavaPassthrough", {{"annotation", "String"}}},
+  };
   return kSchemas;
 }
 
@@ -200,7 +196,7 @@ bool AidlAnnotation::CheckValid() const {
     if (parameter_mapping_it == schema_.supported_parameters.end()) {
       std::ostringstream stream;
       stream << "Parameter " << param_name << " not supported ";
-      stream << "for annotation " << GetName() << ".";
+      stream << "for annotation " << GetName() << ". ";
       stream << "It must be one of:";
       for (const auto& kv : schema_.supported_parameters) {
         stream << " " << kv.first;
@@ -226,13 +222,23 @@ std::map<std::string, std::string> AidlAnnotation::AnnotationParams(
   for (const auto& name_and_param : parameters_) {
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
+    if (schema_.supported_parameters.find(param_name) == schema_.supported_parameters.end()) {
+      std::ostringstream stream;
+      stream << "Parameter " << param_name << " not supported ";
+      stream << "for annotation " << GetName() << ". ";
+      stream << "It must be one of:";
+      for (const auto& kv : schema_.supported_parameters) {
+        stream << " " << kv.first;
+      }
+      AIDL_ERROR(this) << stream.str();
+      continue;
+    }
     AidlTypeSpecifier type{AIDL_LOCATION_HERE, schema_.supported_parameters.at(param_name), false,
                            nullptr, ""};
     if (!param->CheckValid()) {
       AIDL_ERROR(this) << "Invalid value for parameter " << param_name << " on annotation "
                        << GetName() << ".";
-      raw_params.clear();
-      return raw_params;
+      continue;
     }
 
     raw_params.emplace(param_name, param->ValueString(type, decorator));
@@ -280,16 +286,24 @@ const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE);
 }
 
+const AidlAnnotation* AidlAnnotatable::JavaPassthrough() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_PASSTHROUGH);
+}
+
 const AidlTypeSpecifier* AidlAnnotatable::BackingType(const AidlTypenames& typenames) const {
   auto annotation = GetAnnotation(annotations_, AidlAnnotation::Type::BACKING);
   if (annotation != nullptr) {
     auto annotation_params = annotation->AnnotationParams(AidlConstantValueDecorator);
     if (auto it = annotation_params.find("type"); it != annotation_params.end()) {
       const string& type = it->second;
+
+      AIDL_FATAL_IF(type.size() < 2, this) << type;
+      AIDL_FATAL_IF(type[0] != '"', this) << type;
+      AIDL_FATAL_IF(type[type.length() - 1] != '"', this) << type;
+      string unquoted_type = type.substr(1, type.length() - 2);
+
       AidlTypeSpecifier* type_specifier =
-          new AidlTypeSpecifier(AIDL_LOCATION_HERE,
-                                // Strip the quotes off the type String.
-                                type.substr(1, type.length() - 2), false, nullptr, "");
+          new AidlTypeSpecifier(AIDL_LOCATION_HERE, unquoted_type, false, nullptr, "");
       type_specifier->Resolve(typenames);
       return type_specifier;
     }
@@ -408,7 +422,8 @@ std::set<AidlAnnotation::Type> AidlTypeSpecifier::GetSupportedAnnotations() cons
   // kHide and kUnsupportedAppUsage are both method return annotations
   // which we don't distinguish from other type specifiers.
   return {AidlAnnotation::Type::NULLABLE, AidlAnnotation::Type::UTF8_IN_CPP,
-          AidlAnnotation::Type::UNSUPPORTED_APP_USAGE, AidlAnnotation::Type::HIDE};
+          AidlAnnotation::Type::UNSUPPORTED_APP_USAGE, AidlAnnotation::Type::HIDE,
+          AidlAnnotation::Type::JAVA_PASSTHROUGH};
 }
 
 bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
@@ -691,13 +706,13 @@ string AidlMethod::ToString() const {
 }
 
 AidlDefinedType::AidlDefinedType(const AidlLocation& location, const std::string& name,
-                                 const std::string& comments,
-                                 const std::vector<std::string>& package)
-    : AidlAnnotatable(location), name_(name), comments_(comments), package_(package) {}
-
-std::string AidlDefinedType::GetPackage() const {
-  return Join(package_, '.');
-}
+                                 const std::string& comments, const std::string& package)
+    : AidlAnnotatable(location),
+      name_(name),
+      comments_(comments),
+      package_(package),
+      split_package_(package.empty() ? std::vector<std::string>()
+                                     : android::base::Split(package, ".")) {}
 
 bool AidlDefinedType::CheckValid(const AidlTypenames& typenames) const {
   if (!AidlAnnotatable::CheckValid(typenames)) {
@@ -725,12 +740,11 @@ void AidlDefinedType::DumpHeader(CodeWriter* writer) const {
   DumpAnnotations(writer);
 }
 
-AidlParcelable::AidlParcelable(const AidlLocation& location, AidlQualifiedName* name,
-                               const std::vector<std::string>& package, const std::string& comments,
+AidlParcelable::AidlParcelable(const AidlLocation& location, const std::string& name,
+                               const std::string& package, const std::string& comments,
                                const std::string& cpp_header, std::vector<std::string>* type_params)
-    : AidlDefinedType(location, name->GetDotName(), comments, package),
+    : AidlDefinedType(location, name, comments, package),
       AidlParameterizable<std::string>(type_params),
-      name_(name),
       cpp_header_(cpp_header) {
   // Strip off quotation marks if we actually have a cpp header.
   if (cpp_header_.length() >= 2) {
@@ -765,7 +779,8 @@ bool AidlParameterizable<std::string>::CheckValid() const {
 
 std::set<AidlAnnotation::Type> AidlParcelable::GetSupportedAnnotations() const {
   return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
-          AidlAnnotation::Type::JAVA_STABLE_PARCELABLE, AidlAnnotation::Type::HIDE};
+          AidlAnnotation::Type::JAVA_STABLE_PARCELABLE, AidlAnnotation::Type::HIDE,
+          AidlAnnotation::Type::JAVA_PASSTHROUGH};
 }
 
 bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
@@ -785,7 +800,7 @@ void AidlParcelable::Dump(CodeWriter* writer) const {
 }
 
 AidlStructuredParcelable::AidlStructuredParcelable(
-    const AidlLocation& location, AidlQualifiedName* name, const std::vector<std::string>& package,
+    const AidlLocation& location, const std::string& name, const std::string& package,
     const std::string& comments, std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables)
     : AidlParcelable(location, name, package, comments, "" /*cpp_header*/),
       variables_(std::move(*variables)) {}
@@ -806,7 +821,7 @@ void AidlStructuredParcelable::Dump(CodeWriter* writer) const {
 
 std::set<AidlAnnotation::Type> AidlStructuredParcelable::GetSupportedAnnotations() const {
   return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
-          AidlAnnotation::Type::HIDE};
+          AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH};
 }
 
 bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
@@ -952,8 +967,7 @@ string AidlEnumerator::ValueString(const AidlTypeSpecifier& backing_type,
 
 AidlEnumDeclaration::AidlEnumDeclaration(const AidlLocation& location, const std::string& name,
                                          std::vector<std::unique_ptr<AidlEnumerator>>* enumerators,
-                                         const std::vector<std::string>& package,
-                                         const std::string& comments)
+                                         const std::string& package, const std::string& comments)
     : AidlDefinedType(location, name, comments, package), enumerators_(std::move(*enumerators)) {}
 
 void AidlEnumDeclaration::SetBackingType(std::unique_ptr<const AidlTypeSpecifier> type) {
@@ -985,7 +999,7 @@ bool AidlEnumDeclaration::Autofill() {
 
 std::set<AidlAnnotation::Type> AidlEnumDeclaration::GetSupportedAnnotations() const {
   return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::BACKING,
-          AidlAnnotation::Type::HIDE};
+          AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH};
 }
 
 bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames) const {
@@ -1034,7 +1048,7 @@ bool AidlInterface::LanguageSpecificCheckValid(const AidlTypenames& typenames,
 AidlInterface::AidlInterface(const AidlLocation& location, const std::string& name,
                              const std::string& comments, bool oneway,
                              std::vector<std::unique_ptr<AidlMember>>* members,
-                             const std::vector<std::string>& package)
+                             const std::string& package)
     : AidlDefinedType(location, name, comments, package) {
   for (auto& member : *members) {
     AidlMember* local = member.release();
@@ -1078,7 +1092,7 @@ void AidlInterface::Dump(CodeWriter* writer) const {
 
 std::set<AidlAnnotation::Type> AidlInterface::GetSupportedAnnotations() const {
   return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
-          AidlAnnotation::Type::HIDE};
+          AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH};
 }
 
 bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
@@ -1092,6 +1106,11 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
       return false;
     }
 
+    // TODO(b/156872582): Support it when ParcelableHolder supports every backend.
+    if (m->GetType().GetName() == "ParcelableHolder") {
+      AIDL_ERROR(m) << "ParcelableHolder cannot be a return type";
+      return false;
+    }
     if (m->IsOneway() && m->GetType().GetName() != "void") {
       AIDL_ERROR(m) << "oneway method '" << m->GetName() << "' cannot return a value";
       return false;
@@ -1111,6 +1130,11 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
         return false;
       }
 
+      // TODO(b/156872582): Support it when ParcelableHolder supports every backend.
+      if (arg->GetType().GetName() == "ParcelableHolder") {
+        AIDL_ERROR(arg) << "ParcelableHolder cannot be an argument type";
+        return false;
+      }
       if (m->IsOneway() && arg->IsOut()) {
         AIDL_ERROR(m) << "oneway method '" << m->GetName() << "' cannot have out parameters";
         return false;
@@ -1173,83 +1197,5 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
   return success;
 }
 
-AidlQualifiedName::AidlQualifiedName(const AidlLocation& location, const std::string& term,
-                                     const std::string& comments)
-    : AidlNode(location), terms_({term}), comments_(comments) {
-  if (term.find('.') != string::npos) {
-    terms_ = Split(term, ".");
-    for (const auto& subterm : terms_) {
-      if (subterm.empty()) {
-        AIDL_FATAL(this) << "Malformed qualified identifier: '" << term << "'";
-      }
-    }
-  }
-}
-
-void AidlQualifiedName::AddTerm(const std::string& term) {
-  terms_.push_back(term);
-}
-
 AidlImport::AidlImport(const AidlLocation& location, const std::string& needed_class)
     : AidlNode(location), needed_class_(needed_class) {}
-
-std::unique_ptr<Parser> Parser::Parse(const std::string& filename,
-                                      const android::aidl::IoDelegate& io_delegate,
-                                      AidlTypenames& typenames) {
-  // Make sure we can read the file first, before trashing previous state.
-  unique_ptr<string> raw_buffer = io_delegate.GetFileContents(filename);
-  if (raw_buffer == nullptr) {
-    AIDL_ERROR(filename) << "Error while opening file for parsing";
-    return nullptr;
-  }
-
-  // We're going to scan this buffer in place, and yacc demands we put two
-  // nulls at the end.
-  raw_buffer->append(2u, '\0');
-
-  std::unique_ptr<Parser> parser(new Parser(filename, *raw_buffer, typenames));
-
-  if (yy::parser(parser.get()).parse() != 0 || parser->HasError()) return nullptr;
-
-  return parser;
-}
-
-std::vector<std::string> Parser::Package() const {
-  if (!package_) {
-    return {};
-  }
-  return package_->GetTerms();
-}
-
-void Parser::AddImport(std::unique_ptr<AidlImport>&& import) {
-  for (const auto& i : imports_) {
-    if (i->GetNeededClass() == import->GetNeededClass()) {
-      return;
-    }
-  }
-  imports_.emplace_back(std::move(import));
-}
-
-bool Parser::Resolve() {
-  bool success = true;
-  for (AidlTypeSpecifier* typespec : unresolved_typespecs_) {
-    if (!typespec->Resolve(typenames_)) {
-      AIDL_ERROR(typespec) << "Failed to resolve '" << typespec->GetUnresolvedName() << "'";
-      success = false;
-      // don't stop to show more errors if any
-    }
-  }
-  return success;
-}
-
-Parser::Parser(const std::string& filename, std::string& raw_buffer,
-               android::aidl::AidlTypenames& typenames)
-    : filename_(filename), typenames_(typenames) {
-  yylex_init(&scanner_);
-  buffer_ = yy_scan_buffer(&raw_buffer[0], raw_buffer.length(), scanner_);
-}
-
-Parser::~Parser() {
-  yy_delete_buffer(buffer_, scanner_);
-  yylex_destroy(scanner_);
-}

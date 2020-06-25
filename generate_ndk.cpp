@@ -182,25 +182,59 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
   out << "#include <android/binder_stability.h>\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
 
-  types.IterateTypes([&](const AidlDefinedType& other_defined_type) {
-    if (&other_defined_type == &defined_type) return;
-
-    if (other_defined_type.AsInterface() != nullptr) {
-      out << "#include <"
-          << NdkHeaderFile(other_defined_type, ClassNames::RAW, false /*use_os_sep*/) << ">\n";
-    } else if (other_defined_type.AsStructuredParcelable() != nullptr) {
-      out << "#include <"
-          << NdkHeaderFile(other_defined_type, ClassNames::RAW, false /*use_os_sep*/) << ">\n";
-    } else if (other_defined_type.AsParcelable() != nullptr) {
-      out << "#include \"" << other_defined_type.AsParcelable()->GetCppHeader() << "\"\n";
-    } else if (other_defined_type.AsEnumDeclaration() != nullptr) {
-      out << "#include <"
-          << NdkHeaderFile(other_defined_type, ClassNames::RAW, false /*use_os_sep*/) << ">\n";
-    } else {
-      AIDL_FATAL(defined_type) << "Unrecognized type.";
+  auto headerFilePath = [&types](const AidlTypeSpecifier& typespec) -> std::string {
+    const AidlDefinedType* type = types.TryGetDefinedType(typespec.GetName());
+    if (type == nullptr) {
+      // could be a primitive type.
+      return "";
     }
-  });
+
+    if (type->AsInterface() != nullptr) {
+      return NdkHeaderFile(*type, ClassNames::RAW, false /*use_os_sep*/);
+    } else if (type->AsStructuredParcelable() != nullptr) {
+      return NdkHeaderFile(*type, ClassNames::RAW, false /*use_os_sep*/);
+    } else if (type->AsParcelable() != nullptr) {
+      return type->AsParcelable()->GetCppHeader();
+    } else if (type->AsEnumDeclaration() != nullptr) {
+      return NdkHeaderFile(*type, ClassNames::RAW, false /*use_os_sep*/);
+    } else {
+      AIDL_FATAL(*type) << "Unrecognized type.";
+      return "";
+    }
+  };
+
+  std::set<std::string> includes;
+
+  const AidlInterface* interface = defined_type.AsInterface();
+  if (interface != nullptr) {
+    for (const auto& method : interface->GetMethods()) {
+      includes.insert(headerFilePath(method->GetType()));
+      for (const auto& argument : method->GetArguments()) {
+        includes.insert(headerFilePath(argument->GetType()));
+      }
+    }
+  }
+
+  const AidlStructuredParcelable* parcelable = defined_type.AsStructuredParcelable();
+  if (parcelable != nullptr) {
+    for (const auto& field : parcelable->GetFields()) {
+      includes.insert(headerFilePath(field->GetType()));
+    }
+  }
+
+  const AidlEnumDeclaration* enum_decl = defined_type.AsEnumDeclaration();
+  if (enum_decl != nullptr) {
+    includes.insert(headerFilePath(enum_decl->GetBackingType()));
+  }
+
+  for (const auto& path : includes) {
+    if (path == "") {
+      continue;
+    }
+    out << "#include <" << path << ">\n";
+  }
 }
+
 static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
                                    const AidlDefinedType& /*defined_type*/) {
   out << "#include <android/binder_parcel_utils.h>\n";
@@ -326,7 +360,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
                                     false /* isServer */, true /* isNdk */);
   }
   if (options.GenTraces()) {
-    out << "ATrace_beginSection(\"AIDL::" << Options::LanguageToString(options.TargetLanguage())
+    out << "ScopedTrace _aidl_trace(\"AIDL::" << Options::LanguageToString(options.TargetLanguage())
         << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
         << "::client\");\n";
   }
@@ -408,9 +442,6 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
                                    method, "_aidl_status", "_aidl_return", false /* isServer */,
                                    true /* isNdk */);
   }
-  if (options.GenTraces()) {
-    out << "ATrace_endSection();\n";
-  }
 
   out << "return _aidl_status;\n";
   out.Dedent();
@@ -431,7 +462,7 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
   }
   out << "\n";
   if (options.GenTraces()) {
-    out << "ATrace_beginSection(\"AIDL::" << Options::LanguageToString(options.TargetLanguage())
+    out << "ScopedTrace _aidl_trace(\"AIDL::" << Options::LanguageToString(options.TargetLanguage())
         << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
         << "::server\");\n";
   }
@@ -459,9 +490,6 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     out << cpp::GenLogAfterExecute(ClassName(defined_type, ClassNames::SERVER), defined_type,
                                    method, "_aidl_status", "_aidl_return", true /* isServer */,
                                    true /* isNdk */);
-  }
-  if (options.GenTraces()) {
-    out << "ATrace_endSection();\n";
   }
   if (method.IsOneway()) {
     // For a oneway transaction, the kernel will have already returned a result. This is for the
@@ -495,7 +523,19 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
                          const AidlInterface& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::INTERFACE);
   const std::string bn_clazz = ClassName(defined_type, ClassNames::SERVER);
-
+  if (options.GenTraces()) {
+    out << "class ScopedTrace {\n";
+    out.Indent();
+    out << "public:\n"
+        << "inline ScopedTrace(const char* name) {\n"
+        << "ATrace_beginSection(name);\n"
+        << "}\n"
+        << "inline ~ScopedTrace() {\n"
+        << "ATrace_endSection();\n"
+        << "}\n";
+    out.Dedent();
+    out << "};\n";
+  }
   out << "static binder_status_t "
       << "_aidl_onTransact"
       << "(AIBinder* _aidl_binder, transaction_code_t _aidl_code, const AParcel* _aidl_in, "
@@ -907,6 +947,9 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   out << "binder_status_t readFromParcel(const AParcel* parcel);\n";
   out << "binder_status_t writeToParcel(AParcel* parcel) const;\n";
+
+  out << "static const bool _aidl_is_stable = "
+      << (defined_type.IsVintfStability() ? "true" : "false") << ";\n";
   out.Dedent();
   out << "};\n";
   LeaveNdkNamespace(out, defined_type);
