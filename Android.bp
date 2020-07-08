@@ -74,6 +74,7 @@ cc_library_static {
         "line_reader.cpp",
         "io_delegate.cpp",
         "options.cpp",
+        "parser.cpp",
     ],
     yacc: {
         gen_location_hh: true,
@@ -298,6 +299,11 @@ android_test_helper_app {
     optimize: {
         enabled: false,
     },
+    static_libs: [
+        "aidl_test_nonvintf_parcelable-java",
+        "aidl_test_unstable_parcelable-java",
+        "aidl_test_vintf_parcelable-java",
+    ],
     dex_preopt: {
         enabled: false,
     },
@@ -308,6 +314,8 @@ android_test_helper_app {
         "tests/android/aidl/tests/*.aidl",
         "tests/android/aidl/tests/generic/*.aidl",
         "tests/android/aidl/tests/map/*.aidl",
+        "tests/android/aidl/tests/extension/*.aidl",
+        "tests/java_app/src/android/aidl/tests/ExtensionTests.java",
         "tests/java_app/src/android/aidl/tests/GenericTests.java",
         "tests/java_app/src/android/aidl/tests/MapTests.java",
         "tests/java_app/src/android/aidl/tests/NullableTests.java",
