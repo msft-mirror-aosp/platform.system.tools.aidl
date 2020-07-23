@@ -169,11 +169,10 @@ class AidlTest : public ::testing::TestWithParam<Options::Language> {
     }
     args.emplace_back(path);
     Options options = Options::From(args);
-    vector<AidlDefinedType*> defined_types;
     vector<string> imported_files;
     ImportResolver import_resolver{io_delegate_, path, import_paths_, {}};
     AidlError actual_error = ::android::aidl::internals::load_and_validate_aidl(
-        path, options, io_delegate_, &typenames_, &defined_types, &imported_files);
+        path, options, io_delegate_, &typenames_, &imported_files);
 
     if (error != nullptr) {
       *error = actual_error;
@@ -183,9 +182,10 @@ class AidlTest : public ::testing::TestWithParam<Options::Language> {
       return nullptr;
     }
 
+    const auto& defined_types = typenames_.MainDocument().DefinedTypes();
     EXPECT_EQ(1ul, defined_types.size());
 
-    return defined_types.front();
+    return defined_types.front().get();
   }
 
   Options::Language GetLanguage() { return GetParam(); }
@@ -332,7 +332,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableDefineAnnotations) {
   const string method = "package a; @nullable parcelable Foo { String a; String b; }";
   const string expected_stderr =
       "ERROR: a/Foo.aidl:1.32-36: 'nullable' is not a supported annotation for this node. "
-      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough\n";
+      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, JavaDebug\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -436,6 +436,48 @@ TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(cpp_structured_options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, ParsesJavaDebugAnnotation) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @JavaDebug parcelable IFoo { int a; float b; })");
+  Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+
+  string java_out;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/IFoo.java", &java_out));
+  EXPECT_THAT(java_out, testing::HasSubstr("public String toString() {"));
+
+  // Other backends shouldn't be bothered
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/IFoo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(cpp_options, io_delegate_));
+
+  Options ndk_options = Options::From("aidl --lang=ndk -o out -h out a/IFoo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(ndk_options, io_delegate_));
+}
+
+TEST_F(AidlTest, RejectsJavaDebugAnnotation) {
+  {
+    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDebug interface IFoo{}");
+    Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+    CaptureStderr();
+    EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+    const std::string expected_stderr =
+        "ERROR: a/IFoo.aidl:1.22-32: 'JavaDebug' is not a supported annotation for this node. "
+        "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough\n";
+    EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  }
+
+  {
+    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDebug enum IFoo { A=1, }");
+    Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+    CaptureStderr();
+    EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+    const std::string expected_stderr =
+        "ERROR: a/IFoo.aidl:1.27-32: 'JavaDebug' is not a supported annotation for this node. "
+        "It must be one of: Backing, Hide, VintfStability, JavaPassthrough\n";
+    EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  }
 }
 
 TEST_P(AidlTest, AcceptsOneway) {

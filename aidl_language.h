@@ -164,8 +164,17 @@ class AidlErrorLog {
   DISALLOW_COPY_AND_ASSIGN(AidlErrorLog);
 };
 
+// A class used to make it obvious to clang that code is going to abort. This
+// informs static analyses of the aborting behavior of `AIDL_FATAL`, and
+// helps generate slightly faster/smaller code.
+class AidlAbortOnDestruction {
+ public:
+  __attribute__((noreturn)) ~AidlAbortOnDestruction() { abort(); }
+};
+
 #define AIDL_ERROR(CONTEXT) ::AidlErrorLog(false /*fatal*/, (CONTEXT)).os_
-#define AIDL_FATAL(CONTEXT) ::AidlErrorLog(true /*fatal*/, (CONTEXT)).os_
+#define AIDL_FATAL(CONTEXT) \
+  (::AidlAbortOnDestruction(), ::AidlErrorLog(true /*fatal*/, (CONTEXT)).os_)
 #define AIDL_FATAL_IF(CONDITION, CONTEXT) \
   if (CONDITION) AIDL_FATAL(CONTEXT) << "Bad internal state: " << #CONDITION << ": "
 
@@ -220,6 +229,7 @@ class AidlAnnotation : public AidlNode {
     NULLABLE,
     UTF8_IN_CPP,
     JAVA_PASSTHROUGH,
+    JAVA_DEBUG,
   };
   static std::string TypeToString(Type type);
 
@@ -285,6 +295,7 @@ class AidlAnnotatable : public AidlNode {
   bool IsVintfStability() const;
   bool IsStableApiParcelable(Options::Language lang) const;
   bool IsHide() const;
+  bool IsJavaDebug() const;
 
   void DumpAnnotations(CodeWriter* writer) const;
 
@@ -737,6 +748,8 @@ class AidlDefinedType : public AidlAnnotatable {
   const std::vector<std::string> split_package_;
 
   DISALLOW_COPY_AND_ASSIGN(AidlDefinedType);
+  AidlDefinedType(AidlDefinedType&&) = delete;
+  AidlDefinedType& operator=(AidlDefinedType&&) = delete;
 };
 
 class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::string> {
@@ -897,12 +910,21 @@ class AidlImport : public AidlNode {
 class AidlDocument : public AidlNode {
  public:
   AidlDocument(const AidlLocation& location, std::vector<std::unique_ptr<AidlImport>>& imports,
-               std::vector<AidlDefinedType*>& defined_types)
-      : AidlNode(location), imports_(std::move(imports)), defined_types_(defined_types) {}
+               std::vector<std::unique_ptr<AidlDefinedType>>&& defined_types)
+      : AidlNode(location),
+        imports_(std::move(imports)),
+        defined_types_(std::move(defined_types)) {}
   const std::vector<std::unique_ptr<AidlImport>>& Imports() const { return imports_; }
-  const std::vector<AidlDefinedType*>& DefinedTypes() const { return defined_types_; }
+  const std::vector<std::unique_ptr<AidlDefinedType>>& DefinedTypes() const {
+    return defined_types_;
+  }
+  AidlDocument(const AidlDocument&) = delete;
+  AidlDocument(AidlDocument&&) = delete;
+  AidlDocument& operator=(const AidlDocument&) = delete;
+  AidlDocument& operator=(AidlDocument&&) = delete;
+  ~AidlDocument() = default;
 
  private:
   const std::vector<std::unique_ptr<AidlImport>> imports_;
-  const std::vector<AidlDefinedType*> defined_types_;
+  const std::vector<std::unique_ptr<AidlDefinedType>> defined_types_;
 };
