@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_AIDL_TESTS_CLIENT_NULLABLES_H
-#define ANDROID_AIDL_TESTS_CLIENT_NULLABLES_H
+package android.aidl.tests.immutable;
 
-#include <utils/StrongPointer.h>
+import android.aidl.tests.immutable.Foo;
 
-#include "android/aidl/tests/ITestService.h"
-
-// Tests for passing and returning file descriptors.
-namespace android {
-namespace aidl {
-namespace tests {
-namespace client {
-
-bool ConfirmNullables(const sp<ITestService>& s);
-
-}  // namespace client
-}  // namespace tests
-}  // namespace aidl
-}  // namespace android
-
-#endif  // ANDROID_AIDL_TESTS_CLIENT_NULLABLES_H
+interface IBaz {
+    Foo RepeatFoo(in Foo a);
+}

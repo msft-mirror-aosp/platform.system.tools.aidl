@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-#include "gtest/gtest.h"
+package android.aidl.tests.immutable;
 
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+import android.aidl.tests.immutable.Bar;
+
+@Immutable
+parcelable Foo {
+    int a;
+    Bar b;
+    List<Bar> c;
+    Map<String, Bar> d;
+    Bar[] e;
 }
