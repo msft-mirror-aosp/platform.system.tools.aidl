@@ -53,7 +53,6 @@ namespace aidl {
 class AidlTypenames final {
  public:
   AidlTypenames() = default;
-  void Reset();
   bool AddDocument(std::unique_ptr<AidlDocument> doc);
   const std::vector<std::unique_ptr<AidlDocument>>& AllDocuments() const { return documents_; }
   const AidlDocument& MainDocument() const;
@@ -61,6 +60,7 @@ class AidlTypenames final {
   static bool IsBuiltinTypename(const string& type_name);
   static bool IsPrimitiveTypename(const string& type_name);
   const AidlDefinedType* TryGetDefinedType(const string& type_name) const;
+  std::vector<AidlDefinedType*> AllDefinedTypes() const;
 
   struct ResolvedTypename {
     std::string canonical_name;
@@ -68,6 +68,8 @@ class AidlTypenames final {
   };
   ResolvedTypename ResolveTypename(const string& type_name) const;
   bool CanBeOutParameter(const AidlTypeSpecifier& type) const;
+  bool CanBeImmutable(const AidlTypeSpecifier& type) const;
+
   bool IsIgnorableImport(const string& import) const;
   // Returns the AidlEnumDeclaration of the given type, or nullptr if the type
   // is not an AidlEnumDeclaration;
