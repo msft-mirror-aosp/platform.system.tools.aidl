@@ -288,6 +288,15 @@ TEST_P(AidlTest, RejectsDuplicatedArgumentNames) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, RejectsDuplicatedFieldNames) {
+  const string method = "package a; parcelable Foo { int a; String a; }";
+  const string expected_stderr =
+      "ERROR: a/Foo.aidl:1.22-26: The parcelable 'Foo' has duplicate field name 'a'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage()));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_P(AidlTest, RejectsDuplicatedAnnotationParams) {
   const string method = "package a; interface IFoo { @UnsupportedAppUsage(foo=1, foo=2)void f(); }";
   const string expected_stderr = "ERROR: a/IFoo.aidl:1.56-62: Trying to redefine parameter foo.\n";
@@ -326,7 +335,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableAnnotations) {
   const string expected_stderr =
       "ERROR: a/Foo.aidl:1.32-37: 'nullable' is not a supported annotation for this node. "
       "It must be one of: Hide, JavaOnlyStableParcelable, UnsupportedAppUsage, VintfStability, "
-      "JavaPassthrough, Immutable\n";
+      "JavaPassthrough, JavaOnlyImmutable\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -339,7 +348,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableDefineAnnotations) {
   const string expected_stderr =
       "ERROR: a/Foo.aidl:1.32-36: 'nullable' is not a supported annotation for this node. "
       "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, JavaDebug, "
-      "Immutable\n";
+      "JavaOnlyImmutable, FixedSize\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -1909,6 +1918,42 @@ TEST_F(AidlTestIncompatibleChanges, RemovedAnnotation) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTestIncompatibleChanges, AddedParcelableAnnotation) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.47-51: Changed annotations: (empty) to @JavaOnlyStableParcelable\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "parcelable Foo {"
+                               "  int A;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@JavaOnlyStableParcelable parcelable Foo {"
+                               "  int A;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, RemovedParcelableAnnotation) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.21-25: Changed annotations: @JavaOnlyStableParcelable to (empty)\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@JavaOnlyStableParcelable parcelable Foo {"
+                               "  int A;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "parcelable Foo {"
+                               "  int A;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTestIncompatibleChanges, RemovedPackage) {
   const string expected_stderr = "ERROR: old/q/IFoo.aidl:1.11-21: Removed type: q.IFoo\n";
   io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{}");
@@ -1947,6 +1992,78 @@ TEST_F(AidlTestIncompatibleChanges, ChangedConstValue) {
   io_delegate_.SetFileContents("new/p/I.aidl", "package p; interface I { const int A = 2; }");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, FixedSizeAddedField) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.33-37: Number of fields in p.Foo is changed from 1 to 2. "
+      "This is an incompatible change for FixedSize types.\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p; @FixedSize parcelable Foo { int A = 1; }");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p; @FixedSize parcelable Foo { int A = 1; int B = 2; }");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, FixedSizeRemovedField) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.33-37: Number of fields in p.Foo is reduced from 2 to 1.\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p; @FixedSize parcelable Foo { int A = 1; int B = 1; }");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p; @FixedSize parcelable Foo { int A = 1; }");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
+  const string expected_stderr =
+      "ERROR: Foo.aidl:1.36-38: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "a.\n"
+      "ERROR: Foo.aidl:1.44-46: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "b.\n"
+      "ERROR: Foo.aidl:1.55-57: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "c.\n"
+      "ERROR: Foo.aidl:1.80-82: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "d.\n"
+      "ERROR: Foo.aidl:1.92-94: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "e.\n"
+      "ERROR: Foo.aidl:1.109-111: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "f.\n";
+
+  io_delegate_.SetFileContents("Foo.aidl",
+                               "@FixedSize parcelable Foo { "
+                               "  int[] a;"
+                               "  Bar b;"
+                               "  String c;"
+                               "  ParcelFileDescriptor d;"
+                               "  IBinder e;"
+                               "  List<String> f;"
+                               "}");
+  io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { int a; }");
+  Options options =
+      Options::From("aidl Foo.aidl -I . --lang=" + Options::LanguageToString(GetLanguage()));
+
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, AcceptFixedSizeFromFixedSize) {
+  const string expected_stderr = "";
+
+  io_delegate_.SetFileContents("Foo.aidl", "@FixedSize parcelable Foo { int a; Bar b; }");
+  io_delegate_.SetFileContents("Bar.aidl", "@FixedSize parcelable Bar { Val c; }");
+  io_delegate_.SetFileContents("Val.aidl", "enum Val { A, B, }");
+  Options options =
+      Options::From("aidl Foo.aidl -I . --lang=" + Options::LanguageToString(GetLanguage()));
+
+  CaptureStderr();
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
@@ -2123,6 +2240,7 @@ TEST_F(AidlTest, ParseJavaPassthroughAnnotation) {
     interface IFoo {
         @JavaPassthrough(annotation="@com.android.Bob")
         void foo(@JavaPassthrough(annotation="@com.android.Cat") int x);
+        const @JavaPassthrough(annotation="@com.android.David") int A = 3;
     })");
 
   Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
@@ -2133,6 +2251,7 @@ TEST_F(AidlTest, ParseJavaPassthroughAnnotation) {
   EXPECT_THAT(java_out, testing::HasSubstr("@com.android.Alice(arg=com.android.Alice.Value.A)"));
   EXPECT_THAT(java_out, testing::HasSubstr("@com.android.Bob"));
   EXPECT_THAT(java_out, testing::HasSubstr("@com.android.Cat"));
+  EXPECT_THAT(java_out, testing::HasSubstr("@com.android.David"));
 
   // Other backends shouldn't be bothered
   Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/IFoo.aidl");
@@ -2281,36 +2400,47 @@ TEST_P(AidlTest, UnsupportedBackingAnnotationParam) {
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
-TEST_P(AidlTest, SupportImmutableAnnotation) {
-  io_delegate_.SetFileContents(
-      "Foo.aidl",
-      "@Immutable parcelable Foo { int a; Bar b; List<Bar> c; Map<String, Baz> d; Bar[] e; }");
-  io_delegate_.SetFileContents("Bar.aidl", "@Immutable parcelable Bar { String a; }");
-  io_delegate_.SetFileContents("Baz.aidl", "@Immutable @JavaOnlyStableParcelable parcelable Baz;");
+TEST_P(AidlTest, SupportJavaOnlyImmutableAnnotation) {
+  io_delegate_.SetFileContents("Foo.aidl",
+                               "@JavaOnlyImmutable parcelable Foo { int a; Bar b; List<Bar> c; "
+                               "Map<String, Baz> d; Bar[] e; }");
+  io_delegate_.SetFileContents("Bar.aidl", "@JavaOnlyImmutable parcelable Bar { String a; }");
+  io_delegate_.SetFileContents("Baz.aidl",
+                               "@JavaOnlyImmutable @JavaOnlyStableParcelable parcelable Baz;");
   Options options = Options::From("aidl --lang=java -I . Foo.aidl");
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
-TEST_P(AidlTest, RejectMutableParcelableFromImmutableParcelable) {
-  io_delegate_.SetFileContents("Foo.aidl", "@Immutable parcelable Foo { Bar bar; }");
+TEST_P(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableParcelable) {
+  io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { Bar bar; }");
   io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { String a; }");
   Options options = Options::From("aidl --lang=java Foo.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
 TEST_P(AidlTest, ImmtuableParcelableCannotBeInOut) {
-  io_delegate_.SetFileContents("Foo.aidl", "@Immutable parcelable Foo { int a; }");
+  io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; }");
   io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(inout Foo); }");
   Options options = Options::From("aidl --lang=java IBar.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
 TEST_P(AidlTest, ImmtuableParcelableCannotBeOut) {
-  io_delegate_.SetFileContents("Foo.aidl", "@Immutable parcelable Foo { int a; }");
+  io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; }");
   io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(out Foo); }");
   Options options = Options::From("aidl --lang=java IBar.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
+TEST_P(AidlTest, ImmtuableParcelableFieldNameRestriction) {
+  io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; int A; }");
+  Options options = Options::From("aidl --lang=java Foo.aidl");
+  const string expected_stderr =
+      "ERROR: Foo.aidl:1.30-34: The parcelable 'Foo' has duplicate field name 'A' after "
+      "capitalizing the first letter\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
 }  // namespace aidl
 }  // namespace android

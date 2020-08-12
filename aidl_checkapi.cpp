@@ -52,7 +52,7 @@ static set<AidlAnnotation> get_strict_annotations(const AidlAnnotatable& node) {
   static const set<AidlAnnotation::Type> kIgnoreAnnotations{
       AidlAnnotation::Type::NULLABLE,
       AidlAnnotation::Type::JAVA_DEBUG,
-      AidlAnnotation::Type::IMMUTABLE,
+      AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
   };
   set<AidlAnnotation> annotations;
   for (const AidlAnnotation& annotation : node.GetAnnotations()) {
@@ -89,7 +89,6 @@ static bool are_compatible_types(const AidlTypeSpecifier& older, const AidlTypeS
 
 static bool are_compatible_interfaces(const AidlInterface& older, const AidlInterface& newer) {
   bool compatible = true;
-  compatible &= have_compatible_annotations(older, newer);
 
   map<string, AidlMethod*> new_methods;
   for (const auto& m : newer.AsInterface()->GetMethods()) {
@@ -191,6 +190,12 @@ static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
     // you can add new fields only at the end
     AIDL_ERROR(newer) << "Number of fields in " << older.GetCanonicalName() << " is reduced from "
                       << old_fields.size() << " to " << new_fields.size() << ".";
+    return false;
+  }
+  if (newer.IsFixedSize() && old_fields.size() != new_fields.size()) {
+    AIDL_ERROR(newer) << "Number of fields in " << older.GetCanonicalName() << " is changed from "
+                      << old_fields.size() << " to " << new_fields.size()
+                      << ". This is an incompatible change for FixedSize types.";
     return false;
   }
 
@@ -342,6 +347,9 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
     }
     const auto new_type = found->second;
 
+    if (!have_compatible_annotations(*old_type, *new_type)) {
+      compatible = false;
+    }
     if (old_type->AsInterface() != nullptr) {
       if (new_type->AsInterface() == nullptr) {
         AIDL_ERROR(new_type) << "Type mismatch: " << old_type->GetCanonicalName()

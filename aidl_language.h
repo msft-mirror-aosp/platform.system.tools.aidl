@@ -166,7 +166,8 @@ class AidlAnnotation : public AidlNode {
     UTF8_IN_CPP,
     JAVA_PASSTHROUGH,
     JAVA_DEBUG,
-    IMMUTABLE,
+    JAVA_ONLY_IMMUTABLE,
+    FIXED_SIZE,
   };
   static std::string TypeToString(Type type);
 
@@ -230,7 +231,8 @@ class AidlAnnotatable : public AidlNode {
   bool IsNullable() const;
   bool IsUtf8InCpp() const;
   bool IsVintfStability() const;
-  bool IsImmutable() const;
+  bool IsJavaOnlyImmutable() const;
+  bool IsFixedSize() const;
   bool IsStableApiParcelable(Options::Language lang) const;
   bool IsHide() const;
   bool IsJavaDebug() const;
