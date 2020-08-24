@@ -425,9 +425,12 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 			],
 		}
 	`)
-
+	// It's the only exception, <name>-<backend> generates the artifact of which name is <name>-<backend>,
+	// if it doesn't have a version.
 	assertOutput("foo-java", androidVariant, "foo-java.jar")
-	assertOutput("foo-cpp", nativeVariant, "foo-V1-cpp.so")
+
+	assertOutput("foo-cpp", nativeVariant, "foo-cpp.so")
+	assertOutput("foo-unstable-cpp", nativeVariant, "foo-V1-cpp.so")
 
 	// With versions: "1", "2"
 	ctx, _ = testAidl(t, `
@@ -571,7 +574,7 @@ func TestImports(t *testing.T) {
 
 	ldRule := ctx.ModuleForTests("foo-cpp", nativeVariant).Rule("ld")
 	libFlags := ldRule.Args["libFlags"]
-	libBar := filepath.Join("bar-cpp", nativeVariant, "bar-V1-cpp.so")
+	libBar := filepath.Join("bar-unstable-cpp", nativeVariant, "bar-V1-cpp.so")
 	if !strings.Contains(libFlags, libBar) {
 		t.Errorf("%q is not found in %q", libBar, libFlags)
 	}
@@ -603,4 +606,39 @@ func TestDuplicatedVersions(t *testing.T) {
 		"aidl_api/myiface/2/myiface.2.aidl": nil,
 		"aidl_api/myiface/2/.hash":          nil,
 	}))
+}
+
+func TestUnstableVndkModule(t *testing.T) {
+	testAidlError(t, `module "myiface_interface": stability: must be "vintf" if the module is for VNDK.`, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["IFoo.aidl"],
+			vendor_available: true,
+			unstable: true,
+			vndk: {
+				enabled: true,
+			},
+		}
+	`)
+	testAidlError(t, `module "myiface_interface": stability: must be "vintf" if the module is for VNDK.`, `
+		aidl_interface {
+			name: "myiface",
+			vendor_available: true,
+			srcs: ["IFoo.aidl"],
+			vndk: {
+				enabled: true,
+			},
+		}
+	`)
+	testAidl(t, `
+		aidl_interface {
+			name: "myiface",
+			vendor_available: true,
+			srcs: ["IFoo.aidl"],
+			stability: "vintf",
+			vndk: {
+				enabled: true,
+			},
+		}
+	`)
 }
