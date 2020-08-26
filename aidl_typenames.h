@@ -34,6 +34,7 @@ class AidlDefinedType;
 class AidlEnumDeclaration;
 class AidlInterface;
 class AidlTypeSpecifier;
+class AidlDocument;
 
 namespace android {
 namespace aidl {
@@ -52,12 +53,14 @@ namespace aidl {
 class AidlTypenames final {
  public:
   AidlTypenames() = default;
-  void Reset();
-  bool AddDefinedType(unique_ptr<AidlDefinedType> type);
+  bool AddDocument(std::unique_ptr<AidlDocument> doc);
+  const std::vector<std::unique_ptr<AidlDocument>>& AllDocuments() const { return documents_; }
+  const AidlDocument& MainDocument() const;
   bool AddPreprocessedType(unique_ptr<AidlDefinedType> type);
   static bool IsBuiltinTypename(const string& type_name);
   static bool IsPrimitiveTypename(const string& type_name);
   const AidlDefinedType* TryGetDefinedType(const string& type_name) const;
+  std::vector<AidlDefinedType*> AllDefinedTypes() const;
 
   struct ResolvedTypename {
     std::string canonical_name;
@@ -65,6 +68,9 @@ class AidlTypenames final {
   };
   ResolvedTypename ResolveTypename(const string& type_name) const;
   bool CanBeOutParameter(const AidlTypeSpecifier& type) const;
+  bool CanBeJavaOnlyImmutable(const AidlTypeSpecifier& type) const;
+  bool CanBeFixedSize(const AidlTypeSpecifier& type) const;
+
   bool IsIgnorableImport(const string& import) const;
   // Returns the AidlEnumDeclaration of the given type, or nullptr if the type
   // is not an AidlEnumDeclaration;
@@ -83,8 +89,9 @@ class AidlTypenames final {
     const bool from_preprocessed;
   };
   DefinedImplResult TryGetDefinedTypeImpl(const string& type_name) const;
-  map<string, unique_ptr<AidlDefinedType>> defined_types_;
+  map<string, const AidlDefinedType*> defined_types_;
   map<string, unique_ptr<AidlDefinedType>> preprocessed_types_;
+  std::vector<std::unique_ptr<AidlDocument>> documents_;
 };
 
 }  // namespace aidl

@@ -96,7 +96,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
     std::vector<std::string>* type_params;
     std::vector<std::unique_ptr<AidlImport>>* imports;
     AidlImport* import;
-    std::vector<AidlDefinedType*>* declarations;
+    std::vector<std::unique_ptr<AidlDefinedType>>* declarations;
 }
 
 %destructor { } <character>
@@ -186,7 +186,10 @@ AidlLocation loc(const yy::parser::location_type& l) {
 
 document
  : package imports decls
-  { ps->SetDocument(std::make_unique<AidlDocument>(loc(@1), *$2, *$3)); }
+  { ps->SetDocument(std::make_unique<AidlDocument>(loc(@1), *$2, std::move(*$3)));
+    delete $2;
+    delete $3;
+  }
 
 /* A couple of tokens that are keywords elsewhere are identifiers when
  * occurring in the identifier position. Therefore identifier is a
@@ -217,6 +220,8 @@ imports
     });
     if (it == $$->end()) {
       $$->emplace_back($2);
+    } else {
+      delete $2;
     }
   }
 
@@ -239,7 +244,7 @@ qualified_name
 
 decls
  : decl
-  { $$ = new std::vector<AidlDefinedType*>();
+  { $$ = new std::vector<std::unique_ptr<AidlDefinedType>>();
     if ($1 != nullptr) {
       $$->emplace_back($1);
     }
@@ -493,6 +498,9 @@ constant_value_list
     $$ = new std::vector<std::unique_ptr<AidlConstantValue>>;
  }
  | constant_value_non_empty_list {
+    $$ = $1;
+ }
+ | constant_value_non_empty_list  ',' {
     $$ = $1;
  }
  ;

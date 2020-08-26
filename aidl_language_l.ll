@@ -25,7 +25,6 @@
 #define YY_USER_ACTION yylloc->columns(yyleng);
 %}
 
-%option yylineno
 %option noyywrap
 %option nounput
 %option noinput
@@ -38,7 +37,7 @@
 identifier  [_a-zA-Z][_a-zA-Z0-9]*
 whitespace  ([ \t\r]+)
 intvalue    [0-9]+[lL]?
-hexvalue    0[x|X][0-9a-fA-F]+
+hexvalue    0[x|X][0-9a-fA-F]+[lL]?
 floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
 
 %%

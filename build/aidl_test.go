@@ -104,17 +104,7 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 			name: "aidl_metadata_json",
 		}
 	`
-	fs := map[string][]byte{
-		"a.java":              nil,
-		"AndroidManifest.xml": nil,
-		"build/make/target/product/security/testkey": nil,
-		"framework/aidl/a.aidl":                      nil,
-		"IFoo.aidl":                                  nil,
-		"libbinder_ndk.map.txt":                      nil,
-		"system/tools/aidl/build/message_check_compatibility.txt": nil,
-		"system/tools/aidl/build/message_check_equality.txt":      nil,
-		"system/tools/aidl/build/message_check_integrity.txt":     nil,
-	}
+	fs := map[string][]byte{}
 
 	cc.GatherRequiredFilesForTest(fs)
 
@@ -152,12 +142,12 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 	ctx.RegisterModuleType("java_library_static", java.LibraryStaticFactory)
 	ctx.RegisterModuleType("java_library", java.LibraryFactory)
 	ctx.RegisterModuleType("java_system_modules", java.SystemModulesFactory)
-	ctx.RegisterModuleType("ndk_library", cc.NdkLibraryFactory)
 
 	ctx.PreArchMutators(android.RegisterDefaultsPreArchMutators)
 	ctx.PostDepsMutators(android.RegisterOverridePostDepsMutators)
 	ctx.PostDepsMutators(func(ctx android.RegisterMutatorsContext) {
 		ctx.BottomUp("checkUnstableModule", checkUnstableModuleMutator).Parallel()
+		ctx.BottomUp("checkDuplicatedVersions", checkDuplicatedVersions).Parallel()
 	})
 	ctx.Register(config)
 
@@ -219,7 +209,7 @@ func TestVintfWithoutVersionInRelease(t *testing.T) {
 			"IFoo.aidl",
 		],
 	}`
-	expectedError := `module "foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false and PLATFORM_VERSION_CODENAME is REL`
+	expectedError := `module "foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false, PLATFORM_VERSION_CODENAME is REL, and "owner" property is missing.`
 	testAidlError(t, expectedError, vintfWithoutVersionBp, setReleaseEnv())
 
 	ctx, _ := testAidl(t, vintfWithoutVersionBp)
@@ -246,12 +236,10 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 	expectedError := `unstable-java is disallowed in release version because it is unstable.`
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setReleaseEnv(), withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
-		"aidl_api/foo/1/.hash":      nil,
 	}))
 
 	testAidl(t, unstableVersionUsageInJavaBp, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
-		"aidl_api/foo/1/.hash":      nil,
 	}))
 
 	// A stable version can be used in release version
@@ -272,12 +260,10 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 
 	testAidl(t, stableVersionUsageInJavaBp, setReleaseEnv(), withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
-		"aidl_api/foo/1/.hash":      nil,
 	}))
 
 	testAidl(t, stableVersionUsageInJavaBp, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
-		"aidl_api/foo/1/.hash":      nil,
 	}))
 }
 
@@ -296,7 +282,7 @@ func TestNonVersionedModuleUsageInRelease(t *testing.T) {
 		libs: ["foo-java"],
 	}`
 
-	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false and PLATFORM_VERSION_CODENAME is REL.`
+	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false, PLATFORM_VERSION_CODENAME is REL, and "owner" property is missing.`
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
 	testAidl(t, nonVersionedModuleUsageInJavaBp)
 
@@ -395,7 +381,6 @@ func TestCreatesModulesWithFrozenVersions(t *testing.T) {
 		}
 	`, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
-		"aidl_api/foo/1/.hash":      nil,
 	}))
 
 	// For alias for the latest frozen version (=1)
@@ -440,9 +425,12 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 			],
 		}
 	`)
-
+	// It's the only exception, <name>-<backend> generates the artifact of which name is <name>-<backend>,
+	// if it doesn't have a version.
 	assertOutput("foo-java", androidVariant, "foo-java.jar")
-	assertOutput("foo-cpp", nativeVariant, "foo-V1-cpp.so")
+
+	assertOutput("foo-cpp", nativeVariant, "foo-cpp.so")
+	assertOutput("foo-unstable-cpp", nativeVariant, "foo-V1-cpp.so")
 
 	// With versions: "1", "2"
 	ctx, _ = testAidl(t, `
@@ -457,9 +445,7 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 		}
 	`, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
-		"aidl_api/foo/1/.hash":      nil,
 		"aidl_api/foo/2/foo.2.aidl": nil,
-		"aidl_api/foo/2/.hash":      nil,
 	}))
 
 	// alias for the latest frozen version (=2)
@@ -543,9 +529,7 @@ func TestImports(t *testing.T) {
 				},
 			},
 		}
-	`, withFiles(map[string][]byte{
-		"IBar.aidl": nil,
-	}))
+	`)
 
 	testAidlError(t, `backend.cpp.enabled: C\+\+ backend not enabled in the imported AIDL interface "bar"`, `
 		aidl_interface {
@@ -568,9 +552,7 @@ func TestImports(t *testing.T) {
 				},
 			},
 		}
-	`, withFiles(map[string][]byte{
-		"IBar.aidl": nil,
-	}))
+	`)
 
 	ctx, _ := testAidl(t, `
 		aidl_interface {
@@ -588,14 +570,75 @@ func TestImports(t *testing.T) {
 				"IBar.aidl",
 			],
 		}
-	`, withFiles(map[string][]byte{
-		"IBar.aidl": nil,
-	}))
+	`)
 
 	ldRule := ctx.ModuleForTests("foo-cpp", nativeVariant).Rule("ld")
 	libFlags := ldRule.Args["libFlags"]
-	libBar := filepath.Join("bar-cpp", nativeVariant, "bar-V1-cpp.so")
+	libBar := filepath.Join("bar-unstable-cpp", nativeVariant, "bar-V1-cpp.so")
 	if !strings.Contains(libFlags, libBar) {
 		t.Errorf("%q is not found in %q", libBar, libFlags)
 	}
+}
+
+func TestDuplicatedVersions(t *testing.T) {
+	// foo depends on myiface-ndk (v2) via direct dep and also on
+	// myiface-V1-ndk via indirect dep. This should be prohibited.
+	testAidlError(t, `multiple versions of aidl_interface myiface \(backend:ndk\) are used`, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["IFoo.aidl"],
+			versions: ["1", "2"],
+		}
+
+		cc_library {
+			name: "foo",
+			shared_libs: ["myiface-ndk", "bar"],
+		}
+
+		cc_library {
+			name: "bar",
+			shared_libs: ["myiface-V1-ndk"],
+		}
+
+	`, withFiles(map[string][]byte{
+		"aidl_api/myiface/1/myiface.1.aidl": nil,
+		"aidl_api/myiface/1/.hash":          nil,
+		"aidl_api/myiface/2/myiface.2.aidl": nil,
+		"aidl_api/myiface/2/.hash":          nil,
+	}))
+}
+
+func TestUnstableVndkModule(t *testing.T) {
+	testAidlError(t, `module "myiface_interface": stability: must be "vintf" if the module is for VNDK.`, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["IFoo.aidl"],
+			vendor_available: true,
+			unstable: true,
+			vndk: {
+				enabled: true,
+			},
+		}
+	`)
+	testAidlError(t, `module "myiface_interface": stability: must be "vintf" if the module is for VNDK.`, `
+		aidl_interface {
+			name: "myiface",
+			vendor_available: true,
+			srcs: ["IFoo.aidl"],
+			vndk: {
+				enabled: true,
+			},
+		}
+	`)
+	testAidl(t, `
+		aidl_interface {
+			name: "myiface",
+			vendor_available: true,
+			srcs: ["IFoo.aidl"],
+			stability: "vintf",
+			vndk: {
+				enabled: true,
+			},
+		}
+	`)
 }

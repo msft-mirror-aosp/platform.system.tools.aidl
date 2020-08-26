@@ -28,17 +28,25 @@
 #include <android-base/strings.h>
 
 using android::base::ConsumeSuffix;
+using android::base::EndsWith;
 using android::base::Join;
+using android::base::StartsWith;
 using std::string;
 using std::unique_ptr;
 using std::vector;
 
 #define SHOULD_NOT_REACH() CHECK(false) << LOG(FATAL) << ": should not reach here: "
 #define OPEQ(__y__) (string(op_) == string(__y__))
-#define COMPUTE_UNARY(__op__) \
-  if (op == string(#__op__)) return __op__ val;
+#define COMPUTE_UNARY(__op__)  \
+  if (op == string(#__op__)) { \
+    *out = __op__ val;         \
+    return true;               \
+  }
 #define COMPUTE_BINARY(__op__) \
-  if (op == string(#__op__)) return lval __op__ rval;
+  if (op == string(#__op__)) { \
+    *out = lval __op__ rval;   \
+    return true;               \
+  }
 #define OP_IS_BIN_ARITHMETIC (OPEQ("+") || OPEQ("-") || OPEQ("*") || OPEQ("/") || OPEQ("%"))
 #define OP_IS_BIN_BITFLIP (OPEQ("|") || OPEQ("^") || OPEQ("&"))
 #define OP_IS_BIN_COMP \
@@ -62,24 +70,31 @@ using std::vector;
   }
 
 template <class T>
-T handleUnary(const string& op, T val) {
+bool handleUnary(const AidlConstantValue& context, const string& op, T val, int64_t* out) {
+  COMPUTE_UNARY(+)
+  COMPUTE_UNARY(-)
+  COMPUTE_UNARY(!)
+  COMPUTE_UNARY(~)
+  AIDL_FATAL(context) << "Could not handleUnary for " << op << " " << val;
+  return false;
+}
+template <>
+bool handleUnary<bool>(const AidlConstantValue& context, const string& op, bool val, int64_t* out) {
   COMPUTE_UNARY(+)
   COMPUTE_UNARY(-)
   COMPUTE_UNARY(!)
 
-// bitwise negation of a boolean expression always evaluates to 'true'
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wbool-operation"
-  COMPUTE_UNARY(~)
-#pragma clang diagnostic pop
-
-  // Should not reach here.
-  SHOULD_NOT_REACH() << "Could not handleUnary for " << op << " " << val;
-  return static_cast<T>(0xdeadbeef);
+  if (op == "~") {
+    AIDL_ERROR(context) << "Bitwise negation of a boolean expression is always true.";
+    return false;
+  }
+  AIDL_FATAL(context) << "Could not handleUnary for " << op << " " << val;
+  return false;
 }
 
 template <class T>
-T handleBinaryCommon(T lval, const string& op, T rval) {
+bool handleBinaryCommon(const AidlConstantValue& context, T lval, const string& op, T rval,
+                        int64_t* out) {
   COMPUTE_BINARY(+)
   COMPUTE_BINARY(-)
   COMPUTE_BINARY(*)
@@ -95,26 +110,28 @@ T handleBinaryCommon(T lval, const string& op, T rval) {
   COMPUTE_BINARY(>)
   COMPUTE_BINARY(<=)
   COMPUTE_BINARY(>=)
-  // Should not reach here.
-  SHOULD_NOT_REACH() << "Could not handleBinaryCommon for " << lval << " " << op << " " << rval;
-  return static_cast<T>(0xdeadbeef);
+
+  AIDL_FATAL(context) << "Could not handleBinaryCommon for " << lval << " " << op << " " << rval;
+  return false;
 }
 
 template <class T>
-T handleShift(T lval, const string& op, int64_t rval) {
+bool handleShift(const AidlConstantValue& context, T lval, const string& op, int64_t rval,
+                 int64_t* out) {
   // just cast rval to int64_t and it should fit.
   COMPUTE_BINARY(>>)
   COMPUTE_BINARY(<<)
-  // Should not reach here.
-  SHOULD_NOT_REACH() << "Could not handleShift for " << lval << " " << op << " " << rval;
-  return static_cast<T>(0xdeadbeef);
+
+  AIDL_FATAL(context) << "Could not handleShift for " << lval << " " << op << " " << rval;
+  return false;
 }
 
-bool handleLogical(bool lval, const string& op, bool rval) {
+bool handleLogical(const AidlConstantValue& context, bool lval, const string& op, bool rval,
+                   int64_t* out) {
   COMPUTE_BINARY(||);
   COMPUTE_BINARY(&&);
-  // Should not reach here.
-  SHOULD_NOT_REACH() << "Could not handleLogical for " << lval << " " << op << " " << rval;
+
+  AIDL_FATAL(context) << "Could not handleLogical for " << lval << " " << op << " " << rval;
   return false;
 }
 
@@ -197,6 +214,30 @@ T AidlConstantValue::cast() const {
   SWITCH_KIND(final_type_, CASE_CAST_T, SHOULD_NOT_REACH(); return 0;);
 }
 
+AidlConstantValue* AidlConstantValue::Default(const AidlTypeSpecifier& specifier) {
+  AidlLocation location = specifier.GetLocation();
+
+  // allocation of int[0] is a bit wasteful in Java
+  if (specifier.IsArray()) {
+    return nullptr;
+  }
+
+  const std::string name = specifier.GetName();
+  if (name == "boolean") {
+    return Boolean(location, false);
+  }
+  if (name == "byte" || name == "int" || name == "long") {
+    return Integral(location, "0");
+  }
+  if (name == "float") {
+    return Floating(location, "0.0f");
+  }
+  if (name == "double") {
+    return Floating(location, "0.0");
+  }
+  return nullptr;
+}
+
 AidlConstantValue* AidlConstantValue::Boolean(const AidlLocation& location, bool value) {
   return new AidlConstantValue(location, Type::BOOLEAN, value ? "true" : "false");
 }
@@ -216,26 +257,19 @@ AidlConstantValue* AidlConstantValue::Floating(const AidlLocation& location,
 }
 
 bool AidlConstantValue::IsHex(const string& value) {
-  if (value.length() > (sizeof("0x") - 1)) {
-    if (value[0] == '0' && (value[1] == 'x' || value[1] == 'X')) {
-      return true;
-    }
-  }
-  return false;
+  return StartsWith(value, "0x") || StartsWith(value, "0X");
 }
 
 bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value,
                                       Type* parsed_type) {
-  bool isLong = false;
-
   if (parsed_value == nullptr || parsed_type == nullptr) {
     return false;
   }
 
-  if (IsHex(value)) {
-    bool parseOK = false;
-    uint32_t rawValue32;
+  const bool isLong = EndsWith(value, 'l') || EndsWith(value, 'L');
+  const std::string value_substr = isLong ? value.substr(0, value.size() - 1) : value;
 
+  if (IsHex(value)) {
     // AIDL considers 'const int foo = 0xffffffff' as -1, but if we want to
     // handle that when computing constant expressions, then we need to
     // represent 0xffffffff as a uint32_t. However, AIDL only has signed types;
@@ -243,35 +277,34 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
     // int. One example of this is in ICameraService.aidl where a constant int
     // is used for bit manipulations which ideally should be handled with an
     // unsigned int.
-    parseOK = android::base::ParseUint<uint32_t>(value, &rawValue32);
-    if (parseOK) {
+    //
+    // Note, for historical consistency, we need to consider small hex values
+    // as an integral type. Recognizing them as INT8 could break some files,
+    // even though it would simplify this code.
+    if (uint32_t rawValue32;
+        !isLong && android::base::ParseUint<uint32_t>(value_substr, &rawValue32)) {
       *parsed_value = static_cast<int32_t>(rawValue32);
       *parsed_type = Type::INT32;
-    } else {
-      parseOK = android::base::ParseInt<int64_t>(value, parsed_value);
-      if (!parseOK) {
-        *parsed_type = Type::ERROR;
-        return false;
-      }
-
+    } else if (uint64_t rawValue64; android::base::ParseUint<uint64_t>(value_substr, &rawValue64)) {
+      *parsed_value = static_cast<int64_t>(rawValue64);
       *parsed_type = Type::INT64;
+    } else {
+      *parsed_value = 0;
+      *parsed_type = Type::ERROR;
+      return false;
     }
     return true;
   }
 
-  if (value[value.size() - 1] == 'l' || value[value.size() - 1] == 'L') {
-    isLong = true;
-    *parsed_type = Type::INT64;
-  }
-
-  string value_substr = value.substr(0, isLong ? value.size() - 1 : value.size());
-  bool parseOK = android::base::ParseInt<int64_t>(value_substr, parsed_value);
-  if (!parseOK) {
+  if (!android::base::ParseInt<int64_t>(value_substr, parsed_value)) {
+    *parsed_value = 0;
     *parsed_type = Type::ERROR;
     return false;
   }
 
-  if (!isLong) {
+  if (isLong) {
+    *parsed_type = Type::INT64;
+  } else {
     // guess literal type.
     if (*parsed_value <= INT8_MAX && *parsed_value >= INT8_MIN) {
       *parsed_type = Type::INT8;
@@ -299,6 +332,7 @@ AidlConstantValue* AidlConstantValue::Integral(const AidlLocation& location, con
 
 AidlConstantValue* AidlConstantValue::Array(
     const AidlLocation& location, std::unique_ptr<vector<unique_ptr<AidlConstantValue>>> values) {
+  CHECK(values != nullptr) << location;
   return new AidlConstantValue(location, Type::ARRAY, std::move(values));
 }
 
@@ -637,9 +671,8 @@ bool AidlUnaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
     return true;
   }
 
-#define CASE_UNARY(__type__)                                                    \
-  final_value_ = handleUnary(op_, static_cast<__type__>(unary_->final_value_)); \
-  return true;
+#define CASE_UNARY(__type__) \
+  return handleUnary(*this, op_, static_cast<__type__>(unary_->final_value_), &final_value_);
 
   SWITCH_KIND(final_type_, CASE_UNARY, SHOULD_NOT_REACH(); final_type_ = Type::ERROR;
               is_valid_ = false; return false;)
@@ -733,8 +766,6 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
     return true;
   }
 
-  // TODO(b/139877950) Add support for handling overflows
-
   // CASE: + - *  / % | ^ & < > <= >= == !=
   if (isArithmeticOrBitflip || OP_IS_BIN_COMP) {
     if ((op_ == "/" || op_ == "%") && right_val_->final_value_ == 0) {
@@ -752,10 +783,9 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
                       ? promoted        // arithmetic or bitflip operators generates promoted type
                       : Type::BOOLEAN;  // comparison operators generates bool
 
-#define CASE_BINARY_COMMON(__type__)                                                     \
-  final_value_ = handleBinaryCommon(static_cast<__type__>(left_val_->final_value_), op_, \
-                                    static_cast<__type__>(right_val_->final_value_));    \
-  return true;
+#define CASE_BINARY_COMMON(__type__)                                                    \
+  return handleBinaryCommon(*this, static_cast<__type__>(left_val_->final_value_), op_, \
+                            static_cast<__type__>(right_val_->final_value_), &final_value_);
 
     SWITCH_KIND(promoted, CASE_BINARY_COMMON, SHOULD_NOT_REACH(); final_type_ = Type::ERROR;
                 is_valid_ = false; return false;)
@@ -774,9 +804,9 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
       numBits = -numBits;
     }
 
-#define CASE_SHIFT(__type__)                                                                  \
-  final_value_ = handleShift(static_cast<__type__>(left_val_->final_value_), newOp, numBits); \
-  return true;
+#define CASE_SHIFT(__type__)                                                                \
+  return handleShift(*this, static_cast<__type__>(left_val_->final_value_), newOp, numBits, \
+                     &final_value_);
 
     SWITCH_KIND(final_type_, CASE_SHIFT, SHOULD_NOT_REACH(); final_type_ = Type::ERROR;
                 is_valid_ = false; return false;)
@@ -786,8 +816,8 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
   if (OP_IS_BIN_LOGICAL) {
     final_type_ = Type::BOOLEAN;
     // easy; everything is bool.
-    final_value_ = handleLogical(left_val_->final_value_, op_, right_val_->final_value_);
-    return true;
+    return handleLogical(*this, left_val_->final_value_, op_, right_val_->final_value_,
+                         &final_value_);
   }
 
   SHOULD_NOT_REACH();
@@ -802,8 +832,8 @@ AidlConstantValue::AidlConstantValue(const AidlLocation& location, Type parsed_t
       value_(checked_value),
       final_type_(parsed_type),
       final_value_(parsed_value) {
-  CHECK(!value_.empty() || type_ == Type::ERROR);
-  CHECK(type_ == Type::INT8 || type_ == Type::INT32 || type_ == Type::INT64);
+  CHECK(!value_.empty() || type_ == Type::ERROR) << location;
+  CHECK(type_ == Type::INT8 || type_ == Type::INT32 || type_ == Type::INT64) << location;
 }
 
 AidlConstantValue::AidlConstantValue(const AidlLocation& location, Type type,
@@ -812,7 +842,7 @@ AidlConstantValue::AidlConstantValue(const AidlLocation& location, Type type,
       type_(type),
       value_(checked_value),
       final_type_(type) {
-  CHECK(!value_.empty() || type_ == Type::ERROR);
+  CHECK(!value_.empty() || type_ == Type::ERROR) << location;
   switch (type_) {
     case Type::INT8:
     case Type::INT32:

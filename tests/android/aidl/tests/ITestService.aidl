@@ -44,6 +44,19 @@ interface ITestService {
 
   const @utf8InCpp String STRING_TEST_CONSTANT_UTF8 = "baz";
 
+  // This is to emulate a method that is added after the service is implemented.
+  // So the client cannot assume that a call to this method will be successful
+  // or not. However, inside the test environment, we can't build client and
+  // the server with different version of this AIDL file. So, we let the server
+  // actually implement this and intercept the dispatch to the method
+  // inside onTransact().
+  // WARNING: Must be first method.
+  // This requires hard coding the transaction number. As long as this method is
+  // the first in this interface, it can keep the
+  // "::android::IBinder::FIRST_CALL_TRANSACTION + 0" value and allow
+  // methods to be added and removed.
+  int UnimplementedMethod(int arg);
+
   // Test that primitives work as parameters and return types.
   boolean RepeatBoolean(boolean token);
   byte RepeatByte(byte token);
@@ -136,20 +149,12 @@ interface ITestService {
   // inefficient to use an IPC to fill it out in practice.
   void FillOutStructuredParcelable(inout StructuredParcelable parcel);
 
-  // This is to emulate a method that is added after the service is implemented.
-  // So the client cannot assume that call to this method will be successful
-  // or not. However, inside the test environment, we can't build client and
-  // the server with different version of this AIDL file. So, we let the server
-  // to actually implement this, but intercept the dispatch to the method
-  // inside onTransact().
-  int UnimplementedMethod(int arg);
-
   // All these constant expressions should be equal to 1
   const int A1 = (~(-1)) == 0;
-  const int A2 = -(1 << 31) == (1 << 31);
+  const int A2 = ~~(1 << 31) == (1 << 31);
   const int A3 = -0x7fffffff < 0;
-  const int A4 = -0x80000000 < 0;
-  const int A5 = (1 + 0x7fffffff) == -2147483648;
+  const int A4 = 0x80000000 < 0;
+  const int A5 = 0x7fffffff == 2147483647;
   const int A6 = (1 << 31) == 0x80000000;
   const int A7 = (1 + 2) == 3;
   const int A8 = (8 - 9) == -1;

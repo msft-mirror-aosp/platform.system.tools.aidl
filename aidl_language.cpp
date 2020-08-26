@@ -69,6 +69,13 @@ bool IsJavaKeyword(const char* str) {
   return std::find(kJavaKeywords.begin(), kJavaKeywords.end(), str) != kJavaKeywords.end();
 }
 
+inline std::string CapitalizeFirstLetter(const std::string& str) {
+  CHECK(str.size() > 0) << "Input cannot be empty.";
+  std::ostringstream out;
+  out << static_cast<char>(toupper(str[0])) << str.substr(1);
+  return out.str();
+}
+
 void AddHideComment(CodeWriter* writer) {
   writer->Write("/* @hide */\n");
 }
@@ -77,10 +84,6 @@ inline bool HasHideComment(const std::string& comment) {
   return std::regex_search(comment, std::regex("@hide\\b"));
 }
 }  // namespace
-
-AidlToken::AidlToken(const std::string& text, const std::string& comments)
-    : text_(text),
-      comments_(comments) {}
 
 AidlLocation::AidlLocation(const std::string& file, Point begin, Point end, Source source)
     : file_(file), begin_(begin), end_(end), source_(source) {}
@@ -112,16 +115,6 @@ std::string AidlNode::PrintLocation() const {
   return ss.str();
 }
 
-AidlErrorLog::AidlErrorLog(bool fatal, const AidlLocation& location)
-    : os_(std::cerr), fatal_(fatal), location_(location) {
-  sHadError = true;
-
-  os_ << "ERROR: ";
-  os_ << location << ": ";
-}
-
-bool AidlErrorLog::sHadError = false;
-
 const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
   static const std::vector<Schema> kSchemas{
       {AidlAnnotation::Type::NULLABLE, "nullable", {}},
@@ -138,6 +131,9 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
       {AidlAnnotation::Type::HIDE, "Hide", {}},
       {AidlAnnotation::Type::BACKING, "Backing", {{"type", "String"}}},
       {AidlAnnotation::Type::JAVA_PASSTHROUGH, "JavaPassthrough", {{"annotation", "String"}}},
+      {AidlAnnotation::Type::JAVA_DEBUG, "JavaDebug", {}},
+      {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE, "JavaOnlyImmutable", {}},
+      {AidlAnnotation::Type::FIXED_SIZE, "FixedSize", {}},
   };
   return kSchemas;
 }
@@ -282,6 +278,14 @@ bool AidlAnnotatable::IsVintfStability() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::VINTF_STABILITY);
 }
 
+bool AidlAnnotatable::IsJavaOnlyImmutable() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE);
+}
+
+bool AidlAnnotatable::IsFixedSize() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::FIXED_SIZE);
+}
+
 const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE);
 }
@@ -318,6 +322,10 @@ bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
 
 bool AidlAnnotatable::IsHide() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::HIDE);
+}
+
+bool AidlAnnotatable::IsJavaDebug() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DEBUG);
 }
 
 void AidlAnnotatable::DumpAnnotations(CodeWriter* writer) const {
@@ -526,12 +534,18 @@ std::string AidlConstantValueDecorator(const AidlTypeSpecifier& /*type*/,
 
 AidlVariableDeclaration::AidlVariableDeclaration(const AidlLocation& location,
                                                  AidlTypeSpecifier* type, const std::string& name)
-    : AidlVariableDeclaration(location, type, name, nullptr /*default_value*/) {}
+    : AidlVariableDeclaration(location, type, name, AidlConstantValue::Default(*type)) {
+  default_user_specified_ = false;
+}
 
 AidlVariableDeclaration::AidlVariableDeclaration(const AidlLocation& location,
                                                  AidlTypeSpecifier* type, const std::string& name,
                                                  AidlConstantValue* default_value)
-    : AidlNode(location), type_(type), name_(name), default_value_(default_value) {}
+    : AidlNode(location),
+      type_(type),
+      name_(name),
+      default_user_specified_(true),
+      default_value_(default_value) {}
 
 bool AidlVariableDeclaration::CheckValid(const AidlTypenames& typenames) const {
   bool valid = true;
@@ -553,7 +567,7 @@ bool AidlVariableDeclaration::CheckValid(const AidlTypenames& typenames) const {
 
 string AidlVariableDeclaration::ToString() const {
   string ret = type_->Signature() + " " + name_;
-  if (default_value_ != nullptr) {
+  if (default_value_ != nullptr && default_user_specified_) {
     ret += " = " + ValueString(AidlConstantValueDecorator);
   }
   return ret;
@@ -778,9 +792,9 @@ bool AidlParameterizable<std::string>::CheckValid() const {
 }
 
 std::set<AidlAnnotation::Type> AidlParcelable::GetSupportedAnnotations() const {
-  return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
+  return {AidlAnnotation::Type::VINTF_STABILITY,        AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
           AidlAnnotation::Type::JAVA_STABLE_PARCELABLE, AidlAnnotation::Type::HIDE,
-          AidlAnnotation::Type::JAVA_PASSTHROUGH};
+          AidlAnnotation::Type::JAVA_PASSTHROUGH,       AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE};
 }
 
 bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
@@ -820,8 +834,13 @@ void AidlStructuredParcelable::Dump(CodeWriter* writer) const {
 }
 
 std::set<AidlAnnotation::Type> AidlStructuredParcelable::GetSupportedAnnotations() const {
-  return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
-          AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH};
+  return {AidlAnnotation::Type::VINTF_STABILITY,
+          AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
+          AidlAnnotation::Type::HIDE,
+          AidlAnnotation::Type::JAVA_PASSTHROUGH,
+          AidlAnnotation::Type::JAVA_DEBUG,
+          AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
+          AidlAnnotation::Type::FIXED_SIZE};
 }
 
 bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
@@ -829,10 +848,32 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
   if (!AidlParcelable::CheckValid(typenames)) {
     return false;
   }
-
+  std::set<std::string> fieldnames;
   for (const auto& v : GetFields()) {
     success = success && v->CheckValid(typenames);
+    bool duplicated;
+    if (IsJavaOnlyImmutable()) {
+      success = success && typenames.CanBeJavaOnlyImmutable(v->GetType());
+      duplicated = !fieldnames.emplace(CapitalizeFirstLetter(v->GetName())).second;
+    } else {
+      if (IsFixedSize()) {
+        success = success && typenames.CanBeFixedSize(v->GetType());
+        if (!success) {
+          AIDL_ERROR(v) << "The @FixedSize parcelable '" << this->GetName() << "' has a "
+                        << "non-fixed size field named " << v->GetName() << ".";
+        }
+      }
+      duplicated = !fieldnames.emplace(v->GetName()).second;
+    }
+
+    if (duplicated) {
+      AIDL_ERROR(this) << "The parcelable '" << this->GetName() << "' has duplicate field name '"
+                       << v->GetName() << "'"
+                       << (IsJavaOnlyImmutable() ? " after capitalizing the first letter" : "");
+      return false;
+    }
   }
+
   return success;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_AIDL_TESTS_CLIENT_DEFAULTIMPL_H
-#define ANDROID_AIDL_TESTS_CLIENT_DEFAULTIMPL_H
+package android.aidl.tests;
 
-#include "android/aidl/tests/ITestService.h"
-
-#include <utils/StrongPointer.h>
-
-// Tests for default impl
-namespace android {
-namespace aidl {
-namespace tests {
-namespace client {
-
-bool ConfirmDefaultImpl(const sp<ITestService>& s);
-
-}  // namespace client
-}  // namespace tests
-}  // namespace aidl
-}  // namespace android
-
-#endif  // ANDROID_AIDL_TESTS_CLIENT_DEFAULTIMPL_H
+@JavaDebug
+parcelable OtherParcelableForToString {
+    String field;
+}

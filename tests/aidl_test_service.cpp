@@ -31,6 +31,7 @@
 #include <utils/Errors.h>
 #include <utils/Log.h>
 #include <utils/Looper.h>
+#include <utils/String8.h>
 #include <utils/StrongPointer.h>
 
 #include "android/aidl/tests/BnTestService.h"
@@ -38,6 +39,9 @@
 
 #include "android/aidl/tests/BnNamedCallback.h"
 #include "android/aidl/tests/INamedCallback.h"
+
+#include "android/aidl/versioned/tests/BnFooInterface.h"
+#include "android/aidl/versioned/tests/IFooInterface.h"
 
 // Used implicitly.
 #undef LOG_TAG
@@ -52,6 +56,7 @@ using android::LooperCallback;
 using android::OK;
 using android::sp;
 using android::String16;
+using android::String8;
 
 // libbinder:
 using android::BnInterface;
@@ -490,7 +495,7 @@ class NativeService : public BnTestService {
 
   android::status_t onTransact(uint32_t code, const Parcel& data, Parcel* reply,
                                uint32_t flags) override {
-    if (code == ::android::IBinder::FIRST_CALL_TRANSACTION + 53 /* UnimplementedMethod */) {
+    if (code == ::android::IBinder::FIRST_CALL_TRANSACTION + 0 /* UnimplementedMethod */) {
       // pretend that UnimplementedMethod isn't implemented by this service.
       return android::UNKNOWN_TRANSACTION;
     } else {
@@ -500,6 +505,14 @@ class NativeService : public BnTestService {
 
  private:
   map<String16, sp<INamedCallback>> service_map_;
+};
+
+class VersionedService : public android::aidl::versioned::tests::BnFooInterface {
+ public:
+  VersionedService() {}
+  virtual ~VersionedService() = default;
+
+  Status foo() override { return Status::ok(); }
 };
 
 int Run() {
@@ -520,8 +533,19 @@ int Run() {
     return -1;
   }
 
-  defaultServiceManager()->addService(service->getInterfaceDescriptor(),
-                                      service);
+  auto status = defaultServiceManager()->addService(service->getInterfaceDescriptor(), service);
+  if (status != OK) {
+    ALOGE("Failed to add service %s", String8(service->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
+
+  android::sp<VersionedService> versionedService = new VersionedService;
+  status = defaultServiceManager()->addService(versionedService->getInterfaceDescriptor(),
+                                               versionedService);
+  if (status != OK) {
+    ALOGE("Failed to add service %s", String8(versionedService->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
 
   ALOGI("Entering loop");
   while (true) {

@@ -24,11 +24,14 @@
 #include <string>
 #include <vector>
 
+#include <android-base/result.h>
 #include <android-base/strings.h>
 
 namespace android {
 namespace aidl {
 
+using android::base::Error;
+using android::base::Result;
 using std::map;
 using std::set;
 using std::string;
@@ -48,6 +51,8 @@ static set<AidlAnnotation> get_strict_annotations(const AidlAnnotatable& node) {
   // - a new implementation might start accepting null values (add @nullable)
   static const set<AidlAnnotation::Type> kIgnoreAnnotations{
       AidlAnnotation::Type::NULLABLE,
+      AidlAnnotation::Type::JAVA_DEBUG,
+      AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
   };
   set<AidlAnnotation> annotations;
   for (const AidlAnnotation& annotation : node.GetAnnotations()) {
@@ -84,7 +89,6 @@ static bool are_compatible_types(const AidlTypeSpecifier& older, const AidlTypeS
 
 static bool are_compatible_interfaces(const AidlInterface& older, const AidlInterface& newer) {
   bool compatible = true;
-  compatible &= have_compatible_annotations(older, newer);
 
   map<string, AidlMethod*> new_methods;
   for (const auto& m : newer.AsInterface()->GetMethods()) {
@@ -188,6 +192,12 @@ static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
                       << old_fields.size() << " to " << new_fields.size() << ".";
     return false;
   }
+  if (newer.IsFixedSize() && old_fields.size() != new_fields.size()) {
+    AIDL_ERROR(newer) << "Number of fields in " << older.GetCanonicalName() << " is changed from "
+                      << old_fields.size() << " to " << new_fields.size()
+                      << ". This is an incompatible change for FixedSize types.";
+    return false;
+  }
 
   bool compatible = true;
   for (size_t i = 0; i < old_fields.size(); i++) {
@@ -230,7 +240,6 @@ static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
       };
       static std::vector<HistoricalException> exceptions = {
           {"android.net.DhcpResultsParcelable", "serverHostName"},
-          {"android.net.ProvisioningConfigurationParcelable", "enablePreconnection"},
           {"android.net.ResolverParamsParcel", "resolverOptions"},
       };
       bool excepted = false;
@@ -293,49 +302,35 @@ static bool are_compatible_enums(const AidlEnumDeclaration& older,
   return compatible;
 }
 
+static Result<AidlTypenames> load_from_dir(const Options& options, const IoDelegate& io_delegate,
+                                           const std::string& dir) {
+  AidlTypenames typenames;
+  for (const auto& file : io_delegate.ListFiles(dir)) {
+    if (!android::base::EndsWith(file, ".aidl")) continue;
+    if (internals::load_and_validate_aidl(file, options, io_delegate, &typenames,
+                                          nullptr /* imported_files */) != AidlError::OK) {
+      AIDL_ERROR(file) << "Failed to read.";
+      return Error();
+    }
+  }
+  return typenames;
+}
+
 bool check_api(const Options& options, const IoDelegate& io_delegate) {
   CHECK(options.IsStructured());
   CHECK(options.InputFiles().size() == 2) << "--checkapi requires two inputs "
                                           << "but got " << options.InputFiles().size();
-  AidlTypenames old_tns;
-  const string old_dir = options.InputFiles().at(0);
-  vector<AidlDefinedType*> old_types;
-  vector<string> old_files = io_delegate.ListFiles(old_dir);
-  if (old_files.size() == 0) {
-    AIDL_ERROR(old_dir) << "No API file exist";
+  auto old_tns = load_from_dir(options, io_delegate, options.InputFiles().at(0));
+  if (!old_tns.ok()) {
     return false;
   }
-  for (const auto& file : old_files) {
-    if (!android::base::EndsWith(file, ".aidl")) continue;
-
-    vector<AidlDefinedType*> types;
-    if (internals::load_and_validate_aidl(file, options, io_delegate, &old_tns, &types,
-                                          nullptr /* imported_files */) != AidlError::OK) {
-      AIDL_ERROR(file) << "Failed to read.";
-      return false;
-    }
-    old_types.insert(old_types.end(), types.begin(), types.end());
-  }
-
-  AidlTypenames new_tns;
-  const string new_dir = options.InputFiles().at(1);
-  vector<AidlDefinedType*> new_types;
-  vector<string> new_files = io_delegate.ListFiles(new_dir);
-  if (new_files.size() == 0) {
-    AIDL_ERROR(new_dir) << "API files have been removed: " << android::base::Join(old_files, ", ");
+  auto new_tns = load_from_dir(options, io_delegate, options.InputFiles().at(1));
+  if (!new_tns.ok()) {
     return false;
   }
-  for (const auto& file : new_files) {
-    if (!android::base::EndsWith(file, ".aidl")) continue;
 
-    vector<AidlDefinedType*> types;
-    if (internals::load_and_validate_aidl(file, options, io_delegate, &new_tns, &types,
-                                          nullptr /* imported_files */) != AidlError::OK) {
-      AIDL_ERROR(file) << "Failed to read.";
-      return false;
-    }
-    new_types.insert(new_types.end(), types.begin(), types.end());
-  }
+  std::vector<AidlDefinedType*> old_types = old_tns->AllDefinedTypes();
+  std::vector<AidlDefinedType*> new_types = new_tns->AllDefinedTypes();
 
   map<string, AidlDefinedType*> new_map;
   for (const auto t : new_types) {
@@ -352,6 +347,9 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
     }
     const auto new_type = found->second;
 
+    if (!have_compatible_annotations(*old_type, *new_type)) {
+      compatible = false;
+    }
     if (old_type->AsInterface() != nullptr) {
       if (new_type->AsInterface() == nullptr) {
         AIDL_ERROR(new_type) << "Type mismatch: " << old_type->GetCanonicalName()
