@@ -221,14 +221,6 @@ std::vector<unique_ptr<Declaration>> NestInNamespaces(unique_ptr<Declaration> de
   return NestInNamespaces(std::move(decls), package);
 }
 
-bool DeclareLocalVariable(const AidlArgument& a, StatementBlock* b,
-                          const AidlTypenames& typenamespaces) {
-  string type = CppNameOf(a.GetType(), typenamespaces);
-
-  b->AddLiteral(type + " " + BuildVarName(a));
-  return true;
-}
-
 unique_ptr<Declaration> DefineClientTransaction(const AidlTypenames& typenames,
                                                 const AidlInterface& interface,
                                                 const AidlMethod& method, const Options& options) {
@@ -512,9 +504,8 @@ bool HandleServerTransaction(const AidlTypenames& typenames, const AidlInterface
   // Declare all the parameters now.  In the common case, we expect no errors
   // in serialization.
   for (const unique_ptr<AidlArgument>& a : method.GetArguments()) {
-    if (!DeclareLocalVariable(*a, b, typenames)) {
-      return false;
-    }
+    b->AddLiteral(StringPrintf("%s %s", CppNameOf(a->GetType(), typenames).c_str(),
+                               BuildVarName(*a).c_str()));
   }
 
   // Declare a variable to hold the return value.
@@ -769,16 +760,12 @@ unique_ptr<Document> BuildInterfaceSource(const AidlTypenames& typenames,
       HeaderFile(interface, ClassNames::CLIENT, false),
   };
 
-  string fq_name = ClassName(interface, ClassNames::INTERFACE);
-  if (!interface.GetPackage().empty()) {
-    fq_name = interface.GetPackage() + "." + fq_name;
-  }
-
   vector<unique_ptr<Declaration>> decls;
 
-  unique_ptr<MacroDecl> meta_if{new MacroDecl{
-      "DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE",
-      ArgList{vector<string>{ClassName(interface, ClassNames::BASE), '"' + fq_name + '"'}}}};
+  unique_ptr<MacroDecl> meta_if{
+      new MacroDecl{"DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE",
+                    ArgList{vector<string>{ClassName(interface, ClassNames::BASE),
+                                           '"' + interface.GetDescriptor() + '"'}}}};
   decls.push_back(std::move(meta_if));
 
   for (const auto& constant : interface.GetConstantDeclarations()) {
