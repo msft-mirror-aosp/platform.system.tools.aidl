@@ -65,6 +65,7 @@ cc_library_static {
         "aidl_to_cpp.cpp",
         "aidl_to_java.cpp",
         "aidl_to_ndk.cpp",
+        "aidl_to_rust.cpp",
         "ast_cpp.cpp",
         "ast_java.cpp",
         "code_writer.cpp",
@@ -74,6 +75,7 @@ cc_library_static {
         "generate_java.cpp",
         "generate_java_binder.cpp",
         "generate_aidl_mappings.cpp",
+        "generate_rust.cpp",
         "import_resolver.cpp",
         "line_reader.cpp",
         "logging.cpp",
@@ -304,6 +306,7 @@ cc_test {
         "tests/aidl_test_client_service_exceptions.cpp",
         "tests/aidl_test_client_defaultimpl.cpp",
         "tests/aidl_test_client_versioned_interface.cpp",
+        "tests/aidl_test_client_renamed_interface.cpp",
     ],
 }
 

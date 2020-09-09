@@ -34,7 +34,7 @@ namespace aidl {
 namespace cpp {
 
 namespace {
-std::string RawParcelMethod(const AidlTypeSpecifier& raw_type, const AidlTypenames& typenames,
+std::string RawParcelMethod(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
                             bool readMethod) {
   static map<string, string> kBuiltin = {
       {"byte", "Byte"},
@@ -64,14 +64,11 @@ std::string RawParcelMethod(const AidlTypeSpecifier& raw_type, const AidlTypenam
       {"ParcelFileDescriptor", "ParcelableVector"},
   };
 
-  const bool nullable = raw_type.IsNullable();
-  const bool isVector =
-      raw_type.IsArray() || (raw_type.IsGeneric() && raw_type.GetName() == "List");
-  const bool utf8 = raw_type.IsUtf8InCpp();
-  const auto& type = raw_type.IsGeneric() ? *raw_type.GetTypeParameters().at(0) : raw_type;
-  const string& aidl_name = type.GetName();
+  const bool nullable = type.IsNullable();
+  const bool isVector = type.IsArray() || typenames.IsList(type);
+  const bool utf8 = type.IsUtf8InCpp();
 
-  if (auto enum_decl = typenames.GetEnumDeclaration(raw_type); enum_decl != nullptr) {
+  if (auto enum_decl = typenames.GetEnumDeclaration(type); enum_decl != nullptr) {
     if (isVector) {
       return "EnumVector";
     } else {
@@ -80,31 +77,40 @@ std::string RawParcelMethod(const AidlTypeSpecifier& raw_type, const AidlTypenam
   }
 
   if (isVector) {
-    if (kBuiltinVector.find(aidl_name) != kBuiltinVector.end()) {
-      CHECK(AidlTypenames::IsBuiltinTypename(aidl_name));
+    string element_name;
+    if (typenames.IsList(type)) {
+      CHECK(type.GetTypeParameters().size() == 1);
+      element_name = type.GetTypeParameters().at(0)->GetName();
+    } else {
+      element_name = type.GetName();
+    }
+    if (kBuiltinVector.find(element_name) != kBuiltinVector.end()) {
+      CHECK(AidlTypenames::IsBuiltinTypename(element_name));
       if (utf8) {
-        CHECK(aidl_name == "String");
+        CHECK(element_name == "String");
         return readMethod ? "Utf8VectorFromUtf16Vector" : "Utf8VectorAsUtf16Vector";
       }
-      return kBuiltinVector[aidl_name];
+      return kBuiltinVector[element_name];
     }
+    CHECK(!typenames.IsList(type));
   } else {
-    if (kBuiltin.find(aidl_name) != kBuiltin.end()) {
-      CHECK(AidlTypenames::IsBuiltinTypename(aidl_name));
-      if (aidl_name == "IBinder" && nullable && readMethod) {
+    const string& type_name = type.GetName();
+    if (kBuiltin.find(type_name) != kBuiltin.end()) {
+      CHECK(AidlTypenames::IsBuiltinTypename(type_name));
+      if (type_name == "IBinder" && nullable && readMethod) {
         return "NullableStrongBinder";
       }
-      if (aidl_name == "ParcelFileDescriptor" && nullable && !readMethod) {
+      if (type_name == "ParcelFileDescriptor" && nullable && !readMethod) {
         return "NullableParcelable";
       }
       if (utf8) {
-        CHECK(aidl_name == "String");
+        CHECK(type_name == "String");
         return readMethod ? "Utf8FromUtf16" : "Utf8AsUtf16";
       }
-      return kBuiltin[aidl_name];
+      return kBuiltin[type_name];
     }
   }
-  CHECK(!AidlTypenames::IsBuiltinTypename(aidl_name));
+  CHECK(!AidlTypenames::IsBuiltinTypename(type.GetName()));
   auto definedType = typenames.TryGetDefinedType(type.GetName());
   if (definedType != nullptr && definedType->AsInterface() != nullptr) {
     if (isVector) {
@@ -136,7 +142,7 @@ std::string GetRawCppName(const AidlTypeSpecifier& type) {
 
 std::string WrapIfNullable(const std::string type_str, const AidlTypeSpecifier& raw_type,
                            const AidlTypenames& typenames) {
-  const auto& type = raw_type.IsGeneric() ? (*raw_type.GetTypeParameters().at(0)) : raw_type;
+  const auto& type = typenames.IsList(raw_type) ? (*raw_type.GetTypeParameters().at(0)) : raw_type;
 
   if (raw_type.IsNullable() && !AidlTypenames::IsPrimitiveTypename(type.GetName()) &&
       type.GetName() != "IBinder" && typenames.GetEnumDeclaration(type) == nullptr) {
@@ -161,10 +167,8 @@ std::string GetCppName(const AidlTypeSpecifier& raw_type, const AidlTypenames& t
       {"String", "::android::String16"},
       {"void", "void"},
   };
-
-  CHECK(!raw_type.IsGeneric() ||
-        (raw_type.GetName() == "List" && raw_type.GetTypeParameters().size() == 1));
-  const auto& type = raw_type.IsGeneric() ? (*raw_type.GetTypeParameters().at(0)) : raw_type;
+  CHECK(!typenames.IsList(raw_type) || raw_type.GetTypeParameters().size() == 1);
+  const auto& type = typenames.IsList(raw_type) ? (*raw_type.GetTypeParameters().at(0)) : raw_type;
   const string& aidl_name = type.GetName();
   if (m.find(aidl_name) != m.end()) {
     CHECK(AidlTypenames::IsBuiltinTypename(aidl_name));
@@ -209,7 +213,7 @@ std::string GetTransactionIdFor(const AidlMethod& method) {
 }
 
 std::string CppNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
-  if (type.IsArray() || type.IsGeneric()) {
+  if (type.IsArray() || typenames.IsList(type)) {
     std::string cpp_name = GetCppName(type, typenames);
     if (type.IsNullable()) {
       return "::std::optional<::std::vector<" + cpp_name + ">>";
@@ -220,7 +224,7 @@ std::string CppNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typena
 }
 
 bool IsNonCopyableType(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
-  if (type.IsArray() || type.IsGeneric()) {
+  if (type.IsArray() || typenames.IsList(type)) {
     return false;
   }
 
@@ -267,46 +271,60 @@ std::string ParcelWriteCastOf(const AidlTypeSpecifier& type, const AidlTypenames
   return variable_name;
 }
 
-void AddHeaders(const AidlTypeSpecifier& raw_type, const AidlTypenames& typenames,
-                std::set<std::string>& headers) {
-  bool isVector = raw_type.IsArray() || raw_type.IsGeneric();
-  bool isNullable = raw_type.IsNullable();
-  bool utf8 = raw_type.IsUtf8InCpp();
-
-  CHECK(!raw_type.IsGeneric() ||
-        (raw_type.GetName() == "List" && raw_type.GetTypeParameters().size() == 1));
-  const auto& type = raw_type.IsGeneric() ? *raw_type.GetTypeParameters().at(0) : raw_type;
-  auto definedType = typenames.TryGetDefinedType(type.GetName());
+void AddHeaders(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
+                std::set<std::string>* headers) {
+  CHECK(!typenames.IsList(type) || type.GetTypeParameters().size() == 1);
+  bool isVector = type.IsArray() || typenames.IsList(type);
+  bool isNullable = type.IsNullable();
+  bool utf8 = type.IsUtf8InCpp();
 
   if (isVector) {
-    headers.insert("vector");
+    headers->insert("vector");
+  }
+  if (type.IsGeneric()) {
+    for (const auto& parameter : type.GetTypeParameters()) {
+      AddHeaders(*parameter, typenames, headers);
+    }
   }
   if (isNullable) {
     if (type.GetName() != "IBinder") {
-      headers.insert("optional");
+      headers->insert("optional");
     }
   }
+  if (typenames.IsList(type)) {
+    // Nothing else to do for List.
+    return;
+  }
   if (type.GetName() == "String") {
-    headers.insert(utf8 ? "string" : "utils/String16.h");
+    headers->insert(utf8 ? "string" : "utils/String16.h");
+    return;
   }
   if (type.GetName() == "IBinder") {
-    headers.insert("binder/IBinder.h");
+    headers->insert("binder/IBinder.h");
+    return;
   }
   if (type.GetName() == "FileDescriptor") {
-    headers.insert("android-base/unique_fd.h");
+    headers->insert("android-base/unique_fd.h");
+    return;
   }
   if (type.GetName() == "ParcelFileDescriptor") {
-    headers.insert("binder/ParcelFileDescriptor.h");
+    headers->insert("binder/ParcelFileDescriptor.h");
+    return;
   }
 
   static const std::set<string> need_cstdint{"byte", "int", "long"};
   if (need_cstdint.find(type.GetName()) != need_cstdint.end()) {
-    headers.insert("cstdint");
-  }
-
-  if (definedType == nullptr) {
+    headers->insert("cstdint");
     return;
   }
+
+  if (AidlTypenames::IsPrimitiveTypename(type.GetName())) {
+    return;
+  }
+
+  auto definedType = typenames.TryGetDefinedType(type.GetName());
+  AIDL_FATAL_IF(definedType == nullptr, type) << "Unexpected type: " << type.GetName();
+
   if (definedType->AsInterface() != nullptr || definedType->AsStructuredParcelable() != nullptr ||
       definedType->AsEnumDeclaration() != nullptr) {
     AddHeaders(*definedType, headers);
@@ -315,15 +333,15 @@ void AddHeaders(const AidlTypeSpecifier& raw_type, const AidlTypenames& typename
     AIDL_FATAL_IF(cpp_header.empty(), definedType->AsParcelable())
         << "Parcelable " << definedType->AsParcelable()->GetCanonicalName()
         << " has no C++ header defined.";
-    headers.insert(cpp_header);
+    headers->insert(cpp_header);
   }
 }
 
-void AddHeaders(const AidlDefinedType& definedType, std::set<std::string>& headers) {
+void AddHeaders(const AidlDefinedType& definedType, std::set<std::string>* headers) {
   vector<string> name = definedType.GetSplitPackage();
   name.push_back(definedType.GetName());
   const std::string cpp_header = Join(name, '/') + ".h";
-  headers.insert(cpp_header);
+  headers->insert(cpp_header);
 }
 
 }  // namespace cpp

@@ -221,14 +221,6 @@ std::vector<unique_ptr<Declaration>> NestInNamespaces(unique_ptr<Declaration> de
   return NestInNamespaces(std::move(decls), package);
 }
 
-bool DeclareLocalVariable(const AidlArgument& a, StatementBlock* b,
-                          const AidlTypenames& typenamespaces) {
-  string type = CppNameOf(a.GetType(), typenamespaces);
-
-  b->AddLiteral(type + " " + BuildVarName(a));
-  return true;
-}
-
 unique_ptr<Declaration> DefineClientTransaction(const AidlTypenames& typenames,
                                                 const AidlInterface& interface,
                                                 const AidlMethod& method, const Options& options) {
@@ -512,9 +504,8 @@ bool HandleServerTransaction(const AidlTypenames& typenames, const AidlInterface
   // Declare all the parameters now.  In the common case, we expect no errors
   // in serialization.
   for (const unique_ptr<AidlArgument>& a : method.GetArguments()) {
-    if (!DeclareLocalVariable(*a, b, typenames)) {
-      return false;
-    }
+    b->AddLiteral(StringPrintf("%s %s", CppNameOf(a->GetType(), typenames).c_str(),
+                               BuildVarName(*a).c_str()));
   }
 
   // Declare a variable to hold the return value.
@@ -769,16 +760,12 @@ unique_ptr<Document> BuildInterfaceSource(const AidlTypenames& typenames,
       HeaderFile(interface, ClassNames::CLIENT, false),
   };
 
-  string fq_name = ClassName(interface, ClassNames::INTERFACE);
-  if (!interface.GetPackage().empty()) {
-    fq_name = interface.GetPackage() + "." + fq_name;
-  }
-
   vector<unique_ptr<Declaration>> decls;
 
-  unique_ptr<MacroDecl> meta_if{new MacroDecl{
-      "DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE",
-      ArgList{vector<string>{ClassName(interface, ClassNames::BASE), '"' + fq_name + '"'}}}};
+  unique_ptr<MacroDecl> meta_if{
+      new MacroDecl{"DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE",
+                    ArgList{vector<string>{ClassName(interface, ClassNames::BASE),
+                                           '"' + interface.GetDescriptor() + '"'}}}};
   decls.push_back(std::move(meta_if));
 
   for (const auto& constant : interface.GetConstantDeclarations()) {
@@ -919,10 +906,10 @@ unique_ptr<Document> BuildInterfaceHeader(const AidlTypenames& typenames,
 
   for (const auto& method : interface.GetMethods()) {
     for (const auto& argument : method->GetArguments()) {
-      AddHeaders(argument->GetType(), typenames, includes);
+      AddHeaders(argument->GetType(), typenames, &includes);
     }
 
-    AddHeaders(method->GetType(), typenames, includes);
+    AddHeaders(method->GetType(), typenames, &includes);
   }
 
   const string i_name = ClassName(interface, ClassNames::INTERFACE);
@@ -1052,7 +1039,7 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
   set<string> includes = {kStatusHeader, kParcelHeader};
   includes.insert("tuple");
   for (const auto& variable : parcel.GetFields()) {
-    AddHeaders(variable->GetType(), typenames, includes);
+    AddHeaders(variable->GetType(), typenames, &includes);
   }
 
   set<string> operators = {"<", ">", "==", ">=", "<=", "!="};
@@ -1123,7 +1110,8 @@ std::unique_ptr<Document> BuildParcelSource(const AidlTypenames& typenames,
       "int32_t _aidl_parcelable_raw_size = _aidl_parcel->readInt32();\n"
       "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n"
       "[[maybe_unused]] size_t _aidl_parcelable_size = "
-      "static_cast<size_t>(_aidl_parcelable_raw_size);\n");
+      "static_cast<size_t>(_aidl_parcelable_raw_size);\n"
+      "if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;\n");
 
   for (const auto& variable : parcel.GetFields()) {
     string method = ParcelReadMethodOf(variable->GetType(), typenames);
@@ -1174,7 +1162,7 @@ std::unique_ptr<Document> BuildParcelSource(const AidlTypenames& typenames,
   file_decls.push_back(std::move(write));
 
   set<string> includes = {};
-  AddHeaders(parcel, includes);
+  AddHeaders(parcel, &includes);
 
   return unique_ptr<Document>{
       new CppSource{vector<string>(includes.begin(), includes.end()),
@@ -1222,7 +1210,7 @@ std::unique_ptr<Document> BuildEnumHeader(const AidlTypenames& typenames,
       "binder/Enums.h",
       "string",
   };
-  AddHeaders(enum_decl.GetBackingType(), typenames, includes);
+  AddHeaders(enum_decl.GetBackingType(), typenames, &includes);
 
   std::vector<std::unique_ptr<Declaration>> decls1;
   decls1.push_back(std::move(generated_enum));

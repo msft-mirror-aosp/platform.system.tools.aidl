@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package android.aidl.tests.generic;
+package android.aidl.tests;
 
-import android.aidl.tests.generic.Baz;
-import android.aidl.tests.generic.Pair;
-import android.aidl.tests.IntEnum;
-
-interface IFaz {
-    Pair<int, String> getPair();
-    Pair<Baz, Baz> getPair2();
-    Pair<int, IntEnum> getPair3();
+@Descriptor(value="android.aidl.tests.IOldName")
+interface INewName {
+    String RealName();
 }

@@ -134,6 +134,7 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
       {AidlAnnotation::Type::JAVA_DEBUG, "JavaDebug", {}},
       {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE, "JavaOnlyImmutable", {}},
       {AidlAnnotation::Type::FIXED_SIZE, "FixedSize", {}},
+      {AidlAnnotation::Type::DESCRIPTOR, "Descriptor", {{"value", "String"}}},
   };
   return kSchemas;
 }
@@ -326,6 +327,23 @@ bool AidlAnnotatable::IsHide() const {
 
 bool AidlAnnotatable::IsJavaDebug() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DEBUG);
+}
+
+std::string AidlAnnotatable::GetDescriptor() const {
+  auto annotation = GetAnnotation(annotations_, AidlAnnotation::Type::DESCRIPTOR);
+  if (annotation != nullptr) {
+    auto params = annotation->AnnotationParams(AidlConstantValueDecorator);
+    if (auto it = params.find("value"); it != params.end()) {
+      const string& value = it->second;
+
+      AIDL_FATAL_IF(value.size() < 2, this) << value;
+      AIDL_FATAL_IF(value[0] != '"', this) << value;
+      AIDL_FATAL_IF(value[value.length() - 1] != '"', this) << value;
+      std::string unquoted_value = value.substr(1, value.length() - 2);
+      return unquoted_value;
+    }
+  }
+  return "";
 }
 
 void AidlAnnotatable::DumpAnnotations(CodeWriter* writer) const {
@@ -880,30 +898,31 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
 // TODO: we should treat every backend all the same in future.
 bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                                    Options::Language lang) const {
-  if (lang == Options::Language::NDK && IsArray() && GetName() == "IBinder") {
-    AIDL_ERROR(this) << "The NDK backend does not support array of IBinder";
+  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
+      GetName() == "IBinder") {
+    AIDL_ERROR(this) << "The " << Options::LanguageToString(lang)
+                     << " backend does not support array of IBinder";
     return false;
   }
-  if (lang == Options::Language::NDK && IsArray() && IsNullable()) {
+  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
+      IsNullable()) {
     if (GetName() == "ParcelFileDescriptor") {
-      AIDL_ERROR(this) << "The NDK backend does not support nullable array of ParcelFileDescriptor";
+      AIDL_ERROR(this) << "The " << Options::LanguageToString(lang)
+                       << " backend does not support nullable array of ParcelFileDescriptor";
       return false;
     }
 
     const auto defined_type = typenames.TryGetDefinedType(GetName());
     if (defined_type != nullptr && defined_type->AsParcelable() != nullptr) {
-      AIDL_ERROR(this) << "The NDK backend does not support nullable array of parcelable";
+      AIDL_ERROR(this) << "The " << Options::LanguageToString(lang)
+                       << " backend does not support nullable array of parcelable";
       return false;
     }
   }
-  if (lang != Options::Language::JAVA) {
-    if (this->GetName() == "List" && !this->IsGeneric()) {
-      AIDL_ERROR(this) << "Currently, only the Java backend supports non-generic List.";
-      return false;
-    }
-  }
-  if (this->GetName() == "FileDescriptor" && lang == Options::Language::NDK) {
-    AIDL_ERROR(this) << "FileDescriptor isn't supported with the NDK.";
+  if (this->GetName() == "FileDescriptor" &&
+      (lang == Options::Language::NDK || lang == Options::Language::RUST)) {
+    AIDL_ERROR(this) << "FileDescriptor isn't supported by the " << Options::LanguageToString(lang)
+                     << " backend.";
     return false;
   }
   if (this->IsGeneric()) {
@@ -933,20 +952,23 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
       }
     }
   }
-  if (this->GetName() == "Map" || this->GetName() == "CharSequence") {
-    if (lang != Options::Language::JAVA) {
-      AIDL_ERROR(this) << "Currently, only Java backend supports " << this->GetName() << ".";
+
+  if (this->IsArray()) {
+    if (this->GetName() == "List" || this->GetName() == "Map" ||
+        this->GetName() == "CharSequence") {
+      AIDL_ERROR(this) << this->GetName() << "[] is not supported.";
       return false;
     }
   }
-  if (lang == Options::Language::JAVA) {
-    const string name = this->GetName();
-    // List[], Map[], CharSequence[] are not supported.
-    if (AidlTypenames::IsBuiltinTypename(name) && this->IsArray()) {
-      if (name == "List" || name == "Map" || name == "CharSequence") {
-        AIDL_ERROR(this) << "List[], Map[], CharSequence[] are not supported.";
-        return false;
-      }
+
+  if (lang != Options::Language::JAVA) {
+    if (this->GetName() == "List" && !this->IsGeneric()) {
+      AIDL_ERROR(this) << "Currently, only the Java backend supports non-generic List.";
+      return false;
+    }
+    if (this->GetName() == "Map" || this->GetName() == "CharSequence") {
+      AIDL_ERROR(this) << "Currently, only Java backend supports " << this->GetName() << ".";
+      return false;
     }
   }
 
@@ -956,7 +978,7 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
 // TODO: we should treat every backend all the same in future.
 bool AidlParcelable::LanguageSpecificCheckValid(const AidlTypenames& /*typenames*/,
                                                 Options::Language lang) const {
-  if (lang != Options::Language::JAVA) {
+  if (lang == Options::Language::CPP || lang == Options::Language::NDK) {
     const AidlParcelable* unstructured_parcelable = this->AsUnstructuredParcelable();
     if (unstructured_parcelable != nullptr) {
       if (unstructured_parcelable->GetCppHeader().empty()) {
@@ -1133,7 +1155,8 @@ void AidlInterface::Dump(CodeWriter* writer) const {
 
 std::set<AidlAnnotation::Type> AidlInterface::GetSupportedAnnotations() const {
   return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
-          AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH};
+          AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH,
+          AidlAnnotation::Type::DESCRIPTOR};
 }
 
 bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
@@ -1236,6 +1259,14 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
   }
 
   return success;
+}
+
+std::string AidlInterface::GetDescriptor() const {
+  std::string annotatedDescriptor = AidlAnnotatable::GetDescriptor();
+  if (annotatedDescriptor != "") {
+    return annotatedDescriptor;
+  }
+  return GetCanonicalName();
 }
 
 AidlImport::AidlImport(const AidlLocation& location, const std::string& needed_class)
