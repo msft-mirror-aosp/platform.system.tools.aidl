@@ -219,6 +219,13 @@ std::string CppNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typena
       return "::std::optional<::std::vector<" + cpp_name + ">>";
     }
     return "::std::vector<" + cpp_name + ">";
+  } else if (type.IsGeneric()) {
+    std::vector<std::string> type_params;
+    for (const auto& parameter : type.GetTypeParameters()) {
+      type_params.push_back(CppNameOf(*parameter, typenames));
+    }
+    return StringPrintf("%s<%s>", GetCppName(type, typenames).c_str(),
+                        base::Join(type_params, ", ").c_str());
   }
   return GetCppName(type, typenames);
 }
