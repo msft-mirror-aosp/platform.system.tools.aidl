@@ -24,12 +24,14 @@
 #include <sstream>
 
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_rust.h"
 #include "code_writer.h"
 #include "logging.h"
 
+using android::base::Join;
 using std::ostringstream;
 using std::shared_ptr;
 using std::string;
@@ -570,6 +572,20 @@ bool GenerateRustParcel(const string& filename, const AidlStructuredParcelable* 
                         const AidlTypenames& typenames, const IoDelegate& io_delegate) {
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
 
+  // Debug is always derived because all Rust AIDL types implement it
+  // ParcelFileDescriptor doesn't support any of the others because
+  // it's a newtype over std::fs::File which only implements Debug
+  vector<string> derives{"Debug"};
+  const AidlAnnotation* derive_annotation = parcel->RustDerive();
+  if (derive_annotation != nullptr) {
+    for (const auto& name_and_param : derive_annotation->AnnotationParams(ConstantValueDecorator)) {
+      if (name_and_param.second == "true") {
+        derives.push_back(name_and_param.first);
+      }
+    }
+  }
+
+  *code_writer << "#[derive(" << Join(derives, ", ") << ")]\n";
   *code_writer << "pub struct " << parcel->GetName() << " {\n";
   code_writer->Indent();
   for (const auto& variable : parcel->GetFields()) {
@@ -595,12 +611,16 @@ bool GenerateRustEnumDeclaration(const string& filename, const AidlEnumDeclarati
   auto backing_type = RustNameOf(aidl_backing_type, typenames, StorageMode::VALUE);
 
   *code_writer << "#![allow(non_upper_case_globals)]\n";
-  *code_writer << "pub type " << enum_decl->GetName() << " = " << backing_type << ";\n";
+  *code_writer << "use binder::declare_binder_enum;\n";
+  *code_writer << "declare_binder_enum! { " << enum_decl->GetName() << " : " << backing_type
+               << " {\n";
+  code_writer->Indent();
   for (const auto& enumerator : enum_decl->GetEnumerators()) {
     auto value = enumerator->GetValue()->ValueString(aidl_backing_type, ConstantValueDecorator);
-    *code_writer << "pub const " << enumerator->GetName() << ": " << enum_decl->GetName() << " = "
-                 << value << ";\n";
+    *code_writer << enumerator->GetName() << " = " << value << ",\n";
   }
+  code_writer->Dedent();
+  *code_writer << "} }\n";
 
   GenerateMangledAlias(*code_writer, enum_decl);
 
