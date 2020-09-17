@@ -46,6 +46,9 @@
 #include "android/aidl/tests/BnNewName.h"
 #include "android/aidl/tests/BnOldName.h"
 
+#include "android/aidl/tests/extension/MyExt.h"
+#include "android/aidl/tests/extension/MyExt2.h"
+
 // Used implicitly.
 #undef LOG_TAG
 #define LOG_TAG "aidl_native_service"
@@ -77,12 +80,14 @@ using android::aidl::tests::BnOldName;
 using android::aidl::tests::BnTestService;
 using android::aidl::tests::ByteEnum;
 using android::aidl::tests::ConstantExpressionEnum;
+using android::aidl::tests::GenericStructuredParcelable;
 using android::aidl::tests::INamedCallback;
 using android::aidl::tests::INewName;
 using android::aidl::tests::IntEnum;
 using android::aidl::tests::IOldName;
 using android::aidl::tests::LongEnum;
 using android::aidl::tests::SimpleParcelable;
+using android::aidl::tests::StructuredParcelable;
 using android::os::ParcelFileDescriptor;
 using android::os::PersistableBundle;
 
@@ -425,6 +430,16 @@ class NativeService : public BnTestService {
     return RepeatNullable(input, _aidl_return);
   }
 
+  Status RepeatGenericParcelable(
+      const GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>& input,
+      GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>* repeat,
+      GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>* _aidl_return) {
+    ALOGI("Repeating Generic Parcelable");
+    *repeat = input;
+    *_aidl_return = input;
+    return Status::ok();
+  }
+
   Status TakesAnIBinder(const sp<IBinder>& input) override {
     (void)input;
     return Status::ok();
@@ -493,8 +508,7 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
-  virtual ::android::binder::Status FillOutStructuredParcelable(
-      ::android::aidl::tests::StructuredParcelable* parcelable) {
+  virtual ::android::binder::Status FillOutStructuredParcelable(StructuredParcelable* parcelable) {
     parcelable->shouldBeJerry = "Jerry";
     parcelable->shouldContainThreeFs = {parcelable->f, parcelable->f, parcelable->f};
     parcelable->shouldBeByteBar = ByteEnum::BAR;
@@ -514,6 +528,20 @@ class NativeService : public BnTestService {
     parcelable->const_exprs_8 = ConstantExpressionEnum::hexInt32_2;
     parcelable->const_exprs_9 = ConstantExpressionEnum::hexInt32_3;
     parcelable->const_exprs_10 = ConstantExpressionEnum::hexInt64_1;
+
+    return Status::ok();
+  }
+
+  ::android::binder::Status RepeatExtendableParcelable(
+      const ::android::aidl::tests::extension::ExtendableParcelable& ep,
+      ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
+    ep2->a = ep.a * 2;
+    ep2->b = ep.b + "BAR";
+    auto myExt = ep.ext.getParcelable<android::aidl::tests::extension::MyExt>();
+    ::android::aidl::tests::extension::MyExt retMyExt;
+    retMyExt.a = myExt->a * 2;
+    retMyExt.b = myExt->b + "BAR";
+    ep2->ext.setParcelable(retMyExt);
 
     return Status::ok();
   }

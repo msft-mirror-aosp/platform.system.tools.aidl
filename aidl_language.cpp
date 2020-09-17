@@ -32,7 +32,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "aidl_language_y-module.h"
+#include "aidl_language_y.h"
 #include "logging.h"
 
 #include "aidl.h"
@@ -69,8 +69,8 @@ bool IsJavaKeyword(const char* str) {
   return std::find(kJavaKeywords.begin(), kJavaKeywords.end(), str) != kJavaKeywords.end();
 }
 
-inline std::string CapitalizeFirstLetter(const std::string& str) {
-  CHECK(str.size() > 0) << "Input cannot be empty.";
+inline std::string CapitalizeFirstLetter(const AidlNode& context, const std::string& str) {
+  AIDL_FATAL_IF(str.size() <= 0, context) << "Input cannot be empty.";
   std::ostringstream out;
   out << static_cast<char>(toupper(str[0])) << str.substr(1);
   return out.str();
@@ -135,6 +135,15 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
       {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE, "JavaOnlyImmutable", {}},
       {AidlAnnotation::Type::FIXED_SIZE, "FixedSize", {}},
       {AidlAnnotation::Type::DESCRIPTOR, "Descriptor", {{"value", "String"}}},
+      {AidlAnnotation::Type::RUST_DERIVE,
+       "RustDerive",
+       {{"Copy", "boolean"},
+        {"Clone", "boolean"},
+        {"PartialOrd", "boolean"},
+        {"Ord", "boolean"},
+        {"PartialEq", "boolean"},
+        {"Eq", "boolean"},
+        {"Hash", "boolean"}}},
   };
   return kSchemas;
 }
@@ -295,6 +304,10 @@ const AidlAnnotation* AidlAnnotatable::JavaPassthrough() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_PASSTHROUGH);
 }
 
+const AidlAnnotation* AidlAnnotatable::RustDerive() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::RUST_DERIVE);
+}
+
 const AidlTypeSpecifier* AidlAnnotatable::BackingType(const AidlTypenames& typenames) const {
   auto annotation = GetAnnotation(annotations_, AidlAnnotation::Type::BACKING);
   if (annotation != nullptr) {
@@ -435,7 +448,7 @@ string AidlTypeSpecifier::Signature() const {
 }
 
 bool AidlTypeSpecifier::Resolve(const AidlTypenames& typenames) {
-  CHECK(!IsResolved());
+  AIDL_FATAL_IF(IsResolved(), this);
   AidlTypenames::ResolvedTypename result = typenames.ResolveTypename(unresolved_name_);
   if (result.is_resolved) {
     fully_qualified_name_ = result.canonical_name;
@@ -788,7 +801,7 @@ AidlParameterizable<T>::AidlParameterizable(const AidlParameterizable& other) {
   // Copying is not supported if it has type parameters.
   // It doesn't make a problem because only ArrayBase() makes a copy,
   // and it can be called only if a type is not generic.
-  CHECK(!other.IsGeneric());
+  AIDL_FATAL_IF(other.IsGeneric(), AIDL_LOCATION_HERE);
 }
 
 template <typename T>
@@ -833,8 +846,9 @@ void AidlParcelable::Dump(CodeWriter* writer) const {
 
 AidlStructuredParcelable::AidlStructuredParcelable(
     const AidlLocation& location, const std::string& name, const std::string& package,
-    const std::string& comments, std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables)
-    : AidlParcelable(location, name, package, comments, "" /*cpp_header*/),
+    const std::string& comments, std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables,
+    std::vector<std::string>* type_params)
+    : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params),
       variables_(std::move(*variables)) {}
 
 void AidlStructuredParcelable::Dump(CodeWriter* writer) const {
@@ -858,7 +872,8 @@ std::set<AidlAnnotation::Type> AidlStructuredParcelable::GetSupportedAnnotations
           AidlAnnotation::Type::JAVA_PASSTHROUGH,
           AidlAnnotation::Type::JAVA_DEBUG,
           AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
-          AidlAnnotation::Type::FIXED_SIZE};
+          AidlAnnotation::Type::FIXED_SIZE,
+          AidlAnnotation::Type::RUST_DERIVE};
 }
 
 bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
@@ -872,7 +887,7 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
     bool duplicated;
     if (IsJavaOnlyImmutable()) {
       success = success && typenames.CanBeJavaOnlyImmutable(v->GetType());
-      duplicated = !fieldnames.emplace(CapitalizeFirstLetter(v->GetName())).second;
+      duplicated = !fieldnames.emplace(CapitalizeFirstLetter(*v, v->GetName())).second;
     } else {
       if (IsFixedSize()) {
         success = success && typenames.CanBeFixedSize(v->GetType());
@@ -898,24 +913,37 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
 // TODO: we should treat every backend all the same in future.
 bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                                    Options::Language lang) const {
-  if (lang == Options::Language::NDK && IsArray() && GetName() == "IBinder") {
-    AIDL_ERROR(this) << "The NDK backend does not support array of IBinder";
+  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
+      GetName() == "IBinder") {
+    AIDL_ERROR(this) << "The " << Options::LanguageToString(lang)
+                     << " backend does not support array of IBinder";
     return false;
   }
-  if (lang == Options::Language::NDK && IsArray() && IsNullable()) {
+  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) &&
+      GetName() == "ParcelableHolder") {
+    // TODO(b/146611855): Remove it when both NDK and Rust backend support ParcelableHolder
+    AIDL_ERROR(this) << "The NDK and Rust backend does not support ParcelableHolder yet.";
+    return false;
+  }
+  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
+      IsNullable()) {
     if (GetName() == "ParcelFileDescriptor") {
-      AIDL_ERROR(this) << "The NDK backend does not support nullable array of ParcelFileDescriptor";
+      AIDL_ERROR(this) << "The " << Options::LanguageToString(lang)
+                       << " backend does not support nullable array of ParcelFileDescriptor";
       return false;
     }
 
     const auto defined_type = typenames.TryGetDefinedType(GetName());
     if (defined_type != nullptr && defined_type->AsParcelable() != nullptr) {
-      AIDL_ERROR(this) << "The NDK backend does not support nullable array of parcelable";
+      AIDL_ERROR(this) << "The " << Options::LanguageToString(lang)
+                       << " backend does not support nullable array of parcelable";
       return false;
     }
   }
-  if (this->GetName() == "FileDescriptor" && lang == Options::Language::NDK) {
-    AIDL_ERROR(this) << "FileDescriptor isn't supported with the NDK.";
+  if (this->GetName() == "FileDescriptor" &&
+      (lang == Options::Language::NDK || lang == Options::Language::RUST)) {
+    AIDL_ERROR(this) << "FileDescriptor isn't supported by the " << Options::LanguageToString(lang)
+                     << " backend.";
     return false;
   }
   if (this->IsGeneric()) {
@@ -971,7 +999,7 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
 // TODO: we should treat every backend all the same in future.
 bool AidlParcelable::LanguageSpecificCheckValid(const AidlTypenames& /*typenames*/,
                                                 Options::Language lang) const {
-  if (lang != Options::Language::JAVA) {
+  if (lang == Options::Language::CPP || lang == Options::Language::NDK) {
     const AidlParcelable* unstructured_parcelable = this->AsUnstructuredParcelable();
     if (unstructured_parcelable != nullptr) {
       if (unstructured_parcelable->GetCppHeader().empty()) {
@@ -1111,7 +1139,7 @@ AidlInterface::AidlInterface(const AidlLocation& location, const std::string& na
     AidlMethod* method = local->AsMethod();
     AidlConstantDeclaration* constant = local->AsConstantDeclaration();
 
-    CHECK(method == nullptr || constant == nullptr);
+    AIDL_FATAL_IF(method != nullptr && constant != nullptr, member);
 
     if (method) {
       method->ApplyInterfaceOneway(oneway);

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-// generated code prints std::string* which is disallowed
-// by android-base/logging.h
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wuser-defined-warnings"
-#include <aidl_language_y.h>
-#pragma clang diagnostic pop
+package android.aidl.tests;
+
+@JavaDebug
+parcelable GenericStructuredParcelable<T, U, B> {
+  int a;
+  int b;
+}

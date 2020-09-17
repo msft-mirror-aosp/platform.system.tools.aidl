@@ -86,7 +86,7 @@ class AidlLocation {
 };
 
 #define AIDL_LOCATION_HERE \
-  AidlLocation { __FILE__, {__LINE__, 0}, {__LINE__, 0}, AidlLocation::Source::INTERNAL }
+  (AidlLocation{__FILE__, {__LINE__, 0}, {__LINE__, 0}, AidlLocation::Source::INTERNAL})
 
 std::ostream& operator<<(std::ostream& os, const AidlLocation& l);
 
@@ -169,6 +169,7 @@ class AidlAnnotation : public AidlNode {
     JAVA_ONLY_IMMUTABLE,
     FIXED_SIZE,
     DESCRIPTOR,
+    RUST_DERIVE,
   };
   static std::string TypeToString(Type type);
 
@@ -243,6 +244,7 @@ class AidlAnnotatable : public AidlNode {
 
   const AidlAnnotation* UnsupportedAppUsage() const;
   const AidlAnnotation* JavaPassthrough() const;
+  const AidlAnnotation* RustDerive() const;
   const AidlTypeSpecifier* BackingType(const AidlTypenames& typenames) const;
   std::string ToString() const;
 
@@ -753,7 +755,8 @@ class AidlStructuredParcelable : public AidlParcelable {
  public:
   AidlStructuredParcelable(const AidlLocation& location, const std::string& name,
                            const std::string& package, const std::string& comments,
-                           std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables);
+                           std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables,
+                           std::vector<std::string>* type_params);
   virtual ~AidlStructuredParcelable() = default;
 
   // non-copyable, non-movable

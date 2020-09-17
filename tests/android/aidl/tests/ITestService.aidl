@@ -18,12 +18,14 @@ package android.aidl.tests;
 
 import android.aidl.tests.ByteEnum;
 import android.aidl.tests.INamedCallback;
+import android.aidl.tests.GenericStructuredParcelable;
 import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.SimpleParcelable;
 import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.IOldName;
 import android.aidl.tests.INewName;
+import android.aidl.tests.extension.ExtendableParcelable;
 import android.os.PersistableBundle;
 
 interface ITestService {
@@ -74,6 +76,7 @@ interface ITestService {
 
   SimpleParcelable RepeatSimpleParcelable(in SimpleParcelable input,
                                           out SimpleParcelable repeat);
+  GenericStructuredParcelable<int, StructuredParcelable, IntEnum> RepeatGenericParcelable(in GenericStructuredParcelable<int, StructuredParcelable, IntEnum> input, out GenericStructuredParcelable<int, StructuredParcelable, IntEnum> repeat);
   PersistableBundle RepeatPersistableBundle(in PersistableBundle input);
 
   // Test that arrays work as parameters and return types.
@@ -150,6 +153,8 @@ interface ITestService {
   // Since this paracelable has clearly defined default values, it would be
   // inefficient to use an IPC to fill it out in practice.
   void FillOutStructuredParcelable(inout StructuredParcelable parcel);
+
+  void RepeatExtendableParcelable(in ExtendableParcelable ep, out ExtendableParcelable ep2);
 
   // All these constant expressions should be equal to 1
   const int A1 = (~(-1)) == 0;
