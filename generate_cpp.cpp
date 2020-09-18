@@ -172,7 +172,7 @@ unique_ptr<Declaration> BuildMethodDecl(const AidlMethod& method, const AidlType
 
 unique_ptr<Declaration> BuildMetaMethodDecl(const AidlMethod& method, const AidlTypenames&,
                                             const Options& options, bool for_interface) {
-  CHECK(!method.IsUserDefined());
+  AIDL_FATAL_IF(method.IsUserDefined(), method);
   if (method.GetName() == kGetInterfaceVersion && options.Version()) {
     std::ostringstream code;
     if (for_interface) {
@@ -394,7 +394,7 @@ unique_ptr<Declaration> DefineClientMetaTransaction(const AidlTypenames& /* type
                                                     const AidlInterface& interface,
                                                     const AidlMethod& method,
                                                     const Options& options) {
-  CHECK(!method.IsUserDefined());
+  AIDL_FATAL_IF(method.IsUserDefined(), method);
   if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
     const string iface = ClassName(interface, ClassNames::INTERFACE);
     const string proxy = ClassName(interface, ClassNames::CLIENT);
@@ -617,7 +617,7 @@ bool HandleServerTransaction(const AidlTypenames& typenames, const AidlInterface
 bool HandleServerMetaTransaction(const AidlTypenames&, const AidlInterface& interface,
                                  const AidlMethod& method, const Options& options,
                                  StatementBlock* b) {
-  CHECK(!method.IsUserDefined());
+  AIDL_FATAL_IF(method.IsUserDefined(), method);
 
   if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
     std::ostringstream code;
@@ -947,13 +947,15 @@ unique_ptr<Document> BuildInterfaceHeader(const AidlTypenames& typenames,
       }
       case AidlConstantValue::Type::BOOLEAN:  // fall-through
       case AidlConstantValue::Type::INT8:     // fall-through
-      case AidlConstantValue::Type::INT32: {
+      case AidlConstantValue::Type::INT32:    // fall-through
+      // Type promotion may cause this. Value should be small enough to fit in int32.
+      case AidlConstantValue::Type::INT64: {
         int_constant_enum->AddValue(constant->GetName(),
                                     constant->ValueString(ConstantValueDecorator));
         break;
       }
       default: {
-        LOG(FATAL) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
+        AIDL_FATAL(value) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
       }
     }
   }
@@ -1074,6 +1076,12 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
     if (variable->GetDefaultValue()) {
       out << " = " << cppType.c_str() << "(" << variable->ValueString(ConstantValueDecorator)
           << ")";
+    } else if (variable->GetType().GetName() == "ParcelableHolder") {
+      if (parcel.IsVintfStability()) {
+        out << " { ::android::Parcelable::Stability::STABILITY_VINTF }";
+      } else {
+        out << " { ::android::Parcelable::Stability::STABILITY_LOCAL }";
+      }
     }
     out << ";\n";
 
@@ -1095,6 +1103,12 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
       MethodDecl::IS_OVERRIDE | MethodDecl::IS_CONST | MethodDecl::IS_FINAL));
   parcel_class->AddPublic(std::move(write));
 
+  parcel_class->AddPublic(std::unique_ptr<LiteralDecl>(
+      new LiteralDecl(StringPrintf("static const std::string& getParcelableDescriptor() {\n"
+                                   "  static const std::string DESCIPTOR = \"%s\";\n"
+                                   "  return DESCIPTOR;\n"
+                                   "}\n",
+                                   parcel.GetCanonicalName().c_str()))));
   return unique_ptr<Document>{
       new CppHeader{vector<string>(includes.begin(), includes.end()),
                     NestInNamespaces(std::move(parcel_class), parcel.GetSplitPackage())}};
@@ -1247,10 +1261,10 @@ bool WriteHeader(const Options& options, const AidlTypenames& typenames,
       header = BuildServerHeader(typenames, interface, options);
       break;
     default:
-      LOG(FATAL) << "aidl internal error";
+      AIDL_FATAL(interface) << "aidl internal error";
   }
   if (!header) {
-    LOG(ERROR) << "aidl internal error: Failed to generate header.";
+    AIDL_ERROR(interface) << "aidl internal error: Failed to generate header.";
     return false;
   }
 
@@ -1317,17 +1331,17 @@ bool GenerateCppParcel(const string& output_file, const Options& options,
     // Need to write all of the source in the header file, not cpp file.
     source->Write(header_writer.get());
   }
-  CHECK(header_writer->Close());
+  AIDL_FATAL_IF(!header_writer->Close(), header_path);
 
   // TODO(b/111362593): no unecessary files just to have consistent output with interfaces
   const string bp_header = options.OutputHeaderDir() + HeaderFile(parcelable, ClassNames::CLIENT);
   unique_ptr<CodeWriter> bp_writer(io_delegate.GetCodeWriter(bp_header));
   bp_writer->Write("#error TODO(b/111362593) parcelables do not have bp classes");
-  CHECK(bp_writer->Close());
+  AIDL_FATAL_IF(!bp_writer->Close(), bp_header);
   const string bn_header = options.OutputHeaderDir() + HeaderFile(parcelable, ClassNames::SERVER);
   unique_ptr<CodeWriter> bn_writer(io_delegate.GetCodeWriter(bn_header));
   bn_writer->Write("#error TODO(b/111362593) parcelables do not have bn classes");
-  CHECK(bn_writer->Close());
+  AIDL_FATAL_IF(!bn_writer->Close(), bn_header);
 
   unique_ptr<CodeWriter> source_writer = io_delegate.GetCodeWriter(output_file);
   if (parcelable.IsGeneric()) {
@@ -1337,7 +1351,7 @@ bool GenerateCppParcel(const string& output_file, const Options& options,
   } else {
     source->Write(source_writer.get());
   }
-  CHECK(source_writer->Close());
+  AIDL_FATAL_IF(!source_writer->Close(), output_file);
 
   return true;
 }
@@ -1347,21 +1361,21 @@ bool GenerateCppParcelDeclaration(const std::string& filename, const Options& op
   CodeWriterPtr source_writer = io_delegate.GetCodeWriter(filename);
   *source_writer
       << "// This file is intentionally left blank as placeholder for parcel declaration.\n";
-  CHECK(source_writer->Close());
+  AIDL_FATAL_IF(!source_writer->Close(), filename);
 
   // TODO(b/111362593): no unecessary files just to have consistent output with interfaces
   const string header_path = options.OutputHeaderDir() + HeaderFile(parcelable, ClassNames::RAW);
   unique_ptr<CodeWriter> header_writer(io_delegate.GetCodeWriter(header_path));
   header_writer->Write("#error TODO(b/111362593) parcelables do not have headers");
-  CHECK(header_writer->Close());
+  AIDL_FATAL_IF(!header_writer->Close(), header_path);
   const string bp_header = options.OutputHeaderDir() + HeaderFile(parcelable, ClassNames::CLIENT);
   unique_ptr<CodeWriter> bp_writer(io_delegate.GetCodeWriter(bp_header));
   bp_writer->Write("#error TODO(b/111362593) parcelables do not have bp classes");
-  CHECK(bp_writer->Close());
+  AIDL_FATAL_IF(!bp_writer->Close(), bp_header);
   const string bn_header = options.OutputHeaderDir() + HeaderFile(parcelable, ClassNames::SERVER);
   unique_ptr<CodeWriter> bn_writer(io_delegate.GetCodeWriter(bn_header));
   bn_writer->Write("#error TODO(b/111362593) parcelables do not have bn classes");
-  CHECK(bn_writer->Close());
+  AIDL_FATAL_IF(!bn_writer->Close(), bn_header);
 
   return true;
 }
@@ -1376,21 +1390,21 @@ bool GenerateCppEnumDeclaration(const std::string& filename, const Options& opti
   const string header_path = options.OutputHeaderDir() + HeaderFile(enum_decl, ClassNames::RAW);
   unique_ptr<CodeWriter> header_writer(io_delegate.GetCodeWriter(header_path));
   header->Write(header_writer.get());
-  CHECK(header_writer->Close());
+  AIDL_FATAL_IF(!header_writer->Close(), header_path);
 
   // TODO(b/111362593): no unnecessary files just to have consistent output with interfaces
   CodeWriterPtr source_writer = io_delegate.GetCodeWriter(filename);
   *source_writer
       << "// This file is intentionally left blank as placeholder for enum declaration.\n";
-  CHECK(source_writer->Close());
+  AIDL_FATAL_IF(!source_writer->Close(), filename);
   const string bp_header = options.OutputHeaderDir() + HeaderFile(enum_decl, ClassNames::CLIENT);
   unique_ptr<CodeWriter> bp_writer(io_delegate.GetCodeWriter(bp_header));
   bp_writer->Write("#error TODO(b/111362593) enums do not have bp classes");
-  CHECK(bp_writer->Close());
+  AIDL_FATAL_IF(!bp_writer->Close(), bp_header);
   const string bn_header = options.OutputHeaderDir() + HeaderFile(enum_decl, ClassNames::SERVER);
   unique_ptr<CodeWriter> bn_writer(io_delegate.GetCodeWriter(bn_header));
   bn_writer->Write("#error TODO(b/111362593) enums do not have bn classes");
-  CHECK(bn_writer->Close());
+  AIDL_FATAL_IF(!bn_writer->Close(), bn_header);
 
   return true;
 }
@@ -1417,7 +1431,7 @@ bool GenerateCpp(const string& output_file, const Options& options, const AidlTy
     return GenerateCppInterface(output_file, options, typenames, *interface, io_delegate);
   }
 
-  CHECK(false) << "Unrecognized type sent for cpp generation.";
+  AIDL_FATAL(defined_type) << "Unrecognized type sent for cpp generation.";
   return false;
 }
 

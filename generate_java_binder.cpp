@@ -945,7 +945,7 @@ static void generate_interface_descriptors(const Options& options, const AidlInt
 static void compute_outline_methods(const AidlInterface* iface,
                                     const std::shared_ptr<StubClass> stub, size_t outline_threshold,
                                     size_t non_outline_count) {
-  CHECK_LE(non_outline_count, outline_threshold);
+  AIDL_FATAL_IF(non_outline_count > outline_threshold, iface);
   // We'll outline (create sub methods) if there are more than min_methods
   // cases.
   stub->transact_outline = iface->GetMethods().size() > outline_threshold;
@@ -1108,13 +1108,15 @@ std::unique_ptr<Class> generate_binder_interface_class(const AidlInterface* ifac
       }
       case AidlConstantValue::Type::BOOLEAN:  // fall-through
       case AidlConstantValue::Type::INT8:     // fall-through
-      case AidlConstantValue::Type::INT32: {
+      case AidlConstantValue::Type::INT32:    // fall-through
+      // Type promotion may cause this. Value should be small enough to fit in int32.
+      case AidlConstantValue::Type::INT64: {
         generate_int_constant(interface.get(), constant->GetName(),
                               constant->ValueString(ConstantValueDecorator));
         break;
       }
       default: {
-        LOG(FATAL) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
+        AIDL_FATAL(value) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
       }
     }
   }
