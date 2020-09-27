@@ -37,6 +37,11 @@ using std::unique_ptr;
 using std::vector;
 
 template <typename T>
+constexpr int CLZ(T x) {
+  return (sizeof(T) == sizeof(uint64_t)) ? __builtin_clzl(x) : __builtin_clz(x);
+}
+
+template <typename T>
 class OverflowGuard {
  public:
   OverflowGuard(T value) : mValue(value) {}
@@ -108,7 +113,7 @@ class OverflowGuard {
     return mValue >> o;
   }
   T operator<<(T o) {
-    if (o < 0 || o > static_cast<T>(sizeof(T) * 8) || mValue < 0) {
+    if (o < 0 || mValue < 0 || o > CLZ(mValue)) {
       mOverflowed = true;
       return 0;
     }
@@ -831,6 +836,9 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
   }
   is_valid_ = AreCompatibleTypes(left_val_->final_type_, right_val_->final_type_);
   if (!is_valid_) {
+    AIDL_ERROR(this) << "Cannot perform operation '" << op_ << "' on "
+                     << ToString(right_val_->GetType()) << " and " << ToString(left_val_->GetType())
+                     << ".";
     return false;
   }
 
