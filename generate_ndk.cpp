@@ -22,6 +22,8 @@
 #include "aidl_to_ndk.h"
 #include "logging.h"
 
+#include <android-base/stringprintf.h>
+
 namespace android {
 namespace aidl {
 namespace ndk {
@@ -43,23 +45,23 @@ void GenerateNdkInterface(const string& output_file, const Options& options,
   const string i_header = options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::RAW);
   unique_ptr<CodeWriter> i_writer(io_delegate.GetCodeWriter(i_header));
   GenerateInterfaceHeader(*i_writer, types, defined_type, options);
-  CHECK(i_writer->Close());
+  AIDL_FATAL_IF(!i_writer->Close(), i_header);
 
   const string bp_header =
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::CLIENT);
   unique_ptr<CodeWriter> bp_writer(io_delegate.GetCodeWriter(bp_header));
   GenerateClientHeader(*bp_writer, types, defined_type, options);
-  CHECK(bp_writer->Close());
+  AIDL_FATAL_IF(!bp_writer->Close(), bp_header);
 
   const string bn_header =
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::SERVER);
   unique_ptr<CodeWriter> bn_writer(io_delegate.GetCodeWriter(bn_header));
   GenerateServerHeader(*bn_writer, types, defined_type, options);
-  CHECK(bn_writer->Close());
+  AIDL_FATAL_IF(!bn_writer->Close(), bn_header);
 
   unique_ptr<CodeWriter> source_writer = io_delegate.GetCodeWriter(output_file);
   GenerateSource(*source_writer, types, defined_type, options);
-  CHECK(source_writer->Close());
+  AIDL_FATAL_IF(!source_writer->Close(), output_file);
 }
 
 void GenerateNdkParcel(const string& output_file, const Options& options,
@@ -69,30 +71,35 @@ void GenerateNdkParcel(const string& output_file, const Options& options,
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::RAW);
   unique_ptr<CodeWriter> header_writer(io_delegate.GetCodeWriter(header_path));
   GenerateParcelHeader(*header_writer, types, defined_type, options);
-  CHECK(header_writer->Close());
+
+  unique_ptr<CodeWriter> source_writer(io_delegate.GetCodeWriter(output_file));
+  if (defined_type.IsGeneric()) {
+    // Need to write source to header if this is a template
+    GenerateParcelSource(*header_writer, types, defined_type, options);
+  } else {
+    GenerateParcelSource(*source_writer, types, defined_type, options);
+  }
+  (source_writer->Close());
+  AIDL_FATAL_IF(!header_writer->Close(), header_path);
 
   const string bp_header =
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::CLIENT);
   unique_ptr<CodeWriter> bp_writer(io_delegate.GetCodeWriter(bp_header));
   *bp_writer << "#error TODO(b/111362593) defined_types do not have bp classes\n";
-  CHECK(bp_writer->Close());
+  AIDL_FATAL_IF(!bp_writer->Close(), bp_header);
 
   const string bn_header =
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::SERVER);
   unique_ptr<CodeWriter> bn_writer(io_delegate.GetCodeWriter(bn_header));
   *bn_writer << "#error TODO(b/111362593) defined_types do not have bn classes\n";
-  CHECK(bn_writer->Close());
-
-  unique_ptr<CodeWriter> source_writer = io_delegate.GetCodeWriter(output_file);
-  GenerateParcelSource(*source_writer, types, defined_type, options);
-  CHECK(source_writer->Close());
+  AIDL_FATAL_IF(!bn_writer->Close(), bn_header);
 }
 
 void GenerateNdkParcelDeclaration(const std::string& filename, const IoDelegate& io_delegate) {
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
   *code_writer
       << "// This file is intentionally left blank as placeholder for parcel declaration.\n";
-  CHECK(code_writer->Close());
+  AIDL_FATAL_IF(!code_writer->Close(), filename);
 }
 
 void GenerateNdkEnumDeclaration(const string& output_file, const Options& options,
@@ -102,24 +109,24 @@ void GenerateNdkEnumDeclaration(const string& output_file, const Options& option
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::RAW);
   unique_ptr<CodeWriter> header_writer(io_delegate.GetCodeWriter(header_path));
   GenerateEnumHeader(*header_writer, types, defined_type, options);
-  CHECK(header_writer->Close());
+  AIDL_FATAL_IF(!header_writer->Close(), header_path);
 
   const string bp_header =
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::CLIENT);
   unique_ptr<CodeWriter> bp_writer(io_delegate.GetCodeWriter(bp_header));
   *bp_writer << "#error TODO(b/111362593) enums do not have bp classes\n";
-  CHECK(bp_writer->Close());
+  AIDL_FATAL_IF(!bp_writer->Close(), bp_header);
 
   const string bn_header =
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::SERVER);
   unique_ptr<CodeWriter> bn_writer(io_delegate.GetCodeWriter(bn_header));
   *bn_writer << "#error TODO(b/111362593) enums do not have bn classes\n";
-  CHECK(bn_writer->Close());
+  AIDL_FATAL_IF(!bn_writer->Close(), bn_header);
 
   unique_ptr<CodeWriter> source_writer = io_delegate.GetCodeWriter(output_file);
   *source_writer
       << "// This file is intentionally left blank as placeholder for enum declaration.\n";
-  CHECK(source_writer->Close());
+  AIDL_FATAL_IF(!source_writer->Close(), output_file);
 }
 
 void GenerateNdk(const string& output_file, const Options& options, const AidlTypenames& types,
@@ -147,7 +154,7 @@ void GenerateNdk(const string& output_file, const Options& options, const AidlTy
     return;
   }
 
-  CHECK(false) << "Unrecognized type sent for NDK cpp generation.";
+  AIDL_FATAL(defined_type) << "Unrecognized type sent for NDK cpp generation.";
 }
 namespace internals {
 
@@ -210,6 +217,12 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
       includes.insert(headerFilePath(method->GetType()));
       for (const auto& argument : method->GetArguments()) {
         includes.insert(headerFilePath(argument->GetType()));
+        // Check the method arguments for generic type arguments
+        if (argument->GetType().IsGeneric()) {
+          for (const auto& type_argument : argument->GetType().GetTypeParameters()) {
+            includes.insert(headerFilePath(*type_argument));
+          }
+        }
       }
     }
   }
@@ -218,6 +231,12 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
   if (parcelable != nullptr) {
     for (const auto& field : parcelable->GetFields()) {
       includes.insert(headerFilePath(field->GetType()));
+      // Check the fields for generic type arguments
+      if (field->GetType().IsGeneric()) {
+        for (const auto& type_argument : field->GetType().GetTypeParameters()) {
+          includes.insert(headerFilePath(*type_argument));
+        }
+      }
     }
   }
 
@@ -253,8 +272,9 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
 static void GenerateConstantDeclarations(CodeWriter& out, const AidlInterface& interface) {
   for (const auto& constant : interface.GetConstantDeclarations()) {
     const AidlConstantValue& value = constant->GetValue();
-    CHECK(value.GetType() != AidlConstantValue::Type::UNARY &&
-          value.GetType() != AidlConstantValue::Type::BINARY);
+    AIDL_FATAL_IF(value.GetType() == AidlConstantValue::Type::UNARY ||
+                      value.GetType() == AidlConstantValue::Type::BINARY,
+                  value);
     if (value.GetType() == AidlConstantValue::Type::STRING) {
       out << "static const char* " << constant->GetName() << ";\n";
     }
@@ -264,8 +284,9 @@ static void GenerateConstantDeclarations(CodeWriter& out, const AidlInterface& i
   bool hasIntegralConstant = false;
   for (const auto& constant : interface.GetConstantDeclarations()) {
     const AidlConstantValue& value = constant->GetValue();
-    CHECK(value.GetType() != AidlConstantValue::Type::UNARY &&
-          value.GetType() != AidlConstantValue::Type::BINARY);
+    AIDL_FATAL_IF(value.GetType() == AidlConstantValue::Type::UNARY ||
+                      value.GetType() == AidlConstantValue::Type::BINARY,
+                  value);
     if (value.GetType() == AidlConstantValue::Type::BOOLEAN ||
         value.GetType() == AidlConstantValue::Type::INT8 ||
         value.GetType() == AidlConstantValue::Type::INT32) {
@@ -295,8 +316,9 @@ static void GenerateConstantDefinitions(CodeWriter& out, const AidlInterface& in
 
   for (const auto& constant : interface.GetConstantDeclarations()) {
     const AidlConstantValue& value = constant->GetValue();
-    CHECK(value.GetType() != AidlConstantValue::Type::UNARY &&
-          value.GetType() != AidlConstantValue::Type::BINARY);
+    AIDL_FATAL_IF(value.GetType() == AidlConstantValue::Type::UNARY ||
+                      value.GetType() == AidlConstantValue::Type::BINARY,
+                  value);
     if (value.GetType() == AidlConstantValue::Type::STRING) {
       out << "const char* " << clazz << "::" << constant->GetName() << " = "
           << constant->ValueString(ConstantValueDecorator) << ";\n";
@@ -926,14 +948,21 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
 
   out << "#pragma once\n";
   out << "#include <android/binder_interface_utils.h>\n";
+  out << "#include <android/binder_parcelable_utils.h>\n";
   out << "\n";
 
   GenerateHeaderIncludes(out, types, defined_type);
 
   EnterNdkNamespace(out, defined_type);
+  out << cpp::TemplateDecl(defined_type);
   out << "class " << clazz << " {\n";
   out << "public:\n";
   out.Indent();
+  if (defined_type.IsFixedSize()) {
+    out << "typedef std::true_type fixed_size;\n";
+  } else {
+    out << "typedef std::false_type fixed_size;\n";
+  }
   out << "static const char* descriptor;\n";
   out << "\n";
   for (const auto& variable : defined_type.GetFields()) {
@@ -947,8 +976,8 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
   out << "binder_status_t readFromParcel(const AParcel* parcel);\n";
   out << "binder_status_t writeToParcel(AParcel* parcel) const;\n";
 
-  out << "static const bool _aidl_is_stable = "
-      << (defined_type.IsVintfStability() ? "true" : "false") << ";\n";
+  out << "static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::"
+      << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL") << ";\n";
   out.Dedent();
   out << "};\n";
   LeaveNdkNamespace(out, defined_type);
@@ -956,7 +985,14 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
                           const AidlStructuredParcelable& defined_type,
                           const Options& /*options*/) {
-  const std::string clazz = ClassName(defined_type, ClassNames::RAW);
+  std::string clazz = ClassName(defined_type, ClassNames::RAW);
+  if (defined_type.IsGeneric()) {
+    std::vector<std::string> template_params;
+    for (const auto& parameter : defined_type.GetTypeParameters()) {
+      template_params.push_back(parameter);
+    }
+    clazz += base::StringPrintf("<%s>", base::Join(template_params, ", ").c_str());
+  }
 
   out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
       << "\"\n";
@@ -964,10 +1000,12 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   GenerateSourceIncludes(out, types, defined_type);
   out << "\n";
   EnterNdkNamespace(out, defined_type);
+  out << cpp::TemplateDecl(defined_type);
   out << "const char* " << clazz << "::" << kDescriptor << " = \""
       << defined_type.GetCanonicalName() << "\";\n";
   out << "\n";
 
+  out << cpp::TemplateDecl(defined_type);
   out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* parcel) {\n";
   out.Indent();
   out << "int32_t _aidl_parcelable_size;\n";
@@ -992,6 +1030,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "}\n";
 
+  out << cpp::TemplateDecl(defined_type);
   out << "binder_status_t " << clazz << "::writeToParcel(AParcel* parcel) const {\n";
   out.Indent();
   out << "binder_status_t _aidl_ret_status;\n";

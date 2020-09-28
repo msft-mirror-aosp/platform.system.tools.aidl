@@ -103,9 +103,9 @@ static bool HasValidNameComponents(const AidlDefinedType& defined) {
 }
 
 bool AidlTypenames::IsIgnorableImport(const string& import) const {
-  static set<string> ignore_import = {"android.os.IInterface",   "android.os.IBinder",
-                                      "android.os.Parcelable",   "android.os.Parcel",
-                                      "android.content.Context", "java.lang.String"};
+  static set<string> ignore_import = {
+      "android.os.IInterface",   "android.os.IBinder", "android.os.Parcelable", "android.os.Parcel",
+      "android.content.Context", "java.lang.String",   "java.lang.CharSequence"};
   // these known built-in types don't need to be imported
   const bool in_ignore_import = ignore_import.find(import) != ignore_import.end();
   // an already defined type doesn't need to be imported again unless it is from
@@ -132,7 +132,7 @@ bool AidlTypenames::AddDocument(std::unique_ptr<AidlDocument> doc) {
 }
 
 const AidlDocument& AidlTypenames::MainDocument() const {
-  CHECK(documents_.size() != 0) << "Main document doesn't exist";
+  AIDL_FATAL_IF(documents_.size() == 0, AIDL_LOCATION_HERE) << "Main document doesn't exist";
   return *(documents_[0]);
 }
 
@@ -251,9 +251,12 @@ bool AidlTypenames::CanBeFixedSize(const AidlTypeSpecifier& type) const {
   if (IsPrimitiveTypename(name)) {
     return true;
   }
+  if (IsBuiltinTypename(name)) {
+    return false;
+  }
   const AidlDefinedType* t = TryGetDefinedType(type.GetName());
   AIDL_FATAL_IF(t == nullptr, type)
-      << "Failed to look up type. Cannot determine if it can be fixed size.";
+      << "Failed to look up type. Cannot determine if it can be fixed size: " << type.GetName();
 
   if (t->AsEnumDeclaration()) {
     return true;
@@ -273,7 +276,7 @@ bool AidlTypenames::CanBeOutParameter(const AidlTypeSpecifier& type) const {
            type.GetName() == "ParcelFileDescriptor";
   }
   const AidlDefinedType* t = TryGetDefinedType(type.GetName());
-  CHECK(t != nullptr) << "Unrecognized type: '" << type.GetName() << "'";
+  AIDL_FATAL_IF(t == nullptr, type) << "Unrecognized type: '" << type.GetName() << "'";
   // An 'out' field is passed as an argument, so it doesn't make sense if it is immutable.
   return t->AsParcelable() != nullptr && !t->IsJavaOnlyImmutable();
 }

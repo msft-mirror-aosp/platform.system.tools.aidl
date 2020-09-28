@@ -388,7 +388,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableDefineAnnotations) {
   const string expected_stderr =
       "ERROR: a/Foo.aidl:1.32-36: 'nullable' is not a supported annotation for this node. "
       "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, JavaDebug, "
-      "JavaOnlyImmutable, FixedSize\n";
+      "JavaOnlyImmutable, FixedSize, RustDerive\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -874,7 +874,7 @@ TEST_P(AidlTest, FailOnEmptyListWithComma) {
 TEST_P(AidlTest, FailOnMalformedConstHexValue) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: Could not parse hexvalue: 0xffffffffffffffffff at p/IFoo.aidl:3.50-70.\n";
+      "ERROR: p/IFoo.aidl:3.50-71: Could not parse hexvalue: 0xffffffffffffffffff\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -1158,46 +1158,62 @@ TEST_P(AidlTest, RejectsPrimitiveListInStableAidl) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_F(AidlTest, ExtensionTest) {
+TEST_P(AidlTest, ExtensionTest) {
+  CaptureStderr();
   string extendable_parcelable =
       "package a; parcelable Data {\n"
       "  ParcelableHolder extension;\n"
       "  ParcelableHolder extension2;\n"
       "}";
-  EXPECT_NE(nullptr,
-            Parse("a/Data.aidl", extendable_parcelable, typenames_, Options::Language::JAVA));
-  EXPECT_EQ(nullptr,
-            Parse("a/Data.aidl", extendable_parcelable, typenames_, Options::Language::CPP));
-  EXPECT_EQ(nullptr,
-            Parse("a/Data.aidl", extendable_parcelable, typenames_, Options::Language::NDK));
-  EXPECT_EQ(nullptr,
-            Parse("a/Data.aidl", extendable_parcelable, typenames_, Options::Language::RUST));
-
+  if (GetLanguage() == Options::Language::NDK || GetLanguage() == Options::Language::RUST) {
+    EXPECT_EQ(nullptr, Parse("a/Data.aidl", extendable_parcelable, typenames_, GetLanguage()));
+    EXPECT_EQ(
+        "ERROR: a/Data.aidl:2.1-19: The NDK and Rust backend does not support ParcelableHolder "
+        "yet.\n",
+        GetCapturedStderr());
+  } else {
+    EXPECT_NE(nullptr, Parse("a/Data.aidl", extendable_parcelable, typenames_, GetLanguage()));
+    EXPECT_EQ("", GetCapturedStderr());
+  }
+}
+TEST_P(AidlTest, ParcelableHolderAsReturnType) {
+  CaptureStderr();
   string parcelableholder_return_interface =
       "package a; interface IFoo {\n"
       "  ParcelableHolder foo();\n"
       "}";
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_,
-                           Options::Language::JAVA));
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_,
-                           Options::Language::CPP));
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_,
-                           Options::Language::NDK));
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_,
-                           Options::Language::RUST));
+  EXPECT_EQ(nullptr,
+            Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_, GetLanguage()));
 
+  if (GetLanguage() == Options::Language::NDK || GetLanguage() == Options::Language::RUST) {
+    EXPECT_EQ(
+        "ERROR: a/IFoo.aidl:2.1-19: The NDK and Rust backend does not support ParcelableHolder "
+        "yet.\n",
+        GetCapturedStderr());
+    return;
+  }
+  EXPECT_EQ("ERROR: a/IFoo.aidl:2.19-23: ParcelableHolder cannot be a return type\n",
+            GetCapturedStderr());
+}
+
+TEST_P(AidlTest, ParcelableHolderAsArgumentType) {
+  CaptureStderr();
   string extendable_parcelable_arg_interface =
       "package a; interface IFoo {\n"
       "  void foo(in ParcelableHolder ph);\n"
       "}";
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_,
-                           Options::Language::JAVA));
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_,
-                           Options::Language::CPP));
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_,
-                           Options::Language::NDK));
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_,
-                           Options::Language::RUST));
+  EXPECT_EQ(nullptr,
+            Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_, GetLanguage()));
+
+  if (GetLanguage() == Options::Language::NDK || GetLanguage() == Options::Language::RUST) {
+    EXPECT_EQ(
+        "ERROR: a/IFoo.aidl:2.14-31: The NDK and Rust backend does not support ParcelableHolder "
+        "yet.\n",
+        GetCapturedStderr());
+    return;
+  }
+  EXPECT_EQ("ERROR: a/IFoo.aidl:2.31-34: ParcelableHolder cannot be an argument type\n",
+            GetCapturedStderr());
 }
 
 TEST_F(AidlTest, ApiDump) {
@@ -2165,6 +2181,7 @@ TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
                                "  ParcelFileDescriptor d;"
                                "  IBinder e;"
                                "  List<String> f;"
+                               "  int isFixedSize;"
                                "}");
   io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { int a; }");
   Options options =
@@ -2390,6 +2407,31 @@ TEST_F(AidlTest, ParseJavaPassthroughAnnotation) {
   EXPECT_EQ(0, ::android::aidl::compile_aidl(rust_options, io_delegate_));
 }
 
+TEST_F(AidlTest, ParseRustDerive) {
+  io_delegate_.SetFileContents("a/Foo.aidl", R"(package a;
+    @RustDerive(Clone=true, Copy=false)
+    parcelable Foo {
+        int a;
+    })");
+
+  Options rust_options = Options::From("aidl --lang=rust -o out a/Foo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(rust_options, io_delegate_));
+
+  string rust_out;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.rs", &rust_out));
+  EXPECT_THAT(rust_out, testing::HasSubstr("#[derive(Debug, Clone)]"));
+
+  // Other backends shouldn't be bothered
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/Foo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(cpp_options, io_delegate_));
+
+  Options ndk_options = Options::From("aidl --lang=ndk -o out -h out a/Foo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(ndk_options, io_delegate_));
+
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+}
+
 class AidlOutputPathTest : public AidlTest {
  protected:
   void SetUp() override {
@@ -2459,7 +2501,7 @@ TEST_P(AidlTest, FailOnOutOfBoundsInt32MinConstInt) {
 TEST_P(AidlTest, FailOnOutOfBoundsInt64MaxConstInt) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: Could not parse integer: 21474836509999999999999999 at p/IFoo.aidl:3.59-85.\n";
+      "ERROR: p/IFoo.aidl:3.59-86: Could not parse integer: 21474836509999999999999999\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -2475,7 +2517,7 @@ TEST_P(AidlTest, FailOnOutOfBoundsInt64MaxConstInt) {
 TEST_P(AidlTest, FailOnOutOfBoundsInt64MinConstInt) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: Could not parse integer: 21474836509999999999999999 at p/IFoo.aidl:3.61-86.\n";
+      "ERROR: p/IFoo.aidl:3.61-87: Could not parse integer: 21474836509999999999999999\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -2571,5 +2613,37 @@ TEST_P(AidlTest, ImmtuableParcelableFieldNameRestriction) {
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
+
+TEST_P(AidlTest, GenericStructuredParcelable) {
+  io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T, U> { int a; int A; }");
+  Options options =
+      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  const string expected_stderr = "";
+  CaptureStderr();
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
+  io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { int a; int A; }");
+  Options options =
+      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  const string expected_stderr =
+      "ERROR: Foo.aidl:1.11-15: Every type parameter should be unique.\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
+  io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { T a; int A; }");
+  Options options =
+      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  const string expected_stderr = "ERROR: Foo.aidl:1.22-24: Failed to resolve 'T'\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 }  // namespace aidl
 }  // namespace android

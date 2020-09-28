@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package android.aidl.tests.extension;
+package android.aidl.tests;
 
-parcelable ExtendableParcelable {
-    int a;
-    @utf8InCpp String b;
-    ParcelableHolder ext;
-    long c;
-    ParcelableHolder ext2;
+@FixedSize
+parcelable FixedSizeParcelable {
+  int a;
 }

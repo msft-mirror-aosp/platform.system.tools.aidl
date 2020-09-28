@@ -24,12 +24,14 @@
 #include <sstream>
 
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_rust.h"
 #include "code_writer.h"
 #include "logging.h"
 
+using android::base::Join;
 using std::ostringstream;
 using std::shared_ptr;
 using std::string;
@@ -415,12 +417,14 @@ bool GenerateRustInterface(const string& filename, const AidlInterface* iface,
       }
       case AidlConstantValue::Type::BOOLEAN:  // fall-through
       case AidlConstantValue::Type::INT8:     // fall-through
-      case AidlConstantValue::Type::INT32: {
+      case AidlConstantValue::Type::INT32:    // fall-through
+      // Type promotion may cause this. Value should be small enough to fit in int32.
+      case AidlConstantValue::Type::INT64: {
         const_type = "i32";
         break;
       }
       default: {
-        LOG(FATAL) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
+        AIDL_FATAL(value) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
       }
     }
     *code_writer << "pub const " << constant->GetName() << ": " << const_type << " = "
@@ -498,23 +502,20 @@ void GenerateParcelSerialize(CodeWriter& out, const AidlStructuredParcelable* pa
   out << "} else {\n";
   out << "  return parcel.write(&0i32);\n";
   out << "};\n";
-  out << "let start_pos = parcel.get_data_position();\n";
-  out << "parcel.write(&0i32)?;\n";
+  out << "parcel.sized_write(|subparcel| {\n";
+  out.Indent();
   for (const auto& variable : parcel->GetFields()) {
     if (!TypeHasDefault(variable->GetType(), typenames)) {
       out << "let __field_ref = this." << variable->GetName()
           << ".as_ref().ok_or(binder::StatusCode::UNEXPECTED_NULL)?;\n";
-      out << "parcel.write(__field_ref)?;\n";
+      out << "subparcel.write(__field_ref)?;\n";
     } else {
-      out << "parcel.write(&this." << variable->GetName() << ")?;\n";
+      out << "subparcel.write(&this." << variable->GetName() << ")?;\n";
     }
   }
-  out << "let end_pos = parcel.get_data_position();\n";
-  out << "let parcelable_size = (end_pos - start_pos) as i32;\n";
-  out << "unsafe { parcel.set_data_position(start_pos)?; }\n";
-  out << "parcel.write(&parcelable_size)?;\n";
-  out << "unsafe { parcel.set_data_position(end_pos)?; }\n";
   out << "Ok(())\n";
+  out.Dedent();
+  out << "})\n";
   out.Dedent();
   out << "}\n";
   out.Dedent();
@@ -570,6 +571,20 @@ bool GenerateRustParcel(const string& filename, const AidlStructuredParcelable* 
                         const AidlTypenames& typenames, const IoDelegate& io_delegate) {
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
 
+  // Debug is always derived because all Rust AIDL types implement it
+  // ParcelFileDescriptor doesn't support any of the others because
+  // it's a newtype over std::fs::File which only implements Debug
+  vector<string> derives{"Debug"};
+  const AidlAnnotation* derive_annotation = parcel->RustDerive();
+  if (derive_annotation != nullptr) {
+    for (const auto& name_and_param : derive_annotation->AnnotationParams(ConstantValueDecorator)) {
+      if (name_and_param.second == "true") {
+        derives.push_back(name_and_param.first);
+      }
+    }
+  }
+
+  *code_writer << "#[derive(" << Join(derives, ", ") << ")]\n";
   *code_writer << "pub struct " << parcel->GetName() << " {\n";
   code_writer->Indent();
   for (const auto& variable : parcel->GetFields()) {
@@ -595,12 +610,16 @@ bool GenerateRustEnumDeclaration(const string& filename, const AidlEnumDeclarati
   auto backing_type = RustNameOf(aidl_backing_type, typenames, StorageMode::VALUE);
 
   *code_writer << "#![allow(non_upper_case_globals)]\n";
-  *code_writer << "pub type " << enum_decl->GetName() << " = " << backing_type << ";\n";
+  *code_writer << "use binder::declare_binder_enum;\n";
+  *code_writer << "declare_binder_enum! { " << enum_decl->GetName() << " : " << backing_type
+               << " {\n";
+  code_writer->Indent();
   for (const auto& enumerator : enum_decl->GetEnumerators()) {
     auto value = enumerator->GetValue()->ValueString(aidl_backing_type, ConstantValueDecorator);
-    *code_writer << "pub const " << enumerator->GetName() << ": " << enum_decl->GetName() << " = "
-                 << value << ";\n";
+    *code_writer << enumerator->GetName() << " = " << value << ",\n";
   }
+  code_writer->Dedent();
+  *code_writer << "} }\n";
 
   GenerateMangledAlias(*code_writer, enum_decl);
 
@@ -624,7 +643,7 @@ bool GenerateRust(const string& filename, const AidlDefinedType* defined_type,
     return GenerateRustInterface(filename, interface, typenames, io_delegate, options);
   }
 
-  CHECK(false) << "Unrecognized type sent for Rust generation.";
+  AIDL_FATAL(filename) << "Unrecognized type sent for Rust generation.";
   return false;
 }
 
