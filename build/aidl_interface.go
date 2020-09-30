@@ -907,6 +907,9 @@ type aidlInterfaceProperties struct {
 	// Whether the library can be installed on the vendor image.
 	Vendor_available *bool
 
+	// Whether the library can be loaded multiple times into the same process
+	Double_loadable *bool
+
 	// Whether the library can be used on host
 	Host_supported *bool
 
@@ -1234,7 +1237,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 	}
 
 	if i.shouldGenerateNdkBackend() {
-		if !proptools.Bool(i.properties.Vendor_available) {
+		{
 			unstableLib := addCppLibrary(mctx, i, currentVersion, langNdk)
 			if !i.hasVersion() {
 				libs = append(libs, addCppLibrary(mctx, i, unstableVersion, langNdk))
@@ -1247,17 +1250,19 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 				libs = append(libs, addCppLibrary(mctx, i, version, langNdk))
 			}
 		}
-		// TODO(b/121157555): combine with '-ndk' variant
-		unstableLib := addCppLibrary(mctx, i, currentVersion, langNdkPlatform)
-		if !i.hasVersion() {
-			libs = append(libs, addCppLibrary(mctx, i, unstableVersion, langNdkPlatform))
-		}
-		if needToCheckUnstableVersion {
-			addUnstableModule(mctx, unstableLib)
-		}
-		libs = append(libs, unstableLib)
-		for _, version := range versionsForCpp {
-			libs = append(libs, addCppLibrary(mctx, i, version, langNdkPlatform))
+		{
+			// TODO(b/121157555): combine with '-ndk' variant
+			unstableLib := addCppLibrary(mctx, i, currentVersion, langNdkPlatform)
+			if !i.hasVersion() {
+				libs = append(libs, addCppLibrary(mctx, i, unstableVersion, langNdkPlatform))
+			}
+			if needToCheckUnstableVersion {
+				addUnstableModule(mctx, unstableLib)
+			}
+			libs = append(libs, unstableLib)
+			for _, version := range versionsForCpp {
+				libs = append(libs, addCppLibrary(mctx, i, version, langNdkPlatform))
+			}
 		}
 	}
 	versionsForJava := i.properties.Versions
@@ -1477,11 +1482,23 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, versionForMod
 		vendorAvailable = proptools.BoolPtr(false)
 	}
 
+	if lang == langNdk {
+		// TODO(b/121157555): when the NDK variant is its own variant, these wouldn't interact,
+		// but we can't create a vendor version of an NDK variant
+		//
+		// nil (unspecified) is used instead of false so that this can't conflict with
+		// 'vendor: true', for instance.
+		vendorAvailable = nil
+		overrideVndkProperties.Vndk.Enabled = proptools.BoolPtr(false)
+		overrideVndkProperties.Vndk.Support_system_process = proptools.BoolPtr(false)
+	}
+
 	mctx.CreateModule(cc.LibraryFactory, &ccProperties{
 		Name:                      proptools.StringPtr(cppModuleGen),
 		Vendor_available:          vendorAvailable,
 		Host_supported:            hostSupported,
 		Defaults:                  []string{"aidl-cpp-module-defaults"},
+		Double_loadable:           i.properties.Double_loadable,
 		Generated_sources:         []string{cppSourceGen},
 		Generated_headers:         []string{cppSourceGen},
 		Export_generated_headers:  []string{cppSourceGen},
