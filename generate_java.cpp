@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -32,6 +34,15 @@
 using std::unique_ptr;
 using ::android::aidl::java::Variable;
 using std::string;
+
+namespace {
+inline string get_setter_name(const AidlNode& context, const string& variablename) {
+  AIDL_FATAL_IF(variablename.size() <= 0, context) << "A field name cannot be empty.";
+  std::ostringstream out;
+  out << "set" << static_cast<char>(toupper(variablename[0])) << variablename.substr(1);
+  return out.str();
+}
+}  // namespace
 
 namespace android {
 namespace aidl {
@@ -89,7 +100,7 @@ bool generate_java(const std::string& filename, const AidlDefinedType* defined_t
     return generate_java_interface(filename, interface, typenames, io_delegate, options);
   }
 
-  CHECK(false) << "Unrecognized type sent for java generation.";
+  AIDL_FATAL(defined_type) << "Unrecognized type sent for Java generation.";
   return false;
 }
 
@@ -103,6 +114,10 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
   parcel_class->interfaces.push_back("android.os.Parcelable");
   parcel_class->annotations = generate_java_annotations(*parcel);
 
+  if (parcel->IsGeneric()) {
+    parcel_class->type += "<" + base::Join(parcel->GetTypeParameters(), ",") + ">";
+  }
+
   for (const auto& variable : parcel->GetFields()) {
     std::ostringstream out;
     out << variable->GetType().GetComments() << "\n";
@@ -110,16 +125,22 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
       out << a << "\n";
     }
     out << "public ";
-    if (variable->GetType().GetName() == "ParcelableHolder") {
+
+    if (variable->GetType().GetName() == "ParcelableHolder" || parcel->IsJavaOnlyImmutable()) {
       out << "final ";
     }
     out << JavaSignatureOf(variable->GetType(), typenames) << " " << variable->GetName();
-    if (variable->GetDefaultValue()) {
+    if (!parcel->IsJavaOnlyImmutable() && variable->GetDefaultValue()) {
       out << " = " << variable->ValueString(ConstantValueDecorator);
     } else if (variable->GetType().GetName() == "ParcelableHolder") {
       out << std::boolalpha;
-      out << " = new " << JavaSignatureOf(variable->GetType(), typenames) << "("
-          << parcel->IsVintfStability() << ")";
+      out << " = new " << JavaSignatureOf(variable->GetType(), typenames) << "(";
+      if (parcel->IsVintfStability()) {
+        out << "android.os.Parcelable.PARCELABLE_STABILITY_VINTF";
+      } else {
+        out << "android.os.Parcelable.PARCELABLE_STABILITY_LOCAL";
+      }
+      out << ")";
       out << std::noboolalpha;
     }
     out << ";\n";
@@ -127,10 +148,42 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
   }
 
   std::ostringstream out;
+  if (parcel->IsJavaOnlyImmutable()) {
+    auto builder_class = std::make_shared<Class>();
+    builder_class->modifiers = PUBLIC | FINAL | STATIC;
+    builder_class->what = Class::CLASS;
+    builder_class->type = "Builder";
 
+    out.str("");
+    for (const auto& variable : parcel->GetFields()) {
+      out << "private " << JavaSignatureOf(variable->GetType(), typenames) << " "
+          << variable->GetName();
+      if (variable->GetDefaultValue()) {
+        out << " = " << variable->ValueString(ConstantValueDecorator);
+      }
+      out << ";\n";
+      out << "public Builder " << get_setter_name(*variable, variable->GetName()) << "("
+          << JavaSignatureOf(variable->GetType(), typenames) << " " << variable->GetName()
+          << ") {\n"
+          << "  "
+          << "this." << variable->GetName() << " = " << variable->GetName() << ";\n"
+          << "  return this;\n"
+          << "}\n";
+    }
+    out << "public " << parcel->GetCanonicalName() << " build() {\n"
+        << "  return new " << parcel->GetCanonicalName() << "(";
+    std::vector<std::string> variables;
+    std::transform(parcel->GetFields().begin(), parcel->GetFields().end(),
+                   std::back_inserter(variables), [](const auto& f) { return f->GetName(); });
+    out << base::Join(variables, ", ") << ");\n"
+        << "}\n";
+    builder_class->elements.push_back(std::make_shared<LiteralClassElement>(out.str()));
+    parcel_class->elements.push_back(builder_class);
+  }
   if (parcel->IsVintfStability()) {
-    out << "public final boolean isStable() { return true; }\n";
-    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(out.str()));
+    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(
+        "@Override\n public final int getStability() { return "
+        "android.os.Parcelable.PARCELABLE_STABILITY_VINTF; }\n"));
   }
 
   out.str("");
@@ -139,9 +192,13 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
   out << "  @Override\n";
   out << "  public " << parcel->GetName()
       << " createFromParcel(android.os.Parcel _aidl_source) {\n";
-  out << "    " << parcel->GetName() << " _aidl_out = new " << parcel->GetName() << "();\n";
-  out << "    _aidl_out.readFromParcel(_aidl_source);\n";
-  out << "    return _aidl_out;\n";
+  if (parcel->IsJavaOnlyImmutable()) {
+    out << "    return internalCreateFromParcel(_aidl_source);\n";
+  } else {
+    out << "    " << parcel->GetName() << " _aidl_out = new " << parcel->GetName() << "();\n";
+    out << "    _aidl_out.readFromParcel(_aidl_source);\n";
+    out << "    return _aidl_out;\n";
+  }
   out << "  }\n";
   out << "  @Override\n";
   out << "  public " << parcel->GetName() << "[] newArray(int _aidl_size) {\n";
@@ -192,29 +249,78 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
 
   parcel_class->elements.push_back(write_method);
 
-  auto read_method = std::make_shared<Method>();
-  read_method->modifiers = PUBLIC | FINAL;
-  read_method->returnType = "void";
-  read_method->name = "readFromParcel";
-  read_method->parameters.push_back(parcel_variable);
-  read_method->statements = std::make_shared<StatementBlock>();
+  if (parcel->IsJavaOnlyImmutable()) {
+    auto constructor = std::make_shared<Method>();
+    constructor->modifiers = PUBLIC;
+    constructor->name = parcel->GetName();
+    constructor->statements = std::make_shared<StatementBlock>();
+    for (const auto& field : parcel->GetFields()) {
+      constructor->parameters.push_back(std::make_shared<Variable>(
+          JavaSignatureOf(field->GetType(), typenames), field->GetName()));
+      out.str("");
 
+      out << "this." << field->GetName() << " = ";
+      if (field->GetType().GetName() == "List") {
+        out << field->GetName() << " == null ? null : java.util.Collections.unmodifiableList("
+            << field->GetName() << ");\n";
+      } else if (field->GetType().GetName() == "Map") {
+        out << field->GetName() << " == null ? null : java.util.Collections.unmodifiableMap("
+            << field->GetName() << ");\n";
+      } else {
+        out << field->GetName() << ";\n";
+      }
+      constructor->statements->Add(std::make_shared<LiteralStatement>(out.str()));
+    }
+    parcel_class->elements.push_back(constructor);
+  }
+
+  // For an immutable parcelable, generate internalCreateFromParcel method.
+  // Otherwise, generate readFromParcel method.
+  auto read_or_create_method = std::make_shared<Method>();
+  if (parcel->IsJavaOnlyImmutable()) {
+    auto constructor = std::make_shared<Method>();
+    read_or_create_method->modifiers = PRIVATE | STATIC;
+    read_or_create_method->returnType = parcel->GetName();
+    read_or_create_method->name = "internalCreateFromParcel";
+    read_or_create_method->parameters.push_back(parcel_variable);
+    read_or_create_method->statements = std::make_shared<StatementBlock>();
+  } else {
+    read_or_create_method->modifiers = PUBLIC | FINAL;
+    read_or_create_method->returnType = "void";
+    read_or_create_method->name = "readFromParcel";
+    read_or_create_method->parameters.push_back(parcel_variable);
+    read_or_create_method->statements = std::make_shared<StatementBlock>();
+  }
   out.str("");
+  const string builder_variable = "_aidl_parcelable_builder";
+  if (parcel->IsJavaOnlyImmutable()) {
+    out << "Builder " << builder_variable << " = new Builder();\n";
+  }
   out << "int _aidl_start_pos = _aidl_parcel.dataPosition();\n"
       << "int _aidl_parcelable_size = _aidl_parcel.readInt();\n"
-      << "if (_aidl_parcelable_size < 0) return;\n"
-      << "try {\n";
+      << "try {\n"
+      << "  if (_aidl_parcelable_size < 0) return";
+  if (parcel->IsJavaOnlyImmutable()) {
+    out << " " << builder_variable << ".build()";
+  }
+  out << ";\n";
 
-  read_method->statements->Add(std::make_shared<LiteralStatement>(out.str()));
+  read_or_create_method->statements->Add(std::make_shared<LiteralStatement>(out.str()));
 
   out.str("");
-  out << "  if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;\n";
+  out << "  if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return";
+  if (parcel->IsJavaOnlyImmutable()) {
+    out << " " << builder_variable << ".build()";
+  }
+  out << ";\n";
 
   std::shared_ptr<LiteralStatement> sizeCheck = nullptr;
   // keep this across different fields in order to create the classloader
   // at most once.
   bool is_classloader_created = false;
   for (const auto& field : parcel->GetFields()) {
+    const auto field_variable_name =
+        (parcel->IsJavaOnlyImmutable() ? "_aidl_temp_" : "") + field->GetName();
     string code;
     CodeWriterPtr writer = CodeWriter::ForString(&code);
     CodeGeneratorContext context{
@@ -222,25 +328,67 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
         .typenames = typenames,
         .type = field->GetType(),
         .parcel = parcel_variable->name,
-        .var = field->GetName(),
+        .var = field_variable_name,
         .is_classloader_created = &is_classloader_created,
     };
     context.writer.Indent();
+    if (parcel->IsJavaOnlyImmutable()) {
+      context.writer.Write("%s %s;\n", JavaSignatureOf(field->GetType(), typenames).c_str(),
+                           field_variable_name.c_str());
+    }
     CreateFromParcelFor(context);
+    if (parcel->IsJavaOnlyImmutable()) {
+      context.writer.Write("%s.%s(%s);\n", builder_variable.c_str(),
+                           get_setter_name(*field, field->GetName()).c_str(),
+                           field_variable_name.c_str());
+    }
     writer->Close();
-    read_method->statements->Add(std::make_shared<LiteralStatement>(code));
+    read_or_create_method->statements->Add(std::make_shared<LiteralStatement>(code));
     if (!sizeCheck) sizeCheck = std::make_shared<LiteralStatement>(out.str());
-    read_method->statements->Add(sizeCheck);
+    read_or_create_method->statements->Add(sizeCheck);
   }
 
   out.str("");
   out << "} finally {\n"
-      << "  _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
-      << "}\n";
+      << "  if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {\n"
+      << "    throw new android.os.BadParcelableException(\"Overflow in the size of "
+         "parcelable\");\n"
+      << "  }\n"
+      << "  _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
+  if (parcel->IsJavaOnlyImmutable()) {
+    out << "  return " << builder_variable << ".build();\n";
+  }
+  out << "}\n";
 
-  read_method->statements->Add(std::make_shared<LiteralStatement>(out.str()));
+  read_or_create_method->statements->Add(std::make_shared<LiteralStatement>(out.str()));
 
-  parcel_class->elements.push_back(read_method);
+  parcel_class->elements.push_back(read_or_create_method);
+
+  if (parcel->IsJavaDebug()) {
+    out.str("");
+    out << "@Override\n";
+    out << "public String toString() {\n";
+    out << "  java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(";
+    out << "\", \", \"{\", \"}\");\n";
+    for (const auto& field : parcel->GetFields()) {
+      std::string code;
+      CodeWriterPtr writer = CodeWriter::ForString(&code);
+      CodeGeneratorContext context{
+          .writer = *(writer.get()),
+          .typenames = typenames,
+          .type = field->GetType(),
+          .parcel = parcel_variable->name,
+          .var = field->GetName(),
+          .is_classloader_created = &is_classloader_created,
+      };
+      ToStringFor(context);
+      writer->Close();
+      out << "  _aidl_sj.add(\"" << field->GetName() << ": \" + (" << code << "));\n";
+    }
+    out << "  return \"" << parcel->GetCanonicalName() << "\" + _aidl_sj.toString()  ;\n";
+    out << "}\n";
+    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(out.str()));
+  }
 
   auto describe_contents_method = std::make_shared<Method>();
   describe_contents_method->modifiers = PUBLIC | OVERRIDE;

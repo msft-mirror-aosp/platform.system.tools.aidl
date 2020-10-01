@@ -18,10 +18,14 @@ package android.aidl.tests;
 
 import android.aidl.tests.ByteEnum;
 import android.aidl.tests.INamedCallback;
+import android.aidl.tests.GenericStructuredParcelable;
 import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.SimpleParcelable;
 import android.aidl.tests.StructuredParcelable;
+import android.aidl.tests.IOldName;
+import android.aidl.tests.INewName;
+import android.aidl.tests.extension.ExtendableParcelable;
 import android.os.PersistableBundle;
 
 interface ITestService {
@@ -44,6 +48,19 @@ interface ITestService {
 
   const @utf8InCpp String STRING_TEST_CONSTANT_UTF8 = "baz";
 
+  // This is to emulate a method that is added after the service is implemented.
+  // So the client cannot assume that a call to this method will be successful
+  // or not. However, inside the test environment, we can't build client and
+  // the server with different version of this AIDL file. So, we let the server
+  // actually implement this and intercept the dispatch to the method
+  // inside onTransact().
+  // WARNING: Must be first method.
+  // This requires hard coding the transaction number. As long as this method is
+  // the first in this interface, it can keep the
+  // "::android::IBinder::FIRST_CALL_TRANSACTION + 0" value and allow
+  // methods to be added and removed.
+  int UnimplementedMethod(int arg);
+
   // Test that primitives work as parameters and return types.
   boolean RepeatBoolean(boolean token);
   byte RepeatByte(byte token);
@@ -59,6 +76,7 @@ interface ITestService {
 
   SimpleParcelable RepeatSimpleParcelable(in SimpleParcelable input,
                                           out SimpleParcelable repeat);
+  GenericStructuredParcelable<int, StructuredParcelable, IntEnum> RepeatGenericParcelable(in GenericStructuredParcelable<int, StructuredParcelable, IntEnum> input, out GenericStructuredParcelable<int, StructuredParcelable, IntEnum> repeat);
   PersistableBundle RepeatPersistableBundle(in PersistableBundle input);
 
   // Test that arrays work as parameters and return types.
@@ -136,13 +154,7 @@ interface ITestService {
   // inefficient to use an IPC to fill it out in practice.
   void FillOutStructuredParcelable(inout StructuredParcelable parcel);
 
-  // This is to emulate a method that is added after the service is implemented.
-  // So the client cannot assume that call to this method will be successful
-  // or not. However, inside the test environment, we can't build client and
-  // the server with different version of this AIDL file. So, we let the server
-  // to actually implement this, but intercept the dispatch to the method
-  // inside onTransact().
-  int UnimplementedMethod(int arg);
+  void RepeatExtendableParcelable(in ExtendableParcelable ep, out ExtendableParcelable ep2);
 
   // All these constant expressions should be equal to 1
   const int A1 = (~(-1)) == 0;
@@ -195,11 +207,14 @@ interface ITestService {
   const int A48 = (1 << 2) >= 0;
   const int A49 = (4 >> 1) == 2;
   const int A50 = (8 << -1) == 4;
-  const int A51 = (1 << 31 >> 31) == -1;
+  const int A51 = (1 << 30 >> 30) == 1;
   const int A52 = (1 | 16 >> 2) == 5;
   const int A53 = (0x0f ^ 0x33 & 0x99) == 0x1e; // & higher than ^
   const int A54 = (~42 & (1 << 3 | 16 >> 2) ^ 7) == 3;
   const int A55 = (2 + 3 - 4 * -7 / (10 % 3)) - 33 == 0;
   const int A56 = (2 + (-3&4 / 7)) == 2;
   const int A57 = (((((1 + 0)))));
+
+  IOldName GetOldNameInterface();
+  INewName GetNewNameInterface();
 }

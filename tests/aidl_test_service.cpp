@@ -31,6 +31,7 @@
 #include <utils/Errors.h>
 #include <utils/Log.h>
 #include <utils/Looper.h>
+#include <utils/String8.h>
 #include <utils/StrongPointer.h>
 
 #include "android/aidl/tests/BnTestService.h"
@@ -38,6 +39,15 @@
 
 #include "android/aidl/tests/BnNamedCallback.h"
 #include "android/aidl/tests/INamedCallback.h"
+
+#include "android/aidl/versioned/tests/BnFooInterface.h"
+#include "android/aidl/versioned/tests/IFooInterface.h"
+
+#include "android/aidl/tests/BnNewName.h"
+#include "android/aidl/tests/BnOldName.h"
+
+#include "android/aidl/tests/extension/MyExt.h"
+#include "android/aidl/tests/extension/MyExt2.h"
 
 // Used implicitly.
 #undef LOG_TAG
@@ -52,6 +62,7 @@ using android::LooperCallback;
 using android::OK;
 using android::sp;
 using android::String16;
+using android::String8;
 
 // libbinder:
 using android::BnInterface;
@@ -64,13 +75,19 @@ using android::binder::Status;
 
 // Generated code:
 using android::aidl::tests::BnNamedCallback;
+using android::aidl::tests::BnNewName;
+using android::aidl::tests::BnOldName;
 using android::aidl::tests::BnTestService;
 using android::aidl::tests::ByteEnum;
 using android::aidl::tests::ConstantExpressionEnum;
+using android::aidl::tests::GenericStructuredParcelable;
 using android::aidl::tests::INamedCallback;
+using android::aidl::tests::INewName;
 using android::aidl::tests::IntEnum;
+using android::aidl::tests::IOldName;
 using android::aidl::tests::LongEnum;
 using android::aidl::tests::SimpleParcelable;
+using android::aidl::tests::StructuredParcelable;
 using android::os::ParcelFileDescriptor;
 using android::os::PersistableBundle;
 
@@ -104,6 +121,28 @@ class NamedCallback : public BnNamedCallback {
 
  private:
   String16 name_;
+};
+
+class OldName : public BnOldName {
+ public:
+  OldName() = default;
+  ~OldName() = default;
+
+  Status RealName(String16* output) override {
+    *output = String16("OldName");
+    return Status::ok();
+  }
+};
+
+class NewName : public BnNewName {
+ public:
+  NewName() = default;
+  ~NewName() = default;
+
+  Status RealName(String16* output) override {
+    *output = String16("NewName");
+    return Status::ok();
+  }
 };
 
 class NativeService : public BnTestService {
@@ -391,6 +430,16 @@ class NativeService : public BnTestService {
     return RepeatNullable(input, _aidl_return);
   }
 
+  Status RepeatGenericParcelable(
+      const GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>& input,
+      GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>* repeat,
+      GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>* _aidl_return) {
+    ALOGI("Repeating Generic Parcelable");
+    *repeat = input;
+    *_aidl_return = input;
+    return Status::ok();
+  }
+
   Status TakesAnIBinder(const sp<IBinder>& input) override {
     (void)input;
     return Status::ok();
@@ -459,8 +508,7 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
-  virtual ::android::binder::Status FillOutStructuredParcelable(
-      ::android::aidl::tests::StructuredParcelable* parcelable) {
+  virtual ::android::binder::Status FillOutStructuredParcelable(StructuredParcelable* parcelable) {
     parcelable->shouldBeJerry = "Jerry";
     parcelable->shouldContainThreeFs = {parcelable->f, parcelable->f, parcelable->f};
     parcelable->shouldBeByteBar = ByteEnum::BAR;
@@ -484,13 +532,37 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
+  ::android::binder::Status RepeatExtendableParcelable(
+      const ::android::aidl::tests::extension::ExtendableParcelable& ep,
+      ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
+    ep2->a = ep.a * 2;
+    ep2->b = ep.b + "BAR";
+    auto myExt = ep.ext.getParcelable<android::aidl::tests::extension::MyExt>();
+    ::android::aidl::tests::extension::MyExt retMyExt;
+    retMyExt.a = myExt->a * 2;
+    retMyExt.b = myExt->b + "BAR";
+    ep2->ext.setParcelable(retMyExt);
+
+    return Status::ok();
+  }
+
   Status UnimplementedMethod(int32_t /* arg */, int32_t* /* _aidl_return */) override {
     LOG_ALWAYS_FATAL("UnimplementedMethod shouldn't be called");
   }
 
+  Status GetOldNameInterface(sp<IOldName>* ret) {
+    *ret = new OldName;
+    return Status::ok();
+  }
+
+  Status GetNewNameInterface(sp<INewName>* ret) {
+    *ret = new NewName;
+    return Status::ok();
+  }
+
   android::status_t onTransact(uint32_t code, const Parcel& data, Parcel* reply,
                                uint32_t flags) override {
-    if (code == ::android::IBinder::FIRST_CALL_TRANSACTION + 53 /* UnimplementedMethod */) {
+    if (code == ::android::IBinder::FIRST_CALL_TRANSACTION + 0 /* UnimplementedMethod */) {
       // pretend that UnimplementedMethod isn't implemented by this service.
       return android::UNKNOWN_TRANSACTION;
     } else {
@@ -500,6 +572,14 @@ class NativeService : public BnTestService {
 
  private:
   map<String16, sp<INamedCallback>> service_map_;
+};
+
+class VersionedService : public android::aidl::versioned::tests::BnFooInterface {
+ public:
+  VersionedService() {}
+  virtual ~VersionedService() = default;
+
+  Status foo() override { return Status::ok(); }
 };
 
 int Run() {
@@ -520,8 +600,19 @@ int Run() {
     return -1;
   }
 
-  defaultServiceManager()->addService(service->getInterfaceDescriptor(),
-                                      service);
+  auto status = defaultServiceManager()->addService(service->getInterfaceDescriptor(), service);
+  if (status != OK) {
+    ALOGE("Failed to add service %s", String8(service->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
+
+  android::sp<VersionedService> versionedService = new VersionedService;
+  status = defaultServiceManager()->addService(versionedService->getInterfaceDescriptor(),
+                                               versionedService);
+  if (status != OK) {
+    ALOGE("Failed to add service %s", String8(versionedService->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
 
   ALOGI("Entering loop");
   while (true) {

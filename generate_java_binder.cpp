@@ -29,7 +29,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/macros.h>
 #include <android-base/stringprintf.h>
 
 using android::base::Join;
@@ -63,8 +62,6 @@ class VariableFactory {
   std::vector<std::shared_ptr<Variable>> vars_;
   std::string base_;
   int index_;
-
-  DISALLOW_COPY_AND_ASSIGN(VariableFactory);
 };
 
 // =================================================
@@ -72,6 +69,12 @@ class StubClass : public Class {
  public:
   StubClass(const AidlInterface* interfaceType, const Options& options);
   ~StubClass() override = default;
+
+  // non-copyable, non-movable
+  StubClass(const StubClass&) = delete;
+  StubClass(StubClass&&) = delete;
+  StubClass& operator=(const StubClass&) = delete;
+  StubClass& operator=(StubClass&&) = delete;
 
   std::shared_ptr<Variable> transact_code;
   std::shared_ptr<Variable> transact_data;
@@ -98,8 +101,6 @@ class StubClass : public Class {
 
   std::shared_ptr<Variable> transact_descriptor;
   const Options& options_;
-
-  DISALLOW_COPY_AND_ASSIGN(StubClass);
 };
 
 StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
@@ -661,22 +662,41 @@ static std::shared_ptr<Method> generate_proxy_method(
   auto _status = std::make_shared<Variable>("boolean", "_status");
   tryStatement->statements->Add(std::make_shared<VariableDeclaration>(_status, call));
 
-  // If the transaction returns false, which means UNKNOWN_TRANSACTION, fall
-  // back to the local method in the default impl, if set before.
+  // If the transaction returns false, which means UNKNOWN_TRANSACTION, fall back to the local
+  // method in the default impl, if set before. Otherwise, throw a RuntimeException if the interface
+  // is versioned. We can't throw the exception for unversioned interface because that would be an
+  // app breaking change.
   vector<string> arg_names;
   for (const auto& arg : method.GetArguments()) {
     arg_names.emplace_back(arg->GetName());
   }
   bool has_return_type = method.GetType().GetName() != "void";
-  tryStatement->statements->Add(std::make_shared<LiteralStatement>(
-      android::base::StringPrintf(has_return_type ? "if (!_status && getDefaultImpl() != null) {\n"
-                                                    "  return getDefaultImpl().%s(%s);\n"
-                                                    "}\n"
-                                                  : "if (!_status && getDefaultImpl() != null) {\n"
-                                                    "  getDefaultImpl().%s(%s);\n"
-                                                    "  return;\n"
-                                                    "}\n",
-                                  method.GetName().c_str(), Join(arg_names, ", ").c_str())));
+
+  auto checkDefaultImpl = std::make_shared<IfStatement>();
+  checkDefaultImpl->expression = std::make_shared<LiteralExpression>("getDefaultImpl() != null");
+  if (has_return_type) {
+    checkDefaultImpl->statements->Add(std::make_shared<LiteralStatement>(
+        android::base::StringPrintf("return getDefaultImpl().%s(%s);\n", method.GetName().c_str(),
+                                    Join(arg_names, ", ").c_str())));
+  } else {
+    checkDefaultImpl->statements->Add(std::make_shared<LiteralStatement>(
+        android::base::StringPrintf("getDefaultImpl().%s(%s);\n", method.GetName().c_str(),
+                                    Join(arg_names, ", ").c_str())));
+    checkDefaultImpl->statements->Add(std::make_shared<LiteralStatement>("return;\n"));
+  }
+  if (options.Version() > 0) {
+    checkDefaultImpl->elseif = std::make_shared<IfStatement>();
+    checkDefaultImpl->elseif->statements->Add(
+        std::make_shared<LiteralStatement>(android::base::StringPrintf(
+            "throw new android.os.RemoteException(\"Method %s is unimplemented.\");\n",
+            method.GetName().c_str())));
+  }
+
+  auto checkTransactionError = std::make_shared<IfStatement>();
+  checkTransactionError->expression = std::make_shared<LiteralExpression>("!_status");
+  checkTransactionError->statements->Add(checkDefaultImpl);
+
+  tryStatement->statements->Add(checkTransactionError);
 
   // throw back exceptions.
   if (_reply) {
@@ -919,14 +939,14 @@ static void generate_interface_descriptors(const Options& options, const AidlInt
   }
   auto descriptor = std::make_shared<Field>(
       STATIC | FINAL | PUBLIC, std::make_shared<Variable>("java.lang.String", "DESCRIPTOR"));
+  std::string name = iface->GetDescriptor();
   if (options.IsStructured()) {
     // mangle the interface name at build time and demangle it at runtime, to avoid
     // being renamed by jarjar. See b/153843174
-    std::string name = iface->GetCanonicalName();
     std::replace(name.begin(), name.end(), '.', '$');
     descriptor->value = "\"" + name + "\".replace('$', '.')";
   } else {
-    descriptor->value = "\"" + iface->GetCanonicalName() + "\"";
+    descriptor->value = "\"" + name + "\"";
   }
   classToAddDescriptor->elements.push_back(descriptor);
 }
@@ -944,7 +964,7 @@ static void generate_interface_descriptors(const Options& options, const AidlInt
 static void compute_outline_methods(const AidlInterface* iface,
                                     const std::shared_ptr<StubClass> stub, size_t outline_threshold,
                                     size_t non_outline_count) {
-  CHECK_LE(non_outline_count, outline_threshold);
+  AIDL_FATAL_IF(non_outline_count > outline_threshold, iface);
   // We'll outline (create sub methods) if there are more than min_methods
   // cases.
   stub->transact_outline = iface->GetMethods().size() > outline_threshold;
@@ -1095,6 +1115,10 @@ std::unique_ptr<Class> generate_binder_interface_class(const AidlInterface* ifac
       auto code = StringPrintf("%s\n", comment.c_str());
       interface->elements.push_back(std::make_shared<LiteralClassElement>(code));
     }
+    for (const std::string& annotation : generate_java_annotations(constant->GetType())) {
+      auto code = StringPrintf("%s\n", annotation.c_str());
+      interface->elements.push_back(std::make_shared<LiteralClassElement>(code));
+    }
     switch (value.GetType()) {
       case AidlConstantValue::Type::STRING: {
         generate_string_constant(interface.get(), constant->GetName(),
@@ -1103,13 +1127,15 @@ std::unique_ptr<Class> generate_binder_interface_class(const AidlInterface* ifac
       }
       case AidlConstantValue::Type::BOOLEAN:  // fall-through
       case AidlConstantValue::Type::INT8:     // fall-through
-      case AidlConstantValue::Type::INT32: {
+      case AidlConstantValue::Type::INT32:    // fall-through
+      // Type promotion may cause this. Value should be small enough to fit in int32.
+      case AidlConstantValue::Type::INT64: {
         generate_int_constant(interface.get(), constant->GetName(),
                               constant->ValueString(ConstantValueDecorator));
         break;
       }
       default: {
-        LOG(FATAL) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
+        AIDL_FATAL(value) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
       }
     }
   }

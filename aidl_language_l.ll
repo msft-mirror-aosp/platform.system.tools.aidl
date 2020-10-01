@@ -20,12 +20,11 @@
 
 #include "aidl_language.h"
 #include "parser.h"
-#include "aidl_language_y-module.h"
+#include "aidl_language_y.h"
 
 #define YY_USER_ACTION yylloc->columns(yyleng);
 %}
 
-%option yylineno
 %option noyywrap
 %option nounput
 %option noinput

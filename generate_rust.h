@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2020, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_AIDL_TESTS_CLIENT_NULLABLES_H
-#define ANDROID_AIDL_TESTS_CLIENT_NULLABLES_H
+#pragma once
 
-#include <utils/StrongPointer.h>
+#include "aidl_language.h"
+#include "io_delegate.h"
+#include "options.h"
 
-#include "android/aidl/tests/ITestService.h"
+#include <string>
 
-// Tests for passing and returning file descriptors.
 namespace android {
 namespace aidl {
-namespace tests {
-namespace client {
+namespace rust {
 
-bool ConfirmNullables(const sp<ITestService>& s);
+bool GenerateRust(const std::string& filename, const AidlDefinedType* iface,
+                  const AidlTypenames& typenames, const IoDelegate& io_delegate,
+                  const Options& options);
 
-}  // namespace client
-}  // namespace tests
+}  // namespace rust
 }  // namespace aidl
 }  // namespace android
-
-#endif  // ANDROID_AIDL_TESTS_CLIENT_NULLABLES_H

@@ -17,7 +17,7 @@
 %{
 #include "aidl_language.h"
 #include "parser.h"
-#include "aidl_language_y-module.h"
+#include "aidl_language_y.h"
 #include "logging.h"
 #include <android-base/parseint.h>
 #include <set>
@@ -29,9 +29,9 @@
 int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 
 AidlLocation loc(const yy::parser::location_type& begin, const yy::parser::location_type& end) {
-  CHECK(begin.begin.filename == begin.end.filename);
-  CHECK(begin.end.filename == end.begin.filename);
-  CHECK(end.begin.filename == end.end.filename);
+  AIDL_FATAL_IF(begin.begin.filename != begin.end.filename, AIDL_LOCATION_HERE);
+  AIDL_FATAL_IF(begin.end.filename != end.begin.filename, AIDL_LOCATION_HERE);
+  AIDL_FATAL_IF(end.begin.filename != end.end.filename, AIDL_LOCATION_HERE);
   AidlLocation::Point begin_point {
     .line = begin.begin.line,
     .column = begin.begin.column,
@@ -96,21 +96,11 @@ AidlLocation loc(const yy::parser::location_type& l) {
     std::vector<std::string>* type_params;
     std::vector<std::unique_ptr<AidlImport>>* imports;
     AidlImport* import;
-    std::vector<AidlDefinedType*>* declarations;
+    std::vector<std::unique_ptr<AidlDefinedType>>* declarations;
 }
 
 %destructor { } <character>
 %destructor { } <direction>
-// TODO(b/160367901) remove this.
-%destructor {
-  // decl is std::vector<AidlDefinedType*>. When deleting it,
-  // we should first delete AidlDefinedType objects in it.
-  // Otherwise, there would be memory leaks.
-  for (auto* t: *($$)) {
-    delete(t);
-  }
-  delete ($$);
-} decls
 %destructor { delete ($$); } <*>
 
 %token<token> ANNOTATION "annotation"
@@ -163,6 +153,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<declaration> decl
 %type<variable_list> variable_decls
 %type<variable> variable_decl
+%type<type_params> optional_type_params
 %type<interface_members> interface_members
 %type<declaration> unannotated_decl
 %type<interface> interface_decl
@@ -196,7 +187,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 
 document
  : package imports decls
-  { ps->SetDocument(std::make_unique<AidlDocument>(loc(@1), *$2, *$3));
+  { ps->SetDocument(std::make_unique<AidlDocument>(loc(@1), *$2, std::move(*$3)));
     delete $2;
     delete $3;
   }
@@ -254,7 +245,7 @@ qualified_name
 
 decls
  : decl
-  { $$ = new std::vector<AidlDefinedType*>();
+  { $$ = new std::vector<std::unique_ptr<AidlDefinedType>>();
     if ($1 != nullptr) {
       $$->emplace_back($1);
     }
@@ -302,17 +293,23 @@ type_params
     delete $3;
   };
 
+ optional_type_params
+  : /* none */ { $$ = nullptr; }
+  | '<' type_params '>' {
+    $$ = $2;
+  };
 
 parcelable_decl
- : PARCELABLE qualified_name ';' {
-    $$ = new AidlParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments());
+ : PARCELABLE qualified_name optional_type_params ';' {
+    $$ = new AidlParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), "", $3);
     delete $1;
     delete $2;
-  }
- | PARCELABLE qualified_name '<' type_params '>' ';' {
-    $$ = new AidlParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), "", $4);
+ }
+ | PARCELABLE qualified_name optional_type_params '{' variable_decls '}' {
+    $$ = new AidlStructuredParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $5, $3);
     delete $1;
     delete $2;
+    delete $5;
  }
  | PARCELABLE qualified_name CPP_HEADER C_STR ';' {
     $$ = new AidlParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $4->GetText());
@@ -320,12 +317,6 @@ parcelable_decl
     delete $2;
     delete $4;
   }
- | PARCELABLE identifier '{' variable_decls '}' {
-    $$ = new AidlStructuredParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $4);
-    delete $1;
-    delete $2;
-    delete $4;
- }
  | PARCELABLE error ';' {
     ps->AddError();
     $$ = nullptr;
@@ -396,8 +387,8 @@ const_expr
  | INTVALUE {
     $$ = AidlConstantValue::Integral(loc(@1), $1->GetText());
     if ($$ == nullptr) {
-      std::cerr << "ERROR: Could not parse integer: "
-                << $1->GetText() << " at " << @1 << ".\n";
+      AIDL_ERROR(loc(@1)) << "Could not parse integer: "
+                << $1->GetText();
       ps->AddError();
       $$ = AidlConstantValue::Integral(loc(@1), "0");
     }
@@ -410,8 +401,8 @@ const_expr
  | HEXVALUE {
     $$ = AidlConstantValue::Integral(loc(@1), $1->GetText());
     if ($$ == nullptr) {
-      std::cerr << "ERROR: Could not parse hexvalue: "
-                << $1->GetText() << " at " << @1 << ".\n";
+      AIDL_ERROR(loc(@1)) << "Could not parse hexvalue: "
+                << $1->GetText();
       ps->AddError();
       $$ = AidlConstantValue::Integral(loc(@1), "0");
     }
@@ -496,7 +487,7 @@ const_expr
   }
  | '(' error ')'
    {
-     std::cerr << "ERROR: invalid const expression within parenthesis at " << @1 << ".\n";
+     AIDL_ERROR(loc(@1)) << "invalid const expression within parenthesis";
      ps->AddError();
      // to avoid segfaults
      $$ = AidlConstantValue::Integral(loc(@1), "0");

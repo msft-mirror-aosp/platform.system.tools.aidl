@@ -29,6 +29,7 @@ type ccProperties struct {
 	Name                      *string
 	Owner                     *string
 	Defaults                  []string
+	Double_loadable           *bool
 	Vendor_available          *bool
 	Host_supported            *bool
 	Generated_sources         []string
@@ -47,6 +48,7 @@ type ccProperties struct {
 	Stem                      *string
 	Apex_available            []string
 	Min_sdk_version           *string
+	UseApexNameMacro          bool
 }
 
 type javaProperties struct {
@@ -60,6 +62,17 @@ type javaProperties struct {
 	Static_libs     []string
 	Apex_available  []string
 	Min_sdk_version *string
+}
+
+type rustProperties struct {
+	Name           *string
+	Crate_name     string
+	Owner          *string
+	Defaults       []string
+	Host_supported *bool
+	Srcs           []string
+	Rustlibs       []string
+	Stem           *string
 }
 
 type phonyProperties struct {
