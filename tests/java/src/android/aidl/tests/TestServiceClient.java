@@ -21,6 +21,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.aidl.tests.ByteEnum;
 import android.aidl.tests.GenericStructuredParcelable;
@@ -30,7 +31,6 @@ import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.SimpleParcelable;
 import android.aidl.tests.StructuredParcelable;
-import android.aidl.tests.TestFailException;
 import android.aidl.versioned.tests.IFooInterface;
 import android.app.Activity;
 import android.content.Context;
@@ -43,7 +43,6 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.ServiceSpecificException;
 import android.util.Log;
-import androidx.test.core.app.ApplicationProvider;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -63,13 +62,19 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestServiceClient {
     private ITestService service;
+    private ICppJavaTests cpp_java_tests;
 
     @Before
-    public void setUp() {
+    public void setUp() throws RemoteException {
         IBinder binder = ServiceManager.getService(ITestService.class.getName());
         assertNotNull(binder);
         service = ITestService.Stub.asInterface(binder);
         assertNotNull(service);
+
+        IBinder binder2 = service.GetCppJavaTests();
+        if (binder2 != null) {
+            cpp_java_tests = ICppJavaTests.Stub.asInterface(binder2);
+        }
     }
 
     @Test
@@ -283,6 +288,8 @@ public class TestServiceClient {
 
     @Test
     public void testRepeatGenericParcelable() throws RemoteException {
+      assumeTrue(cpp_java_tests != null);
+
       GenericStructuredParcelable<Integer, StructuredParcelable, Integer> input =
           new GenericStructuredParcelable<Integer, StructuredParcelable, Integer>();
       GenericStructuredParcelable<Integer, StructuredParcelable, Integer> out_param =
@@ -292,7 +299,7 @@ public class TestServiceClient {
       GenericStructuredParcelable<Integer, StructuredParcelable, Integer> testing = input;
       assertThat(testing, is(input));
       GenericStructuredParcelable<Integer, StructuredParcelable, Integer> returned =
-          service.RepeatGenericParcelable(input, out_param);
+          cpp_java_tests.RepeatGenericParcelable(input, out_param);
       assertThat(out_param.a, is(input.a));
       assertThat(out_param.b, is(input.b));
       assertThat(returned.a, is(input.a));
@@ -301,21 +308,25 @@ public class TestServiceClient {
 
     @Test
     public void testRepeatParcelable() throws RemoteException {
+        assumeTrue(cpp_java_tests != null);
+
         SimpleParcelable input = new SimpleParcelable("foo", 42);
         SimpleParcelable out_param = new SimpleParcelable();
-        SimpleParcelable returned = service.RepeatSimpleParcelable(input, out_param);
+        SimpleParcelable returned = cpp_java_tests.RepeatSimpleParcelable(input, out_param);
         assertThat(out_param, is(input));
         assertThat(returned, is(input));
     }
 
     @Test
     public void testReverseParcelable() throws RemoteException {
+        assumeTrue(cpp_java_tests != null);
+
         SimpleParcelable[] input = new SimpleParcelable[3];
         input[0] = new SimpleParcelable("a", 1);
         input[1] = new SimpleParcelable("b", 2);
         input[2] = new SimpleParcelable("c", 3);
         SimpleParcelable[] repeated = new SimpleParcelable[3];
-        SimpleParcelable[] reversed = service.ReverseSimpleParcelables(input, repeated);
+        SimpleParcelable[] reversed = cpp_java_tests.ReverseSimpleParcelables(input, repeated);
         assertThat(repeated, is(input));
         assertThat(reversed.length, is(input.length));
         for (int i = 0, k = input.length - 1; i < input.length; ++i, --k) {
@@ -325,14 +336,18 @@ public class TestServiceClient {
 
     @Test
     public void testRepeatEmptyPersistableBundle() throws RemoteException {
+        assumeTrue(cpp_java_tests != null);
+
         PersistableBundle emptyBundle = new PersistableBundle();
-        PersistableBundle returned = service.RepeatPersistableBundle(emptyBundle);
+        PersistableBundle returned = cpp_java_tests.RepeatPersistableBundle(emptyBundle);
         assertThat(returned.size(), is(emptyBundle.size()));
         assertThat(returned.toString(), is(emptyBundle.toString()));
     }
 
     @Test
     public void testRepeatNonEmptyPersistableBundle() throws RemoteException {
+        assumeTrue(cpp_java_tests != null);
+
         PersistableBundle pb = new PersistableBundle();
 
         final String testBoolKey = "testBool";
@@ -362,7 +377,7 @@ public class TestServiceClient {
         testNestedPersistableBundle.putInt(testNestedIntKey, 345);
         pb.putPersistableBundle(testPersistableBundleKey, testNestedPersistableBundle);
 
-        PersistableBundle ret = service.RepeatPersistableBundle(pb);
+        PersistableBundle ret = cpp_java_tests.RepeatPersistableBundle(pb);
 
         assertThat(ret.size(), is(pb.size()));
         assertThat(ret.getBoolean(testBoolKey), is(pb.getBoolean(testBoolKey)));
@@ -383,6 +398,8 @@ public class TestServiceClient {
 
     @Test
     public void testReversePersistableBundleArray() throws RemoteException {
+        assumeTrue(cpp_java_tests != null);
+
         PersistableBundle[] input = new PersistableBundle[3];
         PersistableBundle first = new PersistableBundle();
         PersistableBundle second = new PersistableBundle();
@@ -399,7 +416,7 @@ public class TestServiceClient {
         final int original_input_size = input.length;
 
         PersistableBundle[] repeated = new PersistableBundle[input.length];
-        PersistableBundle[] reversed = service.ReversePersistableBundles(input, repeated);
+        PersistableBundle[] reversed = cpp_java_tests.ReversePersistableBundles(input, repeated);
 
         assertThat(repeated.length, is(input.length));
         assertThat(input.length, is(original_input_size));
@@ -415,11 +432,13 @@ public class TestServiceClient {
 
     @Test
     public void testFileDescriptorPassing() throws RemoteException, IOException {
-        Context context = ApplicationProvider.getApplicationContext();
-        FileOutputStream fos = context.openFileOutput("test-dummy", Context.MODE_PRIVATE);
+        assumeTrue(cpp_java_tests != null);
+
+        String file = "/data/local/tmp/aidl-test-file";
+        FileOutputStream fos = new FileOutputStream(file, false /*append*/);
 
         FileDescriptor descriptor = fos.getFD();
-        FileDescriptor journeyed = service.RepeatFileDescriptor(descriptor);
+        FileDescriptor journeyed = cpp_java_tests.RepeatFileDescriptor(descriptor);
         fos.close();
 
         FileOutputStream journeyedStream = new FileOutputStream(journeyed);
@@ -429,7 +448,7 @@ public class TestServiceClient {
         journeyedStream.write(output);
         journeyedStream.close();
 
-        FileInputStream fis = context.openFileInput("test-dummy");
+        FileInputStream fis = new FileInputStream(file);
         byte[] input = new byte[output.length];
 
         assertThat(fis.read(input), is(input.length));
@@ -438,9 +457,9 @@ public class TestServiceClient {
 
     @Test
     public void testParcelFileDescriptorPassing() throws RemoteException, IOException {
-        Context context = ApplicationProvider.getApplicationContext();
+        String file = "/data/local/tmp/aidl-test-file";
         ParcelFileDescriptor descriptor = ParcelFileDescriptor.open(
-                context.getFileStreamPath("test-dummy"), ParcelFileDescriptor.MODE_CREATE |
+                new File(file), ParcelFileDescriptor.MODE_CREATE |
                     ParcelFileDescriptor.MODE_WRITE_ONLY);
         ParcelFileDescriptor journeyed = service.RepeatParcelFileDescriptor(descriptor);
 
@@ -451,7 +470,7 @@ public class TestServiceClient {
         journeyedStream.write(output);
         journeyedStream.close();
 
-        FileInputStream fis = context.openFileInput("test-dummy");
+        FileInputStream fis = new FileInputStream(file);
         byte[] input = new byte[output.length];
 
         assertThat(fis.read(input), is(input.length));

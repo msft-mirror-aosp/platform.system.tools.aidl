@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <android/aidl/tests/FixedSizeParcelable.h>
 #include <android/aidl/tests/extension/MyExt.h>
 #include <android/aidl/tests/extension/MyExt2.h>
 #include <android/aidl/tests/extension/MyExtLike.h>
@@ -26,7 +25,6 @@ using android::IInterface;
 using android::sp;
 using android::String16;
 using android::aidl::tests::ConstantExpressionEnum;
-using android::aidl::tests::FixedSizeParcelable;
 using android::aidl::tests::GenericStructuredParcelable;
 using android::aidl::tests::INamedCallback;
 using android::aidl::tests::IntEnum;
@@ -42,31 +40,37 @@ using android::os::PersistableBundle;
 using std::vector;
 
 TEST_F(AidlTest, RepeatSimpleParcelable) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   SimpleParcelable input("Booya", 42);
   SimpleParcelable out_param, returned;
-  Status status = service->RepeatSimpleParcelable(input, &out_param, &returned);
+  Status status = cpp_java_tests->RepeatSimpleParcelable(input, &out_param, &returned);
   ASSERT_TRUE(status.isOk()) << status.toString8();
   EXPECT_EQ(input, out_param);
   EXPECT_EQ(input, returned);
 }
 
 TEST_F(AidlTest, RepeatGenericStructureParcelable) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum> input, out_param, returned;
   input.a = 41;
   input.b = 42;
-  Status status = service->RepeatGenericParcelable(input, &out_param, &returned);
+  Status status = cpp_java_tests->RepeatGenericParcelable(input, &out_param, &returned);
   ASSERT_TRUE(status.isOk()) << status.toString8();
   EXPECT_EQ(input, out_param);
   EXPECT_EQ(input, returned);
 }
 
 TEST_F(AidlTest, ReverseSimpleParcelable) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   const vector<SimpleParcelable> original{SimpleParcelable("first", 0),
                                           SimpleParcelable("second", 1),
                                           SimpleParcelable("third", 2)};
   vector<SimpleParcelable> repeated;
   vector<SimpleParcelable> reversed;
-  Status status = service->ReverseSimpleParcelables(original, &repeated, &reversed);
+  Status status = cpp_java_tests->ReverseSimpleParcelables(original, &repeated, &reversed);
   ASSERT_TRUE(status.isOk()) << status.toString8();
 
   EXPECT_EQ(repeated, original);
@@ -74,24 +78,18 @@ TEST_F(AidlTest, ReverseSimpleParcelable) {
   std::reverse(reversed.begin(), reversed.end());
 }
 
-TEST_F(AidlTest, ConfirmFixedSizeTrue) {
-  bool res = std::is_same<FixedSizeParcelable::fixed_size, std::true_type>::value;
-  EXPECT_EQ(res, true);
-}
-
-TEST_F(AidlTest, ConfirmFixedSizeFalse) {
-  bool res = std::is_same<StructuredParcelable::fixed_size, std::true_type>::value;
-  EXPECT_EQ(res, false);
-}
-
 TEST_F(AidlTest, ConfirmPersistableBundles) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   PersistableBundle empty_bundle, returned;
-  Status status = service->RepeatPersistableBundle(empty_bundle, &returned);
+  Status status = cpp_java_tests->RepeatPersistableBundle(empty_bundle, &returned);
   ASSERT_TRUE(status.isOk()) << status.toString8();
   EXPECT_EQ(empty_bundle, returned);
 }
 
 TEST_F(AidlTest, ConfirmPersistableBundlesNonEmpty) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   PersistableBundle non_empty_bundle, returned;
   non_empty_bundle.putBoolean(String16("test_bool"), false);
   non_empty_bundle.putInt(String16("test_int"), 33);
@@ -111,12 +109,14 @@ TEST_F(AidlTest, ConfirmPersistableBundlesNonEmpty) {
   non_empty_bundle.putPersistableBundle(String16("test_persistable_bundle"),
                                         nested_bundle);
 
-  Status status = service->RepeatPersistableBundle(non_empty_bundle, &returned);
+  Status status = cpp_java_tests->RepeatPersistableBundle(non_empty_bundle, &returned);
   ASSERT_TRUE(status.isOk()) << status.toString8();
   EXPECT_EQ(non_empty_bundle, returned);
 }
 
 TEST_F(AidlTest, ReversePersistableBundles) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   PersistableBundle first;
   PersistableBundle second;
   PersistableBundle third;
@@ -127,7 +127,7 @@ TEST_F(AidlTest, ReversePersistableBundles) {
 
   vector<PersistableBundle> repeated;
   vector<PersistableBundle> reversed;
-  Status status = service->ReversePersistableBundles(original, &repeated, &reversed);
+  Status status = cpp_java_tests->ReversePersistableBundles(original, &repeated, &reversed);
   ASSERT_TRUE(status.isOk()) << status.toString8();
 
   EXPECT_EQ(repeated, original);
