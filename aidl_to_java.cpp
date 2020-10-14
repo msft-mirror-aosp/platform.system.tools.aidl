@@ -620,7 +620,7 @@ bool CreateFromParcelFor(const CodeGeneratorContext& c) {
         c.writer << c.var << " = " << c.type.GetName() << ".Stub.asInterface(" << c.parcel
                  << ".readStrongBinder());\n";
       }
-    } else if (t->AsParcelable() != nullptr || t->AsStructuredParcelable() != nullptr) {
+    } else if (t->AsParcelable() != nullptr) {
       if (c.type.IsArray()) {
         c.writer << c.var << " = " << c.parcel << ".createTypedArray("
                  << JavaNameOf(c.type, c.typenames) << ".CREATOR);\n";
@@ -762,7 +762,7 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
   } else {
     const AidlDefinedType* t = c.typenames.TryGetDefinedType(c.type.GetName());
     AIDL_FATAL_IF(t == nullptr, c.type) << "Unknown type: " << c.type.GetName();
-    if (t->AsParcelable() != nullptr) {
+    if (t->AsParcelable() != nullptr || t->AsUnionDeclaration() != nullptr) {
       if (c.type.IsArray()) {
         c.writer << c.parcel << ".readTypedArray(" << c.var << ", " << c.type.GetName()
                  << ".CREATOR);\n";
