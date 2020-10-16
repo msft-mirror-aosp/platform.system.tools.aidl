@@ -15,13 +15,15 @@
  */
 
 package android.aidl.tests;
+import android.aidl.tests.ByteEnum;
 
 union Union {
+    int[] ns;
     int n;
     int m;
-    int[] ns;
     @utf8InCpp String s;
     @nullable IBinder ibinder;
     @utf8InCpp List<String> ss;
+    ByteEnum be;
 }
 
