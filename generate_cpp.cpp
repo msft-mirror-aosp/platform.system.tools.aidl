@@ -1036,6 +1036,11 @@ unique_ptr<Document> BuildInterfaceHeader(const AidlTypenames& typenames,
                     NestInNamespaces(std::move(decls), interface.GetSplitPackage())}};
 }
 
+string GetInitializer(const AidlTypenames& typenames, const AidlVariableDeclaration& variable) {
+  string cppType = CppNameOf(variable.GetType(), typenames);
+  return cppType + "(" + variable.ValueString(ConstantValueDecorator) + ")";
+}
+
 template <typename ParcelableType>
 struct ParcelableTraits {
   static void AddIncludes(set<string>& includes);
@@ -1067,8 +1072,7 @@ struct ParcelableTraits<AidlStructuredParcelable> {
       std::string cppType = CppNameOf(variable->GetType(), typenames);
       out << cppType.c_str() << " " << variable->GetName().c_str();
       if (variable->GetDefaultValue()) {
-        out << " = " << cppType.c_str() << "(" << variable->ValueString(ConstantValueDecorator)
-            << ")";
+        out << " = " << GetInitializer(typenames, *variable);
       } else if (variable->GetType().GetName() == "ParcelableHolder") {
         if (decl.IsVintfStability()) {
           out << " { ::android::Parcelable::Stability::STABILITY_VINTF }";
@@ -1161,26 +1165,34 @@ struct ParcelableTraits<AidlUnionDecl> {
     }
     clazz.AddPublic(std::move(enum_tag));
 
-    auto name = decl.GetName();
+    const auto& name = decl.GetName();
+
+    AIDL_FATAL_IF(decl.GetFields().empty(), decl) << "Union '" << name << "' is empty.";
+    const auto& first_field = decl.GetFields()[0];
+    const auto& first_name = first_field->GetName();
+    const auto& first_value = GetInitializer(typenames, *first_field);
+
     // clang-format off
     auto helper_methods = vector<string>{
         // type classification
         "template<typename _Tp>\n"
         "static constexpr bool not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, " + name + ">;\n\n",
 
-        // ctors
-        name + "() = default;\n",
+        // default ctor inits with the first member's default value
+        name + "() : _value(std::in_place_index<" + first_name + ">, " + first_value + ") { }\n",
+
+        // other ctors with default implementation
         name + "(const " + name + "& other) = default;\n",
         name + "(" + name + "&& other) = default;\n",
         name + "& operator=(const " + name + "&) = default;\n",
         name + "& operator=(" + name + "&&) = default;\n\n",
 
-        // conversion from value
+        // conversion ctor from value
         "template <typename T, std::enable_if_t<not_self<T>, int> = 0>\n"
         "constexpr " + name + "(T&& arg)\n"
         "    : _value(std::forward<T>(arg)) {}\n",
 
-        // to support in-place construction using in_place_index/in_place_type
+        // ctor to support in-place construction using in_place_index/in_place_type
         "template <typename... T>\n"
         "constexpr explicit " + name + "(T&&... args)\n"
         "    : _value(std::forward<T>(args)...) {}\n",
@@ -1246,9 +1258,10 @@ struct ParcelableTraits<AidlUnionDecl> {
 
     auto read_var = [&](const string& var, const AidlTypeSpecifier& type) {
       *out << StringPrintf("%s %s;\n", CppNameOf(type, typenames).c_str(), var.c_str());
-      *out << StringPrintf("if ((%s = %s->%s(&%s)) != %s) return %s;\n", kAndroidStatusVarName,
-                           kParcelVarName, ParcelReadMethodOf(type, typenames).c_str(), var.c_str(),
-                           kAndroidStatusOk, kAndroidStatusVarName);
+      *out << StringPrintf("if ((%s = %s->%s(%s)) != %s) return %s;\n", kAndroidStatusVarName,
+                           kParcelVarName, ParcelReadMethodOf(type, typenames).c_str(),
+                           ParcelReadCastOf(type, typenames, "&" + var).c_str(), kAndroidStatusOk,
+                           kAndroidStatusVarName);
     };
 
     // begin
@@ -1282,7 +1295,8 @@ struct ParcelableTraits<AidlUnionDecl> {
 
     auto write_value = [&](const string& value, const AidlTypeSpecifier& type) {
       return StringPrintf("%s->%s(%s)", kParcelVarName,
-                          ParcelWriteMethodOf(type, typenames).c_str(), value.c_str());
+                          ParcelWriteMethodOf(type, typenames).c_str(),
+                          ParcelWriteCastOf(type, typenames, value).c_str());
     };
 
     // begin
