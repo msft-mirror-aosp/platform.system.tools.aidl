@@ -243,7 +243,6 @@ class AidlAnnotatable : public AidlNode {
   void DumpAnnotations(CodeWriter* writer) const;
 
   const AidlAnnotation* UnsupportedAppUsage() const;
-  const AidlAnnotation* JavaPassthrough() const;
   const AidlAnnotation* RustDerive() const;
   const AidlTypeSpecifier* BackingType(const AidlTypenames& typenames) const;
   std::string ToString() const;
@@ -647,6 +646,8 @@ class AidlStructuredParcelable;
 class AidlInterface;
 class AidlParcelable;
 class AidlStructuredParcelable;
+
+class AidlUnionDecl;
 // AidlDefinedType represents either an interface, parcelable, or enum that is
 // defined in the source file.
 class AidlDefinedType : public AidlAnnotatable {
@@ -677,6 +678,7 @@ class AidlDefinedType : public AidlAnnotatable {
   virtual const AidlStructuredParcelable* AsStructuredParcelable() const { return nullptr; }
   virtual const AidlParcelable* AsParcelable() const { return nullptr; }
   virtual const AidlEnumDeclaration* AsEnumDeclaration() const { return nullptr; }
+  virtual const AidlUnionDecl* AsUnionDeclaration() const { return nullptr; }
   virtual const AidlInterface* AsInterface() const { return nullptr; }
   virtual const AidlParameterizable<std::string>* AsParameterizable() const { return nullptr; }
   bool CheckValid(const AidlTypenames& typenames) const override;
@@ -693,6 +695,10 @@ class AidlDefinedType : public AidlAnnotatable {
     return const_cast<AidlEnumDeclaration*>(
         const_cast<const AidlDefinedType*>(this)->AsEnumDeclaration());
   }
+  AidlUnionDecl* AsUnionDeclaration() {
+    return const_cast<AidlUnionDecl*>(
+        const_cast<const AidlDefinedType*>(this)->AsUnionDeclaration());
+  }
   AidlInterface* AsInterface() {
     return const_cast<AidlInterface*>(const_cast<const AidlDefinedType*>(this)->AsInterface());
   }
@@ -704,6 +710,7 @@ class AidlDefinedType : public AidlAnnotatable {
 
   const AidlParcelable* AsUnstructuredParcelable() const {
     if (this->AsStructuredParcelable() != nullptr) return nullptr;
+    if (this->AsUnionDeclaration() != nullptr) return nullptr;
     return this->AsParcelable();
   }
   AidlParcelable* AsUnstructuredParcelable() {
@@ -845,6 +852,39 @@ class AidlEnumDeclaration : public AidlDefinedType {
   const std::string name_;
   const std::vector<std::unique_ptr<AidlEnumerator>> enumerators_;
   std::unique_ptr<const AidlTypeSpecifier> backing_type_;
+};
+
+class AidlUnionDecl : public AidlParcelable {
+ public:
+  AidlUnionDecl(const AidlLocation& location, const std::string& name, const std::string& package,
+                const std::string& comments,
+                std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables,
+                std::vector<std::string>* type_params);
+  virtual ~AidlUnionDecl() = default;
+
+  // non-copyable, non-movable
+  AidlUnionDecl(const AidlUnionDecl&) = delete;
+  AidlUnionDecl(AidlUnionDecl&&) = delete;
+  AidlUnionDecl& operator=(const AidlUnionDecl&) = delete;
+  AidlUnionDecl& operator=(AidlUnionDecl&&) = delete;
+
+  std::set<AidlAnnotation::Type> GetSupportedAnnotations() const override;
+
+  const AidlNode& AsAidlNode() const override { return *this; }
+
+  const std::vector<std::unique_ptr<AidlVariableDeclaration>>& GetFields() const {
+    return variables_;
+  }
+  bool CheckValid(const AidlTypenames& typenames) const override;
+  bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
+                                  Options::Language lang) const override;
+  std::string GetPreprocessDeclarationName() const override { return "union"; }
+
+  void Dump(CodeWriter* writer) const override;
+  const AidlUnionDecl* AsUnionDeclaration() const override { return this; }
+
+ private:
+  const std::vector<std::unique_ptr<AidlVariableDeclaration>> variables_;
 };
 
 class AidlInterface final : public AidlDefinedType {

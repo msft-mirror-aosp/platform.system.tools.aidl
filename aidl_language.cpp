@@ -300,10 +300,6 @@ const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE);
 }
 
-const AidlAnnotation* AidlAnnotatable::JavaPassthrough() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_PASSTHROUGH);
-}
-
 const AidlAnnotation* AidlAnnotatable::RustDerive() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::RUST_DERIVE);
 }
@@ -1112,6 +1108,78 @@ void AidlEnumDeclaration::Dump(CodeWriter* writer) const {
   }
   writer->Dedent();
   writer->Write("}\n");
+}
+
+AidlUnionDecl::AidlUnionDecl(const AidlLocation& location, const std::string& name,
+                             const std::string& package, const std::string& comments,
+                             std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables,
+                             std::vector<std::string>* type_params)
+    : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params),
+      variables_(std::move(*variables)) {}
+
+std::set<AidlAnnotation::Type> AidlUnionDecl::GetSupportedAnnotations() const {
+  return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::HIDE,
+          AidlAnnotation::Type::JAVA_PASSTHROUGH};
+}
+
+void AidlUnionDecl::Dump(CodeWriter* writer) const {
+  DumpHeader(writer);
+  writer->Write("union %s {\n", GetName().c_str());
+  writer->Indent();
+  for (const auto& field : GetFields()) {
+    if (field->GetType().IsHidden()) {
+      AddHideComment(writer);
+    }
+    writer->Write("%s;\n", field->ToString().c_str());
+  }
+  writer->Dedent();
+  writer->Write("}\n");
+}
+
+bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
+  // visit parent
+  if (!AidlParcelable::CheckValid(typenames)) {
+    return false;
+  }
+  // visit members
+  for (const auto& v : GetFields()) {
+    if (!v->CheckValid(typenames)) {
+      return false;
+    }
+  }
+
+  // now, visit self!
+  bool success = true;
+
+  // TODO(b/170807936) do we need to allow ParcelableHolder in union?
+  for (const auto& v : GetFields()) {
+    if (v->GetType().GetName() == "ParcelableHolder") {
+      AIDL_ERROR(*v) << "A union can't have a member of ParcelableHolder '" << v->GetName() << "'";
+      success = false;
+    }
+  }
+
+  // first member should have default value (implicit or explicit)
+  if (GetFields().empty()) {
+    AIDL_ERROR(*this) << "The union '" << this->GetName() << "' has no fields.";
+    return false;
+  }
+
+  return success;
+}
+
+// TODO: we should treat every backend all the same in future.
+bool AidlUnionDecl::LanguageSpecificCheckValid(const AidlTypenames& typenames,
+                                               Options::Language lang) const {
+  if (!AidlParcelable::LanguageSpecificCheckValid(typenames, lang)) {
+    return false;
+  }
+  for (const auto& v : this->GetFields()) {
+    if (!v->GetType().LanguageSpecificCheckValid(typenames, lang)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // TODO: we should treat every backend all the same in future.
