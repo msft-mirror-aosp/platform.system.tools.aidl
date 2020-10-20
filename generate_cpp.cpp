@@ -24,6 +24,7 @@
 #include <set>
 #include <string>
 
+#include <android-base/format.h>
 #include <android-base/stringprintf.h>
 
 #include "aidl_language.h"
@@ -1044,7 +1045,6 @@ string GetInitializer(const AidlTypenames& typenames, const AidlVariableDeclarat
 template <typename ParcelableType>
 struct ParcelableTraits {
   static void AddIncludes(set<string>& includes);
-  static string GetComparable(const ParcelableType& decl, const string& var_prefix);
   static void AddFields(ClassDecl& clazz, const ParcelableType& decl,
                         const AidlTypenames& typenames);
   static void GenReadFromParcel(const ParcelableType& parcel, const AidlTypenames& typenames,
@@ -1057,13 +1057,6 @@ template <>
 struct ParcelableTraits<AidlStructuredParcelable> {
   static void AddIncludes(set<string>& includes) {
     includes.insert("tuple");  // std::tie in comparison operators
-  }
-  static string GetComparable(const AidlStructuredParcelable& decl, const string& var_prefix) {
-    std::vector<std::string> var_names;
-    for (const auto& variable : decl.GetFields()) {
-      var_names.push_back(var_prefix + variable->GetName());
-    }
-    return "std::tie(" + Join(var_names, ", ") + ")";
   }
   static void AddFields(ClassDecl& clazz, const AidlStructuredParcelable& decl,
                         const AidlTypenames& typenames) {
@@ -1142,180 +1135,61 @@ struct ParcelableTraits<AidlStructuredParcelable> {
   }
 };
 
+// Adapter to cpp::UnionWriter
 template <>
 struct ParcelableTraits<AidlUnionDecl> {
   static void AddIncludes(set<string>& includes) {
-    includes.insert("variant");  // std::variant for value
-    includes.insert("utility");  // std::mode/forward for value
-  }
-  static string GetComparable(const AidlUnionDecl&, const string& var_prefix) {
-    return var_prefix + "_value";
+    includes.insert(std::begin(UnionWriter::headers), std::end(UnionWriter::headers));
   }
   static void AddFields(ClassDecl& clazz, const AidlUnionDecl& decl,
                         const AidlTypenames& typenames) {
-    AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                               /* type_params= */ nullptr, /* comments= */ "");
-    auto enum_tag =
-        std::make_unique<Enum>("Tag", CppNameOf(tag_type, typenames), /* is_class= */ false);
-    bool is_first = true;
-    for (const auto& f : decl.GetFields()) {
-      auto raw_decl = f->Signature();
-      enum_tag->AddValue(f->GetName(), is_first ? "0" : "", "// " + raw_decl);
-      is_first = false;
-    }
-    clazz.AddPublic(std::move(enum_tag));
-
-    const auto& name = decl.GetName();
-
-    AIDL_FATAL_IF(decl.GetFields().empty(), decl) << "Union '" << name << "' is empty.";
-    const auto& first_field = decl.GetFields()[0];
-    const auto& first_name = first_field->GetName();
-    const auto& first_value = GetInitializer(typenames, *first_field);
-
-    // clang-format off
-    auto helper_methods = vector<string>{
-        // type classification
-        "template<typename _Tp>\n"
-        "static constexpr bool not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, " + name + ">;\n\n",
-
-        // default ctor inits with the first member's default value
-        name + "() : _value(std::in_place_index<" + first_name + ">, " + first_value + ") { }\n",
-
-        // other ctors with default implementation
-        name + "(const " + name + "& other) = default;\n",
-        name + "(" + name + "&& other) = default;\n",
-        name + "& operator=(const " + name + "&) = default;\n",
-        name + "& operator=(" + name + "&&) = default;\n\n",
-
-        // conversion ctor from value
-        "template <typename T, std::enable_if_t<not_self<T>, int> = 0>\n"
-        "constexpr " + name + "(T&& arg)\n"
-        "    : _value(std::forward<T>(arg)) {}\n",
-
-        // ctor to support in-place construction using in_place_index/in_place_type
-        "template <typename... T>\n"
-        "constexpr explicit " + name + "(T&&... args)\n"
-        "    : _value(std::forward<T>(args)...) {}\n",
-
-        // value ctor: make<tag>(args...)
-        "template <Tag tag, typename... T>\n"
-        "static " + name + " make(T&&... args) {\n"
-        "  return " + name + "(std::in_place_index<tag>, std::forward<T>(args)...);\n"
-        "}\n",
-
-        // value ctor: make<tag>({initializer_list})
-        "template <Tag tag, typename T, typename... U>\n"
-        "static " + name + " make(std::initializer_list<T> il, U&&... args) {\n"
-        "  return " + name + "(std::in_place_index<tag>, std::move(il), std::forward<U>(args)...);\n"
-        "}\n\n",
-
-        // getTag
-        "Tag getTag() const {\n"
-        "  return (Tag)_value.index();\n"
-        "}\n\n",
-
-        // const-getter
-        "template <Tag tag>\n"
-        "const auto& get() const {\n"
-        "  if (getTag() != tag) { abort(); }\n"
-        "  return std::get<tag>(_value);\n"
-        "}\n\n",
-
-        // getter
-        "template <Tag tag>\n"
-        "auto& get() {\n"
-        "  if (getTag() != tag) { abort(); }\n"
-        "  return std::get<tag>(_value);\n"
-        "}\n\n",
-
-        // setter
-        "template <Tag tag, typename... T>\n"
-        "void set(T&&... args) {\n"
-        "  _value.emplace<tag>(std::forward<T>(args)...);\n"
-        "}\n\n",
-    };
-    // clang-format on
-    for (const auto& helper_method : helper_methods) {
-      clazz.AddPublic(std::make_unique<LiteralDecl>(helper_method));
-    }
-
-    vector<string> field_types;
-    for (const auto& f : decl.GetFields()) {
-      field_types.push_back(CppNameOf(f->GetType(), typenames));
-    }
-    clazz.AddPrivate(
-        std::make_unique<LiteralDecl>("std::variant<" + Join(field_types, ",") + "> _value;\n"));
+    UnionWriter uw{decl, typenames, &CppNameOf, &ConstantValueDecorator};
+    const string public_fields = RunWriter([&](auto& out) { uw.PublicFields(out); });
+    const string private_fields = RunWriter([&](auto& out) { uw.PrivateFields(out); });
+    clazz.AddPublic(std::make_unique<LiteralDecl>(public_fields));
+    clazz.AddPrivate(std::make_unique<LiteralDecl>(private_fields));
   }
-  static void GenReadFromParcel(const AidlUnionDecl& parcel, const AidlTypenames& typenames,
+  static void GenReadFromParcel(const AidlUnionDecl& decl, const AidlTypenames& typenames,
                                 StatementBlock* read_block) {
-    const AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                                     /* type_params= */ nullptr, /* comments= */ "");
-    const string tag = "_aidl_tag";
-    const string value = "_aidl_value";
-
-    string block;
-    CodeWriterPtr out = CodeWriter::ForString(&block);
-
-    auto read_var = [&](const string& var, const AidlTypeSpecifier& type) {
-      *out << StringPrintf("%s %s;\n", CppNameOf(type, typenames).c_str(), var.c_str());
-      *out << StringPrintf("if ((%s = %s->%s(%s)) != %s) return %s;\n", kAndroidStatusVarName,
-                           kParcelVarName, ParcelReadMethodOf(type, typenames).c_str(),
-                           ParcelReadCastOf(type, typenames, "&" + var).c_str(), kAndroidStatusOk,
-                           kAndroidStatusVarName);
-    };
-
-    // begin
-    *out << StringPrintf("%s %s;\n", kAndroidStatusLiteral, kAndroidStatusVarName);
-    read_var(tag, tag_type);
-    *out << StringPrintf("switch (%s) {\n", tag.c_str());
-    for (const auto& variable : parcel.GetFields()) {
-      *out << StringPrintf("case %s: {\n", variable->GetName().c_str());
-      out->Indent();
-      read_var(value, variable->GetType());
-      *out << StringPrintf("set<%s>(std::move(%s));\n", variable->GetName().c_str(), value.c_str());
-      *out << StringPrintf("return %s; }\n", kAndroidStatusOk);
-      out->Dedent();
-    }
-    *out << "}\n";
-    *out << StringPrintf("return %s;\n", kAndroidStatusBadValue);
-    // end
-
-    out->Close();
-    read_block->AddLiteral(block, /*add_semicolon=*/false);
+    const string body = RunWriter([&](auto& out) {
+      UnionWriter uw{decl, typenames, &CppNameOf, &ConstantValueDecorator};
+      uw.ReadFromParcel(out, GetParcelWriterContext(typenames));
+    });
+    read_block->AddLiteral(body, /*add_semicolon=*/false);
   }
-  static void GenWriteToParcel(const AidlUnionDecl& parcel, const AidlTypenames& typenames,
+  static void GenWriteToParcel(const AidlUnionDecl& decl, const AidlTypenames& typenames,
                                StatementBlock* write_block) {
-    const AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                                     /* type_params= */ nullptr, /* comments= */ "");
-    const string tag = "_aidl_tag";
-    const string value = "_aidl_value";
+    const string body = RunWriter([&](auto& out) {
+      UnionWriter uw{decl, typenames, &CppNameOf, &ConstantValueDecorator};
+      uw.WriteToParcel(out, GetParcelWriterContext(typenames));
+    });
+    write_block->AddLiteral(body, /*add_semicolon=*/false);
+  }
 
-    string block;
-    CodeWriterPtr out = CodeWriter::ForString(&block);
-
-    auto write_value = [&](const string& value, const AidlTypeSpecifier& type) {
-      return StringPrintf("%s->%s(%s)", kParcelVarName,
-                          ParcelWriteMethodOf(type, typenames).c_str(),
-                          ParcelWriteCastOf(type, typenames, value).c_str());
-    };
-
-    // begin
-    *out << StringPrintf("%s %s = %s;\n", kAndroidStatusLiteral, kAndroidStatusVarName,
-                         write_value("getTag()", tag_type).c_str());
-    *out << StringPrintf("if (%s != %s) return %s;\n", kAndroidStatusVarName, kAndroidStatusOk,
-                         kAndroidStatusVarName);
-    *out << "switch (getTag()) {\n";
-    for (const auto& variable : parcel.GetFields()) {
-      const string value = "get<" + variable->GetName() + ">()";
-      *out << StringPrintf("case %s: return %s;\n", variable->GetName().c_str(),
-                           write_value(value, variable->GetType()).c_str());
-    }
-    *out << "}\n";
-    *out << "abort();\n";
-    // end
-
+ private:
+  static string RunWriter(std::function<void(CodeWriter&)> writer) {
+    string code;
+    CodeWriterPtr out = CodeWriter::ForString(&code);
+    writer(*out);
     out->Close();
-    write_block->AddLiteral(block, /*add_semicolon=*/false);
+    return code;
+  }
+  static ParcelWriterContext GetParcelWriterContext(const AidlTypenames& typenames) {
+    return ParcelWriterContext{
+        .status_type = kAndroidStatusLiteral,
+        .status_ok = kAndroidStatusOk,
+        .status_bad = kAndroidStatusBadValue,
+        .read_func =
+            [&](CodeWriter& out, const string& var, const AidlTypeSpecifier& type) {
+              out << fmt::format("{}->{}({})", kParcelVarName, ParcelReadMethodOf(type, typenames),
+                                 ParcelReadCastOf(type, typenames, "&" + var));
+            },
+        .write_func =
+            [&](CodeWriter& out, const string& value, const AidlTypeSpecifier& type) {
+              out << fmt::format("{}->{}({})", kParcelVarName, ParcelWriteMethodOf(type, typenames),
+                                 ParcelWriteCastOf(type, typenames, value));
+            },
+    };
   }
 };
 
@@ -1333,18 +1207,9 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames, cons
     AddHeaders(variable->GetType(), typenames, &includes);
   }
 
-  set<string> operators = {"<", ">", "==", ">=", "<=", "!="};
-  string lhs = Traits::GetComparable(parcel, "");
-  string rhs = Traits::GetComparable(parcel, "rhs.");
-  for (const auto& op : operators) {
-    std::ostringstream operator_code;
-    operator_code << "inline bool operator" << op << "([[maybe_unused]] const " << parcel.GetName()
-                  << "& rhs) const {\n"
-                  << "  return " << lhs << op << rhs << ";\n"
-                  << "}\n";
-
-    parcel_class->AddPublic(std::make_unique<LiteralDecl>(operator_code.str()));
-  }
+  string operator_code;
+  GenerateParcelableComparisonOperators(*CodeWriter::ForString(&operator_code), parcel);
+  parcel_class->AddPublic(std::make_unique<LiteralDecl>(operator_code));
 
   Traits::AddFields(*parcel_class, parcel, typenames);
 
