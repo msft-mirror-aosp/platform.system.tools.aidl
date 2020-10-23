@@ -155,9 +155,23 @@ public class Rect implements android.os.Parcelable
   @Override
   public int describeContents() {
     int _mask = 0;
-    if (fd != null) _mask |= fd.describeContents();
-    if (fds != null) for (ParcelFileDescriptor _v0: fds) if (_v0 != null) _mask |= _v0.describeContents();
+    _mask |= describeContents(fd);
+    _mask |= describeContents(fds);
     return _mask;
+  }
+  private int describeContents(Object _v) {
+    if (_v == null) return 0;
+    if (_v instanceof java.util.Collection) {
+      int _mask = 0;
+      for (Object o : (java.util.Collection) _v) {
+        _mask |= describeContents(o);
+      }
+      return _mask;
+    }
+    if (_v instanceof android.os.Parcelable) {
+      return ((android.os.Parcelable) _v).describeContents();
+    }
+    return 0;
   }
 }
 )";
@@ -1774,6 +1788,21 @@ TEST_F(AidlTestCompatibleChanges, ReorderedEnumerator) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, NewUnionField) {
+  io_delegate_.SetFileContents("old/p/Union.aidl",
+                               "package p;"
+                               "union Union {"
+                               "  String foo;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Union.aidl",
+                               "package p;"
+                               "union Union {"
+                               "  String foo;"
+                               "  int num;"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 TEST_F(AidlTestCompatibleChanges, NewPackage) {
   io_delegate_.SetFileContents("old/p/IFoo.aidl",
                                "package p;"
@@ -1944,6 +1973,30 @@ TEST_F(AidlTestIncompatibleChanges, RemovedField) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTestIncompatibleChanges, NewFieldWithNoDefault) {
+  const string expected_stderr =
+      "ERROR: new/p/Data.aidl:1.46-50: Field 'str' does not have a useful default in some "
+      "backends. Please either provide a default value for this field or mark the field as "
+      "@nullable. This value or a null value will be used automatically when an old version of "
+      "this parcelable is sent to a process which understands a new version of this parcelable. In "
+      "order to make sure your code continues to be backwards compatible, make sure the default or "
+      "null value does not cause a semantic change to this parcelable.\n";
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int num;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int num;"
+                               "  String str;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTestIncompatibleChanges, RemovedEnumerator) {
   const string expected_stderr =
       "ERROR: new/p/Enum.aidl:1.15-20: Removed enumerator from p.Enum: FOO\n";
@@ -1957,6 +2010,25 @@ TEST_F(AidlTestIncompatibleChanges, RemovedEnumerator) {
                                "package p;"
                                "enum Enum {"
                                "  BAR = 2,"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, RemovedUnionField) {
+  const string expected_stderr =
+      "ERROR: new/p/Union.aidl:1.16-22: Number of fields in p.Union is reduced from 2 to 1.\n";
+  io_delegate_.SetFileContents("old/p/Union.aidl",
+                               "package p;"
+                               "union Union {"
+                               "  String str;"
+                               "  int num;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Union.aidl",
+                               "package p;"
+                               "union Union {"
+                               "  String str;"
                                "}");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
@@ -3124,10 +3196,17 @@ public final class Foo implements android.os.Parcelable {
     int _mask = 0;
     switch (getTag()) {
     case pfd:
-      if (getPfd() != null) _mask |= getPfd().describeContents();
+      _mask |= describeContents(getPfd());
       break;
     }
     return _mask;
+  }
+  private int describeContents(Object _v) {
+    if (_v == null) return 0;
+    if (_v instanceof android.os.Parcelable) {
+      return ((android.os.Parcelable) _v).describeContents();
+    }
+    return 0;
   }
 
   private void _assertTag(int tag) {
@@ -3293,6 +3372,66 @@ TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+constexpr char kDescriptContentsWithUntypedListMapInJava[] = R"(
+  @Override
+  public int describeContents() {
+    int _mask = 0;
+    _mask |= describeContents(l);
+    _mask |= describeContents(m);
+    return _mask;
+  }
+  private int describeContents(Object _v) {
+    if (_v == null) return 0;
+    Class<?> _clazz = _v.getClass();
+    if (_clazz.isArray() && _clazz.getComponentType() == Object.class) {
+      int _mask = 0;
+      for (Object o : (Object[]) _v) {
+        _mask |= describeContents(o);
+      }
+      return _mask;
+    }
+    if (_v instanceof java.io.FileDescriptor) {
+      return android.os.Parcelable.CONTENTS_FILE_DESCRIPTOR;
+    }
+    if (_v instanceof java.util.Collection) {
+      int _mask = 0;
+      for (Object o : (java.util.Collection) _v) {
+        _mask |= describeContents(o);
+      }
+      return _mask;
+    }
+    if (_v instanceof java.util.Map) {
+      return describeContents(((java.util.Map) _v).values());
+    }
+    if (_v instanceof android.os.Parcelable) {
+      return ((android.os.Parcelable) _v).describeContents();
+    }
+    if (_v instanceof android.util.SparseArray) {
+      android.util.SparseArray _sa = (android.util.SparseArray) _v;
+      int _mask = 0;
+      int _N = _sa.size();
+      int _i = 0;
+      while (_i < _N) {
+        _mask |= describeContents(_sa.valueAt(_i));
+        _i++;
+      }
+      return _mask;
+    }
+    return 0;
+  }
+)";
+TEST_F(AidlTest, SupportUntypeListAndMap) {
+  io_delegate_.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { List l; Map m; }");
+  Options options = Options::From("aidl a/Foo.aidl --lang=java -o out");
+  CaptureStderr();
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+
+  string code;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &code));
+  EXPECT_THAT(code, testing::HasSubstr(kDescriptContentsWithUntypedListMapInJava));
 }
 
 }  // namespace aidl
