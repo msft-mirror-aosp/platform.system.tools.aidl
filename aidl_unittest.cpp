@@ -398,6 +398,16 @@ TEST_P(AidlTest, RejectsDuplicatedFieldNames) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, RejectsRepeatedAnnotations) {
+  const string method = R"(@Hide @Hide parcelable Foo {})";
+  const string expected_stderr =
+      "ERROR: Foo.aidl:1.23-27: 'Hide' is repeated, but not allowed. Previous location: "
+      "Foo.aidl:1.1-6\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("Foo.aidl", method, typenames_, GetLanguage()));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_P(AidlTest, RejectsDuplicatedAnnotationParams) {
   const string method = "package a; interface IFoo { @UnsupportedAppUsage(foo=1, foo=2)void f(); }";
   const string expected_stderr = "ERROR: a/IFoo.aidl:1.56-62: Trying to redefine parameter foo.\n";
@@ -1871,6 +1881,28 @@ TEST_F(AidlTestCompatibleChanges, ChangedConstValueOrder) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, NewFieldOfNewType) {
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int num;"
+                               "}");
+  io_delegate_.SetFileContents(
+      "new/p/Data.aidl",
+      "package p;"
+      "parcelable Data {"
+      "  int num;"
+      "  p.Enum e;"  // this is considered as valid since 0(enum default) is valid for "Enum" type
+      "}");
+  io_delegate_.SetFileContents("new/p/Enum.aidl",
+                               "package p;"
+                               "enum Enum {"
+                               "  FOO = 0,"
+                               "  BAR = 1,"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 class AidlTestIncompatibleChanges : public AidlTest {
  protected:
   Options options_ = Options::From("aidl --checkapi old new");
@@ -1991,6 +2023,32 @@ TEST_F(AidlTestIncompatibleChanges, NewFieldWithNoDefault) {
                                "parcelable Data {"
                                "  int num;"
                                "  String str;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, NewFieldWithNonZeroEnum) {
+  const string expected_stderr =
+      "ERROR: new/p/Data.aidl:1.46-48: Field 'e' of enum 'Enum' can't be initialized as '0'. "
+      "Please make sure 'Enum' has '0' as a valid value.\n";
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int num;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int num;"
+                               "  p.Enum e;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Enum.aidl",
+                               "package p;"
+                               "enum Enum {"
+                               "  FOO = 1,"
+                               "  BAR = 2,"
                                "}");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
@@ -2733,7 +2791,7 @@ TEST_P(AidlTest, UnsupportedBackingAnnotationParam) {
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
-TEST_P(AidlTest, SupportJavaOnlyImmutableAnnotation) {
+TEST_F(AidlTest, SupportJavaOnlyImmutableAnnotation) {
   io_delegate_.SetFileContents("Foo.aidl",
                                "@JavaOnlyImmutable parcelable Foo { int a; Bar b; List<Bar> c; "
                                "Map<String, Baz> d; Bar[] e; }");
@@ -2744,28 +2802,33 @@ TEST_P(AidlTest, SupportJavaOnlyImmutableAnnotation) {
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
-TEST_P(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableParcelable) {
+TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableParcelable) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { Bar bar; }");
   io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { String a; }");
+  string expected_error =
+      "ERROR: Foo.aidl:1.40-44: The @JavaOnlyImmutable parcelable 'Foo' has a non-immutable field "
+      "named 'bar'.\n";
+  CaptureStderr();
   Options options = Options::From("aidl --lang=java Foo.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_error, GetCapturedStderr());
 }
 
-TEST_P(AidlTest, ImmtuableParcelableCannotBeInOut) {
+TEST_F(AidlTest, ImmutableParcelableCannotBeInOut) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; }");
   io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(inout Foo); }");
   Options options = Options::From("aidl --lang=java IBar.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
-TEST_P(AidlTest, ImmtuableParcelableCannotBeOut) {
+TEST_F(AidlTest, ImmutableParcelableCannotBeOut) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; }");
   io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(out Foo); }");
   Options options = Options::From("aidl --lang=java IBar.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
 }
 
-TEST_P(AidlTest, ImmtuableParcelableFieldNameRestriction) {
+TEST_F(AidlTest, ImmutableParcelableFieldNameRestriction) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; int A; }");
   Options options = Options::From("aidl --lang=java Foo.aidl");
   const string expected_stderr =
