@@ -330,7 +330,8 @@ TEST_P(AidlTest, SupportOnlyOutParameters) {
 TEST_P(AidlTest, RejectOutParametersForIBinder) {
   const string interface_ibinder = "package a; interface IBaz { void f(out IBinder bar); }";
   const string expected_ibinder_stderr =
-      "ERROR: a/IBaz.aidl:1.47-51: 'out IBinder bar' can only be an in parameter.\n";
+      "ERROR: a/IBaz.aidl:1.47-51: 'bar' can't be an out parameter because IBinder can only be an "
+      "in parameter.\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IBaz.aidl", interface_ibinder, typenames_, GetLanguage()));
   EXPECT_EQ(expected_ibinder_stderr, GetCapturedStderr());
@@ -391,8 +392,7 @@ TEST_P(AidlTest, RejectsDuplicatedArgumentNames) {
 
 TEST_P(AidlTest, RejectsDuplicatedFieldNames) {
   const string method = "package a; parcelable Foo { int a; String a; }";
-  const string expected_stderr =
-      "ERROR: a/Foo.aidl:1.22-26: The parcelable 'Foo' has duplicate field name 'a'\n";
+  const string expected_stderr = "ERROR: a/Foo.aidl:1.42-44: 'Foo' has duplicate field name 'a'\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage()));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -458,7 +458,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableDefineAnnotations) {
   const string method = "package a; @nullable parcelable IFoo { String a; String b; }";
   const string expected_stderr =
       "ERROR: a/IFoo.aidl:1.32-37: 'nullable' is not a supported annotation for this node. "
-      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, JavaDebug, "
+      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, JavaDerive, "
       "JavaOnlyImmutable, FixedSize, RustDerive\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
@@ -579,44 +579,79 @@ TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_F(AidlTest, ParsesJavaDebugAnnotation) {
-  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @JavaDebug parcelable IFoo { int a; float b; })");
-  Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+TEST_F(AidlTest, ParcelableSupportJavaDeriveToString) {
+  io_delegate_.SetFileContents("a/Foo.aidl", R"(package a;
+    @JavaDerive(toString=true) parcelable Foo { int a; float b; })");
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_EQ(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
 
   string java_out;
-  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/IFoo.java", &java_out));
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &java_out));
   EXPECT_THAT(java_out, testing::HasSubstr("public String toString() {"));
 
   // Other backends shouldn't be bothered
-  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/IFoo.aidl");
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/Foo.aidl");
   EXPECT_EQ(0, ::android::aidl::compile_aidl(cpp_options, io_delegate_));
 
-  Options ndk_options = Options::From("aidl --lang=ndk -o out -h out a/IFoo.aidl");
+  Options ndk_options = Options::From("aidl --lang=ndk -o out -h out a/Foo.aidl");
   EXPECT_EQ(0, ::android::aidl::compile_aidl(ndk_options, io_delegate_));
 }
 
-TEST_F(AidlTest, RejectsJavaDebugAnnotation) {
+TEST_F(AidlTest, UnionSupportJavaDeriveToString) {
+  io_delegate_.SetFileContents("a/Foo.aidl", R"(package a;
+    @JavaDerive(toString=true) union Foo { int a; int[] b; })");
+  CaptureStderr();
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+
+  const string expected_to_string_method = R"--(
+  @Override
+  public String toString() {
+    switch (_tag) {
+    case a: return "a.Foo.a(" + (getA()) + ")";
+    case b: return "a.Foo.b(" + (java.util.Arrays.toString(getB())) + ")";
+    }
+    throw new IllegalStateException("unknown field: " + _tag);
+  }
+)--";
+
+  string java_out;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &java_out));
+  EXPECT_THAT(java_out, testing::HasSubstr(expected_to_string_method));
+}
+
+TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
   {
-    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDebug interface IFoo{}");
+    io_delegate_.SetFileContents("a/Foo.aidl",
+                                 "package a; @JavaDerive(blah=true) parcelable Foo{}");
+    Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
+    CaptureStderr();
+    EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
+    const std::string expected_stderr =
+        "ERROR: a/Foo.aidl:1.11-34: Parameter blah not supported for annotation JavaDerive.";
+    EXPECT_THAT(GetCapturedStderr(), testing::HasSubstr(expected_stderr));
+  }
+
+  {
+    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDerive interface IFoo{}");
     Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
     CaptureStderr();
     EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
     const std::string expected_stderr =
-        "ERROR: a/IFoo.aidl:1.22-32: 'JavaDebug' is not a supported annotation for this node. "
+        "ERROR: a/IFoo.aidl:1.23-33: 'JavaDerive' is not a supported annotation for this node. "
         "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, "
         "Descriptor\n";
     EXPECT_EQ(expected_stderr, GetCapturedStderr());
   }
 
   {
-    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDebug enum IFoo { A=1, }");
+    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDerive enum IFoo { A=1, }");
     Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
     CaptureStderr();
     EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
     const std::string expected_stderr =
-        "ERROR: a/IFoo.aidl:1.27-32: 'JavaDebug' is not a supported annotation for this node. "
+        "ERROR: a/IFoo.aidl:1.28-33: 'JavaDerive' is not a supported annotation for this node. "
         "It must be one of: Backing, Hide, VintfStability, JavaPassthrough\n";
     EXPECT_EQ(expected_stderr, GetCapturedStderr());
   }
@@ -2806,7 +2841,19 @@ TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableParcelable) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { Bar bar; }");
   io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { String a; }");
   string expected_error =
-      "ERROR: Foo.aidl:1.40-44: The @JavaOnlyImmutable parcelable 'Foo' has a non-immutable field "
+      "ERROR: Foo.aidl:1.40-44: The @JavaOnlyImmutable 'Foo' has a non-immutable field "
+      "named 'bar'.\n";
+  CaptureStderr();
+  Options options = Options::From("aidl --lang=java Foo.aidl -I .");
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_error, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableUnion) {
+  io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable union Foo { Bar bar; }");
+  io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { String a; }");
+  string expected_error =
+      "ERROR: Foo.aidl:1.35-39: The @JavaOnlyImmutable 'Foo' has a non-immutable field "
       "named 'bar'.\n";
   CaptureStderr();
   Options options = Options::From("aidl --lang=java Foo.aidl -I .");
@@ -2816,24 +2863,34 @@ TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableParcelable) {
 
 TEST_F(AidlTest, ImmutableParcelableCannotBeInOut) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; }");
-  io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(inout Foo); }");
+  io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(inout Foo foo); }");
+  string expected_error =
+      "ERROR: IBar.aidl:1.35-39: 'foo' can't be an inout parameter because @JavaOnlyImmutable can "
+      "only be an in parameter.\n";
+  CaptureStderr();
   Options options = Options::From("aidl --lang=java IBar.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_error, GetCapturedStderr());
 }
 
 TEST_F(AidlTest, ImmutableParcelableCannotBeOut) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; }");
-  io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(out Foo); }");
+  io_delegate_.SetFileContents("IBar.aidl", "interface IBar { void my(out Foo foo); }");
+  string expected_error =
+      "ERROR: IBar.aidl:1.33-37: 'foo' can't be an out parameter because @JavaOnlyImmutable can "
+      "only be an in parameter.\n";
+  CaptureStderr();
   Options options = Options::From("aidl --lang=java IBar.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_error, GetCapturedStderr());
 }
 
 TEST_F(AidlTest, ImmutableParcelableFieldNameRestriction) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; int A; }");
   Options options = Options::From("aidl --lang=java Foo.aidl");
   const string expected_stderr =
-      "ERROR: Foo.aidl:1.30-34: The parcelable 'Foo' has duplicate field name 'A' after "
-      "capitalizing the first letter\n";
+      "ERROR: Foo.aidl:1.47-49: 'Foo' has duplicate field name 'A' after capitalizing the first "
+      "letter\n";
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -3132,16 +3189,18 @@ public final class Foo implements android.os.Parcelable {
   private Object _value;
 
   public Foo() {
-    int[] value = {42};
-    _set(ns, value);
+    int[] _value = {42};
+    this._tag = ns;
+    this._value = _value;
   }
 
   private Foo(android.os.Parcel _aidl_parcel) {
     readFromParcel(_aidl_parcel);
   }
 
-  private Foo(int tag, Object value) {
-    _set(tag, value);
+  private Foo(int _tag, Object _value) {
+    this._tag = _tag;
+    this._value = _value;
   }
 
   public int getTag() {
@@ -3287,9 +3346,9 @@ public final class Foo implements android.os.Parcelable {
     throw new IllegalStateException("unknown field: " + _tag);
   }
 
-  private void _set(int tag, Object value) {
-    this._tag = tag;
-    this._value = value;
+  private void _set(int _tag, Object _value) {
+    this._tag = _tag;
+    this._value = _value;
   }
 }
 )";
@@ -3383,6 +3442,21 @@ TEST_P(AidlTest, GenericStructuredParcelable) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTest, NestedTypeArgs) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar<A> { }");
+  io_delegate_.SetFileContents(
+      "a/Foo.aidl", "package a; import a.Bar; parcelable Foo { Bar<Bar<String>> barss; }");
+  Options options = Options::From("aidl a/Foo.aidl -I . -o out --lang=java");
+  const string expected_stderr = "";
+  CaptureStderr();
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+
+  string code;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &code));
+  EXPECT_THAT(code, testing::HasSubstr("a.Bar<a.Bar<java.lang.String>> barss;"));
+}
+
 struct GenericAidlTest : ::testing::Test {
   FakeIoDelegate io_delegate_;
   void Compile(string cmd) {
@@ -3435,6 +3509,15 @@ TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, LongCommentWithinConstExpression) {
+  io_delegate_.SetFileContents("Foo.aidl", "enum Foo { FOO = (1 << 1) /* comment */ | 0x0 }");
+  Options options =
+      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  CaptureStderr();
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
 }
 
 constexpr char kDescriptContentsWithUntypedListMapInJava[] = R"(
