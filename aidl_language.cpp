@@ -117,24 +117,25 @@ std::string AidlNode::PrintLocation() const {
 
 const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
   static const std::vector<Schema> kSchemas{
-      {AidlAnnotation::Type::NULLABLE, "nullable", {}},
-      {AidlAnnotation::Type::UTF8_IN_CPP, "utf8InCpp", {}},
-      {AidlAnnotation::Type::VINTF_STABILITY, "VintfStability", {}},
+      {AidlAnnotation::Type::NULLABLE, "nullable", {}, false},
+      {AidlAnnotation::Type::UTF8_IN_CPP, "utf8InCpp", {}, false},
+      {AidlAnnotation::Type::VINTF_STABILITY, "VintfStability", {}, false},
       {AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
        "UnsupportedAppUsage",
        {{"expectedSignature", "String"},
         {"implicitMember", "String"},
         {"maxTargetSdk", "int"},
         {"publicAlternatives", "String"},
-        {"trackingBug", "long"}}},
-      {AidlAnnotation::Type::JAVA_STABLE_PARCELABLE, "JavaOnlyStableParcelable", {}},
-      {AidlAnnotation::Type::HIDE, "Hide", {}},
-      {AidlAnnotation::Type::BACKING, "Backing", {{"type", "String"}}},
-      {AidlAnnotation::Type::JAVA_PASSTHROUGH, "JavaPassthrough", {{"annotation", "String"}}},
-      {AidlAnnotation::Type::JAVA_DEBUG, "JavaDebug", {}},
-      {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE, "JavaOnlyImmutable", {}},
-      {AidlAnnotation::Type::FIXED_SIZE, "FixedSize", {}},
-      {AidlAnnotation::Type::DESCRIPTOR, "Descriptor", {{"value", "String"}}},
+        {"trackingBug", "long"}},
+       false},
+      {AidlAnnotation::Type::JAVA_STABLE_PARCELABLE, "JavaOnlyStableParcelable", {}, false},
+      {AidlAnnotation::Type::HIDE, "Hide", {}, false},
+      {AidlAnnotation::Type::BACKING, "Backing", {{"type", "String"}}, false},
+      {AidlAnnotation::Type::JAVA_PASSTHROUGH, "JavaPassthrough", {{"annotation", "String"}}, true},
+      {AidlAnnotation::Type::JAVA_DERIVE, "JavaDerive", {{"toString", "boolean"}}, false},
+      {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE, "JavaOnlyImmutable", {}, false},
+      {AidlAnnotation::Type::FIXED_SIZE, "FixedSize", {}, false},
+      {AidlAnnotation::Type::DESCRIPTOR, "Descriptor", {{"value", "String"}}, false},
       {AidlAnnotation::Type::RUST_DERIVE,
        "RustDerive",
        {{"Copy", "boolean"},
@@ -143,7 +144,8 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
         {"Ord", "boolean"},
         {"PartialEq", "boolean"},
         {"Eq", "boolean"},
-        {"Hash", "boolean"}}},
+        {"Hash", "boolean"}},
+       false},
   };
   return kSchemas;
 }
@@ -268,6 +270,8 @@ static const AidlAnnotation* GetAnnotation(const vector<AidlAnnotation>& annotat
                                            AidlAnnotation::Type type) {
   for (const auto& a : annotations) {
     if (a.GetType() == type) {
+      AIDL_FATAL_IF(a.Repeatable(), a)
+          << "Trying to get a single annotation when it is repeatable.";
       return &a;
     }
   }
@@ -334,8 +338,8 @@ bool AidlAnnotatable::IsHide() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::HIDE);
 }
 
-bool AidlAnnotatable::IsJavaDebug() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DEBUG);
+const AidlAnnotation* AidlAnnotatable::JavaDerive() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DERIVE);
 }
 
 std::string AidlAnnotatable::GetDescriptor() const {
@@ -364,20 +368,30 @@ void AidlAnnotatable::DumpAnnotations(CodeWriter* writer) const {
 bool AidlAnnotatable::CheckValid(const AidlTypenames&) const {
   std::set<AidlAnnotation::Type> supported_annotations = GetSupportedAnnotations();
   for (const auto& annotation : GetAnnotations()) {
-    if (!annotation.CheckValid()) {
-      return false;
-    }
-
-    std::vector<std::string> supported_annot_strings;
-    for (AidlAnnotation::Type type : supported_annotations) {
-      supported_annot_strings.push_back(AidlAnnotation::TypeToString(type));
-    }
-
+    // check if it is allowed for this node
     if (supported_annotations.find(annotation.GetType()) == supported_annotations.end()) {
+      std::vector<std::string> supported_annot_strings;
+      for (AidlAnnotation::Type type : supported_annotations) {
+        supported_annot_strings.push_back(AidlAnnotation::TypeToString(type));
+      }
       AIDL_ERROR(this) << "'" << annotation.GetName()
                        << "' is not a supported annotation for this node. "
                        << "It must be one of: "
                        << android::base::Join(supported_annot_strings, ", ");
+      return false;
+    }
+    // CheckValid() only if it is okay to be here
+    if (!annotation.CheckValid()) {
+      return false;
+    }
+  }
+
+  std::map<AidlAnnotation::Type, AidlLocation> declared;
+  for (const auto& annotation : GetAnnotations()) {
+    const auto& [iter, inserted] = declared.emplace(annotation.GetType(), annotation.GetLocation());
+    if (!inserted && !annotation.Repeatable()) {
+      AIDL_ERROR(this) << "'" << annotation.GetName()
+                       << "' is repeated, but not allowed. Previous location: " << iter->second;
       return false;
     }
   }
@@ -405,14 +419,16 @@ AidlTypeSpecifier::AidlTypeSpecifier(const AidlLocation& location, const string&
       comments_(comments),
       split_name_(Split(unresolved_name, ".")) {}
 
-AidlTypeSpecifier AidlTypeSpecifier::ArrayBase() const {
+const AidlTypeSpecifier& AidlTypeSpecifier::ArrayBase() const {
   AIDL_FATAL_IF(!is_array_, this);
   // Declaring array of generic type cannot happen, it is grammar error.
   AIDL_FATAL_IF(IsGeneric(), this);
 
-  AidlTypeSpecifier array_base = *this;
-  array_base.is_array_ = false;
-  return array_base;
+  if (!array_base_) {
+    array_base_.reset(new AidlTypeSpecifier(*this));
+    array_base_->is_array_ = false;
+  }
+  return *array_base_;
 }
 
 bool AidlTypeSpecifier::IsHidden() const {
@@ -552,6 +568,10 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
     const auto defined_type = typenames.TryGetDefinedType(GetName());
     if (defined_type != nullptr && defined_type->AsEnumDeclaration() != nullptr && !IsArray()) {
       AIDL_ERROR(this) << "Enum type cannot get nullable annotation";
+      return false;
+    }
+    if (GetName() == "ParcelableHolder") {
+      AIDL_ERROR(this) << "ParcelableHolder cannot be nullable.";
       return false;
     }
   }
@@ -844,12 +864,60 @@ void AidlParcelable::Dump(CodeWriter* writer) const {
   writer->Write("parcelable %s ;\n", GetName().c_str());
 }
 
+bool AidlWithFields::CheckValid(const AidlParcelable& parcel,
+                                const AidlTypenames& typenames) const {
+  bool success = true;
+
+  for (const auto& v : GetFields()) {
+    const bool field_valid = v->CheckValid(typenames);
+    success = success && field_valid;
+  }
+
+  // field names should be unique
+  std::set<std::string> fieldnames;
+  for (const auto& v : GetFields()) {
+    bool duplicated = !fieldnames.emplace(v->GetName()).second;
+    if (duplicated) {
+      AIDL_ERROR(v) << "'" << parcel.GetName() << "' has duplicate field name '" << v->GetName()
+                    << "'";
+      success = false;
+    }
+  }
+
+  // immutable parcelables should have immutable fields.
+  if (parcel.IsJavaOnlyImmutable()) {
+    for (const auto& v : GetFields()) {
+      if (!typenames.CanBeJavaOnlyImmutable(v->GetType())) {
+        AIDL_ERROR(v) << "The @JavaOnlyImmutable '" << parcel.GetName() << "' has a "
+                      << "non-immutable field named '" << v->GetName() << "'.";
+        success = false;
+      }
+    }
+  }
+
+  return success;
+}
+
+bool AidlWithFields::CheckValidForGetterNames(const AidlParcelable& parcel) const {
+  bool success = true;
+  std::set<std::string> getters;
+  for (const auto& v : GetFields()) {
+    bool duplicated = !getters.emplace(CapitalizeFirstLetter(*v, v->GetName())).second;
+    if (duplicated) {
+      AIDL_ERROR(v) << "'" << parcel.GetName() << "' has duplicate field name '" << v->GetName()
+                    << "' after capitalizing the first letter";
+      success = false;
+    }
+  }
+  return success;
+}
+
 AidlStructuredParcelable::AidlStructuredParcelable(
     const AidlLocation& location, const std::string& name, const std::string& package,
     const std::string& comments, std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables,
     std::vector<std::string>* type_params)
     : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params),
-      variables_(std::move(*variables)) {}
+      AidlWithFields(variables) {}
 
 void AidlStructuredParcelable::Dump(CodeWriter* writer) const {
   DumpHeader(writer);
@@ -870,41 +938,36 @@ std::set<AidlAnnotation::Type> AidlStructuredParcelable::GetSupportedAnnotations
           AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
           AidlAnnotation::Type::HIDE,
           AidlAnnotation::Type::JAVA_PASSTHROUGH,
-          AidlAnnotation::Type::JAVA_DEBUG,
+          AidlAnnotation::Type::JAVA_DERIVE,
           AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
           AidlAnnotation::Type::FIXED_SIZE,
           AidlAnnotation::Type::RUST_DERIVE};
 }
 
 bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
-  bool success = true;
   if (!AidlParcelable::CheckValid(typenames)) {
     return false;
   }
-  std::set<std::string> fieldnames;
-  for (const auto& v : GetFields()) {
-    const bool field_valid = v->CheckValid(typenames);
-    success = success && field_valid;
-    bool duplicated;
-    if (IsJavaOnlyImmutable()) {
-      success = success && typenames.CanBeJavaOnlyImmutable(v->GetType());
-      duplicated = !fieldnames.emplace(CapitalizeFirstLetter(*v, v->GetName())).second;
-    } else {
-      if (IsFixedSize()) {
-        if (field_valid && !typenames.CanBeFixedSize(v->GetType())) {
-          AIDL_ERROR(v) << "The @FixedSize parcelable '" << this->GetName() << "' has a "
-                        << "non-fixed size field named " << v->GetName() << ".";
-          success = false;
-        }
-      }
-      duplicated = !fieldnames.emplace(v->GetName()).second;
-    }
+  if (!AidlWithFields::CheckValid(*this, typenames)) {
+    return false;
+  }
 
-    if (duplicated) {
-      AIDL_ERROR(this) << "The parcelable '" << this->GetName() << "' has duplicate field name '"
-                       << v->GetName() << "'"
-                       << (IsJavaOnlyImmutable() ? " after capitalizing the first letter" : "");
-      return false;
+  bool success = true;
+
+  if (IsFixedSize()) {
+    for (const auto& v : GetFields()) {
+      if (!typenames.CanBeFixedSize(v->GetType())) {
+        AIDL_ERROR(v) << "The @FixedSize parcelable '" << this->GetName() << "' has a "
+                      << "non-fixed size field named " << v->GetName() << ".";
+        success = false;
+      }
+    }
+  }
+
+  if (IsJavaOnlyImmutable()) {
+    // Immutable parcelables provide getters
+    if (!CheckValidForGetterNames(*this)) {
+      success = false;
     }
   }
 
@@ -920,10 +983,9 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
                      << " backend does not support array of IBinder";
     return false;
   }
-  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) &&
-      GetName() == "ParcelableHolder") {
-    // TODO(b/146611855): Remove it when both NDK and Rust backend support ParcelableHolder
-    AIDL_ERROR(this) << "The NDK and Rust backend does not support ParcelableHolder yet.";
+  if (lang == Options::Language::RUST && GetName() == "ParcelableHolder") {
+    // TODO(b/146611855): Remove it when Rust backend supports ParcelableHolder
+    AIDL_ERROR(this) << "The Rust backend does not support ParcelableHolder yet.";
     return false;
   }
   if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
@@ -1115,11 +1177,12 @@ AidlUnionDecl::AidlUnionDecl(const AidlLocation& location, const std::string& na
                              std::vector<std::unique_ptr<AidlVariableDeclaration>>* variables,
                              std::vector<std::string>* type_params)
     : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params),
-      variables_(std::move(*variables)) {}
+      AidlWithFields(variables) {}
 
 std::set<AidlAnnotation::Type> AidlUnionDecl::GetSupportedAnnotations() const {
   return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::HIDE,
-          AidlAnnotation::Type::JAVA_PASSTHROUGH};
+          AidlAnnotation::Type::JAVA_PASSTHROUGH, AidlAnnotation::Type::JAVA_DERIVE,
+          AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE};
 }
 
 void AidlUnionDecl::Dump(CodeWriter* writer) const {
@@ -1137,15 +1200,17 @@ void AidlUnionDecl::Dump(CodeWriter* writer) const {
 }
 
 bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
-  // visit parent
+  // visit parents
   if (!AidlParcelable::CheckValid(typenames)) {
     return false;
   }
-  // visit members
-  for (const auto& v : GetFields()) {
-    if (!v->CheckValid(typenames)) {
-      return false;
-    }
+  if (!AidlWithFields::CheckValid(*this, typenames)) {
+    return false;
+  }
+
+  // unions provide getters always
+  if (!CheckValidForGetterNames(*this)) {
+    return false;
   }
 
   // now, visit self!
@@ -1293,7 +1358,8 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
         AIDL_ERROR(m) << "oneway method '" << m->GetName() << "' cannot have out parameters";
         return false;
       }
-      const bool can_be_out = typenames.CanBeOutParameter(arg->GetType());
+
+      const auto [can_be_out, type_aspect] = typenames.CanBeOutParameter(arg->GetType());
       if (!arg->DirectionWasSpecified() && can_be_out) {
         AIDL_ERROR(arg) << "'" << arg->GetType().ToString()
                         << "' can be an out type, so you must declare it as in, out, or inout.";
@@ -1301,7 +1367,8 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
       }
 
       if (arg->GetDirection() != AidlArgument::IN_DIR && !can_be_out) {
-        AIDL_ERROR(arg) << "'" << arg->ToString() << "' can only be an in parameter.";
+        AIDL_ERROR(arg) << "'" << arg->GetName() << "' can't be an " << arg->GetDirectionSpecifier()
+                        << " parameter because " << type_aspect << " can only be an in parameter.";
         return false;
       }
 

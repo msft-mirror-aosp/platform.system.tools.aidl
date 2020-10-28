@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package android.aidl.tests.immutable;
+package android.aidl.tests;
 
-import android.aidl.tests.immutable.Bar;
-import android.aidl.tests.immutable.Union;
-
-@JavaOnlyImmutable
-parcelable Foo {
-    int a = 10;
-    Bar b;
-    List<Bar> c;
-    Map<String, Bar> d;
-    Bar[] e;
-    Union u;
+union UnionWithFd {
+    int num;
+    ParcelFileDescriptor pfd;
 }
