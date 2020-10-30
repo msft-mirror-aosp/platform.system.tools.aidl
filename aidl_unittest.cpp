@@ -1934,6 +1934,20 @@ TEST_F(AidlTestCompatibleChanges, ChangedConstValueOrder) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, ReorderedAnnatations) {
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Alice\")"
+                               "@JavaPassthrough(annotation=\"Bob\")"
+                               "parcelable Foo {}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Bob\")"
+                               "@JavaPassthrough(annotation=\"Alice\")"
+                               "parcelable Foo {}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 TEST_F(AidlTestCompatibleChanges, NewFieldOfNewType) {
   io_delegate_.SetFileContents("old/p/Data.aidl",
                                "package p;"
@@ -2303,6 +2317,45 @@ TEST_F(AidlTestIncompatibleChanges, RemovedAnnotation) {
                                "  void foo(in String[] str);"
                                "  void bar(String str);"
                                "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, ChangedBackingTypeOfEnum) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.11-32: Type changed: byte to long.\n"
+      "ERROR: new/p/Foo.aidl:1.36-40: Changed backing types.\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@Backing(type=\"byte\")"
+                               "enum Foo {"
+                               " FOO, BAR,"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@Backing(type=\"long\")"
+                               "enum Foo {"
+                               " FOO, BAR,"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, ChangedAnnatationParams) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.55-59: Changed annotations: @JavaPassthrough(annotation=\"Alice\") "
+      "to @JavaPassthrough(annotation=\"Bob\")\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Alice\")"
+                               "parcelable Foo {}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Bob\")"
+                               "parcelable Foo {}");
+
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -3460,10 +3513,11 @@ TEST_P(AidlTest, GenericStructuredParcelable) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+// TODO(b/171946195) fix ">>" handling
 TEST_F(AidlTest, NestedTypeArgs) {
   io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar<A> { }");
   io_delegate_.SetFileContents(
-      "a/Foo.aidl", "package a; import a.Bar; parcelable Foo { Bar<Bar<String>> barss; }");
+      "a/Foo.aidl", "package a; import a.Bar; parcelable Foo { Bar<Bar<String> > barss; }");
   Options options = Options::From("aidl a/Foo.aidl -I . -o out --lang=java");
   const string expected_stderr = "";
   CaptureStderr();
@@ -3538,64 +3592,57 @@ TEST_P(AidlTest, LongCommentWithinConstExpression) {
   EXPECT_EQ("", GetCapturedStderr());
 }
 
-constexpr char kDescriptContentsWithUntypedListMapInJava[] = R"(
-  @Override
-  public int describeContents() {
-    int _mask = 0;
-    _mask |= describeContents(l);
-    _mask |= describeContents(m);
-    return _mask;
-  }
-  private int describeContents(Object _v) {
-    if (_v == null) return 0;
-    Class<?> _clazz = _v.getClass();
-    if (_clazz.isArray() && _clazz.getComponentType() == Object.class) {
-      int _mask = 0;
-      for (Object o : (Object[]) _v) {
-        _mask |= describeContents(o);
-      }
-      return _mask;
-    }
-    if (_v instanceof java.io.FileDescriptor) {
-      return android.os.Parcelable.CONTENTS_FILE_DESCRIPTOR;
-    }
-    if (_v instanceof java.util.Collection) {
-      int _mask = 0;
-      for (Object o : (java.util.Collection) _v) {
-        _mask |= describeContents(o);
-      }
-      return _mask;
-    }
-    if (_v instanceof java.util.Map) {
-      return describeContents(((java.util.Map) _v).values());
-    }
-    if (_v instanceof android.os.Parcelable) {
-      return ((android.os.Parcelable) _v).describeContents();
-    }
-    if (_v instanceof android.util.SparseArray) {
-      android.util.SparseArray _sa = (android.util.SparseArray) _v;
-      int _mask = 0;
-      int _N = _sa.size();
-      int _i = 0;
-      while (_i < _N) {
-        _mask |= describeContents(_sa.valueAt(_i));
-        _i++;
-      }
-      return _mask;
-    }
-    return 0;
-  }
-)";
-TEST_F(AidlTest, SupportUntypeListAndMap) {
+TEST_F(AidlTest, RejectUntypdeListAndMapInUnion) {
+  io_delegate_.SetFileContents("a/Foo.aidl", "package a; union Foo { List l; Map m; }");
+  Options options = Options::From("aidl a/Foo.aidl --lang=java -o out");
+  std::string expectedErr =
+      "ERROR: a/Foo.aidl:1.28-30: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: a/Foo.aidl:1.35-37: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expectedErr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, RejectUntypdeListAndMapInUnstructuredParcelable) {
   io_delegate_.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { List l; Map m; }");
   Options options = Options::From("aidl a/Foo.aidl --lang=java -o out");
+  std::string expectedErr =
+      "ERROR: a/Foo.aidl:1.33-35: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: a/Foo.aidl:1.40-42: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
   CaptureStderr();
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
-  EXPECT_EQ("", GetCapturedStderr());
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expectedErr, GetCapturedStderr());
+}
 
-  string code;
-  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &code));
-  EXPECT_THAT(code, testing::HasSubstr(kDescriptContentsWithUntypedListMapInJava));
+TEST_F(AidlTest, RejectNestedUntypedListAndMap) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar<T>;");
+  io_delegate_.SetFileContents(
+      "a/Foo.aidl", "package a; import a.Bar; parcelable Foo { Bar<List> a; Bar<Map> b; }");
+  Options options = Options::From("aidl a/Foo.aidl -I . --lang=java -o out");
+  std::string expectedErr =
+      "ERROR: a/Foo.aidl:1.52-54: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: a/Foo.aidl:1.64-66: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expectedErr, GetCapturedStderr());
 }
 
 }  // namespace aidl
