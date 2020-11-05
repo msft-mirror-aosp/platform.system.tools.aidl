@@ -32,6 +32,17 @@ namespace android {
 namespace aidl {
 namespace cpp {
 
+char kToStringHelper[] = R"(template <typename _T> class _has_toString {
+  template <typename _U> static std::true_type __has_toString(decltype(&_U::toString));
+  template <typename _U> static std::false_type __has_toString(...);
+  public: enum { value = decltype(__has_toString<_T>(nullptr))::value };
+};
+template <typename _T> inline static std::string _call_toString(const _T& t) {
+  if constexpr (_has_toString<_T>::value) return t.toString();
+  return "{no toString() implemented}";
+}
+)";
+
 string ClassName(const AidlDefinedType& defined_type, ClassNames type) {
   string base_name = defined_type.GetName();
   if (base_name.length() >= 2 && base_name[0] == 'I' && isupper(base_name[1])) {
@@ -94,13 +105,105 @@ string BuildVarName(const AidlArgument& a) {
   return prefix + a.GetName();
 }
 
+string ToString(const AidlTypeSpecifier& type, const string& expr);
+string ToStringNullable(const AidlTypeSpecifier& type, const string& expr);
+string ToStringNullableVector(const AidlTypeSpecifier& element_type, const string& expr);
+string ToStringVector(const AidlTypeSpecifier& element_type, const string& expr);
+string ToStringRaw(const AidlTypeSpecifier& type, const string& expr);
+
+string ToStringNullable(const AidlTypeSpecifier& type, const string& expr) {
+  if (AidlTypenames::IsPrimitiveTypename(type.GetName())) {
+    // we don't allow @nullable for primitives
+    return ToStringRaw(type, expr);
+  }
+  return "((" + expr + ") ? " + ToStringRaw(type, "*" + expr) + ": \"(null)\")";
+}
+
+string ToStringVector(const AidlTypeSpecifier& element_type, const string& expr) {
+  return "[&](){ std::ostringstream o; o << \"[\"; bool first = true; for (const auto& v: " + expr +
+         ") { (void)v; if (first) first = false; else o << \", \"; o << " +
+         ToStringRaw(element_type, "v") + "; }; o << \"]\"; return o.str(); }()";
+}
+
+string ToStringNullableVector(const AidlTypeSpecifier& element_type, const string& expr) {
+  return "[&](){ if (!(" + expr +
+         ")) return std::string(\"(null)\"); std::ostringstream o; o << \"[\"; bool first = true; "
+         "for (const auto& v: *(" +
+         expr + ")) { (void)v; if (first) first = false; else o << \", \"; o << " +
+         ToStringNullable(element_type, "v") + "; }; o << \"]\"; return o.str(); }()";
+}
+
+string ToStringRaw(const AidlTypeSpecifier& type, const string& expr) {
+  if (AidlTypenames::IsBuiltinTypename(type.GetName())) {
+    if (AidlTypenames::IsPrimitiveTypename(type.GetName())) {
+      if (type.GetName() == "boolean") {
+        return "(" + expr + "?\"true\":\"false\")";
+      }
+      if (type.GetName() == "char") {
+        return "std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>().to_bytes(" +
+               expr + ")";
+      }
+      return "std::to_string(" + expr + ")";
+    }
+    if (type.GetName() == "String") {
+      return "(std::ostringstream() << " + expr + ").str()";
+    }
+    // ""(empty string) for unsupported types
+    return "\"\"";
+  }
+
+  const AidlDefinedType* defined_type = type.GetDefinedType();
+  AIDL_FATAL_IF(defined_type == nullptr, type);
+
+  if (defined_type->AsInterface()) {
+    // ""(empty string) for unsupported types
+    return "\"\"";
+  }
+  if (defined_type->AsEnumDeclaration()) {
+    const auto ns = Join(defined_type->GetSplitPackage(), "::");
+    return ns + "::toString(" + expr + ")";
+  }
+  return "_call_toString(" + expr + ")";
+}
+
+string ToString(const AidlTypeSpecifier& type, const string& expr) {
+  static const std::set<string> kNotSupported = {"Map", "IBinder", "ParcelFileDescriptor",
+                                                 "ParcelableHolder"};
+  if (kNotSupported.find(type.GetName()) != kNotSupported.end()) {
+    // ""(empty string) for unsupported types
+    return "\"\"";
+  }
+  if (type.IsArray() && type.IsNullable()) {
+    const auto& element_type = type.ArrayBase();
+    return ToStringNullableVector(element_type, expr);
+  }
+  if (type.GetName() == "List" && type.IsNullable()) {
+    const auto& element_type = *type.GetTypeParameters()[0];
+    return ToStringNullableVector(element_type, expr);
+  }
+  if (type.IsArray()) {
+    const auto& element_type = type.ArrayBase();
+    return ToStringVector(element_type, expr);
+  }
+  if (type.GetName() == "List") {
+    const auto& element_type = *type.GetTypeParameters()[0];
+    return ToStringVector(element_type, expr);
+  }
+  if (type.IsNullable()) {
+    return ToStringNullable(type, expr);
+  }
+  return ToStringRaw(type, expr);
+}
+
 struct TypeInfo {
   // name of the type in C++ output
   std::string cpp_name;
 
   // function that writes an expression to convert a variable to a Json::Value
   // object
-  std::function<void(CodeWriter& w, const string& var_name, bool isNdk)> toJsonValueExpr;
+  std::function<void(CodeWriter& w, const AidlTypeSpecifier& type, const string& var_name,
+                     bool isNdk)>
+      toJsonValueExpr;
 };
 
 const static std::unordered_map<std::string, TypeInfo> kTypeInfoMap = {
@@ -108,21 +211,21 @@ const static std::unordered_map<std::string, TypeInfo> kTypeInfoMap = {
     {"boolean",
      {
          "bool",
-         [](CodeWriter& c, const string& var_name, bool) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool) {
            c << "Json::Value(" << var_name << "? \"true\" : \"false\")";
          },
      }},
     {"byte",
      {
          "int8_t",
-         [](CodeWriter& c, const string& var_name, bool) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool) {
            c << "Json::Value(" << var_name << ")";
          },
      }},
     {"char",
      {
          "char16_t",
-         [](CodeWriter& c, const string& var_name, bool isNdk) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool isNdk) {
            if (isNdk) {
              c << "Json::Value(" << var_name << ")";
            } else {
@@ -133,54 +236,68 @@ const static std::unordered_map<std::string, TypeInfo> kTypeInfoMap = {
     {"int",
      {
          "int32_t",
-         [](CodeWriter& c, const string& var_name, bool) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool) {
            c << "Json::Value(" << var_name << ")";
          },
      }},
     {"long",
      {
          "int64_t",
-         [](CodeWriter& c, const string& var_name, bool) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool) {
            c << "Json::Value(static_cast<Json::Int64>(" << var_name << "))";
          },
      }},
     {"float",
      {
          "float",
-         [](CodeWriter& c, const string& var_name, bool) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool) {
            c << "Json::Value(" << var_name << ")";
          },
      }},
     {"double",
      {
          "double",
-         [](CodeWriter& c, const string& var_name, bool) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool) {
            c << "Json::Value(" << var_name << ")";
          },
      }},
     {"String",
      {
          "std::string",
-         [](CodeWriter& c, const string& var_name, bool) {
+         [](CodeWriter& c, const AidlTypeSpecifier&, const string& var_name, bool) {
            c << "Json::Value(" << var_name << ")";
          },
      }}
     // missing List, Map, ParcelFileDescriptor, IBinder
 };
 
+const static TypeInfo kTypeInfoForDefinedType{
+    "<<parcelable>>",  // pseudo-name for parcelable types
+    [](CodeWriter& c, const AidlTypeSpecifier& type, const string& var_name, bool) {
+      c << ToString(type, var_name);
+    }};
+
 TypeInfo GetTypeInfo(const AidlTypeSpecifier& aidl) {
   AIDL_FATAL_IF(!aidl.IsResolved(), aidl) << aidl.ToString();
   const string& aidl_name = aidl.GetName();
 
-  TypeInfo info;
   if (AidlTypenames::IsBuiltinTypename(aidl_name)) {
     auto it = kTypeInfoMap.find(aidl_name);
     if (it != kTypeInfoMap.end()) {
-      info = it->second;
+      return it->second;
     }
+    return {};
   }
-  // Missing interface and parcelable type
-  return info;
+
+  const AidlDefinedType* defined_type = aidl.GetDefinedType();
+  AIDL_FATAL_IF(defined_type == NULL, aidl) << aidl.ToString();
+  if (defined_type->AsStructuredParcelable() || defined_type->AsEnumDeclaration() ||
+      defined_type->AsUnionDeclaration()) {
+    return kTypeInfoForDefinedType;
+  }
+
+  // skip interface types
+  return {};
 }
 
 inline bool CanWriteLog(const TypeInfo& t) {
@@ -200,13 +317,14 @@ void WriteLogFor(CodeWriter& writer, const AidlTypeSpecifier& type, const std::s
 
   const string var_object_expr = ((isPointer ? "*" : "")) + name;
   if (type.IsArray()) {
+    const AidlTypeSpecifier& base_type = type.ArrayBase();
     writer << log << " = Json::Value(Json::arrayValue);\n";
     writer << "for (const auto& v: " << var_object_expr << ") " << log << ".append(";
-    info.toJsonValueExpr(writer, "v", isNdk);
+    info.toJsonValueExpr(writer, base_type, "v", isNdk);
     writer << ");";
   } else {
     writer << log << " = ";
-    info.toJsonValueExpr(writer, var_object_expr, isNdk);
+    info.toJsonValueExpr(writer, type, var_object_expr, isNdk);
     writer << ";";
   }
   writer << "\n";
@@ -421,6 +539,68 @@ void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable
         << "}\n";
   }
   out << "\n";
+}
+
+// Output may look like:
+// inline std::string toString() const {
+//   std::ostringstream os;
+//   os << "MyData{";
+//   os << "field1: " << field1;
+//   os << ", field2: " << v.field2;
+//   ...
+//   os << "}";
+//   return os.str();
+// }
+void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable) {
+  out << kToStringHelper;
+  out << "inline std::string toString() const {\n";
+  out.Indent();
+  out << "std::ostringstream os;\n";
+  out << "os << \"" << parcelable.GetName() << "{\";\n";
+  bool first = true;
+  for (const auto& f : parcelable.GetFields()) {
+    if (first) {
+      out << "os << \"";
+      first = false;
+    } else {
+      out << "os << \", ";
+    }
+    out << f->GetName() << ": \" << " << ToString(f->GetType(), f->GetName()) << ";\n";
+  }
+  out << "os << \"}\";\n";
+  out << "return os.str();\n";
+  out.Dedent();
+  out << "}\n";
+}
+
+// Output may look like:
+// inline std::string toString() const {
+//   std::ostringstream os;
+//   os << "MyData{";
+//   switch (v.getTag()) {
+//   case MyData::field: os << "field: " << v.get<MyData::field>(); break;
+//   ...
+//   }
+//   os << "}";
+//   return os.str();
+// }
+void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable) {
+  out << kToStringHelper;
+  out << "inline std::string toString() const {\n";
+  out.Indent();
+  out << "std::ostringstream os;\n";
+  out << "os << \"" + parcelable.GetName() + "{\";\n";
+  out << "switch (getTag()) {\n";
+  for (const auto& f : parcelable.GetFields()) {
+    const string tag = f->GetName();
+    out << "case " << tag << ": os << \"" << tag << ": \" << "
+        << ToString(f->GetType(), "get<" + tag + ">()") << "; break;\n";
+  }
+  out << "}\n";
+  out << "os << \"}\";\n";
+  out << "return os.str();\n";
+  out.Dedent();
+  out << "}\n";
 }
 
 const vector<string> UnionWriter::headers{
