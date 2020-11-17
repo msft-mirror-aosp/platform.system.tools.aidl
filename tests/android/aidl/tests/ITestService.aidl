@@ -16,6 +16,7 @@
 
 package android.aidl.tests;
 
+import android.aidl.tests.BackendType;
 import android.aidl.tests.ByteEnum;
 import android.aidl.tests.INamedCallback;
 import android.aidl.tests.IntEnum;
@@ -24,6 +25,7 @@ import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.IOldName;
 import android.aidl.tests.INewName;
 
+@SensitiveData
 interface ITestService {
   // Test that constants are accessible
   const int TEST_CONSTANT = 42;
@@ -38,6 +40,9 @@ interface ITestService {
   const int TEST_CONSTANT10 = 0xa5;
   const int TEST_CONSTANT11 = 0xFA;
   const int TEST_CONSTANT12 = 0xffffffff;
+
+  const byte BYTE_TEST_CONSTANT = 17;
+  const long LONG_TEST_CONSTANT = 1L << 40;
 
   const String STRING_TEST_CONSTANT = "foo";
   const String STRING_TEST_CONSTANT2 = "bar";
@@ -198,4 +203,6 @@ interface ITestService {
 
   // Retrieve the ICppJavaTests if the server supports it
   @nullable IBinder GetCppJavaTests();
+
+  BackendType getBackendType();
 }

@@ -949,6 +949,9 @@ type aidlInterfaceProperties struct {
 	// Whether the library can be installed on the vendor image.
 	Vendor_available *bool
 
+	// Whether the library can be installed on the product image.
+	Product_available *bool
+
 	// Whether the library can be loaded multiple times into the same process
 	Double_loadable *bool
 
@@ -1010,6 +1013,14 @@ type aidlInterfaceProperties struct {
 		// (for apps) and "<name>-ndk_platform" (for platform usage).
 		Ndk struct {
 			CommonNativeBackendProperties
+
+			// Currently, all ndk-supported interfaces generate two variants:
+			// - ndk - for apps to use, against an NDK
+			// - ndk_platform - for the platform to use
+			//
+			// This adds an option to disable the 'ndk' variant in cases where APIs
+			// only available in the platform version work.
+			Apps_enabled *bool
 		}
 		// Backend of the compiler generating code for Rust clients.
 		// When enabled, this creates a target called "<name>-rust".
@@ -1047,6 +1058,14 @@ func (i *aidlInterface) shouldGenerateCppBackend() bool {
 func (i *aidlInterface) shouldGenerateNdkBackend() bool {
 	// explicitly true if not specified to give early warning to devs
 	return i.properties.Backend.Ndk.Enabled == nil || *i.properties.Backend.Ndk.Enabled
+}
+
+func (i *aidlInterface) shouldGenerateAppNdkBackend() bool {
+	if !i.shouldGenerateNdkBackend() {
+		return false
+	}
+	// explicitly true if not specified to give early warning to devs
+	return i.properties.Backend.Ndk.Apps_enabled == nil || *i.properties.Backend.Ndk.Apps_enabled
 }
 
 func (i *aidlInterface) shouldGenerateRustBackend() bool {
@@ -1296,34 +1315,31 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 			libs = append(libs, addCppLibrary(mctx, i, version, langCpp))
 		}
 	}
-
-	if i.shouldGenerateNdkBackend() {
-		{
-			unstableLib := addCppLibrary(mctx, i, currentVersion, langNdk)
-			if !i.hasVersion() {
-				libs = append(libs, addCppLibrary(mctx, i, unstableVersion, langNdk))
-			}
-			if needToCheckUnstableVersion {
-				addUnstableModule(mctx, unstableLib)
-			}
-			libs = append(libs, unstableLib)
-			for _, version := range versionsForCpp {
-				libs = append(libs, addCppLibrary(mctx, i, version, langNdk))
-			}
+	if i.shouldGenerateAppNdkBackend() {
+		unstableLib := addCppLibrary(mctx, i, currentVersion, langNdk)
+		if !i.hasVersion() {
+			libs = append(libs, addCppLibrary(mctx, i, unstableVersion, langNdk))
 		}
-		{
-			// TODO(b/121157555): combine with '-ndk' variant
-			unstableLib := addCppLibrary(mctx, i, currentVersion, langNdkPlatform)
-			if !i.hasVersion() {
-				libs = append(libs, addCppLibrary(mctx, i, unstableVersion, langNdkPlatform))
-			}
-			if needToCheckUnstableVersion {
-				addUnstableModule(mctx, unstableLib)
-			}
-			libs = append(libs, unstableLib)
-			for _, version := range versionsForCpp {
-				libs = append(libs, addCppLibrary(mctx, i, version, langNdkPlatform))
-			}
+		if needToCheckUnstableVersion {
+			addUnstableModule(mctx, unstableLib)
+		}
+		libs = append(libs, unstableLib)
+		for _, version := range versionsForCpp {
+			libs = append(libs, addCppLibrary(mctx, i, version, langNdk))
+		}
+	}
+	if i.shouldGenerateNdkBackend() {
+		// TODO(b/121157555): combine with '-ndk' variant
+		unstableLib := addCppLibrary(mctx, i, currentVersion, langNdkPlatform)
+		if !i.hasVersion() {
+			libs = append(libs, addCppLibrary(mctx, i, unstableVersion, langNdkPlatform))
+		}
+		if needToCheckUnstableVersion {
+			addUnstableModule(mctx, unstableLib)
+		}
+		libs = append(libs, unstableLib)
+		for _, version := range versionsForCpp {
+			libs = append(libs, addCppLibrary(mctx, i, version, langNdkPlatform))
 		}
 	}
 	versionsForJava := i.properties.Versions
@@ -1549,24 +1565,27 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, versionForMod
 	}
 
 	vendorAvailable := i.properties.Vendor_available
+	productAvailable := i.properties.Product_available
 	if lang == langCpp && "vintf" == proptools.String(i.properties.Stability) {
-		// Vendors cannot use the libbinder (cpp) backend of AIDL in a way that is stable.
-		// So, in order to prevent accidental usage of these library by vendor, forcibly
-		// disabling this version of the library.
+		// Vendor and product modules cannot use the libbinder (cpp) backend of AIDL in a
+		// way that is stable. So, in order to prevent accidental usage of these library by
+		// vendor and product forcibly disabling this version of the library.
 		//
 		// It may be the case in the future that we will want to enable this (if some generic
 		// helper should be used by both libbinder vendor things using /dev/vndbinder as well
 		// as those things using /dev/binder + libbinder_ndk to talk to stable interfaces).
 		vendorAvailable = proptools.BoolPtr(false)
+		productAvailable = proptools.BoolPtr(false)
 	}
 
 	if lang == langNdk {
 		// TODO(b/121157555): when the NDK variant is its own variant, these wouldn't interact,
-		// but we can't create a vendor version of an NDK variant
+		// but we can't create a vendor or product version of an NDK variant
 		//
 		// nil (unspecified) is used instead of false so that this can't conflict with
 		// 'vendor: true', for instance.
 		vendorAvailable = nil
+		productAvailable = nil
 		overrideVndkProperties.Vndk.Enabled = proptools.BoolPtr(false)
 		overrideVndkProperties.Vndk.Support_system_process = proptools.BoolPtr(false)
 	}
@@ -1574,6 +1593,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, versionForMod
 	mctx.CreateModule(cc.LibraryFactory, &ccProperties{
 		Name:                      proptools.StringPtr(cppModuleGen),
 		Vendor_available:          vendorAvailable,
+		Product_available:         productAvailable,
 		Host_supported:            hostSupported,
 		Defaults:                  []string{"aidl-cpp-module-defaults"},
 		Double_loadable:           i.properties.Double_loadable,
@@ -1594,6 +1614,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, versionForMod
 		Apex_available:            commonProperties.Apex_available,
 		Min_sdk_version:           minSdkVersion,
 		UseApexNameMacro:          true,
+		Target:                    targetProperties{Darwin: perTargetProperties{Enabled: proptools.BoolPtr(false)}},
 	}, &i.properties.VndkProperties, &commonProperties.VndkProperties, &overrideVndkProperties)
 
 	return cppModuleGen
@@ -1773,6 +1794,7 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, versionForMo
 		Stem:           proptools.StringPtr("lib" + versionedRustName),
 		Defaults:       []string{"aidl-rust-module-defaults"},
 		Host_supported: i.properties.Host_supported,
+		Target:         targetProperties{Darwin: perTargetProperties{Enabled: proptools.BoolPtr(false)}},
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),
 	}, &aidlRustSourceProviderProperties{
@@ -1918,7 +1940,8 @@ func (m *aidlInterfacesMetadataSingleton) GenerateAndroidBuildActions(ctx androi
 	})
 
 	var metadataOutputs android.Paths
-	for name, info := range moduleInfos {
+	for _, name := range android.SortedStringKeys(moduleInfos) {
+		info := moduleInfos[name]
 		metadataPath := android.PathForModuleOut(ctx, "metadata_"+name)
 		metadataOutputs = append(metadataOutputs, metadataPath)
 

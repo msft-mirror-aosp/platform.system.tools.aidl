@@ -25,12 +25,22 @@ type sharedLib struct {
 	Shared_libs               []string
 	Export_shared_lib_headers []string
 }
+
+type perTargetProperties struct {
+	Enabled *bool
+}
+
+type targetProperties struct {
+	Darwin perTargetProperties
+}
+
 type ccProperties struct {
 	Name                      *string
 	Owner                     *string
 	Defaults                  []string
 	Double_loadable           *bool
 	Vendor_available          *bool
+	Product_available         *bool
 	Host_supported            *bool
 	Generated_sources         []string
 	Generated_headers         []string
@@ -49,6 +59,7 @@ type ccProperties struct {
 	Apex_available            []string
 	Min_sdk_version           *string
 	UseApexNameMacro          bool
+	Target                    targetProperties
 }
 
 type javaProperties struct {
@@ -73,6 +84,7 @@ type rustProperties struct {
 	Srcs           []string
 	Rustlibs       []string
 	Stem           *string
+	Target         targetProperties
 }
 
 type phonyProperties struct {

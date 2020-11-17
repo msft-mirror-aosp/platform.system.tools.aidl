@@ -239,6 +239,9 @@ unique_ptr<Declaration> DefineClientTransaction(const AidlTypenames& typenames,
 
   // Declare parcels to hold our query and the response.
   b->AddLiteral(StringPrintf("%s %s", kAndroidParcelLiteral, kDataVarName));
+  if (interface.IsSensitiveData()) {
+    b->AddLiteral(StringPrintf("%s.markSensitive()", kDataVarName));
+  }
   // Even if we're oneway, the transact method still takes a parcel.
   b->AddLiteral(StringPrintf("%s %s", kAndroidParcelLiteral, kReplyVarName));
 
@@ -298,9 +301,11 @@ unique_ptr<Declaration> DefineClientTransaction(const AidlTypenames& typenames,
   vector<string> args = {transaction_code, kDataVarName,
                          StringPrintf("&%s", kReplyVarName)};
 
-  if (method.IsOneway()) {
-    args.push_back("::android::IBinder::FLAG_ONEWAY");
-  }
+  std::vector<std::string> flags;
+  if (method.IsOneway()) flags.push_back("::android::IBinder::FLAG_ONEWAY");
+  if (interface.IsSensitiveData()) flags.push_back("::android::IBinder::FLAG_CLEAR_BUF");
+
+  args.push_back(flags.empty() ? "0" : Join(flags, " | "));
 
   b->AddStatement(new Assignment(
       kAndroidStatusVarName,
@@ -815,6 +820,8 @@ unique_ptr<Document> BuildClientHeader(const AidlTypenames& typenames,
       ConstructorDecl::IS_VIRTUAL | ConstructorDecl::IS_DEFAULT}};
 
   vector<unique_ptr<Declaration>> publics;
+  vector<unique_ptr<Declaration>> privates;
+
   publics.push_back(std::move(constructor));
   publics.push_back(std::move(destructor));
 
@@ -832,9 +839,8 @@ unique_ptr<Document> BuildClientHeader(const AidlTypenames& typenames,
     includes.emplace_back("json/value.h");
     publics.emplace_back(
         new LiteralDecl{"static std::function<void(const Json::Value&)> logFunc;\n"});
+    privates.emplace_back(new LiteralDecl{kToStringHelper});
   }
-
-  vector<unique_ptr<Declaration>> privates;
 
   if (options.Version() > 0) {
     privates.emplace_back(new LiteralDecl("int32_t cached_version_ = -1;\n"));
@@ -876,6 +882,8 @@ unique_ptr<Document> BuildServerHeader(const AidlTypenames& /* typenames */,
   vector<string> includes = {"binder/IInterface.h", HeaderFile(interface, ClassNames::RAW, false)};
 
   vector<unique_ptr<Declaration>> publics;
+  vector<unique_ptr<Declaration>> privates;
+
   publics.push_back(std::move(constructor));
   publics.push_back(std::move(on_transact));
 
@@ -896,9 +904,13 @@ unique_ptr<Document> BuildServerHeader(const AidlTypenames& /* typenames */,
     includes.emplace_back("json/value.h");
     publics.emplace_back(
         new LiteralDecl{"static std::function<void(const Json::Value&)> logFunc;\n"});
+    privates.emplace_back(new LiteralDecl{kToStringHelper});
   }
-  unique_ptr<ClassDecl> bn_class{
-      new ClassDecl{bn_name, "::android::BnInterface<" + i_name + ">", {}, std::move(publics), {}}};
+  unique_ptr<ClassDecl> bn_class{new ClassDecl{bn_name,
+                                               "::android::BnInterface<" + i_name + ">",
+                                               {},
+                                               std::move(publics),
+                                               std::move(privates)}};
 
   return unique_ptr<Document>{
       new CppHeader{includes, NestInNamespaces(std::move(bn_class), interface.GetSplitPackage())}};
@@ -936,34 +948,39 @@ unique_ptr<Document> BuildInterfaceHeader(const AidlTypenames& typenames,
   }
 
   std::vector<std::unique_ptr<Declaration>> string_constants;
+  unique_ptr<Enum> byte_constant_enum{new Enum{"", "int8_t", false}};
   unique_ptr<Enum> int_constant_enum{new Enum{"", "int32_t", false}};
+  unique_ptr<Enum> long_constant_enum{new Enum{"", "int64_t", false}};
   for (const auto& constant : interface.GetConstantDeclarations()) {
+    const AidlTypeSpecifier& type = constant->GetType();
     const AidlConstantValue& value = constant->GetValue();
 
-    switch (value.GetType()) {
-      case AidlConstantValue::Type::STRING: {
-        std::string cppType = CppNameOf(constant->GetType(), typenames);
-        unique_ptr<Declaration> getter(new MethodDecl("const " + cppType + "&", constant->GetName(),
-                                                      {}, MethodDecl::IS_STATIC));
-        string_constants.push_back(std::move(getter));
-        break;
-      }
-      case AidlConstantValue::Type::BOOLEAN:  // fall-through
-      case AidlConstantValue::Type::INT8:     // fall-through
-      case AidlConstantValue::Type::INT32:    // fall-through
-      // Type promotion may cause this. Value should be small enough to fit in int32.
-      case AidlConstantValue::Type::INT64: {
-        int_constant_enum->AddValue(constant->GetName(),
-                                    constant->ValueString(ConstantValueDecorator));
-        break;
-      }
-      default: {
-        AIDL_FATAL(value) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
-      }
+    if (type.ToString() == "String") {
+      std::string cppType = CppNameOf(constant->GetType(), typenames);
+      unique_ptr<Declaration> getter(
+          new MethodDecl("const " + cppType + "&", constant->GetName(), {}, MethodDecl::IS_STATIC));
+      string_constants.push_back(std::move(getter));
+    } else if (type.ToString() == "byte") {
+      byte_constant_enum->AddValue(constant->GetName(),
+                                   constant->ValueString(ConstantValueDecorator));
+    } else if (type.ToString() == "int") {
+      int_constant_enum->AddValue(constant->GetName(),
+                                  constant->ValueString(ConstantValueDecorator));
+    } else if (type.ToString() == "long") {
+      long_constant_enum->AddValue(constant->GetName(),
+                                   constant->ValueString(ConstantValueDecorator));
+    } else {
+      AIDL_FATAL(value) << "Unrecognized constant type: " << type.ToString();
     }
+  }
+  if (byte_constant_enum->HasValues()) {
+    if_class->AddPublic(std::move(byte_constant_enum));
   }
   if (int_constant_enum->HasValues()) {
     if_class->AddPublic(std::move(int_constant_enum));
+  }
+  if (long_constant_enum->HasValues()) {
+    if_class->AddPublic(std::move(long_constant_enum));
   }
   if (!string_constants.empty()) {
     includes.insert(kString16Header);
@@ -1234,6 +1251,14 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames, cons
                                    "  return DESCIPTOR;\n"
                                    "}\n",
                                    parcel.GetCanonicalName().c_str()))));
+
+  // toString() method
+  includes.insert("codecvt");  // std::codecvt_utf8_utf16
+  includes.insert("locale");   // std::wstrinig_convert
+  includes.insert("sstream");  // std::ostringstream
+  const string code = CodeWriter::RunWith(&GenerateToString, parcel);
+  parcel_class->AddPublic(std::make_unique<LiteralDecl>(code));
+
   return unique_ptr<Document>{
       new CppHeader{vector<string>(includes.begin(), includes.end()),
                     NestInNamespaces(std::move(parcel_class), parcel.GetSplitPackage())}};

@@ -133,13 +133,19 @@ class AidlParameterizable {
   const std::vector<T>& GetTypeParameters() const { return *type_params_; }
   bool CheckValid() const;
 
+  __attribute__((warn_unused_result)) bool SetTypeParameters(std::vector<T>* type_params) {
+    if (type_params_) return false;
+    type_params_.reset(type_params);
+    return true;
+  }
+
   virtual const AidlNode& AsAidlNode() const = 0;
 
  protected:
   AidlParameterizable(const AidlParameterizable&);
 
  private:
-  const unique_ptr<std::vector<T>> type_params_;
+  unique_ptr<std::vector<T>> type_params_;
   static_assert(std::is_same<T, unique_ptr<AidlTypeSpecifier>>::value ||
                 std::is_same<T, std::string>::value);
 };
@@ -164,6 +170,7 @@ class AidlAnnotation : public AidlNode {
     VINTF_STABILITY,
     NULLABLE,
     UTF8_IN_CPP,
+    SENSITIVE_DATA,
     JAVA_PASSTHROUGH,
     JAVA_DERIVE,
     JAVA_ONLY_IMMUTABLE,
@@ -235,6 +242,7 @@ class AidlAnnotatable : public AidlNode {
   }
   bool IsNullable() const;
   bool IsUtf8InCpp() const;
+  bool IsSensitiveData() const;
   bool IsVintfStability() const;
   bool IsJavaOnlyImmutable() const;
   bool IsFixedSize() const;
@@ -305,6 +313,12 @@ class AidlTypeSpecifier final : public AidlAnnotatable,
 
   bool IsArray() const { return is_array_; }
 
+  __attribute__((warn_unused_result)) bool SetArray() {
+    if (is_array_) return false;
+    is_array_ = true;
+    return true;
+  }
+
   // Resolve the base type name to a fully-qualified name. Return false if the
   // resolution fails.
   bool Resolve(const AidlTypenames& typenames);
@@ -314,6 +328,8 @@ class AidlTypeSpecifier final : public AidlAnnotatable,
   bool LanguageSpecificCheckValid(const AidlTypenames& typenames, Options::Language lang) const;
   const AidlNode& AsAidlNode() const override { return *this; }
 
+  const AidlDefinedType* GetDefinedType() const;
+
  private:
   AidlTypeSpecifier(const AidlTypeSpecifier&) = default;
 
@@ -322,6 +338,7 @@ class AidlTypeSpecifier final : public AidlAnnotatable,
   bool is_array_;
   string comments_;
   vector<string> split_name_;
+  const AidlDefinedType* defined_type_;  // set when Resolve() for defined types
   mutable shared_ptr<AidlTypeSpecifier> array_base_;
 };
 
@@ -347,6 +364,7 @@ class AidlVariableDeclaration : public AidlNode {
   AidlVariableDeclaration& operator=(AidlVariableDeclaration&&) = delete;
 
   std::string GetName() const { return name_; }
+  std::string GetCapitalizedName() const;
   const AidlTypeSpecifier& GetType() const { return *type_; }
   // if this was constructed explicitly with a default value
   bool IsDefaultUserSpecified() const { return default_user_specified_; }

@@ -29,6 +29,9 @@ namespace android {
 namespace aidl {
 namespace cpp {
 
+// provides _call_toString(expr) which call expr.toString() if possible
+extern char kToStringHelper[];
+
 // These roughly correspond to the various class names in the C++ hierarchy:
 enum class ClassNames {
   BASE,          // Foo (not a real class, but useful in some circumstances).
@@ -76,6 +79,9 @@ std::string GenerateEnumValues(const AidlEnumDeclaration& enum_decl,
 std::string TemplateDecl(const AidlParcelable& defined_type);
 
 void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable& parcelable);
+
+void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable);
+void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable);
 
 struct ParcelWriterContext {
   string status_type;

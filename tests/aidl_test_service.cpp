@@ -34,6 +34,7 @@
 #include <utils/String8.h>
 #include <utils/StrongPointer.h>
 
+#include "android/aidl/tests/BackendType.h"
 #include "android/aidl/tests/BnTestService.h"
 #include "android/aidl/tests/ITestService.h"
 
@@ -52,6 +53,9 @@
 #include "android/aidl/tests/Union.h"
 #include "android/aidl/tests/extension/MyExt.h"
 #include "android/aidl/tests/extension/MyExt2.h"
+
+#include "android/aidl/loggable/BnLoggableInterface.h"
+#include "android/aidl/loggable/Data.h"
 
 // Used implicitly.
 #undef LOG_TAG
@@ -78,6 +82,7 @@ using android::ProcessState;
 using android::binder::Status;
 
 // Generated code:
+using android::aidl::tests::BackendType;
 using android::aidl::tests::BnCppJavaTests;
 using android::aidl::tests::BnNamedCallback;
 using android::aidl::tests::BnNewName;
@@ -574,6 +579,7 @@ class NativeService : public BnTestService {
     parcelable->const_exprs_9 = ConstantExpressionEnum::hexInt32_3;
     parcelable->const_exprs_10 = ConstantExpressionEnum::hexInt64_1;
 
+    parcelable->u = Union::make<Union::ns>({1, 2, 3});
     return Status::ok();
   }
 
@@ -593,6 +599,11 @@ class NativeService : public BnTestService {
 
   Status GetCppJavaTests(sp<IBinder>* ret) {
     *ret = new CppJavaTests;
+    return Status::ok();
+  }
+
+  Status getBackendType(BackendType* _aidl_return) override {
+    *_aidl_return = BackendType::CPP;
     return Status::ok();
   }
 
@@ -616,6 +627,22 @@ class VersionedService : public android::aidl::versioned::tests::BnFooInterface 
   virtual ~VersionedService() = default;
 
   Status foo() override { return Status::ok(); }
+};
+
+class LoggableInterfaceService : public android::aidl::loggable::BnLoggableInterface {
+ public:
+  LoggableInterfaceService() {}
+  virtual ~LoggableInterfaceService() = default;
+
+  virtual Status LogThis(bool, vector<bool>*, int8_t, vector<uint8_t>*, char16_t, vector<char16_t>*,
+                         int32_t, vector<int32_t>*, int64_t, vector<int64_t>*, float,
+                         vector<float>*, double, vector<double>*, const String16&,
+                         vector<String16>*, vector<String16>*, const android::aidl::loggable::Data&,
+                         const sp<IBinder>&, optional<ParcelFileDescriptor>*,
+                         vector<ParcelFileDescriptor>*, vector<String16>* _aidl_return) override {
+    *_aidl_return = vector<String16>{String16("loggable")};
+    return Status::ok();
+  }
 };
 
 int Run() {
@@ -647,6 +674,15 @@ int Run() {
                                                versionedService);
   if (status != OK) {
     ALOGE("Failed to add service %s", String8(versionedService->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
+
+  android::sp<LoggableInterfaceService> loggableInterfaceService = new LoggableInterfaceService;
+  status = defaultServiceManager()->addService(loggableInterfaceService->getInterfaceDescriptor(),
+                                               loggableInterfaceService);
+  if (status != OK) {
+    ALOGE("Failed to add service %s",
+          String8(loggableInterfaceService->getInterfaceDescriptor()).c_str());
     return -1;
   }
 

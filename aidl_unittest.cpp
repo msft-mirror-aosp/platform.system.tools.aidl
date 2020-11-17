@@ -421,7 +421,8 @@ TEST_P(AidlTest, RejectUnsupportedInterfaceAnnotations) {
   const string method = "package a; @nullable interface IFoo { int f(); }";
   const string expected_stderr =
       "ERROR: a/IFoo.aidl:1.21-31: 'nullable' is not a supported annotation for this node. "
-      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, Descriptor\n";
+      "It must be one of: Hide, UnsupportedAppUsage, VintfStability, SensitiveData, "
+      "JavaPassthrough, Descriptor\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -640,8 +641,8 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
     EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
     const std::string expected_stderr =
         "ERROR: a/IFoo.aidl:1.23-33: 'JavaDerive' is not a supported annotation for this node. "
-        "It must be one of: Hide, UnsupportedAppUsage, VintfStability, JavaPassthrough, "
-        "Descriptor\n";
+        "It must be one of: Hide, UnsupportedAppUsage, VintfStability, SensitiveData, "
+        "JavaPassthrough, Descriptor\n";
     EXPECT_EQ(expected_stderr, GetCapturedStderr());
   }
 
@@ -951,6 +952,22 @@ TEST_P(AidlTest, FailOnDuplicateConstantNames) {
                       interface IFoo {
                         const String DUPLICATED = "d";
                         const int DUPLICATED = 1;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, FailOnTooBigConstant) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.48-52: Invalid type specifier for an int32 literal: byte\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const byte type2small = 256;
                       }
                    )",
                            typenames_, GetLanguage(), &error));
@@ -1934,6 +1951,20 @@ TEST_F(AidlTestCompatibleChanges, ChangedConstValueOrder) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, ReorderedAnnatations) {
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Alice\")"
+                               "@JavaPassthrough(annotation=\"Bob\")"
+                               "parcelable Foo {}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Bob\")"
+                               "@JavaPassthrough(annotation=\"Alice\")"
+                               "parcelable Foo {}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 TEST_F(AidlTestCompatibleChanges, NewFieldOfNewType) {
   io_delegate_.SetFileContents("old/p/Data.aidl",
                                "package p;"
@@ -2303,6 +2334,45 @@ TEST_F(AidlTestIncompatibleChanges, RemovedAnnotation) {
                                "  void foo(in String[] str);"
                                "  void bar(String str);"
                                "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, ChangedBackingTypeOfEnum) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.11-32: Type changed: byte to long.\n"
+      "ERROR: new/p/Foo.aidl:1.36-40: Changed backing types.\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@Backing(type=\"byte\")"
+                               "enum Foo {"
+                               " FOO, BAR,"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@Backing(type=\"long\")"
+                               "enum Foo {"
+                               " FOO, BAR,"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, ChangedAnnatationParams) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.55-59: Changed annotations: @JavaPassthrough(annotation=\"Alice\") "
+      "to @JavaPassthrough(annotation=\"Bob\")\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Alice\")"
+                               "parcelable Foo {}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"Bob\")"
+                               "parcelable Foo {}");
+
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -2920,7 +2990,10 @@ const char kUnionExampleExpectedOutputCppHeader[] = R"(#pragma once
 #include <binder/Parcel.h>
 #include <binder/ParcelFileDescriptor.h>
 #include <binder/Status.h>
+#include <codecvt>
 #include <cstdint>
+#include <locale>
+#include <sstream>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -3009,6 +3082,26 @@ public:
     static const std::string DESCIPTOR = "a.Foo";
     return DESCIPTOR;
   }
+  template <typename _T> class _has_toString {
+    template <typename _U> static std::true_type __has_toString(decltype(&_U::toString));
+    template <typename _U> static std::false_type __has_toString(...);
+    public: enum { value = decltype(__has_toString<_T>(nullptr))::value };
+  };
+  template <typename _T> inline static std::string _call_toString(const _T& t) {
+    if constexpr (_has_toString<_T>::value) return t.toString();
+    return "{no toString() implemented}";
+  }
+  inline std::string toString() const {
+    std::ostringstream os;
+    os << "Foo{";
+    switch (getTag()) {
+    case ns: os << "ns: " << [&](){ std::ostringstream o; o << "["; bool first = true; for (const auto& v: get<ns>()) { (void)v; if (first) first = false; else o << ", "; o << std::to_string(v); }; o << "]"; return o.str(); }(); break;
+    case e: os << "e: " << a::toString(get<e>()); break;
+    case pfd: os << "pfd: " << ""; break;
+    }
+    os << "}";
+    return os.str();
+  }
 private:
   std::variant<::std::vector<int32_t>, ::a::ByteEnum, ::android::os::ParcelFileDescriptor> _value;
 };  // class Foo
@@ -3061,6 +3154,9 @@ namespace a {
 const char kUnionExampleExpectedOutputNdkHeader[] = R"(#pragma once
 #include <android/binder_interface_utils.h>
 #include <android/binder_parcelable_utils.h>
+#include <codecvt>
+#include <locale>
+#include <sstream>
 
 #include <type_traits>
 #include <utility>
@@ -3138,6 +3234,26 @@ public:
   binder_status_t readFromParcel(const AParcel* _parcel);
   binder_status_t writeToParcel(AParcel* _parcel) const;
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
+  template <typename _T> class _has_toString {
+    template <typename _U> static std::true_type __has_toString(decltype(&_U::toString));
+    template <typename _U> static std::false_type __has_toString(...);
+    public: enum { value = decltype(__has_toString<_T>(nullptr))::value };
+  };
+  template <typename _T> inline static std::string _call_toString(const _T& t) {
+    if constexpr (_has_toString<_T>::value) return t.toString();
+    return "{no toString() implemented}";
+  }
+  inline std::string toString() const {
+    std::ostringstream os;
+    os << "Foo{";
+    switch (getTag()) {
+    case ns: os << "ns: " << [&](){ std::ostringstream o; o << "["; bool first = true; for (const auto& v: get<ns>()) { (void)v; if (first) first = false; else o << ", "; o << std::to_string(v); }; o << "]"; return o.str(); }(); break;
+    case e: os << "e: " << a::toString(get<e>()); break;
+    case pfd: os << "pfd: " << ""; break;
+    }
+    os << "}";
+    return os.str();
+  }
 private:
   std::variant<std::vector<int32_t>, ::aidl::a::ByteEnum, ::ndk::ScopedFileDescriptor> _value;
 };
@@ -3371,6 +3487,83 @@ public final class Foo implements android.os.Parcelable {
 }
 )";
 
+const char kUnionExampleExpectedOutputRust[] = R"(#[derive(Debug)]
+pub enum Foo {
+  Ns(Vec<i32>),
+  E(crate::mangled::_1_a_8_ByteEnum),
+  Pfd(Option<binder::parcel::ParcelFileDescriptor>),
+}
+pub(crate) mod mangled { pub use super::Foo as _1_a_3_Foo; }
+impl Default for Foo {
+  fn default() -> Self {
+    Self::Ns(vec!{42})
+  }
+}
+impl binder::parcel::Serialize for Foo {
+  fn serialize(&self, parcel: &mut binder::parcel::Parcel) -> binder::Result<()> {
+    <Self as binder::parcel::SerializeOption>::serialize_option(Some(self), parcel)
+  }
+}
+impl binder::parcel::SerializeArray for Foo {}
+impl binder::parcel::SerializeOption for Foo {
+  fn serialize_option(this: Option<&Self>, parcel: &mut binder::parcel::Parcel) -> binder::Result<()> {
+    let this = if let Some(this) = this {
+      parcel.write(&1i32)?;
+      this
+    } else {
+      return parcel.write(&0i32);
+    };
+    match this {
+      Self::Ns(v) => {
+        parcel.write(&0i32)?;
+        parcel.write(v)
+      }
+      Self::E(v) => {
+        parcel.write(&1i32)?;
+        parcel.write(v)
+      }
+      Self::Pfd(v) => {
+        parcel.write(&2i32)?;
+        let __field_ref = v.as_ref().ok_or(binder::StatusCode::UNEXPECTED_NULL)?;
+        parcel.write(__field_ref)
+      }
+    }
+  }
+}
+impl binder::parcel::Deserialize for Foo {
+  fn deserialize(parcel: &binder::parcel::Parcel) -> binder::Result<Self> {
+    <Self as binder::parcel::DeserializeOption>::deserialize_option(parcel)
+       .transpose()
+       .unwrap_or(Err(binder::StatusCode::UNEXPECTED_NULL))
+  }
+}
+impl binder::parcel::DeserializeArray for Foo {}
+impl binder::parcel::DeserializeOption for Foo {
+  fn deserialize_option(parcel: &binder::parcel::Parcel) -> binder::Result<Option<Self>> {
+    let status: i32 = parcel.read()?;
+    if status == 0 { return Ok(None); }
+    let tag: i32 = parcel.read()?;
+    match tag {
+      0 => {
+        let value: Vec<i32> = parcel.read()?;
+        Ok(Some(Self::Ns(value)))
+      }
+      1 => {
+        let value: crate::mangled::_1_a_8_ByteEnum = parcel.read()?;
+        Ok(Some(Self::E(value)))
+      }
+      2 => {
+        let value: Option<binder::parcel::ParcelFileDescriptor> = Some(parcel.read()?);
+        Ok(Some(Self::Pfd(value)))
+      }
+      _ => {
+        Err(binder::StatusCode::BAD_VALUE)
+      }
+    }
+  }
+}
+)";
+
 struct AidlUnionTest : ::testing::Test {
   void SetUp() override {
     io_delegate_.SetFileContents("a/Foo.aidl", R"(
@@ -3430,7 +3623,11 @@ TEST_F(AidlUnionTest, Example_Java) {
   Compile("java");
   EXPECT_COMPILE_OUTPUTS(
       map<string, string>({{"out/a/Foo.java", kUnionExampleExpectedOutputJava}}));
-  // TODO(b/170689477) Rust
+}
+
+TEST_F(AidlUnionTest, Example_Rust) {
+  Compile("rust");
+  EXPECT_COMPILE_OUTPUTS(map<string, string>({{"out/a/Foo.rs", kUnionExampleExpectedOutputRust}}));
 }
 
 TEST_P(AidlTest, UnionRejectsEmptyDecl) {
@@ -3462,8 +3659,11 @@ TEST_P(AidlTest, GenericStructuredParcelable) {
 
 TEST_F(AidlTest, NestedTypeArgs) {
   io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar<A> { }");
-  io_delegate_.SetFileContents(
-      "a/Foo.aidl", "package a; import a.Bar; parcelable Foo { Bar<Bar<String>> barss; }");
+  io_delegate_.SetFileContents("a/Baz.aidl", "package a; parcelable Baz<A, B> { }");
+
+  io_delegate_.SetFileContents("a/Foo.aidl",
+                               "package a; import a.Bar; import a.Baz; parcelable Foo { "
+                               "Baz<Bar<Bar<String[]>>[], Bar<String>> barss; }");
   Options options = Options::From("aidl a/Foo.aidl -I . -o out --lang=java");
   const string expected_stderr = "";
   CaptureStderr();
@@ -3472,13 +3672,49 @@ TEST_F(AidlTest, NestedTypeArgs) {
 
   string code;
   EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &code));
-  EXPECT_THAT(code, testing::HasSubstr("a.Bar<a.Bar<java.lang.String>> barss;"));
+  EXPECT_THAT(code,
+              testing::HasSubstr(
+                  "a.Baz<a.Bar<a.Bar<java.lang.String[]>>[],a.Bar<java.lang.String>> barss;"));
+}
+
+TEST_F(AidlTest, DoubleArrayError) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[][] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  const string expected_stderr =
+      "ERROR: a/Bar.aidl:1.28-37: Can only have one dimensional arrays.\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, DoubleGenericError) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a; parcelable Bar { List<String><String> a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  const string expected_stderr =
+      "ERROR: a/Bar.aidl:1.28-33: Can only specify one set of type parameters.\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, ArrayBeforeGenericError) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { List[]<String> a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  const string expected_stderr =
+      "ERROR: a/Bar.aidl:1.28-33: Must specify type parameters (<>) before array ([]).\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 struct GenericAidlTest : ::testing::Test {
   FakeIoDelegate io_delegate_;
   void Compile(string cmd) {
-    io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo { Bar<Baz<Qux> > x; }");
+    io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo { Bar<Baz<Qux>> x; }");
     io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar<T> {  }");
     io_delegate_.SetFileContents("Baz.aidl", "parcelable Baz<T> {  }");
     io_delegate_.SetFileContents("Qux.aidl", "parcelable Qux {  }");
@@ -3538,64 +3774,57 @@ TEST_P(AidlTest, LongCommentWithinConstExpression) {
   EXPECT_EQ("", GetCapturedStderr());
 }
 
-constexpr char kDescriptContentsWithUntypedListMapInJava[] = R"(
-  @Override
-  public int describeContents() {
-    int _mask = 0;
-    _mask |= describeContents(l);
-    _mask |= describeContents(m);
-    return _mask;
-  }
-  private int describeContents(Object _v) {
-    if (_v == null) return 0;
-    Class<?> _clazz = _v.getClass();
-    if (_clazz.isArray() && _clazz.getComponentType() == Object.class) {
-      int _mask = 0;
-      for (Object o : (Object[]) _v) {
-        _mask |= describeContents(o);
-      }
-      return _mask;
-    }
-    if (_v instanceof java.io.FileDescriptor) {
-      return android.os.Parcelable.CONTENTS_FILE_DESCRIPTOR;
-    }
-    if (_v instanceof java.util.Collection) {
-      int _mask = 0;
-      for (Object o : (java.util.Collection) _v) {
-        _mask |= describeContents(o);
-      }
-      return _mask;
-    }
-    if (_v instanceof java.util.Map) {
-      return describeContents(((java.util.Map) _v).values());
-    }
-    if (_v instanceof android.os.Parcelable) {
-      return ((android.os.Parcelable) _v).describeContents();
-    }
-    if (_v instanceof android.util.SparseArray) {
-      android.util.SparseArray _sa = (android.util.SparseArray) _v;
-      int _mask = 0;
-      int _N = _sa.size();
-      int _i = 0;
-      while (_i < _N) {
-        _mask |= describeContents(_sa.valueAt(_i));
-        _i++;
-      }
-      return _mask;
-    }
-    return 0;
-  }
-)";
-TEST_F(AidlTest, SupportUntypeListAndMap) {
+TEST_F(AidlTest, RejectUntypdeListAndMapInUnion) {
+  io_delegate_.SetFileContents("a/Foo.aidl", "package a; union Foo { List l; Map m; }");
+  Options options = Options::From("aidl a/Foo.aidl --lang=java -o out");
+  std::string expectedErr =
+      "ERROR: a/Foo.aidl:1.28-30: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: a/Foo.aidl:1.35-37: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expectedErr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, RejectUntypdeListAndMapInUnstructuredParcelable) {
   io_delegate_.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { List l; Map m; }");
   Options options = Options::From("aidl a/Foo.aidl --lang=java -o out");
+  std::string expectedErr =
+      "ERROR: a/Foo.aidl:1.33-35: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: a/Foo.aidl:1.40-42: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
   CaptureStderr();
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
-  EXPECT_EQ("", GetCapturedStderr());
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expectedErr, GetCapturedStderr());
+}
 
-  string code;
-  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &code));
-  EXPECT_THAT(code, testing::HasSubstr(kDescriptContentsWithUntypedListMapInJava));
+TEST_F(AidlTest, RejectNestedUntypedListAndMap) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar<T>;");
+  io_delegate_.SetFileContents(
+      "a/Foo.aidl", "package a; import a.Bar; parcelable Foo { Bar<List> a; Bar<Map> b; }");
+  Options options = Options::From("aidl a/Foo.aidl -I . --lang=java -o out");
+  std::string expectedErr =
+      "ERROR: a/Foo.aidl:1.52-54: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n"
+      "ERROR: a/Foo.aidl:1.64-66: "
+      "Encountered an untyped List or Map. The use of untyped List/Map is "
+      "prohibited because it is not guaranteed that the objects in the list are recognizable in "
+      "the receiving side. Consider switching to an array or a generic List/Map.\n";
+  CaptureStderr();
+  EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expectedErr, GetCapturedStderr());
 }
 
 }  // namespace aidl

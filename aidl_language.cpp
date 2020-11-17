@@ -69,13 +69,6 @@ bool IsJavaKeyword(const char* str) {
   return std::find(kJavaKeywords.begin(), kJavaKeywords.end(), str) != kJavaKeywords.end();
 }
 
-inline std::string CapitalizeFirstLetter(const AidlNode& context, const std::string& str) {
-  AIDL_FATAL_IF(str.size() <= 0, context) << "Input cannot be empty.";
-  std::ostringstream out;
-  out << static_cast<char>(toupper(str[0])) << str.substr(1);
-  return out.str();
-}
-
 void AddHideComment(CodeWriter* writer) {
   writer->Write("/* @hide */\n");
 }
@@ -119,6 +112,7 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
   static const std::vector<Schema> kSchemas{
       {AidlAnnotation::Type::NULLABLE, "nullable", {}, false},
       {AidlAnnotation::Type::UTF8_IN_CPP, "utf8InCpp", {}, false},
+      {AidlAnnotation::Type::SENSITIVE_DATA, "SensitiveData", {}, false},
       {AidlAnnotation::Type::VINTF_STABILITY, "VintfStability", {}, false},
       {AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
        "UnsupportedAppUsage",
@@ -288,6 +282,10 @@ bool AidlAnnotatable::IsUtf8InCpp() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::UTF8_IN_CPP);
 }
 
+bool AidlAnnotatable::IsSensitiveData() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::SENSITIVE_DATA);
+}
+
 bool AidlAnnotatable::IsVintfStability() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::VINTF_STABILITY);
 }
@@ -321,7 +319,7 @@ const AidlTypeSpecifier* AidlAnnotatable::BackingType(const AidlTypenames& typen
       string unquoted_type = type.substr(1, type.length() - 2);
 
       AidlTypeSpecifier* type_specifier =
-          new AidlTypeSpecifier(AIDL_LOCATION_HERE, unquoted_type, false, nullptr, "");
+          new AidlTypeSpecifier(annotation->GetLocation(), unquoted_type, false, nullptr, "");
       type_specifier->Resolve(typenames);
       return type_specifier;
     }
@@ -465,8 +463,13 @@ bool AidlTypeSpecifier::Resolve(const AidlTypenames& typenames) {
   if (result.is_resolved) {
     fully_qualified_name_ = result.canonical_name;
     split_name_ = Split(fully_qualified_name_, ".");
+    defined_type_ = result.defined_type;
   }
   return result.is_resolved;
+}
+
+const AidlDefinedType* AidlTypeSpecifier::GetDefinedType() const {
+  return defined_type_;
 }
 
 std::set<AidlAnnotation::Type> AidlTypeSpecifier::GetSupportedAnnotations() const {
@@ -616,6 +619,13 @@ bool AidlVariableDeclaration::CheckValid(const AidlTypenames& typenames) const {
   return !ValueString(AidlConstantValueDecorator).empty();
 }
 
+string AidlVariableDeclaration::GetCapitalizedName() const {
+  AIDL_FATAL_IF(name_.size() <= 0, *this) << "Name can't be empty.";
+  string str = name_;
+  str[0] = static_cast<char>(toupper(str[0]));
+  return str;
+}
+
 string AidlVariableDeclaration::ToString() const {
   string ret = type_->Signature() + " " + name_;
   if (default_value_ != nullptr && default_user_specified_) {
@@ -701,7 +711,7 @@ bool AidlConstantDeclaration::CheckValid(const AidlTypenames& typenames) const {
   valid &= value_->CheckValid();
   if (!valid) return false;
 
-  const static set<string> kSupportedConstTypes = {"String", "int"};
+  const static set<string> kSupportedConstTypes = {"String", "byte", "int", "long"};
   if (kSupportedConstTypes.find(type_->ToString()) == kSupportedConstTypes.end()) {
     AIDL_ERROR(this) << "Constant of type " << type_->ToString() << " is not supported.";
     return false;
@@ -902,7 +912,7 @@ bool AidlWithFields::CheckValidForGetterNames(const AidlParcelable& parcel) cons
   bool success = true;
   std::set<std::string> getters;
   for (const auto& v : GetFields()) {
-    bool duplicated = !getters.emplace(CapitalizeFirstLetter(*v, v->GetName())).second;
+    bool duplicated = !getters.emplace(v->GetCapitalizedName()).second;
     if (duplicated) {
       AIDL_ERROR(v) << "'" << parcel.GetName() << "' has duplicate field name '" << v->GetName()
                     << "' after capitalizing the first letter";
@@ -1180,9 +1190,9 @@ AidlUnionDecl::AidlUnionDecl(const AidlLocation& location, const std::string& na
       AidlWithFields(variables) {}
 
 std::set<AidlAnnotation::Type> AidlUnionDecl::GetSupportedAnnotations() const {
-  return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::HIDE,
-          AidlAnnotation::Type::JAVA_PASSTHROUGH, AidlAnnotation::Type::JAVA_DERIVE,
-          AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE};
+  return {AidlAnnotation::Type::VINTF_STABILITY,     AidlAnnotation::Type::HIDE,
+          AidlAnnotation::Type::JAVA_PASSTHROUGH,    AidlAnnotation::Type::JAVA_DERIVE,
+          AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE, AidlAnnotation::Type::RUST_DERIVE};
 }
 
 void AidlUnionDecl::Dump(CodeWriter* writer) const {
@@ -1309,9 +1319,9 @@ void AidlInterface::Dump(CodeWriter* writer) const {
 }
 
 std::set<AidlAnnotation::Type> AidlInterface::GetSupportedAnnotations() const {
-  return {AidlAnnotation::Type::VINTF_STABILITY, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
-          AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH,
-          AidlAnnotation::Type::DESCRIPTOR};
+  return {AidlAnnotation::Type::SENSITIVE_DATA,        AidlAnnotation::Type::VINTF_STABILITY,
+          AidlAnnotation::Type::UNSUPPORTED_APP_USAGE, AidlAnnotation::Type::HIDE,
+          AidlAnnotation::Type::JAVA_PASSTHROUGH,      AidlAnnotation::Type::DESCRIPTOR};
 }
 
 bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {

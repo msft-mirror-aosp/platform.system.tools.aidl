@@ -170,7 +170,7 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 		c(tempFS, config)
 	}
 
-	ctx := android.NewTestArchContext()
+	ctx := android.NewTestArchContext(config)
 	cc.RegisterRequiredBuildComponentsForTest(ctx)
 	ctx.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
 	ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
@@ -203,7 +203,7 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 		ctx.BottomUp("recordVersions", recordVersions).Parallel()
 		ctx.BottomUp("checkDuplicatedVersions", checkDuplicatedVersions).Parallel()
 	})
-	ctx.Register(config)
+	ctx.Register()
 
 	return ctx, config
 }
@@ -780,6 +780,7 @@ func TestUnstableVndkModule(t *testing.T) {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
 			vendor_available: true,
+			product_available: true,
 			unstable: true,
 			vndk: {
 				enabled: true,
@@ -790,6 +791,7 @@ func TestUnstableVndkModule(t *testing.T) {
 		aidl_interface {
 			name: "myiface",
 			vendor_available: true,
+			product_available: true,
 			srcs: ["IFoo.aidl"],
 			vndk: {
 				enabled: true,
@@ -800,6 +802,7 @@ func TestUnstableVndkModule(t *testing.T) {
 		aidl_interface {
 			name: "myiface",
 			vendor_available: true,
+			product_available: true,
 			srcs: ["IFoo.aidl"],
 			stability: "vintf",
 			vndk: {
