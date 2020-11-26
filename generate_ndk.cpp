@@ -616,7 +616,7 @@ void GenerateClientSource(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "::" << clazz << "(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
   }
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
@@ -632,7 +632,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "::" << clazz << "() {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
   }
   out << "::ndk::SpAIBinder " << clazz << "::createBinder() {\n";
   out.Indent();
@@ -805,7 +805,6 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   out << "#include <android/binder_ibinder.h>\n";
   if (options.GenLog()) {
-    out << "#include <json/value.h>\n";
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
@@ -835,7 +834,8 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
     out << "std::mutex " << kCachedHashMutex << ";\n";
   }
   if (options.GenLog()) {
-    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+    out << cpp::kTransactionLogStruct;
+    out << "static std::function<void(const TransactionLog&)> logFunc;\n";
   }
   out.Dedent();
   out << "};\n";
@@ -873,7 +873,8 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
     }
   }
   if (options.GenLog()) {
-    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+    out << cpp::kTransactionLogStruct;
+    out << "static std::function<void(const TransactionLog&)> logFunc;\n";
   }
   out.Dedent();
   out << "protected:\n";
@@ -893,7 +894,6 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
   out << "#pragma once\n\n";
   out << "#include <android/binder_interface_utils.h>\n";
   if (options.GenLog()) {
-    out << "#include <json/value.h>\n";
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
@@ -1119,6 +1119,13 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
     out << "#include <" << header << ">\n";
   }
   GenerateHeaderIncludes(out, types, defined_type);
+
+  // TODO(b/31559095) bionic on host should define this
+  out << "\n";
+  out << "#ifndef __BIONIC__\n";
+  out << "#define __assert2(a,b,c,d) ((void)0)\n";
+  out << "#endif\n";
+  out << "\n";
 
   EnterNdkNamespace(out, defined_type);
   out << cpp::TemplateDecl(defined_type);
