@@ -159,6 +159,7 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 	// To keep tests stable, fix Platform_sdk_codename and Platform_sdk_final
 	// Use setReleaseEnv() to test release version
 	config.TestProductVariables.Platform_sdk_codename = proptools.StringPtr("Q")
+	config.TestProductVariables.Platform_version_active_codenames = []string{"Q"}
 	config.TestProductVariables.Platform_sdk_final = proptools.BoolPtr(false)
 
 	for _, c := range customizers {
@@ -169,7 +170,7 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 		c(tempFS, config)
 	}
 
-	ctx := android.NewTestArchContext()
+	ctx := android.NewTestArchContext(config)
 	cc.RegisterRequiredBuildComponentsForTest(ctx)
 	ctx.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
 	ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
@@ -199,9 +200,10 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 	ctx.PostDepsMutators(apex.RegisterPostDepsMutators)
 	ctx.PostDepsMutators(func(ctx android.RegisterMutatorsContext) {
 		ctx.BottomUp("checkUnstableModule", checkUnstableModuleMutator).Parallel()
+		ctx.BottomUp("recordVersions", recordVersions).Parallel()
 		ctx.BottomUp("checkDuplicatedVersions", checkDuplicatedVersions).Parallel()
 	})
-	ctx.Register(config)
+	ctx.Register()
 
 	return ctx, config
 }
@@ -481,6 +483,70 @@ func TestCreatesModulesWithFrozenVersions(t *testing.T) {
 	assertModulesExists(t, ctx, "foo-unstable-java", "foo-unstable-rust", "foo-unstable-cpp", "foo-unstable-ndk", "foo-unstable-ndk_platform")
 }
 
+func TestErrorsWithUnsortedVersions(t *testing.T) {
+	testAidlError(t, `versions: should be sorted`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"2",
+				"1",
+			],
+			backend: {
+				rust: {
+					enabled: true,
+				},
+			},
+		}
+	`)
+}
+
+func TestErrorsWithDuplicateVersions(t *testing.T) {
+	testAidlError(t, `versions: duplicate`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"1",
+				"1",
+			],
+		}
+	`)
+}
+
+func TestErrorsWithNonPositiveVersions(t *testing.T) {
+	testAidlError(t, `versions: should be > 0`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"-1",
+				"1",
+			],
+		}
+	`)
+}
+
+func TestErrorsWithNonIntegerVersions(t *testing.T) {
+	testAidlError(t, `versions: "first" is not an integer`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"first",
+			],
+		}
+	`)
+}
+
 const (
 	androidVariant    = "android_common"
 	nativeVariant     = "android_arm_armv7-a-neon_shared"
@@ -563,38 +629,6 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 	assertOutput("foo-unstable-rust", nativeRustVariant, "libfoo_unstable.dylib.so")
 
 	// skip ndk/ndk_platform since they follow the same rule with cpp
-}
-
-func TestGenLogForNativeBackendRequiresJson(t *testing.T) {
-	testAidlError(t, `"foo-cpp" depends on .*"libjsoncpp"`, `
-		aidl_interface {
-			name: "foo",
-			srcs: [
-				"IFoo.aidl",
-			],
-			backend: {
-				cpp: {
-					gen_log: true,
-				},
-			},
-		}
-	`)
-	testAidl(t, `
-		aidl_interface {
-			name: "foo",
-			srcs: [
-				"IFoo.aidl",
-			],
-			backend: {
-				cpp: {
-					gen_log: true,
-				},
-			},
-		}
-		cc_library {
-			name: "libjsoncpp",
-		}
-	`)
 }
 
 func TestImports(t *testing.T) {
@@ -703,7 +737,7 @@ func TestImports(t *testing.T) {
 func TestDuplicatedVersions(t *testing.T) {
 	// foo depends on myiface-ndk (v2) via direct dep and also on
 	// myiface-V1-ndk via indirect dep. This should be prohibited.
-	testAidlError(t, `multiple versions of aidl_interface myiface \(backend:ndk\) are used`, `
+	testAidlError(t, `depends on multiple versions of the same aidl_interface: myiface-V1-ndk, myiface-ndk`, `
 		aidl_interface {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
@@ -726,7 +760,7 @@ func TestDuplicatedVersions(t *testing.T) {
 		"aidl_api/myiface/2/myiface.2.aidl": nil,
 		"aidl_api/myiface/2/.hash":          nil,
 	}))
-	testAidlError(t, `multiple versions of aidl_interface myiface \(backend:ndk\) are used`, `
+	testAidlError(t, `depends on multiple versions of the same aidl_interface: myiface-ndk, myiface-unstable-ndk`, `
 		aidl_interface {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
@@ -778,6 +812,7 @@ func TestUnstableVndkModule(t *testing.T) {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
 			vendor_available: true,
+			product_available: true,
 			unstable: true,
 			vndk: {
 				enabled: true,
@@ -788,6 +823,7 @@ func TestUnstableVndkModule(t *testing.T) {
 		aidl_interface {
 			name: "myiface",
 			vendor_available: true,
+			product_available: true,
 			srcs: ["IFoo.aidl"],
 			vndk: {
 				enabled: true,
@@ -798,6 +834,7 @@ func TestUnstableVndkModule(t *testing.T) {
 		aidl_interface {
 			name: "myiface",
 			vendor_available: true,
+			product_available: true,
 			srcs: ["IFoo.aidl"],
 			stability: "vintf",
 			vndk: {

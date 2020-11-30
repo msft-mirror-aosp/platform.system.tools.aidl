@@ -37,6 +37,13 @@ using std::unique_ptr;
 using std::vector;
 
 template <typename T>
+constexpr int CLZ(T x) {
+  // __builtin_clz(0) is undefined
+  if (x == 0) return sizeof(T) * 8;
+  return (sizeof(T) == sizeof(uint64_t)) ? __builtin_clzl(x) : __builtin_clz(x);
+}
+
+template <typename T>
 class OverflowGuard {
  public:
   OverflowGuard(T value) : mValue(value) {}
@@ -101,14 +108,14 @@ class OverflowGuard {
   T operator==(T o) { return mValue == o; }
   T operator!=(T o) { return mValue != o; }
   T operator>>(T o) {
-    if (o < 0 || o > static_cast<T>(sizeof(T) * 8) || mValue < 0) {
+    if (o < 0 || o >= static_cast<T>(sizeof(T) * 8) || mValue < 0) {
       mOverflowed = true;
       return 0;
     }
     return mValue >> o;
   }
   T operator<<(T o) {
-    if (o < 0 || o > static_cast<T>(sizeof(T) * 8) || mValue < 0) {
+    if (o < 0 || mValue < 0 || o > CLZ(mValue) || o >= static_cast<T>(sizeof(T) * 8)) {
       mOverflowed = true;
       return 0;
     }
@@ -831,6 +838,9 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
   }
   is_valid_ = AreCompatibleTypes(left_val_->final_type_, right_val_->final_type_);
   if (!is_valid_) {
+    AIDL_ERROR(this) << "Cannot perform operation '" << op_ << "' on "
+                     << ToString(right_val_->GetType()) << " and " << ToString(left_val_->GetType())
+                     << ".";
     return false;
   }
 
@@ -838,8 +848,9 @@ bool AidlBinaryConstExpression::evaluate(const AidlTypeSpecifier& type) const {
 
   // Handle String case first
   if (left_val_->final_type_ == Type::STRING) {
+    AIDL_FATAL_IF(right_val_->final_type_ != Type::STRING, this);
     if (!OPEQ("+")) {
-      // invalid operation on strings
+      AIDL_ERROR(this) << "Only '+' is supported for strings, not '" << op_ << "'.";
       final_type_ = Type::ERROR;
       is_valid_ = false;
       return false;

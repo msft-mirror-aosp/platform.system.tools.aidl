@@ -37,6 +37,17 @@ static constexpr const char* kCachedHash = "_aidl_cached_hash";
 static constexpr const char* kCachedHashMutex = "_aidl_cached_hash_mutex";
 
 using namespace internals;
+namespace internals {
+void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
+                          const AidlStructuredParcelable& defined_type, const Options& options);
+void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
+                          const AidlStructuredParcelable& defined_type, const Options& options);
+void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
+                          const AidlUnionDecl& defined_type, const Options& options);
+void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
+                          const AidlUnionDecl& defined_type, const Options& options);
+}  // namespace internals
+
 using cpp::ClassNames;
 
 void GenerateNdkInterface(const string& output_file, const Options& options,
@@ -64,8 +75,9 @@ void GenerateNdkInterface(const string& output_file, const Options& options,
   AIDL_FATAL_IF(!source_writer->Close(), output_file);
 }
 
+template <typename ParcelableType>
 void GenerateNdkParcel(const string& output_file, const Options& options,
-                       const AidlTypenames& types, const AidlStructuredParcelable& defined_type,
+                       const AidlTypenames& types, const ParcelableType& defined_type,
                        const IoDelegate& io_delegate) {
   const string header_path =
       options.OutputHeaderDir() + NdkHeaderFile(defined_type, ClassNames::RAW);
@@ -133,7 +145,13 @@ void GenerateNdk(const string& output_file, const Options& options, const AidlTy
                  const AidlDefinedType& defined_type, const IoDelegate& io_delegate) {
   if (const AidlStructuredParcelable* parcelable = defined_type.AsStructuredParcelable();
       parcelable != nullptr) {
-    GenerateNdkParcel(output_file, options, types, *parcelable, io_delegate);
+    GenerateNdkParcel<AidlStructuredParcelable>(output_file, options, types, *parcelable,
+                                                io_delegate);
+    return;
+  }
+
+  if (const AidlUnionDecl* union_decl = defined_type.AsUnionDeclaration(); union_decl != nullptr) {
+    GenerateNdkParcel<AidlUnionDecl>(output_file, options, types, *union_decl, io_delegate);
     return;
   }
 
@@ -188,6 +206,11 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
   out << "#include <android/binder_stability.h>\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
 
+  if (defined_type.IsSensitiveData()) {
+    out << "#include <android/binder_parcel_platform.h>\n";
+    out << "#include <android/binder_ibinder_platform.h>\n";
+  }
+
   auto headerFilePath = [&types](const AidlTypeSpecifier& typespec) -> std::string {
     const AidlDefinedType* type = types.TryGetDefinedType(typespec.GetName());
     if (type == nullptr) {
@@ -198,6 +221,8 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
     if (type->AsInterface() != nullptr) {
       return NdkHeaderFile(*type, ClassNames::RAW, false /*use_os_sep*/);
     } else if (type->AsStructuredParcelable() != nullptr) {
+      return NdkHeaderFile(*type, ClassNames::RAW, false /*use_os_sep*/);
+    } else if (type->AsUnionDeclaration() != nullptr) {
       return NdkHeaderFile(*type, ClassNames::RAW, false /*use_os_sep*/);
     } else if (type->AsParcelable() != nullptr) {
       return type->AsParcelable()->GetCppHeader();
@@ -211,38 +236,51 @@ static void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
 
   std::set<std::string> includes;
 
+  // visit a type and collect all reference types' headers
+  std::function<void(const AidlTypeSpecifier& type)> visit = [&](const AidlTypeSpecifier& type) {
+    includes.insert(headerFilePath(type));
+    if (type.IsGeneric()) {
+      for (const auto& param : type.GetTypeParameters()) {
+        visit(*param);
+      }
+    }
+  };
+
   const AidlInterface* interface = defined_type.AsInterface();
   if (interface != nullptr) {
     for (const auto& method : interface->GetMethods()) {
-      includes.insert(headerFilePath(method->GetType()));
+      visit(method->GetType());
       for (const auto& argument : method->GetArguments()) {
-        includes.insert(headerFilePath(argument->GetType()));
-        // Check the method arguments for generic type arguments
-        if (argument->GetType().IsGeneric()) {
-          for (const auto& type_argument : argument->GetType().GetTypeParameters()) {
-            includes.insert(headerFilePath(*type_argument));
-          }
-        }
+        visit(argument->GetType());
       }
     }
   }
 
-  const AidlStructuredParcelable* parcelable = defined_type.AsStructuredParcelable();
-  if (parcelable != nullptr) {
-    for (const auto& field : parcelable->GetFields()) {
-      includes.insert(headerFilePath(field->GetType()));
+  auto visit_parcelable = [&](const auto& parcelable) {
+    for (const auto& field : parcelable.GetFields()) {
+      visit(field->GetType());
       // Check the fields for generic type arguments
       if (field->GetType().IsGeneric()) {
         for (const auto& type_argument : field->GetType().GetTypeParameters()) {
-          includes.insert(headerFilePath(*type_argument));
+          visit(*type_argument);
         }
       }
     }
+  };
+
+  const AidlStructuredParcelable* parcelable = defined_type.AsStructuredParcelable();
+  if (parcelable != nullptr) {
+    visit_parcelable(*parcelable);
+  }
+
+  const AidlUnionDecl* union_decl = defined_type.AsUnionDeclaration();
+  if (union_decl != nullptr) {
+    visit_parcelable(*union_decl);
   }
 
   const AidlEnumDeclaration* enum_decl = defined_type.AsEnumDeclaration();
   if (enum_decl != nullptr) {
-    includes.insert(headerFilePath(enum_decl->GetBackingType()));
+    visit(enum_decl->GetBackingType());
   }
 
   for (const auto& path : includes) {
@@ -269,48 +307,20 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
   });
 }
 
-static void GenerateConstantDeclarations(CodeWriter& out, const AidlInterface& interface) {
+static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& types,
+                                         const AidlInterface& interface) {
   for (const auto& constant : interface.GetConstantDeclarations()) {
-    const AidlConstantValue& value = constant->GetValue();
-    AIDL_FATAL_IF(value.GetType() == AidlConstantValue::Type::UNARY ||
-                      value.GetType() == AidlConstantValue::Type::BINARY,
-                  value);
-    if (value.GetType() == AidlConstantValue::Type::STRING) {
+    const AidlTypeSpecifier& type = constant->GetType();
+
+    if (type.Signature() == "String") {
       out << "static const char* " << constant->GetName() << ";\n";
+    } else {
+      out << "enum : " << NdkNameOf(types, type, StorageMode::STACK) << " { " << constant->GetName()
+          << " = " << constant->ValueString(ConstantValueDecorator) << " };\n";
     }
-  }
-  out << "\n";
-
-  bool hasIntegralConstant = false;
-  for (const auto& constant : interface.GetConstantDeclarations()) {
-    const AidlConstantValue& value = constant->GetValue();
-    AIDL_FATAL_IF(value.GetType() == AidlConstantValue::Type::UNARY ||
-                      value.GetType() == AidlConstantValue::Type::BINARY,
-                  value);
-    if (value.GetType() == AidlConstantValue::Type::BOOLEAN ||
-        value.GetType() == AidlConstantValue::Type::INT8 ||
-        value.GetType() == AidlConstantValue::Type::INT32) {
-      hasIntegralConstant = true;
-      break;
-    }
-  }
-
-  if (hasIntegralConstant) {
-    out << "enum : int32_t {\n";
-    out.Indent();
-    for (const auto& constant : interface.GetConstantDeclarations()) {
-      const AidlConstantValue& value = constant->GetValue();
-      if (value.GetType() == AidlConstantValue::Type::BOOLEAN ||
-          value.GetType() == AidlConstantValue::Type::INT8 ||
-          value.GetType() == AidlConstantValue::Type::INT32) {
-        out << constant->GetName() << " = " << constant->ValueString(ConstantValueDecorator)
-            << ",\n";
-      }
-    }
-    out.Dedent();
-    out << "};\n";
   }
 }
+
 static void GenerateConstantDefinitions(CodeWriter& out, const AidlInterface& interface) {
   const std::string clazz = ClassName(interface, ClassNames::INTERFACE);
 
@@ -332,6 +342,9 @@ void GenerateSource(CodeWriter& out, const AidlTypenames& types, const AidlInter
   out << "\n";
 
   EnterNdkNamespace(out, defined_type);
+  if (options.GenLog()) {
+    out << cpp::kToStringHelper;
+  }
   GenerateClassSource(out, types, defined_type, options);
   GenerateClientSource(out, types, defined_type, options);
   GenerateServerSource(out, types, defined_type, options);
@@ -387,6 +400,9 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   }
 
   out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
+  if (defined_type.IsSensitiveData()) {
+    out << "AParcel_markSensitive(_aidl_in.get());\n";
+  }
   StatusCheckGoto(out);
 
   for (const auto& arg : method.GetArguments()) {
@@ -409,7 +425,12 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << MethodId(method) << ",\n";
   out << "_aidl_in.getR(),\n";
   out << "_aidl_out.getR(),\n";
-  out << (method.IsOneway() ? "FLAG_ONEWAY" : "0") << "\n";
+
+  std::vector<std::string> flags;
+  if (method.IsOneway()) flags.push_back("FLAG_ONEWAY");
+  if (defined_type.IsSensitiveData()) flags.push_back("FLAG_CLEAR_BUF");
+  out << (flags.empty() ? "0" : base::Join(flags, " | ")) << "\n";
+
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
   out << "| FLAG_PRIVATE_LOCAL\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
@@ -548,7 +569,7 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
     out << "class ScopedTrace {\n";
     out.Indent();
     out << "public:\n"
-        << "inline ScopedTrace(const char* name) {\n"
+        << "inline explicit ScopedTrace(const char* name) {\n"
         << "ATrace_beginSection(name);\n"
         << "}\n"
         << "inline ~ScopedTrace() {\n"
@@ -595,7 +616,7 @@ void GenerateClientSource(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "::" << clazz << "(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
   }
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
@@ -611,7 +632,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "::" << clazz << "() {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
   }
   out << "::ndk::SpAIBinder " << clazz << "::createBinder() {\n";
   out.Indent();
@@ -701,7 +722,7 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << "}\n";
 
   // defintion for static member setDefaultImpl
-  out << "bool " << clazz << "::setDefaultImpl(std::shared_ptr<" << clazz << "> impl) {\n";
+  out << "bool " << clazz << "::setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl) {\n";
   out.Indent();
   out << "// Only one user of this interface can use this function\n";
   out << "// at a time. This is a heuristic to detect if two different\n";
@@ -784,7 +805,6 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   out << "#include <android/binder_ibinder.h>\n";
   if (options.GenLog()) {
-    out << "#include <json/value.h>\n";
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
@@ -798,7 +818,7 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
       << ClassName(defined_type, ClassNames::INTERFACE) << "> {\n";
   out << "public:\n";
   out.Indent();
-  out << clazz << "(const ::ndk::SpAIBinder& binder);\n";
+  out << "explicit " << clazz << "(const ::ndk::SpAIBinder& binder);\n";
   out << "virtual ~" << clazz << "();\n";
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
@@ -814,7 +834,8 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
     out << "std::mutex " << kCachedHashMutex << ";\n";
   }
   if (options.GenLog()) {
-    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+    out << cpp::kTransactionLogStruct;
+    out << "static std::function<void(const TransactionLog&)> logFunc;\n";
   }
   out.Dedent();
   out << "};\n";
@@ -852,7 +873,8 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
     }
   }
   if (options.GenLog()) {
-    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+    out << cpp::kTransactionLogStruct;
+    out << "static std::function<void(const TransactionLog&)> logFunc;\n";
   }
   out.Dedent();
   out << "protected:\n";
@@ -872,7 +894,6 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
   out << "#pragma once\n\n";
   out << "#include <android/binder_interface_utils.h>\n";
   if (options.GenLog()) {
-    out << "#include <json/value.h>\n";
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
@@ -890,7 +911,7 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "();\n";
   out << "virtual ~" << clazz << "();\n";
   out << "\n";
-  GenerateConstantDeclarations(out, defined_type);
+  GenerateConstantDeclarations(out, types, defined_type);
   if (options.Version() > 0) {
     out << "static const int32_t " << kVersion << " = " << std::to_string(options.Version())
         << ";\n";
@@ -906,7 +927,7 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
   out << "static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<" << clazz
       << ">* instance);";
   out << "\n";
-  out << "static bool setDefaultImpl(std::shared_ptr<" << clazz << "> impl);";
+  out << "static bool setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl);";
   out << "\n";
   out << "static const std::shared_ptr<" << clazz << ">& getDefaultImpl();";
   out << "\n";
@@ -948,7 +969,12 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
 
   out << "#pragma once\n";
   out << "#include <android/binder_interface_utils.h>\n";
-  out << "\n";
+  out << "#include <android/binder_parcelable_utils.h>\n";
+
+  // used by toString()
+  out << "#include <codecvt>\n";
+  out << "#include <locale>\n";
+  out << "#include <sstream>\n";
 
   GenerateHeaderIncludes(out, types, defined_type);
 
@@ -966,6 +992,16 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   for (const auto& variable : defined_type.GetFields()) {
     out << NdkNameOf(types, variable->GetType(), StorageMode::STACK) << " " << variable->GetName();
+    if (variable->GetType().GetName() == "ParcelableHolder") {
+      out << "{::ndk::" << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL")
+          << "}";
+    }
+    if (defined_type.IsFixedSize()) {
+      int alignment = NdkAlignmentOf(types, variable->GetType());
+      if (alignment > 0) {
+        out << " __attribute__((aligned (" << std::to_string(alignment) << ")))";
+      }
+    }
     if (variable->GetDefaultValue()) {
       out << " = " << variable->ValueString(ConstantValueDecorator);
     }
@@ -975,8 +1011,11 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
   out << "binder_status_t readFromParcel(const AParcel* parcel);\n";
   out << "binder_status_t writeToParcel(AParcel* parcel) const;\n";
 
-  out << "static const bool _aidl_is_stable = "
-      << (defined_type.IsVintfStability() ? "true" : "false") << ";\n";
+  out << "static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::"
+      << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL") << ";\n";
+
+  cpp::GenerateToString(out, defined_type);
+
   out.Dedent();
   out << "};\n";
   LeaveNdkNamespace(out, defined_type);
@@ -1050,6 +1089,124 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   out << "AParcel_setDataPosition(parcel, _aidl_end_pos);\n";
 
   out << "return _aidl_ret_status;\n";
+  out.Dedent();
+  out << "}\n";
+  out << "\n";
+  LeaveNdkNamespace(out, defined_type);
+}
+
+void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
+                          const AidlUnionDecl& defined_type, const Options& /*options*/) {
+  const std::string clazz = ClassName(defined_type, ClassNames::RAW);
+  cpp::UnionWriter uw{defined_type, types,
+                      [&](const AidlTypeSpecifier& type, const AidlTypenames& types) {
+                        return NdkNameOf(types, type, StorageMode::STACK);
+                      },
+                      &ConstantValueDecorator};
+
+  out << "#pragma once\n";
+  out << "#include <android/binder_interface_utils.h>\n";
+  out << "#include <android/binder_parcelable_utils.h>\n";
+
+  // used by toString()
+  out << "#include <codecvt>\n";
+  out << "#include <locale>\n";
+  out << "#include <sstream>\n";
+
+  out << "\n";
+
+  for (const auto& header : cpp::UnionWriter::headers) {
+    out << "#include <" << header << ">\n";
+  }
+  GenerateHeaderIncludes(out, types, defined_type);
+
+  // TODO(b/31559095) bionic on host should define this
+  out << "\n";
+  out << "#ifndef __BIONIC__\n";
+  out << "#define __assert2(a,b,c,d) ((void)0)\n";
+  out << "#endif\n";
+  out << "\n";
+
+  EnterNdkNamespace(out, defined_type);
+  out << cpp::TemplateDecl(defined_type);
+  out << "class " << clazz << " {\n";
+  out << "public:\n";
+  out.Indent();
+  if (defined_type.IsFixedSize()) {
+    out << "typedef std::true_type fixed_size;\n";
+  } else {
+    out << "typedef std::false_type fixed_size;\n";
+  }
+  out << "static const char* descriptor;\n";
+  out << "\n";
+  uw.PublicFields(out);
+
+  out << "binder_status_t readFromParcel(const AParcel* _parcel);\n";
+  out << "binder_status_t writeToParcel(AParcel* _parcel) const;\n";
+
+  out << "static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::"
+      << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL") << ";\n";
+  cpp::GenerateToString(out, defined_type);
+  out.Dedent();
+  out << "private:\n";
+  out.Indent();
+  uw.PrivateFields(out);
+  out.Dedent();
+  out << "};\n";
+  LeaveNdkNamespace(out, defined_type);
+}
+void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
+                          const AidlUnionDecl& defined_type, const Options& /*options*/) {
+  std::string clazz = ClassName(defined_type, ClassNames::RAW);
+  if (defined_type.IsGeneric()) {
+    std::vector<std::string> template_params;
+    for (const auto& parameter : defined_type.GetTypeParameters()) {
+      template_params.push_back(parameter);
+    }
+    clazz += base::StringPrintf("<%s>", base::Join(template_params, ", ").c_str());
+  }
+
+  cpp::UnionWriter uw{defined_type, types,
+                      [&](const AidlTypeSpecifier& type, const AidlTypenames& types) {
+                        return NdkNameOf(types, type, StorageMode::STACK);
+                      },
+                      &ConstantValueDecorator};
+  cpp::ParcelWriterContext ctx{
+      .status_type = "binder_status_t",
+      .status_ok = "STATUS_OK",
+      .status_bad = "STATUS_BAD_VALUE",
+      .read_func =
+          [&](CodeWriter& out, const std::string& var, const AidlTypeSpecifier& type) {
+            ReadFromParcelFor({out, types, type, "_parcel", "&" + var});
+          },
+      .write_func =
+          [&](CodeWriter& out, const std::string& value, const AidlTypeSpecifier& type) {
+            WriteToParcelFor({out, types, type, "_parcel", value});
+          },
+  };
+
+  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
+      << "\"\n";
+  out << "\n";
+  GenerateSourceIncludes(out, types, defined_type);
+  out << "\n";
+  EnterNdkNamespace(out, defined_type);
+  out << cpp::TemplateDecl(defined_type);
+  out << "const char* " << clazz << "::" << kDescriptor << " = \""
+      << defined_type.GetCanonicalName() << "\";\n";
+  out << "\n";
+
+  out << cpp::TemplateDecl(defined_type);
+  out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _parcel) {\n";
+  out.Indent();
+  uw.ReadFromParcel(out, ctx);
+  out.Dedent();
+  out << "}\n";
+
+  out << cpp::TemplateDecl(defined_type);
+  out << "binder_status_t " << clazz << "::writeToParcel(AParcel* _parcel) const {\n";
+  out.Indent();
+  uw.WriteToParcel(out, ctx);
   out.Dedent();
   out << "}\n";
   out << "\n";

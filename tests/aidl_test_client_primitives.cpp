@@ -94,6 +94,13 @@ TEST_F(AidlPrimitiveTest, aDouble) {
   DoTest(&ITestService::RepeatDouble, double{1.0 / 3.0});
 }
 
+TEST_F(AidlPrimitiveTest, byteConstants) {
+  constexpr int8_t consts[] = {ITestService::BYTE_TEST_CONSTANT};
+  for (auto sent : consts) {
+    DoTest(&ITestService::RepeatByte, sent);
+  }
+}
+
 TEST_F(AidlPrimitiveTest, intConstants) {
   constexpr int32_t consts[] = {
       ITestService::TEST_CONSTANT,   ITestService::TEST_CONSTANT2,  ITestService::TEST_CONSTANT3,
@@ -102,6 +109,13 @@ TEST_F(AidlPrimitiveTest, intConstants) {
       ITestService::TEST_CONSTANT10, ITestService::TEST_CONSTANT11, ITestService::TEST_CONSTANT12};
   for (auto sent : consts) {
     DoTest(&ITestService::RepeatInt, sent);
+  }
+}
+
+TEST_F(AidlPrimitiveTest, longConstants) {
+  constexpr int64_t consts[] = {ITestService::LONG_TEST_CONSTANT};
+  for (auto sent : consts) {
+    DoTest(&ITestService::RepeatLong, sent);
   }
 }
 
@@ -182,27 +196,29 @@ TEST_F(AidlPrimitiveTest, binderArray) {
     input.push_back(INamedCallback::asBinder(got));
   }
 
-  std::vector<sp<IBinder>> output;
-  std::vector<sp<IBinder>> reversed;
-  auto status = service->ReverseNamedCallbackList(input, &output, &reversed);
-  ASSERT_TRUE(status.isOk());
-  ASSERT_THAT(output.size(), Eq(3u));
-  ASSERT_THAT(reversed.size(), Eq(3u));
-
-  for (int i = 0; i < 3; i++) {
-    String16 ret;
-    sp<INamedCallback> named_callback = android::interface_cast<INamedCallback>(output[i]);
-    auto status = named_callback->GetName(&ret);
+  if (cpp_java_tests) {
+    std::vector<sp<IBinder>> output;
+    std::vector<sp<IBinder>> reversed;
+    auto status = cpp_java_tests->ReverseNamedCallbackList(input, &output, &reversed);
     ASSERT_TRUE(status.isOk());
-    ASSERT_THAT(ret, Eq(names[i]));
-  }
+    ASSERT_THAT(output.size(), Eq(3u));
+    ASSERT_THAT(reversed.size(), Eq(3u));
 
-  for (int i = 0; i < 3; i++) {
-    String16 ret;
-    sp<INamedCallback> named_callback = android::interface_cast<INamedCallback>(reversed[i]);
-    auto status = named_callback->GetName(&ret);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_THAT(ret, Eq(names[2 - i]));
+    for (int i = 0; i < 3; i++) {
+      String16 ret;
+      sp<INamedCallback> named_callback = android::interface_cast<INamedCallback>(output[i]);
+      auto status = named_callback->GetName(&ret);
+      ASSERT_TRUE(status.isOk());
+      ASSERT_THAT(ret, Eq(names[i]));
+    }
+
+    for (int i = 0; i < 3; i++) {
+      String16 ret;
+      sp<INamedCallback> named_callback = android::interface_cast<INamedCallback>(reversed[i]);
+      auto status = named_callback->GetName(&ret);
+      ASSERT_TRUE(status.isOk());
+      ASSERT_THAT(ret, Eq(names[2 - i]));
+    }
   }
 }
 

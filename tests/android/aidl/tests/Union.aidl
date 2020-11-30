@@ -15,8 +15,17 @@
  */
 
 package android.aidl.tests;
+import android.aidl.tests.ByteEnum;
 
-@FixedSize
-parcelable FixedSizeParcelable {
-  int a;
+@JavaDerive(toString=true)
+@RustDerive(Clone=true, PartialEq=true)
+union Union {
+    int[] ns;
+    int n;
+    int m;
+    @utf8InCpp String s;
+    @nullable IBinder ibinder;
+    @utf8InCpp List<String> ss;
+    ByteEnum be;
 }
+

@@ -18,12 +18,14 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
 using std::map;
+using std::optional;
 using std::pair;
 using std::set;
 using std::string;
@@ -33,6 +35,7 @@ using std::vector;
 class AidlDefinedType;
 class AidlEnumDeclaration;
 class AidlInterface;
+class AidlParcelable;
 class AidlTypeSpecifier;
 class AidlDocument;
 
@@ -59,15 +62,17 @@ class AidlTypenames final {
   bool AddPreprocessedType(unique_ptr<AidlDefinedType> type);
   static bool IsBuiltinTypename(const string& type_name);
   static bool IsPrimitiveTypename(const string& type_name);
+  bool IsParcelable(const string& type_name) const;
   const AidlDefinedType* TryGetDefinedType(const string& type_name) const;
   std::vector<AidlDefinedType*> AllDefinedTypes() const;
 
   struct ResolvedTypename {
     std::string canonical_name;
     bool is_resolved;
+    const AidlDefinedType* defined_type;
   };
   ResolvedTypename ResolveTypename(const string& type_name) const;
-  bool CanBeOutParameter(const AidlTypeSpecifier& type) const;
+  pair<bool, string> CanBeOutParameter(const AidlTypeSpecifier& type) const;
   bool CanBeJavaOnlyImmutable(const AidlTypeSpecifier& type) const;
   bool CanBeFixedSize(const AidlTypeSpecifier& type) const;
   static bool IsList(const AidlTypeSpecifier& type);
@@ -79,6 +84,9 @@ class AidlTypenames final {
   // Returns the AidlInterface of the given type, or nullptr if the type
   // is not an AidlInterface;
   const AidlInterface* GetInterface(const AidlTypeSpecifier& type) const;
+  // Returns the AidlParcelable of the given type, or nullptr if the type
+  // is not an AidlParcelable;
+  const AidlParcelable* GetParcelable(const AidlTypeSpecifier& type) const;
   // Iterates over all defined and then preprocessed types
   void IterateTypes(const std::function<void(const AidlDefinedType&)>& body) const;
 
@@ -90,7 +98,7 @@ class AidlTypenames final {
     const bool from_preprocessed;
   };
   DefinedImplResult TryGetDefinedTypeImpl(const string& type_name) const;
-  map<string, const AidlDefinedType*> defined_types_;
+  map<string, AidlDefinedType*> defined_types_;
   map<string, unique_ptr<AidlDefinedType>> preprocessed_types_;
   std::vector<std::unique_ptr<AidlDocument>> documents_;
 };

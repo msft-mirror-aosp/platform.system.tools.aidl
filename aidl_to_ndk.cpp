@@ -322,6 +322,19 @@ static map<std::string, TypeInfo> kNdkTypeInfoMap = {
          }),
          .nullable_array = nullptr,
      }},
+    {"ParcelableHolder",
+     TypeInfo{
+         .raw =
+             TypeInfo::Aspect{
+                 .cpp_name = "::ndk::AParcelableHolder",
+                 .value_is_cheap = false,
+                 .read_func = StandardRead("::ndk::AParcel_readParcelable"),
+                 .write_func = StandardWrite("::ndk::AParcel_writeParcelable"),
+             },
+         .array = nullptr,
+         .nullable = nullptr,
+         .nullable_array = nullptr,
+     }},
 };
 
 static TypeInfo::Aspect GetTypeAspect(const AidlTypenames& types, const AidlTypeSpecifier& aidl) {
@@ -414,6 +427,26 @@ std::string NdkNameOf(const AidlTypenames& types, const AidlTypeSpecifier& aidl,
     default:
       AIDL_FATAL(aidl.GetName()) << "Unrecognized mode type: " << static_cast<int>(mode);
   }
+}
+
+size_t NdkAlignmentOf(const AidlTypenames& types, const AidlTypeSpecifier& aidl) {
+  // map from NDK type name to the corresponding alignment size
+  static map<string, int> alignment = {
+      {"bool", 1},  {"int8_t", 1},  {"char16_t", 2}, {"double", 8},
+      {"float", 4}, {"int32_t", 4}, {"int64_t", 8},
+  };
+
+  const string& name = NdkNameOf(types, aidl, StorageMode::STACK);
+  if (alignment.find(name) != alignment.end()) {
+    return alignment[name];
+  } else {
+    const auto& definedType = types.TryGetDefinedType(aidl.GetName());
+    AIDL_FATAL_IF(definedType == nullptr, aidl) << "Failed to resolve type.";
+    if (const auto& enumType = definedType->AsEnumDeclaration(); enumType != nullptr) {
+      return NdkAlignmentOf(types, enumType->GetBackingType());
+    }
+  }
+  return 0;
 }
 
 void WriteToParcelFor(const CodeGeneratorContext& c) {

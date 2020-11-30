@@ -24,6 +24,7 @@
 #include <set>
 #include <string>
 
+#include <android-base/format.h>
 #include <android-base/stringprintf.h>
 
 #include "aidl_language.h"
@@ -52,6 +53,7 @@ const char kFlagsVarName[] = "_aidl_flags";
 const char kDataVarName[] = "_aidl_data";
 const char kErrorLabel[] = "_aidl_error";
 const char kImplVarName[] = "_aidl_impl";
+const char kParcelVarName[] = "_aidl_parcel";
 const char kReplyVarName[] = "_aidl_reply";
 const char kReturnVarName[] = "_aidl_return";
 const char kStatusVarName[] = "_aidl_status";
@@ -59,6 +61,7 @@ const char kTraceVarName[] = "_aidl_trace";
 const char kAndroidParcelLiteral[] = "::android::Parcel";
 const char kAndroidStatusLiteral[] = "::android::status_t";
 const char kAndroidStatusOk[] = "::android::OK";
+const char kAndroidStatusBadValue[] = "::android::BAD_VALUE";
 const char kBinderStatusLiteral[] = "::android::binder::Status";
 const char kIBinderHeader[] = "binder/IBinder.h";
 const char kIInterfaceHeader[] = "binder/IInterface.h";
@@ -236,6 +239,9 @@ unique_ptr<Declaration> DefineClientTransaction(const AidlTypenames& typenames,
 
   // Declare parcels to hold our query and the response.
   b->AddLiteral(StringPrintf("%s %s", kAndroidParcelLiteral, kDataVarName));
+  if (interface.IsSensitiveData()) {
+    b->AddLiteral(StringPrintf("%s.markSensitive()", kDataVarName));
+  }
   // Even if we're oneway, the transact method still takes a parcel.
   b->AddLiteral(StringPrintf("%s %s", kAndroidParcelLiteral, kReplyVarName));
 
@@ -295,9 +301,11 @@ unique_ptr<Declaration> DefineClientTransaction(const AidlTypenames& typenames,
   vector<string> args = {transaction_code, kDataVarName,
                          StringPrintf("&%s", kReplyVarName)};
 
-  if (method.IsOneway()) {
-    args.push_back("::android::IBinder::FLAG_ONEWAY");
-  }
+  std::vector<std::string> flags;
+  if (method.IsOneway()) flags.push_back("::android::IBinder::FLAG_ONEWAY");
+  if (interface.IsSensitiveData()) flags.push_back("::android::IBinder::FLAG_CLEAR_BUF");
+
+  args.push_back(flags.empty() ? "0" : Join(flags, " | "));
 
   b->AddStatement(new Assignment(
       kAndroidStatusVarName,
@@ -461,25 +469,23 @@ unique_ptr<Document> BuildClientSource(const AidlTypenames& typenames,
   if (options.GenLog()) {
     include_list.emplace_back("chrono");
     include_list.emplace_back("functional");
-    include_list.emplace_back("json/value.h");
   }
   vector<unique_ptr<Declaration>> file_decls;
 
   // The constructor just passes the IBinder instance up to the super
   // class.
   const string i_name = ClassName(interface, ClassNames::INTERFACE);
+  const string bp_name = ClassName(interface, ClassNames::CLIENT);
   file_decls.push_back(unique_ptr<Declaration>{new ConstructorImpl{
-      ClassName(interface, ClassNames::CLIENT),
-      ArgList{StringPrintf("const ::android::sp<::android::IBinder>& %s",
-                           kImplVarName)},
-      { "BpInterface<" + i_name + ">(" + kImplVarName + ")" }}});
+      bp_name,
+      ArgList{StringPrintf("const ::android::sp<::android::IBinder>& %s", kImplVarName)},
+      {"BpInterface<" + i_name + ">(" + kImplVarName + ")"}}});
 
   if (options.GenLog()) {
     string code;
-    ClassName(interface, ClassNames::CLIENT);
     CodeWriterPtr writer = CodeWriter::ForString(&code);
-    (*writer) << "std::function<void(const Json::Value&)> "
-              << ClassName(interface, ClassNames::CLIENT) << "::logFunc;\n";
+    (*writer) << "std::function<void(const " + bp_name + "::TransactionLog&)> " << bp_name
+              << "::logFunc;\n";
     writer->Close();
     file_decls.push_back(unique_ptr<Declaration>(new LiteralDecl(code)));
   }
@@ -653,11 +659,9 @@ unique_ptr<Document> BuildServerSource(const AidlTypenames& typenames,
   if (options.GenLog()) {
     include_list.emplace_back("chrono");
     include_list.emplace_back("functional");
-    include_list.emplace_back("json/value.h");
   }
 
-  unique_ptr<ConstructorImpl> constructor{
-      new ConstructorImpl{ClassName(interface, ClassNames::SERVER), ArgList{}, {}}};
+  unique_ptr<ConstructorImpl> constructor{new ConstructorImpl{bn_name, ArgList{}, {}}};
 
   if (interface.IsVintfStability()) {
     constructor->GetStatementBlock()->AddLiteral("::android::internal::Stability::markVintf(this)");
@@ -745,10 +749,9 @@ unique_ptr<Document> BuildServerSource(const AidlTypenames& typenames,
 
   if (options.GenLog()) {
     string code;
-    ClassName(interface, ClassNames::SERVER);
     CodeWriterPtr writer = CodeWriter::ForString(&code);
-    (*writer) << "std::function<void(const Json::Value&)> "
-              << ClassName(interface, ClassNames::SERVER) << "::logFunc;\n";
+    (*writer) << "std::function<void(const " + bn_name + "::TransactionLog&)> " << bn_name
+              << "::logFunc;\n";
     writer->Close();
     decls.push_back(unique_ptr<Declaration>(new LiteralDecl(code)));
   }
@@ -812,6 +815,8 @@ unique_ptr<Document> BuildClientHeader(const AidlTypenames& typenames,
       ConstructorDecl::IS_VIRTUAL | ConstructorDecl::IS_DEFAULT}};
 
   vector<unique_ptr<Declaration>> publics;
+  vector<unique_ptr<Declaration>> privates;
+
   publics.push_back(std::move(constructor));
   publics.push_back(std::move(destructor));
 
@@ -824,14 +829,13 @@ unique_ptr<Document> BuildClientHeader(const AidlTypenames& typenames,
   }
 
   if (options.GenLog()) {
-    includes.emplace_back("chrono");      // for std::chrono::steady_clock
     includes.emplace_back("functional");  // for std::function
-    includes.emplace_back("json/value.h");
-    publics.emplace_back(
-        new LiteralDecl{"static std::function<void(const Json::Value&)> logFunc;\n"});
-  }
 
-  vector<unique_ptr<Declaration>> privates;
+    publics.emplace_back(new LiteralDecl{kTransactionLogStruct});
+    publics.emplace_back(
+        new LiteralDecl{"static std::function<void(const TransactionLog&)> logFunc;\n"});
+    privates.emplace_back(new LiteralDecl{kToStringHelper});
+  }
 
   if (options.Version() > 0) {
     privates.emplace_back(new LiteralDecl("int32_t cached_version_ = -1;\n"));
@@ -873,6 +877,8 @@ unique_ptr<Document> BuildServerHeader(const AidlTypenames& /* typenames */,
   vector<string> includes = {"binder/IInterface.h", HeaderFile(interface, ClassNames::RAW, false)};
 
   vector<unique_ptr<Declaration>> publics;
+  vector<unique_ptr<Declaration>> privates;
+
   publics.push_back(std::move(constructor));
   publics.push_back(std::move(on_transact));
 
@@ -888,14 +894,18 @@ unique_ptr<Document> BuildServerHeader(const AidlTypenames& /* typenames */,
   }
 
   if (options.GenLog()) {
-    includes.emplace_back("chrono");      // for std::chrono::steady_clock
     includes.emplace_back("functional");  // for std::function
-    includes.emplace_back("json/value.h");
+
+    publics.emplace_back(new LiteralDecl{kTransactionLogStruct});
     publics.emplace_back(
-        new LiteralDecl{"static std::function<void(const Json::Value&)> logFunc;\n"});
+        new LiteralDecl{"static std::function<void(const TransactionLog&)> logFunc;\n"});
+    privates.emplace_back(new LiteralDecl{kToStringHelper});
   }
-  unique_ptr<ClassDecl> bn_class{
-      new ClassDecl{bn_name, "::android::BnInterface<" + i_name + ">", {}, std::move(publics), {}}};
+  unique_ptr<ClassDecl> bn_class{new ClassDecl{bn_name,
+                                               "::android::BnInterface<" + i_name + ">",
+                                               {},
+                                               std::move(publics),
+                                               std::move(privates)}};
 
   return unique_ptr<Document>{
       new CppHeader{includes, NestInNamespaces(std::move(bn_class), interface.GetSplitPackage())}};
@@ -933,34 +943,39 @@ unique_ptr<Document> BuildInterfaceHeader(const AidlTypenames& typenames,
   }
 
   std::vector<std::unique_ptr<Declaration>> string_constants;
+  unique_ptr<Enum> byte_constant_enum{new Enum{"", "int8_t", false}};
   unique_ptr<Enum> int_constant_enum{new Enum{"", "int32_t", false}};
+  unique_ptr<Enum> long_constant_enum{new Enum{"", "int64_t", false}};
   for (const auto& constant : interface.GetConstantDeclarations()) {
+    const AidlTypeSpecifier& type = constant->GetType();
     const AidlConstantValue& value = constant->GetValue();
 
-    switch (value.GetType()) {
-      case AidlConstantValue::Type::STRING: {
-        std::string cppType = CppNameOf(constant->GetType(), typenames);
-        unique_ptr<Declaration> getter(new MethodDecl("const " + cppType + "&", constant->GetName(),
-                                                      {}, MethodDecl::IS_STATIC));
-        string_constants.push_back(std::move(getter));
-        break;
-      }
-      case AidlConstantValue::Type::BOOLEAN:  // fall-through
-      case AidlConstantValue::Type::INT8:     // fall-through
-      case AidlConstantValue::Type::INT32:    // fall-through
-      // Type promotion may cause this. Value should be small enough to fit in int32.
-      case AidlConstantValue::Type::INT64: {
-        int_constant_enum->AddValue(constant->GetName(),
-                                    constant->ValueString(ConstantValueDecorator));
-        break;
-      }
-      default: {
-        AIDL_FATAL(value) << "Unrecognized constant type: " << static_cast<int>(value.GetType());
-      }
+    if (type.Signature() == "String") {
+      std::string cppType = CppNameOf(constant->GetType(), typenames);
+      unique_ptr<Declaration> getter(
+          new MethodDecl("const " + cppType + "&", constant->GetName(), {}, MethodDecl::IS_STATIC));
+      string_constants.push_back(std::move(getter));
+    } else if (type.Signature() == "byte") {
+      byte_constant_enum->AddValue(constant->GetName(),
+                                   constant->ValueString(ConstantValueDecorator));
+    } else if (type.Signature() == "int") {
+      int_constant_enum->AddValue(constant->GetName(),
+                                  constant->ValueString(ConstantValueDecorator));
+    } else if (type.Signature() == "long") {
+      long_constant_enum->AddValue(constant->GetName(),
+                                   constant->ValueString(ConstantValueDecorator));
+    } else {
+      AIDL_FATAL(value) << "Unrecognized constant type: " << type.Signature();
     }
+  }
+  if (byte_constant_enum->HasValues()) {
+    if_class->AddPublic(std::move(byte_constant_enum));
   }
   if (int_constant_enum->HasValues()) {
     if_class->AddPublic(std::move(int_constant_enum));
+  }
+  if (long_constant_enum->HasValues()) {
+    if_class->AddPublic(std::move(long_constant_enum));
   }
   if (!string_constants.empty()) {
     includes.insert(kString16Header);
@@ -1034,8 +1049,164 @@ unique_ptr<Document> BuildInterfaceHeader(const AidlTypenames& typenames,
                     NestInNamespaces(std::move(decls), interface.GetSplitPackage())}};
 }
 
-std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
-                                            const AidlStructuredParcelable& parcel,
+string GetInitializer(const AidlTypenames& typenames, const AidlVariableDeclaration& variable) {
+  string cppType = CppNameOf(variable.GetType(), typenames);
+  return cppType + "(" + variable.ValueString(ConstantValueDecorator) + ")";
+}
+
+template <typename ParcelableType>
+struct ParcelableTraits {
+  static void AddIncludes(set<string>& includes);
+  static void AddFields(ClassDecl& clazz, const ParcelableType& decl,
+                        const AidlTypenames& typenames);
+  static void GenReadFromParcel(const ParcelableType& parcel, const AidlTypenames& typenames,
+                                StatementBlock* read_block);
+  static void GenWriteToParcel(const ParcelableType& parcel, const AidlTypenames& typenames,
+                               StatementBlock* write_block);
+};
+
+template <>
+struct ParcelableTraits<AidlStructuredParcelable> {
+  static void AddIncludes(set<string>& includes) {
+    includes.insert("tuple");  // std::tie in comparison operators
+  }
+  static void AddFields(ClassDecl& clazz, const AidlStructuredParcelable& decl,
+                        const AidlTypenames& typenames) {
+    for (const auto& variable : decl.GetFields()) {
+      std::ostringstream out;
+      std::string cppType = CppNameOf(variable->GetType(), typenames);
+      out << cppType.c_str() << " " << variable->GetName().c_str();
+      if (variable->GetDefaultValue()) {
+        out << " = " << GetInitializer(typenames, *variable);
+      } else if (variable->GetType().GetName() == "ParcelableHolder") {
+        if (decl.IsVintfStability()) {
+          out << " { ::android::Parcelable::Stability::STABILITY_VINTF }";
+        } else {
+          out << " { ::android::Parcelable::Stability::STABILITY_LOCAL }";
+        }
+      }
+      out << ";\n";
+
+      clazz.AddPublic(std::unique_ptr<LiteralDecl>(new LiteralDecl(out.str())));
+    }
+  }
+  static void GenReadFromParcel(const AidlStructuredParcelable& parcel,
+                                const AidlTypenames& typenames, StatementBlock* read_block) {
+    read_block->AddLiteral(
+        StringPrintf("%s %s = %s", kAndroidStatusLiteral, kAndroidStatusVarName, kAndroidStatusOk));
+
+    read_block->AddLiteral(
+        "[[maybe_unused]] size_t _aidl_start_pos = _aidl_parcel->dataPosition();\n"
+        "int32_t _aidl_parcelable_raw_size = _aidl_parcel->readInt32();\n"
+        "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n"
+        "[[maybe_unused]] size_t _aidl_parcelable_size = "
+        "static_cast<size_t>(_aidl_parcelable_raw_size);\n"
+        "if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;\n");
+
+    for (const auto& variable : parcel.GetFields()) {
+      string method = ParcelReadMethodOf(variable->GetType(), typenames);
+
+      read_block->AddStatement(new Assignment(
+          kAndroidStatusVarName, new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
+                                                ParcelReadCastOf(variable->GetType(), typenames,
+                                                                 "&" + variable->GetName()))));
+      read_block->AddStatement(ReturnOnStatusNotOk());
+      read_block->AddLiteral(StringPrintf(
+          "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
+          "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
+          "  return %s;\n"
+          "}",
+          kAndroidStatusVarName));
+    }
+    read_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
+  }
+  static void GenWriteToParcel(const AidlStructuredParcelable& parcel,
+                               const AidlTypenames& typenames, StatementBlock* write_block) {
+    write_block->AddLiteral(
+        StringPrintf("%s %s = %s", kAndroidStatusLiteral, kAndroidStatusVarName, kAndroidStatusOk));
+
+    write_block->AddLiteral(
+        "auto _aidl_start_pos = _aidl_parcel->dataPosition();\n"
+        "_aidl_parcel->writeInt32(0);");
+
+    for (const auto& variable : parcel.GetFields()) {
+      string method = ParcelWriteMethodOf(variable->GetType(), typenames);
+      write_block->AddStatement(new Assignment(
+          kAndroidStatusVarName,
+          new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
+                         ParcelWriteCastOf(variable->GetType(), typenames, variable->GetName()))));
+      write_block->AddStatement(ReturnOnStatusNotOk());
+    }
+
+    write_block->AddLiteral(
+        "auto _aidl_end_pos = _aidl_parcel->dataPosition();\n"
+        "_aidl_parcel->setDataPosition(_aidl_start_pos);\n"
+        "_aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);\n"
+        "_aidl_parcel->setDataPosition(_aidl_end_pos);");
+    write_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
+  }
+};
+
+// Adapter to cpp::UnionWriter
+template <>
+struct ParcelableTraits<AidlUnionDecl> {
+  static void AddIncludes(set<string>& includes) {
+    includes.insert(std::begin(UnionWriter::headers), std::end(UnionWriter::headers));
+  }
+  static void AddFields(ClassDecl& clazz, const AidlUnionDecl& decl,
+                        const AidlTypenames& typenames) {
+    UnionWriter uw{decl, typenames, &CppNameOf, &ConstantValueDecorator};
+    const string public_fields = RunWriter([&](auto& out) { uw.PublicFields(out); });
+    const string private_fields = RunWriter([&](auto& out) { uw.PrivateFields(out); });
+    clazz.AddPublic(std::make_unique<LiteralDecl>(public_fields));
+    clazz.AddPrivate(std::make_unique<LiteralDecl>(private_fields));
+  }
+  static void GenReadFromParcel(const AidlUnionDecl& decl, const AidlTypenames& typenames,
+                                StatementBlock* read_block) {
+    const string body = RunWriter([&](auto& out) {
+      UnionWriter uw{decl, typenames, &CppNameOf, &ConstantValueDecorator};
+      uw.ReadFromParcel(out, GetParcelWriterContext(typenames));
+    });
+    read_block->AddLiteral(body, /*add_semicolon=*/false);
+  }
+  static void GenWriteToParcel(const AidlUnionDecl& decl, const AidlTypenames& typenames,
+                               StatementBlock* write_block) {
+    const string body = RunWriter([&](auto& out) {
+      UnionWriter uw{decl, typenames, &CppNameOf, &ConstantValueDecorator};
+      uw.WriteToParcel(out, GetParcelWriterContext(typenames));
+    });
+    write_block->AddLiteral(body, /*add_semicolon=*/false);
+  }
+
+ private:
+  static string RunWriter(std::function<void(CodeWriter&)> writer) {
+    string code;
+    CodeWriterPtr out = CodeWriter::ForString(&code);
+    writer(*out);
+    out->Close();
+    return code;
+  }
+  static ParcelWriterContext GetParcelWriterContext(const AidlTypenames& typenames) {
+    return ParcelWriterContext{
+        .status_type = kAndroidStatusLiteral,
+        .status_ok = kAndroidStatusOk,
+        .status_bad = kAndroidStatusBadValue,
+        .read_func =
+            [&](CodeWriter& out, const string& var, const AidlTypeSpecifier& type) {
+              out << fmt::format("{}->{}({})", kParcelVarName, ParcelReadMethodOf(type, typenames),
+                                 ParcelReadCastOf(type, typenames, "&" + var));
+            },
+        .write_func =
+            [&](CodeWriter& out, const string& value, const AidlTypeSpecifier& type) {
+              out << fmt::format("{}->{}({})", kParcelVarName, ParcelWriteMethodOf(type, typenames),
+                                 ParcelWriteCastOf(type, typenames, value));
+            },
+    };
+  }
+};
+
+template <typename T, typename Traits = ParcelableTraits<T>>
+std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames, const T& parcel,
                                             const Options&) {
   const std::vector<std::string>& type_params =
       parcel.IsGeneric() ? parcel.GetTypeParameters() : std::vector<std::string>();
@@ -1043,57 +1214,16 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
       new ClassDecl{parcel.GetName(), "::android::Parcelable", type_params}};
 
   set<string> includes = {kStatusHeader, kParcelHeader};
-  includes.insert("tuple");
+  Traits::AddIncludes(includes);
   for (const auto& variable : parcel.GetFields()) {
     AddHeaders(variable->GetType(), typenames, &includes);
   }
 
-  set<string> operators = {"<", ">", "==", ">=", "<=", "!="};
-  for (const auto& op : operators) {
-    std::ostringstream operator_code;
-    std::vector<std::string> variable_name;
-    std::vector<std::string> rhs_variable_name;
-    for (const auto& variable : parcel.GetFields()) {
-      variable_name.push_back(variable->GetName());
-      rhs_variable_name.push_back("rhs." + variable->GetName());
-    }
+  string operator_code;
+  GenerateParcelableComparisonOperators(*CodeWriter::ForString(&operator_code), parcel);
+  parcel_class->AddPublic(std::make_unique<LiteralDecl>(operator_code));
 
-    operator_code << "inline bool operator" << op << "([[maybe_unused]] const " << parcel.GetName()
-                  << "& rhs) const {\n"
-                  << "  return "
-                  << "std::tie(" << Join(variable_name, ", ") << ")" << op << "std::tie("
-                  << Join(rhs_variable_name, ", ") << ")"
-                  << ";\n"
-                  << "}\n";
-
-    parcel_class->AddPublic(std::unique_ptr<LiteralDecl>(new LiteralDecl(operator_code.str())));
-  }
-  if (parcel.IsFixedSize()) {
-    parcel_class->AddPublic(
-        std::unique_ptr<LiteralDecl>(new LiteralDecl("typedef std::true_type fixed_size;\n")));
-  } else {
-    parcel_class->AddPublic(
-        std::unique_ptr<LiteralDecl>(new LiteralDecl("typedef std::false_type fixed_size;\n")));
-  }
-  for (const auto& variable : parcel.GetFields()) {
-
-    std::ostringstream out;
-    std::string cppType = CppNameOf(variable->GetType(), typenames);
-    out << cppType.c_str() << " " << variable->GetName().c_str();
-    if (variable->GetDefaultValue()) {
-      out << " = " << cppType.c_str() << "(" << variable->ValueString(ConstantValueDecorator)
-          << ")";
-    } else if (variable->GetType().GetName() == "ParcelableHolder") {
-      if (parcel.IsVintfStability()) {
-        out << " { ::android::Parcelable::Stability::STABILITY_VINTF }";
-      } else {
-        out << " { ::android::Parcelable::Stability::STABILITY_LOCAL }";
-      }
-    }
-    out << ";\n";
-
-    parcel_class->AddPublic(std::unique_ptr<LiteralDecl>(new LiteralDecl(out.str())));
-  }
+  Traits::AddFields(*parcel_class, parcel, typenames);
 
   if (parcel.IsVintfStability()) {
     parcel_class->AddPublic(std::unique_ptr<LiteralDecl>(
@@ -1116,73 +1246,39 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
                                    "  return DESCIPTOR;\n"
                                    "}\n",
                                    parcel.GetCanonicalName().c_str()))));
+
+  // toString() method
+  includes.insert("codecvt");  // std::codecvt_utf8_utf16
+  includes.insert("locale");   // std::wstrinig_convert
+  includes.insert("sstream");  // std::ostringstream
+  const string code = CodeWriter::RunWith(&GenerateToString, parcel);
+  parcel_class->AddPublic(std::make_unique<LiteralDecl>(code));
+
+  auto decls = NestInNamespaces(std::move(parcel_class), parcel.GetSplitPackage());
+  // TODO(b/31559095) bionic on host should define this
+  if constexpr (std::is_same_v<T, AidlUnionDecl>) {
+    decls.insert(decls.begin(),
+                 std::make_unique<LiteralDecl>(
+                     "#ifndef __BIONIC__\n#define __assert2(a,b,c,d) ((void)0)\n#endif\n\n"));
+  }
   return unique_ptr<Document>{
-      new CppHeader{vector<string>(includes.begin(), includes.end()),
-                    NestInNamespaces(std::move(parcel_class), parcel.GetSplitPackage())}};
+      new CppHeader{vector<string>(includes.begin(), includes.end()), std::move(decls)}};
 }
-std::unique_ptr<Document> BuildParcelSource(const AidlTypenames& typenames,
-                                            const AidlStructuredParcelable& parcel,
+
+template <typename T, typename Traits = ParcelableTraits<T>>
+std::unique_ptr<Document> BuildParcelSource(const AidlTypenames& typenames, const T& parcel,
                                             const Options&) {
   const std::vector<std::string>& type_params =
       parcel.IsGeneric() ? parcel.GetTypeParameters() : std::vector<std::string>();
-  unique_ptr<MethodImpl> read{new MethodImpl{kAndroidStatusLiteral, parcel.GetName(),
-                                             "readFromParcel", type_params,
-                                             ArgList("const ::android::Parcel* _aidl_parcel")}};
-  StatementBlock* read_block = read->GetStatementBlock();
-  read_block->AddLiteral(
-      StringPrintf("%s %s = %s", kAndroidStatusLiteral, kAndroidStatusVarName, kAndroidStatusOk));
+  auto read =
+      std::make_unique<MethodImpl>(kAndroidStatusLiteral, parcel.GetName(), "readFromParcel",
+                                   type_params, ArgList("const ::android::Parcel* _aidl_parcel"));
+  Traits::GenReadFromParcel(parcel, typenames, read->GetStatementBlock());
 
-  read_block->AddLiteral(
-      "[[maybe_unused]] size_t _aidl_start_pos = _aidl_parcel->dataPosition();\n"
-      "int32_t _aidl_parcelable_raw_size = _aidl_parcel->readInt32();\n"
-      "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n"
-      "[[maybe_unused]] size_t _aidl_parcelable_size = "
-      "static_cast<size_t>(_aidl_parcelable_raw_size);\n"
-      "if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;\n");
-
-  for (const auto& variable : parcel.GetFields()) {
-    string method = ParcelReadMethodOf(variable->GetType(), typenames);
-
-    read_block->AddStatement(new Assignment(
-        kAndroidStatusVarName, new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
-                                              ParcelReadCastOf(variable->GetType(), typenames,
-                                                               "&" + variable->GetName()))));
-    read_block->AddStatement(ReturnOnStatusNotOk());
-    read_block->AddLiteral(StringPrintf(
-        "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
-        "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
-        "  return %s;\n"
-        "}",
-        kAndroidStatusVarName));
-  }
-  read_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
-
-  unique_ptr<MethodImpl> write{
-      new MethodImpl{kAndroidStatusLiteral, parcel.GetName(), "writeToParcel", type_params,
-                     ArgList("::android::Parcel* _aidl_parcel"), true /*const*/}};
-  StatementBlock* write_block = write->GetStatementBlock();
-  write_block->AddLiteral(
-      StringPrintf("%s %s = %s", kAndroidStatusLiteral, kAndroidStatusVarName, kAndroidStatusOk));
-
-  write_block->AddLiteral(
-      "auto _aidl_start_pos = _aidl_parcel->dataPosition();\n"
-      "_aidl_parcel->writeInt32(0);");
-
-  for (const auto& variable : parcel.GetFields()) {
-    string method = ParcelWriteMethodOf(variable->GetType(), typenames);
-    write_block->AddStatement(new Assignment(
-        kAndroidStatusVarName,
-        new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
-                       ParcelWriteCastOf(variable->GetType(), typenames, variable->GetName()))));
-    write_block->AddStatement(ReturnOnStatusNotOk());
-  }
-
-  write_block->AddLiteral(
-      "auto _aidl_end_pos = _aidl_parcel->dataPosition();\n"
-      "_aidl_parcel->setDataPosition(_aidl_start_pos);\n"
-      "_aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);\n"
-      "_aidl_parcel->setDataPosition(_aidl_end_pos);");
-  write_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
+  auto write = std::make_unique<MethodImpl>(
+      kAndroidStatusLiteral, parcel.GetName(), "writeToParcel", type_params,
+      ArgList("::android::Parcel* _aidl_parcel"), true /*const*/);
+  Traits::GenWriteToParcel(parcel, typenames, write->GetStatementBlock());
 
   vector<unique_ptr<Declaration>> file_decls;
   file_decls.push_back(std::move(read));
@@ -1321,11 +1417,12 @@ bool GenerateCppInterface(const string& output_file, const Options& options,
   return success;
 }
 
-bool GenerateCppParcel(const string& output_file, const Options& options,
-                       const AidlTypenames& typenames, const AidlStructuredParcelable& parcelable,
-                       const IoDelegate& io_delegate) {
-  auto header = BuildParcelHeader(typenames, parcelable, options);
-  auto source = BuildParcelSource(typenames, parcelable, options);
+template <typename ParcelableType>
+bool GenerateCppParcelable(const std::string& output_file, const Options& options,
+                           const AidlTypenames& typenames, const ParcelableType& parcelable,
+                           const IoDelegate& io_delegate) {
+  auto header = BuildParcelHeader<ParcelableType>(typenames, parcelable, options);
+  auto source = BuildParcelSource<ParcelableType>(typenames, parcelable, options);
 
   if (!header || !source) {
     return false;
@@ -1420,9 +1517,16 @@ bool GenerateCpp(const string& output_file, const Options& options, const AidlTy
                  const AidlDefinedType& defined_type, const IoDelegate& io_delegate) {
   const AidlStructuredParcelable* parcelable = defined_type.AsStructuredParcelable();
   if (parcelable != nullptr) {
-    return GenerateCppParcel(output_file, options, typenames, *parcelable, io_delegate);
+    return GenerateCppParcelable(output_file, options, typenames, *parcelable, io_delegate);
   }
 
+  // should come before AsParcelable() because union is a parcelable
+  const AidlUnionDecl* union_decl = defined_type.AsUnionDeclaration();
+  if (union_decl != nullptr) {
+    return GenerateCppParcelable(output_file, options, typenames, *union_decl, io_delegate);
+  }
+
+  // unstructured parcelable
   const AidlParcelable* parcelable_decl = defined_type.AsParcelable();
   if (parcelable_decl != nullptr) {
     return GenerateCppParcelDeclaration(output_file, options, *parcelable_decl, io_delegate);
