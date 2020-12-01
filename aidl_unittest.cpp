@@ -1494,6 +1494,30 @@ TEST_F(AidlTest, ApiDumpWithManualIdsOnlyOnSomeMethods) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTest, ApiDumpConstWithAnnotation) {
+  io_delegate_.SetFileContents("foo/bar/IFoo.aidl",
+                               "package foo.bar;\n"
+                               "interface IFoo {\n"
+                               "    @utf8InCpp String foo();\n"
+                               "    const @utf8InCpp String bar = \"bar\";\n"
+                               "}\n");
+
+  vector<string> args = {"aidl", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
+  Options options = Options::From(args);
+  CaptureStderr();
+  EXPECT_TRUE(dump_api(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+  string actual;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/IFoo.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+interface IFoo {
+  @utf8InCpp String foo();
+  const @utf8InCpp String bar = "bar";
+}
+)"),
+            actual);
+}
+
 TEST_F(AidlTest, CheckNumGenericTypeSecifier) {
   const string expected_list_stderr =
       "ERROR: p/IFoo.aidl:1.37-41: List can only have one type parameter, but got: "
@@ -1961,6 +1985,17 @@ TEST_F(AidlTestCompatibleChanges, ReorderedAnnatations) {
                                "package p;"
                                "@JavaPassthrough(annotation=\"Bob\")"
                                "@JavaPassthrough(annotation=\"Alice\")"
+                               "parcelable Foo {}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
+TEST_F(AidlTestCompatibleChanges, OkayToDeprecate) {
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "parcelable Foo {}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "@JavaPassthrough(annotation=\"@Deprecated\")"
                                "parcelable Foo {}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
