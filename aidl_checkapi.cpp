@@ -32,6 +32,7 @@ namespace aidl {
 
 using android::base::Error;
 using android::base::Result;
+using android::base::StartsWith;
 using std::map;
 using std::set;
 using std::string;
@@ -61,9 +62,15 @@ static vector<string> get_strict_annotations(const AidlAnnotatable& node) {
   };
   vector<string> annotations;
   for (const AidlAnnotation& annotation : node.GetAnnotations()) {
-    if (kIgnoreAnnotations.find(annotation.GetType()) == kIgnoreAnnotations.end()) {
-      annotations.push_back(annotation.ToString(AidlConstantValueDecorator));
+    if (kIgnoreAnnotations.find(annotation.GetType()) != kIgnoreAnnotations.end()) {
+      continue;
     }
+    auto annotation_string = annotation.ToString();
+    // adding @Deprecated (with optional args) is okay
+    if (StartsWith(annotation_string, "@JavaPassthrough(annotation=\"@Deprecated")) {
+      continue;
+    }
+    annotations.push_back(annotation_string);
   }
   return annotations;
 }
@@ -85,8 +92,9 @@ static bool have_compatible_annotations(const AidlAnnotatable& older,
 
 static bool are_compatible_types(const AidlTypeSpecifier& older, const AidlTypeSpecifier& newer) {
   bool compatible = true;
-  if (older.ToString() != newer.ToString()) {
-    AIDL_ERROR(newer) << "Type changed: " << older.ToString() << " to " << newer.ToString() << ".";
+  if (older.Signature() != newer.Signature()) {
+    AIDL_ERROR(newer) << "Type changed: " << older.Signature() << " to " << newer.Signature()
+                      << ".";
     compatible = false;
   }
   compatible &= have_compatible_annotations(older, newer);
