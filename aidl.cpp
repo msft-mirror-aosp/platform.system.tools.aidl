@@ -389,13 +389,11 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const string& filena
       AidlParcelable* doc = new AidlParcelable(location, class_name, package, "" /* comments */);
       typenames->AddPreprocessedType(unique_ptr<AidlParcelable>(doc));
     } else if (decl == "structured_parcelable") {
-      auto temp = new std::vector<std::unique_ptr<AidlVariableDeclaration>>();
       AidlStructuredParcelable* doc = new AidlStructuredParcelable(
-          location, class_name, package, "" /* comments */, temp, nullptr);
+          location, class_name, package, "" /* comments */, nullptr, nullptr);
       typenames->AddPreprocessedType(unique_ptr<AidlStructuredParcelable>(doc));
     } else if (decl == "interface") {
-      auto temp = new std::vector<std::unique_ptr<AidlMember>>();
-      AidlInterface* doc = new AidlInterface(location, class_name, "", false, temp, package);
+      AidlInterface* doc = new AidlInterface(location, class_name, "", false, package, nullptr);
       typenames->AddPreprocessedType(unique_ptr<AidlInterface>(doc));
     } else {
       success = false;
@@ -647,10 +645,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
             new AidlTypeSpecifier(AIDL_LOCATION_HERE, "int", false, nullptr, "");
         ret->Resolve(*typenames);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
-        AidlMethod* method =
-            new AidlMethod(AIDL_LOCATION_HERE, false, ret, "getInterfaceVersion", args, "",
-                           kGetInterfaceVersionId, false /* is_user_defined */);
-        interface->GetMutableMethods().emplace_back(method);
+        auto method = std::make_unique<AidlMethod>(
+            AIDL_LOCATION_HERE, false, ret, "getInterfaceVersion", args, "", kGetInterfaceVersionId,
+            false /* is_user_defined */);
+        interface->AddMethod(std::move(method));
       }
       // add the meta-method 'string getInterfaceHash()' if hash is specified.
       if (!options.Hash().empty()) {
@@ -658,38 +656,38 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
             new AidlTypeSpecifier(AIDL_LOCATION_HERE, "String", false, nullptr, "");
         ret->Resolve(*typenames);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
-        AidlMethod* method = new AidlMethod(AIDL_LOCATION_HERE, false, ret, kGetInterfaceHash, args,
-                                            "", kGetInterfaceHashId, false /* is_user_defined */);
-        interface->GetMutableMethods().emplace_back(method);
+        auto method =
+            std::make_unique<AidlMethod>(AIDL_LOCATION_HERE, false, ret, kGetInterfaceHash, args,
+                                         "", kGetInterfaceHashId, false /* is_user_defined */);
+        interface->AddMethod(std::move(method));
       }
       if (!check_and_assign_method_ids(interface->GetMethods())) {
         return AidlError::BAD_METHOD_ID;
       }
-
-      // Verify and resolve the constant declarations
-      for (const auto& constant : interface->GetConstantDeclarations()) {
-        switch (constant->GetValue().GetType()) {
-          case AidlConstantValue::Type::STRING:    // fall-through
-          case AidlConstantValue::Type::INT8:      // fall-through
-          case AidlConstantValue::Type::INT32:     // fall-through
-          case AidlConstantValue::Type::INT64:     // fall-through
-          case AidlConstantValue::Type::FLOATING:  // fall-through
-          case AidlConstantValue::Type::UNARY:     // fall-through
-          case AidlConstantValue::Type::BINARY: {
-            bool success = constant->CheckValid(*typenames);
-            if (!success) {
-              return AidlError::BAD_TYPE;
-            }
-            if (constant->ValueString(cpp::ConstantValueDecorator).empty()) {
-              return AidlError::BAD_TYPE;
-            }
-            break;
+    }
+    // Verify and resolve the constant declarations
+    for (const auto& constant : defined_type->GetConstantDeclarations()) {
+      switch (constant->GetValue().GetType()) {
+        case AidlConstantValue::Type::STRING:    // fall-through
+        case AidlConstantValue::Type::INT8:      // fall-through
+        case AidlConstantValue::Type::INT32:     // fall-through
+        case AidlConstantValue::Type::INT64:     // fall-through
+        case AidlConstantValue::Type::FLOATING:  // fall-through
+        case AidlConstantValue::Type::UNARY:     // fall-through
+        case AidlConstantValue::Type::BINARY: {
+          bool success = constant->CheckValid(*typenames);
+          if (!success) {
+            return AidlError::BAD_TYPE;
           }
-          default:
-            AIDL_FATAL(constant) << "Unrecognized constant type: "
-                                 << static_cast<int>(constant->GetValue().GetType());
-            break;
+          if (constant->ValueString(cpp::ConstantValueDecorator).empty()) {
+            return AidlError::BAD_TYPE;
+          }
+          break;
         }
+        default:
+          AIDL_FATAL(constant) << "Unrecognized constant type: "
+                               << static_cast<int>(constant->GetValue().GetType());
+          break;
       }
     }
   }
@@ -726,23 +724,17 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
                 << "the receiving side. Consider switching to an array or a generic List/Map.";
           }
         };
-    const AidlInterface* iface = type.AsInterface();
-    const AidlWithFields* data_structure = type.AsStructuredParcelable();
-    if (!data_structure) {
-      data_structure = type.AsUnionDeclaration();
-    }
 
-    if (iface != nullptr && options.IsStructured()) {
-      for (const auto& method : iface->GetMethods()) {
+    if (type.AsInterface() && options.IsStructured()) {
+      for (const auto& method : type.GetMethods()) {
         check_untyped_container(method->GetType(), method.get());
         for (const auto& arg : method->GetArguments()) {
           check_untyped_container(arg->GetType(), method.get());
         }
       }
-    } else if (data_structure != nullptr) {
-      for (const auto& field : data_structure->GetFields()) {
-        check_untyped_container(field->GetType(), field.get());
-      }
+    }
+    for (const auto& field : type.GetFields()) {
+      check_untyped_container(field->GetType(), field.get());
     }
   });
 

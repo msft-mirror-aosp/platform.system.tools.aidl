@@ -229,20 +229,6 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel,
   out << "}\n";
 }
 
-template <typename ParcelableType>
-void GenerateDerivedMethods(CodeWriter& out, const ParcelableType& parcel,
-                            const AidlTypenames& typenames) {
-  if (auto java_derive = parcel.JavaDerive(); java_derive) {
-    auto synthetic_methods = java_derive->AnnotationParams(ConstantValueDecorator);
-    for (const auto& [method_name, generate] : synthetic_methods) {
-      if (generate == "true") {
-        if (method_name == "toString") {
-          GenerateToString(out, parcel, typenames);
-        }
-      }
-    }
-  }
-}
 }  // namespace
 
 namespace android {
@@ -576,12 +562,20 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
 
   parcel_class->elements.push_back(read_or_create_method);
 
-  auto method = CodeWriter::RunWith(GenerateDerivedMethods, *parcel, typenames);
-  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(method));
+  string constants;
+  generate_constant_declarations(*CodeWriter::ForString(&constants), *parcel);
+  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(constants));
 
-  auto describe_contents_method =
-      CodeWriter::RunWith(GenerateParcelableDescribeContents, *parcel, typenames);
-  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(describe_contents_method));
+  if (parcel->JavaDerive("toString")) {
+    string to_string;
+    GenerateToString(*CodeWriter::ForString(&to_string), *parcel, typenames);
+    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(to_string));
+  }
+
+  string describe_contents;
+  GenerateParcelableDescribeContents(*CodeWriter::ForString(&describe_contents), *parcel,
+                                     typenames);
+  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(describe_contents));
 
   return parcel_class;
 }
@@ -823,9 +817,13 @@ void generate_union(CodeWriter& out, const AidlUnionDecl* decl, const AidlTypena
   out.Dedent();
   out << "}\n\n";
 
+  generate_constant_declarations(out, *decl);
+
   GenerateParcelableDescribeContents(out, *decl, typenames);
   out << "\n";
-  GenerateDerivedMethods(out, *decl, typenames);
+  if (decl->JavaDerive("toString")) {
+    GenerateToString(out, *decl, typenames);
+  }
 
   // helper: _assertTag
   out << "private void _assertTag(" + tag_type + " tag) {\n";
