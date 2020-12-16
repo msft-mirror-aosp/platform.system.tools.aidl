@@ -307,12 +307,13 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
   });
 }
 
+template <typename TypeWithConstants>
 static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& types,
-                                         const AidlInterface& interface) {
-  for (const auto& constant : interface.GetConstantDeclarations()) {
+                                         const TypeWithConstants& type) {
+  for (const auto& constant : type.GetConstantDeclarations()) {
     const AidlTypeSpecifier& type = constant->GetType();
 
-    if (type.ToString() == "String") {
+    if (type.Signature() == "String") {
       out << "static const char* " << constant->GetName() << ";\n";
     } else {
       out << "enum : " << NdkNameOf(types, type, StorageMode::STACK) << " { " << constant->GetName()
@@ -321,15 +322,17 @@ static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& t
   }
 }
 
-static void GenerateConstantDefinitions(CodeWriter& out, const AidlInterface& interface) {
-  const std::string clazz = ClassName(interface, ClassNames::INTERFACE);
-
+template <typename TypeWithConstants>
+static void GenerateConstantDefinitions(CodeWriter& out, const TypeWithConstants& interface,
+                                        const std::string& clazz,
+                                        const std::string& tmpl_decl = "") {
   for (const auto& constant : interface.GetConstantDeclarations()) {
     const AidlConstantValue& value = constant->GetValue();
     AIDL_FATAL_IF(value.GetType() == AidlConstantValue::Type::UNARY ||
                       value.GetType() == AidlConstantValue::Type::BINARY,
                   value);
     if (value.GetType() == AidlConstantValue::Type::STRING) {
+      out << tmpl_decl;
       out << "const char* " << clazz << "::" << constant->GetName() << " = "
           << constant->ValueString(ConstantValueDecorator) << ";\n";
     }
@@ -417,6 +420,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     } else if (arg->IsOut() && arg->GetType().IsArray()) {
       out << "_aidl_ret_status = ::ndk::AParcel_writeVectorSize(_aidl_in.get(), *" << var_name
           << ");\n";
+      StatusCheckGoto(out);
     }
   }
   out << "_aidl_ret_status = AIBinder_transact(\n";
@@ -519,6 +523,7 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
       StatusCheckBreak(out);
     } else if (arg->IsOut() && arg->GetType().IsArray()) {
       out << "_aidl_ret_status = ::ndk::AParcel_resizeVector(_aidl_in, &" << var_name << ");\n";
+      StatusCheckBreak(out);
     }
   }
   if (options.GenLog()) {
@@ -569,7 +574,7 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
     out << "class ScopedTrace {\n";
     out.Indent();
     out << "public:\n"
-        << "inline ScopedTrace(const char* name) {\n"
+        << "inline explicit ScopedTrace(const char* name) {\n"
         << "ATrace_beginSection(name);\n"
         << "}\n"
         << "inline ~ScopedTrace() {\n"
@@ -616,7 +621,7 @@ void GenerateClientSource(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "::" << clazz << "(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
   }
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
@@ -632,7 +637,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "::" << clazz << "() {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const Json::Value&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
   }
   out << "::ndk::SpAIBinder " << clazz << "::createBinder() {\n";
   out.Indent();
@@ -684,7 +689,7 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "::" << clazz << "() {}\n";
   out << clazz << "::~" << clazz << "() {}\n";
   out << "\n";
-  GenerateConstantDefinitions(out, defined_type);
+  GenerateConstantDefinitions(out, defined_type, clazz);
   out << "\n";
 
   out << "std::shared_ptr<" << clazz << "> " << clazz
@@ -722,7 +727,7 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << "}\n";
 
   // defintion for static member setDefaultImpl
-  out << "bool " << clazz << "::setDefaultImpl(std::shared_ptr<" << clazz << "> impl) {\n";
+  out << "bool " << clazz << "::setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl) {\n";
   out.Indent();
   out << "// Only one user of this interface can use this function\n";
   out << "// at a time. This is a heuristic to detect if two different\n";
@@ -805,7 +810,6 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   out << "#include <android/binder_ibinder.h>\n";
   if (options.GenLog()) {
-    out << "#include <json/value.h>\n";
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
@@ -819,7 +823,7 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
       << ClassName(defined_type, ClassNames::INTERFACE) << "> {\n";
   out << "public:\n";
   out.Indent();
-  out << clazz << "(const ::ndk::SpAIBinder& binder);\n";
+  out << "explicit " << clazz << "(const ::ndk::SpAIBinder& binder);\n";
   out << "virtual ~" << clazz << "();\n";
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
@@ -835,7 +839,8 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
     out << "std::mutex " << kCachedHashMutex << ";\n";
   }
   if (options.GenLog()) {
-    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+    out << cpp::kTransactionLogStruct;
+    out << "static std::function<void(const TransactionLog&)> logFunc;\n";
   }
   out.Dedent();
   out << "};\n";
@@ -873,7 +878,8 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
     }
   }
   if (options.GenLog()) {
-    out << "static std::function<void(const Json::Value&)> logFunc;\n";
+    out << cpp::kTransactionLogStruct;
+    out << "static std::function<void(const TransactionLog&)> logFunc;\n";
   }
   out.Dedent();
   out << "protected:\n";
@@ -893,7 +899,6 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
   out << "#pragma once\n\n";
   out << "#include <android/binder_interface_utils.h>\n";
   if (options.GenLog()) {
-    out << "#include <json/value.h>\n";
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
@@ -919,6 +924,13 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
   if (!options.Hash().empty()) {
     out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
   }
+  for (const auto& method : defined_type.GetMethods()) {
+    if (!method->IsUserDefined()) {
+      continue;
+    }
+    out << "static constexpr uint32_t TRANSACTION_" << method->GetName() << " = "
+        << "FIRST_CALL_TRANSACTION + " << std::to_string(method->GetId()) << ";\n";
+  }
   out << "\n";
   out << "static std::shared_ptr<" << clazz << "> fromBinder(const ::ndk::SpAIBinder& binder);\n";
   out << "static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<" << clazz
@@ -927,7 +939,7 @@ void GenerateInterfaceHeader(CodeWriter& out, const AidlTypenames& types,
   out << "static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<" << clazz
       << ">* instance);";
   out << "\n";
-  out << "static bool setDefaultImpl(std::shared_ptr<" << clazz << "> impl);";
+  out << "static bool setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl);";
   out << "\n";
   out << "static const std::shared_ptr<" << clazz << ">& getDefaultImpl();";
   out << "\n";
@@ -1010,10 +1022,14 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   out << "binder_status_t readFromParcel(const AParcel* parcel);\n";
   out << "binder_status_t writeToParcel(AParcel* parcel) const;\n";
+  out << "\n";
+
+  cpp::GenerateParcelableComparisonOperators(out, defined_type);
 
   out << "static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::"
       << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL") << ";\n";
 
+  GenerateConstantDeclarations(out, types, defined_type);
   cpp::GenerateToString(out, defined_type);
 
   out.Dedent();
@@ -1042,6 +1058,8 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   out << "const char* " << clazz << "::" << kDescriptor << " = \""
       << defined_type.GetCanonicalName() << "\";\n";
   out << "\n";
+
+  GenerateConstantDefinitions(out, defined_type, clazz, cpp::TemplateDecl(defined_type));
 
   out << cpp::TemplateDecl(defined_type);
   out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* parcel) {\n";
@@ -1120,6 +1138,13 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
   }
   GenerateHeaderIncludes(out, types, defined_type);
 
+  // TODO(b/31559095) bionic on host should define this
+  out << "\n";
+  out << "#ifndef __BIONIC__\n";
+  out << "#define __assert2(a,b,c,d) ((void)0)\n";
+  out << "#endif\n";
+  out << "\n";
+
   EnterNdkNamespace(out, defined_type);
   out << cpp::TemplateDecl(defined_type);
   out << "class " << clazz << " {\n";
@@ -1136,9 +1161,13 @@ void GenerateParcelHeader(CodeWriter& out, const AidlTypenames& types,
 
   out << "binder_status_t readFromParcel(const AParcel* _parcel);\n";
   out << "binder_status_t writeToParcel(AParcel* _parcel) const;\n";
+  out << "\n";
+
+  cpp::GenerateParcelableComparisonOperators(out, defined_type);
 
   out << "static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::"
       << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL") << ";\n";
+  GenerateConstantDeclarations(out, types, defined_type);
   cpp::GenerateToString(out, defined_type);
   out.Dedent();
   out << "private:\n";
@@ -1188,6 +1217,8 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   out << "const char* " << clazz << "::" << kDescriptor << " = \""
       << defined_type.GetCanonicalName() << "\";\n";
   out << "\n";
+
+  GenerateConstantDefinitions(out, defined_type, clazz, cpp::TemplateDecl(defined_type));
 
   out << cpp::TemplateDecl(defined_type);
   out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _parcel) {\n";

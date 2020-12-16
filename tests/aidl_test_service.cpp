@@ -579,7 +579,10 @@ class NativeService : public BnTestService {
     parcelable->const_exprs_9 = ConstantExpressionEnum::hexInt32_3;
     parcelable->const_exprs_10 = ConstantExpressionEnum::hexInt64_1;
 
+    parcelable->shouldSetBit0AndBit2 = StructuredParcelable::BIT0 | StructuredParcelable::BIT2;
+
     parcelable->u = Union::make<Union::ns>({1, 2, 3});
+    parcelable->shouldBeConstS1 = Union::S1();
     return Status::ok();
   }
 
@@ -626,7 +629,17 @@ class VersionedService : public android::aidl::versioned::tests::BnFooInterface 
   VersionedService() {}
   virtual ~VersionedService() = default;
 
-  Status foo() override { return Status::ok(); }
+  Status originalApi() override { return Status::ok(); }
+  Status acceptUnionAndReturnString(const ::android::aidl::versioned::tests::BazUnion& u,
+                                    std::string* _aidl_return) override {
+    switch (u.getTag()) {
+      case ::android::aidl::versioned::tests::BazUnion::intNum:
+        *_aidl_return =
+            std::to_string(u.get<::android::aidl::versioned::tests::BazUnion::intNum>());
+        break;
+    }
+    return Status::ok();
+  }
 };
 
 class LoggableInterfaceService : public android::aidl::loggable::BnLoggableInterface {

@@ -183,7 +183,7 @@ TEST_F(AidlTest, UnionUsage) {
   EXPECT_EQ(one_two, std::vector<int>({1, 2}));
 
   // abort with a bad access
-  EXPECT_DEATH(one_two.get<Union::n>(), "");
+  EXPECT_DEATH(one_two.get<Union::n>(), "bad access");
 
   // set<tag>(...) overwrites the content with a new tag
   one_two_three.set<Union::s>("123");
@@ -265,6 +265,8 @@ TEST_F(AidlTest, ConfirmStructuredParcelables) {
   EXPECT_EQ(parcelable.arrayDefaultsTo123[2], 3);
   EXPECT_TRUE(parcelable.arrayDefaultsToEmpty.empty());
 
+  EXPECT_EQ(parcelable.defaultWithFoo, IntEnum::FOO);
+
   service->FillOutStructuredParcelable(&parcelable);
 
   ASSERT_EQ(parcelable.shouldContainThreeFs.size(), 3u);
@@ -303,7 +305,11 @@ TEST_F(AidlTest, ConfirmStructuredParcelables) {
   EXPECT_EQ(parcelable.addString1, "hello world!");
   EXPECT_EQ(parcelable.addString2, "The quick brown fox jumps over the lazy dog.");
 
+  EXPECT_EQ(StructuredParcelable::BIT0 | StructuredParcelable::BIT2,
+            parcelable.shouldSetBit0AndBit2);
+
   EXPECT_EQ(parcelable.u->get<Union::ns>(), vector<int32_t>({1, 2, 3}));
+  EXPECT_EQ(parcelable.shouldBeConstS1->get<Union::s>(), Union::S1());
 }
 
 TEST_F(AidlTest, EmptyParcelableHolder) {

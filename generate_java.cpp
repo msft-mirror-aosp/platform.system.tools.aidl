@@ -229,20 +229,60 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel,
   out << "}\n";
 }
 
-template <typename ParcelableType>
-void GenerateDerivedMethods(CodeWriter& out, const ParcelableType& parcel,
-                            const AidlTypenames& typenames) {
-  if (auto java_derive = parcel.JavaDerive(); java_derive) {
-    auto synthetic_methods = java_derive->AnnotationParams(ConstantValueDecorator);
-    for (const auto& [method_name, generate] : synthetic_methods) {
-      if (generate == "true") {
-        if (method_name == "toString") {
-          GenerateToString(out, parcel, typenames);
-        }
-      }
-    }
+void GenerateEqualsAndHashCode(CodeWriter& out, const AidlStructuredParcelable& parcel,
+                      const AidlTypenames&) {
+  out << "@Override\n";
+  out << "public boolean equals(Object other) {\n";
+  out.Indent();
+  out << "if (this == other) return true;\n";
+  out << "if (other == null) return false;\n";
+  out << "if (!(other instanceof " << parcel.GetName() << ")) return false;\n";
+  out << parcel.GetName() << " that = (" << parcel.GetName() << ")other;\n";
+  for (const auto& field : parcel.GetFields()) {
+    out << "if (!java.util.Objects.deepEquals(" << field->GetName() << ", that." << field->GetName()
+        << ")) return false;\n";
   }
+  out << "return true;\n";
+  out.Dedent();
+  out << "}\n";
+  out << "\n";
+  out << "@Override\n";
+  out << "public int hashCode() {\n";
+  out.Indent();
+  out << "return java.util.Arrays.deepHashCode(java.util.Arrays.asList(";
+  std::vector<std::string> names;
+  for (const auto& field : parcel.GetFields()) {
+    names.push_back(field->GetName());
+  }
+  out << android::base::Join(names, ", ") << ").toArray());\n";
+  out.Dedent();
+  out << "}\n";
 }
+
+void GenerateEqualsAndHashCode(CodeWriter& out, const AidlUnionDecl& decl,
+                                 const AidlTypenames&) {
+  out << "@Override\n";
+  out << "public boolean equals(Object other) {\n";
+  out.Indent();
+  out << "if (this == other) return true;\n";
+  out << "if (other == null) return false;\n";
+  out << "if (!(other instanceof " << decl.GetName() << ")) return false;\n";
+  out << decl.GetName() << " that = (" << decl.GetName() << ")other;\n";
+  out << "if (_tag != that._tag) return false;\n";
+  out << "if (!java.util.Objects.deepEquals(_value, that._value)) return false;\n";
+  out << "return true;\n";
+  out.Dedent();
+  out << "}\n";
+  out << "\n";
+  out << "@Override\n";
+  out << "public int hashCode() {\n";
+  out.Indent();
+  out << "return java.util.Arrays.deepHashCode(java.util.Arrays.asList(_tag, _value).toArray());\n";
+  out.Dedent();
+  out << "}\n";
+  out << "\n";
+}
+
 }  // namespace
 
 namespace android {
@@ -576,12 +616,26 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
 
   parcel_class->elements.push_back(read_or_create_method);
 
-  auto method = CodeWriter::RunWith(GenerateDerivedMethods, *parcel, typenames);
-  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(method));
+  string constants;
+  generate_constant_declarations(*CodeWriter::ForString(&constants), *parcel);
+  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(constants));
 
-  auto describe_contents_method =
-      CodeWriter::RunWith(GenerateParcelableDescribeContents, *parcel, typenames);
-  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(describe_contents_method));
+  if (parcel->JavaDerive("toString")) {
+    string to_string;
+    GenerateToString(*CodeWriter::ForString(&to_string), *parcel, typenames);
+    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(to_string));
+  }
+
+  if (parcel->JavaDerive("equals")) {
+    string to_string;
+    GenerateEqualsAndHashCode(*CodeWriter::ForString(&to_string), *parcel, typenames);
+    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(to_string));
+  }
+
+  string describe_contents;
+  GenerateParcelableDescribeContents(*CodeWriter::ForString(&describe_contents), *parcel,
+                                     typenames);
+  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(describe_contents));
 
   return parcel_class;
 }
@@ -819,13 +873,21 @@ void generate_union(CodeWriter& out, const AidlUnionDecl* decl, const AidlTypena
     out.Dedent();
   }
   out << "}\n";
-  out << "throw new RuntimeException(\"union: out of range: \" + _aidl_tag);\n";
+  out << "throw new IllegalArgumentException(\"union: unknown tag: \" + _aidl_tag);\n";
   out.Dedent();
   out << "}\n\n";
 
+  generate_constant_declarations(out, *decl);
+
   GenerateParcelableDescribeContents(out, *decl, typenames);
   out << "\n";
-  GenerateDerivedMethods(out, *decl, typenames);
+  if (decl->JavaDerive("toString")) {
+    GenerateToString(out, *decl, typenames);
+  }
+
+  if (decl->JavaDerive("equals")) {
+    GenerateEqualsAndHashCode(out, *decl, typenames);
+  }
 
   // helper: _assertTag
   out << "private void _assertTag(" + tag_type + " tag) {\n";

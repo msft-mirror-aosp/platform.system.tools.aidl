@@ -32,6 +32,7 @@ namespace aidl {
 
 using android::base::Error;
 using android::base::Result;
+using android::base::StartsWith;
 using std::map;
 using std::set;
 using std::string;
@@ -61,9 +62,15 @@ static vector<string> get_strict_annotations(const AidlAnnotatable& node) {
   };
   vector<string> annotations;
   for (const AidlAnnotation& annotation : node.GetAnnotations()) {
-    if (kIgnoreAnnotations.find(annotation.GetType()) == kIgnoreAnnotations.end()) {
-      annotations.push_back(annotation.ToString(AidlConstantValueDecorator));
+    if (kIgnoreAnnotations.find(annotation.GetType()) != kIgnoreAnnotations.end()) {
+      continue;
     }
+    auto annotation_string = annotation.ToString();
+    // adding @Deprecated (with optional args) is okay
+    if (StartsWith(annotation_string, "@JavaPassthrough(annotation=\"@Deprecated")) {
+      continue;
+    }
+    annotations.push_back(annotation_string);
   }
   return annotations;
 }
@@ -85,11 +92,43 @@ static bool have_compatible_annotations(const AidlAnnotatable& older,
 
 static bool are_compatible_types(const AidlTypeSpecifier& older, const AidlTypeSpecifier& newer) {
   bool compatible = true;
-  if (older.ToString() != newer.ToString()) {
-    AIDL_ERROR(newer) << "Type changed: " << older.ToString() << " to " << newer.ToString() << ".";
+  if (older.Signature() != newer.Signature()) {
+    AIDL_ERROR(newer) << "Type changed: " << older.Signature() << " to " << newer.Signature()
+                      << ".";
     compatible = false;
   }
   compatible &= have_compatible_annotations(older, newer);
+  return compatible;
+}
+
+static bool are_compatible_constants(const AidlDefinedType& older, const AidlDefinedType& newer) {
+  bool compatible = true;
+
+  map<string, AidlConstantDeclaration*> new_constdecls;
+  for (const auto& c : newer.GetConstantDeclarations()) {
+    new_constdecls[c->GetName()] = &*c;
+  }
+
+  for (const auto& old_c : older.GetConstantDeclarations()) {
+    const auto found = new_constdecls.find(old_c->GetName());
+    if (found == new_constdecls.end()) {
+      AIDL_ERROR(old_c) << "Removed constant declaration: " << older.GetCanonicalName() << "."
+                        << old_c->GetName();
+      compatible = false;
+      continue;
+    }
+
+    const auto new_c = found->second;
+    compatible &= are_compatible_types(old_c->GetType(), new_c->GetType());
+
+    const string old_value = old_c->GetValue().Literal();
+    const string new_value = new_c->GetValue().Literal();
+    if (old_value != new_value) {
+      AIDL_ERROR(newer) << "Changed constant value: " << older.GetCanonicalName() << "."
+                        << old_c->GetName() << " from " << old_value << " to " << new_value << ".";
+      compatible = false;
+    }
+  }
   return compatible;
 }
 
@@ -147,31 +186,8 @@ static bool are_compatible_interfaces(const AidlInterface& older, const AidlInte
     }
   }
 
-  map<string, AidlConstantDeclaration*> new_constdecls;
-  for (const auto& c : newer.AsInterface()->GetConstantDeclarations()) {
-    new_constdecls.emplace(c->GetName(), c.get());
-  }
+  compatible = are_compatible_constants(older, newer) && compatible;
 
-  for (const auto& old_c : older.AsInterface()->GetConstantDeclarations()) {
-    const auto found = new_constdecls.find(old_c->GetName());
-    if (found == new_constdecls.end()) {
-      AIDL_ERROR(old_c) << "Removed constant declaration: " << older.GetCanonicalName() << "."
-                        << old_c->GetName();
-      compatible = false;
-      continue;
-    }
-
-    const auto new_c = found->second;
-    compatible &= are_compatible_types(old_c->GetType(), new_c->GetType());
-
-    const string old_value = old_c->ValueString(AidlConstantValueDecorator);
-    const string new_value = new_c->ValueString(AidlConstantValueDecorator);
-    if (old_value != new_value) {
-      AIDL_ERROR(newer) << "Changed constant value: " << older.GetCanonicalName() << "."
-                        << old_c->GetName() << " from " << old_value << " to " << new_value << ".";
-      compatible = false;
-    }
-  }
   return compatible;
 }
 
@@ -191,14 +207,12 @@ static bool has_usable_nil_type(const AidlTypeSpecifier& specifier) {
 static bool HasZeroEnumerator(const AidlEnumDeclaration& enum_decl) {
   return std::any_of(enum_decl.GetEnumerators().begin(), enum_decl.GetEnumerators().end(),
                      [&](const unique_ptr<AidlEnumerator>& enumerator) {
-                       return enumerator->GetValue()->ValueString(
-                                  enum_decl.GetBackingType(), AidlConstantValueDecorator) == "0";
+                       return enumerator->GetValue()->Literal() == "0";
                      });
 }
 
-template <typename ParcelableType>
-static bool are_compatible_parcelables(const ParcelableType& older, const AidlTypenames&,
-                                       const ParcelableType& newer,
+static bool are_compatible_parcelables(const AidlDefinedType& older, const AidlTypenames&,
+                                       const AidlDefinedType& newer,
                                        const AidlTypenames& new_types) {
   const auto& old_fields = older.GetFields();
   const auto& new_fields = newer.GetFields();
@@ -221,8 +235,8 @@ static bool are_compatible_parcelables(const ParcelableType& older, const AidlTy
     const auto& new_field = new_fields.at(i);
     compatible &= are_compatible_types(old_field->GetType(), new_field->GetType());
 
-    const string old_value = old_field->ValueString(AidlConstantValueDecorator);
-    const string new_value = new_field->ValueString(AidlConstantValueDecorator);
+    string old_value = old_field->GetDefaultValue() ? old_field->GetDefaultValue()->Literal() : "";
+    string new_value = new_field->GetDefaultValue() ? new_field->GetDefaultValue()->Literal() : "";
     if (old_value != new_value) {
       AIDL_ERROR(new_field) << "Changed default value: " << old_value << " to " << new_value << ".";
       compatible = false;
@@ -302,6 +316,9 @@ static bool are_compatible_parcelables(const ParcelableType& older, const AidlTy
            "cause a semantic change to this parcelable.";
     compatible = false;
   }
+
+  compatible = are_compatible_constants(older, newer) && compatible;
+
   return compatible;
 }
 
@@ -328,10 +345,8 @@ static bool are_compatible_enums(const AidlEnumDeclaration& older,
       compatible = false;
       continue;
     }
-    const string old_value =
-        old_enum_map[name]->ValueString(older.GetBackingType(), AidlConstantValueDecorator);
-    const string new_value =
-        new_enum_map[name]->ValueString(newer.GetBackingType(), AidlConstantValueDecorator);
+    const string old_value = old_enum_map[name]->Literal();
+    const string new_value = new_enum_map[name]->Literal();
     if (old_value != new_value) {
       AIDL_ERROR(newer) << "Changed enumerator value: " << older.GetCanonicalName() << "::" << name
                         << " from " << old_value << " to " << new_value << ".";

@@ -15,6 +15,7 @@
  */
 
 #include "aidl_to_cpp.h"
+#include "aidl_to_cpp_common.h"
 #include "aidl_language.h"
 #include "logging.h"
 
@@ -93,44 +94,43 @@ std::string RawParcelMethod(const AidlTypeSpecifier& type, const AidlTypenames& 
       }
       return kBuiltinVector[element_name];
     }
-    AIDL_FATAL_IF(typenames.IsList(type), type);
-  } else {
-    const string& type_name = type.GetName();
-    if (kBuiltin.find(type_name) != kBuiltin.end()) {
-      AIDL_FATAL_IF(!AidlTypenames::IsBuiltinTypename(type_name), type);
-      if (type_name == "IBinder" && nullable && readMethod) {
-        return "NullableStrongBinder";
-      }
-      if (type_name == "ParcelFileDescriptor" && nullable && !readMethod) {
-        return "NullableParcelable";
-      }
-      if (utf8) {
-        AIDL_FATAL_IF(type_name != "String", type);
-        return readMethod ? "Utf8FromUtf16" : "Utf8AsUtf16";
-      }
-      return kBuiltin[type_name];
-    }
-  }
-  AIDL_FATAL_IF(AidlTypenames::IsBuiltinTypename(type.GetName()), type);
-  auto definedType = typenames.TryGetDefinedType(type.GetName());
-  if (definedType != nullptr && definedType->AsInterface() != nullptr) {
-    if (isVector) {
+    auto definedType = typenames.TryGetDefinedType(element_name);
+    if (definedType != nullptr && definedType->AsInterface() != nullptr) {
       return "StrongBinderVector";
     }
+    return "ParcelableVector";
+  }
+
+  const string& type_name = type.GetName();
+  if (kBuiltin.find(type_name) != kBuiltin.end()) {
+    AIDL_FATAL_IF(!AidlTypenames::IsBuiltinTypename(type_name), type);
+    if (type_name == "IBinder" && nullable && readMethod) {
+      return "NullableStrongBinder";
+    }
+    if (type_name == "ParcelFileDescriptor" && nullable && !readMethod) {
+      return "NullableParcelable";
+    }
+    if (utf8) {
+      AIDL_FATAL_IF(type_name != "String", type);
+      return readMethod ? "Utf8FromUtf16" : "Utf8AsUtf16";
+    }
+    return kBuiltin[type_name];
+  }
+
+  AIDL_FATAL_IF(AidlTypenames::IsBuiltinTypename(type.GetName()), type);
+  auto definedType = typenames.TryGetDefinedType(type.GetName());
+  // The type must be either primitive or interface or parcelable,
+  // so it cannot be nullptr.
+  AIDL_FATAL_IF(definedType == nullptr, type) << type.GetName() << " is not found.";
+
+  if (definedType->AsInterface() != nullptr) {
     if (nullable && readMethod) {
       return "NullableStrongBinder";
     }
     return "StrongBinder";
   }
 
-  // The type must be either primitive or interface or parcelable,
-  // so it cannot be nullptr.
-  AIDL_FATAL_IF(definedType == nullptr, type) << type.GetName() << " is not found.";
-
   // Parcelable
-  if (isVector) {
-    return "ParcelableVector";
-  }
   if (nullable && !readMethod) {
     return "NullableParcelable";
   }
@@ -203,15 +203,17 @@ std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::str
     return "::android::String16(" + raw_value + ")";
   }
 
+  if (auto defined_type = type.GetDefinedType(); defined_type) {
+    auto enum_type = defined_type->AsEnumDeclaration();
+    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
+    return GetRawCppName(type) + "::" + raw_value.substr(raw_value.find_last_of('.') + 1);
+  }
+
   return raw_value;
 };
 
-std::string GetTransactionIdFor(const AidlMethod& method) {
-  ostringstream output;
-
-  output << "::android::IBinder::FIRST_CALL_TRANSACTION + ";
-  output << method.GetId() << " /* " << method.GetName() << " */";
-  return output.str();
+std::string GetTransactionIdFor(const AidlInterface& iface, const AidlMethod& method) {
+  return ClassName(iface, ClassNames::SERVER) + "::TRANSACTION_" + method.GetName();
 }
 
 std::string CppNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {

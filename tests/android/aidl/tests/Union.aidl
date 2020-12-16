@@ -17,7 +17,7 @@
 package android.aidl.tests;
 import android.aidl.tests.ByteEnum;
 
-@JavaDerive(toString=true)
+@JavaDerive(toString=true, equals=true)
 @RustDerive(Clone=true, PartialEq=true)
 union Union {
     int[] ns;
@@ -27,5 +27,7 @@ union Union {
     @nullable IBinder ibinder;
     @utf8InCpp List<String> ss;
     ByteEnum be;
+
+    const @utf8InCpp String S1 = "a string constant in union";
 }
 

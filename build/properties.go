@@ -17,14 +17,6 @@ package aidl
 type nameProperties struct {
 	Name *string
 }
-type staticLib struct {
-	Whole_static_libs []string
-}
-
-type sharedLib struct {
-	Shared_libs               []string
-	Export_shared_lib_headers []string
-}
 
 type perTargetProperties struct {
 	Enabled *bool
@@ -44,9 +36,6 @@ type ccProperties struct {
 	Host_supported            *bool
 	Generated_sources         []string
 	Generated_headers         []string
-	Shared                    sharedLib
-	Static                    staticLib
-	Static_libs               []string
 	Shared_libs               []string
 	Export_shared_lib_headers []string
 	Export_generated_headers  []string
@@ -60,6 +49,9 @@ type ccProperties struct {
 	Min_sdk_version           *string
 	UseApexNameMacro          bool
 	Target                    targetProperties
+	Tidy                      *bool
+	Tidy_flags                []string
+	Tidy_checks_as_errors     []string
 }
 
 type javaProperties struct {

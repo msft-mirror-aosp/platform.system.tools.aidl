@@ -26,10 +26,11 @@ cc_defaults {
         "libbase",
         "libcutils",
     ],
-    sanitize: {
-        integer_overflow: true,
-        misc_undefined: ["integer"],
-    },
+    // TODO(b/174366536): basic_stringbuf::overflow causes "ubsan: implicit-conversion"
+    // sanitize: {
+    //     integer_overflow: true,
+    //     misc_undefined: ["integer"],
+    // },
     target: {
         windows: {
             enabled: true,
@@ -365,6 +366,9 @@ java_test {
         "aidl_test_vintf_parcelable-java",
         // client uses the newest version
         "aidl-test-versioned-interface-java",
+        // TODO: remove once Android migrates to JUnit 4.12,
+        // which provides assertThrows
+        "testng",
     ],
     srcs: [
         "tests/android/aidl/tests/*.aidl",

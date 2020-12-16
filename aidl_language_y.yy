@@ -84,10 +84,9 @@ AidlLocation loc(const yy::parser::location_type& l) {
     std::vector<std::unique_ptr<AidlConstantValue>>* constant_value_list;
     std::vector<std::unique_ptr<AidlArgument>>* arg_list;
     AidlVariableDeclaration* variable;
-    std::vector<std::unique_ptr<AidlVariableDeclaration>>* variable_list;
     AidlMethod* method;
     AidlMember* constant;
-    std::vector<std::unique_ptr<AidlMember>>* interface_members;
+    std::vector<std::unique_ptr<AidlMember>>* members;
     AidlDefinedType* declaration;
     std::vector<std::unique_ptr<AidlTypeSpecifier>>* type_args;
     std::vector<std::string>* type_params;
@@ -154,10 +153,9 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<declaration> parcelable_decl
 %type<declaration> enum_decl
 %type<declaration> union_decl
-%type<variable_list> variable_decls
+%type<members> parcelable_members interface_members
 %type<variable> variable_decl
 %type<type_params> optional_type_params
-%type<interface_members> interface_members
 %type<method> method_decl
 %type<constant> constant_decl
 %type<enumerator> enumerator
@@ -301,11 +299,10 @@ parcelable_decl
     delete $1;
     delete $2;
  }
- | PARCELABLE qualified_name optional_type_params '{' variable_decls '}' {
-    $$ = new AidlStructuredParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $5, $3);
+ | PARCELABLE qualified_name optional_type_params '{' parcelable_members '}' {
+    $$ = new AidlStructuredParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $3, $5);
     delete $1;
     delete $2;
-    delete $5;
  }
  | PARCELABLE qualified_name CPP_HEADER C_STR ';' {
     $$ = new AidlParcelable(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $4->GetText());
@@ -320,16 +317,22 @@ parcelable_decl
     delete $1;
   };
 
-variable_decls
+parcelable_members
  : /* empty */ {
-    $$ = new std::vector<std::unique_ptr<AidlVariableDeclaration>>;
- }
- | variable_decls variable_decl {
+    $$ = new std::vector<std::unique_ptr<AidlMember>>();
+  }
+ | parcelable_members variable_decl {
+    $1->emplace_back($2);
     $$ = $1;
-    if ($2 != nullptr) {
-      $$->push_back(std::unique_ptr<AidlVariableDeclaration>($2));
-    }
- };
+  }
+ | parcelable_members constant_decl {
+    $1->emplace_back($2);
+    $$ = $1;
+  }
+ | parcelable_members error ';' {
+    ps->AddError();
+    $$ = $1;
+  };
 
 variable_decl
  : type identifier ';' {
@@ -341,19 +344,16 @@ variable_decl
    $$ = new AidlVariableDeclaration(loc(@2), $1, $2->GetText(),  $4);
    delete $2;
  }
- | error ';' {
-   ps->AddError();
-   $$ = nullptr;
- }
+ ;
 
 interface_decl
  : INTERFACE identifier '{' interface_members '}' {
-    $$ = new AidlInterface(loc(@1), $2->GetText(), $1->GetComments(), false, $4, ps->Package());
+    $$ = new AidlInterface(loc(@1), $2->GetText(), $1->GetComments(), false, ps->Package(), $4);
     delete $1;
     delete $2;
   }
  | ONEWAY INTERFACE identifier '{' interface_members '}' {
-    $$ = new AidlInterface(loc(@2), $3->GetText(),  $1->GetComments(), true, $5, ps->Package());
+    $$ = new AidlInterface(loc(@2), $3->GetText(),  $1->GetComments(), true, ps->Package(), $5);
     delete $1;
     delete $2;
     delete $3;
@@ -409,6 +409,10 @@ const_expr
     $$ = AidlConstantValue::String(loc(@1), $1->GetText());
     delete $1;
   }
+ | qualified_name {
+    $$ = new AidlConstantReference(loc(@1), $1->GetText(), $1->GetComments());
+    delete $1;
+ }
  | '{' constant_value_list '}' {
     $$ = AidlConstantValue::Array(loc(@1), std::unique_ptr<vector<unique_ptr<AidlConstantValue>>>($2));
   }
@@ -560,11 +564,10 @@ enum_decl
  ;
 
 union_decl
- : UNION qualified_name optional_type_params '{' variable_decls '}' {
-    $$ = new AidlUnionDecl(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $5, $3);
+ : UNION qualified_name optional_type_params '{' parcelable_members '}' {
+    $$ = new AidlUnionDecl(loc(@2), $2->GetText(), ps->Package(), $1->GetComments(), $3, $5);
     delete $1;
     delete $2;
-    delete $5;
   }
  ;
 

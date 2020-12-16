@@ -25,8 +25,8 @@ use aidl_test_interface::aidl::android::aidl::tests::{
     ByteEnum::ByteEnum, IntEnum::IntEnum, LongEnum::LongEnum, StructuredParcelable, Union,
 };
 use aidl_test_interface::binder;
-use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::IFooInterface::{
-    self, BpFooInterface,
+use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
+    IFooInterface, IFooInterface::BpFooInterface, BazUnion::BazUnion,
 };
 use std::fs::File;
 use std::io::{Read, Write};
@@ -529,7 +529,10 @@ fn test_parcelable() {
         "The quick brown fox jumps over the lazy dog."
     );
 
-    assert_eq!(parcelable.u, Some(Union::Union::Ns(vec![1, 2, 3])))
+    assert_eq!(parcelable.shouldSetBit0AndBit2, StructuredParcelable::BIT0 | StructuredParcelable::BIT2);
+
+    assert_eq!(parcelable.u, Some(Union::Union::Ns(vec![1, 2, 3])));
+    assert_eq!(parcelable.shouldBeConstS1, Some(Union::Union::S(Union::S1.to_string())))
 }
 
 const EXPECTED_ARG_VALUE: i32 = 100;
@@ -575,8 +578,28 @@ fn test_versioned_interface_hash() {
     let hash = service.getInterfaceHash();
     assert_eq!(
         hash.as_ref().map(String::as_str),
-        Ok("fcd4f9c806cbc8af3694d569fd1de1ecc8cf7d22")
+        Ok("796b4ab269d476662bed4ab57092ed000e48d5d7")
     );
+}
+
+#[test]
+fn test_versioned_known_union_field_is_ok() {
+    let service: Box<dyn IFooInterface::IFooInterface> =
+        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
+            .expect("did not get binder service");
+
+    assert_eq!(service.acceptUnionAndReturnString(&BazUnion::IntNum(42)), Ok(String::from("42")));
+}
+
+#[test]
+fn test_versioned_unknown_union_field_triggers_error() {
+    let service: Box<dyn IFooInterface::IFooInterface> =
+        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
+            .expect("did not get binder service");
+
+    let ret = service.acceptUnionAndReturnString(&BazUnion::LongNum(42));
+    assert!(!ret.is_ok());
+    assert_eq!(ret.unwrap_err().transaction_error(), binder::StatusCode::BAD_VALUE);
 }
 
 fn test_renamed_interface<F>(f: F)
@@ -619,29 +642,28 @@ fn test_renamed_interface_new_as_new() {
     });
 }
 
-// FIXME: these tests are disabled because they currently fail; the reason
-// is that even though IOldName and INewName are identical and have the
-// same descriptors, they get different classes from `Remotable::get_class`
-// so `into_interface` fails.
-//
-// #[test]
-// fn test_renamed_interface_old_as_new() {
-//     test_renamed_interface(|old_name, _| {
-//         let new_name = old_name.as_binder().into_interface::<dyn INewName::INewName>();
-//         assert!(new_name.is_ok());
-//
-//         let real_name = new_name.unwrap().RealName();
-//         assert_eq!(real_name.as_ref().map(String::as_str), Ok("OldName"));
-//     });
-// }
-//
-// #[test]
-// fn test_renamed_interface_new_as_old() {
-//     test_renamed_interface(|_, new_name| {
-//         let old_name = new_name.as_binder().into_interface::<dyn IOldName::IOldName>();
-//         assert!(old_name.is_ok());
-//
-//         let real_name = old_name.unwrap().RealName();
-//         assert_eq!(real_name.as_ref().map(String::as_str), Ok("NewName"));
-//     });
-// }
+#[test]
+fn test_renamed_interface_old_as_new() {
+    test_renamed_interface(|old_name, _| {
+        let new_name = old_name
+            .as_binder()
+            .into_interface::<dyn INewName::INewName>();
+        assert!(new_name.is_ok());
+
+        let real_name = new_name.unwrap().RealName();
+        assert_eq!(real_name.as_ref().map(String::as_str), Ok("OldName"));
+    });
+}
+
+#[test]
+fn test_renamed_interface_new_as_old() {
+    test_renamed_interface(|_, new_name| {
+        let old_name = new_name
+            .as_binder()
+            .into_interface::<dyn IOldName::IOldName>();
+        assert!(old_name.is_ok());
+
+        let real_name = old_name.unwrap().RealName();
+        assert_eq!(real_name.as_ref().map(String::as_str), Ok("NewName"));
+    });
+}

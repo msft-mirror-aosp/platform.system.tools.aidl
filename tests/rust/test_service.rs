@@ -25,8 +25,8 @@ use aidl_test_interface::aidl::android::aidl::tests::{
     IOldName, IntEnum::IntEnum, LongEnum::LongEnum, StructuredParcelable, Union,
 };
 use aidl_test_interface::binder::{self, Interface, ParcelFileDescriptor, SpIBinder};
-use aidl_test_versioned_interface_V1::aidl::android::aidl::versioned::tests::IFooInterface::{
-    self, BnFooInterface, BpFooInterface,
+use aidl_test_versioned_interface_V1::aidl::android::aidl::versioned::tests::{
+    IFooInterface, IFooInterface::BnFooInterface, IFooInterface::BpFooInterface, BazUnion::BazUnion,
 };
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -270,8 +270,10 @@ impl ITestService::ITestService for TestService {
         parcelable.const_exprs_9 = ConstantExpressionEnum::hexInt32_3;
         parcelable.const_exprs_10 = ConstantExpressionEnum::hexInt64_1;
 
-        parcelable.u = Some(Union::Union::Ns(vec![1, 2, 3]));
+        parcelable.shouldSetBit0AndBit2 = StructuredParcelable::BIT0 | StructuredParcelable::BIT2;
 
+        parcelable.u = Some(Union::Union::Ns(vec![1, 2, 3]));
+        parcelable.shouldBeConstS1 = Some(Union::Union::S(Union::S1.to_string()));
         Ok(())
     }
 
@@ -297,8 +299,13 @@ struct FooInterface;
 impl Interface for FooInterface {}
 
 impl IFooInterface::IFooInterface for FooInterface {
-    fn foo(&self) -> binder::Result<()> {
+    fn originalApi(&self) -> binder::Result<()> {
         Ok(())
+    }
+    fn acceptUnionAndReturnString(&self, u: &BazUnion) -> binder::Result<String> {
+        match u {
+            BazUnion::IntNum(n) => Ok(n.to_string()),
+        }
     }
 }
 
