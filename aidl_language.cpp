@@ -44,6 +44,7 @@ int isatty(int  fd)
 }
 #endif
 
+using android::aidl::DiagnosticID;
 using android::aidl::IoDelegate;
 using android::base::Join;
 using android::base::Split;
@@ -863,7 +864,7 @@ AidlDefinedType::AidlDefinedType(const AidlLocation& location, const std::string
   }
 }
 
-bool AidlDefinedType::CheckValid(const AidlTypenames& typenames) const {
+bool AidlDefinedType::CheckValid(const AidlTypenames& typenames, DiagnosticsContext&) const {
   if (!AidlAnnotatable::CheckValid(typenames)) {
     return false;
   }
@@ -991,8 +992,8 @@ std::set<AidlAnnotation::Type> AidlParcelable::GetSupportedAnnotations() const {
           AidlAnnotation::Type::JAVA_PASSTHROUGH,       AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE};
 }
 
-bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
-  if (!AidlDefinedType::CheckValid(typenames)) {
+bool AidlParcelable::CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const {
+  if (!AidlDefinedType::CheckValid(typenames, diag)) {
     return false;
   }
   if (!AidlParameterizable<std::string>::CheckValid()) {
@@ -1044,8 +1045,9 @@ std::set<AidlAnnotation::Type> AidlStructuredParcelable::GetSupportedAnnotations
           AidlAnnotation::Type::RUST_DERIVE};
 }
 
-bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
-  if (!AidlParcelable::CheckValid(typenames)) {
+bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames,
+                                          DiagnosticsContext& diag) const {
+  if (!AidlParcelable::CheckValid(typenames, diag)) {
     return false;
   }
 
@@ -1240,8 +1242,9 @@ std::set<AidlAnnotation::Type> AidlEnumDeclaration::GetSupportedAnnotations() co
           AidlAnnotation::Type::HIDE, AidlAnnotation::Type::JAVA_PASSTHROUGH};
 }
 
-bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames) const {
-  if (!AidlDefinedType::CheckValid(typenames)) {
+bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames,
+                                     DiagnosticsContext& diag) const {
+  if (!AidlDefinedType::CheckValid(typenames, diag)) {
     return false;
   }
   if (!GetMembers().empty()) {
@@ -1256,6 +1259,18 @@ bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames) const {
   for (const auto& enumerator : enumerators_) {
     success = success && enumerator->CheckValid(GetBackingType());
   }
+
+  AIDL_FATAL_IF(GetEnumerators().empty(), this)
+      << "The enum '" << GetName() << "' has no enumerators.";
+
+  const auto& first = GetEnumerators()[0];
+  if (auto first_value = first->ValueString(GetBackingType(), AidlConstantValueDecorator);
+      first_value != "0") {
+    diag.Report(first->GetLocation(), DiagnosticID::enum_zero)
+        << "The first enumerator '" << first->GetName() << "' should be 0, but it is "
+        << first_value << ".";
+  }
+
   return success;
 }
 
@@ -1303,9 +1318,9 @@ void AidlUnionDecl::Dump(CodeWriter* writer) const {
   writer->Write("}\n");
 }
 
-bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
+bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const {
   // visit parents
-  if (!AidlParcelable::CheckValid(typenames)) {
+  if (!AidlParcelable::CheckValid(typenames, diag)) {
     return false;
   }
 
@@ -1421,8 +1436,8 @@ std::set<AidlAnnotation::Type> AidlInterface::GetSupportedAnnotations() const {
           AidlAnnotation::Type::JAVA_PASSTHROUGH,      AidlAnnotation::Type::DESCRIPTOR};
 }
 
-bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
-  if (!AidlDefinedType::CheckValid(typenames)) {
+bool AidlInterface::CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const {
+  if (!AidlDefinedType::CheckValid(typenames, diag)) {
     return false;
   }
   // Has to be a pointer due to deleting copy constructor. No idea why.
@@ -1520,6 +1535,11 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
     }
     constant_names.insert(constant->GetName());
     success = success && constant->CheckValid(typenames);
+  }
+
+  if (auto name = GetName(); name.size() < 1 || name[0] != 'I') {
+    diag.Report(GetLocation(), DiagnosticID::interface_name)
+        << "Interface names should start with I.";
   }
 
   return success;
