@@ -171,6 +171,7 @@ class AidlAnnotation : public AidlNode {
     FIXED_SIZE,
     DESCRIPTOR,
     RUST_DERIVE,
+    SUPPRESS_WARNINGS,
   };
   static std::string TypeToString(Type type);
 
@@ -192,6 +193,9 @@ class AidlAnnotation : public AidlNode {
   // e.g) "@RustDerive(Clone=true, Copy=true)"
   string ToString() const;
 
+  template <typename T>
+  std::optional<T> ParamValue(const std::string& param_name) const;
+
   std::map<std::string, std::string> AnnotationParams(
       const ConstantValueDecorator& decorator) const;
   const string& GetComments() const { return comments_; }
@@ -205,7 +209,7 @@ class AidlAnnotation : public AidlNode {
     std::string name;
 
     // map from param name -> value type
-    std::map<std::string, std::string> supported_parameters;
+    std::map<std::string, const AidlTypeSpecifier&> supported_parameters;
 
     bool repeatable;
 
@@ -257,6 +261,7 @@ class AidlAnnotatable : public AidlNode {
   const AidlAnnotation* UnsupportedAppUsage() const;
   const AidlAnnotation* RustDerive() const;
   const AidlAnnotation* BackingType() const;
+  std::vector<std::string> SuppressWarnings() const;
 
   // ToString is for dumping AIDL.
   // Returns string representation of annotations.
@@ -510,7 +515,7 @@ class AidlConstantValue : public AidlNode {
    * Return the value casted to the given type.
    */
   template <typename T>
-  T cast() const;
+  T Cast() const;
 
   virtual ~AidlConstantValue() = default;
 
@@ -1081,6 +1086,7 @@ class AidlDocument : public AidlNode {
   AidlDocument& operator=(const AidlDocument&) = delete;
   AidlDocument& operator=(AidlDocument&&) = delete;
 
+  bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const;
   std::optional<std::string> ResolveName(const std::string& unresolved_type) const;
   const std::vector<std::unique_ptr<AidlImport>>& Imports() const { return imports_; }
   const std::vector<std::unique_ptr<AidlDefinedType>>& DefinedTypes() const {
@@ -1091,3 +1097,12 @@ class AidlDocument : public AidlNode {
   const std::vector<std::unique_ptr<AidlImport>> imports_;
   const std::vector<std::unique_ptr<AidlDefinedType>> defined_types_;
 };
+
+template <typename T>
+std::optional<T> AidlAnnotation::ParamValue(const std::string& param_name) const {
+  auto it = parameters_.find(param_name);
+  if (it == parameters_.end()) {
+    return std::nullopt;
+  }
+  return it->second->Cast<T>();
+}
