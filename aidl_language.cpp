@@ -79,21 +79,6 @@ inline bool HasHideComment(const std::string& comment) {
 }
 }  // namespace
 
-AidlLocation::AidlLocation(const std::string& file, Point begin, Point end, Source source)
-    : file_(file), begin_(begin), end_(end), source_(source) {}
-
-std::ostream& operator<<(std::ostream& os, const AidlLocation& l) {
-  os << l.file_;
-  if (l.LocationKnown()) {
-    os << ":" << l.begin_.line << "." << l.begin_.column << "-";
-    if (l.begin_.line != l.end_.line) {
-      os << l.end_.line << ".";
-    }
-    os << l.end_.column;
-  }
-  return os;
-}
-
 AidlNode::AidlNode(const AidlLocation& location) : location_(location) {}
 
 std::string AidlNode::PrintLine() const {
@@ -867,7 +852,7 @@ AidlDefinedType::AidlDefinedType(const AidlLocation& location, const std::string
   }
 }
 
-bool AidlDefinedType::CheckValid(const AidlTypenames& typenames, DiagnosticsContext&) const {
+bool AidlDefinedType::CheckValid(const AidlTypenames& typenames) const {
   if (!AidlAnnotatable::CheckValid(typenames)) {
     return false;
   }
@@ -995,8 +980,8 @@ std::set<AidlAnnotation::Type> AidlParcelable::GetSupportedAnnotations() const {
           AidlAnnotation::Type::JAVA_PASSTHROUGH,       AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE};
 }
 
-bool AidlParcelable::CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const {
-  if (!AidlDefinedType::CheckValid(typenames, diag)) {
+bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
+  if (!AidlDefinedType::CheckValid(typenames)) {
     return false;
   }
   if (!AidlParameterizable<std::string>::CheckValid()) {
@@ -1051,9 +1036,8 @@ std::set<AidlAnnotation::Type> AidlStructuredParcelable::GetSupportedAnnotations
   };
 }
 
-bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames,
-                                          DiagnosticsContext& diag) const {
-  if (!AidlParcelable::CheckValid(typenames, diag)) {
+bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
+  if (!AidlParcelable::CheckValid(typenames)) {
     return false;
   }
 
@@ -1272,9 +1256,8 @@ std::set<AidlAnnotation::Type> AidlEnumDeclaration::GetSupportedAnnotations() co
   };
 }
 
-bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames,
-                                     DiagnosticsContext& diag) const {
-  if (!AidlDefinedType::CheckValid(typenames, diag)) {
+bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames) const {
+  if (!AidlDefinedType::CheckValid(typenames)) {
     return false;
   }
   if (!GetMembers().empty()) {
@@ -1290,20 +1273,7 @@ bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames,
     success = success && enumerator->CheckValid(GetBackingType());
   }
 
-  if (!success) return false;  // ValueString requires valid type
-
-  AIDL_FATAL_IF(GetEnumerators().empty(), this)
-      << "The enum '" << GetName() << "' has no enumerators.";
-
-  const auto& first = GetEnumerators()[0];
-  if (auto first_value = first->ValueString(GetBackingType(), AidlConstantValueDecorator);
-      first_value != "0") {
-    diag.Report(first->GetLocation(), DiagnosticID::enum_zero)
-        << "The first enumerator '" << first->GetName() << "' should be 0, but it is "
-        << first_value << ".";
-  }
-
-  return true;
+  return success;
 }
 
 void AidlEnumDeclaration::Dump(CodeWriter* writer) const {
@@ -1353,9 +1323,9 @@ void AidlUnionDecl::Dump(CodeWriter* writer) const {
   writer->Write("}\n");
 }
 
-bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const {
+bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
   // visit parents
-  if (!AidlParcelable::CheckValid(typenames, diag)) {
+  if (!AidlParcelable::CheckValid(typenames)) {
     return false;
   }
 
@@ -1474,8 +1444,8 @@ std::set<AidlAnnotation::Type> AidlInterface::GetSupportedAnnotations() const {
   };
 }
 
-bool AidlInterface::CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const {
-  if (!AidlDefinedType::CheckValid(typenames, diag)) {
+bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
+  if (!AidlDefinedType::CheckValid(typenames)) {
     return false;
   }
   // Has to be a pointer due to deleting copy constructor. No idea why.
@@ -1543,13 +1513,6 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames, DiagnosticsContex
         AIDL_ERROR(arg) << "Argument name cannot begin with '_aidl'";
         return false;
       }
-
-      if (arg->GetDirection() == AidlArgument::INOUT_DIR) {
-        diag.Report(arg->GetLocation(), DiagnosticID::inout_parameter)
-            << arg->GetName()
-            << " is 'inout'. Avoid inout parameters. This is somewhat confusing for clients "
-               "because although the parameters are 'in', they look out 'out' parameters.";
-      }
     }
 
     auto it = method_names.find(m->GetName());
@@ -1581,12 +1544,6 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames, DiagnosticsContex
     constant_names.insert(constant->GetName());
     success = success && constant->CheckValid(typenames);
   }
-
-  if (auto name = GetName(); name.size() < 1 || name[0] != 'I') {
-    diag.Report(GetLocation(), DiagnosticID::interface_name)
-        << "Interface names should start with I.";
-  }
-
   return success;
 }
 
@@ -1600,15 +1557,6 @@ std::string AidlInterface::GetDescriptor() const {
 
 AidlImport::AidlImport(const AidlLocation& location, const std::string& needed_class)
     : AidlNode(location), needed_class_(needed_class) {}
-
-bool AidlDocument::CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const {
-  for (const auto& t : defined_types_) {
-    if (!t->CheckValid(typenames, diag)) {
-      return false;
-    }
-  }
-  return true;
-}
 
 // Resolves unresolved type name to fully qualified typename to import
 // case #1: SimpleName --> import p.SimpleName
@@ -1638,3 +1586,27 @@ std::optional<std::string> AidlDocument::ResolveName(const std::string& unresolv
   }
   return canonical_name;
 }
+
+void AidlVisitAll::VisitDocument(const AidlDocument& d) {
+  for (const auto& type : d.DefinedTypes()) type->Accept(*this);
+}
+void AidlVisitAll::VisitInterface(const AidlInterface& i) {
+  for (const auto& m : i.GetMembers()) m->Accept(*this);
+}
+void AidlVisitAll::VisitEnum(const AidlEnumDeclaration& e) {
+  for (const auto& v : e.GetEnumerators()) v->Accept(*this);
+}
+void AidlVisitAll::VisitUnion(const AidlUnionDecl& u) {
+  for (const auto& m : u.GetMembers()) m->Accept(*this);
+}
+void AidlVisitAll::VisitStructuredParcelable(const AidlStructuredParcelable& p) {
+  for (const auto& m : p.GetMembers()) m->Accept(*this);
+}
+void AidlVisitAll::VisitUnstructuredParcelable(const AidlParcelable&) {}
+void AidlVisitAll::VisitEnumerator(const AidlEnumerator&) {}
+void AidlVisitAll::VisitMethod(const AidlMethod& m) {
+  for (const auto& a : m.GetArguments()) a->Accept(*this);
+}
+void AidlVisitAll::VisitConstant(const AidlConstantDeclaration&) {}
+void AidlVisitAll::VisitVariable(const AidlVariableDeclaration&) {}
+void AidlVisitAll::VisitArgument(const AidlArgument&) {}

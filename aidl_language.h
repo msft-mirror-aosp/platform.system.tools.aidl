@@ -28,6 +28,8 @@
 #include "code_writer.h"
 #include "diagnostics.h"
 #include "io_delegate.h"
+#include "location.h"
+#include "logging.h"
 #include "options.h"
 
 using android::aidl::AidlTypenames;
@@ -40,6 +42,26 @@ using std::unique_ptr;
 using std::vector;
 class AidlNode;
 
+// helper to see if T is the same to one of Args types.
+template <typename T, typename... Args>
+struct is_one_of : std::false_type {};
+
+template <typename T, typename S, typename... Args>
+struct is_one_of<T, S, Args...> {
+  enum { value = std::is_same_v<T, S> || is_one_of<T, Args...>::value };
+};
+
+// helper to see if T is std::vector of something.
+template <typename>
+struct is_vector : std::false_type {};
+
+template <typename T>
+struct is_vector<std::vector<T>> : std::true_type {};
+
+// helper for static_assert(false)
+template <typename T>
+struct unsupported_type : std::false_type {};
+
 namespace android {
 namespace aidl {
 namespace mappings {
@@ -51,46 +73,54 @@ std::string dump_location(const AidlNode& method);
 }  // namespace aidl
 }  // namespace android
 
-class AidlLocation {
+bool ParseFloating(std::string_view sv, double* parsed);
+bool ParseFloating(std::string_view sv, float* parsed);
+
+class AidlDocument;
+class AidlInterface;
+class AidlParcelable;
+class AidlStructuredParcelable;
+class AidlEnumDeclaration;
+class AidlUnionDecl;
+class AidlVariableDeclaration;
+class AidlConstantDeclaration;
+class AidlEnumerator;
+class AidlMethod;
+class AidlArgument;
+
+class AidlVisitor {
  public:
-  struct Point {
-    int line;
-    int column;
-  };
-
-  enum class Source {
-    // From internal aidl source code
-    INTERNAL = 0,
-    // From a parsed file
-    EXTERNAL = 1
-  };
-
-  AidlLocation(const std::string& file, Point begin, Point end, Source source);
-  AidlLocation(const std::string& file, Source source)
-      : AidlLocation(file, {0, 0}, {0, 0}, source) {}
-
-  bool IsInternal() const { return source_ == Source::INTERNAL; }
-
-  // The first line of a file is line 1.
-  bool LocationKnown() const { return begin_.line != 0; }
-
-  friend std::ostream& operator<<(std::ostream& os, const AidlLocation& l);
-  friend class AidlNode;
-
- private:
-  // INTENTIONALLY HIDDEN: only operator<< should access details here.
-  // Otherwise, locations should only ever be copied around to construct new
-  // objects.
-  const std::string file_;
-  Point begin_;
-  Point end_;
-  Source source_;
+  virtual ~AidlVisitor() = default;
+  virtual void VisitDocument(const AidlDocument& d) = 0;
+  virtual void VisitInterface(const AidlInterface& i) = 0;
+  virtual void VisitUnstructuredParcelable(const AidlParcelable& p) = 0;
+  virtual void VisitStructuredParcelable(const AidlStructuredParcelable& p) = 0;
+  virtual void VisitUnion(const AidlUnionDecl& u) = 0;
+  virtual void VisitEnum(const AidlEnumDeclaration& e) = 0;
+  virtual void VisitEnumerator(const AidlEnumerator& e) = 0;
+  virtual void VisitMethod(const AidlMethod& m) = 0;
+  virtual void VisitVariable(const AidlVariableDeclaration& v) = 0;
+  virtual void VisitConstant(const AidlConstantDeclaration& c) = 0;
+  virtual void VisitArgument(const AidlArgument& a) = 0;
 };
 
-#define AIDL_LOCATION_HERE \
-  (AidlLocation{__FILE__, {__LINE__, 0}, {__LINE__, 0}, AidlLocation::Source::INTERNAL})
-
-std::ostream& operator<<(std::ostream& os, const AidlLocation& l);
+// Provides default implementation which visits child nodes.
+// In a derived class, call super method to visit chid nodes.
+// Calling super method first visits nodes in bottom-up way.
+class AidlVisitAll : public AidlVisitor {
+ public:
+  void VisitDocument(const AidlDocument& d) override;
+  void VisitInterface(const AidlInterface& i) override;
+  void VisitUnstructuredParcelable(const AidlParcelable& p) override;
+  void VisitStructuredParcelable(const AidlStructuredParcelable& p) override;
+  void VisitUnion(const AidlUnionDecl& u) override;
+  void VisitEnum(const AidlEnumDeclaration& e) override;
+  void VisitEnumerator(const AidlEnumerator& e) override;
+  void VisitMethod(const AidlMethod& m) override;
+  void VisitVariable(const AidlVariableDeclaration& v) override;
+  void VisitConstant(const AidlConstantDeclaration& c) override;
+  void VisitArgument(const AidlArgument& a) override;
+};
 
 // Anything that is locatable in a .aidl file.
 class AidlNode {
@@ -392,6 +422,8 @@ class AidlMember : public AidlNode {
     return const_cast<AidlVariableDeclaration*>(
         const_cast<const AidlMember*>(this)->AsVariableDeclaration());
   }
+
+  virtual void Accept(AidlVisitor& vis) const = 0;
 };
 
 // TODO: This class is used for method arguments and also parcelable fields,
@@ -425,6 +457,7 @@ class AidlVariableDeclaration : public AidlMember {
 
   AidlTypeSpecifier* GetMutableType() { return type_.get(); }
 
+  void Accept(AidlVisitor& vis) const override { vis.VisitVariable(*this); }
   bool CheckValid(const AidlTypenames& typenames) const;
 
   // ToString is for dumping AIDL.
@@ -474,6 +507,7 @@ class AidlArgument : public AidlVariableDeclaration {
   // This is "direction annotations type name".
   // e.g) "in @utf8InCpp String[] names"
   std::string ToString() const;
+  void Accept(AidlVisitor& vis) const override { vis.VisitArgument(*this); }
 
  private:
   Direction direction_;
@@ -511,11 +545,41 @@ class AidlConstantValue : public AidlNode {
     virtual void Visit(AidlBinaryConstExpression&) = 0;
   };
 
-  /*
-   * Return the value casted to the given type.
-   */
+  // Returns the evaluated value. T> should match to the actual type.
   template <typename T>
-  T Cast() const;
+  T EvaluatedValue() const {
+    is_evaluated_ || (CheckValid() && evaluate());
+    AIDL_FATAL_IF(!is_valid_, this);
+
+    if constexpr (is_vector<T>::value) {
+      AIDL_FATAL_IF(final_type_ != Type::ARRAY, this);
+      T result;
+      for (const auto& v : values_) {
+        result.push_back(v->EvaluatedValue<typename T::value_type>());
+      }
+      return result;
+    } else if constexpr (is_one_of<T, float, double>::value) {
+      AIDL_FATAL_IF(final_type_ != Type::FLOATING, this);
+      T result;
+      AIDL_FATAL_IF(!ParseFloating(value_, &result), this);
+      return result;
+    } else if constexpr (std::is_same<T, std::string>::value) {
+      AIDL_FATAL_IF(final_type_ != Type::STRING, this);
+      return final_string_value_.substr(1, final_string_value_.size() - 2);  // unquote "
+    } else if constexpr (is_one_of<T, int8_t, int32_t, int64_t>::value) {
+      AIDL_FATAL_IF(final_type_ < Type::INT8 && final_type_ > Type::INT64, this);
+      return static_cast<T>(final_value_);
+    } else if constexpr (std::is_same<T, char>::value) {
+      AIDL_FATAL_IF(final_type_ != Type::CHARACTER, this);
+      return final_string_value_.at(1);  // unquote '
+    } else if constexpr (std::is_same<T, bool>::value) {
+      static_assert(std::is_same<T, bool>::value, "..");
+      AIDL_FATAL_IF(final_type_ != Type::BOOLEAN, this);
+      return final_value_ != 0;
+    } else {
+      static_assert(unsupported_type<T>::value);
+    }
+  }
 
   virtual ~AidlConstantValue() = default;
 
@@ -677,6 +741,7 @@ class AidlConstantDeclaration : public AidlMember {
   AidlTypeSpecifier* GetMutableType() { return type_.get(); }
   const string& GetName() const { return name_; }
   const AidlConstantValue& GetValue() const { return *value_; }
+  void Accept(AidlVisitor& vis) const override { vis.VisitConstant(*this); }
   bool CheckValid(const AidlTypenames& typenames) const;
 
   // ToString is for dumping AIDL.
@@ -759,6 +824,8 @@ class AidlMethod : public AidlMember {
   // e.g) "foo(int, String)"
   std::string Signature() const;
 
+  void Accept(AidlVisitor& vis) const override { vis.VisitMethod(*this); }
+
  private:
   bool oneway_;
   std::string comments_;
@@ -812,7 +879,8 @@ class AidlDefinedType : public AidlAnnotatable {
   virtual const AidlUnionDecl* AsUnionDeclaration() const { return nullptr; }
   virtual const AidlInterface* AsInterface() const { return nullptr; }
   virtual const AidlParameterizable<std::string>* AsParameterizable() const { return nullptr; }
-  virtual bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& context) const;
+  virtual bool CheckValid(const AidlTypenames& typenames) const;
+  virtual void Accept(AidlVisitor& vis) const = 0;
   virtual bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                           Options::Language lang) const = 0;
   AidlStructuredParcelable* AsStructuredParcelable() {
@@ -896,7 +964,10 @@ class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::s
   std::string GetCppHeader() const { return cpp_header_; }
 
   std::set<AidlAnnotation::Type> GetSupportedAnnotations() const override;
-  bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& context) const override;
+  bool CheckValid(const AidlTypenames& typenames) const override;
+  void Accept(AidlVisitor& vis) const override {
+    if (AsUnstructuredParcelable()) vis.VisitUnstructuredParcelable(*this);
+  }
   bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                   Options::Language lang) const override;
   const AidlParcelable* AsParcelable() const override { return this; }
@@ -930,7 +1001,8 @@ class AidlStructuredParcelable : public AidlParcelable {
   void Dump(CodeWriter* writer) const override;
 
   std::set<AidlAnnotation::Type> GetSupportedAnnotations() const override;
-  bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& context) const override;
+  void Accept(AidlVisitor& vis) const override { vis.VisitStructuredParcelable(*this); }
+  bool CheckValid(const AidlTypenames& typenames) const override;
   bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                   Options::Language lang) const override;
 };
@@ -950,6 +1022,7 @@ class AidlEnumerator : public AidlNode {
   const std::string& GetName() const { return name_; }
   AidlConstantValue* GetValue() const { return value_.get(); }
   const std::string& GetComments() const { return comments_; }
+  void Accept(AidlVisitor& vis) const { vis.VisitEnumerator(*this); }
   bool CheckValid(const AidlTypeSpecifier& enum_backing_type) const;
 
   string ValueString(const AidlTypeSpecifier& backing_type,
@@ -984,7 +1057,8 @@ class AidlEnumDeclaration : public AidlDefinedType {
     return enumerators_;
   }
   std::set<AidlAnnotation::Type> GetSupportedAnnotations() const override;
-  bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& context) const override;
+  void Accept(AidlVisitor& vis) const override { vis.VisitEnum(*this); }
+  bool CheckValid(const AidlTypenames& typenames) const override;
   bool LanguageSpecificCheckValid(const AidlTypenames& /*typenames*/,
                                   Options::Language) const override {
     return true;
@@ -1017,8 +1091,8 @@ class AidlUnionDecl : public AidlParcelable {
   std::set<AidlAnnotation::Type> GetSupportedAnnotations() const override;
 
   const AidlNode& AsAidlNode() const override { return *this; }
-
-  bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& context) const override;
+  void Accept(AidlVisitor& vis) const override { vis.VisitUnion(*this); }
+  bool CheckValid(const AidlTypenames& typenames) const override;
   bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                   Options::Language lang) const override;
   std::string GetPreprocessDeclarationName() const override { return "union"; }
@@ -1046,7 +1120,8 @@ class AidlInterface final : public AidlDefinedType {
   void Dump(CodeWriter* writer) const override;
 
   std::set<AidlAnnotation::Type> GetSupportedAnnotations() const override;
-  bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& context) const override;
+  void Accept(AidlVisitor& vis) const override { vis.VisitInterface(*this); }
+  bool CheckValid(const AidlTypenames& typenames) const override;
   bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                   Options::Language lang) const override;
 
@@ -1086,7 +1161,7 @@ class AidlDocument : public AidlNode {
   AidlDocument& operator=(const AidlDocument&) = delete;
   AidlDocument& operator=(AidlDocument&&) = delete;
 
-  bool CheckValid(const AidlTypenames& typenames, DiagnosticsContext& diag) const;
+  void Accept(AidlVisitor& vis) const { vis.VisitDocument(*this); }
   std::optional<std::string> ResolveName(const std::string& unresolved_type) const;
   const std::vector<std::unique_ptr<AidlImport>>& Imports() const { return imports_; }
   const std::vector<std::unique_ptr<AidlDefinedType>>& DefinedTypes() const {
@@ -1104,5 +1179,5 @@ std::optional<T> AidlAnnotation::ParamValue(const std::string& param_name) const
   if (it == parameters_.end()) {
     return std::nullopt;
   }
-  return it->second->Cast<T>();
+  return it->second->EvaluatedValue<T>();
 }
