@@ -997,3 +997,42 @@ func TestSrcsAvailable(t *testing.T) {
 	testAidlError(t, `depends on //.:myiface-cpp-source which is not visible to this module`,
 		fmt.Sprintf(bp, "true", "false"), customizer)
 }
+
+func TestRustDuplicateNames(t *testing.T) {
+	testAidl(t, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["dir/a/Foo.aidl", "dir/b/Foo.aidl"],
+			backend: {
+				rust: {
+					enabled: true,
+				},
+			},
+		}
+	`)
+}
+
+func TestAidlFlags(t *testing.T) {
+	ctx, _ := testAidl(t, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["a/Foo.aidl", "b/Bar.aidl"],
+			flags: ["-Weverything", "-Werror"],
+			backend: { rust: { enabled: true }}
+		}
+	`)
+	for module, outputs := range map[string][]string{
+		"myiface-cpp-source":  {"a/Foo.h", "b/Bar.h"},
+		"myiface-java-source": {"a/Foo.java", "b/Bar.java"},
+		"myiface-ndk-source":  {"aidl/a/Foo.h", "aidl/b/Bar.h"},
+		"myiface-rust-source": {"a/Foo.rs", "b/Bar.rs"},
+	} {
+		for _, output := range outputs {
+			t.Run(module+"/"+output, func(t *testing.T) {
+				params := ctx.ModuleForTests(module, "").Output(output)
+				assertContains(t, params.Args["optionalFlags"], "-Weverything")
+				assertContains(t, params.Args["optionalFlags"], "-Werror")
+			})
+		}
+	}
+}

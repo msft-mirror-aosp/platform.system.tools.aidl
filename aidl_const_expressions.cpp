@@ -248,6 +248,20 @@ static bool isValidLiteralChar(char c) {
            c == '\\');   // Disallow backslashes for future proofing.
 }
 
+bool ParseFloating(std::string_view sv, double* parsed) {
+  // float literal should be parsed successfully.
+  android::base::ConsumeSuffix(&sv, "f");
+  return android::base::ParseDouble(std::string(sv).data(), parsed);
+}
+
+bool ParseFloating(std::string_view sv, float* parsed) {
+  // we only care about float literal (with suffix "f").
+  if (!android::base::ConsumeSuffix(&sv, "f")) {
+    return false;
+  }
+  return android::base::ParseFloat(std::string(sv).data(), parsed);
+}
+
 bool AidlUnaryConstExpression::IsCompatibleType(Type type, const string& op) {
   // Verify the unary type here
   switch (type) {
@@ -310,15 +324,6 @@ AidlConstantValue::Type AidlBinaryConstExpression::UsualArithmeticConversion(Typ
 // Returns the promoted integral type where INT32 is the smallest type
 AidlConstantValue::Type AidlBinaryConstExpression::IntegralPromotion(Type in) {
   return (Type::INT32 < in) ? in : Type::INT32;
-}
-
-template <typename T>
-T AidlConstantValue::cast() const {
-  AIDL_FATAL_IF(!is_evaluated_, this);
-
-#define CASE_CAST_T(__type__) return static_cast<T>(static_cast<__type__>(final_value_));
-
-  SWITCH_KIND(final_type_, CASE_CAST_T, SHOULD_NOT_REACH(); return 0;);
 }
 
 AidlConstantValue* AidlConstantValue::Default(const AidlTypeSpecifier& specifier) {
@@ -560,22 +565,18 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
       return decorator(type, "{" + Join(value_strings, ", ") + "}");
     }
     case Type::FLOATING: {
-      std::string_view raw_view(value_.c_str());
-      bool is_float_literal = ConsumeSuffix(&raw_view, "f");
-      std::string stripped_value = std::string(raw_view);
-
       if (type_string == "double") {
         double parsed_value;
-        if (!android::base::ParseDouble(stripped_value, &parsed_value)) {
+        if (!ParseFloating(value_, &parsed_value)) {
           AIDL_ERROR(this) << "Could not parse " << value_;
           err = -1;
           break;
         }
         return decorator(type, std::to_string(parsed_value));
       }
-      if (is_float_literal && type_string == "float") {
+      if (type_string == "float") {
         float parsed_value;
-        if (!android::base::ParseFloat(stripped_value, &parsed_value)) {
+        if (!ParseFloating(value_, &parsed_value)) {
           AIDL_ERROR(this) << "Could not parse " << value_;
           err = -1;
           break;
@@ -849,7 +850,8 @@ bool AidlUnaryConstExpression::evaluate() const {
   }
 
 #define CASE_UNARY(__type__) \
-  return handleUnary(*this, op_, static_cast<__type__>(unary_->final_value_), &final_value_);
+  return is_valid_ =         \
+             handleUnary(*this, op_, static_cast<__type__>(unary_->final_value_), &final_value_);
 
   SWITCH_KIND(final_type_, CASE_UNARY, SHOULD_NOT_REACH(); final_type_ = Type::ERROR;
               is_valid_ = false; return false;)
@@ -957,9 +959,10 @@ bool AidlBinaryConstExpression::evaluate() const {
                       ? promoted        // arithmetic or bitflip operators generates promoted type
                       : Type::BOOLEAN;  // comparison operators generates bool
 
-#define CASE_BINARY_COMMON(__type__)                                                    \
-  return handleBinaryCommon(*this, static_cast<__type__>(left_val_->final_value_), op_, \
-                            static_cast<__type__>(right_val_->final_value_), &final_value_);
+#define CASE_BINARY_COMMON(__type__)                                                        \
+  return is_valid_ =                                                                        \
+             handleBinaryCommon(*this, static_cast<__type__>(left_val_->final_value_), op_, \
+                                static_cast<__type__>(right_val_->final_value_), &final_value_);
 
     SWITCH_KIND(promoted, CASE_BINARY_COMMON, SHOULD_NOT_REACH(); final_type_ = Type::ERROR;
                 is_valid_ = false; return false;)
@@ -979,9 +982,9 @@ bool AidlBinaryConstExpression::evaluate() const {
       numBits = -numBits;
     }
 
-#define CASE_SHIFT(__type__)                                                       \
-  return handleShift(*this, static_cast<__type__>(left_val_->final_value_), newOp, \
-                     static_cast<__type__>(numBits), &final_value_);
+#define CASE_SHIFT(__type__)                                                                   \
+  return is_valid_ = handleShift(*this, static_cast<__type__>(left_val_->final_value_), newOp, \
+                                 static_cast<__type__>(numBits), &final_value_);
 
     SWITCH_KIND(final_type_, CASE_SHIFT, SHOULD_NOT_REACH(); final_type_ = Type::ERROR;
                 is_valid_ = false; return false;)

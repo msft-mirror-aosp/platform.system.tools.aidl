@@ -16,9 +16,10 @@
 #pragma once
 
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
+
+#include "diagnostics.h"
 
 namespace android {
 namespace aidl {
@@ -55,6 +56,21 @@ class ErrorMessage {
     f(stream_);
     return *this;
   }
+};
+
+// Handles warning-related options (e.g. -W, -w, ...)
+class WarningOptions {
+ public:
+  std::vector<const char*> Parse(int argc, const char* const argv[], ErrorMessage& error_message);
+  DiagnosticMapping GetDiagnosticMapping() const;
+
+ private:
+  bool as_errors_ = false;           // -Werror
+  bool enable_all_ = false;          // -Weverything
+  bool disable_all_ = false;         // -w
+  std::set<std::string> enabled_;    // -Wfoo
+  std::set<std::string> disabled_;   // -Wno-foo
+  std::set<std::string> no_errors_;  // -Wno-error=foo
 };
 
 class Options final {
@@ -135,6 +151,8 @@ class Options final {
 
   static const string LanguageToString(Language language);
 
+  DiagnosticMapping GetDiagnosticMapping() const { return warning_options_.GetDiagnosticMapping(); }
+
   // The following are for testability, but cannot be influenced on the command line.
   // Threshold of interface methods to enable outlining of onTransact cases.
   size_t onTransact_outline_threshold_{275u};
@@ -166,6 +184,7 @@ class Options final {
   string hash_ = "";
   bool gen_log_ = false;
   ErrorMessage error_message_;
+  WarningOptions warning_options_;
 };
 
 }  // namespace aidl
