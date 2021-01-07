@@ -217,7 +217,7 @@ class AidlTest : public ::testing::TestWithParam<Options::Language> {
     io_delegate_.SetFileContents(path, contents);
     vector<string> args;
     args.emplace_back("aidl");
-    args.emplace_back("--lang=" + Options::LanguageToString(lang));
+    args.emplace_back("--lang=" + to_string(lang));
     for (const string& s : additional_arguments) {
       args.emplace_back(s);
     }
@@ -262,7 +262,7 @@ INSTANTIATE_TEST_SUITE_P(AidlTestSuite, AidlTest,
                          testing::Values(Options::Language::CPP, Options::Language::JAVA,
                                          Options::Language::NDK, Options::Language::RUST),
                          [](const testing::TestParamInfo<Options::Language>& info) {
-                           return Options::LanguageToString(info.param);
+                           return to_string(info.param);
                          });
 
 TEST_P(AidlTest, AcceptMissingPackage) {
@@ -909,6 +909,120 @@ TEST_F(AidlTest, CppHeaderIncludes) {
   EXPECT_EQ(kExpectedCppHeaderOutput, output);
 }
 
+TEST_P(AidlTest, SupportDeprecated) {
+  struct TestCase {
+    std::string output_file;
+    std::string annotation;
+  };
+
+  auto CheckDeprecated = [&](const std::string& filename, const std::string& contents,
+                             std::map<Options::Language, TestCase> expectation) {
+    io_delegate_.SetFileContents(filename, contents);
+
+    auto options = Options::From("aidl --lang=" + to_string(GetLanguage()) + " " + filename +
+                                 " --out=out --header_out=out");
+    EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+    if (auto it = expectation.find(GetLanguage()); it != expectation.end()) {
+      const auto& test_case = it->second;
+      string output;
+      EXPECT_TRUE(io_delegate_.GetWrittenContents(test_case.output_file, &output))
+          << base::Join(io_delegate_.ListOutputFiles(), ",");
+      EXPECT_THAT(output, HasSubstr(test_case.annotation));
+    }
+  };
+
+  CheckDeprecated("IFoo.aidl",
+                  "interface IFoo {\n"
+                  "  /** @deprecated use bar() */\n"
+                  "  List<String> foo();\n"
+                  "}",
+                  {
+                      {Options::Language::JAVA, {"out/IFoo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/IFoo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/IFoo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/IFoo.rs", "#[deprecated"}},
+                  });
+
+  CheckDeprecated("Foo.aidl",
+                  "parcelable Foo {\n"
+                  "  /** @deprecated use bar*/\n"
+                  "  int foo = 0;\n"
+                  "}",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
+
+  CheckDeprecated("IFoo.aidl",
+                  "interface IFoo {\n"
+                  "  /** @deprecated use bar*/\n"
+                  "  const int FOO = 0;\n"
+                  "}",
+                  {
+                      {Options::Language::JAVA, {"out/IFoo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/IFoo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/IFoo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/IFoo.rs", "#[deprecated"}},
+                  });
+
+  // union fields
+  CheckDeprecated("Foo.aidl",
+                  "union Foo {\n"
+                  "  int bar = 0;\n"
+                  "  /** @deprecated use bar*/\n"
+                  "  int foo;\n"
+                  "}",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
+
+  CheckDeprecated("Foo.aidl",
+                  "/** @deprecated use Bar */\n"
+                  "parcelable Foo {}",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
+
+  CheckDeprecated("Foo.aidl",
+                  "/** @deprecated use Bar */\n"
+                  "union Foo { int foo = 0; }",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
+
+  CheckDeprecated("IFoo.aidl",
+                  "/** @deprecated use IBar */\n"
+                  "interface IFoo {}",
+                  {
+                      {Options::Language::JAVA, {"out/IFoo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/IFoo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/IFoo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/IFoo.rs", "#[deprecated"}},
+                  });
+
+  CheckDeprecated("Foo.aidl",
+                  "/** @deprecated use IBar */\n"
+                  "enum Foo { FOO }",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      // TODO(b/174514415) support "deprecated"
+                      // {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
+}
+
 TEST_P(AidlTest, RequireOuterClass) {
   const string expected_stderr = "ERROR: p/IFoo.aidl:1.54-60: Failed to resolve 'Inner'\n";
   io_delegate_.SetFileContents("p/Outer.aidl",
@@ -1397,8 +1511,7 @@ TEST_P(AidlTest, ParcelableHolderAsArgumentType) {
 
 TEST_P(AidlTest, RejectNullableParcelableHolderField) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo { @nullable ParcelableHolder ext; }");
-  Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr = "ERROR: Foo.aidl:1.27-44: ParcelableHolder cannot be nullable.\n";
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
@@ -1415,8 +1528,7 @@ TEST_P(AidlTest, RejectNullableParcelableHolderField) {
 
 TEST_P(AidlTest, ParcelablesWithConstants) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo { const int BIT = 0x1 << 3; }");
-  Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   CaptureStderr();
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -1424,8 +1536,7 @@ TEST_P(AidlTest, ParcelablesWithConstants) {
 
 TEST_P(AidlTest, UnionWithConstants) {
   io_delegate_.SetFileContents("Foo.aidl", "union Foo { const int BIT = 0x1 << 3; int n; }");
-  Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   CaptureStderr();
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -2652,8 +2763,7 @@ TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
                                "  int isFixedSize;"
                                "}");
   io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { int a; }");
-  Options options =
-      Options::From("aidl Foo.aidl -I . --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
 
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
@@ -2666,8 +2776,7 @@ TEST_P(AidlTest, AcceptFixedSizeFromFixedSize) {
   io_delegate_.SetFileContents("Foo.aidl", "@FixedSize parcelable Foo { int a; Bar b; }");
   io_delegate_.SetFileContents("Bar.aidl", "@FixedSize parcelable Bar { Val c; }");
   io_delegate_.SetFileContents("Val.aidl", "enum Val { A, B, }");
-  Options options =
-      Options::From("aidl Foo.aidl -I . --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
 
   CaptureStderr();
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
@@ -3872,8 +3981,7 @@ TEST_P(AidlTest, UnionRejectsFirstEnumWithNoDefaults) {
 
 TEST_P(AidlTest, GenericStructuredParcelable) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T, U> { int a; int A; }");
-  Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr = "";
   CaptureStderr();
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
@@ -3884,8 +3992,7 @@ TEST_F(AidlTest, GenericStructuredParcelableWithStringConstants_Cpp) {
   io_delegate_.SetFileContents("Foo.aidl",
                                "parcelable Foo<T, U> { int a; const String s = \"\"; }");
   Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(Options::Language::CPP) +
-                    " -o out -h out");
+      Options::From("aidl Foo.aidl --lang=" + to_string(Options::Language::CPP) + " -o out -h out");
   const string expected_stderr = "";
   CaptureStderr();
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
@@ -3904,8 +4011,7 @@ TEST_F(AidlTest, GenericStructuredParcelableWithStringConstants_Ndk) {
   io_delegate_.SetFileContents("Foo.aidl",
                                "parcelable Foo<T, U> { int a; const String s = \"\"; }");
   Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(Options::Language::NDK) +
-                    " -o out -h out");
+      Options::From("aidl Foo.aidl --lang=" + to_string(Options::Language::NDK) + " -o out -h out");
   const string expected_stderr = "";
   CaptureStderr();
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
@@ -4007,8 +4113,7 @@ TEST_F(GenericAidlTest, ImportGenericParameterTypesNDK) {
 
 TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { int a; int A; }");
-  Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr =
       "ERROR: Foo.aidl:1.11-15: Every type parameter should be unique.\n";
   CaptureStderr();
@@ -4018,8 +4123,7 @@ TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
 
 TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { T a; int A; }");
-  Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr = "ERROR: Foo.aidl:1.22-24: Failed to resolve 'T'\n";
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
@@ -4028,8 +4132,7 @@ TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
 
 TEST_P(AidlTest, LongCommentWithinConstExpression) {
   io_delegate_.SetFileContents("Foo.aidl", "enum Foo { FOO = (1 << 1) /* comment */ | 0x0 }");
-  Options options =
-      Options::From("aidl Foo.aidl --lang=" + Options::LanguageToString(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   CaptureStderr();
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -4236,8 +4339,8 @@ TEST_P(AidlTest, DefaultWithEmptyArray) {
   io_delegate_.SetFileContents("a/p/Foo.aidl", "package p; parcelable Foo { p.Bar[] bars = {}; }");
   io_delegate_.SetFileContents("a/p/Bar.aidl", "package p; parcelable Bar { }");
   CaptureStderr();
-  auto options = Options::From("aidl -I a --lang " + Options::LanguageToString(GetLanguage()) +
-                               " -o out -h out a/p/Foo.aidl");
+  auto options =
+      Options::From("aidl -I a --lang " + to_string(GetLanguage()) + " -o out -h out a/p/Foo.aidl");
   EXPECT_EQ(0, aidl::compile_aidl(options, io_delegate_));
   auto err = GetCapturedStderr();
   EXPECT_EQ("", err);
@@ -4250,8 +4353,8 @@ TEST_P(AidlTest, RejectRefsInAnnotation) {
                                "  @JavaPassthrough(annotation=ANNOTATION) void foo();\n"
                                "}");
   CaptureStderr();
-  auto options = Options::From("aidl --lang " + Options::LanguageToString(GetLanguage()) +
-                               " -o out -h out a/p/IFoo.aidl");
+  auto options =
+      Options::From("aidl --lang " + to_string(GetLanguage()) + " -o out -h out a/p/IFoo.aidl");
   EXPECT_EQ(1, aidl::compile_aidl(options, io_delegate_));
   auto err = GetCapturedStderr();
   EXPECT_EQ(
@@ -4311,6 +4414,19 @@ TEST_F(AidlTest, RecursiveReferences) {
   EXPECT_EQ("", GetCapturedStderr());
 }
 
+TEST_P(AidlTest, UnknownConstReference) {
+  io_delegate_.SetFileContents("Foo.aidl", " parcelable Foo { UnknownType field = UNKNOWN_REF; }");
+  auto options =
+      Options::From("aidl --lang " + to_string(GetLanguage()) + " -o out -h out Foo.aidl");
+  const string err =
+      "ERROR: Foo.aidl:1.18-30: Failed to resolve 'UnknownType'\n"
+      "ERROR: Foo.aidl:1.38-50: Can't find UNKNOWN_REF in Foo\n"
+      "ERROR: Foo.aidl:1.38-50: Unknown reference 'UNKNOWN_REF'\n";
+  CaptureStderr();
+  EXPECT_EQ(1, aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ(err, GetCapturedStderr());
+}
+
 TEST_P(AidlTest, JavaCompatibleBuiltinTypes) {
   string contents = R"(
 import android.os.IBinder;
@@ -4322,7 +4438,7 @@ interface IFoo {}
 
 TEST_P(AidlTest, WarningInterfaceName) {
   io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
-  auto options = Options::From("aidl --lang " + Options::LanguageToString(GetLanguage()) +
+  auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
                                " -Weverything -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_EQ(0, aidl::compile_aidl(options, io_delegate_));
@@ -4332,7 +4448,7 @@ TEST_P(AidlTest, WarningInterfaceName) {
 
 TEST_P(AidlTest, ErrorInterfaceName) {
   io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
-  auto options = Options::From("aidl --lang " + Options::LanguageToString(GetLanguage()) +
+  auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
                                " -Weverything -Werror -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_EQ(1, aidl::compile_aidl(options, io_delegate_));
@@ -4427,7 +4543,7 @@ class AidlTypeParamTest : public testing::TestWithParam<std::tuple<Options::Lang
   void Run(const std::string& generic_type_decl,
            const std::map<std::string, std::string>& expectations) {
     const auto& param = GetParam();
-    const auto& lang = Options::LanguageToString(std::get<0>(param));
+    const auto& lang = to_string(std::get<0>(param));
     const auto& kind = std::get<1>(param).kind;
 
     FakeIoDelegate io;
@@ -4458,8 +4574,7 @@ INSTANTIATE_TEST_SUITE_P(
                                      Options::Language::NDK, Options::Language::RUST),
                      testing::ValuesIn(kTypeParams)),
     [](const testing::TestParamInfo<std::tuple<Options::Language, TypeParam>>& info) {
-      return Options::LanguageToString(std::get<0>(info.param)) + "_" +
-             std::get<1>(info.param).kind;
+      return to_string(std::get<0>(info.param)) + "_" + std::get<1>(info.param).kind;
     });
 
 TEST_P(AidlTypeParamTest, ListSupportedTypes) {

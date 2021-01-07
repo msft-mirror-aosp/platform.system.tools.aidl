@@ -109,14 +109,14 @@ class DiagnosticsVisitor : public AidlVisitor {
     };
     Hook suppress{std::bind(&DiagnosticsContext::Suppress, &diag, _1)};
     Hook restore{std::bind(&DiagnosticsContext::Restore, &diag, _1)};
-    std::function<void(const AidlTraversable&)> topDown =
-        [&topDown, &suppress, &restore, visitor](const AidlTraversable& a) {
+    std::function<void(const AidlNode&)> top_down = [&top_down, &suppress, &restore,
+                                                     visitor](const AidlNode& a) {
       a.DispatchVisit(suppress);
       a.DispatchVisit(*visitor);
-      a.TraverseChildren(topDown);
+      a.TraverseChildren(top_down);
       a.DispatchVisit(restore);
     };
-    topDown(doc);
+    top_down(doc);
   }
  protected:
   DiagnosticsContext& diag;
@@ -238,6 +238,16 @@ struct DiagnoseOutArray : DiagnosticsVisitor {
   }
 };
 
+struct DiagnoseFileDescriptor : DiagnosticsVisitor {
+  DiagnoseFileDescriptor(DiagnosticsContext& diag) : DiagnosticsVisitor(diag) {}
+  void Visit(const AidlTypeSpecifier& t) override {
+    if (t.GetName() == "FileDescriptor") {
+      diag.Report(t.GetLocation(), DiagnosticID::file_descriptor)
+          << "Please use ParcelFileDescriptor instead of FileDescriptor.";
+    }
+  }
+};
+
 bool Diagnose(const AidlDocument& doc, const DiagnosticMapping& mapping) {
   DiagnosticsContext diag(mapping);
 
@@ -248,6 +258,7 @@ bool Diagnose(const AidlDocument& doc, const DiagnosticMapping& mapping) {
   DiagnoseExplicitDefault{diag}.Check(doc);
   DiagnoseMixedOneway{diag}.Check(doc);
   DiagnoseOutArray{diag}.Check(doc);
+  DiagnoseFileDescriptor{diag}.Check(doc);
 
   return diag.ErrorCount() == 0;
 }
