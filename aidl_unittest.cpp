@@ -31,6 +31,7 @@
 #include "aidl_language.h"
 #include "aidl_to_cpp.h"
 #include "aidl_to_java.h"
+#include "comments.h"
 #include "logging.h"
 #include "options.h"
 #include "tests/fake_io_delegate.h"
@@ -294,7 +295,7 @@ TEST_P(AidlTest, RejectUnsupportedInterfaceAnnotations) {
   const string method = "package a; @nullable interface IFoo { int f(); }";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("'nullable' is not a supported annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@nullable is not available."));
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
@@ -303,8 +304,7 @@ TEST_P(AidlTest, RejectUnsupportedTypeAnnotations) {
   const string method = "package a; interface IFoo { @JavaOnlyStableParcelable int f(); }";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("'JavaOnlyStableParcelable' is not a supported annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaOnlyStableParcelable is not available."));
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
@@ -313,7 +313,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableAnnotations) {
   const string method = "package a; @nullable parcelable IFoo cpp_header \"IFoo.h\";";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("'nullable' is not a supported annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@nullable is not available."));
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
@@ -322,7 +322,7 @@ TEST_P(AidlTest, RejectUnsupportedParcelableDefineAnnotations) {
   const string method = "package a; @nullable parcelable IFoo { String a; String b; }";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("'nullable' is not a supported annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@nullable is not available."));
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
@@ -561,7 +561,7 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
     Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
     CaptureStderr();
     EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
-    EXPECT_THAT(GetCapturedStderr(), HasSubstr("'JavaDerive' is not a supported annotation"));
+    EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
   }
 
   {
@@ -569,7 +569,7 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
     Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
     CaptureStderr();
     EXPECT_NE(0, ::android::aidl::compile_aidl(java_options, io_delegate_));
-    EXPECT_THAT(GetCapturedStderr(), HasSubstr("'JavaDerive' is not a supported annotation"));
+    EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
   }
 }
 
@@ -620,19 +620,29 @@ TEST_P(AidlTest, AnnotationsInMultiplePlaces) {
 
 TEST_P(AidlTest, WritesComments) {
   string foo_interface =
-      "package a; /* foo */ interface IFoo {"
-      "  /* i */ int i();"
-      "  /* j */ @nullable String j();"
-      "  /* k */ @UnsupportedAppUsage oneway void k(int a); }";
+      R"(package a;
+        /* foo */
+        interface IFoo {
+          /* i */
+          int i();
+          // j
+          @nullable String j();
+          // k1
+          /* k2 */
+          @UnsupportedAppUsage oneway void k(int a);
+        })";
 
+  CaptureStderr();
   auto parse_result = Parse("a/IFoo.aidl", foo_interface, typenames_, GetLanguage());
   EXPECT_NE(nullptr, parse_result);
-  EXPECT_EQ("/* foo */", parse_result->GetComments());
+  EXPECT_EQ("", GetCapturedStderr());
+
+  EXPECT_EQ((Comments{{"/* foo */"}}), parse_result->GetComments());
 
   const AidlInterface* interface = parse_result->AsInterface();
-  EXPECT_EQ("/* i */", interface->GetMethods()[0]->GetComments());
-  EXPECT_EQ("/* j */", interface->GetMethods()[1]->GetComments());
-  EXPECT_EQ("/* k */", interface->GetMethods()[2]->GetComments());
+  EXPECT_EQ((Comments{{"/* i */"}}), interface->GetMethods()[0]->GetComments());
+  EXPECT_EQ((Comments{{"// j\n"}}), interface->GetMethods()[1]->GetComments());
+  EXPECT_EQ((Comments{{"// k1\n"}, {"/* k2 */"}}), interface->GetMethods()[2]->GetComments());
 }
 
 TEST_P(AidlTest, CppHeaderCanBeIdentifierAsWell) {
@@ -651,7 +661,7 @@ TEST_P(AidlTest, CppHeaderCanBeIdentifierAsWell) {
   auto parse_result = Parse(input_path, input, typenames_, GetLanguage());
   EXPECT_NE(nullptr, parse_result);
   const AidlInterface* interface = parse_result->AsInterface();
-  EXPECT_EQ("// get bar\n", interface->GetMethods()[0]->GetComments());
+  EXPECT_EQ((Comments{{"// get bar\n"}}), interface->GetMethods()[0]->GetComments());
 }
 
 TEST_F(AidlTest, ParsesPreprocessedFile) {
@@ -687,7 +697,7 @@ TEST_P(AidlTest, PreferImportToPreprocessed) {
   EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").is_resolved);
   EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").is_resolved);
   // But if we request just "IBar" we should get our imported one.
-  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, "");
+  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, {});
   ambiguous_type.Resolve(typenames_);
   EXPECT_EQ("one.IBar", ambiguous_type.GetName());
 }
@@ -709,7 +719,7 @@ TEST_P(AidlTest, B147918827) {
   EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").is_resolved);
   EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").is_resolved);
   // But if we request just "IBar" we should get our imported one.
-  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, "");
+  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, {});
   ambiguous_type.Resolve(typenames_);
   EXPECT_EQ("one.IBar", ambiguous_type.GetName());
 }
@@ -741,14 +751,14 @@ TEST_P(AidlTest, SupportDeprecated) {
   };
 
   auto CheckDeprecated = [&](const std::string& filename, const std::string& contents,
-                             std::map<Options::Language, TestCase> expectation) {
+                             std::vector<std::pair<Options::Language, TestCase>> expectations) {
     io_delegate_.SetFileContents(filename, contents);
 
     auto options = Options::From("aidl --lang=" + to_string(GetLanguage()) + " " + filename +
                                  " --out=out --header_out=out");
     EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
-    if (auto it = expectation.find(GetLanguage()); it != expectation.end()) {
-      const auto& test_case = it->second;
+    for (const auto& [lang, test_case] : expectations) {
+      if (lang != GetLanguage()) continue;
       string output;
       EXPECT_TRUE(io_delegate_.GetWrittenContents(test_case.output_file, &output))
           << base::Join(io_delegate_.ListOutputFiles(), ",");
@@ -756,18 +766,53 @@ TEST_P(AidlTest, SupportDeprecated) {
     }
   };
 
-  CheckDeprecated("IFoo.aidl",
-                  "interface IFoo {\n"
-                  "  /** @deprecated use bar() */\n"
-                  "  List<String> foo();\n"
-                  "}",
-                  {
-                      {Options::Language::JAVA, {"out/IFoo.java", "@Deprecated"}},
-                      {Options::Language::CPP, {"out/IFoo.h", "__attribute__((deprecated"}},
-                      {Options::Language::NDK, {"out/aidl/IFoo.h", "__attribute__((deprecated"}},
-                      {Options::Language::RUST, {"out/IFoo.rs", "#[deprecated"}},
-                  });
+  // Emit escaped string for notes
+  CheckDeprecated(
+      "IFoo.aidl",
+      R"(interface IFoo {
+           /**
+            * @note asdf
+            * @deprecated a really long deprecation message
+            *
+            *    which is really long
+            * @param foo bar
+            */
+           List<String> foo();
+        })",
+      {
+          {Options::Language::JAVA, {"out/IFoo.java", "@Deprecated"}},
+          {Options::Language::CPP,
+           {"out/IFoo.h",
+            R"(__attribute__((deprecated("a really long deprecation message which is really long"))))"}},
+          {Options::Language::NDK,
+           {"out/aidl/IFoo.h",
+            R"(__attribute__((deprecated("a really long deprecation message which is really long"))))"}},
+          {Options::Language::RUST,
+           {"out/IFoo.rs",
+            R"(#[deprecated = "a really long deprecation message which is really long"])"}},
+      });
 
+  // In AIDL @deprecated can be in block comments as well as javadoc style
+  CheckDeprecated(
+      "IFoo.aidl",
+      "interface IFoo {\n"
+      "  /* @deprecated use bar() */\n"
+      "  List<String> foo();\n"
+      "}",
+      {
+          {Options::Language::JAVA, {"out/IFoo.java", "@Deprecated"}},
+          {Options::Language::JAVA, {"out/IFoo.java", "/** @deprecated use bar() */"}},
+          {Options::Language::CPP, {"out/IFoo.h", "__attribute__((deprecated(\"use bar()\")))"}},
+          {Options::Language::NDK,
+           {"out/aidl/IFoo.h", "__attribute__((deprecated(\"use bar()\")))"}},
+          {Options::Language::RUST, {"out/IFoo.rs", "#[deprecated = \"use bar()\"]"}},
+      });
+
+  // but not in line comments
+  auto parsed = Parse("IFoo.aidl", "// @deprecated\ninterface IFoo {}", typenames_, GetLanguage());
+  EXPECT_FALSE(parsed->IsDeprecated());
+
+  // parcelable
   CheckDeprecated("Foo.aidl",
                   "parcelable Foo {\n"
                   "  /** @deprecated use bar*/\n"
@@ -780,6 +825,7 @@ TEST_P(AidlTest, SupportDeprecated) {
                       {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
                   });
 
+  // interface constants
   CheckDeprecated("IFoo.aidl",
                   "interface IFoo {\n"
                   "  /** @deprecated use bar*/\n"
@@ -843,7 +889,7 @@ TEST_P(AidlTest, SupportDeprecated) {
                       {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
                       {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
                       {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
-                      // TODO(b/174514415) support "deprecated"
+                      // TODO(b/177860423) support "deprecated" in Rust enum
                       // {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
                   });
 }
@@ -1124,7 +1170,7 @@ TEST_P(AidlTest, UnderstandsNestedParcelables) {
 
   EXPECT_TRUE(typenames_.ResolveTypename("p.Outer.Inner").is_resolved);
   // C++ uses "::" instead of "." to refer to a inner class.
-  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", false, nullptr, "");
+  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", false, nullptr, {});
   EXPECT_EQ("::p::Outer::Inner", cpp::CppNameOf(nested_type, typenames_));
 }
 
@@ -1138,7 +1184,7 @@ TEST_P(AidlTest, UnderstandsNativeParcelables) {
   auto parse_result = Parse(input_path, input, typenames_, GetLanguage());
   EXPECT_NE(nullptr, parse_result);
   EXPECT_TRUE(typenames_.ResolveTypename("p.Bar").is_resolved);
-  AidlTypeSpecifier native_type(AIDL_LOCATION_HERE, "p.Bar", false, nullptr, "");
+  AidlTypeSpecifier native_type(AIDL_LOCATION_HERE, "p.Bar", false, nullptr, {});
   native_type.Resolve(typenames_);
 
   EXPECT_EQ("p.Bar", java::InstantiableJavaSignatureOf(native_type, typenames_));
@@ -1388,15 +1434,20 @@ TEST_F(AidlTest, ApiDump) {
       "foo/bar/IFoo.aidl",
       "package foo.bar;\n"
       "import foo.bar.Data;\n"
-      "// comment @hide\n"
+      "// commented /* @hide */\n"
       "interface IFoo {\n"
-      "    /* @hide */\n"
-      "    int foo(out int[] a, String b, boolean c, inout List<String>  d);\n"
-      "    int foo2(@utf8InCpp String x, inout List<String>  y);\n"
+      "    /* @hide applied \n"
+      "       @deprecated use foo2 */\n"
+      "    int foo(out int[] a, String b, boolean c, inout List<String> d);\n"
+      "    int foo2(@utf8InCpp String x, inout List<String> y);\n"
       "    IFoo foo3(IFoo foo);\n"
       "    Data getData();\n"
-      "    // @hide\n"
+      "    // @hide not applied\n"
+      "    /** blahblah\n"
+      "        @deprecated\n"
+      "          reason why... */\n"
       "    const int A = 1;\n"
+      "    // @deprecated tags in line comments are ignored\n"
       "    const String STR = \"Hello\";\n"
       "}\n");
   io_delegate_.SetFileContents("foo/bar/Data.aidl",
@@ -1410,7 +1461,7 @@ TEST_F(AidlTest, ApiDump) {
                                "   int y;\n"
                                "   /*@hide2*/\n"
                                "   IFoo foo;\n"
-                               "   // It should be @hide property\n"
+                               "   // Ignore @hide property in line comment\n"
                                "   @nullable String[] c;\n"
                                "}\n");
   io_delegate_.SetFileContents("api.aidl", "");
@@ -1421,33 +1472,38 @@ TEST_F(AidlTest, ApiDump) {
   ASSERT_TRUE(result);
   string actual;
   EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/IFoo.aidl", &actual));
-  EXPECT_EQ(actual, string(kPreamble).append(R"(package foo.bar;
-/* @hide */
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
 interface IFoo {
-  /* @hide */
+  /**
+   * @hide
+   * @deprecated use foo2
+   */
   int foo(out int[] a, String b, boolean c, inout List<String> d);
   int foo2(@utf8InCpp String x, inout List<String> y);
   foo.bar.IFoo foo3(foo.bar.IFoo foo);
   foo.bar.Data getData();
-  /* @hide */
+  /**
+   * @deprecated reason why...
+   */
   const int A = 1;
   const String STR = "Hello";
 }
-)"));
+)"),
+            actual);
 
   EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Data.aidl", &actual));
-  EXPECT_EQ(actual, string(kPreamble).append(R"(package foo.bar;
-/* @hide */
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+/**
+ * @hide
+ */
 parcelable Data {
-  /* @hide */
   int x = 10;
-  /* @hide */
   int y;
   foo.bar.IFoo foo;
-  /* @hide */
   @nullable String[] c;
 }
-)"));
+)"),
+            actual);
 }
 
 TEST_F(AidlTest, ApiDumpWithManualIds) {
@@ -1836,6 +1892,19 @@ TEST_F(AidlTest, ConflictWithMetaTransactionGetName) {
                                "package p; interface IFoo {"
                                "String getTransactionName(); }");
   EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, CheckApiForEquality) {
+  CaptureStderr();
+  Options options = Options::From("aidl --checkapi=equal old new");
+
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p; interface IFoo{ @utf8InCpp @nullable String foo();}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p; interface IFoo{ @utf8InCpp String foo();}");
+
+  EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("+  @utf8InCpp String foo();"));
 }
 
 TEST_F(AidlTest, DifferentOrderAnnotationsInCheckAPI) {
@@ -2478,7 +2547,7 @@ TEST_F(AidlTestIncompatibleChanges, ChangedAnnatationParams) {
 
 TEST_F(AidlTestIncompatibleChanges, AddedParcelableAnnotation) {
   const string expected_stderr =
-      "ERROR: new/p/Foo.aidl:1.47-51: Changed annotations: (empty) to @JavaOnlyStableParcelable\n";
+      "ERROR: new/p/Foo.aidl:1.32-36: Changed annotations: (empty) to @FixedSize\n";
   io_delegate_.SetFileContents("old/p/Foo.aidl",
                                "package p;"
                                "parcelable Foo {"
@@ -2486,7 +2555,7 @@ TEST_F(AidlTestIncompatibleChanges, AddedParcelableAnnotation) {
                                "}");
   io_delegate_.SetFileContents("new/p/Foo.aidl",
                                "package p;"
-                               "@JavaOnlyStableParcelable parcelable Foo {"
+                               "@FixedSize parcelable Foo {"
                                "  int A;"
                                "}");
   CaptureStderr();
@@ -2496,10 +2565,10 @@ TEST_F(AidlTestIncompatibleChanges, AddedParcelableAnnotation) {
 
 TEST_F(AidlTestIncompatibleChanges, RemovedParcelableAnnotation) {
   const string expected_stderr =
-      "ERROR: new/p/Foo.aidl:1.21-25: Changed annotations: @JavaOnlyStableParcelable to (empty)\n";
+      "ERROR: new/p/Foo.aidl:1.21-25: Changed annotations: @FixedSize to (empty)\n";
   io_delegate_.SetFileContents("old/p/Foo.aidl",
                                "package p;"
-                               "@JavaOnlyStableParcelable parcelable Foo {"
+                               "@FixedSize parcelable Foo {"
                                "  int A;"
                                "}");
   io_delegate_.SetFileContents("new/p/Foo.aidl",
@@ -3084,6 +3153,14 @@ TEST_F(AidlTest, ImmutableParcelableFieldNameRestriction) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, UnionInUnion) {
+  import_paths_.insert(".");
+  io_delegate_.SetFileContents("Bar.aidl", "union Bar { int n = 42; long l; }");
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse("Foo.aidl", "union Foo { Bar b; int n; }", typenames_, GetLanguage()));
+  EXPECT_THAT("", GetCapturedStderr());
+}
+
 TEST_P(AidlTest, UnionRejectsEmptyDecl) {
   const string method = "package a; union Foo {}";
   const string expected_stderr = "ERROR: a/Foo.aidl:1.17-21: The union 'Foo' has no fields.\n";
@@ -3586,6 +3663,66 @@ TEST_P(AidlTest, ErrorInterfaceName) {
   EXPECT_EQ(1, aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ("ERROR: p/Foo.aidl:1.1-10: Interface names should start with I. [-Winterface-name]\n",
             GetCapturedStderr());
+}
+
+TEST_F(AidlTest, FormatCommentsForJava) {
+  using android::aidl::FormatCommentsForJava;
+
+  struct TestCase {
+    vector<Comment> comments;
+    string formatted;
+  };
+  vector<TestCase> testcases = {
+      {{}, ""},
+      {{{"// line comments\n"}}, "// line comments\n"},
+      {{{"// @hide \n"}}, "// @hide \n"},
+      // Transform the last block comment as Javadoc.
+      {{{"/*\n"
+         " * Hello, world!\n"
+         " */"}},
+       "/**\n"
+       " * Hello, world!\n"
+       " */"},
+      {{{"/* @hide */"}}, "/** @hide */"},
+      {{{"/**\n"
+         "   @param foo ...\n"
+         "*/"}},
+       "/**\n"
+       "   @param foo ...\n"
+       "*/"},
+      {{{"/* @hide */"}, {"/* @hide */"}}, "/* @hide *//** @hide */"},
+      {{{"/* @deprecated first */"}, {"/* @deprecated second */"}},
+       "/* @deprecated first *//** @deprecated second */"},
+      {{{"/* @deprecated */"}, {"/** @param foo */"}}, "/* @deprecated *//** @param foo */"},
+      // Line comments are printed as they are
+      {{{"/* @deprecated */"}, {"// line comments\n"}}, "/* @deprecated */// line comments\n"},
+  };
+  for (const auto& [input, formatted] : testcases) {
+    EXPECT_EQ(formatted, FormatCommentsForJava(input));
+  }
+}
+
+TEST_F(AidlTest, HideIsNotForArgs) {
+  io_delegate_.SetFileContents("IFoo.aidl",
+                               "interface IFoo {\n"
+                               "  void foo(in @Hide int x);\n"
+                               "}");
+  auto options = Options::From("aidl --lang=java IFoo.aidl");
+  CaptureStderr();
+  EXPECT_EQ(1, aidl::compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@Hide is not available"));
+}
+
+TEST_F(AidlTest, SuppressWarningsIsNotForArgs) {
+  io_delegate_.SetFileContents(
+      "IFoo.aidl",
+      "interface IFoo {\n"
+      "  void foo(in @SuppressWarnings(value=\"inout-parameter\") int x);\n"
+      "}");
+  auto options = Options::From("aidl --lang=java IFoo.aidl");
+  CaptureStderr();
+  EXPECT_EQ(1, aidl::compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@SuppressWarnings is not available"));
 }
 
 struct TypeParam {
