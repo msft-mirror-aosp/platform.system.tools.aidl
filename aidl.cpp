@@ -346,6 +346,57 @@ bool ParsePreprocessedLine(const string& line, string* decl, std::string* packag
   return true;
 }
 
+bool ValidateAnnotationContext(const AidlDocument& doc) {
+  struct AnnotationValidator : AidlVisitor {
+    bool success = true;
+
+    void Check(const AidlAnnotatable& annotatable, AidlAnnotation::TargetContext context) {
+      for (const auto& annot : annotatable.GetAnnotations()) {
+        if (!annot.CheckContext(context)) {
+          success = false;
+        }
+      }
+    }
+    void Visit(const AidlInterface& m) override {
+      Check(m, AidlAnnotation::CONTEXT_TYPE_INTERFACE);
+    }
+    void Visit(const AidlParcelable& m) override {
+      Check(m, AidlAnnotation::CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE);
+    }
+    void Visit(const AidlStructuredParcelable& m) override {
+      Check(m, AidlAnnotation::CONTEXT_TYPE_STRUCTURED_PARCELABLE);
+    }
+    void Visit(const AidlEnumDeclaration& m) override {
+      Check(m, AidlAnnotation::CONTEXT_TYPE_ENUM);
+    }
+    void Visit(const AidlUnionDecl& m) override { Check(m, AidlAnnotation::CONTEXT_TYPE_UNION); }
+    void Visit(const AidlMethod& m) override {
+      Check(m.GetType(), AidlAnnotation::CONTEXT_TYPE_SPECIFIER | AidlAnnotation::CONTEXT_METHOD);
+      for (const auto& arg : m.GetArguments()) {
+        Check(arg->GetType(), AidlAnnotation::CONTEXT_TYPE_SPECIFIER);
+      }
+    }
+    void Visit(const AidlConstantDeclaration& m) override {
+      Check(m.GetType(), AidlAnnotation::CONTEXT_TYPE_SPECIFIER | AidlAnnotation::CONTEXT_CONST);
+    }
+    void Visit(const AidlVariableDeclaration& m) override {
+      Check(m.GetType(), AidlAnnotation::CONTEXT_TYPE_SPECIFIER | AidlAnnotation::CONTEXT_FIELD);
+    }
+    void Visit(const AidlTypeSpecifier& m) override {
+      // nested generic type parameters are checked as well
+      if (m.IsGeneric()) {
+        for (const auto& tp : m.GetTypeParameters()) {
+          Check(*tp, AidlAnnotation::CONTEXT_TYPE_SPECIFIER);
+        }
+      }
+    }
+  };
+
+  AnnotationValidator validator;
+  VisitTopDown(validator, doc);
+  return validator.success;
+}
+
 }  // namespace
 
 namespace internals {
@@ -386,14 +437,15 @@ bool parse_preprocessed_file(const IoDelegate& io_delegate, const string& filena
       if (AidlTypenames::IsBuiltinTypename(class_name)) {
         continue;
       }
-      AidlParcelable* doc = new AidlParcelable(location, class_name, package, "" /* comments */);
+      AidlParcelable* doc = new AidlParcelable(location, class_name, package, Comments{});
       typenames->AddPreprocessedType(unique_ptr<AidlParcelable>(doc));
     } else if (decl == "structured_parcelable") {
-      AidlStructuredParcelable* doc = new AidlStructuredParcelable(
-          location, class_name, package, "" /* comments */, nullptr, nullptr);
+      AidlStructuredParcelable* doc =
+          new AidlStructuredParcelable(location, class_name, package, Comments{}, nullptr, nullptr);
       typenames->AddPreprocessedType(unique_ptr<AidlStructuredParcelable>(doc));
     } else if (decl == "interface") {
-      AidlInterface* doc = new AidlInterface(location, class_name, "", false, package, nullptr);
+      AidlInterface* doc =
+          new AidlInterface(location, class_name, Comments{}, false, package, nullptr);
       typenames->AddPreprocessedType(unique_ptr<AidlInterface>(doc));
     } else {
       success = false;
@@ -623,23 +675,23 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       // add the meta-method 'int getInterfaceVersion()' if version is specified.
       if (options.Version() > 0) {
         AidlTypeSpecifier* ret =
-            new AidlTypeSpecifier(AIDL_LOCATION_HERE, "int", false, nullptr, "");
+            new AidlTypeSpecifier(AIDL_LOCATION_HERE, "int", false, nullptr, Comments{});
         ret->Resolve(*typenames);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method = std::make_unique<AidlMethod>(
-            AIDL_LOCATION_HERE, false, ret, "getInterfaceVersion", args, "", kGetInterfaceVersionId,
-            false /* is_user_defined */);
+            AIDL_LOCATION_HERE, false, ret, "getInterfaceVersion", args, Comments{},
+            kGetInterfaceVersionId, false /* is_user_defined */);
         interface->AddMethod(std::move(method));
       }
       // add the meta-method 'string getInterfaceHash()' if hash is specified.
       if (!options.Hash().empty()) {
         AidlTypeSpecifier* ret =
-            new AidlTypeSpecifier(AIDL_LOCATION_HERE, "String", false, nullptr, "");
+            new AidlTypeSpecifier(AIDL_LOCATION_HERE, "String", false, nullptr, Comments{});
         ret->Resolve(*typenames);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
-        auto method =
-            std::make_unique<AidlMethod>(AIDL_LOCATION_HERE, false, ret, kGetInterfaceHash, args,
-                                         "", kGetInterfaceHashId, false /* is_user_defined */);
+        auto method = std::make_unique<AidlMethod>(
+            AIDL_LOCATION_HERE, false, ret, kGetInterfaceHash, args, Comments{},
+            kGetInterfaceHashId, false /* is_user_defined */);
         interface->AddMethod(std::move(method));
       }
       if (!check_and_assign_method_ids(interface->GetMethods())) {
@@ -660,6 +712,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         }
       }
     }
+  }
+
+  if (!ValidateAnnotationContext(main_parser->ParsedDocument())) {
+    return AidlError::BAD_TYPE;
   }
 
   if (!is_check_api && !Diagnose(main_parser->ParsedDocument(), options.GetDiagnosticMapping())) {
@@ -846,9 +902,15 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
     AidlTypenames typenames;
     if (internals::load_and_validate_aidl(file, options, io_delegate, &typenames, nullptr) ==
         AidlError::OK) {
-      for (const auto& type : typenames.MainDocument().DefinedTypes()) {
+      const auto& doc = typenames.MainDocument();
+
+      for (const auto& type : doc.DefinedTypes()) {
         unique_ptr<CodeWriter> writer =
             io_delegate.GetCodeWriter(GetApiDumpPathFor(*type, options));
+        // dump doc comments (license) as well for each type
+        for (const auto& c : doc.GetComments()) {
+          (*writer) << c.body;
+        }
         (*writer) << kPreamble;
         if (!type->GetPackage().empty()) {
           (*writer) << "package " << type->GetPackage() << ";\n";

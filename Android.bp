@@ -25,6 +25,7 @@ cc_defaults {
     static_libs: [
         "libbase",
         "libcutils",
+        "libgtest",
     ],
     // TODO(b/174366536): basic_stringbuf::overflow causes "ubsan: implicit-conversion"
     // sanitize: {
@@ -71,6 +72,7 @@ cc_library_static {
         "ast_cpp.cpp",
         "ast_java.cpp",
         "code_writer.cpp",
+        "comments.cpp",
         "diagnostics.cpp",
         "generate_aidl_mappings.cpp",
         "generate_cpp.cpp",
@@ -182,6 +184,7 @@ cc_fuzz {
         "libaidl-common",
         "libbase",
         "libcutils",
+        "libgtest",
         "liblog",
     ],
     // Enable this to show additional information about what is being parsed during fuzzing.
@@ -423,6 +426,7 @@ genrule {
 cc_test_host {
     name: "aidl-golden-test-build-hook",
     generated_sources: ["aidl-golden-test-build-hook-gen"],
+    gtest: false,
 }
 
 //

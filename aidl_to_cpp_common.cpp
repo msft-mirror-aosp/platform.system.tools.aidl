@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include "ast_cpp.h"
+#include "comments.h"
 #include "logging.h"
 #include "os.h"
 
@@ -422,6 +423,16 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable) {
   out << "}\n";
 }
 
+std::string GetDeprecatedAttribute(const AidlCommentable& type) {
+  if (auto deprecated = FindDeprecated(type.GetComments()); deprecated.has_value()) {
+    if (deprecated->note.empty()) {
+      return "__attribute__((deprecated))";
+    }
+    return "__attribute__((deprecated(" + QuotedEscape(deprecated->note) + ")))";
+  }
+  return "";
+}
+
 const vector<string> UnionWriter::headers{
     "cassert",      // __assert for logging
     "type_traits",  // std::is_same_v
@@ -439,7 +450,7 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
 
 void UnionWriter::PublicFields(CodeWriter& out) const {
   AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                             /* type_params= */ nullptr, /* comments= */ "");
+                             /* type_params= */ nullptr, Comments{});
   tag_type.Resolve(typenames);
 
   out << "enum Tag : " << name_of(tag_type, typenames) << " {\n";
@@ -518,7 +529,7 @@ void set(_Tp&&... _args) {{
 
 void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx) const {
   AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                             /* type_params= */ nullptr, /* comments= */ "");
+                             /* type_params= */ nullptr, Comments{});
   tag_type.Resolve(typenames);
 
   const string tag = "_aidl_tag";
@@ -562,7 +573,7 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
 
 void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx) const {
   AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                             /* type_params= */ nullptr, /* comments= */ "");
+                             /* type_params= */ nullptr, Comments{});
   tag_type.Resolve(typenames);
 
   const string tag = "_aidl_tag";

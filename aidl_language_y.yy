@@ -92,6 +92,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
     std::vector<std::string>* type_params;
     std::vector<std::unique_ptr<AidlImport>>* imports;
     AidlImport* import;
+    AidlPackage* package;
     std::vector<std::unique_ptr<AidlDefinedType>>* declarations;
 }
 
@@ -99,6 +100,8 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %destructor { } <direction>
 %destructor { delete ($$); } <*>
 
+%token<token> PACKAGE "package"
+%token<token> IMPORT "import"
 %token<token> ANNOTATION "annotation"
 %token<token> C_STR "string literal"
 %token<token> IDENTIFIER "identifier"
@@ -117,11 +120,9 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token '(' ')' ',' '=' '[' ']' '.' '{' '}' ';'
 %token UNKNOWN "unrecognized character"
 %token<token> CPP_HEADER "cpp_header (which can also be used as an identifier)"
-%token IMPORT "import"
 %token IN "in"
 %token INOUT "inout"
 %token OUT "out"
-%token PACKAGE "package"
 %token TRUE_LITERAL "true"
 %token FALSE_LITERAL "false"
 
@@ -177,17 +178,26 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<constant_value_list> constant_value_non_empty_list
 %type<imports> imports
 %type<import> import
+%type<package> package
 %type<declarations> decls
 %type<token> identifier error qualified_name
 
 %%
 
 document
- : package imports decls
-  { ps->SetDocument(std::make_unique<AidlDocument>(loc(@1), *$2, std::move(*$3)));
+ : package imports decls {
+    Comments comments;
+    if ($1) {
+      comments = $1->GetComments();
+    } else if (!$2->empty()) {
+      comments = $2->front()->GetComments();
+    }
+    ps->SetDocument(std::make_unique<AidlDocument>(loc(@1), comments, std::move(*$2), std::move(*$3)));
+    delete $1;
     delete $2;
     delete $3;
   }
+ ;
 
 /* A couple of tokens that are keywords elsewhere are identifiers when
  * occurring in the identifier position. Therefore identifier is a
@@ -200,11 +210,16 @@ identifier
  ;
 
 package
- : {}
- | PACKAGE qualified_name ';'
-  { ps->SetPackage($2->GetText());
+ : {
+    $$ = nullptr;
+ }
+ | PACKAGE qualified_name ';' {
+    $$ = new AidlPackage(loc(@1, @3), $1->GetComments());
+    ps->SetPackage($2->GetText());
+    delete $1;
     delete $2;
   }
+ ;
 
 imports
  : { $$ = new std::vector<std::unique_ptr<AidlImport>>(); }
@@ -222,9 +237,9 @@ imports
   }
 
 import
- : IMPORT qualified_name ';'
-  {
-    $$ = new AidlImport(loc(@2), $2->GetText());
+ : IMPORT qualified_name ';' {
+    $$ = new AidlImport(loc(@2), $2->GetText(), $1->GetComments());
+    delete $1;
     delete $2;
   };
 
@@ -584,7 +599,7 @@ method_decl
     delete $2;
   }
  | annotation_list ONEWAY type identifier '(' arg_list ')' ';' {
-    const std::string& comments = ($1->size() > 0) ? $1->begin()->GetComments() : $2->GetComments();
+    const auto& comments = ($1->size() > 0) ? $1->begin()->GetComments() : $2->GetComments();
     $$ = new AidlMethod(loc(@4), true, $3, $4->GetText(), $6, comments);
     $3->Annotate(std::move(*$1));
     delete $1;
@@ -602,7 +617,7 @@ method_decl
     delete $7;
   }
  | annotation_list ONEWAY type identifier '(' arg_list ')' '=' INTVALUE ';' {
-    const std::string& comments = ($1->size() > 0) ? $1->begin()->GetComments() : $2->GetComments();
+    const auto& comments = ($1->size() > 0) ? $1->begin()->GetComments() : $2->GetComments();
     int32_t serial = 0;
     if (!android::base::ParseInt($9->GetText(), &serial)) {
         AIDL_ERROR(loc(@9)) << "Could not parse int value: " << $9->GetText();
@@ -737,26 +752,22 @@ parameter_non_empty_list
   };
 
 annotation
- : ANNOTATION
-  {
-    $$ = AidlAnnotation::Parse(loc(@1), $1->GetText(), nullptr);
-    if ($$) {
-      $$->SetComments($1->GetComments());
-    } else {
+ : ANNOTATION {
+    $$ = AidlAnnotation::Parse(loc(@1), $1->GetText(), nullptr, $1->GetComments());
+    if (!$$) {
       ps->AddError();
     }
     delete $1;
-  };
+  }
  | ANNOTATION '(' parameter_list ')' {
-    $$ = AidlAnnotation::Parse(loc(@1, @4), $1->GetText(), $3);
-    if ($$) {
-      $$->SetComments($1->GetComments());
-    } else {
+    $$ = AidlAnnotation::Parse(loc(@1, @4), $1->GetText(), $3, $1->GetComments());
+    if (!$$) {
       ps->AddError();
     }
     delete $1;
     delete $3;
- }
+  }
+ ;
 
 direction
  : IN
