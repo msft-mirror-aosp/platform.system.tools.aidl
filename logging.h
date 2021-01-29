@@ -16,51 +16,51 @@
 
 #pragma once
 
-#include "aidl_language.h"
-
 #include <iostream>
+#include <string>
+
+#include "location.h"
+
+class AidlNode;
 
 // Generic point for printing any error in the AIDL compiler.
 class AidlErrorLog {
  public:
-  AidlErrorLog(bool fatal, const AidlLocation& location)
-      : os_(std::cerr), fatal_(fatal), location_(location) {
-    sHadError = true;
+  enum Severity { NO_OP, WARNING, ERROR, FATAL };
 
-    os_ << "ERROR: ";
-    os_ << location << ": ";
-  }
-  AidlErrorLog(bool fatal, const std::string& filename)
-      : AidlErrorLog(fatal, AidlLocation(filename, AidlLocation::Source::EXTERNAL)) {}
-  AidlErrorLog(bool fatal, const AidlNode& node) : AidlErrorLog(fatal, node.location_) {}
-  AidlErrorLog(bool fatal, const AidlNode* node) : AidlErrorLog(fatal, *node) {}
+  AidlErrorLog(Severity severity, const AidlLocation& location, const std::string& suffix = "");
+  AidlErrorLog(Severity severity, const std::string& filename);
+  AidlErrorLog(Severity severity, const AidlNode& node);
+  AidlErrorLog(Severity severity, const AidlNode* node) : AidlErrorLog(severity, *node) {}
 
   template <typename T>
-  AidlErrorLog(bool fatal, const std::unique_ptr<T>& node) : AidlErrorLog(fatal, *node) {}
-  ~AidlErrorLog() {
-    os_ << std::endl;
-    if (fatal_) abort();
-    if (location_.IsInternal()) {
-      os_ << "Logging an internal location should not happen. Offending location: " << location_
-          << std::endl;
-      abort();
-    }
-  }
+  AidlErrorLog(Severity severity, const std::unique_ptr<T>& node) : AidlErrorLog(severity, *node) {}
+  ~AidlErrorLog();
 
-  // AidlErrorLog is a single use object. No need to copy or move
+  // AidlErrorLog is a single use object. No need to copy
   AidlErrorLog(const AidlErrorLog&) = delete;
-  AidlErrorLog(AidlErrorLog&&) = delete;
   AidlErrorLog& operator=(const AidlErrorLog&) = delete;
-  AidlErrorLog& operator=(AidlErrorLog&&) = delete;
 
-  std::ostream& os_;
+  // btw, making it movable so that functions can return it.
+  AidlErrorLog(AidlErrorLog&&) = default;
+  AidlErrorLog& operator=(AidlErrorLog&&) = default;
+
+  template <typename T>
+  AidlErrorLog& operator<<(T&& arg) {
+    if (severity_ != NO_OP) {
+      (*os_) << std::forward<T>(arg);
+    }
+    return *this;
+  }
 
   static void clearError() { sHadError = false; }
   static bool hadError() { return sHadError; }
 
  private:
-  bool fatal_;
+  std::ostream* os_;
+  Severity severity_;
   const AidlLocation location_;
+  const std::string suffix_;
   static bool sHadError;
 };
 
@@ -72,8 +72,8 @@ class AidlAbortOnDestruction {
   __attribute__((noreturn)) ~AidlAbortOnDestruction() { abort(); }
 };
 
-#define AIDL_ERROR(CONTEXT) ::AidlErrorLog(false /*fatal*/, (CONTEXT)).os_
+#define AIDL_ERROR(CONTEXT) ::AidlErrorLog(AidlErrorLog::ERROR, (CONTEXT))
 #define AIDL_FATAL(CONTEXT) \
-  (::AidlAbortOnDestruction(), ::AidlErrorLog(true /*fatal*/, (CONTEXT)).os_)
+  (::AidlAbortOnDestruction(), ::AidlErrorLog(AidlErrorLog::FATAL, (CONTEXT)))
 #define AIDL_FATAL_IF(CONDITION, CONTEXT) \
   if (CONDITION) AIDL_FATAL(CONTEXT) << "Bad internal state: " << #CONDITION << ": "

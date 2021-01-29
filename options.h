@@ -16,9 +16,10 @@
 #pragma once
 
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
+
+#include "diagnostics.h"
 
 namespace android {
 namespace aidl {
@@ -57,11 +58,28 @@ class ErrorMessage {
   }
 };
 
+// Handles warning-related options (e.g. -W, -w, ...)
+class WarningOptions {
+ public:
+  std::vector<const char*> Parse(int argc, const char* const argv[], ErrorMessage& error_message);
+  DiagnosticMapping GetDiagnosticMapping() const;
+
+ private:
+  bool as_errors_ = false;           // -Werror
+  bool enable_all_ = false;          // -Weverything
+  bool disable_all_ = false;         // -w
+  std::set<std::string> enabled_;    // -Wfoo
+  std::set<std::string> disabled_;   // -Wno-foo
+  std::set<std::string> no_errors_;  // -Wno-error=foo
+};
+
 class Options final {
  public:
   enum class Language { UNSPECIFIED, JAVA, CPP, NDK, RUST };
 
   enum class Task { UNSPECIFIED, COMPILE, PREPROCESS, DUMP_API, CHECK_API, DUMP_MAPPINGS };
+
+  enum class CheckApiLevel { COMPATIBLE, EQUAL };
 
   enum class Stability { UNSPECIFIED, VINTF };
   bool StabilityFromString(const std::string& stability, Stability* out_stability);
@@ -83,6 +101,8 @@ class Options final {
   bool IsCppOutput() const { return language_ == Language::CPP || language_ == Language::NDK; }
 
   Task GetTask() const { return task_; }
+
+  CheckApiLevel GetCheckApiLevel() const { return check_api_level_; }
 
   const set<string>& ImportDirs() const { return import_dirs_; }
 
@@ -125,8 +145,6 @@ class Options final {
 
   bool GenLog() const { return gen_log_; }
 
-  bool GenParcelableToString() const { return gen_parcelable_to_string_; }
-
   bool Ok() const { return error_message_.stream_.str().empty(); }
 
   string GetErrorMessage() const { return error_message_.stream_.str(); }
@@ -135,7 +153,7 @@ class Options final {
 
   bool GenApiMapping() const { return task_ == Task::DUMP_MAPPINGS; }
 
-  static const string LanguageToString(Language language);
+  DiagnosticMapping GetDiagnosticMapping() const { return warning_options_.GetDiagnosticMapping(); }
 
   // The following are for testability, but cannot be influenced on the command line.
   // Threshold of interface methods to enable outlining of onTransact cases.
@@ -149,6 +167,7 @@ class Options final {
   const string myname_;
   Language language_ = Language::UNSPECIFIED;
   Task task_ = Task::COMPILE;
+  CheckApiLevel check_api_level_ = CheckApiLevel::COMPATIBLE;
   set<string> import_dirs_;
   set<string> import_files_;
   vector<string> preprocessed_files_;
@@ -167,9 +186,11 @@ class Options final {
   int version_ = 0;
   string hash_ = "";
   bool gen_log_ = false;
-  bool gen_parcelable_to_string_ = false;
   ErrorMessage error_message_;
+  WarningOptions warning_options_;
 };
+
+std::string to_string(Options::Language language);
 
 }  // namespace aidl
 }  // namespace android

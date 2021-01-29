@@ -37,6 +37,8 @@ namespace aidl {
 namespace rust {
 
 namespace {
+std::string GetRawRustName(const AidlTypeSpecifier& type);
+
 std::string ConstantValueDecoratorInternal(const AidlTypeSpecifier& type,
                                            const std::string& raw_value, bool by_ref) {
   if (type.IsArray()) {
@@ -62,6 +64,12 @@ std::string ConstantValueDecoratorInternal(const AidlTypeSpecifier& type,
     // The actual type might be String or &str,
     // and .into() transparently converts into either one
     return raw_value + ".into()";
+  }
+
+  if (auto defined_type = type.GetDefinedType(); defined_type) {
+    auto enum_type = defined_type->AsEnumDeclaration();
+    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
+    return GetRawRustName(type) + "::" + raw_value.substr(raw_value.find_last_of('.') + 1);
   }
 
   return raw_value;
@@ -96,8 +104,7 @@ std::string GetRustName(const AidlTypeSpecifier& type, const AidlTypenames& type
   };
 
   // If the type is an array/List<T>, get the inner element type
-  AIDL_FATAL_IF(
-      type.IsGeneric() && (type.GetName() != "List" || type.GetTypeParameters().size() != 1), type);
+  AIDL_FATAL_IF(typenames.IsList(type) && type.GetTypeParameters().size() != 1, type);
   const auto& element_type = type.IsGeneric() ? (*type.GetTypeParameters().at(0)) : type;
   const string& element_type_name = element_type.GetName();
   if (m.find(element_type_name) != m.end()) {
@@ -150,7 +157,7 @@ std::string ConstantValueDecoratorRef(const AidlTypeSpecifier& type, const std::
 std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
                        StorageMode mode) {
   std::string rust_name;
-  if (type.IsArray() || type.IsGeneric()) {
+  if (type.IsArray() || typenames.IsList(type)) {
     StorageMode element_mode;
     if (mode == StorageMode::OUT_ARGUMENT || mode == StorageMode::DEFAULT_VALUE) {
       // Elements need to have Default for resize_out_vec()
@@ -210,7 +217,7 @@ StorageMode ArgumentStorageMode(const AidlArgument& arg, const AidlTypenames& ty
 
   const bool isEnum = definedType && definedType->AsEnumDeclaration() != nullptr;
   const bool isPrimitive = AidlTypenames::IsPrimitiveTypename(typeName);
-  if (typeName == "String" || arg.GetType().IsArray() || arg.GetType().IsGeneric()) {
+  if (typeName == "String" || arg.GetType().IsArray() || typenames.IsList(arg.GetType())) {
     return StorageMode::UNSIZED_ARGUMENT;
   } else if (!(isPrimitive || isEnum)) {
     return StorageMode::IN_ARGUMENT;
@@ -286,7 +293,7 @@ bool TypeIsInterface(const AidlTypeSpecifier& type, const AidlTypenames& typenam
 }
 
 bool TypeHasDefault(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
-  if (type.IsArray() || type.IsGeneric()) {
+  if (type.IsArray() || typenames.IsList(type)) {
     return true;
   }
 

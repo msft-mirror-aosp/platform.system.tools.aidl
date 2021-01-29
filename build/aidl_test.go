@@ -15,6 +15,7 @@
 package aidl
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -79,6 +80,9 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 	bp = bp + java.GatherRequiredDepsForTest()
 	bp = bp + cc.GatherRequiredDepsForTest(android.Android)
 	bp = bp + `
+		package {
+			default_visibility: ["//visibility:public"],
+		}
 		java_defaults {
 			name: "aidl-java-module-defaults",
 		}
@@ -170,26 +174,32 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 		c(tempFS, config)
 	}
 
-	ctx := android.NewTestArchContext()
+	ctx := android.NewTestArchContext(config)
+	android.RegisterPackageBuildComponents(ctx)
+	ctx.PreArchMutators(android.RegisterVisibilityRuleChecker)
+
 	cc.RegisterRequiredBuildComponentsForTest(ctx)
+	java.RegisterRequiredBuildComponentsForTest(ctx)
 	ctx.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
 	ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
-	ctx.RegisterModuleType("android_app", java.AndroidAppFactory)
-	ctx.RegisterModuleType("java_defaults", func() android.Module {
-		return java.DefaultsFactory()
-	})
 	ctx.RegisterModuleType("rust_defaults", func() android.Module {
 		return rust.DefaultsFactory()
 	})
 	ctx.RegisterModuleType("rust_library", rust.RustLibraryFactory)
-	ctx.RegisterModuleType("java_library_static", java.LibraryStaticFactory)
-	ctx.RegisterModuleType("java_library", java.LibraryFactory)
-	ctx.RegisterModuleType("java_system_modules", java.SystemModulesFactory)
 
 	ctx.RegisterModuleType("apex", apex.BundleFactory)
 	ctx.RegisterModuleType("apex_key", apex.ApexKeyFactory)
 
 	ctx.PreArchMutators(android.RegisterDefaultsPreArchMutators)
+	ctx.PreArchMutators(android.RegisterVisibilityRuleGatherer)
+
+	ctx.PreArchMutators(func(ctx android.RegisterMutatorsContext) {
+		ctx.BottomUp("checkImports", checkImports)
+		ctx.TopDown("createAidlInterface", createAidlInterfaceMutator)
+	})
+
+	ctx.PostDepsMutators(android.RegisterVisibilityRuleEnforcer)
+
 	ctx.PreDepsMutators(func(ctx android.RegisterMutatorsContext) {
 		ctx.BottomUp("rust_libraries", rust.LibraryMutator).Parallel()
 		ctx.BottomUp("rust_stdlinkage", rust.LibstdMutator).Parallel()
@@ -200,9 +210,10 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 	ctx.PostDepsMutators(apex.RegisterPostDepsMutators)
 	ctx.PostDepsMutators(func(ctx android.RegisterMutatorsContext) {
 		ctx.BottomUp("checkUnstableModule", checkUnstableModuleMutator).Parallel()
+		ctx.BottomUp("recordVersions", recordVersions).Parallel()
 		ctx.BottomUp("checkDuplicatedVersions", checkDuplicatedVersions).Parallel()
 	})
-	ctx.Register(config)
+	ctx.Register()
 
 	return ctx, config
 }
@@ -210,7 +221,7 @@ func _testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android
 func testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android.TestContext, android.Config) {
 	t.Helper()
 	ctx, config := _testAidl(t, bp, customizers...)
-	_, errs := ctx.ParseFileList(".", []string{"Android.bp"})
+	_, errs := ctx.ParseBlueprintsFiles("Android.bp")
 	android.FailIfErrored(t, errs)
 	_, errs = ctx.PrepareBuildActions(config)
 	android.FailIfErrored(t, errs)
@@ -220,7 +231,7 @@ func testAidl(t *testing.T, bp string, customizers ...testCustomizer) (*android.
 func testAidlError(t *testing.T, pattern, bp string, customizers ...testCustomizer) {
 	t.Helper()
 	ctx, config := _testAidl(t, bp, customizers...)
-	_, errs := ctx.ParseFileList(".", []string{"Android.bp"})
+	_, errs := ctx.ParseBlueprintsFiles("Android.bp")
 	if len(errs) > 0 {
 		android.FailIfNoMatchingErrors(t, pattern, errs)
 		return
@@ -235,6 +246,7 @@ func testAidlError(t *testing.T, pattern, bp string, customizers ...testCustomiz
 
 // asserts that there are expected module regardless of variants
 func assertModulesExists(t *testing.T, ctx *android.TestContext, names ...string) {
+	t.Helper()
 	missing := []string{}
 	for _, name := range names {
 		variants := ctx.ModuleVariantsForTests(name)
@@ -250,6 +262,23 @@ func assertModulesExists(t *testing.T, ctx *android.TestContext, names ...string
 		})
 		t.Errorf("expected modules(%v) not found. all modules: %v", missing, android.SortedStringKeys(allModuleNames))
 	}
+}
+
+func assertContains(t *testing.T, actual, expected string) {
+	t.Helper()
+	if !strings.Contains(actual, expected) {
+		t.Errorf("%q is not found in %q.", expected, actual)
+	}
+}
+
+func assertListContains(t *testing.T, actual []string, expected string) {
+	t.Helper()
+	for _, a := range actual {
+		if strings.Contains(a, expected) {
+			return
+		}
+	}
+	t.Errorf("%q is not found in %v.", expected, actual)
 }
 
 // Vintf module must have versions in release version
@@ -271,7 +300,7 @@ func TestVintfWithoutVersionInRelease(t *testing.T) {
 	testAidlError(t, expectedError, vintfWithoutVersionBp, setReleaseEnv())
 
 	ctx, _ := testAidl(t, vintfWithoutVersionBp)
-	assertModulesExists(t, ctx, "foo-java", "foo-rust", "foo-cpp", "foo-ndk", "foo-ndk_platform")
+	assertModulesExists(t, ctx, "foo-V1-java", "foo-V1-rust", "foo-V1-cpp", "foo-V1-ndk", "foo-V1-ndk_platform")
 }
 
 // Check if using unstable version in release cause an error.
@@ -288,10 +317,10 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 	}
 	java_library {
 		name: "bar",
-		libs: ["foo-unstable-java"],
+		libs: ["foo-V2-java"],
 	}`
 
-	expectedError := `unstable-java is disallowed in release version because it is unstable.`
+	expectedError := `foo-V2-java is disallowed in release version because it is unstable.`
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setReleaseEnv(), withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
 	}))
@@ -313,7 +342,7 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 	}
 	java_library {
 		name: "bar",
-		libs: ["foo-java"],
+		libs: ["foo-V1-java"],
 	}`
 
 	testAidl(t, stableVersionUsageInJavaBp, setReleaseEnv(), withFiles(map[string][]byte{
@@ -337,7 +366,7 @@ func TestNonVersionedModuleUsageInRelease(t *testing.T) {
 
 	java_library {
 		name: "bar",
-		libs: ["foo-java"],
+		libs: ["foo-V1-java"],
 	}`
 
 	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false, PLATFORM_VERSION_CODENAME is REL, and "owner" property is missing.`
@@ -430,7 +459,7 @@ func TestCreatesModulesWithNoVersions(t *testing.T) {
 		}
 	`)
 
-	assertModulesExists(t, ctx, "foo-java", "foo-rust", "foo-cpp", "foo-ndk", "foo-ndk_platform")
+	assertModulesExists(t, ctx, "foo-V1-java", "foo-V1-rust", "foo-V1-cpp", "foo-V1-ndk", "foo-V1-ndk_platform")
 }
 
 func TestCreatesModulesWithFrozenVersions(t *testing.T) {
@@ -471,15 +500,75 @@ func TestCreatesModulesWithFrozenVersions(t *testing.T) {
 		"aidl_api/foo/1/foo.1.aidl": nil,
 	}))
 
-	// For alias for the latest frozen version (=1)
-	assertModulesExists(t, ctx, "foo-java", "foo-rust", "foo-cpp", "foo-ndk", "foo-ndk_platform")
-
 	// For frozen version "1"
-	// Note that it is not yet implemented to generate native modules for latest frozen version
-	assertModulesExists(t, ctx, "foo-V1-java")
+	assertModulesExists(t, ctx, "foo-V1-java", "foo-V1-rust", "foo-V1-cpp", "foo-V1-ndk", "foo-V1-ndk_platform")
 
 	// For ToT (current)
-	assertModulesExists(t, ctx, "foo-unstable-java", "foo-unstable-rust", "foo-unstable-cpp", "foo-unstable-ndk", "foo-unstable-ndk_platform")
+	assertModulesExists(t, ctx, "foo-V2-java", "foo-V2-rust", "foo-V2-cpp", "foo-V2-ndk", "foo-V2-ndk_platform")
+}
+
+func TestErrorsWithUnsortedVersions(t *testing.T) {
+	testAidlError(t, `versions: should be sorted`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"2",
+				"1",
+			],
+			backend: {
+				rust: {
+					enabled: true,
+				},
+			},
+		}
+	`)
+}
+
+func TestErrorsWithDuplicateVersions(t *testing.T) {
+	testAidlError(t, `versions: duplicate`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"1",
+				"1",
+			],
+		}
+	`)
+}
+
+func TestErrorsWithNonPositiveVersions(t *testing.T) {
+	testAidlError(t, `versions: should be > 0`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"-1",
+				"1",
+			],
+		}
+	`)
+}
+
+func TestErrorsWithNonIntegerVersions(t *testing.T) {
+	testAidlError(t, `versions: "first" is not an integer`, `
+		aidl_interface {
+			name: "foo",
+			srcs: [
+				"IFoo.aidl",
+			],
+			versions: [
+				"first",
+			],
+		}
+	`)
 }
 
 const (
@@ -519,13 +608,11 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 			},
 		}
 	`)
-	// It's the only exception, <name>-<backend> generates the artifact of which name is <name>-<backend>,
-	// if it doesn't have a version.
-	assertOutput("foo-java", androidVariant, "foo-java.jar")
+	// Even though there is no version, generated modules have version(V1) unless it isn't an unstable interface.
+	assertOutput("foo-V1-java", androidVariant, "foo-V1-java.jar")
 
-	assertOutput("foo-cpp", nativeVariant, "foo-cpp.so")
-	assertOutput("foo-unstable-cpp", nativeVariant, "foo-V1-cpp.so")
-	assertOutput("foo-rust", nativeRustVariant, "libfoo.dylib.so")
+	assertOutput("foo-V1-cpp", nativeVariant, "foo-V1-cpp.so")
+	assertOutput("foo-V1-rust", nativeRustVariant, "libfoo_V1.dylib.so")
 
 	// With versions: "1", "2"
 	ctx, _ = testAidl(t, `
@@ -549,9 +636,9 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 	}))
 
 	// alias for the latest frozen version (=2)
-	assertOutput("foo-java", androidVariant, "foo-java.jar")
-	assertOutput("foo-cpp", nativeVariant, "foo-V2-cpp.so")
-	assertOutput("foo-rust", nativeRustVariant, "libfoo.dylib.so")
+	assertOutput("foo-V2-java", androidVariant, "foo-V2-java.jar")
+	assertOutput("foo-V2-cpp", nativeVariant, "foo-V2-cpp.so")
+	assertOutput("foo-V2-rust", nativeRustVariant, "libfoo_V2.dylib.so")
 
 	// frozen "1"
 	assertOutput("foo-V1-java", androidVariant, "foo-V1-java.jar")
@@ -559,43 +646,11 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 	assertOutput("foo-V1-rust", nativeRustVariant, "libfoo_V1.dylib.so")
 
 	// tot
-	assertOutput("foo-unstable-java", androidVariant, "foo-unstable-java.jar")
-	assertOutput("foo-unstable-cpp", nativeVariant, "foo-V3-cpp.so")
-	assertOutput("foo-unstable-rust", nativeRustVariant, "libfoo_unstable.dylib.so")
+	assertOutput("foo-V3-java", androidVariant, "foo-V3-java.jar")
+	assertOutput("foo-V3-cpp", nativeVariant, "foo-V3-cpp.so")
+	assertOutput("foo-V3-rust", nativeRustVariant, "libfoo_V3.dylib.so")
 
 	// skip ndk/ndk_platform since they follow the same rule with cpp
-}
-
-func TestGenLogForNativeBackendRequiresJson(t *testing.T) {
-	testAidlError(t, `"foo-cpp" depends on .*"libjsoncpp"`, `
-		aidl_interface {
-			name: "foo",
-			srcs: [
-				"IFoo.aidl",
-			],
-			backend: {
-				cpp: {
-					gen_log: true,
-				},
-			},
-		}
-	`)
-	testAidl(t, `
-		aidl_interface {
-			name: "foo",
-			srcs: [
-				"IFoo.aidl",
-			],
-			backend: {
-				cpp: {
-					gen_log: true,
-				},
-			},
-		}
-		cc_library {
-			name: "libjsoncpp",
-		}
-	`)
 }
 
 func TestImports(t *testing.T) {
@@ -685,16 +740,16 @@ func TestImports(t *testing.T) {
 		}
 	`)
 
-	ldRule := ctx.ModuleForTests("foo-cpp", nativeVariant).Rule("ld")
+	ldRule := ctx.ModuleForTests("foo-V1-cpp", nativeVariant).Rule("ld")
 	libFlags := ldRule.Args["libFlags"]
-	libBar := filepath.Join("bar.1-unstable-cpp", nativeVariant, "bar.1-V1-cpp.so")
+	libBar := filepath.Join("bar.1-V1-cpp", nativeVariant, "bar.1-V1-cpp.so")
 	if !strings.Contains(libFlags, libBar) {
 		t.Errorf("%q is not found in %q", libBar, libFlags)
 	}
 
-	rustcRule := ctx.ModuleForTests("foo-rust", nativeRustVariant).Rule("rustc")
+	rustcRule := ctx.ModuleForTests("foo-V1-rust", nativeRustVariant).Rule("rustc")
 	libFlags = rustcRule.Args["libFlags"]
-	libBar = filepath.Join(buildDir, ".intermediates", "bar.1-rust", nativeRustVariant, "libbar_1.dylib.so")
+	libBar = filepath.Join(buildDir, ".intermediates", "bar.1-V1-rust", nativeRustVariant, "libbar_1_V1.dylib.so")
 	libBarFlag := "--extern bar_1=" + libBar
 	if !strings.Contains(libFlags, libBarFlag) {
 		t.Errorf("%q is not found in %q", libBarFlag, libFlags)
@@ -702,9 +757,9 @@ func TestImports(t *testing.T) {
 }
 
 func TestDuplicatedVersions(t *testing.T) {
-	// foo depends on myiface-ndk (v2) via direct dep and also on
+	// foo depends on myiface-V2-ndk via direct dep and also on
 	// myiface-V1-ndk via indirect dep. This should be prohibited.
-	testAidlError(t, `multiple versions of aidl_interface myiface \(backend:ndk\) are used`, `
+	testAidlError(t, `depends on multiple versions of the same aidl_interface: myiface-V1-ndk, myiface-V2-ndk`, `
 		aidl_interface {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
@@ -713,7 +768,7 @@ func TestDuplicatedVersions(t *testing.T) {
 
 		cc_library {
 			name: "foo",
-			shared_libs: ["myiface-ndk", "bar"],
+			shared_libs: ["myiface-V2-ndk", "bar"],
 		}
 
 		cc_library {
@@ -727,7 +782,7 @@ func TestDuplicatedVersions(t *testing.T) {
 		"aidl_api/myiface/2/myiface.2.aidl": nil,
 		"aidl_api/myiface/2/.hash":          nil,
 	}))
-	testAidlError(t, `multiple versions of aidl_interface myiface \(backend:ndk\) are used`, `
+	testAidlError(t, `depends on multiple versions of the same aidl_interface: myiface-V1-ndk, myiface-V2-ndk`, `
 		aidl_interface {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
@@ -742,7 +797,63 @@ func TestDuplicatedVersions(t *testing.T) {
 
 		cc_library {
 			name: "foobar",
-			shared_libs: ["myiface-ndk", "myiface2-ndk"],
+			shared_libs: ["myiface-V1-ndk", "myiface2-V1-ndk"],
+		}
+
+	`, withFiles(map[string][]byte{
+		"aidl_api/myiface/1/myiface.1.aidl": nil,
+		"aidl_api/myiface/1/.hash":          nil,
+	}))
+	testAidlError(t, `depends on multiple versions of the same aidl_interface: myiface-V1-ndk-source, myiface-V2-ndk`, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["IFoo.aidl"],
+			versions: ["1"],
+			backend: {
+				ndk: {
+					srcs_available: true,
+				},
+			},
+		}
+
+		aidl_interface {
+			name: "myiface2",
+			srcs: ["IBar.aidl"],
+			imports: ["myiface"]
+		}
+
+		cc_library {
+			name: "foobar",
+			srcs: [":myiface-V1-ndk-source"],
+			shared_libs: ["myiface2-V1-ndk"],
+		}
+
+	`, withFiles(map[string][]byte{
+		"aidl_api/myiface/1/myiface.1.aidl": nil,
+		"aidl_api/myiface/1/.hash":          nil,
+	}))
+	testAidl(t, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["IFoo.aidl"],
+			versions: ["1"],
+			backend: {
+				ndk: {
+					srcs_available: true,
+				},
+			},
+		}
+
+		aidl_interface {
+			name: "myiface2",
+			srcs: ["IBar.aidl"],
+			imports: ["myiface"]
+		}
+
+		cc_library {
+			name: "foobar",
+			srcs: [":myiface-V2-ndk-source"],
+			shared_libs: ["myiface2-V1-ndk"],
 		}
 
 	`, withFiles(map[string][]byte{
@@ -764,7 +875,7 @@ func TestDuplicatedVersions(t *testing.T) {
 
 		cc_library {
 			name: "foobar",
-			shared_libs: ["myiface-unstable-ndk", "myiface2-ndk"],
+			shared_libs: ["myiface-V2-ndk", "myiface2-V1-ndk"],
 		}
 
 	`, withFiles(map[string][]byte{
@@ -779,6 +890,7 @@ func TestUnstableVndkModule(t *testing.T) {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
 			vendor_available: true,
+			product_available: true,
 			unstable: true,
 			vndk: {
 				enabled: true,
@@ -789,6 +901,7 @@ func TestUnstableVndkModule(t *testing.T) {
 		aidl_interface {
 			name: "myiface",
 			vendor_available: true,
+			product_available: true,
 			srcs: ["IFoo.aidl"],
 			vndk: {
 				enabled: true,
@@ -799,6 +912,7 @@ func TestUnstableVndkModule(t *testing.T) {
 		aidl_interface {
 			name: "myiface",
 			vendor_available: true,
+			product_available: true,
 			srcs: ["IFoo.aidl"],
 			stability: "vintf",
 			vndk: {
@@ -822,7 +936,7 @@ func TestCcModuleWithApexNameMacro(t *testing.T) {
 		apex {
 			name: "myapex",
 			key: "myapex.key",
-			native_shared_libs: ["myiface-ndk_platform"],
+			native_shared_libs: ["myiface-V1-ndk_platform"],
 		}
 		apex_key {
 			name: "myapex.key",
@@ -833,15 +947,86 @@ func TestCcModuleWithApexNameMacro(t *testing.T) {
 		"system/sepolicy/apex/myapex-file_contexts": nil,
 	}))
 
-	assertContains := func(t *testing.T, actual, expected string) {
-		t.Helper()
-		if !strings.Contains(actual, expected) {
-			t.Errorf("%q is not found in %q.", expected, actual)
-		}
-	}
-
-	ccRule := ctx.ModuleForTests("myiface-ndk_platform", "android_arm64_armv8-a_static_myapex").Rule("cc")
+	ccRule := ctx.ModuleForTests("myiface-V1-ndk_platform", "android_arm64_armv8-a_static_myapex").Rule("cc")
 	assertContains(t, ccRule.Args["cFlags"], "-D__ANDROID_APEX__")
 	assertContains(t, ccRule.Args["cFlags"], "-D__ANDROID_APEX_NAME__='\"myapex\"'")
 	assertContains(t, ccRule.Args["cFlags"], "-D__ANDROID_APEX_MYAPEX__")
+}
+
+func TestSrcsAvailable(t *testing.T) {
+	bp := `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["IFoo.aidl"],
+			backend: {
+				java: {
+					srcs_available: %s,
+				},
+				cpp: {
+					srcs_available: %s,
+				},
+			},
+		}
+	`
+	customizer := withFiles(map[string][]byte{
+		"otherpackage/Android.bp": []byte(`
+			java_library {
+				name: "javalib",
+				srcs: [":myiface-V1-java-source"],
+			}
+			cc_library_shared {
+				name: "cclib",
+				srcs: [":myiface-V1-cpp-source"],
+			}
+		`),
+	})
+	ctx, _ := testAidl(t, fmt.Sprintf(bp, "true", "true"), customizer)
+	javaInputs := ctx.ModuleForTests("javalib", "android_common").Rule("javac").Inputs.Strings()
+	assertListContains(t, javaInputs, "myiface-V1-java-source/gen/IFoo.java")
+	ccInput := ctx.ModuleForTests("cclib", "android_arm64_armv8-a_shared").Rule("cc").Input.String()
+	assertContains(t, ccInput, "myiface-V1-cpp-source/gen/IFoo.cpp")
+
+	testAidlError(t, `depends on //.:myiface-V1-java-source which is not visible to this module`,
+		fmt.Sprintf(bp, "false", "true"), customizer)
+	testAidlError(t, `depends on //.:myiface-V1-cpp-source which is not visible to this module`,
+		fmt.Sprintf(bp, "true", "false"), customizer)
+}
+
+func TestRustDuplicateNames(t *testing.T) {
+	testAidl(t, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["dir/a/Foo.aidl", "dir/b/Foo.aidl"],
+			backend: {
+				rust: {
+					enabled: true,
+				},
+			},
+		}
+	`)
+}
+
+func TestAidlFlags(t *testing.T) {
+	ctx, _ := testAidl(t, `
+		aidl_interface {
+			name: "myiface",
+			srcs: ["a/Foo.aidl", "b/Bar.aidl"],
+			flags: ["-Weverything", "-Werror"],
+			backend: { rust: { enabled: true }}
+		}
+	`)
+	for module, outputs := range map[string][]string{
+		"myiface-V1-cpp-source":  {"a/Foo.h", "b/Bar.h"},
+		"myiface-V1-java-source": {"a/Foo.java", "b/Bar.java"},
+		"myiface-V1-ndk-source":  {"aidl/a/Foo.h", "aidl/b/Bar.h"},
+		"myiface-V1-rust-source": {"a/Foo.rs", "b/Bar.rs"},
+	} {
+		for _, output := range outputs {
+			t.Run(module+"/"+output, func(t *testing.T) {
+				params := ctx.ModuleForTests(module, "").Output(output)
+				assertContains(t, params.Args["optionalFlags"], "-Weverything")
+				assertContains(t, params.Args["optionalFlags"], "-Werror")
+			})
+		}
+	}
 }

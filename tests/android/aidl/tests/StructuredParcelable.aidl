@@ -20,8 +20,10 @@ import android.aidl.tests.ByteEnum;
 import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.ConstantExpressionEnum;
+import android.aidl.tests.Union;
 
-@JavaDebug
+@JavaDerive(toString=true, equals=true)
+@RustDerive(Clone=true, PartialEq=true)
 parcelable StructuredParcelable {
     int[] shouldContainThreeFs;
     int f;
@@ -129,7 +131,7 @@ parcelable StructuredParcelable {
       (~42 & (1 << 3 | 16 >> 2) ^ 7) == 3,
       (2 + 3 - 4 * -7 / (10 % 3)) - 33 == 0,
       (2 + (-3&4 / 7)) == 2,
-      (((((1 + 0)))))
+      (((((1 + 0))))),
     };
 
     long[] int64_1 = {
@@ -162,5 +164,15 @@ parcelable StructuredParcelable {
     // String expressions
     @utf8InCpp String addString1 = "hello" + " world!";
     @utf8InCpp String addString2 = "The quick brown fox jumps " + "over the lazy dog.";
+
+    const int BIT0 = 0x1;
+    const int BIT1 = 0x1 << 1;
+    const int BIT2 = 0x1 << 2;
+    int shouldSetBit0AndBit2;
+
+    @nullable Union u;
+    @nullable Union shouldBeConstS1;
+
+    IntEnum defaultWithFoo = IntEnum.FOO;
 }
 

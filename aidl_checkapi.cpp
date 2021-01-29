@@ -26,18 +26,38 @@
 
 #include <android-base/result.h>
 #include <android-base/strings.h>
+#include <gtest/gtest.h>
 
 namespace android {
 namespace aidl {
 
 using android::base::Error;
 using android::base::Result;
+using android::base::StartsWith;
 using std::map;
 using std::set;
 using std::string;
 using std::vector;
 
-static set<AidlAnnotation> get_strict_annotations(const AidlAnnotatable& node) {
+static std::string Dump(const AidlDefinedType& type) {
+  std::string dump;
+  type.Dump(CodeWriter::ForString(&dump).get());
+  return dump;
+}
+
+// Uses each type's Dump() and GTest utility(EqHelper).
+static bool CheckEquality(const AidlDefinedType& older, const AidlDefinedType& newer) {
+  using testing::internal::EqHelper;
+  auto older_file = older.GetLocation().GetFile();
+  auto newer_file = newer.GetLocation().GetFile();
+  auto result = EqHelper::Compare(older_file.data(), newer_file.data(), Dump(older), Dump(newer));
+  if (!result) {
+    AIDL_ERROR(newer) << result.failure_message();
+  }
+  return result;
+}
+
+static vector<string> get_strict_annotations(const AidlAnnotatable& node) {
   // This must be symmetrical (if you can add something, you must be able to
   // remove it). The reason is that we have no way of knowing which interface a
   // server serves and which interface a client serves (e.g. a callback
@@ -51,23 +71,36 @@ static set<AidlAnnotation> get_strict_annotations(const AidlAnnotatable& node) {
   // - a new implementation might start accepting null values (add @nullable)
   static const set<AidlAnnotation::Type> kIgnoreAnnotations{
       AidlAnnotation::Type::NULLABLE,
-      AidlAnnotation::Type::JAVA_DEBUG,
+      // @JavaDerive doesn't affect read/write
+      AidlAnnotation::Type::JAVA_DERIVE,
       AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
+      // @Backing for a enum type is checked by the enum checker
+      AidlAnnotation::Type::BACKING,
+      // @RustDerive doesn't affect read/write
+      AidlAnnotation::Type::RUST_DERIVE,
+      AidlAnnotation::Type::SUPPRESS_WARNINGS,
   };
-  set<AidlAnnotation> annotations;
+  vector<string> annotations;
   for (const AidlAnnotation& annotation : node.GetAnnotations()) {
-    if (kIgnoreAnnotations.find(annotation.GetType()) == kIgnoreAnnotations.end()) {
-      annotations.insert(annotation);
+    if (kIgnoreAnnotations.find(annotation.GetType()) != kIgnoreAnnotations.end()) {
+      continue;
     }
+    auto annotation_string = annotation.ToString();
+    // adding @Deprecated (with optional args) is okay
+    if (StartsWith(annotation_string, "@JavaPassthrough(annotation=\"@Deprecated")) {
+      continue;
+    }
+    annotations.push_back(annotation_string);
   }
   return annotations;
 }
 
 static bool have_compatible_annotations(const AidlAnnotatable& older,
                                         const AidlAnnotatable& newer) {
-  set<AidlAnnotation> olderAnnotations = get_strict_annotations(older);
-  set<AidlAnnotation> newerAnnotations = get_strict_annotations(newer);
-
+  vector<string> olderAnnotations = get_strict_annotations(older);
+  vector<string> newerAnnotations = get_strict_annotations(newer);
+  sort(olderAnnotations.begin(), olderAnnotations.end());
+  sort(newerAnnotations.begin(), newerAnnotations.end());
   if (olderAnnotations != newerAnnotations) {
     const string from = older.ToString().empty() ? "(empty)" : older.ToString();
     const string to = newer.ToString().empty() ? "(empty)" : newer.ToString();
@@ -79,11 +112,43 @@ static bool have_compatible_annotations(const AidlAnnotatable& older,
 
 static bool are_compatible_types(const AidlTypeSpecifier& older, const AidlTypeSpecifier& newer) {
   bool compatible = true;
-  if (older.ToString() != newer.ToString()) {
-    AIDL_ERROR(newer) << "Type changed: " << older.ToString() << " to " << newer.ToString() << ".";
+  if (older.Signature() != newer.Signature()) {
+    AIDL_ERROR(newer) << "Type changed: " << older.Signature() << " to " << newer.Signature()
+                      << ".";
     compatible = false;
   }
   compatible &= have_compatible_annotations(older, newer);
+  return compatible;
+}
+
+static bool are_compatible_constants(const AidlDefinedType& older, const AidlDefinedType& newer) {
+  bool compatible = true;
+
+  map<string, AidlConstantDeclaration*> new_constdecls;
+  for (const auto& c : newer.GetConstantDeclarations()) {
+    new_constdecls[c->GetName()] = &*c;
+  }
+
+  for (const auto& old_c : older.GetConstantDeclarations()) {
+    const auto found = new_constdecls.find(old_c->GetName());
+    if (found == new_constdecls.end()) {
+      AIDL_ERROR(old_c) << "Removed constant declaration: " << older.GetCanonicalName() << "."
+                        << old_c->GetName();
+      compatible = false;
+      continue;
+    }
+
+    const auto new_c = found->second;
+    compatible &= are_compatible_types(old_c->GetType(), new_c->GetType());
+
+    const string old_value = old_c->GetValue().Literal();
+    const string new_value = new_c->GetValue().Literal();
+    if (old_value != new_value) {
+      AIDL_ERROR(newer) << "Changed constant value: " << older.GetCanonicalName() << "."
+                        << old_c->GetName() << " from " << old_value << " to " << new_value << ".";
+      compatible = false;
+    }
+  }
   return compatible;
 }
 
@@ -141,49 +206,21 @@ static bool are_compatible_interfaces(const AidlInterface& older, const AidlInte
     }
   }
 
-  map<string, AidlConstantDeclaration*> new_constdecls;
-  for (const auto& c : newer.AsInterface()->GetConstantDeclarations()) {
-    new_constdecls.emplace(c->GetName(), c.get());
-  }
+  compatible = are_compatible_constants(older, newer) && compatible;
 
-  for (const auto& old_c : older.AsInterface()->GetConstantDeclarations()) {
-    const auto found = new_constdecls.find(old_c->GetName());
-    if (found == new_constdecls.end()) {
-      AIDL_ERROR(old_c) << "Removed constant declaration: " << older.GetCanonicalName() << "."
-                        << old_c->GetName();
-      compatible = false;
-      continue;
-    }
-
-    const auto new_c = found->second;
-    compatible &= are_compatible_types(old_c->GetType(), new_c->GetType());
-
-    const string old_value = old_c->ValueString(AidlConstantValueDecorator);
-    const string new_value = new_c->ValueString(AidlConstantValueDecorator);
-    if (old_value != new_value) {
-      AIDL_ERROR(newer) << "Changed constant value: " << older.GetCanonicalName() << "."
-                        << old_c->GetName() << " from " << old_value << " to " << new_value << ".";
-      compatible = false;
-    }
-  }
   return compatible;
 }
 
-// returns whether the given type when defaulted will be accepted by
-// unmarshalling code
-static bool has_usable_nil_type(const AidlTypeSpecifier& specifier) {
-  // TODO(b/155238508): fix for primitives
-
-  // This technically only applies in C++, but even if both the client and the
-  // server of an interface are in Java at a particular point in time, where
-  // null is currently always acceptable, we want to make sure that versions
-  // of this service can work in native and future backends without a problem.
-  // Also, in that case, adding nullable does not hurt.
-  return specifier.IsNullable();
+static bool HasZeroEnumerator(const AidlEnumDeclaration& enum_decl) {
+  return std::any_of(enum_decl.GetEnumerators().begin(), enum_decl.GetEnumerators().end(),
+                     [&](const unique_ptr<AidlEnumerator>& enumerator) {
+                       return enumerator->GetValue()->Literal() == "0";
+                     });
 }
 
-static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
-                                       const AidlStructuredParcelable& newer) {
+static bool are_compatible_parcelables(const AidlDefinedType& older, const AidlTypenames&,
+                                       const AidlDefinedType& newer,
+                                       const AidlTypenames& new_types) {
   const auto& old_fields = older.GetFields();
   const auto& new_fields = newer.GetFields();
   if (old_fields.size() > new_fields.size()) {
@@ -205,8 +242,8 @@ static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
     const auto& new_field = new_fields.at(i);
     compatible &= are_compatible_types(old_field->GetType(), new_field->GetType());
 
-    const string old_value = old_field->ValueString(AidlConstantValueDecorator);
-    const string new_value = new_field->ValueString(AidlConstantValueDecorator);
+    string old_value = old_field->GetDefaultValue() ? old_field->GetDefaultValue()->Literal() : "";
+    string new_value = new_field->GetDefaultValue() ? new_field->GetDefaultValue()->Literal() : "";
     if (old_value != new_value) {
       AIDL_ERROR(new_field) << "Changed default value: " << old_value << " to " << new_value << ".";
       compatible = false;
@@ -231,38 +268,59 @@ static bool are_compatible_parcelables(const AidlStructuredParcelable& older,
 
   for (size_t i = old_fields.size(); i < new_fields.size(); i++) {
     const auto& new_field = new_fields.at(i);
-    if (!new_field->GetDefaultValue() && !has_usable_nil_type(new_field->GetType())) {
-      // Old API versions may suffer from the issue presented here. There is
-      // only a finite number in Android, which we must allow indefinitely.
-      struct HistoricalException {
-        std::string canonical;
-        std::string field;
-      };
-      static std::vector<HistoricalException> exceptions = {
-          {"android.net.DhcpResultsParcelable", "serverHostName"},
-          {"android.net.ResolverParamsParcel", "resolverOptions"},
-      };
-      bool excepted = false;
-      for (const HistoricalException& exception : exceptions) {
-        if (older.GetCanonicalName() == exception.canonical &&
-            new_field->GetName() == exception.field) {
-          excepted = true;
-          break;
-        }
-      }
-      if (excepted) continue;
-
-      AIDL_ERROR(new_field)
-          << "Field '" << new_field->GetName()
-          << "' does not have a useful default in some backends. Please either provide a default "
-             "value for this field or mark the field as @nullable. This value or a null value will "
-             "be used automatically when an old version of this parcelable is sent to a process "
-             "which understands a new version of this parcelable. In order to make sure your code "
-             "continues to be backwards compatible, make sure the default or null value does not "
-             "cause a semantic change to this parcelable.";
-      compatible = false;
+    if (new_field->HasUsefulDefaultValue()) {
+      continue;
     }
+
+    // enum can't be nullable, but it's okay if it has 0 as a valid enumerator.
+    if (const auto& enum_decl = new_types.GetEnumDeclaration(new_field->GetType());
+        enum_decl != nullptr) {
+      if (HasZeroEnumerator(*enum_decl)) {
+        continue;
+      }
+
+      // TODO(b/142893595): Rephrase the message: "provide a default value or make sure ..."
+      AIDL_ERROR(new_field) << "Field '" << new_field->GetName() << "' of enum '"
+                            << enum_decl->GetName()
+                            << "' can't be initialized as '0'. Please make sure '"
+                            << enum_decl->GetName() << "' has '0' as a valid value.";
+      compatible = false;
+      continue;
+    }
+
+    // Old API versions may suffer from the issue presented here. There is
+    // only a finite number in Android, which we must allow indefinitely.
+    struct HistoricalException {
+      std::string canonical;
+      std::string field;
+    };
+    static std::vector<HistoricalException> exceptions = {
+        {"android.net.DhcpResultsParcelable", "serverHostName"},
+        {"android.net.ResolverParamsParcel", "resolverOptions"},
+    };
+    bool excepted = false;
+    for (const HistoricalException& exception : exceptions) {
+      if (older.GetCanonicalName() == exception.canonical &&
+          new_field->GetName() == exception.field) {
+        excepted = true;
+        break;
+      }
+    }
+    if (excepted) continue;
+
+    AIDL_ERROR(new_field)
+        << "Field '" << new_field->GetName()
+        << "' does not have a useful default in some backends. Please either provide a default "
+           "value for this field or mark the field as @nullable. This value or a null value will "
+           "be used automatically when an old version of this parcelable is sent to a process "
+           "which understands a new version of this parcelable. In order to make sure your code "
+           "continues to be backwards compatible, make sure the default or null value does not "
+           "cause a semantic change to this parcelable.";
+    compatible = false;
   }
+
+  compatible = are_compatible_constants(older, newer) && compatible;
+
   return compatible;
 }
 
@@ -289,10 +347,8 @@ static bool are_compatible_enums(const AidlEnumDeclaration& older,
       compatible = false;
       continue;
     }
-    const string old_value =
-        old_enum_map[name]->ValueString(older.GetBackingType(), AidlConstantValueDecorator);
-    const string new_value =
-        new_enum_map[name]->ValueString(newer.GetBackingType(), AidlConstantValueDecorator);
+    const string old_value = old_enum_map[name]->Literal();
+    const string new_value = new_enum_map[name]->Literal();
     if (old_value != new_value) {
       AIDL_ERROR(newer) << "Changed enumerator value: " << older.GetCanonicalName() << "::" << name
                         << " from " << old_value << " to " << new_value << ".";
@@ -330,15 +386,33 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
     return false;
   }
 
+  const Options::CheckApiLevel level = options.GetCheckApiLevel();
+
   std::vector<AidlDefinedType*> old_types = old_tns->AllDefinedTypes();
   std::vector<AidlDefinedType*> new_types = new_tns->AllDefinedTypes();
+
+  bool compatible = true;
+
+  if (level == Options::CheckApiLevel::EQUAL) {
+    std::set<string> old_type_names;
+    for (const auto t : old_types) {
+      old_type_names.insert(t->GetCanonicalName());
+    }
+    for (const auto new_type : new_types) {
+      const auto found = old_type_names.find(new_type->GetCanonicalName());
+      if (found == old_type_names.end()) {
+        AIDL_ERROR(new_type) << "Added type: " << new_type->GetCanonicalName();
+        compatible = false;
+        continue;
+      }
+    }
+  }
 
   map<string, AidlDefinedType*> new_map;
   for (const auto t : new_types) {
     new_map.emplace(t->GetCanonicalName(), t);
   }
 
-  bool compatible = true;
   for (const auto old_type : old_types) {
     const auto found = new_map.find(old_type->GetCanonicalName());
     if (found == new_map.end()) {
@@ -347,6 +421,13 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
       continue;
     }
     const auto new_type = found->second;
+
+    if (level == Options::CheckApiLevel::EQUAL) {
+      if (!CheckEquality(*old_type, *new_type)) {
+        compatible = false;
+      }
+      continue;
+    }
 
     if (!have_compatible_annotations(*old_type, *new_type)) {
       compatible = false;
@@ -368,8 +449,18 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
         compatible = false;
         continue;
       }
-      compatible &= are_compatible_parcelables(*(old_type->AsStructuredParcelable()),
-                                               *(new_type->AsStructuredParcelable()));
+      compatible &= are_compatible_parcelables(*(old_type->AsStructuredParcelable()), *old_tns,
+                                               *(new_type->AsStructuredParcelable()), *new_tns);
+    } else if (old_type->AsUnionDeclaration() != nullptr) {
+      if (new_type->AsUnionDeclaration() == nullptr) {
+        AIDL_ERROR(new_type) << "Type mismatch: " << old_type->GetCanonicalName()
+                             << " is changed from " << old_type->GetPreprocessDeclarationName()
+                             << " to " << new_type->GetPreprocessDeclarationName();
+        compatible = false;
+        continue;
+      }
+      compatible &= are_compatible_parcelables(*(old_type->AsUnionDeclaration()), *old_tns,
+                                               *(new_type->AsUnionDeclaration()), *new_tns);
     } else if (old_type->AsEnumDeclaration() != nullptr) {
       if (new_type->AsEnumDeclaration() == nullptr) {
         AIDL_ERROR(new_type) << "Type mismatch: " << old_type->GetCanonicalName()

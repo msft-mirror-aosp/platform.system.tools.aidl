@@ -18,6 +18,7 @@
 
 #include "aidl_language.h"
 #include "aidl_typenames.h"
+#include "comments.h"
 #include "io_delegate.h"
 #include "logging.h"
 #include "options.h"
@@ -31,8 +32,8 @@ typedef yy_buffer_state* YY_BUFFER_STATE;
 
 class AidlToken {
  public:
-  AidlToken(const std::string& text, const std::string& comments)
-      : text_(text), comments_(comments) {}
+  AidlToken(const std::string& text, android::aidl::Comments comments)
+      : text_(text), comments_(std::move(comments)) {}
   ~AidlToken() = default;
 
   AidlToken(const AidlToken&) = delete;
@@ -41,12 +42,19 @@ class AidlToken {
   AidlToken& operator=(AidlToken&&) = delete;
 
   const std::string& GetText() const { return text_; }
-  const std::string& GetComments() const { return comments_; }
+  const android::aidl::Comments& GetComments() const { return comments_; }
+
+  template <typename T>
+  void Append(T&& text) {
+    text_ += std::forward<T>(text);
+  }
 
  private:
   std::string text_;
-  std::string comments_;
+  android::aidl::Comments comments_;
 };
+
+using TypeResolver = std::function<bool(const AidlDocument*, AidlTypeSpecifier*)>;
 
 class Parser {
  public:
@@ -67,6 +75,15 @@ class Parser {
   const std::string& FileName() const { return filename_; }
   void* Scanner() const { return scanner_; }
 
+  // This restricts the grammar to something more reasonable. One alternative
+  // would be to support multiple sets of type specifiers in our AST, but then a
+  // lot of later code would have to deal with this more complicated type. So,
+  // in order to keep the AST simpler, restricting the grammar here.
+  //
+  // Takes ownership of type_args, modifies type.
+  void SetTypeParameters(AidlTypeSpecifier* type,
+                         std::vector<std::unique_ptr<AidlTypeSpecifier>>* type_args);
+
   void SetPackage(const std::string& package) { package_ = package; }
   const std::string& Package() const { return package_; }
 
@@ -76,7 +93,7 @@ class Parser {
 
   const vector<AidlTypeSpecifier*>& GetUnresolvedTypespecs() const { return unresolved_typespecs_; }
 
-  bool Resolve();
+  bool Resolve(TypeResolver& type_resolver);
   void SetDocument(std::unique_ptr<AidlDocument>&& document) {
     // The parsed document is owned by typenames_. This parser object only has
     // a reference to it.
