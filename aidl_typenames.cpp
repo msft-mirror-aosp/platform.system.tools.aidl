@@ -131,6 +131,17 @@ bool AidlTypenames::AddDocument(std::unique_ptr<AidlDocument> doc) {
   return true;
 }
 
+const AidlDocument* AidlTypenames::GetDocumentFor(const AidlDefinedType* type) const {
+  for (const auto& doc : AllDocuments()) {
+    for (const auto& defined_type : doc->DefinedTypes()) {
+      if (defined_type.get() == type) {
+        return doc.get();
+      }
+    }
+  }
+  return nullptr;
+}
+
 const AidlDocument& AidlTypenames::MainDocument() const {
   AIDL_FATAL_IF(documents_.size() == 0, AIDL_LOCATION_HERE) << "Main document doesn't exist";
   return *(documents_[0]);
@@ -339,6 +350,22 @@ void AidlTypenames::IterateTypes(const std::function<void(const AidlDefinedType&
   for (const auto& kv : preprocessed_types_) {
     body(*kv.second);
   }
+}
+
+bool AidlTypenames::Autofill() const {
+  bool success = true;
+  IterateTypes([&](const AidlDefinedType& type) {
+    // BackingType is filled in for all known enums, including imported enums,
+    // because other types that may use enums, such as Interface or
+    // StructuredParcelable, need to know the enum BackingType when
+    // generating code.
+    if (auto enum_decl = const_cast<AidlDefinedType&>(type).AsEnumDeclaration(); enum_decl) {
+      if (!enum_decl->Autofill(*this)) {
+        success = false;
+      }
+    }
+  });
+  return success;
 }
 
 }  // namespace aidl

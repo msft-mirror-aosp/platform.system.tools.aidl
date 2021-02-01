@@ -55,9 +55,9 @@ string Options::GetUsage() const {
        << myname_ << " --dumpapi --out=DIR INPUT..." << endl
        << "   Dump API signature of AIDL file(s) to DIR." << endl
        << endl
-       << myname_ << " --checkapi OLD_DIR NEW_DIR" << endl
-       << "   Checkes whether API dump NEW_DIR is backwards compatible extension " << endl
-       << "   of the API dump OLD_DIR." << endl
+       << myname_ << " --checkapi[={compatible|equal}] OLD_DIR NEW_DIR" << endl
+       << "   Check whether NEW_DIR API dump is {compatible|equal} extension " << endl
+       << "   of the API dump OLD_DIR. Default: compatible" << endl
 #endif
        << endl;
 
@@ -124,6 +124,19 @@ string Options::GetUsage() const {
        << "  --log" << endl
        << "          Information about the transaction, e.g., method name, argument" << endl
        << "          values, execution time, etc., is provided via callback." << endl
+       << "  -Werror" << endl
+       << "          Turn warnings into errors." << endl
+       << "  -Wno-error=<warning>" << endl
+       << "          Turn the specified warning into a warning even if -Werror is specified."
+       << endl
+       << "  -W<warning>" << endl
+       << "          Enable the specified warning." << endl
+       << "  -Wno-<warning>" << endl
+       << "          Disable the specified warning." << endl
+       << "  -w" << endl
+       << "          Disable all diagnostics. -w wins -Weverything" << endl
+       << "  -Weverything" << endl
+       << "          Enable all diagnostics." << endl
        << "  --help" << endl
        << "          Show this help." << endl
        << endl
@@ -142,7 +155,7 @@ string Options::GetUsage() const {
   return sstr.str();
 }
 
-const string Options::LanguageToString(Language language) {
+string to_string(Options::Language language) {
   switch (language) {
     case Options::Language::CPP:
       return "cpp";
@@ -188,8 +201,12 @@ Options Options::From(const vector<string>& args) {
   return Options(argc, argv, lang);
 }
 
-Options::Options(int argc, const char* const argv[], Options::Language default_lang)
-    : myname_(argv[0]), language_(default_lang) {
+Options::Options(int argc, const char* const raw_argv[], Options::Language default_lang)
+    : myname_(raw_argv[0]), language_(default_lang) {
+  std::vector<const char*> argv = warning_options_.Parse(argc, raw_argv, error_message_);
+  if (!Ok()) return;
+  argc = argv.size();
+
   bool lang_option_found = false;
   optind = 0;
   while (true) {
@@ -198,7 +215,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         {"preprocess", no_argument, 0, 's'},
 #ifndef _WIN32
         {"dumpapi", no_argument, 0, 'u'},
-        {"checkapi", no_argument, 0, 'A'},
+        {"checkapi", optional_argument, 0, 'A'},
 #endif
         {"apimapping", required_argument, 0, 'i'},
         {"include", required_argument, 0, 'I'},
@@ -218,7 +235,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         {"help", no_argument, 0, 'e'},
         {0, 0, 0, 0},
     };
-    const int c = getopt_long(argc, const_cast<char* const*>(argv),
+    const int c = getopt_long(argc, const_cast<char* const*>(argv.data()),
                               "I:m:p:d:o:h:abtv:", long_options, nullptr);
     if (c == -1) {
       // no more options
@@ -268,6 +285,16 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
           task_ = Options::Task::CHECK_API;
           // to ensure that all parcelables in the api dumpes are structured
           structured_ = true;
+          if (optarg) {
+            if (strcmp(optarg, "compatible") == 0)
+              check_api_level_ = CheckApiLevel::COMPATIBLE;
+            else if (strcmp(optarg, "equal") == 0)
+              check_api_level_ = CheckApiLevel::EQUAL;
+            else {
+              error_message_ << "Unsupported --checkapi level: '" << optarg << "'" << endl;
+              return;
+            }
+          }
         }
         break;
 #endif
@@ -370,7 +397,7 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
         // when output is omitted and -o option isn't set, the output is by
         // default set to the input file path with .aidl is replaced to .java.
         // If -o option is set, the output path is calculated by
-        // generate_outputFileName which returns "<output_dir>/<package/name>/
+        // GetOutputFilePath which returns "<output_dir>/<package/name>/
         // <typename>.java"
         output_file_ = input_files_.front();
         if (android::base::EndsWith(output_file_, ".aidl")) {
@@ -503,6 +530,63 @@ Options::Options(int argc, const char* const argv[], Options::Language default_l
   AIDL_FATAL_IF(!output_dir_.empty() && output_dir_.back() != OS_PATH_SEPARATOR, output_dir_);
   AIDL_FATAL_IF(!output_header_dir_.empty() && output_header_dir_.back() != OS_PATH_SEPARATOR,
                 output_header_dir_);
+}
+
+std::vector<const char*> WarningOptions::Parse(int argc, const char* const raw_argv[],
+                                               ErrorMessage& error_message) {
+  std::vector<const char*> remains;
+  for (int i = 0; i < argc; i++) {
+    auto arg = raw_argv[i];
+    if (strcmp(arg, "-Weverything") == 0) {
+      enable_all_ = true;
+    } else if (strcmp(arg, "-Werror") == 0) {
+      as_errors_ = true;
+    } else if (strcmp(arg, "-w") == 0) {
+      disable_all_ = true;
+    } else if (base::StartsWith(arg, "-Wno-error=")) {
+      no_errors_.insert(arg + strlen("-Wno-error="));
+    } else if (base::StartsWith(arg, "-Wno-")) {
+      disabled_.insert(arg + strlen("-Wno-"));
+    } else if (base::StartsWith(arg, "-W")) {
+      enabled_.insert(arg + strlen("-W"));
+    } else {
+      remains.push_back(arg);
+    }
+  }
+
+  for (const auto& names : {no_errors_, disabled_, enabled_}) {
+    for (const auto& name : names) {
+      if (kAllDiagnostics.count(name) == 0) {
+        error_message << "unknown warning: " << name << "\n";
+        return {};
+      }
+    }
+  }
+
+  return remains;
+}
+
+DiagnosticMapping WarningOptions::GetDiagnosticMapping() const {
+  DiagnosticMapping mapping;
+  for (const auto& [_, d] : kAllDiagnostics) {
+    bool enabled = d.default_enabled;
+    if (enable_all_ || enabled_.find(d.name) != enabled_.end()) {
+      enabled = true;
+    }
+    if (disable_all_ || disabled_.find(d.name) != disabled_.end()) {
+      enabled = false;
+    }
+
+    DiagnosticSeverity severity = DiagnosticSeverity::DISABLED;
+    if (enabled) {
+      severity = DiagnosticSeverity::WARNING;
+      if (as_errors_ && no_errors_.find(d.name) == no_errors_.end()) {
+        severity = DiagnosticSeverity::ERROR;
+      }
+    }
+    mapping.Severity(d.id, severity);
+  }
+  return mapping;
 }
 
 }  // namespace aidl

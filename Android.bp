@@ -25,6 +25,7 @@ cc_defaults {
     static_libs: [
         "libbase",
         "libcutils",
+        "libgtest",
     ],
     // TODO(b/174366536): basic_stringbuf::overflow causes "ubsan: implicit-conversion"
     // sanitize: {
@@ -56,31 +57,34 @@ cc_library_static {
     host_supported: true,
 
     srcs: [
-        "aidl.cpp",
         "aidl_checkapi.cpp",
         "aidl_const_expressions.cpp",
-        "aidl_language.cpp",
         "aidl_language_l.ll",
         "aidl_language_y.yy",
-        "aidl_typenames.cpp",
+        "aidl_language.cpp",
+        "aidl_to_cpp_common.cpp",
         "aidl_to_cpp.cpp",
         "aidl_to_java.cpp",
         "aidl_to_ndk.cpp",
         "aidl_to_rust.cpp",
+        "aidl_typenames.cpp",
+        "aidl.cpp",
         "ast_cpp.cpp",
         "ast_java.cpp",
         "code_writer.cpp",
-        "generate_cpp.cpp",
-        "aidl_to_cpp_common.cpp",
-        "generate_ndk.cpp",
-        "generate_java.cpp",
-        "generate_java_binder.cpp",
+        "comments.cpp",
+        "diagnostics.cpp",
         "generate_aidl_mappings.cpp",
+        "generate_cpp.cpp",
+        "generate_java_binder.cpp",
+        "generate_java.cpp",
+        "generate_ndk.cpp",
         "generate_rust.cpp",
         "import_resolver.cpp",
-        "line_reader.cpp",
-        "logging.cpp",
         "io_delegate.cpp",
+        "line_reader.cpp",
+        "location.cpp",
+        "logging.cpp",
         "options.cpp",
         "parser.cpp",
     ],
@@ -134,15 +138,12 @@ cc_test {
         "ast_cpp_unittest.cpp",
         "ast_java_unittest.cpp",
         "code_writer_unittest.cpp",
+        "diagnostics_unittest.cpp",
         "generate_cpp_unittest.cpp",
         "io_delegate_unittest.cpp",
         "options_unittest.cpp",
-        "tests/end_to_end_tests.cpp",
         "tests/fake_io_delegate.cpp",
         "tests/main.cpp",
-        "tests/test_data_example_interface.cpp",
-        "tests/test_data_ping_responder.cpp",
-        "tests/test_data_string_constants.cpp",
         "tests/test_util.cpp",
     ],
 
@@ -153,6 +154,8 @@ cc_test {
         "libgmock",
         "liblog",
     ],
+
+    required: ["aidl-golden-test-build-hook"],
 }
 
 cc_fuzz {
@@ -181,6 +184,7 @@ cc_fuzz {
         "libaidl-common",
         "libbase",
         "libcutils",
+        "libgtest",
         "liblog",
     ],
     // Enable this to show additional information about what is being parsed during fuzzing.
@@ -261,6 +265,7 @@ filegroup {
         "tests/android/aidl/tests/StructuredParcelable.aidl",
         "tests/android/aidl/tests/Union.aidl",
         "tests/android/aidl/tests/UnionWithFd.aidl",
+        "tests/android/aidl/tests/unions/*.aidl",
     ],
     path: "tests",
 }
@@ -330,7 +335,7 @@ cc_test {
         "libcutils",
         "libgmock",
         //  client uses the latest version
-        "aidl-test-versioned-interface-cpp",
+        "aidl-test-versioned-interface-V2-cpp",
         "aidl_test_loggable_interface-cpp"
     ],
     srcs: [
@@ -361,11 +366,14 @@ java_test {
     static_libs: [
         "androidx.test.core",
         "androidx.test.runner",
-        "aidl_test_nonvintf_parcelable-java",
+        "aidl_test_nonvintf_parcelable-V1-java",
         "aidl_test_unstable_parcelable-java",
-        "aidl_test_vintf_parcelable-java",
+        "aidl_test_vintf_parcelable-V1-java",
         // client uses the newest version
-        "aidl-test-versioned-interface-java",
+        "aidl-test-versioned-interface-V2-java",
+        // TODO: remove once Android migrates to JUnit 4.12,
+        // which provides assertThrows
+        "testng",
     ],
     srcs: [
         "tests/android/aidl/tests/*.aidl",
@@ -373,6 +381,7 @@ java_test {
         "tests/android/aidl/tests/immutable/*.aidl",
         "tests/android/aidl/tests/map/*.aidl",
         "tests/android/aidl/tests/extension/*.aidl",
+        "tests/android/aidl/tests/unions/*.aidl",
         "tests/java/src/android/aidl/tests/**/*.java",
     ],
     aidl: {
@@ -383,6 +392,41 @@ java_test {
         generate_traces: true,
     },
     test_suites: ["general-tests"],
+}
+
+//
+// "Golden" test of compiler output
+//
+
+sh_binary_host {
+    name: "aidl-golden-test",
+    src: "tests/golden_test.sh",
+}
+
+genrule {
+    name: "aidl-golden-test-build-hook-gen",
+    tools: ["aidl-golden-test"],
+    cmd: "$(location aidl-golden-test) check && " +
+         "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
+    srcs: [
+        // warning: keep this list up to date with tests/golden_test.sh
+        ":aidl-test-interface-cpp-source",
+        ":aidl-test-interface-java-source",
+        ":aidl-test-interface-ndk_platform-source",
+        ":aidl-test-interface-rust-source",
+        ":aidl_test_loggable_interface-cpp-source",
+        ":aidl_test_loggable_interface-java-source",
+        ":aidl_test_loggable_interface-ndk_platform-source",
+        ":aidl_test_loggable_interface-ndk-source",
+        "tests/golden_output/**/*",
+    ],
+    out: ["TODO_b_37575883.cpp"],
+}
+
+cc_test_host {
+    name: "aidl-golden-test-build-hook",
+    generated_sources: ["aidl-golden-test-build-hook-gen"],
+    gtest: false,
 }
 
 //
@@ -402,12 +446,15 @@ aidl_interface {
     gen_trace: true,
     backend: {
         cpp: {
+            srcs_available: true,
             gen_log: true,
         },
         ndk: {
+            srcs_available: true,
             gen_log: true,
         },
         java: {
+            srcs_available: true,
             platform_apis: true,
         },
     },
@@ -423,14 +470,20 @@ aidl_interface {
     srcs: [":libaidl-integration-test-files"],
     local_include_dir: "tests",
     backend: {
+        cpp: {
+            srcs_available: true,
+        },
         java: {
             platform_apis: true,
+            srcs_available: true,
         },
         rust: {
             enabled: true,
+            srcs_available: true,
         },
         ndk: {
             apps_enabled: false,
+            srcs_available: true,
         },
     },
 }
@@ -442,7 +495,7 @@ rust_test {
     ],
     rustlibs: [
         "aidl-test-interface-rust",
-        "aidl-test-versioned-interface-rust",
+        "aidl-test-versioned-interface-V2-rust",
         "liblibc",
     ],
     prefer_rlib: true,

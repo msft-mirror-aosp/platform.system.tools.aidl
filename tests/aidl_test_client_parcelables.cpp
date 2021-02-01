@@ -18,6 +18,7 @@
 #include <android/aidl/tests/extension/MyExt.h>
 #include <android/aidl/tests/extension/MyExt2.h>
 #include <android/aidl/tests/extension/MyExtLike.h>
+#include <android/aidl/tests/unions/EnumUnion.h>
 #include "aidl_test_client.h"
 
 #include <string>
@@ -40,6 +41,7 @@ using android::aidl::tests::extension::ExtendableParcelable;
 using android::aidl::tests::extension::MyExt;
 using android::aidl::tests::extension::MyExt2;
 using android::aidl::tests::extension::MyExtLike;
+using android::aidl::tests::unions::EnumUnion;
 using android::binder::Status;
 using android::os::PersistableBundle;
 using std::string;
@@ -195,6 +197,12 @@ TEST_F(AidlTest, UnionUsage) {
   EXPECT_EQ(Union::ss, one_two_three.getTag());
 }
 
+TEST_F(AidlTest, UnionDefaultConstructorInitializeWithFirstMember) {
+  EXPECT_EQ(Union::make<Union::ns>(), Union());  // int[] ns
+  EXPECT_EQ(EnumUnion::make<EnumUnion::intEnum>(IntEnum::FOO),
+            EnumUnion());  // IntEnum intEnum = IntEnum.FOO
+}
+
 TEST_F(AidlTest, StructuredParcelableEquality) {
   // TODO: break up equality tests, these are hard to read, because you need to
   // keep the state of the parcelables in mind
@@ -265,6 +273,8 @@ TEST_F(AidlTest, ConfirmStructuredParcelables) {
   EXPECT_EQ(parcelable.arrayDefaultsTo123[2], 3);
   EXPECT_TRUE(parcelable.arrayDefaultsToEmpty.empty());
 
+  EXPECT_EQ(parcelable.defaultWithFoo, IntEnum::FOO);
+
   service->FillOutStructuredParcelable(&parcelable);
 
   ASSERT_EQ(parcelable.shouldContainThreeFs.size(), 3u);
@@ -316,16 +326,58 @@ TEST_F(AidlTest, EmptyParcelableHolder) {
   {
     ExtendableParcelable ep;
     ep.writeToParcel(&parcel);
-    auto emptyExt = ep.ext.getParcelable<MyExt>();
+    std::shared_ptr<MyExt> emptyExt;
+    ep.ext.getParcelable(&emptyExt);
     EXPECT_FALSE(emptyExt);
   }
   {
     parcel.setDataPosition(0);
     ExtendableParcelable ep;
     ep.readFromParcel(&parcel);
-    auto emptyExt = ep.ext.getParcelable<MyExt>();
+    std::shared_ptr<MyExt> emptyExt;
+    ep.ext.getParcelable(&emptyExt);
     EXPECT_FALSE(emptyExt);
   }
+}
+
+TEST_F(AidlTest, ParcelableHolderEqualityOperator) {
+  auto ph1 = android::os::ParcelableHolder(android::Parcelable::Stability::STABILITY_LOCAL);
+  auto ph2 = android::os::ParcelableHolder(android::Parcelable::Stability::STABILITY_LOCAL);
+  auto ph3 = android::os::ParcelableHolder(android::Parcelable::Stability::STABILITY_LOCAL);
+  auto ptr1 = std::make_shared<MyExt>();
+  auto ptr2 = std::make_shared<MyExt>();
+  ptr1->a = 1;
+  ptr1->b = "a";
+  ptr2->a = 1;
+  ptr2->b = "a";
+
+  ph1.setParcelable(ptr1);
+  ph2.setParcelable(ptr1);
+  ph3.setParcelable(ptr2);
+
+  // ParcelableHolder always uses its address as a comparison criterion.
+  EXPECT_TRUE(ph1 != ph2);
+  EXPECT_TRUE(ph2 != ph3);
+  EXPECT_TRUE(ph1 == ph1);
+  EXPECT_TRUE(ph2 == ph2);
+  EXPECT_TRUE(ph3 == ph3);
+
+  android::Parcel parcel;
+  ph1.writeToParcel(&parcel);
+  ph2.writeToParcel(&parcel);
+  ph3.writeToParcel(&parcel);
+  parcel.setDataPosition(0);
+
+  ph1.readFromParcel(&parcel);
+  ph2.readFromParcel(&parcel);
+  ph3.readFromParcel(&parcel);
+
+  // ParcelableHolder always uses its address as a comparison criterion.
+  EXPECT_TRUE(ph1 != ph2);
+  EXPECT_TRUE(ph2 != ph3);
+  EXPECT_TRUE(ph1 == ph1);
+  EXPECT_TRUE(ph2 == ph2);
+  EXPECT_TRUE(ph3 == ph3);
 }
 
 TEST_F(AidlTest, NativeExtednableParcelable) {
@@ -346,15 +398,18 @@ TEST_F(AidlTest, NativeExtednableParcelable) {
     ep.b = "a";
     ep.c = 42L;
 
-    EXPECT_TRUE(ep.ext.setParcelable(ext));
-    EXPECT_TRUE(ep.ext2.setParcelable(ext2));
+    EXPECT_TRUE(ep.ext.setParcelable(ext) == android::OK);
+    EXPECT_TRUE(ep.ext2.setParcelable(ext2) == android::OK);
 
-    auto extLike = ep.ext.getParcelable<MyExtLike>();
+    std::shared_ptr<MyExtLike> extLike;
+    ep.ext.getParcelable(&extLike);
     EXPECT_FALSE(extLike) << "The extension type must be MyExt, so it has to fail even though "
                              "MyExtLike has the same structure as MyExt.";
 
-    auto actualExt = ep.ext.getParcelable<MyExt>();
-    auto actualExt2 = ep.ext2.getParcelable<MyExt2>();
+    std::shared_ptr<MyExt> actualExt;
+    ep.ext.getParcelable(&actualExt);
+    std::shared_ptr<MyExt2> actualExt2;
+    ep.ext2.getParcelable(&actualExt2);
 
     EXPECT_TRUE(actualExt);
     EXPECT_TRUE(actualExt2);
@@ -370,14 +425,18 @@ TEST_F(AidlTest, NativeExtednableParcelable) {
     ExtendableParcelable ep;
     ep.readFromParcel(&parcel);
 
-    auto extLike = ep.ext.getParcelable<MyExtLike>();
+    std::shared_ptr<MyExtLike> extLike;
+    ep.ext.getParcelable(&extLike);
     EXPECT_FALSE(extLike) << "The extension type must be MyExt, so it has to fail even though "
                              "MyExtLike has the same structure as MyExt.";
 
-    auto actualExt = ep.ext.getParcelable<MyExt>();
-    auto actualExt2 = ep.ext2.getParcelable<MyExt2>();
+    std::shared_ptr<MyExt> actualExt;
+    ep.ext.getParcelable(&actualExt);
+    std::shared_ptr<MyExt2> actualExt2;
+    ep.ext2.getParcelable(&actualExt2);
 
-    auto emptyExt = ep.ext2.getParcelable<MyExt>();
+    std::shared_ptr<MyExt> emptyExt;
+    ep.ext2.getParcelable(&emptyExt);
     EXPECT_FALSE(emptyExt);
 
     EXPECT_TRUE(actualExt);

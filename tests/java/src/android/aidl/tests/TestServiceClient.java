@@ -21,6 +21,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.aidl.tests.ByteEnum;
@@ -550,6 +551,42 @@ public class TestServiceClient {
         }
     }
 
+    private void shouldBeTheSame(StructuredParcelable a, StructuredParcelable b) {
+        assertTrue(a.equals(b));
+        assertTrue(b.equals(a));
+        assertTrue(a.equals(a));
+        assertTrue(b.equals(b));
+        assertTrue(a.hashCode() == b.hashCode());
+    }
+
+    private void shouldBeDifferent(StructuredParcelable a, StructuredParcelable b) {
+        assertFalse(a.equals(b));
+        assertFalse(b.equals(a));
+        assertFalse(a.hashCode() == b.hashCode());
+    }
+
+    @Test
+    public void testStructurecParcelableEquality() {
+        StructuredParcelable p = new StructuredParcelable();
+        p.shouldContainThreeFs = new int[] {1, 2, 3};
+        p.shouldBeJerry = "Jerry";
+
+        StructuredParcelable p2 = new StructuredParcelable();
+        p2.shouldContainThreeFs = new int[] {1, 2, 3};
+        p2.shouldBeJerry = "Jerry";
+        shouldBeTheSame(p, p2);
+
+        StructuredParcelable p3 = new StructuredParcelable();
+        p3.shouldContainThreeFs = new int[] {1, 2, 3, 4};
+        p3.shouldBeJerry = "Jerry";
+        shouldBeDifferent(p, p3);
+
+        StructuredParcelable p4 = new StructuredParcelable();
+        p4.shouldContainThreeFs = new int[] {1, 2, 3};
+        p4.shouldBeJerry = "Tom";
+        shouldBeDifferent(p, p4);
+    }
+
     @Test
     public void testStrucuturedParcelable() throws RemoteException {
         final int kDesiredFValue = 17;
@@ -574,6 +611,7 @@ public class TestServiceClient {
         assertThat(p.doubleWithDefault, is(-3.14e17));
         assertThat(p.arrayDefaultsTo123, is(new int[] {1, 2, 3}));
         assertThat(p.arrayDefaultsToEmpty.length, is(0));
+        assertThat(p.defaultWithFoo, is(IntEnum.FOO));
 
         service.FillOutStructuredParcelable(p);
 
@@ -669,7 +707,8 @@ public class TestServiceClient {
             + "addString2: The quick brown fox jumps over the lazy dog., "
             + "shouldSetBit0AndBit2: 5, "
             + "u: android.aidl.tests.Union.ns([1, 2, 3]), "
-            + "shouldBeConstS1: android.aidl.tests.Union.s(a string constant in union)"
+            + "shouldBeConstS1: android.aidl.tests.Union.s(a string constant in union), "
+            + "defaultWithFoo: 1000"
             + "}";
         assertThat(p.toString(), is(expected));
     }

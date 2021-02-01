@@ -18,6 +18,7 @@
 
 #include "aidl_language.h"
 #include "aidl_typenames.h"
+#include "comments.h"
 #include "io_delegate.h"
 #include "logging.h"
 #include "options.h"
@@ -31,8 +32,8 @@ typedef yy_buffer_state* YY_BUFFER_STATE;
 
 class AidlToken {
  public:
-  AidlToken(const std::string& text, const std::string& comments)
-      : text_(text), comments_(comments) {}
+  AidlToken(const std::string& text, android::aidl::Comments comments)
+      : text_(text), comments_(std::move(comments)) {}
   ~AidlToken() = default;
 
   AidlToken(const AidlToken&) = delete;
@@ -41,7 +42,7 @@ class AidlToken {
   AidlToken& operator=(AidlToken&&) = delete;
 
   const std::string& GetText() const { return text_; }
-  const std::string& GetComments() const { return comments_; }
+  const android::aidl::Comments& GetComments() const { return comments_; }
 
   template <typename T>
   void Append(T&& text) {
@@ -50,8 +51,10 @@ class AidlToken {
 
  private:
   std::string text_;
-  std::string comments_;
+  android::aidl::Comments comments_;
 };
+
+using TypeResolver = std::function<bool(const AidlDocument*, AidlTypeSpecifier*)>;
 
 class Parser {
  public:
@@ -90,7 +93,7 @@ class Parser {
 
   const vector<AidlTypeSpecifier*>& GetUnresolvedTypespecs() const { return unresolved_typespecs_; }
 
-  bool Resolve();
+  bool Resolve(TypeResolver& type_resolver);
   void SetDocument(std::unique_ptr<AidlDocument>&& document) {
     // The parsed document is owned by typenames_. This parser object only has
     // a reference to it.

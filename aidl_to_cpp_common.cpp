@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include "ast_cpp.h"
+#include "comments.h"
 #include "logging.h"
 #include "os.h"
 
@@ -306,8 +307,9 @@ std::string GenerateEnumValues(const AidlEnumDeclaration& enum_decl,
   code << "#pragma clang diagnostic push\n";
   code << "#pragma clang diagnostic ignored \"-Wc++17-extensions\"\n";
   code << "template <>\n";
-  code << "constexpr inline std::array<" << fq_name << ", " << size << "> enum_values<" << fq_name
-       << "> = {\n";
+  code << "constexpr inline std::array<" << fq_name << ", " << size << ">";
+  GenerateDeprecated(code, enum_decl);
+  code << " enum_values<" << fq_name << "> = {\n";
   for (const auto& enumerator : enum_decl.GetEnumerators()) {
     code << "  " << fq_name << "::" << enumerator->GetName() << ",\n";
   }
@@ -421,6 +423,16 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable) {
   out << "}\n";
 }
 
+std::string GetDeprecatedAttribute(const AidlCommentable& type) {
+  if (auto deprecated = FindDeprecated(type.GetComments()); deprecated.has_value()) {
+    if (deprecated->note.empty()) {
+      return "__attribute__((deprecated))";
+    }
+    return "__attribute__((deprecated(" + QuotedEscape(deprecated->note) + ")))";
+  }
+  return "";
+}
+
 const vector<string> UnionWriter::headers{
     "cassert",      // __assert for logging
     "type_traits",  // std::is_same_v
@@ -438,13 +450,16 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
 
 void UnionWriter::PublicFields(CodeWriter& out) const {
   AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                             /* type_params= */ nullptr, /* comments= */ "");
+                             /* type_params= */ nullptr, Comments{});
   tag_type.Resolve(typenames);
 
   out << "enum Tag : " << name_of(tag_type, typenames) << " {\n";
   bool is_first = true;
   for (const auto& f : decl.GetFields()) {
-    out << "  " << f->GetName() << (is_first ? " = 0" : "") << ",  // " << f->Signature() << ";\n";
+    out << "  " << f->GetName();
+    GenerateDeprecated(out, *f);
+    if (is_first) out << " = 0";
+    out << ",  // " << f->Signature() << ";\n";
     is_first = false;
   }
   out << "};\n";
@@ -472,9 +487,9 @@ template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
 constexpr {name}(_Tp&& _arg)
     : _value(std::forward<_Tp>(_arg)) {{}}
 
-template <typename... _Tp>
-constexpr explicit {name}(_Tp&&... _args)
-    : _value(std::forward<_Tp>(_args)...) {{}}
+template <size_t _Np, typename... _Tp>
+constexpr explicit {name}(std::in_place_index_t<_Np>, _Tp&&... _args)
+    : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {{}}
 
 template <Tag _tag, typename... _Tp>
 static {name} make(_Tp&&... _args) {{
@@ -514,7 +529,7 @@ void set(_Tp&&... _args) {{
 
 void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx) const {
   AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                             /* type_params= */ nullptr, /* comments= */ "");
+                             /* type_params= */ nullptr, Comments{});
   tag_type.Resolve(typenames);
 
   const string tag = "_aidl_tag";
@@ -558,7 +573,7 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
 
 void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx) const {
   AidlTypeSpecifier tag_type(AIDL_LOCATION_HERE, "int", /* is_array= */ false,
-                             /* type_params= */ nullptr, /* comments= */ "");
+                             /* type_params= */ nullptr, Comments{});
   tag_type.Resolve(typenames);
 
   const string tag = "_aidl_tag";

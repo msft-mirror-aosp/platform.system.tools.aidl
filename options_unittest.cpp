@@ -24,6 +24,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "diagnostics.h"
+
+using android::aidl::DiagnosticID;
+using android::aidl::DiagnosticSeverity;
 using std::cerr;
 using std::endl;
 using std::string;
@@ -342,6 +346,103 @@ TEST(OptionsTests, ParsesCompileRustInvalid_RejectHeaderOut) {
   };
   EXPECT_EQ(false, GetOptions(arg_with_header_dir)->Ok());
   EXPECT_THAT(GetCapturedStderr(), testing::HasSubstr(expected_error));
+}
+
+TEST(OptionsTests, ParsesWarningEnableAll) {
+  const char* args[] = {
+      "aidl", "--lang=java", "-Weverything", "--out=out", "input.aidl", nullptr,
+  };
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  auto mapping = options->GetDiagnosticMapping();
+  EXPECT_EQ(DiagnosticSeverity::WARNING, mapping.Severity(DiagnosticID::interface_name));
+}
+
+TEST(OptionsTests, ParsesWarningEnableSpecificWarning) {
+  const char* args[] = {
+      "aidl", "--lang=java", "-Winterface-name", "--out=out", "input.aidl", nullptr,
+  };
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  auto mapping = options->GetDiagnosticMapping();
+  EXPECT_EQ(DiagnosticSeverity::WARNING, mapping.Severity(DiagnosticID::interface_name));
+}
+
+TEST(OptionsTests, ParsesWarningDisableSpecificWarning) {
+  const char* args[] = {
+      "aidl",      "--lang=java", "-Weverything", "-Wno-interface-name",
+      "--out=out", "input.aidl",  nullptr,
+  };
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  auto mapping = options->GetDiagnosticMapping();
+  EXPECT_EQ(DiagnosticSeverity::DISABLED, mapping.Severity(DiagnosticID::interface_name));
+}
+
+TEST(OptionsTests, ParsesWarningAsErrors) {
+  const char* args[] = {
+      "aidl", "--lang=java", "-Werror", "-Weverything", "--out=out", "input.aidl", nullptr,
+  };
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  auto mapping = options->GetDiagnosticMapping();
+  EXPECT_EQ(DiagnosticSeverity::ERROR, mapping.Severity(DiagnosticID::interface_name));
+}
+
+TEST(OptionsTests, RejectsUnknownWarning) {
+  const char* args[] = {
+      "aidl", "--lang=java", "-Wfoobar", "--out=out", "input.aidl", nullptr,
+  };
+  CaptureStderr();
+  auto options = GetOptions(args);
+  EXPECT_FALSE(options->Ok());
+  EXPECT_THAT(GetCapturedStderr(), testing::HasSubstr("unknown warning: foobar"));
+}
+
+TEST(OptionsTests, CheckApi) {
+  const char* args[] = {
+      "aidl", "--checkapi", "old", "new", nullptr,
+  };
+  CaptureStderr();
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  EXPECT_EQ("", GetCapturedStderr());
+  EXPECT_EQ(Options::Task::CHECK_API, options->GetTask());
+  EXPECT_EQ(Options::CheckApiLevel::COMPATIBLE, options->GetCheckApiLevel());
+}
+
+TEST(OptionsTests, CheckApiWithCompatible) {
+  const char* args[] = {
+      "aidl", "--checkapi=compatible", "old", "new", nullptr,
+  };
+  CaptureStderr();
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  EXPECT_EQ("", GetCapturedStderr());
+  EXPECT_EQ(Options::Task::CHECK_API, options->GetTask());
+  EXPECT_EQ(Options::CheckApiLevel::COMPATIBLE, options->GetCheckApiLevel());
+}
+
+TEST(OptionsTests, CheckApiWithEqual) {
+  const char* args[] = {
+      "aidl", "--checkapi=equal", "old", "new", nullptr,
+  };
+  CaptureStderr();
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  EXPECT_EQ("", GetCapturedStderr());
+  EXPECT_EQ(Options::Task::CHECK_API, options->GetTask());
+  EXPECT_EQ(Options::CheckApiLevel::EQUAL, options->GetCheckApiLevel());
+}
+
+TEST(OptionsTests, CheckApiWithUnknown) {
+  const char* args[] = {
+      "aidl", "--checkapi=unknown", "old", "new", nullptr,
+  };
+  CaptureStderr();
+  auto options = GetOptions(args);
+  EXPECT_FALSE(options->Ok());
+  EXPECT_THAT(GetCapturedStderr(), testing::HasSubstr("Unsupported --checkapi level: 'unknown'"));
 }
 
 }  // namespace aidl

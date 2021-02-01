@@ -25,7 +25,7 @@ use aidl_test_interface::aidl::android::aidl::tests::{
     IOldName, IntEnum::IntEnum, LongEnum::LongEnum, StructuredParcelable, Union,
 };
 use aidl_test_interface::binder::{self, Interface, ParcelFileDescriptor, SpIBinder};
-use aidl_test_versioned_interface_V1::aidl::android::aidl::versioned::tests::{
+use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
     IFooInterface, IFooInterface::BnFooInterface, IFooInterface::BpFooInterface, BazUnion::BazUnion,
 };
 use std::collections::HashMap;
@@ -116,6 +116,11 @@ macro_rules! impl_repeat_nullable {
 impl ITestService::ITestService for TestService {
     impl_repeat! {RepeatByte, i8}
     impl_reverse! {ReverseByte, u8}
+
+    fn UnimplementedMethod(&self, _: i32) -> binder::Result<i32> {
+        // Pretend this method hasn't been implemented
+        Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
+    }
 
     fn TestOneway(&self) -> binder::Result<()> {
         Err(binder::StatusCode::UNKNOWN_ERROR.into())

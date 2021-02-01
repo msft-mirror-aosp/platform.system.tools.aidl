@@ -17,12 +17,13 @@
 package android.aidl.tests;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import android.aidl.tests.Union;
 import android.aidl.tests.UnionWithFd;
+import android.aidl.tests.unions.EnumUnion;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
@@ -39,9 +40,9 @@ import org.junit.runners.JUnit4;
 public class UnionTests {
   @Test
   public void defaultConstructorInitsWithFirstField() {
-    Union u = new Union(); // `int[] ns`
-    assertThat(u.getTag(), is(Union.ns));
-    assertNull(u.getNs());
+    assertThat(new Union(), is(Union.ns(new int[] {}))); // int[] ns = {}
+    assertThat(
+        new EnumUnion(), is(EnumUnion.intEnum(IntEnum.FOO))); // IntEnum intEnum = IntEnum.FOO
   }
 
   @Test
@@ -96,5 +97,35 @@ public class UnionTests {
     assertTrue((v.describeContents() & Parcelable.CONTENTS_FILE_DESCRIPTOR) != 0);
 
     parcel.recycle();
+  }
+
+  private void shouldBeTheSame(Union a, Union b) {
+    assertTrue(a.equals(b));
+    assertTrue(b.equals(a));
+    assertTrue(a.equals(a));
+    assertTrue(b.equals(b));
+    assertTrue(a.hashCode() == b.hashCode());
+  }
+
+  private void shouldBeDifferent(Union a, Union b) {
+    assertFalse(a.equals(b));
+    assertFalse(b.equals(a));
+    assertFalse(a.hashCode() == b.hashCode());
+  }
+
+  @Test
+  public void equalsAndHashCode() {
+    // same tag, same value
+    shouldBeTheSame(Union.s("hello"), Union.s("hello"));
+
+    // different tag, same value
+    shouldBeDifferent(Union.m(10), Union.n(10));
+
+    // same tag, different value
+    shouldBeDifferent(Union.s("hello"), Union.s("world"));
+
+    // with array
+    shouldBeTheSame(Union.ns(new int[]{1, 2, 3}),Union.ns(new int[]{1, 2, 3}));
+    shouldBeDifferent(Union.ns(new int[]{1, 2, 3}), Union.ns(new int[]{1, 2, 4}));
   }
 }

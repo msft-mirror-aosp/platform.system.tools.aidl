@@ -229,11 +229,81 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel,
   out << "}\n";
 }
 
+void GenerateEqualsAndHashCode(CodeWriter& out, const AidlStructuredParcelable& parcel,
+                      const AidlTypenames&) {
+  out << "@Override\n";
+  out << "public boolean equals(Object other) {\n";
+  out.Indent();
+  out << "if (this == other) return true;\n";
+  out << "if (other == null) return false;\n";
+  out << "if (!(other instanceof " << parcel.GetName() << ")) return false;\n";
+  out << parcel.GetName() << " that = (" << parcel.GetName() << ")other;\n";
+  for (const auto& field : parcel.GetFields()) {
+    out << "if (!java.util.Objects.deepEquals(" << field->GetName() << ", that." << field->GetName()
+        << ")) return false;\n";
+  }
+  out << "return true;\n";
+  out.Dedent();
+  out << "}\n";
+  out << "\n";
+  out << "@Override\n";
+  out << "public int hashCode() {\n";
+  out.Indent();
+  out << "return java.util.Arrays.deepHashCode(java.util.Arrays.asList(";
+  std::vector<std::string> names;
+  for (const auto& field : parcel.GetFields()) {
+    names.push_back(field->GetName());
+  }
+  out << android::base::Join(names, ", ") << ").toArray());\n";
+  out.Dedent();
+  out << "}\n";
+}
+
+void GenerateEqualsAndHashCode(CodeWriter& out, const AidlUnionDecl& decl,
+                                 const AidlTypenames&) {
+  out << "@Override\n";
+  out << "public boolean equals(Object other) {\n";
+  out.Indent();
+  out << "if (this == other) return true;\n";
+  out << "if (other == null) return false;\n";
+  out << "if (!(other instanceof " << decl.GetName() << ")) return false;\n";
+  out << decl.GetName() << " that = (" << decl.GetName() << ")other;\n";
+  out << "if (_tag != that._tag) return false;\n";
+  out << "if (!java.util.Objects.deepEquals(_value, that._value)) return false;\n";
+  out << "return true;\n";
+  out.Dedent();
+  out << "}\n";
+  out << "\n";
+  out << "@Override\n";
+  out << "public int hashCode() {\n";
+  out.Indent();
+  out << "return java.util.Arrays.deepHashCode(java.util.Arrays.asList(_tag, _value).toArray());\n";
+  out.Dedent();
+  out << "}\n";
+  out << "\n";
+}
+
 }  // namespace
 
 namespace android {
 namespace aidl {
 namespace java {
+
+std::string GenerateComments(const AidlCommentable& node) {
+  std::string comments = FormatCommentsForJava(node.GetComments());
+  if (!comments.empty() && comments.back() != '\n') {
+    comments += '\n';
+  }
+  return comments;
+}
+
+std::string GenerateAnnotations(const AidlNode& node) {
+  std::string result;
+  for (const auto& a : JavaAnnotationsFor(node)) {
+    result += a + "\n";
+  }
+  return result;
+}
 
 bool generate_java_interface(const string& filename, const AidlInterface* iface,
                              const AidlTypenames& typenames, const IoDelegate& io_delegate,
@@ -306,12 +376,12 @@ bool generate_java(const std::string& filename, const AidlDefinedType* defined_t
 std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
     const AidlStructuredParcelable* parcel, const AidlTypenames& typenames) {
   auto parcel_class = std::make_unique<Class>();
-  parcel_class->comment = parcel->GetComments();
+  parcel_class->comment = GenerateComments(*parcel);
   parcel_class->modifiers = PUBLIC;
   parcel_class->what = Class::CLASS;
   parcel_class->type = parcel->GetCanonicalName();
   parcel_class->interfaces.push_back("android.os.Parcelable");
-  parcel_class->annotations = generate_java_annotations(*parcel);
+  parcel_class->annotations = JavaAnnotationsFor(*parcel);
 
   if (parcel->IsGeneric()) {
     parcel_class->type += "<" + base::Join(parcel->GetTypeParameters(), ",") + ">";
@@ -319,10 +389,8 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
 
   for (const auto& variable : parcel->GetFields()) {
     std::ostringstream out;
-    out << variable->GetType().GetComments() << "\n";
-    for (const auto& a : generate_java_annotations(variable->GetType())) {
-      out << a << "\n";
-    }
+    out << GenerateComments(*variable);
+    out << GenerateAnnotations(*variable);
     out << "public ";
 
     if (variable->GetType().GetName() == "ParcelableHolder" || parcel->IsJavaOnlyImmutable()) {
@@ -572,6 +640,12 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
     parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(to_string));
   }
 
+  if (parcel->JavaDerive("equals")) {
+    string to_string;
+    GenerateEqualsAndHashCode(*CodeWriter::ForString(&to_string), *parcel, typenames);
+    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(to_string));
+  }
+
   string describe_contents;
   GenerateParcelableDescribeContents(*CodeWriter::ForString(&describe_contents), *parcel,
                                      typenames);
@@ -588,14 +662,13 @@ void generate_enum(const CodeWriterPtr& code_writer, const AidlEnumDeclaration* 
       " */\n");
 
   code_writer->Write("package %s;\n", enum_decl->GetPackage().c_str());
-  code_writer->Write("%s\n", enum_decl->GetComments().c_str());
-  for (const std::string& annotation : generate_java_annotations(*enum_decl)) {
-    code_writer->Write("%s\n", annotation.c_str());
-  }
+  (*code_writer) << GenerateComments(*enum_decl);
+  (*code_writer) << GenerateAnnotations(*enum_decl);
   code_writer->Write("public @interface %s {\n", enum_decl->GetName().c_str());
   code_writer->Indent();
   for (const auto& enumerator : enum_decl->GetEnumerators()) {
-    code_writer->Write("%s", enumerator->GetComments().c_str());
+    (*code_writer) << GenerateComments(*enumerator);
+    (*code_writer) << GenerateAnnotations(*enumerator);
     code_writer->Write(
         "public static final %s %s = %s;\n",
         JavaSignatureOf(enum_decl->GetBackingType(), typenames).c_str(),
@@ -609,7 +682,7 @@ void generate_enum(const CodeWriterPtr& code_writer, const AidlEnumDeclaration* 
 void generate_union(CodeWriter& out, const AidlUnionDecl* decl, const AidlTypenames& typenames) {
   const string tag_type = "int";
   const AidlTypeSpecifier tag_type_specifier(AIDL_LOCATION_HERE, tag_type, false /* isArray */,
-                                             nullptr /* type_params */, "");
+                                             nullptr /* type_params */, Comments{});
   const string clazz = decl->GetName();
 
   out << "/*\n";
@@ -618,10 +691,8 @@ void generate_union(CodeWriter& out, const AidlUnionDecl* decl, const AidlTypena
 
   out << "package " + decl->GetPackage() + ";\n";
   out << "\n";
-  out << decl->GetComments() << "\n";
-  for (const auto& annotation : generate_java_annotations(*decl)) {
-    out << annotation << "\n";
-  }
+  out << GenerateComments(*decl);
+  out << GenerateAnnotations(*decl);
 
   out << "public final class " + clazz + " implements android.os.Parcelable {\n";
   out.Indent();
@@ -678,12 +749,14 @@ void generate_union(CodeWriter& out, const AidlUnionDecl* decl, const AidlTypena
 
   // value ctor, getter, setter(for mutable) for each field
   for (const auto& variable : decl->GetFields()) {
+    out << "// " + variable->Signature() + ";\n\n";
+
     auto var_name = variable->GetName();
     auto var_type = JavaSignatureOf(variable->GetType(), typenames);
 
-    out << "// " + variable->Signature() + ";\n";
     // value ctor
-    out << variable->GetType().GetComments() + "\n";
+    out << GenerateComments(*variable);
+    out << GenerateAnnotations(*variable);
     out << "public static " + clazz + " " + var_name + "(" + var_type + " _value) {\n";
     out.Indent();
     out << "return new " + clazz + "(" + var_name + ", _value);\n";
@@ -825,6 +898,10 @@ void generate_union(CodeWriter& out, const AidlUnionDecl* decl, const AidlTypena
     GenerateToString(out, *decl, typenames);
   }
 
+  if (decl->JavaDerive("equals")) {
+    GenerateEqualsAndHashCode(out, *decl, typenames);
+  }
+
   // helper: _assertTag
   out << "private void _assertTag(" + tag_type + " tag) {\n";
   out << "  if (getTag() != tag) {\n";
@@ -886,26 +963,47 @@ std::vector<std::string> generate_java_annotations(const AidlAnnotatable& a) {
                         generate_java_unsupportedappusage_parameters(*unsupported_app_usage));
   }
 
-  auto strip_double_quote = [](const AidlTypeSpecifier& type,
-                               const std::string& raw_value) -> std::string {
-    if (!StartsWith(raw_value, "\"") || !EndsWith(raw_value, "\"")) {
-      AIDL_FATAL(type) << "Java passthrough annotation " << raw_value << " is not properly quoted";
-      return "";
-    }
-    return raw_value.substr(1, raw_value.size() - 2);
-  };
-
   for (const auto& annotation : a.GetAnnotations()) {
     if (annotation.GetType() == AidlAnnotation::Type::JAVA_PASSTHROUGH) {
-      for (const auto& name_and_param : annotation.AnnotationParams(strip_double_quote)) {
-        if (name_and_param.first == "annotation") {
-          result.emplace_back(name_and_param.second);
-          break;
-        }
-      }
+      result.emplace_back(annotation.ParamValue<std::string>("annotation").value());
     }
   }
 
+  return result;
+}
+
+struct JavaAnnotationsVisitor : AidlVisitor {
+  JavaAnnotationsVisitor(std::vector<std::string>& result) : result(result) {}
+  void Visit(const AidlTypeSpecifier& t) override { result = generate_java_annotations(t); }
+  void Visit(const AidlInterface& t) override { ForDefinedType(t); }
+  void Visit(const AidlParcelable& t) override { ForDefinedType(t); }
+  void Visit(const AidlStructuredParcelable& t) override { ForDefinedType(t); }
+  void Visit(const AidlUnionDecl& t) override { ForDefinedType(t); }
+  void Visit(const AidlEnumDeclaration& t) override { ForDefinedType(t); }
+  void Visit(const AidlMethod& m) override { ForMember(m); }
+  void Visit(const AidlConstantDeclaration& c) override { ForMember(c); }
+  void Visit(const AidlVariableDeclaration& v) override { ForMember(v); }
+  std::vector<std::string>& result;
+
+  void ForDefinedType(const AidlDefinedType& t) {
+    result = generate_java_annotations(t);
+    if (t.IsDeprecated()) {
+      result.push_back("@Deprecated");
+    }
+  }
+  template <typename Member>
+  void ForMember(const Member& t) {
+    result = generate_java_annotations(t.GetType());
+    if (t.IsDeprecated()) {
+      result.push_back("@Deprecated");
+    }
+  }
+};
+
+std::vector<std::string> JavaAnnotationsFor(const AidlNode& a) {
+  std::vector<std::string> result;
+  JavaAnnotationsVisitor visitor{result};
+  a.DispatchVisit(visitor);
   return result;
 }
 

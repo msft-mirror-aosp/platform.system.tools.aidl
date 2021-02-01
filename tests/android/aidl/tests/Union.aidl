@@ -17,10 +17,10 @@
 package android.aidl.tests;
 import android.aidl.tests.ByteEnum;
 
-@JavaDerive(toString=true)
+@JavaDerive(toString=true, equals=true)
 @RustDerive(Clone=true, PartialEq=true)
 union Union {
-    int[] ns;
+    int[] ns = {};
     int n;
     int m;
     @utf8InCpp String s;
@@ -30,4 +30,3 @@ union Union {
 
     const @utf8InCpp String S1 = "a string constant in union";
 }
-

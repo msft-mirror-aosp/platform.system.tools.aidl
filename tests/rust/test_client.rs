@@ -19,10 +19,13 @@
 use aidl_test_interface::aidl::android::aidl::tests::INewName::{self, BpNewName};
 use aidl_test_interface::aidl::android::aidl::tests::IOldName::{self, BpOldName};
 use aidl_test_interface::aidl::android::aidl::tests::ITestService::{
-    self, BpTestService, ITestServiceDefault,
+    self, BpTestService, ITestServiceDefault, ITestServiceDefaultRef,
 };
 use aidl_test_interface::aidl::android::aidl::tests::{
     ByteEnum::ByteEnum, IntEnum::IntEnum, LongEnum::LongEnum, StructuredParcelable, Union,
+};
+use aidl_test_interface::aidl::android::aidl::tests::unions::{
+    EnumUnion::EnumUnion,
 };
 use aidl_test_interface::binder;
 use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
@@ -382,8 +385,10 @@ test_nullable! {
 
 #[test]
 fn test_nullable_parcelable() {
-    let mut value = StructuredParcelable::StructuredParcelable::default();
-    value.f = 42;
+    let value = StructuredParcelable::StructuredParcelable{
+        f: 42,
+        ..Default::default()
+    };
 
     let service = get_test_service();
     let value = Some(value);
@@ -535,6 +540,12 @@ fn test_parcelable() {
     assert_eq!(parcelable.shouldBeConstS1, Some(Union::Union::S(Union::S1.to_string())))
 }
 
+#[test]
+fn test_unions() {
+    assert_eq!(Union::Union::default(), Union::Union::Ns(vec![]));
+    assert_eq!(EnumUnion::default(), EnumUnion::IntEnum(IntEnum::FOO));
+}
+
 const EXPECTED_ARG_VALUE: i32 = 100;
 const EXPECTED_RETURN_VALUE: i32 = 200;
 
@@ -542,7 +553,7 @@ struct TestDefaultImpl;
 
 impl binder::Interface for TestDefaultImpl {}
 
-impl ITestService::ITestService for TestDefaultImpl {
+impl ITestServiceDefault for TestDefaultImpl {
     fn UnimplementedMethod(&self, arg: i32) -> binder::Result<i32> {
         assert_eq!(arg, EXPECTED_ARG_VALUE);
         Ok(EXPECTED_RETURN_VALUE)
@@ -552,7 +563,7 @@ impl ITestService::ITestService for TestDefaultImpl {
 #[test]
 fn test_default_impl() {
     let service = get_test_service();
-    let di: ITestServiceDefault = Some(Arc::new(TestDefaultImpl));
+    let di: ITestServiceDefaultRef = Some(Arc::new(TestDefaultImpl));
     <BpTestService as ITestService::ITestService>::setDefaultImpl(di);
 
     let result = service.UnimplementedMethod(EXPECTED_ARG_VALUE);
@@ -642,29 +653,28 @@ fn test_renamed_interface_new_as_new() {
     });
 }
 
-// FIXME: these tests are disabled because they currently fail; the reason
-// is that even though IOldName and INewName are identical and have the
-// same descriptors, they get different classes from `Remotable::get_class`
-// so `into_interface` fails.
-//
-// #[test]
-// fn test_renamed_interface_old_as_new() {
-//     test_renamed_interface(|old_name, _| {
-//         let new_name = old_name.as_binder().into_interface::<dyn INewName::INewName>();
-//         assert!(new_name.is_ok());
-//
-//         let real_name = new_name.unwrap().RealName();
-//         assert_eq!(real_name.as_ref().map(String::as_str), Ok("OldName"));
-//     });
-// }
-//
-// #[test]
-// fn test_renamed_interface_new_as_old() {
-//     test_renamed_interface(|_, new_name| {
-//         let old_name = new_name.as_binder().into_interface::<dyn IOldName::IOldName>();
-//         assert!(old_name.is_ok());
-//
-//         let real_name = old_name.unwrap().RealName();
-//         assert_eq!(real_name.as_ref().map(String::as_str), Ok("NewName"));
-//     });
-// }
+#[test]
+fn test_renamed_interface_old_as_new() {
+    test_renamed_interface(|old_name, _| {
+        let new_name = old_name
+            .as_binder()
+            .into_interface::<dyn INewName::INewName>();
+        assert!(new_name.is_ok());
+
+        let real_name = new_name.unwrap().RealName();
+        assert_eq!(real_name.as_ref().map(String::as_str), Ok("OldName"));
+    });
+}
+
+#[test]
+fn test_renamed_interface_new_as_old() {
+    test_renamed_interface(|_, new_name| {
+        let old_name = new_name
+            .as_binder()
+            .into_interface::<dyn IOldName::IOldName>();
+        assert!(old_name.is_ok());
+
+        let real_name = old_name.unwrap().RealName();
+        assert_eq!(real_name.as_ref().map(String::as_str), Ok("NewName"));
+    });
+}

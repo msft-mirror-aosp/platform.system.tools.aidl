@@ -57,6 +57,7 @@ class AidlTypenames final {
  public:
   AidlTypenames() = default;
   bool AddDocument(std::unique_ptr<AidlDocument> doc);
+  const AidlDocument* GetDocumentFor(const AidlDefinedType* type) const;
   const std::vector<std::unique_ptr<AidlDocument>>& AllDocuments() const { return documents_; }
   const AidlDocument& MainDocument() const;
   bool AddPreprocessedType(unique_ptr<AidlDefinedType> type);
@@ -89,6 +90,8 @@ class AidlTypenames final {
   const AidlParcelable* GetParcelable(const AidlTypeSpecifier& type) const;
   // Iterates over all defined and then preprocessed types
   void IterateTypes(const std::function<void(const AidlDefinedType&)>& body) const;
+  // Fixes AST after type/ref resolution before validation
+  bool Autofill() const;
 
  private:
   struct DefinedImplResult {

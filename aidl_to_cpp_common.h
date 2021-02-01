@@ -85,6 +85,15 @@ void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable);
 void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable);
 
+std::string GetDeprecatedAttribute(const AidlCommentable& type);
+
+template <typename Stream>
+void GenerateDeprecated(Stream& out, const AidlCommentable& type) {
+  if (auto deprecated = GetDeprecatedAttribute(type); !deprecated.empty()) {
+    out << " " + deprecated;
+  }
+}
+
 struct ParcelWriterContext {
   string status_type;
   string status_ok;
