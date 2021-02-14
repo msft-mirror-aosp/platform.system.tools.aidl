@@ -1,13 +1,11 @@
 #pragma once
 
+#include <android/binder_to_string.h>
 #include <binder/Parcel.h>
 #include <binder/ParcelFileDescriptor.h>
 #include <binder/Status.h>
 #include <cassert>
-#include <codecvt>
 #include <cstdint>
-#include <locale>
-#include <sstream>
 #include <type_traits>
 #include <utility>
 #include <utils/String16.h>
@@ -63,9 +61,9 @@ public:
   constexpr UnionWithFd(_Tp&& _arg)
       : _value(std::forward<_Tp>(_arg)) {}
 
-  template <typename... _Tp>
-  constexpr explicit UnionWithFd(_Tp&&... _args)
-      : _value(std::forward<_Tp>(_args)...) {}
+  template <size_t _Np, typename... _Tp>
+  constexpr explicit UnionWithFd(std::in_place_index_t<_Np>, _Tp&&... _args)
+      : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {}
 
   template <Tag _tag, typename... _Tp>
   static UnionWithFd make(_Tp&&... _args) {
@@ -104,21 +102,12 @@ public:
     static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.UnionWithFd");
     return DESCIPTOR;
   }
-  template <typename _T> class _has_toString {
-    template <typename _U> static std::true_type __has_toString(decltype(&_U::toString));
-    template <typename _U> static std::false_type __has_toString(...);
-    public: enum { value = decltype(__has_toString<_T>(nullptr))::value };
-  };
-  template <typename _T> inline static std::string _call_toString(const _T& t) {
-    if constexpr (_has_toString<_T>::value) return t.toString();
-    return "{no toString() implemented}";
-  }
   inline std::string toString() const {
     std::ostringstream os;
     os << "UnionWithFd{";
     switch (getTag()) {
-    case num: os << "num: " << std::to_string(get<num>()); break;
-    case pfd: os << "pfd: " << ""; break;
+    case num: os << "num: " << ::android::internal::ToString(get<num>()); break;
+    case pfd: os << "pfd: " << ::android::internal::ToString(get<pfd>()); break;
     }
     os << "}";
     return os.str();
