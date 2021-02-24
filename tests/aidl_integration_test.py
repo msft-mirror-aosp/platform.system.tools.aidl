@@ -3,6 +3,7 @@
 import pipes
 import re
 import subprocess
+import sys
 import unittest
 
 BITNESS_32 = ("", "32")
@@ -128,9 +129,9 @@ class JavaServer:
         self.host.run('killall ' + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness),
                       ignore_status=True)
     def run(self):
-        return self.host.run('CLASSPATH=/data/framework/aidl_test_java.jar '
+        return self.host.run('CLASSPATH=/data/framework/aidl_test_java_service.jar '
                              + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
-                             ' /data/framework android.aidl.tests.TestServiceServer',
+                             ' /data/framework android.aidl.service.TestServiceServer',
                              background=True)
 
 class JavaClient:
@@ -142,7 +143,7 @@ class JavaClient:
         self.host.run('killall ' + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness),
                       ignore_status=True)
     def run(self):
-        result = self.host.run('CLASSPATH=/data/framework/aidl_test_java.jar '
+        result = self.host.run('CLASSPATH=/data/framework/aidl_test_java_client.jar '
                                + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
                                ' /data/framework android.aidl.tests.AidlJavaTests')
         print(result.printable_string())
@@ -226,4 +227,4 @@ if __name__ == '__main__':
             setattr(TestAidl, test_name, test)
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestAidl)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    sys.exit(not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful())

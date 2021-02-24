@@ -55,15 +55,18 @@ func init() {
 	pctx.SourcePathVariable("aidlToJniCmd", "system/tools/aidl/build/aidl_to_jni.py")
 	pctx.SourcePathVariable("aidlRustGlueCmd", "system/tools/aidl/build/aidl_rust_glue.py")
 	android.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
-	android.PreArchMutators(func(ctx android.RegisterMutatorsContext) {
-		ctx.BottomUp("checkImports", checkImports).Parallel()
-		ctx.TopDown("createAidlInterface", createAidlInterfaceMutator).Parallel()
-	})
+	android.PreArchMutators(registerPreDepsMutators)
+	android.PreArchBp2BuildMutators(registerPreDepsMutators)
 	android.PostDepsMutators(func(ctx android.RegisterMutatorsContext) {
 		ctx.BottomUp("checkUnstableModule", checkUnstableModuleMutator).Parallel()
 		ctx.BottomUp("recordVersions", recordVersions).Parallel()
 		ctx.BottomUp("checkDuplicatedVersions", checkDuplicatedVersions).Parallel()
 	})
+}
+
+func registerPreDepsMutators(ctx android.RegisterMutatorsContext) {
+	ctx.BottomUp("checkImports", checkImports).Parallel()
+	ctx.TopDown("createAidlInterface", createAidlInterfaceMutator).Parallel()
 }
 
 func createAidlInterfaceMutator(mctx android.TopDownMutatorContext) {
@@ -385,7 +388,7 @@ type aidlInterfaceProperties struct {
 		// Backend of the compiler generating code for Rust clients.
 		// When enabled, this creates a target called "<name>-rust".
 		Rust struct {
-			CommonNativeBackendProperties
+			CommonBackendProperties
 		}
 	}
 
@@ -613,8 +616,25 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 			mctx.PropertyErrorf("versions", "cannot have versions for an unstable interface")
 			return
 		}
+		if i.properties.Stability != nil {
+			mctx.ModuleErrorf("unstable:true and stability:%q cannot happen at the same time", i.properties.Stability)
+			return
+		}
 	}
-	needToCheckUnstableVersion := sdkIsFinal && i.hasVersion() && i.Owner() == ""
+
+	// Two different types of 'unstable' here
+	// - 'unstable: true' meaning the module is never stable
+	// - current unfrozen ToT version
+	//
+	// OEM branches may remove 'i.Owner()' here to apply the check to all interfaces, in
+	// addition to core platform interfaces. Otherwise, we rely on vts_treble_vintf_vendor_test.
+	requireFrozenVersion := !unstable && sdkIsFinal && i.Owner() == ""
+
+	// surface error early, main check is via checkUnstableModuleMutator
+	if requireFrozenVersion && !i.hasVersion() {
+		mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false, PLATFORM_VERSION_CODENAME is REL, and \"owner\" property is missing.")
+	}
+
 	versions := i.properties.Versions
 	nextVersion := i.nextVersion()
 	shouldGenerateLangBackendMap := map[string]bool{
@@ -628,14 +648,14 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 			continue
 		}
 		libs = append(libs, addLibrary(mctx, i, nextVersion, lang))
-		if !unstable && needToCheckUnstableVersion {
+		if requireFrozenVersion {
 			addUnstableModule(mctx, libs[len(libs)-1])
 		}
 		for _, version := range versions {
 			libs = append(libs, addLibrary(mctx, i, version, lang))
 		}
 		// TODO(b/150578172) remove those modules when every module specify its version.
-		if !sdkIsFinal {
+		if !sdkIsFinal && i.isAllowedListedModule() {
 			if !unstable {
 				libs = append(libs, addLibrary(mctx, i, "", lang))
 			}
@@ -643,20 +663,14 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		}
 	}
 
-	if proptools.Bool(i.properties.Unstable) {
+	if unstable {
 		apiDirRoot := filepath.Join(aidlApiDir, i.ModuleBase.Name())
 		aidlDumps, _ := mctx.GlobWithDeps(filepath.Join(mctx.ModuleDir(), apiDirRoot, "**/*.aidl"), nil)
 		if len(aidlDumps) != 0 {
 			mctx.PropertyErrorf("unstable", "The interface is configured as unstable, "+
 				"but API dumps exist under %q. Unstable interface cannot have dumps.", apiDirRoot)
 		}
-		if i.properties.Stability != nil {
-			mctx.ModuleErrorf("unstable:true and stability:%q cannot happen at the same time", i.properties.Stability)
-		}
 	} else {
-		if sdkIsFinal && !i.hasVersion() && i.Owner() == "" {
-			mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false, PLATFORM_VERSION_CODENAME is REL, and \"owner\" property is missing.")
-		}
 		addApiModule(mctx, i)
 	}
 
@@ -674,6 +688,21 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 	i.internalModuleNames = libs
 }
 
+func (i *aidlInterface) commonBackendProperties(lang string) CommonBackendProperties {
+	switch lang {
+	case langCpp:
+		return i.properties.Backend.Cpp.CommonBackendProperties
+	case langJava:
+		return i.properties.Backend.Java.CommonBackendProperties
+	case langNdk, langNdkPlatform:
+		return i.properties.Backend.Ndk.CommonBackendProperties
+	case langRust:
+		return i.properties.Backend.Rust.CommonBackendProperties
+	default:
+		panic(fmt.Errorf("unsupported language backend %q\n", lang))
+	}
+}
+
 // srcsVisibility gives the value for the `visibility` property of the source gen module for the
 // language backend `lang`. By default, the source gen module is not visible to the clients of
 // aidl_interface (because it's an impl detail), but when `backend.<backend>.srcs_available` is set
@@ -682,20 +711,7 @@ func srcsVisibility(mctx android.LoadHookContext, lang string) []string {
 	if a, ok := mctx.Module().(*aidlInterface); !ok {
 		panic(fmt.Errorf("%q is not aidl_interface", mctx.Module().String()))
 	} else {
-		var prop *bool
-		switch lang {
-		case langCpp:
-			prop = a.properties.Backend.Cpp.Srcs_available
-		case langJava:
-			prop = a.properties.Backend.Java.Srcs_available
-		case langNdk, langNdkPlatform:
-			prop = a.properties.Backend.Ndk.Srcs_available
-		case langRust:
-			prop = a.properties.Backend.Rust.Srcs_available
-		default:
-			panic(fmt.Errorf("unsupported language backend %q\n", lang))
-		}
-		if proptools.Bool(prop) {
+		if proptools.Bool(a.commonBackendProperties(lang).Srcs_available) {
 			// Returning nil so that the visibility of the source module defaults to the
 			// the package-level default visibility. This way, the source module gets
 			// the same visibility as the library modules.
@@ -782,4 +798,16 @@ func lookupInterface(name string, config android.Config) *aidlInterface {
 		}
 	}
 	return nil
+}
+
+// TODO(b/150578172) remove exception when every module specify its version.
+func (i *aidlInterface) isAllowedListedModule() bool {
+	allowlist := []string{
+		"networkstack-aidl-interfaces",
+		"netd_aidl_interface",
+		"ipmemorystore-aidl-interfaces",
+		"dnsresolver_aidl_interface",
+		"netd_event_listener_interface",
+	}
+	return android.InList(i.ModuleBase.Name(), allowlist)
 }

@@ -411,12 +411,6 @@ std::string AidlAnnotatable::GetDescriptor() const {
   return "";
 }
 
-void AidlAnnotatable::DumpAnnotations(CodeWriter* writer) const {
-  if (annotations_.empty()) return;
-
-  writer->Write("%s\n", AidlAnnotatable::ToString().c_str());
-}
-
 bool AidlAnnotatable::CheckValid(const AidlTypenames&) const {
   for (const auto& annotation : GetAnnotations()) {
     if (!annotation.CheckValid()) {
@@ -512,14 +506,20 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
     return false;
   }
   if (IsGeneric()) {
-    const string& type_name = GetName();
+    const auto& types = GetTypeParameters();
+    for (const auto& arg : types) {
+      if (!arg->CheckValid(typenames)) {
+        return false;
+      }
+    }
 
-    auto& types = GetTypeParameters();
+    const string& type_name = GetName();
     // TODO(b/136048684) Disallow to use primitive types only if it is List or Map.
     if (type_name == "List" || type_name == "Map") {
       if (std::any_of(types.begin(), types.end(), [&](auto& type_ptr) {
-            return (typenames.GetEnumDeclaration(*type_ptr)) ||
-                   AidlTypenames::IsPrimitiveTypename(type_ptr->GetName());
+            return !type_ptr->IsArray() &&
+                   (typenames.GetEnumDeclaration(*type_ptr) ||
+                    AidlTypenames::IsPrimitiveTypename(type_ptr->GetName()));
           })) {
         AIDL_ERROR(this) << "A generic type cannot have any primitive type parameters.";
         return false;
@@ -538,6 +538,12 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
         return false;
       }
       const AidlTypeSpecifier& contained_type = *GetTypeParameters()[0];
+      if (contained_type.IsArray()) {
+        AIDL_ERROR(this)
+            << "List of arrays is not supported. List<T> supports parcelable/union, String, "
+               "IBinder, and ParcelFileDescriptor.";
+        return false;
+      }
       const string& contained_type_name = contained_type.GetName();
       if (AidlTypenames::IsBuiltinTypename(contained_type_name)) {
         if (contained_type_name != "String" && contained_type_name != "IBinder" &&
@@ -562,7 +568,7 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
         return false;
       }
       if (num_params == 2) {
-        const string& key_type = GetTypeParameters()[0]->GetName();
+        const string& key_type = GetTypeParameters()[0]->Signature();
         if (key_type != "String") {
           AIDL_ERROR(this) << "The type of key in map must be String, but it is "
                            << "'" << key_type << "'";
@@ -766,23 +772,6 @@ bool AidlCommentable::IsDeprecated() const {
   return android::aidl::FindDeprecated(GetComments()).has_value();
 }
 
-// Dumps comment only if its has meaningful tags.
-void AidlCommentable::DumpComments(CodeWriter& out) const {
-  using namespace android::aidl;
-  const auto hidden = IsHidden();
-  const auto deprecated = FindDeprecated(GetComments());
-  if (hidden || deprecated) {
-    out << "/**\n";
-    if (hidden) {
-      out << " * @hide\n";
-    }
-    if (deprecated) {
-      out << " * @deprecated " << deprecated->note << "\n";
-    }
-    out << " */\n";
-  }
-}
-
 AidlMember::AidlMember(const AidlLocation& location, const Comments& comments)
     : AidlCommentable(location, comments) {}
 
@@ -903,26 +892,6 @@ std::string AidlDefinedType::GetCanonicalName() const {
   return GetPackage() + "." + GetName();
 }
 
-void AidlDefinedType::DumpHeader(CodeWriter* writer) const {
-  DumpComments(*writer);
-  DumpAnnotations(writer);
-}
-
-void AidlDefinedType::DumpMembers(CodeWriter& out) const {
-  for (const auto& method : GetMethods()) {
-    method->DumpComments(out);
-    out << method->ToString() << ";\n";
-  }
-  for (const auto& field : GetFields()) {
-    field->DumpComments(out);
-    out << field->ToString() << ";\n";
-  }
-  for (const auto& constdecl : GetConstantDeclarations()) {
-    constdecl->DumpComments(out);
-    out << constdecl->ToString() << ";\n";
-  }
-}
-
 bool AidlDefinedType::CheckValidWithMembers(const AidlTypenames& typenames) const {
   bool success = true;
 
@@ -1028,25 +997,11 @@ bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
   return true;
 }
 
-void AidlParcelable::Dump(CodeWriter* writer) const {
-  DumpHeader(writer);
-  writer->Write("parcelable %s ;\n", GetName().c_str());
-}
-
 AidlStructuredParcelable::AidlStructuredParcelable(
     const AidlLocation& location, const std::string& name, const std::string& package,
     const Comments& comments, std::vector<std::string>* type_params,
     std::vector<std::unique_ptr<AidlMember>>* members)
     : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params, members) {}
-
-void AidlStructuredParcelable::Dump(CodeWriter* writer) const {
-  DumpHeader(writer);
-  writer->Write("parcelable %s {\n", GetName().c_str());
-  writer->Indent();
-  DumpMembers(*writer);
-  writer->Dedent();
-  writer->Write("}\n");
-}
 
 bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
   if (!AidlParcelable::CheckValid(typenames)) {
@@ -1078,6 +1033,15 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
 // TODO: we should treat every backend all the same in future.
 bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                                    Options::Language lang) const {
+  if (IsGeneric()) {
+    const auto& types = GetTypeParameters();
+    for (const auto& arg : types) {
+      if (!arg->LanguageSpecificCheckValid(typenames, lang)) {
+        return false;
+      }
+    }
+  }
+
   if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
       GetName() == "IBinder") {
     AIDL_ERROR(this) << "The " << to_string(lang) << " backend does not support array of IBinder";
@@ -1275,32 +1239,11 @@ bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames) const {
   return success;
 }
 
-void AidlEnumDeclaration::Dump(CodeWriter* writer) const {
-  DumpHeader(writer);
-  writer->Write("enum %s {\n", GetName().c_str());
-  writer->Indent();
-  for (const auto& enumerator : GetEnumerators()) {
-    writer->Write("%s = %s,\n", enumerator->GetName().c_str(),
-                  enumerator->ValueString(GetBackingType(), AidlConstantValueDecorator).c_str());
-  }
-  writer->Dedent();
-  writer->Write("}\n");
-}
-
 AidlUnionDecl::AidlUnionDecl(const AidlLocation& location, const std::string& name,
                              const std::string& package, const Comments& comments,
                              std::vector<std::string>* type_params,
                              std::vector<std::unique_ptr<AidlMember>>* members)
     : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params, members) {}
-
-void AidlUnionDecl::Dump(CodeWriter* writer) const {
-  DumpHeader(writer);
-  writer->Write("union %s {\n", GetName().c_str());
-  writer->Indent();
-  DumpMembers(*writer);
-  writer->Dedent();
-  writer->Write("}\n");
-}
 
 bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
   // visit parents
@@ -1392,15 +1335,6 @@ AidlInterface::AidlInterface(const AidlLocation& location, const std::string& na
   for (auto& m : GetMethods()) {
     m.get()->ApplyInterfaceOneway(oneway);
   }
-}
-
-void AidlInterface::Dump(CodeWriter* writer) const {
-  DumpHeader(writer);
-  writer->Write("interface %s {\n", GetName().c_str());
-  writer->Indent();
-  DumpMembers(*writer);
-  writer->Dedent();
-  writer->Write("}\n");
 }
 
 bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
