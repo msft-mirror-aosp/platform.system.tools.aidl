@@ -15,10 +15,6 @@
  */
 
 #include "aidl.h"
-#include "aidl_language.h"
-#include "import_resolver.h"
-#include "logging.h"
-#include "options.h"
 
 #include <map>
 #include <string>
@@ -27,6 +23,12 @@
 #include <android-base/result.h>
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
+
+#include "aidl_dumpapi.h"
+#include "aidl_language.h"
+#include "import_resolver.h"
+#include "logging.h"
+#include "options.h"
 
 namespace android {
 namespace aidl {
@@ -39,10 +41,21 @@ using std::set;
 using std::string;
 using std::vector;
 
+struct DumpForEqualityVisitor : DumpVisitor {
+  DumpForEqualityVisitor(CodeWriter& out) : DumpVisitor(out) {}
+
+  void DumpConstantValue(const AidlTypeSpecifier&, const AidlConstantValue& c) {
+    out << c.Literal();
+  }
+};
+
 static std::string Dump(const AidlDefinedType& type) {
-  std::string dump;
-  type.Dump(CodeWriter::ForString(&dump).get());
-  return dump;
+  string code;
+  CodeWriterPtr out = CodeWriter::ForString(&code);
+  DumpForEqualityVisitor visitor(*out);
+  type.DispatchVisit(visitor);
+  out->Close();
+  return code;
 }
 
 // Uses each type's Dump() and GTest utility(EqHelper).
@@ -360,8 +373,14 @@ static bool are_compatible_enums(const AidlEnumDeclaration& older,
 
 static Result<AidlTypenames> load_from_dir(const Options& options, const IoDelegate& io_delegate,
                                            const std::string& dir) {
+  Result<std::vector<std::string>> dir_files = io_delegate.ListFiles(dir);
+  if (!dir_files.ok()) {
+    AIDL_ERROR(dir) << dir_files.error();
+    return Error();
+  }
+
   AidlTypenames typenames;
-  for (const auto& file : io_delegate.ListFiles(dir)) {
+  for (const auto& file : *dir_files) {
     if (!android::base::EndsWith(file, ".aidl")) continue;
     if (internals::load_and_validate_aidl(file, options, io_delegate, &typenames,
                                           nullptr /* imported_files */) != AidlError::OK) {
@@ -369,6 +388,7 @@ static Result<AidlTypenames> load_from_dir(const Options& options, const IoDeleg
       return Error();
     }
   }
+
   return typenames;
 }
 

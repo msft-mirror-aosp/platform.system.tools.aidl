@@ -73,7 +73,7 @@ function _aidl-format() (
       local input="$1"
       local style="$2"
       local temp="$(mktemp)"
-      local styletext="$([ -n "$style" ] && cat "$style" | tr '\n' ',' 2> /dev/null)"
+      local styletext="$([ -f "$style" ] && cat "$style" | tr '\n' ',' 2> /dev/null)"
       cat "$input" | clang-format \
         --style='{BasedOnStyle: Google,
         ColumnLimit: 100,
@@ -124,7 +124,11 @@ function _aidl-format() (
       fixup "$output"
 
       if [ $mode = "diff" ]; then
-        diff "$input" "$output"
+        diff "$input" "$output" || (
+          echo "You can try to fix this by running:"
+          echo "$0 -w <file>"
+          echo ""
+        )
         rm "$output"
       elif [ $mode = "write" ]; then
         if diff -q "$output" "$input" >/dev/null; then

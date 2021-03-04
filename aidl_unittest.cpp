@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "aidl_checkapi.h"
+#include "aidl_dumpapi.h"
 #include "aidl_language.h"
 #include "aidl_to_cpp.h"
 #include "aidl_to_java.h"
@@ -212,7 +213,7 @@ TEST_P(AidlTest, RejectOutParametersForIBinder) {
 }
 
 TEST_P(AidlTest, RejectsOutParametersInOnewayInterface) {
-  const string oneway_interface = "package a; oneway interface IBar { void f(out int bar); }";
+  const string oneway_interface = "package a; oneway interface IBar { void f(out int[] bar); }";
   const string expected_stderr =
       "ERROR: a/IBar.aidl:1.40-42: oneway method 'f' cannot have out parameters\n";
   CaptureStderr();
@@ -221,7 +222,7 @@ TEST_P(AidlTest, RejectsOutParametersInOnewayInterface) {
 }
 
 TEST_P(AidlTest, RejectsOutParametersInOnewayMethod) {
-  const string oneway_method = "package a; interface IBar { oneway void f(out int bar); }";
+  const string oneway_method = "package a; interface IBar { oneway void f(out int[] bar); }";
   const string expected_stderr =
       "ERROR: a/IBar.aidl:1.40-42: oneway method 'f' cannot have out parameters\n";
   CaptureStderr();
@@ -760,8 +761,7 @@ TEST_P(AidlTest, SupportDeprecated) {
     for (const auto& [lang, test_case] : expectations) {
       if (lang != GetLanguage()) continue;
       string output;
-      EXPECT_TRUE(io_delegate_.GetWrittenContents(test_case.output_file, &output))
-          << base::Join(io_delegate_.ListOutputFiles(), ",");
+      EXPECT_TRUE(io_delegate_.GetWrittenContents(test_case.output_file, &output));
       EXPECT_THAT(output, HasSubstr(test_case.annotation));
     }
   };
@@ -1493,9 +1493,7 @@ interface IFoo {
 
   EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Data.aidl", &actual));
   EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
-/**
- * @hide
- */
+/* @hide */
 parcelable Data {
   int x = 10;
   int y;
@@ -1935,6 +1933,19 @@ TEST_F(AidlTest, CheckApi_EnumFieldsWithDefaultValues) {
   io_delegate_.SetFileContents("new/p/Enum.aidl", enum_definition);
 
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+}
+
+TEST_F(AidlTest, CheckApiEqual_EnumFieldsWithDefaultValues) {
+  Options options = Options::From("aidl --checkapi=equal old new");
+  const string foo_definition = "package p; parcelable Foo{ p.Enum e = p.Enum.FOO; }";
+  const string enum_definition = "package p; enum Enum { FOO }";
+  io_delegate_.SetFileContents("old/p/Foo.aidl", foo_definition);
+  io_delegate_.SetFileContents("old/p/Enum.aidl", enum_definition);
+  io_delegate_.SetFileContents("new/p/Foo.aidl", foo_definition);
+  io_delegate_.SetFileContents("new/p/Enum.aidl", enum_definition);
+  CaptureStderr();
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
 }
 
 class AidlTestCompatibleChanges : public AidlTest {
@@ -2725,25 +2736,25 @@ TEST_F(AidlTest, HandleManualIdAssignments) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_F(AidlTest, ParcelFileDescriptorIsBuiltinType) {
-  Options javaOptions = Options::From("aidl --lang=java -o out p/IFoo.aidl");
-  Options cppOptions = Options::From("aidl --lang=cpp -h out -o out p/IFoo.aidl");
-  Options rustOptions = Options::From("aidl --lang=rust -o out p/IFoo.aidl");
+TEST_P(AidlTest, ParcelFileDescriptorIsBuiltinType) {
+  Options options =
+      Options::From("aidl --lang=" + to_string(GetLanguage()) + " -h out -o out p/IFoo.aidl");
 
   // use without import
   io_delegate_.SetFileContents("p/IFoo.aidl",
                                "package p; interface IFoo{ void foo(in ParcelFileDescriptor fd);}");
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(javaOptions, io_delegate_));
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(cppOptions, io_delegate_));
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(rustOptions, io_delegate_));
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+
+  // capture output files
+  map<string, string> outputs = io_delegate_.OutputFiles();
 
   // use without import but with full name
   io_delegate_.SetFileContents(
       "p/IFoo.aidl",
       "package p; interface IFoo{ void foo(in android.os.ParcelFileDescriptor fd);}");
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(javaOptions, io_delegate_));
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(cppOptions, io_delegate_));
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(rustOptions, io_delegate_));
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  // output files should be the same
+  EXPECT_EQ(outputs, io_delegate_.OutputFiles());
 
   // use with import (as before)
   io_delegate_.SetFileContents("p/IFoo.aidl",
@@ -2752,9 +2763,34 @@ TEST_F(AidlTest, ParcelFileDescriptorIsBuiltinType) {
                                "interface IFoo{"
                                "  void foo(in ParcelFileDescriptor fd);"
                                "}");
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(javaOptions, io_delegate_));
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(cppOptions, io_delegate_));
-  EXPECT_EQ(0, ::android::aidl::compile_aidl(rustOptions, io_delegate_));
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  // output files should be the same
+  EXPECT_EQ(outputs, io_delegate_.OutputFiles());
+}
+
+TEST_P(AidlTest, RejectsOutputParcelFileDescriptor) {
+  Options options = Options::From("aidl p/IFoo.aidl -I . --lang=" + to_string(GetLanguage()));
+  CaptureStderr();
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo{"
+                               "  void foo(out ParcelFileDescriptor fd);"
+                               "}");
+  EXPECT_EQ(1, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("can't be an out parameter"));
+}
+
+TEST_P(AidlTest, RejectsArgumentDirectionNotSpecified) {
+  Options options = Options::From("aidl p/IFoo.aidl -I . --lang=" + to_string(GetLanguage()));
+  CaptureStderr();
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo{"
+                               "  void foo(ParcelFileDescriptor fd);"
+                               "}");
+  EXPECT_EQ(1, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("ParcelFileDescriptor can be an in or inout parameter."));
 }
 
 TEST_F(AidlTest, ManualIds) {
@@ -3280,11 +3316,30 @@ TEST_F(AidlTest, ArrayBeforeGenericError) {
   io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { List[]<String> a; }");
 
   Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
-  const string expected_stderr =
-      "ERROR: a/Bar.aidl:1.28-33: Must specify type parameters (<>) before array ([]).\n";
   CaptureStderr();
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(), testing::HasSubstr("syntax error, unexpected '<'"));
+}
+
+TEST_F(AidlTest, NullableArraysAreNotSupported) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a; parcelable Bar { String @nullable [] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_EQ(1, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), testing::HasSubstr("Annotations for arrays are not supported."));
+}
+
+TEST_F(AidlTest, ListOfNullablesAreNotSupported) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a; parcelable Bar { List<@nullable String> a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_EQ(1, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              testing::HasSubstr("Annotations for type arguments are not supported."));
 }
 
 struct GenericAidlTest : ::testing::Test {
@@ -3517,7 +3572,10 @@ enum Foo {
   EXPECT_TRUE(type);
   const auto& enum_type = type->AsEnumDeclaration();
   string code;
-  enum_type->Dump(CodeWriter::ForString(&code).get());
+  auto writer = CodeWriter::ForString(&code);
+  DumpVisitor visitor(*writer);
+  visitor.Visit(*enum_type);
+  writer->Close();
   EXPECT_EQ(R"--(@Backing(type="int")
 enum Foo {
   STANDARD_SHIFT = 16,
@@ -3731,7 +3789,8 @@ struct TypeParam {
 };
 
 const TypeParam kTypeParams[] = {
-    {"primitive", "int"},   {"String", "String"},
+    {"primitive", "int"},   {"primitiveArray", "int[]"},
+    {"String", "String"},   {"StringArray", "String[]"},
     {"IBinder", "IBinder"}, {"ParcelFileDescriptor", "ParcelFileDescriptor"},
     {"parcelable", "Foo"},  {"enum", "a.Enum"},
     {"union", "a.Union"},   {"interface", "a.IBar"},
@@ -3742,10 +3801,18 @@ const std::map<std::string, std::string> kListSupportExpectations = {
     {"java_primitive", "A generic type cannot have any primitive type parameters."},
     {"ndk_primitive", "A generic type cannot have any primitive type parameters."},
     {"rust_primitive", "A generic type cannot have any primitive type parameters."},
+    {"cpp_primitiveArray", "List of arrays is not supported."},
+    {"java_primitiveArray", "List of arrays is not supported."},
+    {"ndk_primitiveArray", "List of arrays is not supported."},
+    {"rust_primitiveArray", "List of arrays is not supported."},
     {"cpp_String", ""},
     {"java_String", ""},
     {"ndk_String", ""},
     {"rust_String", ""},
+    {"cpp_StringArray", "List of arrays is not supported."},
+    {"java_StringArray", "List of arrays is not supported."},
+    {"ndk_StringArray", "List of arrays is not supported."},
+    {"rust_StringArray", "List of arrays is not supported."},
     {"cpp_IBinder", ""},
     {"java_IBinder", ""},
     {"ndk_IBinder", "List<IBinder> is not supported. List in NDK doesn't support IBinder."},
@@ -3777,10 +3844,18 @@ const std::map<std::string, std::string> kArraySupportExpectations = {
     {"java_primitive", ""},
     {"ndk_primitive", ""},
     {"rust_primitive", ""},
+    {"cpp_primitiveArray", "Can only have one dimensional arrays."},
+    {"java_primitiveArray", "Can only have one dimensional arrays."},
+    {"ndk_primitiveArray", "Can only have one dimensional arrays."},
+    {"rust_primitiveArray", "Can only have one dimensional arrays."},
     {"cpp_String", ""},
     {"java_String", ""},
     {"ndk_String", ""},
     {"rust_String", ""},
+    {"cpp_StringArray", "Can only have one dimensional arrays."},
+    {"java_StringArray", "Can only have one dimensional arrays."},
+    {"ndk_StringArray", "Can only have one dimensional arrays."},
+    {"rust_StringArray", "Can only have one dimensional arrays."},
     {"cpp_IBinder", ""},
     {"java_IBinder", ""},
     {"ndk_IBinder", "The ndk backend does not support array of IBinder"},

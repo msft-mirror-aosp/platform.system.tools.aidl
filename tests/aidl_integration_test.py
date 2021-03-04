@@ -3,14 +3,16 @@
 import pipes
 import re
 import subprocess
+import sys
 import unittest
 
 BITNESS_32 = ("", "32")
 BITNESS_64 = ("64", "64")
 
 APP_PROCESS_FOR_PRETTY_BITNESS = 'app_process%s'
-NATIVE_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client/aidl_test_client%s'
 NATIVE_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service/aidl_test_service%s'
+CPP_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client/aidl_test_client%s'
+NDK_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client_ndk/aidl_test_client_ndk%s'
 RUST_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_client/aidl_test_rust_client%s'
 RUST_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service/aidl_test_rust_service%s'
 
@@ -107,10 +109,6 @@ class NativeServer:
         return self.host.run(self.binary, background=True)
 
 class NativeClient:
-    def __init__(self, host, bitness):
-        self.name = "%s_bit_native_client" % pretty_bitness(bitness)
-        self.host = host
-        self.binary = NATIVE_TEST_CLIENT_FOR_BITNESS % bitness
     def cleanup(self):
         self.host.run('killall %s' % self.binary, ignore_status=True)
     def run(self):
@@ -119,15 +117,42 @@ class NativeClient:
         if result.exit_status:
             raise TestFail(result.stdout)
 
+class CppClient(NativeClient):
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_cpp_client" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = CPP_TEST_CLIENT_FOR_BITNESS % bitness
+
+class NdkClient(NativeClient):
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_ndk_client" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = NDK_TEST_CLIENT_FOR_BITNESS % bitness
+
+class JavaServer:
+    def __init__(self, host, bitness):
+        self.name = "java_server_%s" % pretty_bitness(bitness)
+        self.host = host
+        self.bitness = bitness
+    def cleanup(self):
+        self.host.run('killall ' + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness),
+                      ignore_status=True)
+    def run(self):
+        return self.host.run('CLASSPATH=/data/framework/aidl_test_java_service.jar '
+                             + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
+                             ' /data/framework android.aidl.service.TestServiceServer',
+                             background=True)
+
 class JavaClient:
     def __init__(self, host, bitness):
         self.name = "java_client_%s" % pretty_bitness(bitness)
         self.host = host
         self.bitness = bitness
     def cleanup(self):
-        self.host.run('killall app_process', ignore_status=True)
+        self.host.run('killall ' + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness),
+                      ignore_status=True)
     def run(self):
-        result = self.host.run('CLASSPATH=/data/framework/aidl_test_java.jar '
+        result = self.host.run('CLASSPATH=/data/framework/aidl_test_java_client.jar '
                                + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
                                ' /data/framework android.aidl.tests.AidlJavaTests')
         print(result.printable_string())
@@ -195,15 +220,14 @@ if __name__ == '__main__':
     servers = []
 
     for bitness in bitnesses:
-        clients += [NativeClient(host, bitness)]
+        clients += [NdkClient(host, bitness)]
+
+        clients += [CppClient(host, bitness)]
         servers += [NativeServer(host, bitness)]
 
-
-    for bitness in bitnesses:
         clients += [JavaClient(host, bitness)]
-        # TODO(b/169704480): Java server
+        servers += [JavaServer(host, bitness)]
 
-    for bitness in bitnesses:
         clients += [RustClient(host, bitness)]
         servers += [RustServer(host, bitness)]
 
@@ -214,4 +238,4 @@ if __name__ == '__main__':
             setattr(TestAidl, test_name, test)
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestAidl)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    sys.exit(not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful())

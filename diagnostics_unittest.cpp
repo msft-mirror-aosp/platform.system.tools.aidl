@@ -42,7 +42,8 @@ struct DiagnosticsTest : testing::Test {
     }
     // emit diagnostics as warnings.
     // "java" has no specific meaning here because we're testing CheckValid()
-    const Options options = Options::From("aidl -I . --lang java -o out -Weverything " + main);
+    const Options options =
+        Options::From("aidl " + optional_args + " -I . --lang java -o out -Weverything " + main);
     CaptureStderr();
     load_and_validate_aidl(main, options, io, &typenames, nullptr);
     const std::string err = GetCapturedStderr();
@@ -57,6 +58,7 @@ struct DiagnosticsTest : testing::Test {
 
   AidlTypenames typenames;
   FakeIoDelegate io;
+  std::string optional_args;
   std::vector<DiagnosticID> expect_diagnostics;
 };
 
@@ -75,39 +77,9 @@ TEST_F(DiagnosticsTest, interface_name) {
   ParseFiles({{"Foo.aidl", "interface Foo { }"}});
 }
 
-TEST_F(DiagnosticsTest, enum_zero) {
-  expect_diagnostics = {DiagnosticID::enum_zero};
-  ParseFiles({{"Enum.aidl", "enum Enum { A = 1 }"}});
-}
-
-TEST_F(DiagnosticsTest, enum_zero_suppress_SuppressAtDeclLevel) {
-  expect_diagnostics = {};
-  ParseFiles({{"Enum.aidl", "@SuppressWarnings(value={\"enum-zero\"}) enum Enum { A = 1 }"}});
-}
-
-TEST_F(DiagnosticsTest, explicit_default) {
-  expect_diagnostics = {DiagnosticID::explicit_default};
-  ParseFiles({{"Foo.aidl", "parcelable Foo { int n; }"}});
-}
-
 TEST_F(DiagnosticsTest, enum_explicit_default) {
   expect_diagnostics = {DiagnosticID::enum_explicit_default};
   ParseFiles({{"Foo.aidl", "parcelable Foo { E e; }"}, {"E.aidl", "enum E { A }"}});
-}
-
-TEST_F(DiagnosticsTest, explicit_default_OkayForSomeTypesOrDefaultIsSet) {
-  expect_diagnostics = {};
-  ParseFiles({{"Foo.aidl",
-               "parcelable Foo { \n"
-               "  Bar bar;\n"
-               "  IBinder binder;\n"
-               "  @nullable String s;\n"
-               "  int[] numbers = {};\n"
-               "  List<String> stringList;\n"
-               "  IBaz baz;\n"
-               "}"},
-              {"Bar.aidl", "parcelable Bar { }"},
-              {"IBaz.aidl", "interface IBaz { }"}});
 }
 
 TEST_F(DiagnosticsTest, inout_parameter) {
@@ -157,6 +129,14 @@ TEST_F(DiagnosticsTest, DontMixOnewayWithTwowayMethods) {
   });
 }
 
+TEST_F(DiagnosticsTest, OnewayInterfaceIsOkayWithSyntheticMethods) {
+  optional_args = "--version 2";  // will add getInterfaceVersion() synthetic method
+  expect_diagnostics = {};
+  ParseFiles({
+      {"IFoo.aidl", "oneway interface IFoo { void foo(); }"},
+  });
+}
+
 TEST_F(DiagnosticsTest, ArraysAsOutputParametersConsideredHarmful) {
   expect_diagnostics = {DiagnosticID::out_array};
   ParseFiles({
@@ -167,7 +147,34 @@ TEST_F(DiagnosticsTest, ArraysAsOutputParametersConsideredHarmful) {
 TEST_F(DiagnosticsTest, file_descriptor) {
   expect_diagnostics = {DiagnosticID::file_descriptor};
   ParseFiles({{"IFoo.aidl",
-               "interface IFoo { \n"
+               "interface IFoo {\n"
                "  void foo(in FileDescriptor fd);\n"
                "}"}});
+}
+
+TEST_F(DiagnosticsTest, out_nullable) {
+  expect_diagnostics = {DiagnosticID::out_nullable};
+  ParseFiles({{"IFoo.aidl",
+               "interface IFoo {\n"
+               "  void foo(out @nullable Bar bar);\n"
+               "}"},
+              {"Bar.aidl", "parcelable Bar {}"}});
+}
+
+TEST_F(DiagnosticsTest, inout_nullable) {
+  expect_diagnostics = {DiagnosticID::out_nullable};
+  ParseFiles({{"IFoo.aidl",
+               "interface IFoo {\n"
+               "  void foo(inout @nullable Bar bar);\n"
+               "}"},
+              {"Bar.aidl", "parcelable Bar {}"}});
+}
+
+TEST_F(DiagnosticsTest, out_nullable_OkayForArrays) {
+  expect_diagnostics = {DiagnosticID::out_array};  // not triggering out_nullable
+  ParseFiles({{"IFoo.aidl",
+               "interface IFoo {\n"
+               "  void foo(inout @nullable Bar[] bar1, out @nullable Bar[] bar2);\n"
+               "}"},
+              {"Bar.aidl", "parcelable Bar {}"}});
 }

@@ -42,7 +42,7 @@ public class NullableTests {
 
     @Before
     public void setUp() throws RemoteException {
-        IBinder binder = ServiceManager.getService(ITestService.class.getName());
+        IBinder binder = ServiceManager.waitForService(ITestService.class.getName());
         assertNotNull(binder);
         mService = ITestService.Stub.asInterface(binder);
         assertNotNull(mService);
@@ -60,7 +60,9 @@ public class NullableTests {
         } catch (NullPointerException ex) {
             return;
         }
-        fail("NullPointerException was expected, but wasn't thrown");
+        if (mService.getBackendType() != BackendType.JAVA) {
+          fail("NullPointerException was expected, but wasn't thrown");
+        }
     }
 
     @Test
@@ -70,7 +72,10 @@ public class NullableTests {
         } catch (NullPointerException ex) {
             return;
         }
-        fail("NullPointerException was expected, but wasn't thrown");
+
+        if (mService.getBackendType() != BackendType.JAVA) {
+          fail("NullPointerException was expected, but wasn't thrown");
+        }
     }
 
     @Test
@@ -84,7 +89,9 @@ public class NullableTests {
         } catch (NullPointerException ex) {
             return;
         }
-        fail("NullPointerException was expected, but wasn't thrown");
+        if (mService.getBackendType() != BackendType.JAVA) {
+          fail("NullPointerException was expected, but wasn't thrown");
+        }
     }
 
     @Test

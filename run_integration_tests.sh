@@ -27,7 +27,11 @@ $ANDROID_BUILD_TOP/build/soong/soong_ui.bash --make-mode \
 adb root
 adb wait-for-device
 adb sync data
-adb install -r \
-    ${ANDROID_PRODUCT_OUT}/testcases/aidl_test_java/x86/aidl_test_java.apk
+adb push \
+    ${ANDROID_PRODUCT_OUT}/testcases/aidl_test_java_service/*/aidl_test_java_service.jar \
+    /data/framework/aidl_test_java_service.jar
+adb push \
+    ${ANDROID_PRODUCT_OUT}/testcases/aidl_test_java_client/*/aidl_test_java_client.jar \
+    /data/framework/aidl_test_java_client.jar
 
 ${ANDROID_BUILD_TOP}/system/tools/aidl/tests/aidl_integration_test.py

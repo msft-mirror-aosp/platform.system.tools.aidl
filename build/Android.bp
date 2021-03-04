@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "system_tools_aidl_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["system_tools_aidl_license"],
+}
+
 bootstrap_go_package {
     name: "aidl-soong-rules",
     pkgPath: "android/soong/aidl",
@@ -83,6 +92,7 @@ aidl_interface {
     vendor_available: true,
     double_loadable: true,
     host_supported: true,
+    flags: ["-Werror"],
     srcs: [
         "tests_1/some_package/IFoo.aidl",
         "tests_1/some_package/Thing.aidl",
@@ -98,6 +108,7 @@ aidl_interface {
 aidl_interface {
     name: "test-piece-2",
     local_include_dir: "tests_1",
+    flags: ["-Werror"],
     srcs: [
         "tests_1/INoPackage.aidl",
         "tests_1/some_package/IBar.aidl",
@@ -117,6 +128,7 @@ aidl_interface {
 aidl_interface {
     name: "test-piece-3",
     local_include_dir: "tests_1",
+    flags: ["-Werror"],
     srcs: [
         "tests_1/other_package/IBaz.aidl",
     ],
@@ -135,6 +147,7 @@ aidl_interface {
 aidl_interface {
     name: "test-piece-4",
     local_include_dir: "tests_2",
+    flags: ["-Werror"],
     srcs: [
         "tests_2/another_package/IFaz.aidl",
     ],
@@ -148,10 +161,14 @@ aidl_interface {
     },
     gen_trace: true,
     versions: ["1"],
+    dumpapi: {
+        no_license: true,
+    },
 }
 
 aidl_interface {
     name: "test-root-package",
+    flags: ["-Werror"],
     srcs: [
         "test_package/IBaz.aidl",
     ],
@@ -174,9 +191,10 @@ aidl_interface {
     name: "test-piece-5",
     unstable: true,
     local_include_dir: "tests_3",
+    flags: ["-Werror"],
     srcs: [
         "tests_3/EmptyParcelable.aidl",
-        "tests_3/EmptyInterface.aidl",
+        "tests_3/IEmptyInterface.aidl",
     ],
 }
 
@@ -185,6 +203,7 @@ aidl_interface {
 // in order to work)
 aidl_interface {
     name: "tests_transitive_parcel.a",
+    flags: ["-Werror"],
     srcs: [ "tests_transitive_parcel/a/*.aidl" ],
     imports: [
         "tests_transitive_parcel.b",
@@ -200,6 +219,7 @@ aidl_interface {
 
 aidl_interface {
     name: "tests_transitive_parcel.b",
+    flags: ["-Werror"],
     srcs: [ "tests_transitive_parcel/b/*.aidl" ],
     imports: [ "tests_transitive_parcel.c" ],
     unstable: true,
@@ -212,6 +232,7 @@ aidl_interface {
 
 aidl_interface {
     name: "tests_transitive_parcel.c",
+    flags: ["-Werror"],
     srcs: [ "tests_transitive_parcel/c/*.aidl" ],
     unstable: true,
     backend: {
