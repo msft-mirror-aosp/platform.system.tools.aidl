@@ -22,6 +22,7 @@
 #include "logging.h"
 #include "os.h"
 
+using android::base::EndsWith;
 using android::base::Join;
 using android::base::Split;
 using std::string;
@@ -57,7 +58,11 @@ void DumpVisitor::DumpMembers(const AidlDefinedType& dt) {
 void DumpVisitor::DumpComments(const AidlCommentable& c) {
   const auto hidden = c.IsHidden();
   const auto deprecated = FindDeprecated(c.GetComments());
-  if (hidden || deprecated) {
+  if (hidden && !deprecated) {
+    // to pass --checkapi between the current and the tot in the mainline-prod branch
+    // emit @hide in a legacy dump style
+    out << "/* @hide */\n";
+  } else if (hidden || deprecated) {
     out << "/**\n";
     if (hidden) {
       out << " * @hide\n";
@@ -148,6 +153,17 @@ static string GetApiDumpPathFor(const AidlDefinedType& defined_type, const Optio
          ".aidl";
 }
 
+static void DumpComments(CodeWriter& out, const Comments& comments) {
+  bool needs_newline = false;
+  for (const auto& c : comments) {
+    out << c.body;
+    needs_newline = !EndsWith(c.body, "\n");
+  }
+  if (needs_newline) {
+    out << "\n";
+  }
+}
+
 bool dump_api(const Options& options, const IoDelegate& io_delegate) {
   for (const auto& file : options.InputFiles()) {
     AidlTypenames typenames;
@@ -158,9 +174,9 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
       for (const auto& type : doc.DefinedTypes()) {
         unique_ptr<CodeWriter> writer =
             io_delegate.GetCodeWriter(GetApiDumpPathFor(*type, options));
-        // dump doc comments (license) as well for each type
-        for (const auto& c : doc.GetComments()) {
-          (*writer) << c.body;
+        if (!options.DumpNoLicense()) {
+          // dump doc comments (license) as well for each type
+          DumpComments(*writer, doc.GetComments());
         }
         (*writer) << kPreamble;
         if (!type->GetPackage().empty()) {
