@@ -42,8 +42,7 @@ const (
 	langNdkPlatform           = "ndk_platform"
 	langRust                  = "rust"
 
-	currentVersion  = "current"
-	unstableVersion = "unstable"
+	currentVersion = "current"
 )
 
 var (
@@ -135,22 +134,6 @@ func recordVersions(mctx android.BottomUpMutatorContext) {
 			if android.InList(depName, i.internalModuleNames) {
 				ifaceName := i.ModuleBase.Name()
 				verLang := depName[len(ifaceName):]
-
-				// TODO(b/150578172) remove those modules when every module specify its version.
-				if i.hasVersion() {
-					if strings.HasPrefix(verLang, "-unstable") {
-						verLang = "-V" + i.nextVersion() + strings.TrimPrefix(verLang, "-unstable")
-					} else if !strings.HasPrefix(verLang, "-V") {
-						verLang = "-V" + i.latestVersion() + verLang
-					}
-				} else {
-					verLang = strings.TrimPrefix(verLang, "-unstable")
-					if !proptools.Bool(i.properties.Unstable) {
-						if !strings.HasPrefix(verLang, "-V1") {
-							verLang = "-V1" + verLang
-						}
-					}
-				}
 				myAidlDeps[DepInfo{ifaceName, verLang, isSource}] = true
 				break
 			}
@@ -292,6 +275,11 @@ type CommonNativeBackendProperties struct {
 	cc.VndkProperties
 }
 
+type DumpApiProperties struct {
+	// Dumps without license header (assuming it is the first comment in .aidl file). Default: false
+	No_license *bool
+}
+
 type aidlInterfaceProperties struct {
 	// Vndk properties for C++/NDK libraries only (preferred to use backend-specific settings)
 	cc.VndkProperties
@@ -398,6 +386,9 @@ type aidlInterfaceProperties struct {
 
 	// Optional flags to be passed to the AIDL compiler. e.g. "-Weverything"
 	Flags []string
+
+	// --dumpapi options
+	Dumpapi DumpApiProperties
 }
 
 type aidlInterface struct {
@@ -654,13 +645,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		for _, version := range versions {
 			libs = append(libs, addLibrary(mctx, i, version, lang))
 		}
-		// TODO(b/150578172) remove those modules when every module specify its version.
-		if !sdkIsFinal && i.isAllowedListedModule() {
-			if !unstable {
-				libs = append(libs, addLibrary(mctx, i, "", lang))
-			}
-			libs = append(libs, addLibrary(mctx, i, unstableVersion, lang))
-		}
 	}
 
 	if unstable {
@@ -798,16 +782,4 @@ func lookupInterface(name string, config android.Config) *aidlInterface {
 		}
 	}
 	return nil
-}
-
-// TODO(b/150578172) remove exception when every module specify its version.
-func (i *aidlInterface) isAllowedListedModule() bool {
-	allowlist := []string{
-		"networkstack-aidl-interfaces",
-		"netd_aidl_interface",
-		"ipmemorystore-aidl-interfaces",
-		"dnsresolver_aidl_interface",
-		"netd_event_listener_interface",
-	}
-	return android.InList(i.ModuleBase.Name(), allowlist)
 }
