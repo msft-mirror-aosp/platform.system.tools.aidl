@@ -39,10 +39,17 @@ func withFiles(files map[string][]byte) android.FixturePreparer {
 	return android.FixtureMergeMockFs(files)
 }
 
+func intPtr(v int) *int {
+	return &v
+}
+
 func setReleaseEnv() android.FixturePreparer {
 	return android.FixtureModifyProductVariables(func(variables android.FixtureProductVariables) {
+		// Q is finalized as 29. No codename that is actively being developed.
+		variables.Platform_sdk_version = intPtr(29)
 		variables.Platform_sdk_codename = proptools.StringPtr("REL")
 		variables.Platform_sdk_final = proptools.BoolPtr(true)
+		variables.Platform_version_active_codenames = []string{}
 	})
 }
 
@@ -129,6 +136,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 	preparers = append(preparers, android.FixtureModifyProductVariables(func(variables android.FixtureProductVariables) {
 		// To keep tests stable, fix Platform_sdk_codename and Platform_sdk_final
 		// Use setReleaseEnv() to test release version
+		variables.Platform_sdk_version = intPtr(28)
 		variables.Platform_sdk_codename = proptools.StringPtr("Q")
 		variables.Platform_version_active_codenames = []string{"Q"}
 		variables.Platform_sdk_final = proptools.BoolPtr(false)
@@ -695,14 +703,14 @@ func TestImports(t *testing.T) {
 		}
 	`)
 
-	ldRule := ctx.ModuleForTests("foo-V1-cpp", nativeVariant).Rule("ld").RelativeToTop()
+	ldRule := ctx.ModuleForTests("foo-V1-cpp", nativeVariant).Rule("ld")
 	libFlags := ldRule.Args["libFlags"]
 	libBar := filepath.Join("bar.1-V1-cpp", nativeVariant, "bar.1-V1-cpp.so")
 	if !strings.Contains(libFlags, libBar) {
 		t.Errorf("%q is not found in %q", libBar, libFlags)
 	}
 
-	rustcRule := ctx.ModuleForTests("foo-V1-rust", nativeRustVariant).Rule("rustc").RelativeToTop()
+	rustcRule := ctx.ModuleForTests("foo-V1-rust", nativeRustVariant).Rule("rustc")
 	libFlags = rustcRule.Args["libFlags"]
 	libBar = filepath.Join("out", "soong", ".intermediates", "bar.1-V1-rust", nativeRustVariant, "libbar_1_V1.dylib.so")
 	libBarFlag := "--extern bar_1=" + libBar
