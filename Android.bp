@@ -227,6 +227,9 @@ python_test_host {
         "aidl_test_rust_service",
     ],
     test_suites: ["general-tests"],
+    test_options: {
+        unit_test: false,
+    },
 }
 
 cc_defaults {
@@ -448,6 +451,7 @@ java_test {
         "tests/java/src/android/aidl/tests/UnionTests.java",
         "tests/java/src/android/aidl/tests/ExtensionTests.java",
         "tests/java/src/android/aidl/tests/NullableTests.java",
+        "tests/java/src/android/aidl/tests/VintfTests.java",
     ],
 }
 
