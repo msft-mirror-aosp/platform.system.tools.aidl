@@ -1,6 +1,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-#[allow(unused_imports)] use binder::IBinder;
+#[allow(unused_imports)] use binder::IBinderInternal;
 use binder::declare_binder_interface;
 declare_binder_interface! {
   IOldName["android.aidl.tests.IOldName"] {
@@ -25,8 +25,7 @@ pub trait IOldNameDefault: Send + Sync {
   }
 }
 pub mod transactions {
-  #[allow(unused_imports)] use binder::IBinder;
-  pub const RealName: binder::TransactionCode = binder::SpIBinder::FIRST_CALL_TRANSACTION + 0;
+  pub const RealName: binder::TransactionCode = binder::FIRST_CALL_TRANSACTION + 0;
 }
 pub type IOldNameDefaultRef = Option<std::sync::Arc<dyn IOldNameDefault>>;
 use lazy_static::lazy_static;
@@ -36,7 +35,7 @@ lazy_static! {
 pub(crate) mod mangled { pub use super::IOldName as _7_android_4_aidl_5_tests_8_IOldName; }
 impl IOldName for BpOldName {
   fn RealName(&self) -> binder::public_api::Result<String> {
-    let _aidl_reply = self.binder.transact(transactions::RealName, 0, |_aidl_data| {
+    let _aidl_reply = self.binder.transact(transactions::RealName, binder::FLAG_PRIVATE_LOCAL, |_aidl_data| {
       Ok(())
     });
     if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {

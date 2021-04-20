@@ -73,18 +73,18 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
 	}, &aidlGenProperties{
-		Srcs:       srcs,
-		AidlRoot:   aidlRoot,
-		Imports:    concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
-		Stability:  i.properties.Stability,
-		Lang:       lang,
-		BaseName:   i.ModuleBase.Name(),
-		GenLog:     genLog,
-		Version:    i.versionForAidlGenRule(version),
-		GenTrace:   genTrace,
-		Unstable:   i.properties.Unstable,
-		Visibility: srcsVisibility(mctx, lang),
-		Flags:      i.flagsForAidlGenRule(version),
+		Srcs:                  srcs,
+		AidlRoot:              aidlRoot,
+		ImportsWithoutVersion: concat(i.properties.ImportsWithoutVersion, []string{i.ModuleBase.Name()}),
+		Stability:             i.properties.Stability,
+		Lang:                  lang,
+		BaseName:              i.ModuleBase.Name(),
+		GenLog:                genLog,
+		Version:               i.versionForAidlGenRule(version),
+		GenTrace:              genTrace,
+		Unstable:              i.properties.Unstable,
+		Visibility:            srcsVisibility(mctx, lang),
+		Flags:                 i.flagsForAidlGenRule(version),
 	})
 
 	importExportDependencies := []string{}
@@ -230,17 +230,17 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(javaSourceGen),
 	}, &aidlGenProperties{
-		Srcs:       srcs,
-		AidlRoot:   aidlRoot,
-		Imports:    concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
-		Stability:  i.properties.Stability,
-		Lang:       langJava,
-		BaseName:   i.ModuleBase.Name(),
-		Version:    i.versionForAidlGenRule(version),
-		GenTrace:   proptools.Bool(i.properties.Gen_trace),
-		Unstable:   i.properties.Unstable,
-		Visibility: srcsVisibility(mctx, langJava),
-		Flags:      i.flagsForAidlGenRule(version),
+		Srcs:                  srcs,
+		AidlRoot:              aidlRoot,
+		ImportsWithoutVersion: concat(i.properties.ImportsWithoutVersion, []string{i.ModuleBase.Name()}),
+		Stability:             i.properties.Stability,
+		Lang:                  langJava,
+		BaseName:              i.ModuleBase.Name(),
+		Version:               i.versionForAidlGenRule(version),
+		GenTrace:              proptools.Bool(i.properties.Gen_trace),
+		Unstable:              i.properties.Unstable,
+		Visibility:            srcsVisibility(mctx, langJava),
+		Flags:                 i.flagsForAidlGenRule(version),
 	})
 
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
@@ -278,16 +278,16 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(rustSourceGen),
 	}, &aidlGenProperties{
-		Srcs:       srcs,
-		AidlRoot:   aidlRoot,
-		Imports:    concat(i.properties.Imports, []string{i.ModuleBase.Name()}),
-		Stability:  i.properties.Stability,
-		Lang:       langRust,
-		BaseName:   i.ModuleBase.Name(),
-		Version:    i.versionForAidlGenRule(version),
-		Unstable:   i.properties.Unstable,
-		Visibility: srcsVisibility(mctx, langRust),
-		Flags:      i.flagsForAidlGenRule(version),
+		Srcs:                  srcs,
+		AidlRoot:              aidlRoot,
+		ImportsWithoutVersion: concat(i.properties.ImportsWithoutVersion, []string{i.ModuleBase.Name()}),
+		Stability:             i.properties.Stability,
+		Lang:                  langRust,
+		BaseName:              i.ModuleBase.Name(),
+		Version:               i.versionForAidlGenRule(version),
+		Unstable:              i.properties.Unstable,
+		Visibility:            srcsVisibility(mctx, langRust),
+		Flags:                 i.flagsForAidlGenRule(version),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))
@@ -322,18 +322,13 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 // ""->bar
 func (i *aidlInterface) versionedName(version string) string {
 	name := i.ModuleBase.Name()
-	// TODO(b/150578172) remove exception when every module specify its version.
 	if version == "" {
 		return name
-	} else if version == unstableVersion {
-		return name + "-" + unstableVersion
 	}
 	return name + "-V" + version
 }
 
 func (i *aidlInterface) srcsForVersion(mctx android.LoadHookContext, version string) (srcs []string, aidlRoot string) {
-	// TODO(b/150578172) remove exception when every module specify its version.
-	version = i.normalizeVersion(version)
 	if version == i.nextVersion() {
 		return i.properties.Srcs, i.properties.Local_include_dir
 	} else {
@@ -354,13 +349,6 @@ func (i *aidlInterface) versionForAidlGenRule(version string) string {
 	if !i.hasVersion() {
 		return ""
 	}
-	// TODO(b/150578172) remove exception when every module specify its version.
-	if version == "" {
-		return i.latestVersion()
-	}
-	if version == unstableVersion {
-		return i.nextVersion()
-	}
 	return version
 }
 
@@ -374,9 +362,6 @@ func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
 }
 
 func (i *aidlInterface) isModuleForVndk(version string) bool {
-	// TODO(b/150578172) remove exception when every module specify its version.
-	version = i.normalizeVersion(version)
-
 	if i.properties.Vndk_use_version != nil {
 		if !i.hasVersion() {
 			panic("does not make sense, vndk_use_version specififed")
@@ -398,11 +383,11 @@ func (i *aidlInterface) isModuleForVndk(version string) bool {
 // whatever                            | unstable                | unstable version
 // ToT version(including unstable)     | whatever                | ToT version(unstable if unstable)
 // otherwise                           | whatever                | the latest stable version
-// TODO(b/146436251) Make import field specify the explicit version which it wants to import.
+// In the case that import specifies the version which it wants to use, use that version.
 func (i *aidlInterface) getImportWithVersion(version string, anImport string, config android.Config) string {
-	// TODO(b/150578172) remove exception when every module specify its version.
-	version = i.normalizeVersion(version)
-
+	if hasVersionSuffix(anImport) {
+		return anImport
+	}
 	other := lookupInterface(anImport, config)
 	if proptools.Bool(other.properties.Unstable) {
 		return anImport
@@ -411,20 +396,6 @@ func (i *aidlInterface) getImportWithVersion(version string, anImport string, co
 		return other.versionedName(other.nextVersion())
 	}
 	return other.versionedName(other.latestVersion())
-}
-
-// TODO(b/150578172) remove exception when every module specify its version.
-func (i *aidlInterface) normalizeVersion(version string) string {
-	if version == "" {
-		if i.hasVersion() {
-			return i.latestVersion()
-		} else if !proptools.Bool(i.properties.Unstable) {
-			return i.nextVersion()
-		}
-	} else if version == unstableVersion {
-		return i.nextVersion()
-	}
-	return version
 }
 
 func aidlImplementationGeneratorFactory() android.Module {

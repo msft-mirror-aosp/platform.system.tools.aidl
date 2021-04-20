@@ -1,6 +1,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-#[allow(unused_imports)] use binder::IBinder;
+#[allow(unused_imports)] use binder::IBinderInternal;
 use binder::declare_binder_interface;
 declare_binder_interface! {
   INamedCallback["android.aidl.tests.INamedCallback"] {
@@ -25,8 +25,7 @@ pub trait INamedCallbackDefault: Send + Sync {
   }
 }
 pub mod transactions {
-  #[allow(unused_imports)] use binder::IBinder;
-  pub const GetName: binder::TransactionCode = binder::SpIBinder::FIRST_CALL_TRANSACTION + 0;
+  pub const GetName: binder::TransactionCode = binder::FIRST_CALL_TRANSACTION + 0;
 }
 pub type INamedCallbackDefaultRef = Option<std::sync::Arc<dyn INamedCallbackDefault>>;
 use lazy_static::lazy_static;
@@ -36,7 +35,7 @@ lazy_static! {
 pub(crate) mod mangled { pub use super::INamedCallback as _7_android_4_aidl_5_tests_14_INamedCallback; }
 impl INamedCallback for BpNamedCallback {
   fn GetName(&self) -> binder::public_api::Result<String> {
-    let _aidl_reply = self.binder.transact(transactions::GetName, 0, |_aidl_data| {
+    let _aidl_reply = self.binder.transact(transactions::GetName, binder::FLAG_PRIVATE_LOCAL, |_aidl_data| {
       Ok(())
     });
     if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
