@@ -113,10 +113,10 @@ public class Rect implements android.os.Parcelable
     int _aidl_parcelable_size = _aidl_parcel.readInt();
     if (_aidl_parcelable_size < 0) return;
     try {
+      if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
       x = _aidl_parcel.readInt();
       if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
       y = _aidl_parcel.readInt();
-      if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
     } finally {
       _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
     }

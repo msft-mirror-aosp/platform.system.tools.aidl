@@ -184,11 +184,12 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
   out.str("");
   out << "  if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;\n";
 
-  LiteralStatement* sizeCheck = nullptr;
+  string sizeCheck = out.str();
   // keep this across different fields in order to create the classloader
   // at most once.
   bool is_classloader_created = false;
   for (const auto& field : parcel->GetFields()) {
+    read_method->statements->Add(new LiteralStatement(sizeCheck));
     string code;
     CodeWriterPtr writer = CodeWriter::ForString(&code);
     CodeGeneratorContext context{
@@ -203,8 +204,6 @@ android::aidl::java::Class* generate_parcel_class(const AidlStructuredParcelable
     CreateFromParcelFor(context);
     writer->Close();
     read_method->statements->Add(new LiteralStatement(code));
-    if (!sizeCheck) sizeCheck = new LiteralStatement(out.str());
-    read_method->statements->Add(sizeCheck);
   }
 
   out.str("");

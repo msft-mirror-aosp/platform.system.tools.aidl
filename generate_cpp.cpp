@@ -1056,20 +1056,22 @@ std::unique_ptr<Document> BuildParcelSource(const TypeNamespace& /*types*/,
       "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n"
       "size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);\n");
 
-  for (const auto& variable : parcel.GetFields()) {
-    string method = variable->GetType().GetLanguageType<Type>()->ReadFromParcelMethod();
+  auto checkAvailableData = StringPrintf(
+      "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
+      "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
+      "  return %s;\n"
+      "}\n",
+      kAndroidStatusVarName);
 
+  for (const auto& variable : parcel.GetFields()) {
+    read_block->AddLiteral(checkAvailableData, /*add_semicolon=*/false);
+    string method = variable->GetType().GetLanguageType<Type>()->ReadFromParcelMethod();
     read_block->AddStatement(new Assignment(
         kAndroidStatusVarName, new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
                                               ArgList("&" + variable->GetName()))));
     read_block->AddStatement(ReturnOnStatusNotOk());
-    read_block->AddLiteral(StringPrintf(
-        "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
-        "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
-        "  return %s;\n"
-        "}",
-        kAndroidStatusVarName));
   }
+  read_block->AddLiteral("_aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size)");
   read_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
 
   unique_ptr<MethodImpl> write{

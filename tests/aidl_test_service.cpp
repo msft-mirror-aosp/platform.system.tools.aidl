@@ -33,6 +33,8 @@
 #include <utils/Looper.h>
 #include <utils/StrongPointer.h>
 
+#include "android/aidl/versioned/tests/BnFooInterface.h"
+
 #include "android/aidl/tests/BnTestService.h"
 #include "android/aidl/tests/ITestService.h"
 
@@ -67,6 +69,8 @@ using android::aidl::tests::BnNamedCallback;
 using android::aidl::tests::BnTestService;
 using android::aidl::tests::INamedCallback;
 using android::aidl::tests::SimpleParcelable;
+using android::aidl::versioned::tests::BnFooInterface;
+using android::aidl::versioned::tests::Foo;
 using android::binder::Map;
 using android::os::ParcelFileDescriptor;
 using android::os::PersistableBundle;
@@ -485,8 +489,21 @@ class NativeService : public BnTestService {
   map<String16, sp<INamedCallback>> service_map_;
 };
 
+class FooInterface : public BnFooInterface {
+ public:
+  FooInterface() {}
+  virtual ~FooInterface() = default;
+
+  Status ignoreFooAndReturnInt(const Foo& foo, int32_t value, int32_t* ret) override {
+    (void)foo;
+    *ret = value;
+    return Status::ok();
+  }
+};
+
 int Run() {
   android::sp<NativeService> service = new NativeService;
+  android::sp<FooInterface> versioned = new FooInterface;
   sp<Looper> looper(Looper::prepare(0 /* opts */));
 
   int binder_fd = -1;
@@ -505,6 +522,7 @@ int Run() {
 
   defaultServiceManager()->addService(service->getInterfaceDescriptor(),
                                       service);
+  defaultServiceManager()->addService(versioned->getInterfaceDescriptor(), versioned);
 
   ALOGI("Entering loop");
   while (true) {
