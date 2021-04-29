@@ -1093,7 +1093,7 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
       rhs_variable_name.push_back("rhs." + variable->GetName());
     }
 
-    operator_code << "inline bool operator" << op << "(const " << parcel.GetName()
+    operator_code << "inline bool operator" << op << "([[maybe_unused]] const " << parcel.GetName()
                   << "& rhs) const {\n"
                   << "  return "
                   << "std::tie(" << Join(variable_name, ", ") << ")" << op << "std::tie("
@@ -1146,21 +1146,23 @@ std::unique_ptr<Document> BuildParcelSource(const AidlTypenames& typenames,
       "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n"
       "size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);\n");
 
-  for (const auto& variable : parcel.GetFields()) {
-    string method = ParcelReadMethodOf(variable->GetType(), typenames);
+  auto checkAvailableData = StringPrintf(
+      "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
+      "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
+      "  return %s;\n"
+      "}\n",
+      kAndroidStatusVarName);
 
+  for (const auto& variable : parcel.GetFields()) {
+    read_block->AddLiteral(checkAvailableData, /*add_semicolon=*/false);
+    string method = ParcelReadMethodOf(variable->GetType(), typenames);
     read_block->AddStatement(new Assignment(
         kAndroidStatusVarName, new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
                                               ParcelReadCastOf(variable->GetType(), typenames,
                                                                "&" + variable->GetName()))));
     read_block->AddStatement(ReturnOnStatusNotOk());
-    read_block->AddLiteral(StringPrintf(
-        "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
-        "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
-        "  return %s;\n"
-        "}",
-        kAndroidStatusVarName));
   }
+  read_block->AddLiteral("_aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size)");
   read_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
 
   unique_ptr<MethodImpl> write{

@@ -30,6 +30,7 @@
 #include "aidl_test_client_primitives.h"
 #include "aidl_test_client_service_exceptions.h"
 #include "aidl_test_client_utf8_strings.h"
+#include "aidl_test_client_versioned_interface.h"
 
 // libutils:
 using android::OK;
@@ -115,6 +116,8 @@ int main(int /* argc */, char * argv []) {
   if (!client_tests::ConfirmUtf8InCppStringListReverse(service)) return 1;
 
   if (!client_tests::ConfirmDefaultImpl(service)) return 1;
+
+  if (!client_tests::ConfirmReadDataAfterParcelableWithNewField()) return 1;
 
   return 0;
 }

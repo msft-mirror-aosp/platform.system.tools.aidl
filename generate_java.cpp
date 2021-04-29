@@ -195,11 +195,12 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
   out.str("");
   out << "  if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;\n";
 
-  std::shared_ptr<LiteralStatement> sizeCheck = nullptr;
+  std::shared_ptr<LiteralStatement> sizeCheck = std::make_shared<LiteralStatement>(out.str());
   // keep this across different fields in order to create the classloader
   // at most once.
   bool is_classloader_created = false;
   for (const auto& field : parcel->GetFields()) {
+    read_method->statements->Add(sizeCheck);
     string code;
     CodeWriterPtr writer = CodeWriter::ForString(&code);
     CodeGeneratorContext context{
@@ -214,8 +215,6 @@ std::unique_ptr<android::aidl::java::Class> generate_parcel_class(
     CreateFromParcelFor(context);
     writer->Close();
     read_method->statements->Add(std::make_shared<LiteralStatement>(code));
-    if (!sizeCheck) sizeCheck = std::make_shared<LiteralStatement>(out.str());
-    read_method->statements->Add(sizeCheck);
   }
 
   out.str("");
