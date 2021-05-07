@@ -561,26 +561,33 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlStructuredParcelab
   out << "let start_pos = parcel.get_data_position();\n";
   out << "let parcelable_size: i32 = parcel.read()?;\n";
   out << "if parcelable_size < 0 { return Err(binder::StatusCode::BAD_VALUE); }\n";
+  out << "if start_pos.checked_add(parcelable_size).is_none() {\n";
+  out << "  return Err(binder::StatusCode::BAD_VALUE);\n";
+  out << "}\n";
 
-  // Pre-emit the common field epilogue code, shared between all fields:
-  ostringstream epilogue;
-  epilogue << "if (parcel.get_data_position() - start_pos) == parcelable_size {\n";
+  // Pre-emit the common field prologue code, shared between all fields:
+  ostringstream prologue;
+  prologue << "if (parcel.get_data_position() - start_pos) == parcelable_size {\n";
   // We assume the lhs can never be > parcelable_size, because then the read
   // immediately preceding this check would have returned NOT_ENOUGH_DATA
-  epilogue << "  return Ok(Some(result));\n";
-  epilogue << "}\n";
-  string epilogue_str = epilogue.str();
+  prologue << "  return Ok(Some(result));\n";
+  prologue << "}\n";
+  string prologue_str = prologue.str();
 
   out << "let mut result = Self::default();\n";
   for (const auto& variable : parcel->GetFields()) {
+    out << prologue_str;
     if (!TypeHasDefault(variable->GetType(), typenames)) {
       out << "result." << variable->GetName() << " = Some(parcel.read()?);\n";
     } else {
       out << "result." << variable->GetName() << " = parcel.read()?;\n";
     }
-    out << epilogue_str;
   }
-
+  // Now we read all fields.
+  // Skip remaining data in case we're reading from a newer version
+  out << "unsafe {\n";
+  out << "  parcel.set_data_position(start_pos + parcelable_size)?;\n";
+  out << "}\n";
   out << "Ok(Some(result))\n";
 }
 
