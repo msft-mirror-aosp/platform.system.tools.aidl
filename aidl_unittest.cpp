@@ -283,6 +283,12 @@ TEST_P(AidlTest, RejectsRepeatedAnnotations) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, AcceptsEmptyParcelable) {
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage()));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
 TEST_P(AidlTest, RejectsDuplicatedAnnotationParams) {
   const string method = "package a; interface IFoo { @UnsupportedAppUsage(foo=1, foo=2)void f(); }";
   const string expected_stderr = "ERROR: a/IFoo.aidl:1.56-62: Trying to redefine parameter foo.\n";
@@ -2004,6 +2010,19 @@ TEST_F(AidlTestCompatibleChanges, NewField) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, NewField2) {
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int foo = 0;"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 TEST_F(AidlTestCompatibleChanges, NewEnumerator) {
   io_delegate_.SetFileContents("old/p/Enum.aidl",
                                "package p;"
@@ -2161,6 +2180,32 @@ TEST_F(AidlTestCompatibleChanges, NewFieldOfNewType) {
                                "enum Enum {"
                                "  FOO = 0,"
                                "  BAR = 1,"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
+TEST_F(AidlTestCompatibleChanges, CompatibleExplicitDefaults) {
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;\n"
+                               "parcelable Data {\n"
+                               "  p.Enum e;\n"
+                               "}");
+  io_delegate_.SetFileContents("old/p/Enum.aidl",
+                               "package p;\n"
+                               "enum Enum {\n"
+                               "  FOO = 0,\n"
+                               "  BAR = 1,\n"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;\n"
+                               "parcelable Data {\n"
+                               "  p.Enum e = p.Enum.FOO;\n"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Enum.aidl",
+                               "package p;\n"
+                               "enum Enum {\n"
+                               "  FOO = 0,\n"
+                               "  BAR = 1,\n"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
@@ -2641,6 +2686,21 @@ TEST_F(AidlTestIncompatibleChanges, FixedSizeAddedField) {
                                "package p; @FixedSize parcelable Foo { int A = 1; }");
   io_delegate_.SetFileContents("new/p/Foo.aidl",
                                "package p; @FixedSize parcelable Foo { int A = 1; int B = 2; }");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, UidRangeParcelAddedField) {
+  const string expected_stderr =
+      "ERROR: new/android/net/UidRangeParcel.aidl:1.32-47: Number of fields in "
+      "android.net.UidRangeParcel is changed from 1 to 2. "
+      "But it is forbidden because of legacy support.\n";
+  io_delegate_.SetFileContents("old/android/net/UidRangeParcel.aidl",
+                               "package android.net; parcelable UidRangeParcel { int A = 1; }");
+  io_delegate_.SetFileContents(
+      "new/android/net/UidRangeParcel.aidl",
+      "package android.net; parcelable UidRangeParcel { int A = 1; int B = 2; }");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -3140,6 +3200,15 @@ TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableParcelable) {
   Options options = Options::From("aidl --lang=java Foo.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_error, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, JavaOnlyImmutableParcelableWithEnumFields) {
+  io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { Bar bar; }");
+  io_delegate_.SetFileContents("Bar.aidl", "enum Bar { FOO }");
+  CaptureStderr();
+  Options options = Options::From("aidl --lang=java Foo.aidl -I .");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
 }
 
 TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableUnion) {
