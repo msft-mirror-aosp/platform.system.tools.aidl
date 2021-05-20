@@ -298,6 +298,8 @@ class NativeService : public BnTestService {
 
   Status TestOneway() override { return Status::fromStatusT(android::UNKNOWN_ERROR); }
 
+  Status Deprecated() override { return Status::ok(); }
+
   Status RepeatBoolean(bool token, bool* _aidl_return) override {
     LogRepeatedToken(token ? 1 : 0);
     *_aidl_return = token;
@@ -636,6 +638,21 @@ class VersionedService : public android::aidl::versioned::tests::BnFooInterface 
             std::to_string(u.get<::android::aidl::versioned::tests::BazUnion::intNum>());
         break;
     }
+    return Status::ok();
+  }
+  Status returnsLengthOfFooArray(const vector<::android::aidl::versioned::tests::Foo>& foos,
+                                 int32_t* ret) override {
+    *ret = static_cast<int32_t>(foos.size());
+    return Status::ok();
+  }
+  Status ignoreParcelablesAndRepeatInt(const ::android::aidl::versioned::tests::Foo& inFoo,
+                                       ::android::aidl::versioned::tests::Foo* inoutFoo,
+                                       ::android::aidl::versioned::tests::Foo* outFoo,
+                                       int32_t value, int32_t* ret) override {
+    (void)inFoo;
+    (void)inoutFoo;
+    (void)outFoo;
+    *ret = value;
     return Status::ok();
   }
 };

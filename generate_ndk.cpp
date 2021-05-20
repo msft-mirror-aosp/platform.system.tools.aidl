@@ -891,9 +891,9 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
       continue;
     }
     if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
-      out << NdkMethodDecl(types, *method) << " final override;\n";
+      out << NdkMethodDecl(types, *method) << " final;\n";
     } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
-      out << NdkMethodDecl(types, *method) << " final override;\n";
+      out << NdkMethodDecl(types, *method) << " final;\n";
     } else {
       AIDL_FATAL(defined_type) << "Meta method '" << method->GetName() << "' is unimplemented.";
     }
@@ -1102,14 +1102,14 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   StatusCheckReturn(out);
 
   for (const auto& variable : defined_type.GetFields()) {
-    out << "_aidl_ret_status = ";
-    ReadFromParcelFor({out, types, variable->GetType(), "parcel", "&" + variable->GetName()});
-    out << ";\n";
-    StatusCheckReturn(out);
     out << "if (AParcel_getDataPosition(parcel) - _aidl_start_pos >= _aidl_parcelable_size) {\n"
         << "  AParcel_setDataPosition(parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
         << "  return _aidl_ret_status;\n"
         << "}\n";
+    out << "_aidl_ret_status = ";
+    ReadFromParcelFor({out, types, variable->GetType(), "parcel", "&" + variable->GetName()});
+    out << ";\n";
+    StatusCheckReturn(out);
   }
   out << "AParcel_setDataPosition(parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
       << "return _aidl_ret_status;\n";
@@ -1271,7 +1271,7 @@ std::string GenerateEnumToString(const AidlTypenames& typenames,
                                  const AidlEnumDeclaration& enum_decl) {
   std::ostringstream code;
   const std::string signature =
-      "static inline std::string toString(" + enum_decl.GetName() + " val)";
+      "[[nodiscard]] static inline std::string toString(" + enum_decl.GetName() + " val)";
   if (enum_decl.IsDeprecated()) {
     code << signature;
     cpp::GenerateDeprecated(code, enum_decl);

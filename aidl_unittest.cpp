@@ -283,6 +283,12 @@ TEST_P(AidlTest, RejectsRepeatedAnnotations) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, AcceptsEmptyParcelable) {
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage()));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
 TEST_P(AidlTest, RejectsDuplicatedAnnotationParams) {
   const string method = "package a; interface IFoo { @UnsupportedAppUsage(foo=1, foo=2)void f(); }";
   const string expected_stderr = "ERROR: a/IFoo.aidl:1.56-62: Trying to redefine parameter foo.\n";
@@ -1174,6 +1180,62 @@ TEST_P(AidlTest, UnderstandsNestedParcelables) {
   EXPECT_EQ("::p::Outer::Inner", cpp::CppNameOf(nested_type, typenames_));
 }
 
+TEST_F(AidlTest, CppNameOf_GenericType) {
+  io_delegate_.SetFileContents("p/Wrapper.aidl", "package p; parcelable Wrapper<T> { T wrapped; }");
+  import_paths_.emplace("");
+  // Since we don't support compilation of Wrapper directly (due to "T" reference),
+  // prepare Holder so that Wrapper gets parsed into AidlTypenames
+  const string input_path = "p/Holder.aidl";
+  const string input =
+      "package p; import p.Wrapper; parcelable Holder {\n"
+      "  @nullable Wrapper<String> value;\n"
+      "}";
+
+  auto parse_result = Parse(input_path, input, typenames_, Options::Language::CPP);
+  EXPECT_NE(nullptr, parse_result);
+
+  auto type = [](std::string name, auto&&... type_params) -> std::unique_ptr<AidlTypeSpecifier> {
+    auto params = new std::vector<std::unique_ptr<AidlTypeSpecifier>>;
+    (..., params->emplace_back(std::move(type_params)));
+    return std::make_unique<AidlTypeSpecifier>(AIDL_LOCATION_HERE, name, false, params, Comments{});
+  };
+
+  auto set_nullable = [](std::unique_ptr<AidlTypeSpecifier>&& type) {
+    std::vector<AidlAnnotation> annotations;
+    annotations.emplace_back(*AidlAnnotation::Parse(AIDL_LOCATION_HERE, "nullable", nullptr, {}));
+    type->Annotate(std::move(annotations));
+    return std::move(type);
+  };
+
+  auto set_array = [](std::unique_ptr<AidlTypeSpecifier>&& type) {
+    (void)type->SetArray();
+    return std::move(type);
+  };
+
+  auto w = type("p.Wrapper", type("String"));
+  EXPECT_EQ("::p::Wrapper<::android::String16>", cpp::CppNameOf(*w, typenames_));
+
+  auto nullable_w = set_nullable(type("p.Wrapper", type("String")));
+  EXPECT_EQ("::std::optional<::p::Wrapper<::android::String16>>",
+            cpp::CppNameOf(*nullable_w, typenames_));
+
+  auto array_w = set_array(type("p.Wrapper", type("String")));
+  EXPECT_EQ("::std::vector<::p::Wrapper<::android::String16>>",
+            cpp::CppNameOf(*array_w, typenames_));
+
+  auto nullable_array_w = set_nullable(set_array(type("p.Wrapper", type("String"))));
+  EXPECT_EQ("::std::optional<::std::vector<::std::optional<::p::Wrapper<::android::String16>>>>",
+            cpp::CppNameOf(*nullable_array_w, typenames_));
+
+  auto list_w = type("List", type("p.Wrapper", type("String")));
+  EXPECT_EQ("::std::vector<::p::Wrapper<::android::String16>>",
+            cpp::CppNameOf(*list_w, typenames_));
+
+  auto nullable_list_w = set_nullable(type("List", type("p.Wrapper", type("String"))));
+  EXPECT_EQ("::std::optional<::std::vector<::std::optional<::p::Wrapper<::android::String16>>>>",
+            cpp::CppNameOf(*nullable_list_w, typenames_));
+}
+
 TEST_P(AidlTest, UnderstandsNativeParcelables) {
   io_delegate_.SetFileContents(
       "p/Bar.aidl",
@@ -2004,6 +2066,19 @@ TEST_F(AidlTestCompatibleChanges, NewField) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, NewField2) {
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int foo = 0;"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 TEST_F(AidlTestCompatibleChanges, NewEnumerator) {
   io_delegate_.SetFileContents("old/p/Enum.aidl",
                                "package p;"
@@ -2161,6 +2236,32 @@ TEST_F(AidlTestCompatibleChanges, NewFieldOfNewType) {
                                "enum Enum {"
                                "  FOO = 0,"
                                "  BAR = 1,"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
+TEST_F(AidlTestCompatibleChanges, CompatibleExplicitDefaults) {
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;\n"
+                               "parcelable Data {\n"
+                               "  p.Enum e;\n"
+                               "}");
+  io_delegate_.SetFileContents("old/p/Enum.aidl",
+                               "package p;\n"
+                               "enum Enum {\n"
+                               "  FOO = 0,\n"
+                               "  BAR = 1,\n"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;\n"
+                               "parcelable Data {\n"
+                               "  p.Enum e = p.Enum.FOO;\n"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Enum.aidl",
+                               "package p;\n"
+                               "enum Enum {\n"
+                               "  FOO = 0,\n"
+                               "  BAR = 1,\n"
                                "}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
@@ -2641,6 +2742,21 @@ TEST_F(AidlTestIncompatibleChanges, FixedSizeAddedField) {
                                "package p; @FixedSize parcelable Foo { int A = 1; }");
   io_delegate_.SetFileContents("new/p/Foo.aidl",
                                "package p; @FixedSize parcelable Foo { int A = 1; int B = 2; }");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, UidRangeParcelAddedField) {
+  const string expected_stderr =
+      "ERROR: new/android/net/UidRangeParcel.aidl:1.32-47: Number of fields in "
+      "android.net.UidRangeParcel is changed from 1 to 2. "
+      "But it is forbidden because of legacy support.\n";
+  io_delegate_.SetFileContents("old/android/net/UidRangeParcel.aidl",
+                               "package android.net; parcelable UidRangeParcel { int A = 1; }");
+  io_delegate_.SetFileContents(
+      "new/android/net/UidRangeParcel.aidl",
+      "package android.net; parcelable UidRangeParcel { int A = 1; int B = 2; }");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -3140,6 +3256,15 @@ TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableParcelable) {
   Options options = Options::From("aidl --lang=java Foo.aidl -I .");
   EXPECT_NE(0, ::android::aidl::compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_error, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, JavaOnlyImmutableParcelableWithEnumFields) {
+  io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { Bar bar; }");
+  io_delegate_.SetFileContents("Bar.aidl", "enum Bar { FOO }");
+  CaptureStderr();
+  Options options = Options::From("aidl --lang=java Foo.aidl -I .");
+  EXPECT_EQ(0, ::android::aidl::compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
 }
 
 TEST_F(AidlTest, RejectMutableParcelableFromJavaOnlyImmutableUnion) {

@@ -85,7 +85,7 @@ type aidlGenRule struct {
 	implicitInputs android.Paths
 	importFlags    string
 
-	// TODO(b/149952131): always have a hash file
+	// A frozen aidl_interface always have a hash file
 	hashFile android.Path
 
 	genOutDir     android.ModuleGenPath
@@ -104,7 +104,7 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		return
 	}
 
-	genDirTimestamp := android.PathForModuleGen(ctx, "timestamp")
+	genDirTimestamp := android.PathForModuleGen(ctx, "timestamp") // $out/gen/timestamp
 	g.implicitInputs = append(g.implicitInputs, genDirTimestamp)
 
 	var importPaths []string
@@ -141,6 +141,13 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		Args: map[string]string{
 			"outDir": g.genOutDir.String(),
 		},
+	})
+
+	// This is to trigger genrule alone
+	ctx.Build(pctx, android.BuildParams{
+		Rule:   android.Phony,
+		Output: android.PathForModuleOut(ctx, "timestamp"), // $out/timestamp
+		Inputs: g.genOutputs.Paths(),
 	})
 }
 
