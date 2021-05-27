@@ -54,7 +54,8 @@ class AidlToken {
   android::aidl::Comments comments_;
 };
 
-using TypeResolver = std::function<bool(const AidlDocument*, AidlTypeSpecifier*)>;
+using TypeResolver = std::function<bool(const AidlDefinedType*, AidlTypeSpecifier*)>;
+bool ResolveReferences(const AidlDocument& document, TypeResolver& resolver);
 
 class Parser {
  public:
@@ -65,9 +66,9 @@ class Parser {
   ~Parser();
 
   // Parse contents of file |filename|. Should only be called once.
-  static std::unique_ptr<Parser> Parse(const std::string& filename,
-                                       const android::aidl::IoDelegate& io_delegate,
-                                       AidlTypenames& typenames);
+  static const AidlDocument* Parse(const std::string& filename,
+                                   const android::aidl::IoDelegate& io_delegate,
+                                   AidlTypenames& typenames);
 
   void AddError() { error_++; }
   bool HasError() const { return error_ != 0; }
@@ -87,7 +88,6 @@ class Parser {
   void SetPackage(const std::string& package) { package_ = package; }
   const std::string& Package() const { return package_; }
 
-  bool Resolve(TypeResolver& type_resolver);
   void SetDocument(std::unique_ptr<AidlDocument>&& document) {
     // The parsed document is owned by typenames_. This parser object only has
     // a reference to it.
@@ -96,11 +96,6 @@ class Parser {
       document_ = nullptr;
       AddError();
     }
-  }
-
-  const AidlDocument& ParsedDocument() const {
-    AIDL_FATAL_IF(HasError(), FileName());
-    return *document_;
   }
 
  private:
