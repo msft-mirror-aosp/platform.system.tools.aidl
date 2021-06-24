@@ -17,6 +17,7 @@
 #include "generate_cpp.h"
 #include "aidl.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <memory>
@@ -26,6 +27,7 @@
 
 #include <android-base/format.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 
 #include "aidl_language.h"
 #include "aidl_to_cpp.h"
@@ -243,7 +245,7 @@ unique_ptr<Declaration> DefineClientTransaction(const AidlTypenames& typenames,
   if (interface.IsSensitiveData()) {
     b->AddLiteral(StringPrintf("%s.markSensitive()", kDataVarName));
   }
-  b->AddLiteral(StringPrintf("%s.markForBinder(remote())", kDataVarName));
+  b->AddLiteral(StringPrintf("%s.markForBinder(remoteStrong())", kDataVarName));
 
   // Even if we're oneway, the transact method still takes a parcel.
   b->AddLiteral(StringPrintf("%s %s", kAndroidParcelLiteral, kReplyVarName));
@@ -963,7 +965,7 @@ unique_ptr<Document> BuildServerHeader(const AidlTypenames& /* typenames */,
 
   if (options.Version() > 0) {
     std::ostringstream code;
-    code << "int32_t " << kGetInterfaceVersion << "() final override;\n";
+    code << "int32_t " << kGetInterfaceVersion << "() final;\n";
     publics.emplace_back(new LiteralDecl(code.str()));
   }
   if (!options.Hash().empty()) {
@@ -1120,23 +1122,26 @@ void BuildReadFromParcel(const AidlStructuredParcelable& parcel, const AidlTypen
       "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n"
       "[[maybe_unused]] size_t _aidl_parcelable_size = "
       "static_cast<size_t>(_aidl_parcelable_raw_size);\n"
-      "if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;\n");
+      "if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;\n",
+      /*add_semicolon=*/false);
+
+  auto checkAvailableData = StringPrintf(
+      "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
+      "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
+      "  return %s;\n"
+      "}\n",
+      kAndroidStatusVarName);
 
   for (const auto& variable : parcel.GetFields()) {
+    read_block->AddLiteral(checkAvailableData, /*add_semicolon=*/false);
     string method = ParcelReadMethodOf(variable->GetType(), typenames);
-
     read_block->AddStatement(new Assignment(
         kAndroidStatusVarName, new MethodCall(StringPrintf("_aidl_parcel->%s", method.c_str()),
                                               ParcelReadCastOf(variable->GetType(), typenames,
                                                                "&" + variable->GetName()))));
     read_block->AddStatement(ReturnOnStatusNotOk());
-    read_block->AddLiteral(StringPrintf(
-        "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n"
-        "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n"
-        "  return %s;\n"
-        "}",
-        kAndroidStatusVarName));
   }
+  read_block->AddLiteral("_aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size)");
   read_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
 }
 
@@ -1147,7 +1152,8 @@ void BuildWriteToParcel(const AidlStructuredParcelable& parcel, const AidlTypena
 
   write_block->AddLiteral(
       "auto _aidl_start_pos = _aidl_parcel->dataPosition();\n"
-      "_aidl_parcel->writeInt32(0);");
+      "_aidl_parcel->writeInt32(0);\n",
+      /*add_semicolon=*/false);
 
   for (const auto& variable : parcel.GetFields()) {
     string method = ParcelWriteMethodOf(variable->GetType(), typenames);
@@ -1162,7 +1168,8 @@ void BuildWriteToParcel(const AidlStructuredParcelable& parcel, const AidlTypena
       "auto _aidl_end_pos = _aidl_parcel->dataPosition();\n"
       "_aidl_parcel->setDataPosition(_aidl_start_pos);\n"
       "_aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);\n"
-      "_aidl_parcel->setDataPosition(_aidl_end_pos);");
+      "_aidl_parcel->setDataPosition(_aidl_end_pos);\n",
+      /*add_semicolon=*/false);
   write_block->AddLiteral(StringPrintf("return %s", kAndroidStatusVarName));
 }
 
@@ -1269,11 +1276,11 @@ std::unique_ptr<Document> BuildParcelHeader(const AidlTypenames& typenames,
 
   unique_ptr<MethodDecl> read(new MethodDecl(kAndroidStatusLiteral, "readFromParcel",
                                              ArgList("const ::android::Parcel* _aidl_parcel"),
-                                             MethodDecl::IS_OVERRIDE | MethodDecl::IS_FINAL));
+                                             MethodDecl::IS_FINAL));
   parcel_class->AddPublic(std::move(read));
-  unique_ptr<MethodDecl> write(new MethodDecl(
-      kAndroidStatusLiteral, "writeToParcel", ArgList("::android::Parcel* _aidl_parcel"),
-      MethodDecl::IS_OVERRIDE | MethodDecl::IS_CONST | MethodDecl::IS_FINAL));
+  unique_ptr<MethodDecl> write(new MethodDecl(kAndroidStatusLiteral, "writeToParcel",
+                                              ArgList("::android::Parcel* _aidl_parcel"),
+                                              MethodDecl::IS_CONST | MethodDecl::IS_FINAL));
   parcel_class->AddPublic(std::move(write));
 
   parcel_class->AddPublic(std::unique_ptr<LiteralDecl>(
@@ -1331,10 +1338,10 @@ std::unique_ptr<Document> BuildParcelSource(const AidlTypenames& typenames, cons
 std::string GenerateEnumToString(const AidlTypenames& typenames,
                                  const AidlEnumDeclaration& enum_decl) {
   std::ostringstream code;
-  const std::string signature =
-      "static inline std::string toString(" + enum_decl.GetName() + " val)";
+  code << "[[nodiscard]]";
   GenerateDeprecated(code, enum_decl);
-  code << signature << " {\n";
+  code << " static inline std::string toString(" << enum_decl.GetName() << " val)";
+  code << " {\n";
   code << "  switch(val) {\n";
   std::set<std::string> unique_cases;
   for (const auto& enumerator : enum_decl.GetEnumerators()) {
@@ -1553,8 +1560,37 @@ bool GenerateCppEnumDeclaration(const std::string& filename, const Options& opti
   return true;
 }
 
+// Ensures that output_file is  <out_dir>/<packagename>/<typename>.cpp
+bool ValidateOutputFilePath(const string& output_file, const Options& options,
+                            const AidlDefinedType& defined_type) {
+  const auto& out_dir =
+      !options.OutputDir().empty() ? options.OutputDir() : options.OutputHeaderDir();
+  if (output_file.empty() || !android::base::StartsWith(output_file, out_dir)) {
+    // If output_file is not set (which happens in the unit tests) or is outside of out_dir, we can
+    // help but accepting it, because the path is what the user has requested.
+    return true;
+  }
+
+  string canonical_name = defined_type.GetCanonicalName();
+  std::replace(canonical_name.begin(), canonical_name.end(), '.', OS_PATH_SEPARATOR);
+  const string expected = out_dir + canonical_name + ".cpp";
+  if (expected != output_file) {
+    AIDL_ERROR(defined_type) << "Output file is expected to be at " << expected << ", but is "
+                             << output_file << ".\n If this is an Android platform "
+                             << "build, consider providing the input AIDL files using a filegroup "
+                             << "with `path:\"<base>\"` so that the AIDL files are located at "
+                             << "<base>/<packagename>/<typename>.aidl.";
+    return false;
+  }
+  return true;
+}
+
 bool GenerateCpp(const string& output_file, const Options& options, const AidlTypenames& typenames,
                  const AidlDefinedType& defined_type, const IoDelegate& io_delegate) {
+  if (!ValidateOutputFilePath(output_file, options, defined_type)) {
+    return false;
+  }
+
   const AidlStructuredParcelable* parcelable = defined_type.AsStructuredParcelable();
   if (parcelable != nullptr) {
     return GenerateCppParcelable(output_file, options, typenames, *parcelable, io_delegate);

@@ -29,7 +29,7 @@ use aidl_test_interface::aidl::android::aidl::tests::unions::{
 };
 use aidl_test_interface::binder;
 use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
-    IFooInterface, IFooInterface::BpFooInterface, BazUnion::BazUnion,
+    IFooInterface, IFooInterface::BpFooInterface, BazUnion::BazUnion, Foo::Foo,
 };
 use std::fs::File;
 use std::io::{Read, Write};
@@ -247,7 +247,7 @@ fn test_binder_exchange() {
         .GetOtherTestService(NAME)
         .expect("error calling GetOtherTestService");
     assert_eq!(got.GetName().as_ref().map(String::as_ref), Ok(NAME));
-    assert_eq!(service.VerifyName(&*got, NAME), Ok(true));
+    assert_eq!(service.VerifyName(&got, NAME), Ok(true));
 }
 
 fn build_pipe() -> (File, File) {
@@ -623,7 +623,7 @@ fn test_versioned_interface_hash() {
     let hash = service.getInterfaceHash();
     assert_eq!(
         hash.as_ref().map(String::as_str),
-        Ok("796b4ab269d476662bed4ab57092ed000e48d5d7")
+        Ok("9e7be1859820c59d9d55dd133e71a3687b5d2e5b")
     );
 }
 
@@ -654,6 +654,32 @@ fn test_versioned_unknown_union_field_triggers_error() {
     } else {
         assert_eq!(ret.unwrap_err().transaction_error(), binder::StatusCode::BAD_VALUE);
     }
+}
+
+#[test]
+fn test_array_of_parcelable_with_new_field() {
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
+        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
+            .expect("did not get binder service");
+
+    let foos = [Default::default(), Default::default(), Default::default()];
+    let ret = service.returnsLengthOfFooArray(&foos);
+    assert_eq!(ret, Ok(foos.len() as i32));
+}
+
+#[test]
+fn test_read_data_correctly_after_parcelable_with_new_field() {
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
+        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
+            .expect("did not get binder service");
+
+    let in_foo = Default::default();
+    let mut inout_foo = Foo { intDefault42: 0 };
+    let mut out_foo = Foo { intDefault42: 0 };
+    let ret = service.ignoreParcelablesAndRepeatInt(&in_foo, &mut inout_foo, &mut out_foo, 43);
+    assert_eq!(ret, Ok(43));
+    assert_eq!(inout_foo.intDefault42, 0);
+    assert_eq!(out_foo.intDefault42, 0);
 }
 
 fn test_renamed_interface<F>(f: F)

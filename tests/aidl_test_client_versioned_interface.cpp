@@ -25,6 +25,7 @@ using android::OK;
 using android::sp;
 using android::String16;
 using android::aidl::versioned::tests::BazUnion;
+using android::aidl::versioned::tests::Foo;
 using android::aidl::versioned::tests::IFooInterface;
 
 class VersionedInterfaceTest : public AidlTest {
@@ -44,7 +45,7 @@ TEST_F(VersionedInterfaceTest, getInterfaceVersion) {
 }
 
 TEST_F(VersionedInterfaceTest, getInterfaceHash) {
-  EXPECT_EQ("796b4ab269d476662bed4ab57092ed000e48d5d7", versioned->getInterfaceHash());
+  EXPECT_EQ("9e7be1859820c59d9d55dd133e71a3687b5d2e5b", versioned->getInterfaceHash());
 }
 
 TEST_F(VersionedInterfaceTest, noProblemWhenPassingAUnionWithOldField) {
@@ -66,4 +67,24 @@ TEST_F(VersionedInterfaceTest, errorWhenPassingAUnionWithNewField) {
   } else {
     EXPECT_EQ(::android::BAD_VALUE, status.transactionError()) << status;
   }
+}
+
+TEST_F(VersionedInterfaceTest, arrayOfParcelableWithNewParam) {
+  std::vector<Foo> foos(42);
+  int32_t length;
+  auto status = versioned->returnsLengthOfFooArray(foos, &length);
+  EXPECT_TRUE(status.isOk());
+  EXPECT_EQ(42, length);
+}
+
+TEST_F(VersionedInterfaceTest, readDataCorrectlyAfterParcelableWithNewField) {
+  Foo inFoo, inoutFoo, outFoo;
+  inoutFoo.intDefault42 = 0;
+  outFoo.intDefault42 = 0;
+  int32_t ret;
+  auto status = versioned->ignoreParcelablesAndRepeatInt(inFoo, &inoutFoo, &outFoo, 43, &ret);
+  EXPECT_TRUE(status.isOk());
+  EXPECT_EQ(43, ret);
+  EXPECT_EQ(0, inoutFoo.intDefault42);
+  EXPECT_EQ(0, outFoo.intDefault42);
 }

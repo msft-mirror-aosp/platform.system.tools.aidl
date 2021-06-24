@@ -38,7 +38,7 @@ cc_defaults {
         "-Werror",
         "-Wextra",
     ],
-    whole_static_libs: ["libgtest_prod"],
+    header_libs: ["libgtest_prod_headers"],
     static_libs: [
         "libbase",
         "libcutils",
@@ -100,11 +100,11 @@ cc_library_static {
         "generate_rust.cpp",
         "import_resolver.cpp",
         "io_delegate.cpp",
-        "line_reader.cpp",
         "location.cpp",
         "logging.cpp",
         "options.cpp",
         "parser.cpp",
+        "preprocess.cpp",
     ],
     yacc: {
         gen_location_hh: true,
@@ -190,6 +190,7 @@ cc_fuzz {
             "smoreland@google.com",
             "jiyong@google.com",
             "jeongik@google.com",
+            "jooyung@google.com",
         ],
     },
 
@@ -275,12 +276,15 @@ filegroup {
         "tests/android/aidl/tests/BackendType.aidl",
         "tests/android/aidl/tests/ByteEnum.aidl",
         "tests/android/aidl/tests/ConstantExpressionEnum.aidl",
+        "tests/android/aidl/tests/DeprecatedEnum.aidl",
+        "tests/android/aidl/tests/DeprecatedParcelable.aidl",
         "tests/android/aidl/tests/GenericStructuredParcelable.aidl",
+        "tests/android/aidl/tests/IDeprecated.aidl",
         "tests/android/aidl/tests/INamedCallback.aidl",
         "tests/android/aidl/tests/INewName.aidl",
-        "tests/android/aidl/tests/IntEnum.aidl",
         "tests/android/aidl/tests/IOldName.aidl",
         "tests/android/aidl/tests/ITestService.aidl",
+        "tests/android/aidl/tests/IntEnum.aidl",
         "tests/android/aidl/tests/LongEnum.aidl",
         "tests/android/aidl/tests/OtherParcelableForToString.aidl",
         "tests/android/aidl/tests/ParcelableForToString.aidl",
@@ -382,6 +386,8 @@ cc_test {
     static_libs: [
         "libcutils",
         "libgmock",
+        //  client uses the latest version
+        "aidl-test-versioned-interface-V2-ndk_platform",
         "aidl-test-interface-ndk_platform",
         "aidl_test_loggable_interface-ndk_platform"
     ],
@@ -390,6 +396,7 @@ cc_test {
     ],
     srcs: [
         "tests/aidl_test_client_ndk_loggable_interface.cpp",
+        "tests/aidl_test_client_ndk_versioned_interface.cpp",
     ],
 }
 

@@ -47,7 +47,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::UnimplementedMethod(int32_t arg, int32_t* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -82,10 +82,40 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   return _aidl_status;
 }
 
+::android::binder::Status BpTestService::Deprecated() {
+  ::android::Parcel _aidl_data;
+  _aidl_data.markSensitive();
+  _aidl_data.markForBinder(remoteStrong());
+  ::android::Parcel _aidl_reply;
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  ::android::binder::Status _aidl_status;
+  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_Deprecated, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
+  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+     return ITestService::getDefaultImpl()->Deprecated();
+  }
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = _aidl_status.readFromParcel(_aidl_reply);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  if (!_aidl_status.isOk()) {
+    return _aidl_status;
+  }
+  _aidl_error:
+  _aidl_status.setFromStatusT(_aidl_ret_status);
+  return _aidl_status;
+}
+
 ::android::binder::Status BpTestService::TestOneway() {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -108,7 +138,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatBoolean(bool token, bool* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -146,7 +176,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatByte(int8_t token, int8_t* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -184,7 +214,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatChar(char16_t token, char16_t* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -222,7 +252,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatInt(int32_t token, int32_t* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -260,7 +290,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatLong(int64_t token, int64_t* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -298,7 +328,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatFloat(float token, float* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -336,7 +366,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatDouble(double token, double* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -374,7 +404,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatString(const ::android::String16& token, ::android::String16* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -412,7 +442,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatByteEnum(::android::aidl::tests::ByteEnum token, ::android::aidl::tests::ByteEnum* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -450,7 +480,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatIntEnum(::android::aidl::tests::IntEnum token, ::android::aidl::tests::IntEnum* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -488,7 +518,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatLongEnum(::android::aidl::tests::LongEnum token, ::android::aidl::tests::LongEnum* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -526,7 +556,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseBoolean(const ::std::vector<bool>& input, ::std::vector<bool>* repeated, ::std::vector<bool>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -572,7 +602,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseByte(const ::std::vector<uint8_t>& input, ::std::vector<uint8_t>* repeated, ::std::vector<uint8_t>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -618,7 +648,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseChar(const ::std::vector<char16_t>& input, ::std::vector<char16_t>* repeated, ::std::vector<char16_t>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -664,7 +694,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseInt(const ::std::vector<int32_t>& input, ::std::vector<int32_t>* repeated, ::std::vector<int32_t>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -710,7 +740,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseLong(const ::std::vector<int64_t>& input, ::std::vector<int64_t>* repeated, ::std::vector<int64_t>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -756,7 +786,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseFloat(const ::std::vector<float>& input, ::std::vector<float>* repeated, ::std::vector<float>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -802,7 +832,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseDouble(const ::std::vector<double>& input, ::std::vector<double>* repeated, ::std::vector<double>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -848,7 +878,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseString(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* repeated, ::std::vector<::android::String16>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -894,7 +924,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseByteEnum(const ::std::vector<::android::aidl::tests::ByteEnum>& input, ::std::vector<::android::aidl::tests::ByteEnum>* repeated, ::std::vector<::android::aidl::tests::ByteEnum>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -940,7 +970,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseIntEnum(const ::std::vector<::android::aidl::tests::IntEnum>& input, ::std::vector<::android::aidl::tests::IntEnum>* repeated, ::std::vector<::android::aidl::tests::IntEnum>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -986,7 +1016,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseLongEnum(const ::std::vector<::android::aidl::tests::LongEnum>& input, ::std::vector<::android::aidl::tests::LongEnum>* repeated, ::std::vector<::android::aidl::tests::LongEnum>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1032,7 +1062,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::GetOtherTestService(const ::android::String16& name, ::android::sp<::android::aidl::tests::INamedCallback>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1070,7 +1100,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::VerifyName(const ::android::sp<::android::aidl::tests::INamedCallback>& service, const ::android::String16& name, bool* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1112,7 +1142,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseStringList(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* repeated, ::std::vector<::android::String16>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1154,7 +1184,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatParcelFileDescriptor(const ::android::os::ParcelFileDescriptor& read, ::android::os::ParcelFileDescriptor* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1192,7 +1222,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseParcelFileDescriptorArray(const ::std::vector<::android::os::ParcelFileDescriptor>& input, ::std::vector<::android::os::ParcelFileDescriptor>* repeated, ::std::vector<::android::os::ParcelFileDescriptor>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1238,7 +1268,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ThrowServiceException(int32_t code) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1272,7 +1302,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableIntArray(const ::std::optional<::std::vector<int32_t>>& input, ::std::optional<::std::vector<int32_t>>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1310,7 +1340,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableByteEnumArray(const ::std::optional<::std::vector<::android::aidl::tests::ByteEnum>>& input, ::std::optional<::std::vector<::android::aidl::tests::ByteEnum>>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1348,7 +1378,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableIntEnumArray(const ::std::optional<::std::vector<::android::aidl::tests::IntEnum>>& input, ::std::optional<::std::vector<::android::aidl::tests::IntEnum>>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1386,7 +1416,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableLongEnumArray(const ::std::optional<::std::vector<::android::aidl::tests::LongEnum>>& input, ::std::optional<::std::vector<::android::aidl::tests::LongEnum>>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1424,7 +1454,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableString(const ::std::optional<::android::String16>& input, ::std::optional<::android::String16>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1462,7 +1492,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableStringList(const ::std::optional<::std::vector<::std::optional<::android::String16>>>& input, ::std::optional<::std::vector<::std::optional<::android::String16>>>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1500,7 +1530,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableParcelable(const ::std::optional<::android::aidl::tests::StructuredParcelable>& input, ::std::optional<::android::aidl::tests::StructuredParcelable>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1538,7 +1568,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::TakesAnIBinder(const ::android::sp<::android::IBinder>& input) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1572,7 +1602,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::TakesANullableIBinder(const ::android::sp<::android::IBinder>& input) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1606,7 +1636,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatUtf8CppString(const ::std::string& token, ::std::string* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1644,7 +1674,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::RepeatNullableUtf8CppString(const ::std::optional<::std::string>& token, ::std::optional<::std::string>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1682,7 +1712,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseUtf8CppString(const ::std::vector<::std::string>& input, ::std::vector<::std::string>* repeated, ::std::vector<::std::string>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1728,7 +1758,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseNullableUtf8CppString(const ::std::optional<::std::vector<::std::optional<::std::string>>>& input, ::std::optional<::std::vector<::std::optional<::std::string>>>* repeated, ::std::optional<::std::vector<::std::optional<::std::string>>>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1774,7 +1804,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::ReverseUtf8CppStringList(const ::std::optional<::std::vector<::std::optional<::std::string>>>& input, ::std::optional<::std::vector<::std::optional<::std::string>>>* repeated, ::std::optional<::std::vector<::std::optional<::std::string>>>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1816,7 +1846,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::GetCallback(bool return_null, ::android::sp<::android::aidl::tests::INamedCallback>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1854,7 +1884,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::FillOutStructuredParcelable(::android::aidl::tests::StructuredParcelable* parcel) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1892,7 +1922,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::GetOldNameInterface(::android::sp<::android::aidl::tests::IOldName>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1926,7 +1956,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::GetNewNameInterface(::android::sp<::android::aidl::tests::INewName>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1960,7 +1990,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::GetCppJavaTests(::android::sp<::android::IBinder>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -1994,7 +2024,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 ::android::binder::Status BpTestService::getBackendType(::android::aidl::tests::BackendType* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
-  _aidl_data.markForBinder(remote());
+  _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
@@ -2045,6 +2075,9 @@ BnTestService::BnTestService()
   ::android::internal::Stability::markCompilationUnit(this);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+
 ::android::status_t BnTestService::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
   ::android::status_t _aidl_ret_status = ::android::OK;
   switch (_aidl_code) {
@@ -2070,6 +2103,22 @@ BnTestService::BnTestService()
     }
     _aidl_ret_status = _aidl_reply->writeInt32(_aidl_return);
     if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+  }
+  break;
+  case BnTestService::TRANSACTION_Deprecated:
+  {
+    if (!(_aidl_data.checkInterface(this))) {
+      _aidl_ret_status = ::android::BAD_TYPE;
+      break;
+    }
+    ::android::binder::Status _aidl_status(Deprecated());
+    _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (!_aidl_status.isOk()) {
       break;
     }
   }
@@ -3447,6 +3496,8 @@ BnTestService::BnTestService()
   }
   return _aidl_ret_status;
 }
+
+#pragma clang diagnostic pop
 
 }  // namespace tests
 
