@@ -78,6 +78,10 @@ func createAidlInterfaceMutator(mctx android.TopDownMutatorContext) {
 }
 
 func checkUnstableModuleMutator(mctx android.BottomUpMutatorContext) {
+	// If it is an aidl interface, we don't need to check its dependencies.
+	if isAidlModule(mctx.ModuleName(), mctx.Config()) {
+		return
+	}
 	mctx.VisitDirectDepsIf(func(m android.Module) bool {
 		return android.InList(m.Name(), *unstableModules(mctx.Config()))
 	}, func(m android.Module) {
@@ -94,6 +98,15 @@ func checkUnstableModuleMutator(mctx android.BottomUpMutatorContext) {
 	})
 }
 
+func isAidlModule(moduleName string, config android.Config) bool {
+	for _, i := range *aidlInterfaces(config) {
+		if android.InList(moduleName, i.internalModuleNames) {
+			return true
+		}
+	}
+	return false
+}
+
 func recordVersions(mctx android.BottomUpMutatorContext) {
 	switch mctx.Module().(type) {
 	case *java.Library:
@@ -104,13 +117,7 @@ func recordVersions(mctx android.BottomUpMutatorContext) {
 		return
 	}
 
-	isAidlModule := false // whether this module is from an AIDL interface
-	for _, i := range *aidlInterfaces(mctx.Config()) {
-		if android.InList(mctx.ModuleName(), i.internalModuleNames) {
-			isAidlModule = true
-			break
-		}
-	}
+	isAidlModule := isAidlModule(mctx.ModuleName(), mctx.Config())
 
 	// First, gather all the AIDL interfaces modules that are directly or indirectly
 	// depended on by this module
@@ -232,7 +239,7 @@ func getPaths(ctx android.ModuleContext, rawSrcs []string, root string) (srcs an
 	}
 
 	if len(srcs) == 0 {
-		ctx.PropertyErrorf("srcs", "No sources provided.")
+		ctx.PropertyErrorf("srcs", "No sources provided in %v", root)
 	}
 
 	// gather base directories from input .aidl files
@@ -341,9 +348,6 @@ type aidlInterfaceProperties struct {
 	// List of aidl_interface modules that this uses. It trims version suffix in 'Imports' field.
 	ImportsWithoutVersion []string `blueprint:"mutated"`
 
-	// Used by gen dependency to fill out aidl include path
-	Full_import_paths []string `blueprint:"mutated"`
-
 	// Stability promise. Currently only supports "vintf".
 	// If this is unset, this corresponds to an interface with stability within
 	// this compilation context (so an interface loaded here can only be used
@@ -416,6 +420,12 @@ type aidlInterface struct {
 
 	// list of module names that are created for this interface
 	internalModuleNames []string
+
+	// map for version to preprocessed.aidl file.
+	// There's two additional alias for versions:
+	// - ""(empty) is for ToT
+	// - "latest" is for i.latestVersion()
+	preprocessed map[string]android.WritablePath
 }
 
 func (i *aidlInterface) shouldGenerateJavaBackend() bool {
@@ -630,11 +640,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 	if !isRelativePath(i.properties.Local_include_dir) {
 		mctx.PropertyErrorf("local_include_dir", "must be relative path: "+i.properties.Local_include_dir)
 	}
-	var importPaths []string
-	importPaths = append(importPaths, filepath.Join(mctx.ModuleDir(), i.properties.Local_include_dir))
-	importPaths = append(importPaths, i.properties.Include_dirs...)
-
-	i.properties.Full_import_paths = importPaths
 
 	i.gatherInterface(mctx)
 	i.checkStability(mctx)
@@ -647,7 +652,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 	}
 
 	var libs []string
-	sdkIsFinal := !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview()
 
 	unstable := proptools.Bool(i.properties.Unstable)
 
@@ -662,13 +666,18 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		}
 	}
 
+	sdkIsFinal := !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview()
+	requireFrozenNoOwner := i.Owner() == "" && (sdkIsFinal || mctx.Config().IsEnvTrue("AIDL_FROZEN_REL"))
+	requireFrozenWithOwner := i.Owner() != "" && android.InList(i.Owner(), strings.Fields(mctx.Config().Getenv("AIDL_FROZEN_OWNERS")))
+	requireFrozenByOwner := requireFrozenNoOwner || requireFrozenWithOwner
+
 	// Two different types of 'unstable' here
 	// - 'unstable: true' meaning the module is never stable
 	// - current unfrozen ToT version
 	//
 	// OEM branches may remove 'i.Owner()' here to apply the check to all interfaces, in
 	// addition to core platform interfaces. Otherwise, we rely on vts_treble_vintf_vendor_test.
-	requireFrozenVersion := !unstable && sdkIsFinal && i.Owner() == ""
+	requireFrozenVersion := !unstable && requireFrozenByOwner
 
 	// surface error early, main check is via checkUnstableModuleMutator
 	if requireFrozenVersion && !i.hasVersion() {
@@ -762,17 +771,83 @@ func srcsVisibility(mctx android.LoadHookContext, lang string) []string {
 func (i *aidlInterface) Name() string {
 	return i.ModuleBase.Name() + aidlInterfaceSuffix
 }
+
 func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
-	aidlRoot := android.PathForModuleSrc(ctx, i.properties.Local_include_dir)
-	for _, src := range android.PathsForModuleSrc(ctx, i.properties.Srcs) {
-		baseDir := getBaseDir(ctx, src, aidlRoot)
-		relPath, _ := filepath.Rel(baseDir, src.String())
-		computedType := strings.TrimSuffix(strings.ReplaceAll(relPath, "/", "."), ".aidl")
+	srcs, _ := getPaths(ctx, i.properties.Srcs, i.properties.Local_include_dir)
+	for _, src := range srcs {
+		computedType := strings.TrimSuffix(strings.ReplaceAll(src.Rel(), "/", "."), ".aidl")
 		i.computedTypes = append(i.computedTypes, computedType)
 	}
+
+	i.preprocessed = make(map[string]android.WritablePath)
+	// generate (len(versions) + 1) preprocessed.aidl files
+	for _, version := range concat(i.properties.Versions, []string{i.nextVersion()}) {
+		i.preprocessed[version] = i.buildPreprocessed(ctx, version)
+	}
+	// helpful aliases
+	if !proptools.Bool(i.properties.Unstable) {
+		if i.hasVersion() {
+			i.preprocessed["latest"] = i.preprocessed[i.latestVersion()]
+		} else {
+			// when we have no frozen versions yet, use "next version" as latest
+			i.preprocessed["latest"] = i.preprocessed[i.nextVersion()]
+		}
+		i.preprocessed[""] = i.preprocessed[i.nextVersion()]
+	}
 }
+
+// imported interfaces
+// TODO(b/146436251) use imports in versions_with_info
+// For example, foo-V1 should use bar-V1 while foo-V2 should use bar-V2
+//   name: "foo",
+//   versions_with_info: [
+//     { version: "1", imports: ["bar-V1"]},
+//     { version: "2", imports: ["bar-V2"]},
+//   ]
+func (i *aidlInterface) getImports(version string) map[string]string {
+	imports := make(map[string]string)
+	useLatestStable := !proptools.Bool(i.properties.Unstable) && version != "" && version != i.nextVersion()
+	for _, importString := range i.properties.Imports {
+		name, targetVersion := parseModuleWithVersion(importString)
+		if targetVersion == "" && useLatestStable {
+			targetVersion = "latest"
+		}
+		imports[name] = targetVersion
+	}
+	return imports
+}
+
+// generate preprocessed.aidl which contains only types with evaluated constants.
+// "imports" will use preprocessed.aidl with -p flag to avoid parsing the entire transitive list
+// of dependencies.
+func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version string) android.WritablePath {
+	deps := getDeps(ctx, i.getImports(version))
+
+	preprocessed := android.PathForModuleOut(ctx, version, "preprocessed.aidl")
+	rb := android.NewRuleBuilder(pctx, ctx)
+	srcs, root_dir := i.srcsForVersion(ctx, version)
+	paths, imports := getPaths(ctx, srcs, root_dir)
+
+	preprocessCommand := rb.Command().BuiltTool("aidl").
+		FlagWithOutput("--preprocess ", preprocessed).
+		Flag("--structured")
+	if i.properties.Stability != nil {
+		preprocessCommand.FlagWithArg("--stability ", *i.properties.Stability)
+	}
+	preprocessCommand.FlagForEachInput("-p", deps.preprocessed)
+	preprocessCommand.FlagForEachArg("-I", concat(imports, i.properties.Include_dirs))
+	preprocessCommand.Inputs(paths)
+	name := i.BaseModuleName()
+	if version != "" {
+		name += "/" + version
+	}
+	rb.Build("export_"+name, "export types for "+name)
+	return preprocessed
+}
+
 func (i *aidlInterface) DepsMutator(ctx android.BottomUpMutatorContext) {
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
+	ctx.AddDependency(ctx.Module(), importInterfaceDep, wrap("", i.properties.ImportsWithoutVersion, aidlInterfaceSuffix)...)
 }
 
 var (
