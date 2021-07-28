@@ -19,7 +19,6 @@ import (
 
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/google/blueprint"
 )
@@ -35,7 +34,6 @@ var (
 
 func init() {
 	android.RegisterModuleType("aidl_mapping", aidlMappingFactory)
-	android.RegisterMakeVarsProvider(pctx, allAidlInterfacesMakeVars)
 }
 
 type aidlMappingProperties struct {
@@ -54,7 +52,7 @@ func (s *aidlMapping) DepsMutator(ctx android.BottomUpMutatorContext) {
 }
 
 func (s *aidlMapping) GenerateAndroidBuildActions(ctx android.ModuleContext) {
-	srcs, imports := getPaths(ctx, s.properties.Srcs)
+	srcs, imports := getPaths(ctx, s.properties.Srcs, "")
 
 	s.outputFilePath = android.PathForModuleOut(ctx, s.properties.Output)
 	outDir := android.PathForModuleGen(ctx)
@@ -89,14 +87,4 @@ func (m *aidlMapping) AndroidMk() android.AndroidMkData {
 			fmt.Fprintln(w, targetName+":", m.outputFilePath.String())
 		},
 	}
-}
-
-func allAidlInterfacesMakeVars(ctx android.MakeVarsContext) {
-	names := []string{}
-	ctx.VisitAllModules(func(module android.Module) {
-		if ai, ok := module.(*aidlInterface); ok {
-			names = append(names, ai.BaseModuleName())
-		}
-	})
-	ctx.Strict("ALL_AIDL_INTERFACES", strings.Join(names, " "))
 }

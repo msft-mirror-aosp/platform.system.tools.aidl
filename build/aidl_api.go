@@ -31,16 +31,16 @@ var (
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{
 		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
 			`${aidlCmd} --dumpapi --structured ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
-			`(cd ${outDir} && find ./ -name "*.aidl" -print0 | LC_ALL=C sort -z | xargs -0 sha1sum && echo ${latestVersion}) | sha1sum | cut -d " " -f 1 > ${hashFile} `,
-		CommandDeps: []string{"${aidlCmd}"},
+			`${aidlHashGen} ${outDir} ${latestVersion} ${hashFile}`,
+		CommandDeps: []string{"${aidlCmd}", "${aidlHashGen}"},
 	}, "optionalFlags", "imports", "outDir", "hashFile", "latestVersion")
 
 	aidlCheckApiRule = pctx.StaticRule("aidlCheckApiRule", blueprint.RuleParams{
-		Command: `(${aidlCmd} ${optionalFlags} --checkapi=${checkApiLevel} ${old} ${new} && touch ${out}) || ` +
+		Command: `(${aidlCmd} ${optionalFlags} --checkapi=${checkApiLevel} ${imports} ${old} ${new} && touch ${out}) || ` +
 			`(cat ${messageFile} && exit 1)`,
 		CommandDeps: []string{"${aidlCmd}"},
 		Description: "AIDL CHECK API: ${new} against ${old}",
-	}, "optionalFlags", "old", "new", "messageFile", "checkApiLevel")
+	}, "optionalFlags", "imports", "old", "new", "messageFile", "checkApiLevel")
 
 	aidlVerifyHashRule = pctx.StaticRule("aidlVerifyHashRule", blueprint.RuleParams{
 		Command: `if [ $$(cd '${apiDir}' && { find ./ -name "*.aidl" -print0 | LC_ALL=C sort -z | xargs -0 sha1sum && echo ${version}; } | sha1sum | cut -d " " -f 1) = $$(read -r <'${hashFile}' hash extra; printf %s $$hash) ]; then ` +
@@ -75,6 +75,9 @@ type aidlApi struct {
 
 	// for triggering freezing API as the new version
 	freezeApiTimestamp android.WritablePath
+
+	// for checking for active development on unfrozen version
+	hasDevelopment android.WritablePath
 }
 
 func (m *aidlApi) apiDir() string {
@@ -87,43 +90,38 @@ func (m *aidlApi) nextVersion() string {
 }
 
 type apiDump struct {
+	version  string
 	dir      android.Path
 	files    android.Paths
 	hashFile android.OptionalPath
 }
 
+func (m *aidlApi) getImports(ctx android.ModuleContext, version string) map[string]string {
+	iface := ctx.GetDirectDepWithTag(m.properties.BaseName, interfaceDep).(*aidlInterface)
+	return iface.getImports(version)
+}
+
 func (m *aidlApi) createApiDumpFromSource(ctx android.ModuleContext) apiDump {
-	srcs, imports := getPaths(ctx, m.properties.Srcs)
+	srcs, imports := getPaths(ctx, m.properties.Srcs, m.properties.AidlRoot)
 
 	if ctx.Failed() {
 		return apiDump{}
 	}
 
-	var importPaths []string
-	importPaths = append(importPaths, imports...)
-	ctx.VisitDirectDeps(func(dep android.Module) {
-		if importedAidl, ok := dep.(*aidlInterface); ok {
-			importPaths = append(importPaths, importedAidl.properties.Full_import_paths...)
-		}
-	})
+	// dumpapi uses imports for ToT("") version
+	deps := getDeps(ctx, m.getImports(ctx, m.nextVersion()))
+	imports = append(imports, deps.imports...)
 
 	var apiDir android.WritablePath
 	var apiFiles android.WritablePaths
 	var hashFile android.WritablePath
 
 	apiDir = android.PathForModuleOut(ctx, "dump")
-	aidlRoot := android.PathForModuleSrc(ctx, m.properties.AidlRoot)
 	for _, src := range srcs {
-		baseDir := getBaseDir(ctx, src, aidlRoot)
-		relPath, _ := filepath.Rel(baseDir, src.String())
-		outFile := android.PathForModuleOut(ctx, "dump", relPath)
+		outFile := android.PathForModuleOut(ctx, "dump", src.Rel())
 		apiFiles = append(apiFiles, outFile)
 	}
 	hashFile = android.PathForModuleOut(ctx, "dump", ".hash")
-	latestVersion := "latest-version"
-	if len(m.properties.Versions) >= 1 {
-		latestVersion = m.properties.Versions[len(m.properties.Versions)-1]
-	}
 
 	var optionalFlags []string
 	if m.properties.Stability != nil {
@@ -132,44 +130,60 @@ func (m *aidlApi) createApiDumpFromSource(ctx android.ModuleContext) apiDump {
 	if proptools.Bool(m.properties.Dumpapi.No_license) {
 		optionalFlags = append(optionalFlags, "--no_license")
 	}
+	optionalFlags = append(optionalFlags, wrap("-p", deps.preprocessed.Strings(), "")...)
 
+	version := nextVersion(m.properties.Versions)
 	ctx.Build(pctx, android.BuildParams{
-		Rule:    aidlDumpApiRule,
-		Outputs: append(apiFiles, hashFile),
-		Inputs:  srcs,
+		Rule:      aidlDumpApiRule,
+		Outputs:   append(apiFiles, hashFile),
+		Inputs:    srcs,
+		Implicits: deps.preprocessed,
 		Args: map[string]string{
 			"optionalFlags": strings.Join(optionalFlags, " "),
-			"imports":       strings.Join(wrap("-I", importPaths, ""), " "),
+			"imports":       strings.Join(wrap("-I", imports, ""), " "),
 			"outDir":        apiDir.String(),
 			"hashFile":      hashFile.String(),
-			"latestVersion": latestVersion,
+			"latestVersion": versionForHashGen(version),
 		},
 	})
-	return apiDump{apiDir, apiFiles.Paths(), android.OptionalPathForPath(hashFile)}
+	return apiDump{version, apiDir, apiFiles.Paths(), android.OptionalPathForPath(hashFile)}
 }
 
-func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, version string) android.WritablePath {
-	timestampFile := android.PathForModuleOut(ctx, "updateapi_"+version+".timestamp")
-
-	modulePath := android.PathForModuleSrc(ctx).String()
-
-	targetDir := filepath.Join(modulePath, m.apiDir(), version)
+func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, version string, latestVersionDump *apiDump) android.WritablePath {
+	creatingNewVersion := version != currentVersion
+	moduleDir := android.PathForModuleSrc(ctx).String()
+	targetDir := filepath.Join(moduleDir, m.apiDir(), version)
 	rb := android.NewRuleBuilder(pctx, ctx)
-	// Wipe the target directory and then copy the API dump into the directory
-	rb.Command().Text("mkdir -p " + targetDir)
-	rb.Command().Text("rm -rf " + targetDir + "/*")
-	if version != currentVersion {
-		rb.Command().Text("cp -rf " + dump.dir.String() + "/. " + targetDir).Implicits(dump.files)
-		// If this is making a new frozen (i.e. non-current) version of the interface,
-		// modify Android.bp file to add the new version to the 'versions' property.
-		rb.Command().BuiltTool("bpmodify").
+
+	if creatingNewVersion {
+		// We are asked to create a new version. But before doing that, check if the given
+		// dump is the same as the latest version. If so, don't create a new version,
+		// otherwise we will be unnecessarily creating many versions.
+		// Copy the given dump to the target directory only when the equality check failed
+		// (i.e. `has_development` file contains "1").
+		rb.Command().
+			Text("if [ \"$(cat ").Input(m.hasDevelopment).Text(")\" = \"1\" ]; then").
+			Text("mkdir -p " + targetDir + " && ").
+			Text("cp -rf " + dump.dir.String() + "/. " + targetDir).Implicits(dump.files).
+			Text("; fi")
+
+		// Also modify Android.bp file to add the new version to the 'versions' property.
+		rb.Command().
+			Text("if [ \"$(cat ").Input(m.hasDevelopment).Text(")\" = \"1\" ]; then").
+			BuiltTool("bpmodify").
 			Text("-w -m " + m.properties.BaseName).
 			Text("-parameter versions -a " + version).
-			Text(android.PathForModuleSrc(ctx, "Android.bp").String())
+			Text(android.PathForModuleSrc(ctx, "Android.bp").String()).
+			Text("; fi")
+
 	} else {
-		// In this case (unfrozen interface), don't copy .hash
+		// We are updating the current version. Don't copy .hash to the current dump
+		rb.Command().Text("mkdir -p " + targetDir)
+		rb.Command().Text("rm -rf " + targetDir + "/*")
 		rb.Command().Text("cp -rf " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
 	}
+
+	timestampFile := android.PathForModuleOut(ctx, "updateapi_"+version+".timestamp")
 	rb.Command().Text("touch").Output(timestampFile)
 
 	rb.Build("dump_aidl_api"+m.properties.BaseName+"_"+version,
@@ -177,25 +191,66 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 	return timestampFile
 }
 
+type deps struct {
+	preprocessed android.Paths
+	implicits    android.Paths
+	imports      []string
+}
+
+// calculates import flags(-I) from deps.
+// When the target is ToT, use ToT of imported interfaces. If not, we use "current" snapshot of
+// imported interfaces.
+func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps {
+	var deps deps
+	ctx.VisitDirectDeps(func(dep android.Module) {
+		switch ctx.OtherModuleDependencyTag(dep) {
+		case importInterfaceDep:
+			iface := dep.(*aidlInterface)
+			if version, ok := versionedImports[iface.BaseModuleName()]; ok {
+				if iface.preprocessed[version] == nil {
+					ctx.ModuleErrorf("can't import %v's preprocessed(version=%v)", iface.BaseModuleName(), version)
+				}
+				deps.preprocessed = append(deps.preprocessed, iface.preprocessed[version])
+			}
+		case interfaceDep:
+			iface := dep.(*aidlInterface)
+			deps.imports = append(deps.imports, iface.properties.Include_dirs...)
+		case importApiDep, apiDep:
+			api := dep.(*aidlApi)
+			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date
+			deps.implicits = append(deps.implicits, api.checkApiTimestamps.Paths()...)
+			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
+		}
+	})
+	return deps
+}
+
 func (m *aidlApi) checkApi(ctx android.ModuleContext, oldDump, newDump apiDump, checkApiLevel string, messageFile android.Path) android.WritablePath {
 	newVersion := newDump.dir.Base()
 	timestampFile := android.PathForModuleOut(ctx, "checkapi_"+newVersion+".timestamp")
+
+	// --checkapi(old,new) should use imports for "new"
+	deps := getDeps(ctx, m.getImports(ctx, newDump.version))
+	var implicits android.Paths
+	implicits = append(implicits, deps.implicits...)
+	implicits = append(implicits, deps.preprocessed...)
+	implicits = append(implicits, oldDump.files...)
+	implicits = append(implicits, newDump.files...)
+	implicits = append(implicits, messageFile)
 
 	var optionalFlags []string
 	if m.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *m.properties.Stability)
 	}
+	optionalFlags = append(optionalFlags, wrap("-p", deps.preprocessed.Strings(), "")...)
 
-	var implicits android.Paths
-	implicits = append(implicits, oldDump.files...)
-	implicits = append(implicits, newDump.files...)
-	implicits = append(implicits, messageFile)
 	ctx.Build(pctx, android.BuildParams{
 		Rule:      aidlCheckApiRule,
 		Implicits: implicits,
 		Output:    timestampFile,
 		Args: map[string]string{
 			"optionalFlags": strings.Join(optionalFlags, " "),
+			"imports":       strings.Join(wrap("-I", deps.imports, ""), " "),
 			"old":           oldDump.dir.String(),
 			"new":           newDump.dir.String(),
 			"messageFile":   messageFile.String(),
@@ -225,10 +280,6 @@ func (m *aidlApi) checkEquality(ctx android.ModuleContext, oldDump apiDump, newD
 	rb.Command().Text("sed").Flag(" s/%s/" + m.properties.BaseName + "/g ").Input(messageFile).Text(" > ").Output(formattedMessageFile)
 	rb.Build("format_message_"+m.properties.BaseName, "")
 
-	var implicits android.Paths
-	implicits = append(implicits, oldDump.files...)
-	implicits = append(implicits, newDump.files...)
-	implicits = append(implicits, formattedMessageFile)
 	return m.checkApi(ctx, oldDump, newDump, "equal", formattedMessageFile)
 }
 
@@ -236,13 +287,6 @@ func (m *aidlApi) checkIntegrity(ctx android.ModuleContext, dump apiDump) androi
 	version := dump.dir.Base()
 	timestampFile := android.PathForModuleOut(ctx, "checkhash_"+version+".timestamp")
 	messageFile := android.PathForSource(ctx, "system/tools/aidl/build/message_check_integrity.txt")
-
-	i, _ := strconv.Atoi(version)
-	if i == 1 {
-		version = "latest-version"
-	} else {
-		version = strconv.Itoa(i - 1)
-	}
 
 	var implicits android.Paths
 	implicits = append(implicits, dump.files...)
@@ -254,12 +298,37 @@ func (m *aidlApi) checkIntegrity(ctx android.ModuleContext, dump apiDump) androi
 		Output:    timestampFile,
 		Args: map[string]string{
 			"apiDir":      dump.dir.String(),
-			"version":     version,
+			"version":     versionForHashGen(version),
 			"hashFile":    dump.hashFile.Path().String(),
 			"messageFile": messageFile.String(),
 		},
 	})
 	return timestampFile
+}
+
+func (m *aidlApi) checkForDevelopment(ctx android.ModuleContext, latestVersionDump *apiDump, totDump apiDump) android.WritablePath {
+	hasDevPath := android.PathForModuleOut(ctx, "has_development")
+	rb := android.NewRuleBuilder(pctx, ctx)
+	rb.Command().Text("rm -f " + hasDevPath.String())
+	if latestVersionDump != nil {
+		hasDevCommand := rb.Command()
+		hasDevCommand.BuiltTool("aidl").FlagWithArg("--checkapi=", "equal")
+		if m.properties.Stability != nil {
+			hasDevCommand.FlagWithArg("--stability ", *m.properties.Stability)
+		}
+		// checkapi(latest, tot) should use imports for nextVersion(=tot)
+		deps := getDeps(ctx, m.getImports(ctx, m.nextVersion()))
+		hasDevCommand.
+			FlagForEachArg("-I", deps.imports).Implicits(deps.implicits).
+			FlagForEachInput("-p", deps.preprocessed).
+			Text(latestVersionDump.dir.String()).Implicits(latestVersionDump.files).
+			Text(totDump.dir.String()).Implicits(totDump.files).
+			Text("2> /dev/null; echo $? >").Output(hasDevPath)
+	} else {
+		rb.Command().Text("echo 1 >").Output(hasDevPath)
+	}
+	rb.Build("check_for_development", "")
+	return hasDevPath
 }
 
 func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
@@ -272,6 +341,7 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	var currentApiDump apiDump
 	if currentApiDir.Valid() {
 		currentApiDump = apiDump{
+			version:  nextVersion(m.properties.Versions),
 			dir:      currentApiDir.Path(),
 			files:    ctx.Glob(filepath.Join(currentApiDir.Path().String(), "**/*.aidl"), nil),
 			hashFile: android.ExistentPathForSource(ctx, ctx.ModuleDir(), m.apiDir(), currentVersion, ".hash"),
@@ -300,16 +370,29 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		apiDir := filepath.Join(ctx.ModuleDir(), m.apiDir(), ver)
 		apiDirPath := android.ExistentPathForSource(ctx, apiDir)
 		if apiDirPath.Valid() {
-			dumps = append(dumps, apiDump{
+			hashFilePath := filepath.Join(apiDir, ".hash")
+			dump := apiDump{
+				version:  ver,
 				dir:      apiDirPath.Path(),
 				files:    ctx.Glob(filepath.Join(apiDirPath.String(), "**/*.aidl"), nil),
-				hashFile: android.ExistentPathForSource(ctx, ctx.ModuleDir(), m.apiDir(), ver, ".hash"),
-			})
+				hashFile: android.ExistentPathForSource(ctx, hashFilePath),
+			}
+			if !dump.hashFile.Valid() {
+				// We should show the source path of hash_gen because aidl_hash_gen cannot be built due to build error.
+				cmd := fmt.Sprintf(`(croot && system/tools/aidl/build/hash_gen.sh %s %s %s)`, apiDir, versionForHashGen(ver), hashFilePath)
+				ctx.ModuleErrorf("A frozen aidl_interface must have '.hash' file, but %s-V%s doesn't have it. Use the command below to generate hash.\n%s\n",
+					m.properties.BaseName, ver, cmd)
+			}
+			dumps = append(dumps, dump)
 		} else if ctx.Config().AllowMissingDependencies() {
 			ctx.AddMissingDependencies([]string{apiDir})
 		} else {
 			ctx.ModuleErrorf("API version %s path %s does not exist", ver, apiDir)
 		}
+	}
+	var latestVersionDump *apiDump
+	if len(dumps) >= 1 {
+		latestVersionDump = &dumps[len(dumps)-1]
 	}
 	if currentApiDir.Valid() {
 		dumps = append(dumps, currentApiDump)
@@ -327,12 +410,15 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		m.checkApiTimestamps = append(m.checkApiTimestamps, checked)
 	}
 
+	// Check for active development on the unfrozen version
+	m.hasDevelopment = m.checkForDevelopment(ctx, latestVersionDump, totApiDump)
+
 	// API dump from source is updated to the 'current' version. Triggered by `m <name>-update-api`
-	m.updateApiTimestamp = m.makeApiDumpAsVersion(ctx, totApiDump, currentVersion)
+	m.updateApiTimestamp = m.makeApiDumpAsVersion(ctx, totApiDump, currentVersion, nil)
 
 	// API dump from source is frozen as the next stable version. Triggered by `m <name>-freeze-api`
 	nextVersion := m.nextVersion()
-	m.freezeApiTimestamp = m.makeApiDumpAsVersion(ctx, totApiDump, nextVersion)
+	m.freezeApiTimestamp = m.makeApiDumpAsVersion(ctx, totApiDump, nextVersion, latestVersionDump)
 }
 
 func (m *aidlApi) AndroidMk() android.AndroidMkData {
@@ -350,8 +436,24 @@ func (m *aidlApi) AndroidMk() android.AndroidMkData {
 	}
 }
 
+type depTag struct {
+	blueprint.BaseDependencyTag
+	name string
+}
+
+var (
+	apiDep       = depTag{name: "api"}
+	interfaceDep = depTag{name: "interface"}
+
+	importApiDep       = depTag{name: "imported-api"}
+	importInterfaceDep = depTag{name: "imported-interface"}
+)
+
 func (m *aidlApi) DepsMutator(ctx android.BottomUpMutatorContext) {
-	ctx.AddDependency(ctx.Module(), nil, wrap("", m.properties.ImportsWithoutVersion, aidlInterfaceSuffix)...)
+	ctx.AddDependency(ctx.Module(), interfaceDep, m.properties.BaseName+aidlInterfaceSuffix)
+	ctx.AddDependency(ctx.Module(), importInterfaceDep, wrap("", m.properties.ImportsWithoutVersion, aidlInterfaceSuffix)...)
+	ctx.AddDependency(ctx.Module(), importApiDep, wrap("", m.properties.ImportsWithoutVersion, aidlApiSuffix)...)
+	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
 
 func aidlApiFactory() android.Module {
@@ -371,9 +473,50 @@ func addApiModule(mctx android.LoadHookContext, i *aidlInterface) string {
 		Srcs:                  srcs,
 		AidlRoot:              aidlRoot,
 		Stability:             i.properties.Stability,
-		ImportsWithoutVersion: concat(i.properties.ImportsWithoutVersion, []string{i.ModuleBase.Name()}),
+		ImportsWithoutVersion: i.properties.ImportsWithoutVersion,
 		Versions:              i.properties.Versions,
 		Dumpapi:               i.properties.Dumpapi,
 	})
 	return apiModule
+}
+
+func versionForHashGen(ver string) string {
+	// aidlHashGen uses the version before current version. If it has never been frozen, return 'latest-version'.
+	verInt, _ := strconv.Atoi(ver)
+	if verInt > 1 {
+		return strconv.Itoa(verInt - 1)
+	}
+	return "latest-version"
+}
+
+func init() {
+	android.RegisterSingletonType("aidl-freeze-api", freezeApiSingletonFactory)
+}
+
+func freezeApiSingletonFactory() android.Singleton {
+	return &freezeApiSingleton{}
+}
+
+type freezeApiSingleton struct{}
+
+func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) {
+	var files android.Paths
+	ctx.VisitAllModules(func(module android.Module) {
+		if !module.Enabled() {
+			return
+		}
+		if m, ok := module.(*aidlApi); ok {
+			ownersToFreeze := strings.Fields(ctx.Config().Getenv("AIDL_FREEZE_OWNERS"))
+			var shouldBeFrozen bool
+			if len(ownersToFreeze) > 0 {
+				shouldBeFrozen = android.InList(m.Owner(), ownersToFreeze)
+			} else {
+				shouldBeFrozen = m.Owner() == ""
+			}
+			if shouldBeFrozen {
+				files = append(files, m.freezeApiTimestamp)
+			}
+		}
+	})
+	ctx.Phony("aidl-freeze-api", files...)
 }

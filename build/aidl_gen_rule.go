@@ -82,10 +82,11 @@ type aidlGenRule struct {
 
 	properties aidlGenProperties
 
+	deps           deps
 	implicitInputs android.Paths
 	importFlags    string
 
-	// TODO(b/149952131): always have a hash file
+	// A frozen aidl_interface always have a hash file
 	hashFile android.Path
 
 	genOutDir     android.ModuleGenPath
@@ -97,33 +98,27 @@ type aidlGenRule struct {
 var _ android.SourceFileProducer = (*aidlGenRule)(nil)
 var _ genrule.SourceFileGenerator = (*aidlGenRule)(nil)
 
+func (g *aidlGenRule) getImports(ctx android.ModuleContext) map[string]string {
+	iface := ctx.GetDirectDepWithTag(g.properties.BaseName, interfaceDep).(*aidlInterface)
+	return iface.getImports(g.properties.Version)
+}
+
 func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
-	srcs, imports := getPaths(ctx, g.properties.Srcs)
+	srcs, imports := getPaths(ctx, g.properties.Srcs, g.properties.AidlRoot)
 
 	if ctx.Failed() {
 		return
 	}
 
+	g.deps = getDeps(ctx, g.getImports(ctx))
+
 	genDirTimestamp := android.PathForModuleGen(ctx, "timestamp") // $out/gen/timestamp
 	g.implicitInputs = append(g.implicitInputs, genDirTimestamp)
+	g.implicitInputs = append(g.implicitInputs, g.deps.implicits...)
+	g.implicitInputs = append(g.implicitInputs, g.deps.preprocessed...)
 
-	var importPaths []string
-	importPaths = append(importPaths, imports...)
-	ctx.VisitDirectDeps(func(dep android.Module) {
-		if importedAidl, ok := dep.(*aidlInterface); ok {
-			importPaths = append(importPaths, importedAidl.properties.Full_import_paths...)
-		} else if api, ok := dep.(*aidlApi); ok {
-			// When compiling an AIDL interface, also make sure that each
-			// version of the interface is compatible with its previous version
-			for _, path := range api.checkApiTimestamps {
-				g.implicitInputs = append(g.implicitInputs, path)
-			}
-			for _, path := range api.checkHashTimestamps {
-				g.implicitInputs = append(g.implicitInputs, path)
-			}
-		}
-	})
-	g.importFlags = strings.Join(wrap("-I", importPaths, ""), " ")
+	imports = append(imports, g.deps.imports...)
+	g.importFlags = strings.Join(wrap("-I", imports, ""), " ")
 
 	g.genOutDir = android.PathForModuleGen(ctx)
 	g.genHeaderDir = android.PathForModuleGen(ctx, "include")
@@ -152,7 +147,8 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 }
 
 func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContext, src android.Path) (android.WritablePath, android.Paths) {
-	baseDir := getBaseDir(ctx, src, android.PathForModuleSrc(ctx, g.properties.AidlRoot))
+	relPath := src.Rel()
+	baseDir := strings.TrimSuffix(strings.TrimSuffix(src.String(), relPath), "/")
 
 	var ext string
 	if g.properties.Lang == langJava {
@@ -162,7 +158,6 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	} else {
 		ext = "cpp"
 	}
-	relPath, _ := filepath.Rel(baseDir, src.String())
 	outFile := android.PathForModuleGen(ctx, pathtools.ReplaceExtension(relPath, ext))
 	implicits := g.implicitInputs
 
@@ -188,6 +183,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	if g.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *g.properties.Stability)
 	}
+	optionalFlags = append(optionalFlags, wrap("-p", g.deps.preprocessed.Strings(), "")...)
 
 	var headers android.WritablePaths
 	if g.properties.Lang == langJava {
@@ -283,10 +279,16 @@ func (g *aidlGenRule) GeneratedHeaderDirs() android.Paths {
 }
 
 func (g *aidlGenRule) DepsMutator(ctx android.BottomUpMutatorContext) {
-	ctx.AddDependency(ctx.Module(), nil, wrap("", g.properties.ImportsWithoutVersion, aidlInterfaceSuffix)...)
+	// original interface
+	ctx.AddDependency(ctx.Module(), interfaceDep, g.properties.BaseName+aidlInterfaceSuffix)
+
 	if !proptools.Bool(g.properties.Unstable) {
-		ctx.AddDependency(ctx.Module(), nil, g.properties.BaseName+aidlApiSuffix)
+		// for checkapi timestamps
+		ctx.AddDependency(ctx.Module(), apiDep, g.properties.BaseName+aidlApiSuffix)
 	}
+
+	// imported interfaces
+	ctx.AddDependency(ctx.Module(), importInterfaceDep, wrap("", g.properties.ImportsWithoutVersion, aidlInterfaceSuffix)...)
 
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
