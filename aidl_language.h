@@ -334,6 +334,7 @@ class AidlAnnotatable : public AidlCommentable {
     }
   }
   bool IsNullable() const;
+  bool IsHeapNullable() const;
   bool IsUtf8InCpp() const;
   bool IsSensitiveData() const;
   bool IsVintfStability() const;
@@ -1057,9 +1058,6 @@ class AidlStructuredParcelable : public AidlParcelable {
   std::string GetPreprocessDeclarationName() const override { return "structured_parcelable"; }
 
   bool CheckValid(const AidlTypenames& typenames) const override;
-  bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
-                                  Options::Language lang) const override;
-
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 };
 
@@ -1154,8 +1152,6 @@ class AidlUnionDecl : public AidlParcelable {
 
   const AidlNode& AsAidlNode() const override { return *this; }
   bool CheckValid(const AidlTypenames& typenames) const override;
-  bool LanguageSpecificCheckValid(const AidlTypenames& typenames,
-                                  Options::Language lang) const override;
   std::string GetPreprocessDeclarationName() const override { return "union"; }
 
   const AidlUnionDecl* AsUnionDeclaration() const override { return this; }

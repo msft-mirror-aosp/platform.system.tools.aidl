@@ -98,7 +98,10 @@ static const AidlTypeSpecifier kBooleanType{AIDL_LOCATION_HERE, "boolean", false
 
 const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
   static const std::vector<Schema> kSchemas{
-      {AidlAnnotation::Type::NULLABLE, "nullable", CONTEXT_TYPE_SPECIFIER, {}},
+      {AidlAnnotation::Type::NULLABLE,
+       "nullable",
+       CONTEXT_TYPE_SPECIFIER,
+       {{"heap", kBooleanType}}},
       {AidlAnnotation::Type::UTF8_IN_CPP, "utf8InCpp", CONTEXT_TYPE_SPECIFIER, {}},
       {AidlAnnotation::Type::SENSITIVE_DATA, "SensitiveData", CONTEXT_TYPE_INTERFACE, {}},
       {AidlAnnotation::Type::VINTF_STABILITY, "VintfStability", CONTEXT_TYPE, {}},
@@ -342,6 +345,14 @@ AidlAnnotatable::AidlAnnotatable(const AidlLocation& location, const Comments& c
 
 bool AidlAnnotatable::IsNullable() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::NULLABLE);
+}
+
+bool AidlAnnotatable::IsHeapNullable() const {
+  auto annot = GetAnnotation(annotations_, AidlAnnotation::Type::NULLABLE);
+  if (annot) {
+    return annot->ParamValue<bool>("heap").value_or(false);
+  }
+  return false;
 }
 
 bool AidlAnnotatable::IsUtf8InCpp() const {
@@ -634,6 +645,12 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
     if (GetName() == "ParcelableHolder") {
       AIDL_ERROR(this) << "ParcelableHolder cannot be nullable.";
       return false;
+    }
+    if (IsHeapNullable()) {
+      if (!defined_type || IsArray() || !defined_type->AsParcelable()) {
+        AIDL_ERROR(this) << "@nullable(heap=true) is available to parcelables.";
+        return false;
+      }
     }
   }
   return true;
@@ -1215,27 +1232,8 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
 }
 
 // TODO: we should treat every backend all the same in future.
-bool AidlParcelable::LanguageSpecificCheckValid(const AidlTypenames& /*typenames*/,
+bool AidlParcelable::LanguageSpecificCheckValid(const AidlTypenames& typenames,
                                                 Options::Language lang) const {
-  if (lang == Options::Language::CPP || lang == Options::Language::NDK) {
-    const AidlParcelable* unstructured_parcelable = this->AsUnstructuredParcelable();
-    if (unstructured_parcelable != nullptr) {
-      if (unstructured_parcelable->GetCppHeader().empty()) {
-        AIDL_ERROR(unstructured_parcelable)
-            << "Unstructured parcelable must have C++ header defined.";
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-// TODO: we should treat every backend all the same in future.
-bool AidlStructuredParcelable::LanguageSpecificCheckValid(const AidlTypenames& typenames,
-                                                          Options::Language lang) const {
-  if (!AidlParcelable::LanguageSpecificCheckValid(typenames, lang)) {
-    return false;
-  }
   for (const auto& v : this->GetFields()) {
     if (!v->GetType().LanguageSpecificCheckValid(typenames, lang)) {
       return false;
@@ -1397,20 +1395,6 @@ bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
   }
 
   return success;
-}
-
-// TODO: we should treat every backend all the same in future.
-bool AidlUnionDecl::LanguageSpecificCheckValid(const AidlTypenames& typenames,
-                                               Options::Language lang) const {
-  if (!AidlParcelable::LanguageSpecificCheckValid(typenames, lang)) {
-    return false;
-  }
-  for (const auto& v : this->GetFields()) {
-    if (!v->GetType().LanguageSpecificCheckValid(typenames, lang)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 // TODO: we should treat every backend all the same in future.
