@@ -487,12 +487,6 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   // Validation phase
   //////////////////////////////////////////////////////////////////////////
 
-  // For legacy reasons, by default, compiling an unstructured parcelable (which contains no output)
-  // is allowed. This must not be returned as an error until the very end of this procedure since
-  // this may be considered a success, and we should first check that there are not other, more
-  // serious failures.
-  bool contains_unstructured_parcelable = false;
-
   const auto& types = document->DefinedTypes();
   const int num_defined_types = types.size();
   for (const auto& defined_type : types) {
@@ -541,10 +535,8 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         AIDL_ERROR(unstructured_parcelable)
             << "Refusing to generate code with unstructured parcelables. Declared parcelables "
                "should be in their own file and/or cannot be used with --structured interfaces.";
-        // Continue parsing for more errors
+        return AidlError::FOUND_PARCELABLE;
       }
-
-      contains_unstructured_parcelable = true;
     }
 
     if (defined_type->IsVintfStability()) {
@@ -675,17 +667,12 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     *imported_files = import_paths;
   }
 
-  if (contains_unstructured_parcelable) {
-    // Considered a success for the legacy case, so this must be returned last.
-    return AidlError::FOUND_PARCELABLE;
-  }
-
   return AidlError::OK;
 }
 
 } // namespace internals
 
-int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
+bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
   const Options::Language lang = options.TargetLanguage();
   for (const string& input_file : options.InputFiles()) {
     AidlTypenames typenames;
@@ -694,9 +681,8 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
 
     AidlError aidl_err = internals::load_and_validate_aidl(input_file, options, io_delegate,
                                                            &typenames, &imported_files);
-    bool allowError = aidl_err == AidlError::FOUND_PARCELABLE && !options.FailOnParcelable();
-    if (aidl_err != AidlError::OK && !allowError) {
-      return 1;
+    if (aidl_err != AidlError::OK) {
+      return false;
     }
 
     for (const auto& defined_type : typenames.MainDocument().DefinedTypes()) {
@@ -707,13 +693,13 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
       if (output_file_name.empty() && !options.OutputDir().empty()) {
         output_file_name = GetOutputFilePath(options, *defined_type);
         if (output_file_name.empty()) {
-          return 1;
+          return false;
         }
       }
 
       if (!write_dep_file(options, *defined_type, imported_files, io_delegate, input_file,
                           output_file_name)) {
-        return 1;
+        return false;
       }
 
       bool success = false;
@@ -738,11 +724,11 @@ int compile_aidl(const Options& options, const IoDelegate& io_delegate) {
         AIDL_FATAL(input_file) << "Should not reach here.";
       }
       if (!success) {
-        return 1;
+        return false;
       }
     }
   }
-  return 0;
+  return true;
 }
 
 bool dump_mappings(const Options& options, const IoDelegate& io_delegate) {
@@ -773,39 +759,41 @@ bool dump_mappings(const Options& options, const IoDelegate& io_delegate) {
 int aidl_entry(const Options& options, const IoDelegate& io_delegate) {
   AidlErrorLog::clearError();
 
-  int ret = 1;
-  switch (options.GetTask()) {
-    case Options::Task::HELP:
-      ret = 0;
-      break;
-    case Options::Task::COMPILE:
-      ret = android::aidl::compile_aidl(options, io_delegate);
-      break;
-    case Options::Task::PREPROCESS:
-      ret = android::aidl::Preprocess(options, io_delegate) ? 0 : 1;
-      break;
-    case Options::Task::DUMP_API:
-      ret = android::aidl::dump_api(options, io_delegate) ? 0 : 1;
-      break;
-    case Options::Task::CHECK_API:
-      ret = android::aidl::check_api(options, io_delegate) ? 0 : 1;
-      break;
-    case Options::Task::DUMP_MAPPINGS:
-      ret = android::aidl::dump_mappings(options, io_delegate) ? 0 : 1;
-      break;
-    default:
-      AIDL_FATAL(AIDL_LOCATION_HERE)
-          << "Unrecognized task: " << static_cast<size_t>(options.GetTask());
+  bool success = false;
+  if (options.Ok()) {
+    switch (options.GetTask()) {
+      case Options::Task::HELP:
+        success = true;
+        break;
+      case Options::Task::COMPILE:
+        success = android::aidl::compile_aidl(options, io_delegate);
+        break;
+      case Options::Task::PREPROCESS:
+        success = android::aidl::Preprocess(options, io_delegate);
+        break;
+      case Options::Task::DUMP_API:
+        success = android::aidl::dump_api(options, io_delegate);
+        break;
+      case Options::Task::CHECK_API:
+        success = android::aidl::check_api(options, io_delegate);
+        break;
+      case Options::Task::DUMP_MAPPINGS:
+        success = android::aidl::dump_mappings(options, io_delegate);
+        break;
+      default:
+        AIDL_FATAL(AIDL_LOCATION_HERE)
+            << "Unrecognized task: " << static_cast<size_t>(options.GetTask());
+    }
+  } else {
+    AIDL_ERROR(options.GetErrorMessage()) << options.GetUsage();
   }
 
-  // compiler invariants
-  const bool shouldReportError = ret != 0;
   const bool reportedError = AidlErrorLog::hadError();
-  AIDL_FATAL_IF(shouldReportError != reportedError, AIDL_LOCATION_HERE)
-      << "Compiler returned error " << ret << " but did" << (reportedError ? "" : " not")
+  AIDL_FATAL_IF(success == reportedError, AIDL_LOCATION_HERE)
+      << "Compiler returned success " << success << " but did" << (reportedError ? "" : " not")
       << " emit error logs";
 
-  return ret;
+  return success ? 0 : 1;
 }
 
 }  // namespace aidl
