@@ -77,7 +77,7 @@ class Options final {
  public:
   enum class Language { UNSPECIFIED, JAVA, CPP, NDK, RUST };
 
-  enum class Task { UNSPECIFIED, COMPILE, PREPROCESS, DUMP_API, CHECK_API, DUMP_MAPPINGS };
+  enum class Task { HELP, COMPILE, PREPROCESS, DUMP_API, CHECK_API, DUMP_MAPPINGS };
 
   enum class CheckApiLevel { COMPATIBLE, EQUAL };
 
@@ -85,6 +85,12 @@ class Options final {
   bool StabilityFromString(const std::string& stability, Stability* out_stability);
 
   Options(int argc, const char* const argv[], Language default_lang = Language::UNSPECIFIED);
+
+  Options PlusImportDir(const std::string& import_dir) const {
+    Options copy(*this);
+    copy.import_dirs_.insert(import_dir);
+    return copy;
+  }
 
   static Options From(const string& cmdline);
 
@@ -105,8 +111,6 @@ class Options final {
   CheckApiLevel GetCheckApiLevel() const { return check_api_level_; }
 
   const set<string>& ImportDirs() const { return import_dirs_; }
-
-  const set<string>& ImportFiles() const { return import_files_; }
 
   const vector<string>& PreprocessedFiles() const { return preprocessed_files_; }
 
@@ -171,7 +175,6 @@ class Options final {
   Task task_ = Task::COMPILE;
   CheckApiLevel check_api_level_ = CheckApiLevel::COMPATIBLE;
   set<string> import_dirs_;
-  set<string> import_files_;
   vector<string> preprocessed_files_;
   string dependency_file_;
   bool gen_traces_ = false;
