@@ -48,7 +48,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   }
 
   while (provider.remaining_bytes() > 0) {
-    io.SetFileContents(provider.ConsumeRandomLengthString(), provider.ConsumeRandomLengthString());
+    const std::string name = provider.ConsumeRandomLengthString();
+    const std::string contents = provider.ConsumeRandomLengthString();
+    io.SetFileContents(name, contents);
   }
 
   if (kFuzzLog) {
