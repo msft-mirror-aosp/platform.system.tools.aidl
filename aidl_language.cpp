@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -30,13 +31,14 @@
 
 #include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
+#include <android-base/result.h>
 #include <android-base/strings.h>
 
+#include "aidl.h"
 #include "aidl_language_y.h"
 #include "comments.h"
 #include "logging.h"
-
-#include "aidl.h"
+#include "permission/parser.h"
 
 #ifdef _WIN32
 int isatty(int  fd)
@@ -46,7 +48,9 @@ int isatty(int  fd)
 #endif
 
 using android::aidl::IoDelegate;
+using android::base::Error;
 using android::base::Join;
+using android::base::Result;
 using android::base::Split;
 using std::cerr;
 using std::pair;
@@ -155,6 +159,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "SuppressWarnings",
        CONTEXT_TYPE | CONTEXT_MEMBER,
        {{"value", kStringArrayType, /* required= */ true}}},
+      {AidlAnnotation::Type::ENFORCE,
+       "Enforce",
+       CONTEXT_METHOD,
+       {{"condition", kStringType, /* required= */ true}}},
   };
   return kSchemas;
 }
@@ -167,9 +175,9 @@ std::string AidlAnnotation::TypeToString(Type type) {
   __builtin_unreachable();
 }
 
-AidlAnnotation* AidlAnnotation::Parse(
+std::unique_ptr<AidlAnnotation> AidlAnnotation::Parse(
     const AidlLocation& location, const string& name,
-    std::map<std::string, std::shared_ptr<AidlConstantValue>>* parameter_list,
+    std::map<std::string, std::shared_ptr<AidlConstantValue>> parameter_list,
     const Comments& comments) {
   const Schema* schema = nullptr;
   for (const Schema& a_schema : AllSchemas()) {
@@ -187,19 +195,16 @@ AidlAnnotation* AidlAnnotation::Parse(
     }
     stream << ".";
     AIDL_ERROR(location) << stream.str();
-    return nullptr;
-  }
-  if (parameter_list == nullptr) {
-    return new AidlAnnotation(location, *schema, {}, comments);
+    return {};
   }
 
-  return new AidlAnnotation(location, *schema, std::move(*parameter_list), comments);
+  return std::unique_ptr<AidlAnnotation>(
+      new AidlAnnotation(location, *schema, std::move(parameter_list), comments));
 }
 
-AidlAnnotation::AidlAnnotation(
-    const AidlLocation& location, const Schema& schema,
-    std::map<std::string, std::shared_ptr<AidlConstantValue>>&& parameters,
-    const Comments& comments)
+AidlAnnotation::AidlAnnotation(const AidlLocation& location, const Schema& schema,
+                               std::map<std::string, std::shared_ptr<AidlConstantValue>> parameters,
+                               const Comments& comments)
     : AidlNode(location, comments), schema_(schema), parameters_(std::move(parameters)) {}
 
 struct ConstReferenceFinder : AidlVisitor {
@@ -264,7 +269,26 @@ bool AidlAnnotation::CheckValid() const {
       success = false;
     }
   }
-  return success;
+  if (!success) {
+    return false;
+  }
+  // For @Enforce annotations, validates the expression.
+  if (schema_.type == AidlAnnotation::Type::ENFORCE) {
+    auto expr = EnforceExpression();
+    if (!expr.ok()) {
+      AIDL_ERROR(this) << "Unable to parse @Enforce annotation: " << expr.error();
+      return false;
+    }
+  }
+  return true;
+}
+
+Result<unique_ptr<perm::Expression>> AidlAnnotation::EnforceExpression() const {
+  auto perm_expr = ParamValue<std::string>("condition");
+  if (perm_expr.has_value()) {
+    return perm::Parser::Parse(perm_expr.value());
+  }
+  return Error() << "No condition parameter for @Enforce";
 }
 
 // Checks if the annotation is applicable to the current context.
@@ -393,6 +417,21 @@ std::vector<std::string> AidlAnnotatable::SuppressWarnings() const {
     auto names = annot->ParamValue<std::vector<std::string>>("value");
     AIDL_FATAL_IF(!names.has_value(), this);
     return std::move(names.value());
+  }
+  return {};
+}
+
+// Parses the @Enforce annotation expression.
+std::unique_ptr<perm::Expression> AidlAnnotatable::EnforceExpression(
+    const AidlNode& context) const {
+  auto annot = GetAnnotation(annotations_, AidlAnnotation::Type::ENFORCE);
+  if (annot) {
+    auto perm_expr = annot->EnforceExpression();
+    if (!perm_expr.ok()) {
+      // This should have been caught during validation.
+      AIDL_FATAL(context) << "Unable to parse @Enforce annotation: " << perm_expr.error();
+    }
+    return std::move(perm_expr.value());
   }
   return {};
 }

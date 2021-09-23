@@ -647,6 +647,13 @@ TEST_P(AidlTest, ParseDescriptorAnnotation) {
   ASSERT_EQ("IBar", interface->GetDescriptor());
 }
 
+TEST_P(AidlTest, UnknownAnnotation) {
+  const string oneway_method = "package a; @Unknown interface IFoo { }";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", oneway_method, typenames_, GetLanguage()));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("not a recognized annotation"));
+}
+
 TEST_P(AidlTest, AcceptsOnewayMethod) {
   const string oneway_method = "package a; interface IFoo { oneway void f(int a); }";
   EXPECT_NE(nullptr, Parse("a/IFoo.aidl", oneway_method, typenames_, GetLanguage()));
@@ -1451,7 +1458,7 @@ TEST_F(AidlTest, CppNameOf_GenericType) {
 
   auto set_nullable = [](std::unique_ptr<AidlTypeSpecifier>&& type) {
     std::vector<AidlAnnotation> annotations;
-    annotations.emplace_back(*AidlAnnotation::Parse(AIDL_LOCATION_HERE, "nullable", nullptr, {}));
+    annotations.emplace_back(*AidlAnnotation::Parse(AIDL_LOCATION_HERE, "nullable", {}, {}));
     type->Annotate(std::move(annotations));
     return std::move(type);
   };
@@ -1951,6 +1958,17 @@ TEST_F(AidlTest, ApiDumpWithGenerics) {
                                      "parcelable Foo<T, U> {\n"
                                      "}\n"),
             actual);
+}
+
+TEST_F(AidlTest, ImportedDocumentHasDuplicateDefinitions) {
+  io_delegate_.SetFileContents("IFoo.aidl", "interface IFoo; interface IFoo;\n");
+  io_delegate_.SetFileContents("Bar.aidl", "enum Bar { CONST = IFoo.NONE }\n");
+
+  vector<string> args = {"aidl", "--dumpapi", "-I.", "-o out", "Bar.aidl"};
+  Options options = Options::From(args);
+  CaptureStderr();
+  EXPECT_FALSE(dump_api(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Can't find NONE in IFoo"));
 }
 
 TEST_F(AidlTest, CheckNumGenericTypeSecifier) {
@@ -3368,6 +3386,48 @@ TEST_F(AidlTest, ParseRustDerive) {
 
   Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
+}
+
+TEST_F(AidlTest, EmptyEnforceAnnotation) {
+  const string expected_stderr = "ERROR: a/IFoo.aidl:3.1-19: Missing 'condition' on @Enforce.\n";
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @Enforce()
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, EmptyEnforceCondition) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @Enforce(condition="")
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("ERROR: a/IFoo.aidl:3.1-31: Unable to parse @Enforce annotation"));
+}
+
+TEST_F(AidlTest, InvalidEnforceCondition) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @Enforce(condition="invalid")
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("ERROR: a/IFoo.aidl:3.1-38: Unable to parse @Enforce annotation"));
 }
 
 class AidlOutputPathTest : public AidlTest {

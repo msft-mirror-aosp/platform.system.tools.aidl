@@ -772,17 +772,21 @@ parameter_non_empty_list
 
 annotation
  : ANNOTATION {
-    $$ = AidlAnnotation::Parse(loc(@1), $1->GetText(), nullptr, $1->GetComments());
+    // release() returns nullptr if unique_ptr is empty.
+    $$ = AidlAnnotation::Parse(loc(@1), $1->GetText(), {}, $1->GetComments()).release();
     if (!$$) {
       ps->AddError();
     }
     delete $1;
   }
  | ANNOTATION '(' parameter_list ')' {
-    $$ = AidlAnnotation::Parse(loc(@1, @4), $1->GetText(), $3, $1->GetComments());
-    if (!$$) {
+    auto annot = AidlAnnotation::Parse(loc(@1, @4), $1->GetText(), std::move(*$3), $1->GetComments());
+    if (annot) {
+      $$ = annot.release();
+    } else {
       ps->AddError();
     }
+
     delete $1;
     delete $3;
   }

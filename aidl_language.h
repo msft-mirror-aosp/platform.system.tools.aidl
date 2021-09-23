@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <android-base/result.h>
 #include <android-base/strings.h>
 
 #include "aidl_typenames.h"
@@ -32,11 +33,13 @@
 #include "location.h"
 #include "logging.h"
 #include "options.h"
+#include "permission/parser.h"
 
 using android::aidl::AidlTypenames;
 using android::aidl::CodeWriter;
 using android::aidl::Comments;
 using android::aidl::Options;
+using android::base::Result;
 using std::shared_ptr;
 using std::string;
 using std::unique_ptr;
@@ -231,6 +234,7 @@ class AidlAnnotation : public AidlNode {
     DESCRIPTOR,
     RUST_DERIVE,
     SUPPRESS_WARNINGS,
+    ENFORCE,
   };
 
   using TargetContext = uint16_t;
@@ -252,9 +256,9 @@ class AidlAnnotation : public AidlNode {
 
   static std::string TypeToString(Type type);
 
-  static AidlAnnotation* Parse(
+  static std::unique_ptr<AidlAnnotation> Parse(
       const AidlLocation& location, const string& name,
-      std::map<std::string, std::shared_ptr<AidlConstantValue>>* parameter_list,
+      std::map<std::string, std::shared_ptr<AidlConstantValue>> parameter_list,
       const Comments& comments);
 
   AidlAnnotation(const AidlAnnotation&) = default;
@@ -278,6 +282,8 @@ class AidlAnnotation : public AidlNode {
       const ConstantValueDecorator& decorator) const;
   void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override;
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
+
+  Result<unique_ptr<perm::Expression>> EnforceExpression() const;
 
  private:
   struct ParamType {
@@ -306,7 +312,7 @@ class AidlAnnotation : public AidlNode {
   static const std::vector<Schema>& AllSchemas();
 
   AidlAnnotation(const AidlLocation& location, const Schema& schema,
-                 std::map<std::string, std::shared_ptr<AidlConstantValue>>&& parameters,
+                 std::map<std::string, std::shared_ptr<AidlConstantValue>> parameters,
                  const Comments& comments);
 
   const Schema& schema_;
@@ -349,6 +355,7 @@ class AidlAnnotatable : public AidlCommentable {
   const AidlAnnotation* RustDerive() const;
   const AidlAnnotation* BackingType() const;
   std::vector<std::string> SuppressWarnings() const;
+  std::unique_ptr<perm::Expression> EnforceExpression(const AidlNode&) const;
 
   // ToString is for dumping AIDL.
   // Returns string representation of annotations.
