@@ -25,6 +25,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "aidl_checkapi.h"
@@ -45,6 +46,7 @@ using std::map;
 using std::set;
 using std::string;
 using std::unique_ptr;
+using std::variant;
 using std::vector;
 using testing::HasSubstr;
 using testing::TestParamInfo;
@@ -648,9 +650,14 @@ TEST_P(AidlTest, ParseDescriptorAnnotation) {
 }
 
 TEST_P(AidlTest, UnknownAnnotation) {
-  const string oneway_method = "package a; @Unknown interface IFoo { }";
   CaptureStderr();
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", oneway_method, typenames_, GetLanguage()));
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", "package a; @Unknown interface IFoo { }", typenames_,
+                           GetLanguage()));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("not a recognized annotation"));
+
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", "package a; @Unknown(param=true) interface IFoo { }",
+                           typenames_, GetLanguage()));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("not a recognized annotation"));
 }
 
@@ -1409,7 +1416,7 @@ TEST_P(AidlTest, ParseNegativeConstHexValue) {
   EXPECT_EQ("-1", cpp_constants[0]->ValueString(cpp::ConstantValueDecorator));
 }
 
-TEST_P(AidlTest, UnderstandsNestedParcelables) {
+TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
   io_delegate_.SetFileContents(
       "p/Outer.aidl",
       "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
@@ -1427,7 +1434,7 @@ TEST_P(AidlTest, UnderstandsNestedParcelables) {
   EXPECT_EQ("::p::Outer::Inner", cpp::CppNameOf(nested_type, typenames_));
 }
 
-TEST_P(AidlTest, UnderstandsNestedParcelablesWithoutImports) {
+TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelablesWithoutImports) {
   io_delegate_.SetFileContents("p/Outer.aidl",
                                "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
   import_paths_.emplace("");
@@ -1441,6 +1448,238 @@ TEST_P(AidlTest, UnderstandsNestedParcelablesWithoutImports) {
   // C++ uses "::" instead of "." to refer to a inner class.
   AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", false, nullptr, {});
   EXPECT_EQ("::p::Outer::Inner", cpp::CppNameOf(nested_type, typenames_));
+}
+
+TEST_F(AidlTest, UnderstandsNestedTypes) {
+  io_delegate_.SetFileContents("p/IOuter.aidl",
+                               "package p;\n"
+                               "interface IOuter {\n"
+                               "  parcelable Inner {}\n"
+                               "}");
+  import_paths_.emplace("");
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "import p.IOuter;\n"
+      "interface IFoo {\n"
+      "  IOuter.Inner get();\n"
+      "}";
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_EQ(GetCapturedStderr(), "");
+
+  EXPECT_TRUE(typenames_.ResolveTypename("p.IOuter.Inner").is_resolved);
+  // C++ uses "::" instead of "." to refer to a inner class.
+  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.IOuter.Inner", false, nullptr, {});
+  EXPECT_EQ("::p::IOuter::Inner", cpp::CppNameOf(nested_type, typenames_));
+}
+
+TEST_F(AidlTest, UnderstandsNestedTypesViaFullyQualifiedName) {
+  io_delegate_.SetFileContents("p/IOuter.aidl",
+                               "package p;\n"
+                               "interface IOuter {\n"
+                               "  parcelable Inner {}\n"
+                               "}");
+  import_paths_.emplace("");
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "interface IFoo {\n"
+      "  p.IOuter.Inner get();\n"
+      "}";
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_EQ(GetCapturedStderr(), "");
+
+  EXPECT_TRUE(typenames_.ResolveTypename("p.IOuter.Inner").is_resolved);
+}
+
+TEST_F(AidlTest, UnderstandsNestedTypesViaFullyQualifiedImport) {
+  io_delegate_.SetFileContents("p/IOuter.aidl",
+                               "package p;\n"
+                               "interface IOuter {\n"
+                               "  parcelable Inner {}\n"
+                               "}");
+  import_paths_.emplace("");
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "import p.IOuter.Inner;"
+      "interface IFoo {\n"
+      "  Inner get();\n"
+      "}";
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_EQ(GetCapturedStderr(), "");
+
+  EXPECT_TRUE(typenames_.ResolveTypename("p.IOuter.Inner").is_resolved);
+}
+
+TEST_F(AidlTest, UnderstandsNestedTypesInTheSameScope) {
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "interface IFoo {\n"
+      "  parcelable Result {}\n"
+      "  Result get();\n"
+      "}";
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_EQ(GetCapturedStderr(), "");
+
+  EXPECT_TRUE(typenames_.ResolveTypename("p.IFoo.Result").is_resolved);
+}
+
+// Finding the type of nested named member.
+struct TypeFinder : AidlVisitor {
+  string name;
+  const AidlTypeSpecifier* type = nullptr;
+  TypeFinder(std::string name) : name(name) {}
+  void Visit(const AidlVariableDeclaration& v) override {
+    if (v.GetName() == name) {
+      type = &v.GetType();
+    }
+  }
+  void Visit(const AidlMethod& m) override {
+    if (m.GetName() == name) {
+      type = &m.GetType();
+    }
+  }
+  static string Get(const AidlDefinedType& type, const string& name) {
+    TypeFinder v(name);
+    VisitTopDown(v, type);
+    return v.type ? v.type->Signature() : "(null)";
+  };
+};
+
+TEST_F(AidlTest, UnderstandsNestedTypesViaQualifiedInTheSameScope) {
+  io_delegate_.SetFileContents("q/IBar.aidl",
+                               "package q;\n"
+                               "interface IBar {\n"
+                               "  parcelable Baz {}\n"
+                               "}");
+  import_paths_.emplace("");
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "import q.IBar;\n"
+      "interface IFoo {\n"
+      "  parcelable Nested {\n"
+      "    Baz t1;\n"
+      "  }\n"
+      "  parcelable Baz { }\n"
+      "  IBar.Baz t2();\n"
+      "  Baz t3();\n"
+      "}";
+  CaptureStderr();
+  auto foo = Parse(input_path, input, typenames_, Options::Language::CPP);
+  EXPECT_EQ(GetCapturedStderr(), "");
+  ASSERT_NE(nullptr, foo);
+
+  EXPECT_EQ(TypeFinder::Get(*foo, "t1"), "p.IFoo.Baz");
+  EXPECT_EQ(TypeFinder::Get(*foo, "t2"), "q.IBar.Baz");
+  EXPECT_EQ(TypeFinder::Get(*foo, "t3"), "p.IFoo.Baz");
+}
+
+TEST_F(AidlTest, RejectsNestedTypesWithParentsName) {
+  const string input_path = "p/Foo.aidl";
+  const string input =
+      "package p;\n"
+      "parcelable Foo {\n"
+      "  parcelable Foo {}\n"
+      "}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Nested type 'Foo' has the same name as its parent."));
+}
+
+TEST_F(AidlTest, RejectsInterfaceAsNestedTypes) {
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "interface IFoo {\n"
+      "  interface ICallback { void done(); }\n"
+      "  void doTask(ICallback cb);\n"
+      "}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Interfaces should be at the root scope"));
+}
+
+TEST_F(AidlTest, RejectsNestedTypesWithDuplicateNames) {
+  const string input_path = "p/Foo.aidl";
+  const string input =
+      "package p;\n"
+      "interface Foo {\n"
+      "  parcelable Bar {}\n"
+      "  parcelable Bar {}\n"
+      "}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Redefinition of 'Bar'"));
+}
+
+TEST_F(AidlTest, TypeResolutionWithMultipleLevelsOfNesting) {
+  struct Failure {
+    string err;
+  };
+  struct TestCase {
+    string type;
+    variant<string, Failure> expected;  // success<0> or failure<1>
+  };
+  vector<TestCase> cases = {
+      {"foo.A", "foo.A"},
+      {"foo.A.B", "foo.A.B"},
+      {"@nullable(heap=true) A", "foo.A.B.A"},
+      // In the scope of foo.A.B.A, B is resolved to A.B.A.B first.
+      {"B.A", Failure{"Failed to resolve 'B.A'"}},
+      {"B", "foo.A.B.A.B"},
+      {"A.B", "foo.A.B.A.B"},
+  };
+  const string input_path = "foo/A.aidl";
+  for (auto& [type, expected] : cases) {
+    AidlTypenames typenames;
+    // clang-format off
+    const string input =
+        "package foo;\n"
+        "parcelable A {\n"
+        "  parcelable B {\n"
+        "    parcelable A {\n"
+        "      parcelable B {\n"
+        "      }\n"
+        "      " + type + " m;\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    // clang-format on
+    CaptureStderr();
+    auto foo = Parse(input_path, input, typenames, Options::Language::CPP);
+    if (auto failure = std::get_if<Failure>(&expected); failure) {
+      ASSERT_EQ(nullptr, foo);
+      EXPECT_THAT(GetCapturedStderr(), HasSubstr(failure->err));
+    } else {
+      EXPECT_EQ(GetCapturedStderr(), "");
+      ASSERT_NE(nullptr, foo);
+      EXPECT_EQ(TypeFinder::Get(*foo, "m"), std::get<string>(expected));
+    }
+  }
+}
+
+TEST_F(AidlTest, HeaderForNestedTypeShouldPointToTopMostParent) {
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "interface IFoo {\n"
+      "  parcelable Result {}\n"
+      "}";
+  CaptureStderr();
+  auto foo = Parse(input_path, input, typenames_, Options::Language::CPP);
+  ASSERT_NE(nullptr, foo);
+  EXPECT_EQ(GetCapturedStderr(), "");
+
+  auto result = typenames_.ResolveTypename("p.IFoo.Result").defined_type;
+  ASSERT_NE(nullptr, result);
+  EXPECT_EQ("p/IFoo.h", cpp::CppHeaderForType(*result));
 }
 
 TEST_F(AidlTest, CppNameOf_GenericType) {
@@ -3072,30 +3311,36 @@ TEST_F(AidlTestIncompatibleChanges, FixedSizeRemovedField) {
 
 TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
   const string expected_stderr =
-      "ERROR: Foo.aidl:1.36-38: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "ERROR: Foo.aidl:2.8-10: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
       "a.\n"
-      "ERROR: Foo.aidl:1.44-46: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
-      "b.\n"
-      "ERROR: Foo.aidl:1.55-57: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "ERROR: Foo.aidl:3.6-8: The @FixedSize parcelable 'Foo' has a non-fixed size field named b.\n"
+      "ERROR: Foo.aidl:4.9-11: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
       "c.\n"
-      "ERROR: Foo.aidl:1.80-82: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "ERROR: Foo.aidl:5.23-25: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
       "d.\n"
-      "ERROR: Foo.aidl:1.92-94: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "ERROR: Foo.aidl:6.10-12: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
       "e.\n"
-      "ERROR: Foo.aidl:1.109-111: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
-      "f.\n";
+      "ERROR: Foo.aidl:7.15-17: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "f.\n"
+      "ERROR: Foo.aidl:9.23-33: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "nullable1.\n"
+      "ERROR: Foo.aidl:10.34-44: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "nullable2.\n";
 
   io_delegate_.SetFileContents("Foo.aidl",
-                               "@FixedSize parcelable Foo { "
-                               "  int[] a;"
-                               "  Bar b;"
-                               "  String c;"
-                               "  ParcelFileDescriptor d;"
-                               "  IBinder e;"
-                               "  List<String> f;"
-                               "  int isFixedSize;"
+                               "@FixedSize parcelable Foo {\n"
+                               "  int[] a;\n"
+                               "  Bar b;\n"
+                               "  String c;\n"
+                               "  ParcelFileDescriptor d;\n"
+                               "  IBinder e;\n"
+                               "  List<String> f;\n"
+                               "  int isFixedSize;\n"
+                               "  @nullable OtherFixed nullable1;\n"
+                               "  @nullable(heap=true) OtherFixed nullable2;\n"
                                "}");
   io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { int a; }");
+  io_delegate_.SetFileContents("OtherFixed.aidl", "@FixedSize parcelable OtherFixed { int a; }");
   Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
 
   CaptureStderr();
@@ -3386,6 +3631,48 @@ TEST_F(AidlTest, ParseRustDerive) {
 
   Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
+}
+
+TEST_F(AidlTest, EmptyEnforceAnnotation) {
+  const string expected_stderr = "ERROR: a/IFoo.aidl:3.1-19: Missing 'condition' on @Enforce.\n";
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @Enforce()
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_F(AidlTest, EmptyEnforceCondition) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @Enforce(condition="")
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("ERROR: a/IFoo.aidl:3.1-31: Unable to parse @Enforce annotation"));
+}
+
+TEST_F(AidlTest, InvalidEnforceCondition) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @Enforce(condition="invalid")
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("ERROR: a/IFoo.aidl:3.1-38: Unable to parse @Enforce annotation"));
 }
 
 class AidlOutputPathTest : public AidlTest {
