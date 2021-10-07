@@ -1606,6 +1606,43 @@ TEST_F(AidlTest, RejectsInterfaceAsNestedTypes) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Interfaces should be at the root scope"));
 }
 
+TEST_F(AidlTest, RejectUnstructuredParcelableAsNestedTypes) {
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "interface IFoo {\n"
+      "  parcelable Bar cpp_header \"Bar.h\";\n"
+      "}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Unstructured parcelables should be at the root scope"));
+}
+
+TEST_F(AidlTest, RejectGenericTypeWithNestedTypes) {
+  const string input_path = "p/Foo.aidl";
+  const string input =
+      "package p;\n"
+      "parcelable Foo<T> {\n"
+      "  parcelable Bar {}\n"
+      "}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Generic types can't have nested types."));
+}
+
+TEST_F(AidlTest, HandleSyntaxErrorsInNestedDecl) {
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "interface IFoo {\n"
+      "  parcelable;\n"  // missing identifier
+      "}";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("expecting identifier"));
+}
+
 TEST_F(AidlTest, RejectsNestedTypesWithDuplicateNames) {
   const string input_path = "p/Foo.aidl";
   const string input =
@@ -3785,6 +3822,25 @@ TEST_P(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
                               enum TestEnum {
                                 FOO = 127,
                                 BAR,
+                              }
+                             )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, FailOnUnsupportedBackingType) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/TestEnum.aidl:3.35-44: Invalid backing type: boolean. Backing type must be one of: "
+      "byte, int, long\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/TestEnum.aidl",
+                           R"(package p;
+                              @Backing(type="boolean")
+                              enum TestEnum {
+                                FOO = 0,
+                                BAR = 1,
                               }
                              )",
                            typenames_, GetLanguage(), &error));
