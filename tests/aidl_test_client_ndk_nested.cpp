@@ -14,41 +14,44 @@
  * limitations under the License.
  */
 
-#include <android/aidl/tests/nested/BpNestedService.h>
-#include <android/aidl/tests/nested/INestedService.h>
-
-#include "aidl_test_client.h"
-
-#include <android/aidl/tests/BackendType.h>
+#include <android/binder_auto_utils.h>
+#include <android/binder_manager.h>
 #include <binder/IServiceManager.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <utils/String16.h>
 
-using android::IBinder;
-using android::sp;
-using android::String16;
-using android::aidl::tests::nested::BpNestedService;
-using android::aidl::tests::nested::INestedService;
-using android::aidl::tests::nested::ParcelableWithNested;
-using NestedResult = android::aidl::tests::nested::INestedService::Result;
-using NestedStatus = android::aidl::tests::nested::ParcelableWithNested::Status;
-using android::aidl::tests::BackendType;
-using std::optional;
-using std::pair;
-using std::string;
+#include <aidl/android/aidl/tests/BackendType.h>
+#include <aidl/android/aidl/tests/ITestService.h>
+#include <aidl/android/aidl/tests/nested/BpNestedService.h>
+#include <aidl/android/aidl/tests/nested/INestedService.h>
+
+using aidl::android::aidl::tests::nested::INestedService;
+using aidl::android::aidl::tests::nested::ParcelableWithNested;
+using NestedResult = aidl::android::aidl::tests::nested::INestedService::Result;
+using NestedStatus = aidl::android::aidl::tests::nested::ParcelableWithNested::Status;
+using aidl::android::aidl::tests::BackendType;
+using aidl::android::aidl::tests::ITestService;
+using std::shared_ptr;
 using std::vector;
 using testing::Eq;
 
+struct AidlTest : testing::Test {
+  template <typename T>
+  std::shared_ptr<T> getService() {
+    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_getService(T::descriptor));
+    return T::fromBinder(binder);
+  }
+};
+
 TEST_F(AidlTest, NestedService) {
   BackendType backendType;
-  auto status = service->getBackendType(&backendType);
+  auto status = getService<ITestService>()->getBackendType(&backendType);
   EXPECT_TRUE(status.isOk());
   // TODO(b/201729533) enable test when Rust backend supports nested types
   if (backendType == BackendType::RUST) GTEST_SKIP();
 
-  sp<INestedService> nestedService;
-  EXPECT_EQ(android::OK, android::getService(INestedService::descriptor, &nestedService));
+  auto nestedService = getService<INestedService>();
   ASSERT_NE(nullptr, nestedService);
 
   ParcelableWithNested p;
@@ -60,8 +63,8 @@ TEST_F(AidlTest, NestedService) {
   EXPECT_EQ(r.status, NestedStatus::NOT_OK);
 
   // android::enum_ranges<>
-  vector<NestedStatus> values{android::enum_range<NestedStatus>().begin(),
-                              android::enum_range<NestedStatus>().end()};
+  vector<NestedStatus> values{ndk::enum_range<NestedStatus>().begin(),
+                              ndk::enum_range<NestedStatus>().end()};
   EXPECT_EQ(values, vector<NestedStatus>({NestedStatus::OK, NestedStatus::NOT_OK}));
 
   // toString()

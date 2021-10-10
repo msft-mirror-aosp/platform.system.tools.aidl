@@ -75,19 +75,19 @@ string ClassName(const AidlDefinedType& defined_type, ClassNames type) {
 
 std::string HeaderFile(const AidlDefinedType& defined_type, ClassNames class_type,
                        bool use_os_sep) {
-  std::string file_path = defined_type.GetPackage();
-  for (char& c : file_path) {
-    if (c == '.') {
-      c = (use_os_sep) ? OS_PATH_SEPARATOR : '/';
-    }
+  // For a nested type, we need to include its top-most parent type's header.
+  const AidlDefinedType* toplevel = &defined_type;
+  for (auto parent = toplevel->GetParentType(); parent;) {
+    toplevel = parent;
+    parent = toplevel->GetParentType();
   }
-  if (!file_path.empty()) {
-    file_path += (use_os_sep) ? OS_PATH_SEPARATOR : '/';
-  }
-  file_path += ClassName(defined_type, class_type);
-  file_path += ".h";
+  AIDL_FATAL_IF(toplevel->GetParentType() != nullptr, defined_type)
+      << "Can't find a top-level decl";
 
-  return file_path;
+  char separator = (use_os_sep) ? OS_PATH_SEPARATOR : '/';
+  vector<string> paths = toplevel->GetSplitPackage();
+  paths.push_back(ClassName(*toplevel, class_type));
+  return Join(paths, separator) + ".h";
 }
 
 void EnterNamespace(CodeWriter& out, const AidlDefinedType& defined_type) {
@@ -205,6 +205,22 @@ string GetQualifiedName(const AidlDefinedType& type) {
   return name;
 }
 
+// Generates enum's class declaration. This should be called in a proper scope. For example, in its
+// namespace or parent type.
+void GenerateEnumClassDecl(CodeWriter& out, const AidlEnumDeclaration& enum_decl,
+                           const std::string& backing_type, ConstantValueDecorator decorator) {
+  out << "enum class";
+  GenerateDeprecated(out, enum_decl);
+  out << " " << enum_decl.GetName() << " : " << backing_type << " {\n";
+  out.Indent();
+  for (const auto& enumerator : enum_decl.GetEnumerators()) {
+    out << enumerator->GetName() << " = "
+        << enumerator->ValueString(enum_decl.GetBackingType(), decorator) << ",\n";
+  }
+  out.Dedent();
+  out << "};\n";
+}
+
 // enum_values template value is defined in its own namespace (android::internal or ndk::internal),
 // so the enum_decl type should be fully qualified.
 std::string GenerateEnumValues(const AidlEnumDeclaration& enum_decl,
@@ -225,6 +241,41 @@ std::string GenerateEnumValues(const AidlEnumDeclaration& enum_decl,
   }
   code << "};\n";
   code << "#pragma clang diagnostic pop\n";
+  return code.str();
+}
+
+// toString(enum_type) is defined in the same namespace of the type.
+// So, if enum_decl is nested in parent type(s), it should be qualified with parent type(s).
+std::string GenerateEnumToString(const AidlEnumDeclaration& enum_decl,
+                                 const std::string& backing_type) {
+  const auto q_name = GetQualifiedName(enum_decl);
+  std::ostringstream code;
+  const std::string signature =
+      "[[nodiscard]] static inline std::string toString(" + q_name + " val)";
+  if (enum_decl.IsDeprecated()) {
+    code << signature;
+    GenerateDeprecated(code, enum_decl);
+    code << ";\n";
+  }
+  code << signature << " {\n";
+  code << "  switch(val) {\n";
+  std::set<std::string> unique_cases;
+  for (const auto& enumerator : enum_decl.GetEnumerators()) {
+    std::string c = enumerator->ValueString(enum_decl.GetBackingType(), AidlConstantValueDecorator);
+    // Only add a case if its value has not yet been used in the switch
+    // statement. C++ does not allow multiple cases with the same value, but
+    // enums does allow this. In this scenario, the first declared
+    // enumerator with the given value is printed.
+    if (unique_cases.count(c) == 0) {
+      unique_cases.insert(c);
+      code << "  case " << q_name << "::" << enumerator->GetName() << ":\n";
+      code << "    return \"" << enumerator->GetName() << "\";\n";
+    }
+  }
+  code << "  default:\n";
+  code << "    return std::to_string(static_cast<" << backing_type << ">(val));\n";
+  code << "  }\n";
+  code << "}\n";
   return code.str();
 }
 
