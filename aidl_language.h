@@ -81,7 +81,6 @@ bool ParseFloating(std::string_view sv, double* parsed);
 bool ParseFloating(std::string_view sv, float* parsed);
 
 class AidlDocument;
-class AidlPackage;
 class AidlImport;
 class AidlInterface;
 class AidlParcelable;
@@ -121,7 +120,6 @@ class AidlVisitor {
   virtual void Visit(const AidlBinaryConstExpression&) {}
   virtual void Visit(const AidlAnnotation&) {}
   virtual void Visit(const AidlImport&) {}
-  virtual void Visit(const AidlPackage&) {}
 };
 
 class AidlScope {
@@ -964,6 +962,7 @@ class AidlDefinedType : public AidlMember, public AidlScope {
         const_cast<const AidlDefinedType*>(this)->AsUnstructuredParcelable());
   }
   const AidlDefinedType* GetParentType() const;
+  const AidlDefinedType* GetRootType() const;
   const std::vector<std::unique_ptr<AidlDefinedType>>& GetNestedTypes() const { return types_; }
   const std::vector<std::unique_ptr<AidlVariableDeclaration>>& GetFields() const {
     return variables_;
@@ -1104,6 +1103,9 @@ class AidlEnumDeclaration : public AidlDefinedType {
 
   void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override {
     AidlDefinedType::TraverseChildren(traverse);
+    if (backing_type_) {
+      traverse(*backing_type_);
+    }
     for (const auto& c : GetEnumerators()) {
       traverse(*c);
     }
@@ -1158,20 +1160,6 @@ class AidlInterface final : public AidlDefinedType {
   bool CheckValid(const AidlTypenames& typenames) const override;
   std::string GetDescriptor() const;
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
-};
-
-class AidlPackage : public AidlNode {
- public:
-  AidlPackage(const AidlLocation& location, const std::string& name, const Comments& comments)
-      : AidlNode(location, comments), name_(name) {}
-  virtual ~AidlPackage() = default;
-  void TraverseChildren(std::function<void(const AidlNode&)>) const {}
-  void DispatchVisit(AidlVisitor& v) const { v.Visit(*this); }
-
-  const std::string& GetName() const { return name_; }
-
- private:
-  std::string name_;
 };
 
 class AidlImport : public AidlNode {

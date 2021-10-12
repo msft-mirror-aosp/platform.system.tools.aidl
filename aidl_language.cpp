@@ -1023,6 +1023,12 @@ bool AidlDefinedType::CheckValidWithMembers(const AidlTypenames& typenames) cons
     success = success && t->CheckValid(typenames);
   }
 
+  if (auto parameterizable = AsParameterizable();
+      parameterizable && parameterizable->IsGeneric() && !GetNestedTypes().empty()) {
+    AIDL_ERROR(this) << "Generic types can't have nested types.";
+    return false;
+  }
+
   std::set<std::string> nested_type_names;
   for (const auto& t : GetNestedTypes()) {
     bool duplicated = !nested_type_names.emplace(t->GetName()).second;
@@ -1034,6 +1040,13 @@ bool AidlDefinedType::CheckValidWithMembers(const AidlTypenames& typenames) cons
     if (t->GetName() == GetName()) {
       AIDL_ERROR(t) << "Nested type '" << GetName() << "' has the same name as its parent.";
       success = false;
+    }
+    // Having unstructured parcelables as nested types doesn't make sense because they are defined
+    // somewhere else in native languages (e.g. C++, Java...).
+    if (AidlCast<AidlParcelable>(*t)) {
+      AIDL_ERROR(t) << "'" << t->GetName()
+                    << "' is nested. Unstructured parcelables should be at the root scope.";
+      return false;
     }
     // For now we don't allow "interface" to be nested
     if (AidlCast<AidlInterface>(*t)) {
@@ -1101,6 +1114,14 @@ const AidlDefinedType* AidlDefinedType::GetParentType() const {
   return AidlCast<AidlDefinedType>(GetEnclosingScope()->GetNode());
 }
 
+const AidlDefinedType* AidlDefinedType::GetRootType() const {
+  const AidlDefinedType* root = this;
+  for (auto parent = root->GetParentType(); parent; parent = parent->GetParentType()) {
+    root = parent;
+  }
+  return root;
+}
+
 // Resolve `name` in the current scope. If not found, delegate to the parent
 std::string AidlDefinedType::ResolveName(const std::string& name) const {
   // For example, in the following, t1's type Baz means x.Foo.Bar.Baz
@@ -1153,11 +1174,11 @@ const AidlDefinedType* AidlCast<AidlDefinedType>(const AidlNode& node) {
 }
 
 const AidlDocument& AidlDefinedType::GetDocument() const {
-  // TODO(b/182508839): resolve with nested types when we support nested types
-  auto scope = GetEnclosingScope();
+  const AidlDefinedType* root = GetRootType();
+  auto scope = root->GetEnclosingScope();
   AIDL_FATAL_IF(!scope, this) << "no scope defined.";
   auto doc = AidlCast<AidlDocument>(scope->GetNode());
-  AIDL_FATAL_IF(!doc, this) << "scope is not a document.";
+  AIDL_FATAL_IF(!doc, this) << "root scope is not a document.";
   return *doc;
 }
 
@@ -1258,11 +1279,6 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
   if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
       GetName() == "IBinder") {
     AIDL_ERROR(this) << "The " << to_string(lang) << " backend does not support array of IBinder";
-    return false;
-  }
-  if (lang == Options::Language::RUST && GetName() == "ParcelableHolder") {
-    // TODO(b/146611855): Remove it when Rust backend supports ParcelableHolder
-    AIDL_ERROR(this) << "The Rust backend does not support ParcelableHolder yet.";
     return false;
   }
   if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
@@ -1412,10 +1428,21 @@ bool AidlEnumDeclaration::Autofill(const AidlTypenames& typenames) {
     backing_type_ =
         std::make_unique<AidlTypeSpecifier>(AIDL_LOCATION_HERE, "byte", false, nullptr, Comments{});
   }
-  // Autofill() is called after type resolution, we resolve the backing type manually.
-  if (!backing_type_->Resolve(typenames, nullptr)) {
-    AIDL_ERROR(this) << "Invalid backing type: " << backing_type_->GetName();
+
+  // we only support/test a few backing types, so make sure this is a supported
+  // one (otherwise boolean might work, which isn't supported/tested in all
+  // backends)
+  static std::set<string> kBackingTypes = {"byte", "int", "long"};
+  if (kBackingTypes.find(backing_type_->GetName()) == kBackingTypes.end()) {
+    AIDL_ERROR(this) << "Invalid backing type: " << backing_type_->GetName()
+                     << ". Backing type must be one of: " << Join(kBackingTypes, ", ");
+    return false;
   }
+
+  // Autofill() is called before type resolution, we resolve the backing type manually.
+  AIDL_FATAL_IF(!backing_type_->Resolve(typenames, nullptr),
+                "supporting backing types must resolve");
+
   return true;
 }
 

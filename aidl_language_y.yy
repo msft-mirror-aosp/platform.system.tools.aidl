@@ -92,7 +92,6 @@ AidlLocation loc(const yy::parser::location_type& l) {
     std::vector<std::string>* type_params;
     std::vector<std::unique_ptr<AidlImport>>* imports;
     AidlImport* import;
-    AidlPackage* package;
     std::vector<std::unique_ptr<AidlDefinedType>>* declarations;
 }
 
@@ -178,14 +177,13 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<constant_value_list> constant_value_non_empty_list
 %type<imports> imports
 %type<import> import
-%type<package> package
 %type<declarations> decls
-%type<token> identifier error qualified_name
+%type<token> identifier error qualified_name optional_package
 
 %%
 
 document
- : package imports decls {
+ : optional_package imports decls {
     Comments comments;
     if ($1) {
       comments = $1->GetComments();
@@ -209,14 +207,13 @@ identifier
  | CPP_HEADER
  ;
 
-package
+optional_package
  : {
     $$ = nullptr;
  }
  | PACKAGE qualified_name ';' {
-    $$ = new AidlPackage(loc(@1, @3), $2->GetText(), $1->GetComments());
-    ps->SetPackage(*$$);
-    delete $1;
+    ps->SetPackage($2->GetText());
+    $$ = $1; // for comments
     delete $2;
   }
  ;
@@ -348,7 +345,7 @@ parcelable_members
     $$ = $1;
   }
  | parcelable_members decl {
-    $1->emplace_back($2);
+    if ($2) $1->emplace_back($2);  // decl may be nullptr on error
     $$ = $1;
   }
  | parcelable_members error ';' {
@@ -403,7 +400,10 @@ interface_members
  | interface_members constant_decl
   { $1->push_back(std::unique_ptr<AidlMember>($2)); $$ = $1; }
  | interface_members decl
-  { $1->push_back(std::unique_ptr<AidlMember>($2)); $$ = $1; }
+  {
+    if ($2) $1->emplace_back($2);  // decl may be nullptr on error
+    $$ = $1;
+  }
  | interface_members error ';' {
     ps->AddError();
     $$ = $1;

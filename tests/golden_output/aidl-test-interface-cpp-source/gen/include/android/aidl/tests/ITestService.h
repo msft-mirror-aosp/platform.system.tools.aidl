@@ -9,6 +9,7 @@
 #include <android/aidl/tests/LongEnum.h>
 #include <android/aidl/tests/RecursiveList.h>
 #include <android/aidl/tests/StructuredParcelable.h>
+#include <android/aidl/tests/extension/ExtendableParcelable.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/ParcelFileDescriptor.h>
@@ -21,94 +22,85 @@
 #include <vector>
 
 namespace android {
-
 namespace aidl {
-
 namespace tests {
-
 class ITestService : public ::android::IInterface {
 public:
   DECLARE_META_INTERFACE(TestService)
-  enum  : int8_t {
-    BYTE_TEST_CONSTANT = 17,
-  };
-  enum  : int32_t {
-    TEST_CONSTANT = 42,
-    TEST_CONSTANT2 = -42,
-    TEST_CONSTANT3 = 42,
-    TEST_CONSTANT4 = 4,
-    TEST_CONSTANT5 = -4,
-    TEST_CONSTANT6 = 0,
-    TEST_CONSTANT7 = 0,
-    TEST_CONSTANT8 = 0,
-    TEST_CONSTANT9 = 86,
-    TEST_CONSTANT10 = 165,
-    TEST_CONSTANT11 = 250,
-    TEST_CONSTANT12 = -1,
-    A1 = 1,
-    A2 = 1,
-    A3 = 1,
-    A4 = 1,
-    A5 = 1,
-    A6 = 1,
-    A7 = 1,
-    A8 = 1,
-    A9 = 1,
-    A10 = 1,
-    A11 = 1,
-    A12 = 1,
-    A13 = 1,
-    A14 = 1,
-    A15 = 1,
-    A16 = 1,
-    A17 = 1,
-    A18 = 1,
-    A19 = 1,
-    A20 = 1,
-    A21 = 1,
-    A22 = 1,
-    A23 = 1,
-    A24 = 1,
-    A25 = 1,
-    A26 = 1,
-    A27 = 1,
-    A28 = 1,
-    A29 = 1,
-    A30 = 1,
-    A31 = 1,
-    A32 = 1,
-    A33 = 1,
-    A34 = 1,
-    A35 = 1,
-    A36 = 1,
-    A37 = 1,
-    A38 = 1,
-    A39 = 1,
-    A40 = 1,
-    A41 = 1,
-    A42 = 1,
-    A43 = 1,
-    A44 = 1,
-    A45 = 1,
-    A46 = 1,
-    A47 = 1,
-    A48 = 1,
-    A49 = 1,
-    A50 = 1,
-    A51 = 1,
-    A52 = 1,
-    A53 = 1,
-    A54 = 1,
-    A55 = 1,
-    A56 = 1,
-    A57 = 1,
-  };
-  enum  : int64_t {
-    LONG_TEST_CONSTANT = 1099511627776L,
-  };
+  enum : int32_t { TEST_CONSTANT = 42 };
+  enum : int32_t { TEST_CONSTANT2 = -42 };
+  enum : int32_t { TEST_CONSTANT3 = 42 };
+  enum : int32_t { TEST_CONSTANT4 = 4 };
+  enum : int32_t { TEST_CONSTANT5 = -4 };
+  enum : int32_t { TEST_CONSTANT6 = 0 };
+  enum : int32_t { TEST_CONSTANT7 = 0 };
+  enum : int32_t { TEST_CONSTANT8 = 0 };
+  enum : int32_t { TEST_CONSTANT9 = 86 };
+  enum : int32_t { TEST_CONSTANT10 = 165 };
+  enum : int32_t { TEST_CONSTANT11 = 250 };
+  enum : int32_t { TEST_CONSTANT12 = -1 };
+  enum : int8_t { BYTE_TEST_CONSTANT = 17 };
+  enum : int64_t { LONG_TEST_CONSTANT = 1099511627776L };
   static const ::android::String16& STRING_TEST_CONSTANT();
   static const ::android::String16& STRING_TEST_CONSTANT2();
   static const ::std::string& STRING_TEST_CONSTANT_UTF8();
+  enum : int32_t { A1 = 1 };
+  enum : int32_t { A2 = 1 };
+  enum : int32_t { A3 = 1 };
+  enum : int32_t { A4 = 1 };
+  enum : int32_t { A5 = 1 };
+  enum : int32_t { A6 = 1 };
+  enum : int32_t { A7 = 1 };
+  enum : int32_t { A8 = 1 };
+  enum : int32_t { A9 = 1 };
+  enum : int32_t { A10 = 1 };
+  enum : int32_t { A11 = 1 };
+  enum : int32_t { A12 = 1 };
+  enum : int32_t { A13 = 1 };
+  enum : int32_t { A14 = 1 };
+  enum : int32_t { A15 = 1 };
+  enum : int32_t { A16 = 1 };
+  enum : int32_t { A17 = 1 };
+  enum : int32_t { A18 = 1 };
+  enum : int32_t { A19 = 1 };
+  enum : int32_t { A20 = 1 };
+  enum : int32_t { A21 = 1 };
+  enum : int32_t { A22 = 1 };
+  enum : int32_t { A23 = 1 };
+  enum : int32_t { A24 = 1 };
+  enum : int32_t { A25 = 1 };
+  enum : int32_t { A26 = 1 };
+  enum : int32_t { A27 = 1 };
+  enum : int32_t { A28 = 1 };
+  enum : int32_t { A29 = 1 };
+  enum : int32_t { A30 = 1 };
+  enum : int32_t { A31 = 1 };
+  enum : int32_t { A32 = 1 };
+  enum : int32_t { A33 = 1 };
+  enum : int32_t { A34 = 1 };
+  enum : int32_t { A35 = 1 };
+  enum : int32_t { A36 = 1 };
+  enum : int32_t { A37 = 1 };
+  enum : int32_t { A38 = 1 };
+  enum : int32_t { A39 = 1 };
+  enum : int32_t { A40 = 1 };
+  enum : int32_t { A41 = 1 };
+  enum : int32_t { A42 = 1 };
+  enum : int32_t { A43 = 1 };
+  enum : int32_t { A44 = 1 };
+  enum : int32_t { A45 = 1 };
+  enum : int32_t { A46 = 1 };
+  enum : int32_t { A47 = 1 };
+  enum : int32_t { A48 = 1 };
+  enum : int32_t { A49 = 1 };
+  enum : int32_t { A50 = 1 };
+  enum : int32_t { A51 = 1 };
+  enum : int32_t { A52 = 1 };
+  enum : int32_t { A53 = 1 };
+  enum : int32_t { A54 = 1 };
+  enum : int32_t { A55 = 1 };
+  enum : int32_t { A56 = 1 };
+  enum : int32_t { A57 = 1 };
   virtual ::android::binder::Status UnimplementedMethod(int32_t arg, int32_t* _aidl_return) = 0;
   virtual ::android::binder::Status Deprecated() __attribute__((deprecated("to make sure we have something in system/tools/aidl which does a compile check of deprecated and make sure this is reflected in goldens"))) = 0;
   virtual ::android::binder::Status TestOneway() = 0;
@@ -156,6 +148,7 @@ public:
   virtual ::android::binder::Status ReverseUtf8CppStringList(const ::std::optional<::std::vector<::std::optional<::std::string>>>& input, ::std::optional<::std::vector<::std::optional<::std::string>>>* repeated, ::std::optional<::std::vector<::std::optional<::std::string>>>* _aidl_return) = 0;
   virtual ::android::binder::Status GetCallback(bool return_null, ::android::sp<::android::aidl::tests::INamedCallback>* _aidl_return) = 0;
   virtual ::android::binder::Status FillOutStructuredParcelable(::android::aidl::tests::StructuredParcelable* parcel) = 0;
+  virtual ::android::binder::Status RepeatExtendableParcelable(const ::android::aidl::tests::extension::ExtendableParcelable& ep, ::android::aidl::tests::extension::ExtendableParcelable* ep2) = 0;
   virtual ::android::binder::Status ReverseList(const ::android::aidl::tests::RecursiveList& list, ::android::aidl::tests::RecursiveList* _aidl_return) = 0;
   virtual ::android::binder::Status GetOldNameInterface(::android::sp<::android::aidl::tests::IOldName>* _aidl_return) = 0;
   virtual ::android::binder::Status GetNewNameInterface(::android::sp<::android::aidl::tests::INewName>* _aidl_return) = 0;
@@ -309,6 +302,9 @@ public:
   ::android::binder::Status FillOutStructuredParcelable(::android::aidl::tests::StructuredParcelable*) override {
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
+  ::android::binder::Status RepeatExtendableParcelable(const ::android::aidl::tests::extension::ExtendableParcelable&, ::android::aidl::tests::extension::ExtendableParcelable*) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
   ::android::binder::Status ReverseList(const ::android::aidl::tests::RecursiveList&, ::android::aidl::tests::RecursiveList*) override {
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
@@ -325,9 +321,6 @@ public:
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
 };  // class ITestServiceDefault
-
 }  // namespace tests
-
 }  // namespace aidl
-
 }  // namespace android

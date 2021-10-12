@@ -54,6 +54,8 @@
 #include "android/aidl/tests/extension/MyExt.h"
 #include "android/aidl/tests/extension/MyExt2.h"
 
+#include "android/aidl/tests/nested/BnNestedService.h"
+
 #include "android/aidl/loggable/BnLoggableInterface.h"
 #include "android/aidl/loggable/Data.h"
 
@@ -285,18 +287,6 @@ class CppJavaTests : public BnCppJavaTests {
     if (*_aidl_return) {
       std::reverse((*_aidl_return)->begin(), (*_aidl_return)->end());
     }
-    return Status::ok();
-  }
-
-  ::android::binder::Status RepeatExtendableParcelable(
-      const ::android::aidl::tests::extension::ExtendableParcelable& ep,
-      ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
-    ep2->a = ep.a;
-    ep2->b = ep.b;
-    std::shared_ptr<android::aidl::tests::extension::MyExt> myExt;
-    ep.ext.getParcelable(&myExt);
-    ep2->ext.setParcelable(myExt);
-
     return Status::ok();
   }
 };
@@ -608,6 +598,18 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
+  ::android::binder::Status RepeatExtendableParcelable(
+      const ::android::aidl::tests::extension::ExtendableParcelable& ep,
+      ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
+    ep2->a = ep.a;
+    ep2->b = ep.b;
+    std::shared_ptr<android::aidl::tests::extension::MyExt> myExt;
+    ep.ext.getParcelable(&myExt);
+    ep2->ext.setParcelable(myExt);
+
+    return Status::ok();
+  }
+
   ::android::binder::Status ReverseList(const RecursiveList& list, RecursiveList* ret) override {
     std::unique_ptr<RecursiveList> reversed;
     const RecursiveList* cur = &list;
@@ -709,6 +711,22 @@ class LoggableInterfaceService : public android::aidl::loggable::BnLoggableInter
   }
 };
 
+using namespace android::aidl::tests::nested;
+class NestedService : public BnNestedService {
+ public:
+  NestedService() {}
+  virtual ~NestedService() = default;
+
+  virtual Status flipStatus(const ParcelableWithNested& p, INestedService::Result* _aidl_return) {
+    if (p.status == ParcelableWithNested::Status::OK) {
+      _aidl_return->status = ParcelableWithNested::Status::NOT_OK;
+    } else {
+      _aidl_return->status = ParcelableWithNested::Status::OK;
+    }
+    return Status::ok();
+  }
+};
+
 int Run() {
   android::sp<NativeService> service = new NativeService;
   sp<Looper> looper(Looper::prepare(0 /* opts */));
@@ -747,6 +765,14 @@ int Run() {
   if (status != OK) {
     ALOGE("Failed to add service %s",
           String8(loggableInterfaceService->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
+
+  android::sp<NestedService> nestedService = new NestedService;
+  status =
+      defaultServiceManager()->addService(nestedService->getInterfaceDescriptor(), nestedService);
+  if (status != OK) {
+    ALOGE("Failed to add service %s", String8(nestedService->getInterfaceDescriptor()).c_str());
     return -1;
   }
 
