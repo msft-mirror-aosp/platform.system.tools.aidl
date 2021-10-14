@@ -1474,6 +1474,40 @@ TEST_F(AidlTest, UnderstandsNestedTypes) {
   EXPECT_EQ("::p::IOuter::Inner", cpp::CppNameOf(nested_type, typenames_));
 }
 
+TEST_F(AidlTest, DefinedTypeKnowsItsParentScope) {
+  const string input_path = "p/IFoo.aidl";
+  const string input =
+      "package p;\n"
+      "interface IFoo {\n"
+      "  parcelable Inner {\n"
+      "    enum Enum { A }\n"
+      "  }\n"
+      "}";
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
+  EXPECT_EQ(GetCapturedStderr(), "");
+
+  auto enum_type = typenames_.ResolveTypename("p.IFoo.Inner.Enum");
+  auto inner_type = typenames_.ResolveTypename("p.IFoo.Inner");
+  auto ifoo_type = typenames_.ResolveTypename("p.IFoo");
+  EXPECT_TRUE(enum_type.is_resolved);
+  EXPECT_TRUE(inner_type.is_resolved);
+  EXPECT_TRUE(ifoo_type.is_resolved);
+  // GetParentType()
+  EXPECT_EQ(inner_type.defined_type, enum_type.defined_type->GetParentType());
+  EXPECT_EQ(ifoo_type.defined_type, inner_type.defined_type->GetParentType());
+  EXPECT_EQ(nullptr, ifoo_type.defined_type->GetParentType());
+  // GetRootType()
+  EXPECT_EQ(ifoo_type.defined_type, enum_type.defined_type->GetRootType());
+  EXPECT_EQ(ifoo_type.defined_type, inner_type.defined_type->GetRootType());
+  EXPECT_EQ(ifoo_type.defined_type, ifoo_type.defined_type->GetRootType());
+  // GetDocument()
+  auto main_document = &typenames_.MainDocument();
+  EXPECT_EQ(main_document, &enum_type.defined_type->GetDocument());
+  EXPECT_EQ(main_document, &inner_type.defined_type->GetDocument());
+  EXPECT_EQ(main_document, &ifoo_type.defined_type->GetDocument());
+}
+
 TEST_F(AidlTest, UnderstandsNestedTypesViaFullyQualifiedName) {
   io_delegate_.SetFileContents("p/IOuter.aidl",
                                "package p;\n"
@@ -1719,6 +1753,84 @@ TEST_F(AidlTest, HeaderForNestedTypeShouldPointToTopMostParent) {
   EXPECT_EQ("p/IFoo.h", cpp::CppHeaderForType(*result));
 }
 
+TEST_F(AidlTest, ReorderNestedTypesForCppOutput) {
+  const string input_path = "p/IFoo.aidl";
+  const string input = R"(
+    package p;
+    interface IFoo {
+      // partial orderings for [A, D, G]:
+      //   D - A
+      //   A - G
+      parcelable A {
+        // partial orderings for [B, C]:
+        //   C - B
+        parcelable B {
+          C c;
+          D.E d;
+        }
+        parcelable C {}
+      }
+      parcelable D {
+        // partial orderings for [E, F]:
+        //   F - E
+        parcelable E {
+          F f;
+        }
+        parcelable F {}
+      }
+      parcelable G {
+        A.B b;
+      }
+    }
+  )";
+  Options options = Options::From("aidl --lang cpp -I. -oout -hout p/IFoo.aidl");
+  io_delegate_.SetFileContents(input_path, input);
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(GetCapturedStderr(), "");
+
+  string code;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/p/IFoo.h", &code));
+  // check partial orderings: a should comes before b
+  EXPECT_LE(code.find("class D"), code.find("class A"));
+  EXPECT_LE(code.find("class A"), code.find("class G"));
+  EXPECT_LE(code.find("class C"), code.find("class B"));
+  EXPECT_LE(code.find("class F"), code.find("class E"));
+}
+
+TEST_F(AidlTest, RejectsNestedTypesWithCyclicDeps) {
+  const string input_path = "p/IFoo.aidl";
+  const string input = R"(
+    package p;
+    interface IFoo {
+      // Cycles:
+      //   D - A
+      //   A - G
+      //   G - D
+      parcelable A {
+        parcelable B {
+          C c;
+        }
+      }
+      parcelable C {
+        parcelable D {
+          E e;
+        }
+      }
+      parcelable E {
+        parcelable F {
+          A a;
+        }
+      }
+    }
+  )";
+  Options options = Options::From("aidl --lang cpp -I. -oout -hout p/IFoo.aidl");
+  io_delegate_.SetFileContents(input_path, input);
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("IFoo has nested types with cyclic references."));
+}
+
 TEST_F(AidlTest, CppNameOf_GenericType) {
   const string input_path = "p/Wrapper.aidl";
   const string input = "package p; parcelable Wrapper<T> {}";
@@ -1733,8 +1845,9 @@ TEST_F(AidlTest, CppNameOf_GenericType) {
   };
 
   auto set_nullable = [](std::unique_ptr<AidlTypeSpecifier>&& type) {
-    std::vector<AidlAnnotation> annotations;
-    annotations.emplace_back(*AidlAnnotation::Parse(AIDL_LOCATION_HERE, "nullable", {}, {}));
+    std::vector<std::unique_ptr<AidlAnnotation>> annotations;
+    annotations.emplace_back(std::unique_ptr<AidlAnnotation>(
+        AidlAnnotation::Parse(AIDL_LOCATION_HERE, "nullable", {}, {})));
     type->Annotate(std::move(annotations));
     return std::move(type);
   };
@@ -1921,16 +2034,8 @@ TEST_P(AidlTest, ExtensionTest) {
       "  ParcelableHolder extension;\n"
       "  ParcelableHolder extension2;\n"
       "}";
-  if (GetLanguage() == Options::Language::RUST) {
-    EXPECT_EQ(nullptr, Parse("a/Data.aidl", extendable_parcelable, typenames_, GetLanguage()));
-    EXPECT_EQ(
-        "ERROR: a/Data.aidl:2.1-19: The Rust backend does not support ParcelableHolder "
-        "yet.\n",
-        GetCapturedStderr());
-  } else {
-    EXPECT_NE(nullptr, Parse("a/Data.aidl", extendable_parcelable, typenames_, GetLanguage()));
-    EXPECT_EQ("", GetCapturedStderr());
-  }
+  EXPECT_NE(nullptr, Parse("a/Data.aidl", extendable_parcelable, typenames_, GetLanguage()));
+  EXPECT_EQ("", GetCapturedStderr());
 }
 TEST_P(AidlTest, ParcelableHolderAsReturnType) {
   CaptureStderr();
@@ -1941,14 +2046,6 @@ TEST_P(AidlTest, ParcelableHolderAsReturnType) {
   EXPECT_EQ(nullptr,
             Parse("a/IFoo.aidl", parcelableholder_return_interface, typenames_, GetLanguage()));
 
-  if (GetLanguage() == Options::Language::RUST) {
-    EXPECT_EQ(
-        "ERROR: a/IFoo.aidl:2.19-23: ParcelableHolder cannot be a return type\n"
-        "ERROR: a/IFoo.aidl:2.1-19: The Rust backend does not support ParcelableHolder "
-        "yet.\n",
-        GetCapturedStderr());
-    return;
-  }
   EXPECT_EQ("ERROR: a/IFoo.aidl:2.19-23: ParcelableHolder cannot be a return type\n",
             GetCapturedStderr());
 }
@@ -1962,14 +2059,6 @@ TEST_P(AidlTest, ParcelableHolderAsArgumentType) {
   EXPECT_EQ(nullptr,
             Parse("a/IFoo.aidl", extendable_parcelable_arg_interface, typenames_, GetLanguage()));
 
-  if (GetLanguage() == Options::Language::RUST) {
-    EXPECT_EQ(
-        "ERROR: a/IFoo.aidl:2.31-34: ParcelableHolder cannot be an argument type\n"
-        "ERROR: a/IFoo.aidl:2.14-31: The Rust backend does not support ParcelableHolder "
-        "yet.\n",
-        GetCapturedStderr());
-    return;
-  }
   EXPECT_EQ("ERROR: a/IFoo.aidl:2.31-34: ParcelableHolder cannot be an argument type\n",
             GetCapturedStderr());
 }
@@ -1980,14 +2069,6 @@ TEST_P(AidlTest, RejectNullableParcelableHolderField) {
   const string expected_stderr = "ERROR: Foo.aidl:1.27-44: ParcelableHolder cannot be nullable.\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  if (GetLanguage() == Options::Language::RUST) {
-    EXPECT_EQ(
-        "ERROR: Foo.aidl:1.27-44: ParcelableHolder cannot be nullable.\n"
-        "ERROR: Foo.aidl:1.27-44: The Rust backend does not support ParcelableHolder "
-        "yet.\n",
-        GetCapturedStderr());
-    return;
-  }
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
@@ -4478,13 +4559,12 @@ TEST_P(AidlTest, ConstRefsCanPointToTheSameValue) {
 }
 
 TEST_P(AidlTest, UnknownConstReference) {
-  io_delegate_.SetFileContents("Foo.aidl", " parcelable Foo { UnknownType field = UNKNOWN_REF; }");
+  io_delegate_.SetFileContents("Foo.aidl", " parcelable Foo { int field = UNKNOWN_REF; }");
   auto options =
       Options::From("aidl --lang " + to_string(GetLanguage()) + " -o out -h out Foo.aidl");
   const string err =
-      "ERROR: Foo.aidl:1.18-30: Failed to resolve 'UnknownType'\n"
-      "ERROR: Foo.aidl:1.38-50: Can't find UNKNOWN_REF in Foo\n"
-      "ERROR: Foo.aidl:1.38-50: Unknown reference 'UNKNOWN_REF'\n";
+      "ERROR: Foo.aidl:1.30-42: Can't find UNKNOWN_REF in Foo\n"
+      "ERROR: Foo.aidl:1.30-42: Unknown reference 'UNKNOWN_REF'\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_EQ(err, GetCapturedStderr());
@@ -4551,22 +4631,18 @@ TEST_F(AidlTest, FormatCommentsForJava) {
       {{{"/*\n"
          " * Hello, world!\n"
          " */"}},
-       "/**\n"
-       " * Hello, world!\n"
-       " */"},
-      {{{"/* @hide */"}}, "/** @hide */"},
+       "/** Hello, world! */\n"},
+      {{{"/* @hide */"}}, "/** @hide */\n"},
       {{{"/**\n"
          "   @param foo ...\n"
          "*/"}},
-       "/**\n"
-       "   @param foo ...\n"
-       "*/"},
-      {{{"/* @hide */"}, {"/* @hide */"}}, "/* @hide *//** @hide */"},
+       "/** @param foo ... */\n"},
+      {{{"/* @hide */"}, {"/* @hide */"}}, "/* @hide */\n/** @hide */\n"},
       {{{"/* @deprecated first */"}, {"/* @deprecated second */"}},
-       "/* @deprecated first *//** @deprecated second */"},
-      {{{"/* @deprecated */"}, {"/** @param foo */"}}, "/* @deprecated *//** @param foo */"},
+       "/* @deprecated first */\n/** @deprecated second */\n"},
+      {{{"/* @deprecated */"}, {"/** @param foo */"}}, "/* @deprecated */\n/** @param foo */\n"},
       // Line comments are printed as they are
-      {{{"/* @deprecated */"}, {"// line comments\n"}}, "/* @deprecated */// line comments\n"},
+      {{{"/* @deprecated */"}, {"// line comments\n"}}, "/* @deprecated */\n// line comments\n"},
   };
   for (const auto& [input, formatted] : testcases) {
     EXPECT_EQ(formatted, FormatCommentsForJava(input));

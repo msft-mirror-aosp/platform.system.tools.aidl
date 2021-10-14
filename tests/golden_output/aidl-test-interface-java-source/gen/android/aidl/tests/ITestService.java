@@ -2,6 +2,7 @@
  * This file is auto-generated.  DO NOT MODIFY.
  */
 package android.aidl.tests;
+/** interface comment */
 public interface ITestService extends android.os.IInterface
 {
   /** Default implementation for ITestService. */
@@ -23,9 +24,9 @@ public interface ITestService extends android.os.IInterface
       return 0;
     }
     /**
-         * @deprecated to make sure we have something in system/tools/aidl which does a compile check
-         *     of deprecated and make sure this is reflected in goldens
-         */
+     * @deprecated to make sure we have something in system/tools/aidl which does a compile check
+     *     of deprecated and make sure this is reflected in goldens
+     */
     @Override public void Deprecated() throws android.os.RemoteException
     {
     }
@@ -204,6 +205,7 @@ public interface ITestService extends android.os.IInterface
     {
       return null;
     }
+    /** comment before annotation */
     @Override public android.aidl.tests.INamedCallback GetCallback(boolean return_null) throws android.os.RemoteException
     {
       return null;
@@ -211,6 +213,9 @@ public interface ITestService extends android.os.IInterface
     // Since this paracelable has clearly defined default values, it would be
     // inefficient to use an IPC to fill it out in practice.
     @Override public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException
+    {
+    }
+    @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
     {
     }
     @Override public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException
@@ -862,6 +867,28 @@ public interface ITestService extends android.os.IInterface
           }
           break;
         }
+        case TRANSACTION_RepeatExtendableParcelable:
+        {
+          android.aidl.tests.extension.ExtendableParcelable _arg0;
+          if ((0!=data.readInt())) {
+            _arg0 = android.aidl.tests.extension.ExtendableParcelable.CREATOR.createFromParcel(data);
+          }
+          else {
+            _arg0 = null;
+          }
+          android.aidl.tests.extension.ExtendableParcelable _arg1;
+          _arg1 = new android.aidl.tests.extension.ExtendableParcelable();
+          this.RepeatExtendableParcelable(_arg0, _arg1);
+          reply.writeNoException();
+          if ((_arg1!=null)) {
+            reply.writeInt(1);
+            _arg1.writeToParcel(reply, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+          }
+          else {
+            reply.writeInt(0);
+          }
+          break;
+        }
         case TRANSACTION_ReverseList:
         {
           android.aidl.tests.RecursiveList _arg0;
@@ -968,9 +995,9 @@ public interface ITestService extends android.os.IInterface
         return _result;
       }
       /**
-           * @deprecated to make sure we have something in system/tools/aidl which does a compile check
-           *     of deprecated and make sure this is reflected in goldens
-           */
+       * @deprecated to make sure we have something in system/tools/aidl which does a compile check
+       *     of deprecated and make sure this is reflected in goldens
+       */
       @Override public void Deprecated() throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
@@ -2142,6 +2169,7 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
+      /** comment before annotation */
       @Override public android.aidl.tests.INamedCallback GetCallback(boolean return_null) throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
@@ -2192,6 +2220,37 @@ public interface ITestService extends android.os.IInterface
           _reply.readException();
           if ((0!=_reply.readInt())) {
             parcel.readFromParcel(_reply);
+          }
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
+      @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          if ((ep!=null)) {
+            _data.writeInt(1);
+            ep.writeToParcel(_data, 0);
+          }
+          else {
+            _data.writeInt(0);
+          }
+          boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatExtendableParcelable, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              getDefaultImpl().RepeatExtendableParcelable(ep, ep2);
+              return;
+            }
+          }
+          _reply.readException();
+          if ((0!=_reply.readInt())) {
+            ep2.readFromParcel(_reply);
           }
         }
         finally {
@@ -2376,11 +2435,12 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_ReverseUtf8CppStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 44);
     static final int TRANSACTION_GetCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 45);
     static final int TRANSACTION_FillOutStructuredParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 46);
-    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 47);
-    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 48);
-    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 49);
-    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 50);
-    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 51);
+    static final int TRANSACTION_RepeatExtendableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 47);
+    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 48);
+    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 49);
+    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 50);
+    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 51);
+    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 52);
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
       // at a time. This is a heuristic to detect if two different
@@ -2400,6 +2460,10 @@ public interface ITestService extends android.os.IInterface
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService".replace('$', '.');
   // Test that constants are accessible
+  /** extra doc comment */
+  // extra line comment
+  /* extra regular comment */
+  /** const comment */
   public static final int TEST_CONSTANT = 42;
   public static final int TEST_CONSTANT2 = -42;
   public static final int TEST_CONSTANT3 = 42;
@@ -2490,9 +2554,9 @@ public interface ITestService extends android.os.IInterface
   // methods to be added and removed.
   public int UnimplementedMethod(int arg) throws android.os.RemoteException;
   /**
-       * @deprecated to make sure we have something in system/tools/aidl which does a compile check
-       *     of deprecated and make sure this is reflected in goldens
-       */
+   * @deprecated to make sure we have something in system/tools/aidl which does a compile check
+   *     of deprecated and make sure this is reflected in goldens
+   */
   @Deprecated
   public void Deprecated() throws android.os.RemoteException;
   public void TestOneway() throws android.os.RemoteException;
@@ -2545,10 +2609,12 @@ public interface ITestService extends android.os.IInterface
   public java.lang.String[] ReverseUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException;
   public java.lang.String[] ReverseNullableUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException;
   public java.util.List<java.lang.String> ReverseUtf8CppStringList(java.util.List<java.lang.String> input, java.util.List<java.lang.String> repeated) throws android.os.RemoteException;
+  /** comment before annotation */
   public android.aidl.tests.INamedCallback GetCallback(boolean return_null) throws android.os.RemoteException;
   // Since this paracelable has clearly defined default values, it would be
   // inefficient to use an IPC to fill it out in practice.
   public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException;
+  public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException;
   public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException;
   public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException;
   public android.aidl.tests.INewName GetNewNameInterface() throws android.os.RemoteException;

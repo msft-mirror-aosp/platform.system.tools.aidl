@@ -33,6 +33,8 @@ import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.Union;
 import android.aidl.tests.extension.ExtendableParcelable;
 import android.aidl.tests.extension.MyExt;
+import android.aidl.tests.nested.INestedService;
+import android.aidl.tests.nested.ParcelableWithNested;
 import android.aidl.versioned.tests.BazUnion;
 import android.aidl.versioned.tests.Foo;
 import android.aidl.versioned.tests.IFooInterface;
@@ -58,6 +60,9 @@ public class TestServiceServer extends ITestService.Stub {
 
     FooInterface foo = new FooInterface();
     ServiceManager.addService(IFooInterface.class.getName(), foo);
+
+    NestedService nested = new NestedService();
+    ServiceManager.addService(INestedService.class.getName(), nested);
 
     Binder.joinThreadPool();
   }
@@ -87,6 +92,19 @@ public class TestServiceServer extends ITestService.Stub {
     @Override
     public final String getInterfaceHash() {
       return IFooInterface.HASH;
+    }
+  }
+
+  private static class NestedService extends INestedService.Stub {
+    @Override
+    public final Result flipStatus(ParcelableWithNested p) {
+      Result result = new Result();
+      if (p.status == ParcelableWithNested.Status.OK) {
+        result.status = ParcelableWithNested.Status.NOT_OK;
+      } else {
+        result.status = ParcelableWithNested.Status.OK;
+      }
+      return result;
     }
   }
 
@@ -424,6 +442,16 @@ public class TestServiceServer extends ITestService.Stub {
     parcelable.shouldBeConstS1 = Union.s(Union.S1);
   }
   @Override
+  public void RepeatExtendableParcelable(ExtendableParcelable ep, ExtendableParcelable ep2)
+      throws RemoteException {
+    ep2.a = ep.a;
+    ep2.b = ep.b;
+    // no way to copy currently w/o unparceling
+    ep2.ext.setParcelable(ep.ext.getParcelable(MyExt.class));
+    ep2.c = ep.c;
+    ep2.ext2.setParcelable(null);
+  }
+  @Override
   public RecursiveList ReverseList(RecursiveList list) throws RemoteException {
     RecursiveList reversed = null;
     while (list != null) {
@@ -553,16 +581,6 @@ public class TestServiceServer extends ITestService.Stub {
         reversed[i] = input[input.length - i - 1];
       }
       return reversed;
-    }
-    @Override
-    public void RepeatExtendableParcelable(ExtendableParcelable ep, ExtendableParcelable ep2)
-        throws RemoteException {
-      ep2.a = ep.a;
-      ep2.b = ep.b;
-      // no way to copy currently w/o unparceling
-      ep2.ext.setParcelable(ep.ext.getParcelable(MyExt.class));
-      ep2.c = ep.c;
-      ep2.ext2.setParcelable(null);
     }
   }
 

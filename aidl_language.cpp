@@ -352,13 +352,13 @@ void AidlAnnotation::TraverseChildren(std::function<void(const AidlNode&)> trave
   }
 }
 
-static const AidlAnnotation* GetAnnotation(const vector<AidlAnnotation>& annotations,
-                                           AidlAnnotation::Type type) {
+static const AidlAnnotation* GetAnnotation(
+    const vector<std::unique_ptr<AidlAnnotation>>& annotations, AidlAnnotation::Type type) {
   for (const auto& a : annotations) {
-    if (a.GetType() == type) {
-      AIDL_FATAL_IF(a.Repeatable(), a)
+    if (a->GetType() == type) {
+      AIDL_FATAL_IF(a->Repeatable(), a)
           << "Trying to get a single annotation when it is repeatable.";
-      return &a;
+      return a.get();
     }
   }
   return nullptr;
@@ -463,16 +463,17 @@ std::string AidlAnnotatable::GetDescriptor() const {
 
 bool AidlAnnotatable::CheckValid(const AidlTypenames&) const {
   for (const auto& annotation : GetAnnotations()) {
-    if (!annotation.CheckValid()) {
+    if (!annotation->CheckValid()) {
       return false;
     }
   }
 
   std::map<AidlAnnotation::Type, AidlLocation> declared;
   for (const auto& annotation : GetAnnotations()) {
-    const auto& [iter, inserted] = declared.emplace(annotation.GetType(), annotation.GetLocation());
-    if (!inserted && !annotation.Repeatable()) {
-      AIDL_ERROR(this) << "'" << annotation.GetName()
+    const auto& [iter, inserted] =
+        declared.emplace(annotation->GetType(), annotation->GetLocation());
+    if (!inserted && !annotation->Repeatable()) {
+      AIDL_ERROR(this) << "'" << annotation->GetName()
                        << "' is repeated, but not allowed. Previous location: " << iter->second;
       return false;
     }
@@ -484,7 +485,7 @@ bool AidlAnnotatable::CheckValid(const AidlTypenames&) const {
 string AidlAnnotatable::ToString() const {
   vector<string> ret;
   for (const auto& a : annotations_) {
-    ret.emplace_back(a.ToString());
+    ret.emplace_back(a->ToString());
   }
   std::sort(ret.begin(), ret.end());
   return Join(ret, " ");
@@ -500,16 +501,14 @@ AidlTypeSpecifier::AidlTypeSpecifier(const AidlLocation& location, const string&
       is_array_(is_array),
       split_name_(Split(unresolved_name, ".")) {}
 
-const AidlTypeSpecifier& AidlTypeSpecifier::ArrayBase() const {
+void AidlTypeSpecifier::ViewAsArrayBase(std::function<void(const AidlTypeSpecifier&)> func) const {
   AIDL_FATAL_IF(!is_array_, this);
   // Declaring array of generic type cannot happen, it is grammar error.
   AIDL_FATAL_IF(IsGeneric(), this);
 
-  if (!array_base_) {
-    array_base_.reset(new AidlTypeSpecifier(*this));
-    array_base_->is_array_ = false;
-  }
-  return *array_base_;
+  is_array_ = false;
+  func(*this);
+  is_array_ = true;
 }
 
 string AidlTypeSpecifier::Signature() const {
@@ -1056,6 +1055,13 @@ bool AidlDefinedType::CheckValidWithMembers(const AidlTypenames& typenames) cons
     }
   }
 
+  if (!TopologicalVisit(GetNestedTypes(), [](auto&) {})) {
+    AIDL_ERROR(this) << GetName()
+                     << " has nested types with cyclic references. C++ and NDK backends don't "
+                        "support cyclic references.";
+    return false;
+  }
+
   for (const auto& v : GetFields()) {
     const bool field_valid = v->CheckValid(typenames);
     success = success && field_valid;
@@ -1114,6 +1120,14 @@ const AidlDefinedType* AidlDefinedType::GetParentType() const {
   return AidlCast<AidlDefinedType>(GetEnclosingScope()->GetNode());
 }
 
+const AidlDefinedType* AidlDefinedType::GetRootType() const {
+  const AidlDefinedType* root = this;
+  for (auto parent = root->GetParentType(); parent; parent = parent->GetParentType()) {
+    root = parent;
+  }
+  return root;
+}
+
 // Resolve `name` in the current scope. If not found, delegate to the parent
 std::string AidlDefinedType::ResolveName(const std::string& name) const {
   // For example, in the following, t1's type Baz means x.Foo.Bar.Baz
@@ -1166,11 +1180,11 @@ const AidlDefinedType* AidlCast<AidlDefinedType>(const AidlNode& node) {
 }
 
 const AidlDocument& AidlDefinedType::GetDocument() const {
-  // TODO(b/182508839): resolve with nested types when we support nested types
-  auto scope = GetEnclosingScope();
+  const AidlDefinedType* root = GetRootType();
+  auto scope = root->GetEnclosingScope();
   AIDL_FATAL_IF(!scope, this) << "no scope defined.";
   auto doc = AidlCast<AidlDocument>(scope->GetNode());
-  AIDL_FATAL_IF(!doc, this) << "scope is not a document.";
+  AIDL_FATAL_IF(!doc, this) << "root scope is not a document.";
   return *doc;
 }
 
@@ -1185,13 +1199,6 @@ AidlParcelable::AidlParcelable(const AidlLocation& location, const std::string& 
   if (cpp_header_.length() >= 2) {
     cpp_header_ = cpp_header_.substr(1, cpp_header_.length() - 2);
   }
-}
-template <typename T>
-AidlParameterizable<T>::AidlParameterizable(const AidlParameterizable& other) {
-  // Copying is not supported if it has type parameters.
-  // It doesn't make a problem because only ArrayBase() makes a copy,
-  // and it can be called only if a type is not generic.
-  AIDL_FATAL_IF(other.IsGeneric(), AIDL_LOCATION_HERE);
 }
 
 template <typename T>
@@ -1271,11 +1278,6 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
   if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
       GetName() == "IBinder") {
     AIDL_ERROR(this) << "The " << to_string(lang) << " backend does not support array of IBinder";
-    return false;
-  }
-  if (lang == Options::Language::RUST && GetName() == "ParcelableHolder") {
-    // TODO(b/146611855): Remove it when Rust backend supports ParcelableHolder
-    AIDL_ERROR(this) << "The Rust backend does not support ParcelableHolder yet.";
     return false;
   }
   if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
