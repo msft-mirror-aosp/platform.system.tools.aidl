@@ -186,7 +186,6 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
 				Apex_available:            commonProperties.Apex_available,
 				Min_sdk_version:           i.minSdkVersion(lang),
-				UseApexNameMacro:          true,
 				Target:                    targetProp,
 				Tidy:                      proptools.BoolPtr(true),
 				// Do the tidy check only for the generated headers
@@ -226,6 +225,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		ImportsWithoutVersion: i.properties.ImportsWithoutVersion,
 		Stability:             i.properties.Stability,
 		Min_sdk_version:       i.minSdkVersion(langJava),
+		Platform_apis:         proptools.Bool(i.properties.Backend.Java.Platform_apis),
 		Lang:                  langJava,
 		BaseName:              i.ModuleBase.Name(),
 		Version:               i.versionForAidlGenRule(version),

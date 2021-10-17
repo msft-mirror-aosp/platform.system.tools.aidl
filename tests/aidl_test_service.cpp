@@ -269,38 +269,6 @@ class CppJavaTests : public BnCppJavaTests {
     (void)input;
     return Status::ok();
   }
-
-  Status ReverseIBinderArray(const vector<sp<IBinder>>& input, vector<sp<IBinder>>* repeated,
-                             vector<sp<IBinder>>* _aidl_return) override {
-    ALOGI("Reversing IBinder array of length %zu", input.size());
-    *repeated = input;
-    *_aidl_return = input;
-    std::reverse(_aidl_return->begin(), _aidl_return->end());
-    return Status::ok();
-  }
-
-  Status ReverseNullableIBinderArray(const std::optional<vector<sp<IBinder>>>& input,
-                                     std::optional<vector<sp<IBinder>>>* repeated,
-                                     std::optional<vector<sp<IBinder>>>* _aidl_return) override {
-    *repeated = input;
-    *_aidl_return = input;
-    if (*_aidl_return) {
-      std::reverse((*_aidl_return)->begin(), (*_aidl_return)->end());
-    }
-    return Status::ok();
-  }
-
-  ::android::binder::Status RepeatExtendableParcelable(
-      const ::android::aidl::tests::extension::ExtendableParcelable& ep,
-      ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
-    ep2->a = ep.a;
-    ep2->b = ep.b;
-    std::shared_ptr<android::aidl::tests::extension::MyExt> myExt;
-    ep.ext.getParcelable(&myExt);
-    ep2->ext.setParcelable(myExt);
-
-    return Status::ok();
-  }
 };
 
 class NativeService : public BnTestService {
@@ -610,6 +578,18 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
+  ::android::binder::Status RepeatExtendableParcelable(
+      const ::android::aidl::tests::extension::ExtendableParcelable& ep,
+      ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
+    ep2->a = ep.a;
+    ep2->b = ep.b;
+    std::shared_ptr<android::aidl::tests::extension::MyExt> myExt;
+    ep.ext.getParcelable(&myExt);
+    ep2->ext.setParcelable(myExt);
+
+    return Status::ok();
+  }
+
   ::android::binder::Status ReverseList(const RecursiveList& list, RecursiveList* ret) override {
     std::unique_ptr<RecursiveList> reversed;
     const RecursiveList* cur = &list;
@@ -621,6 +601,25 @@ class NativeService : public BnTestService {
       cur = cur->next.get();
     }
     *ret = std::move(*reversed);
+    return Status::ok();
+  }
+
+  Status ReverseIBinderArray(const vector<sp<IBinder>>& input, vector<sp<IBinder>>* repeated,
+                             vector<sp<IBinder>>* _aidl_return) override {
+    *repeated = input;
+    *_aidl_return = input;
+    std::reverse(_aidl_return->begin(), _aidl_return->end());
+    return Status::ok();
+  }
+
+  Status ReverseNullableIBinderArray(const std::optional<vector<sp<IBinder>>>& input,
+                                     std::optional<vector<sp<IBinder>>>* repeated,
+                                     std::optional<vector<sp<IBinder>>>* _aidl_return) override {
+    *repeated = input;
+    *_aidl_return = input;
+    if (*_aidl_return) {
+      std::reverse((*_aidl_return)->begin(), (*_aidl_return)->end());
+    }
     return Status::ok();
   }
 

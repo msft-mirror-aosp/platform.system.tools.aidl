@@ -25,11 +25,26 @@ import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.RecursiveList;
 import android.aidl.tests.StructuredParcelable;
+import android.aidl.tests.extension.ExtendableParcelable;
 
+/**
+ * interface comment
+ */
 @SuppressWarnings(value={"inout-parameter", "mixed-oneway", "out-array"})
 @SensitiveData
 interface ITestService {
     // Test that constants are accessible
+
+    /**
+     * extra doc comment
+     */
+    // extra line comment
+    /*
+     * extra regular comment
+     */
+    /**
+     * const comment
+     */
     const int TEST_CONSTANT = 42;
     const int TEST_CONSTANT2 = -42;
     const int TEST_CONSTANT3 = +42;
@@ -144,13 +159,22 @@ interface ITestService {
             in @nullable @utf8InCpp List<String> input,
             out @nullable @utf8InCpp List<String> repeated);
 
+    /**
+     * comment before annotation
+     */
     @nullable INamedCallback GetCallback(boolean return_null);
 
     // Since this paracelable has clearly defined default values, it would be
     // inefficient to use an IPC to fill it out in practice.
     void FillOutStructuredParcelable(inout StructuredParcelable parcel);
 
+    void RepeatExtendableParcelable(in ExtendableParcelable ep, out ExtendableParcelable ep2);
+
     RecursiveList ReverseList(in RecursiveList list);
+
+    IBinder[] ReverseIBinderArray(in IBinder[] input, out IBinder[] repeated);
+    @nullable IBinder[] ReverseNullableIBinderArray(
+            in @nullable IBinder[] input, out @nullable IBinder[] repeated);
 
     // All these constant expressions should be equal to 1
     const int A1 = (~(-1)) == 0;

@@ -21,7 +21,6 @@ import android.aidl.tests.IntEnum;
 import android.aidl.tests.SimpleParcelable;
 import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.Union;
-import android.aidl.tests.extension.ExtendableParcelable;
 import android.os.PersistableBundle;
 
 // Tests that are only supported by the C++/Java backends, not NDK/Rust
@@ -46,9 +45,4 @@ interface ICppJavaTests {
 
     void TakesAnIBinderList(in List<IBinder> input);
     void TakesANullableIBinderList(in @nullable List<IBinder> input);
-    IBinder[] ReverseIBinderArray(in IBinder[] input, out IBinder[] repeated);
-    @nullable IBinder[] ReverseNullableIBinderArray(
-            in @nullable IBinder[] input, out @nullable IBinder[] repeated);
-
-    void RepeatExtendableParcelable(in ExtendableParcelable ep, out ExtendableParcelable ep2);
 }

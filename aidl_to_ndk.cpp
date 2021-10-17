@@ -303,14 +303,24 @@ static map<std::string, TypeInfo> kNdkTypeInfoMap = {
                  .read_func = StandardRead("::ndk::AParcel_readRequiredStrongBinder"),
                  .write_func = StandardRead("::ndk::AParcel_writeRequiredStrongBinder"),
              },
-         .array = nullptr,
+         .array = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
+             .cpp_name = "std::vector<::ndk::SpAIBinder>",
+             .value_is_cheap = false,
+             .read_func = StandardRead("::ndk::AParcel_readVector"),
+             .write_func = StandardWrite("::ndk::AParcel_writeVector"),
+         }),
          .nullable = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
              .cpp_name = "::ndk::SpAIBinder",
              .value_is_cheap = false,
              .read_func = StandardRead("::ndk::AParcel_readNullableStrongBinder"),
              .write_func = StandardRead("::ndk::AParcel_writeNullableStrongBinder"),
          }),
-         .nullable_array = nullptr,
+         .nullable_array = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
+             .cpp_name = "std::optional<std::vector<::ndk::SpAIBinder>>",
+             .value_is_cheap = false,
+             .read_func = StandardRead("::ndk::AParcel_readVector"),
+             .write_func = StandardWrite("::ndk::AParcel_writeVector"),
+         }),
      }},
     {"ParcelFileDescriptor",
      TypeInfo{
@@ -365,13 +375,9 @@ static TypeInfo::Aspect GetTypeAspect(const AidlTypenames& types, const AidlType
     // TODO(b/136048684) AIDL doesn't support nested type parameter yet.
     AIDL_FATAL_IF(type_param->IsGeneric(), aidl) << "AIDL doesn't support nested type parameter";
 
-    AidlTypeSpecifier array_type =
-        AidlTypeSpecifier(AIDL_LOCATION_HERE, type_param->GetName(), true /* isArray */,
-                          nullptr /* type_params */, aidl.GetComments());
-    if (!(array_type.Resolve(types, nullptr) && array_type.CheckValid(types))) {
-      AIDL_FATAL(aidl) << "The type parameter is wrong.";
-    }
-    return GetTypeAspect(types, array_type);
+    auto array_type =
+        types.MakeResolvedType(AIDL_LOCATION_HERE, type_param->GetName(), /*isArray=*/true);
+    return GetTypeAspect(types, *array_type);
   }
 
   if (AidlTypenames::IsBuiltinTypename(aidl_name)) {

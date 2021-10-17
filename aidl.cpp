@@ -309,7 +309,7 @@ bool ValidateAnnotationContext(const AidlDocument& doc) {
 
     void Check(const AidlAnnotatable& annotatable, AidlAnnotation::TargetContext context) {
       for (const auto& annot : annotatable.GetAnnotations()) {
-        if (!annot.CheckContext(context)) {
+        if (!annot->CheckContext(context)) {
           success = false;
         }
       }
@@ -557,23 +557,19 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     if (interface != nullptr) {
       // add the meta-method 'int getInterfaceVersion()' if version is specified.
       if (options.Version() > 0) {
-        AidlTypeSpecifier* ret =
-            new AidlTypeSpecifier(AIDL_LOCATION_HERE, "int", false, nullptr, Comments{});
-        ret->Resolve(*typenames, nullptr);
+        auto ret = typenames->MakeResolvedType(AIDL_LOCATION_HERE, "int", false);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method = std::make_unique<AidlMethod>(
-            AIDL_LOCATION_HERE, false, ret, "getInterfaceVersion", args, Comments{},
+            AIDL_LOCATION_HERE, false, ret.release(), "getInterfaceVersion", args, Comments{},
             kGetInterfaceVersionId, false /* is_user_defined */);
         interface->AddMethod(std::move(method));
       }
       // add the meta-method 'string getInterfaceHash()' if hash is specified.
       if (!options.Hash().empty()) {
-        AidlTypeSpecifier* ret =
-            new AidlTypeSpecifier(AIDL_LOCATION_HERE, "String", false, nullptr, Comments{});
-        ret->Resolve(*typenames, nullptr);
+        auto ret = typenames->MakeResolvedType(AIDL_LOCATION_HERE, "String", false);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method = std::make_unique<AidlMethod>(
-            AIDL_LOCATION_HERE, false, ret, kGetInterfaceHash, args, Comments{},
+            AIDL_LOCATION_HERE, false, ret.release(), kGetInterfaceHash, args, Comments{},
             kGetInterfaceHashId, false /* is_user_defined */);
         interface->AddMethod(std::move(method));
       }
@@ -593,6 +589,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         return AidlError::BAD_TYPE;
       }
     }
+  }
+
+  for (const auto& doc : typenames->AllDocuments()) {
+    VisitTopDown([](const AidlNode& n) { n.MarkVisited(); }, *doc);
   }
 
   if (!ValidateAnnotationContext(*document)) {
@@ -688,13 +688,6 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
     for (const auto& defined_type : typenames.MainDocument().DefinedTypes()) {
       AIDL_FATAL_IF(defined_type == nullptr, input_file);
 
-      // TODO(b/182508839) add Rust backend support for nested types
-      if (!defined_type->GetNestedTypes().empty() && lang == Options::Language::RUST) {
-        AIDL_ERROR(defined_type) << "Nested types are not supported yet in " << to_string(lang)
-                                 << " backend.";
-        return false;
-      }
-
       string output_file_name = options.OutputFile();
       // if needed, generate the output file name from the base folder
       if (output_file_name.empty() && !options.OutputDir().empty()) {
@@ -725,8 +718,8 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
           success = true;
         }
       } else if (lang == Options::Language::RUST) {
-        success = rust::GenerateRust(output_file_name, defined_type.get(), typenames, io_delegate,
-                                     options);
+        rust::GenerateRust(output_file_name, options, typenames, *defined_type, io_delegate);
+        success = true;
       } else {
         AIDL_FATAL(input_file) << "Should not reach here.";
       }
@@ -765,6 +758,7 @@ bool dump_mappings(const Options& options, const IoDelegate& io_delegate) {
 
 int aidl_entry(const Options& options, const IoDelegate& io_delegate) {
   AidlErrorLog::clearError();
+  AidlNode::ClearUnvisitedNodes();
 
   bool success = false;
   if (options.Ok()) {
@@ -799,6 +793,17 @@ int aidl_entry(const Options& options, const IoDelegate& io_delegate) {
   AIDL_FATAL_IF(success == reportedError, AIDL_LOCATION_HERE)
       << "Compiler returned success " << success << " but did" << (reportedError ? "" : " not")
       << " emit error logs";
+
+  if (success) {
+    auto locations = AidlNode::GetLocationsOfUnvisitedNodes();
+    if (!locations.empty()) {
+      for (const auto& location : locations) {
+        AIDL_ERROR(location) << "AidlNode at location was not visited!";
+      }
+      AIDL_FATAL(AIDL_LOCATION_HERE)
+          << "The AIDL AST was not processed fully. Please report an issue.";
+    }
+  }
 
   return success ? 0 : 1;
 }
