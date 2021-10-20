@@ -134,6 +134,13 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
 void GenerateClassDecl(CodeWriter& out, const AidlTypenames& types,
                        const AidlDefinedType& defined_type, const Options& options);
 
+void GenerateNestedTypeDecls(CodeWriter& out, const AidlTypenames& types,
+                             const AidlDefinedType& defined_type, const Options& options) {
+  auto visit = [&](const auto& nested) { GenerateClassDecl(out, types, nested, options); };
+  AIDL_FATAL_IF(!TopologicalVisit(defined_type.GetNestedTypes(), visit), defined_type)
+      << "Cycle detected.";
+}
+
 void GenerateHeaderDefinitions(CodeWriter& out, const AidlTypenames& types,
                                const AidlDefinedType& defined_type, const Options& options) {
   struct Visitor : AidlVisitor {
@@ -998,9 +1005,7 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << clazz << "();\n";
   out << "virtual ~" << clazz << "();\n";
   out << "\n";
-  for (const auto& nested : defined_type.GetNestedTypes()) {
-    GenerateClassDecl(out, types, *nested, options);
-  }
+  GenerateNestedTypeDecls(out, types, defined_type, options);
   GenerateConstantDeclarations(out, types, defined_type);
   if (options.Version() > 0) {
     out << "static const int32_t " << kVersion << " = " << std::to_string(options.Version())
@@ -1079,9 +1084,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   }
   out << "static const char* descriptor;\n";
   out << "\n";
-  for (const auto& nested : defined_type.GetNestedTypes()) {
-    GenerateClassDecl(out, types, *nested, options);
-  }
+  GenerateNestedTypeDecls(out, types, defined_type, options);
   for (const auto& variable : defined_type.GetFields()) {
     out << NdkNameOf(types, variable->GetType(), StorageMode::STACK);
     cpp::GenerateDeprecated(out, *variable);
@@ -1143,49 +1146,51 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   GenerateConstantDefinitions(out, defined_type, clazz, cpp::TemplateDecl(defined_type));
 
   out << cpp::TemplateDecl(defined_type);
-  out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* parcel) {\n";
+  out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _aidl_parcel) {\n";
   out.Indent();
   out << "int32_t _aidl_parcelable_size;\n";
-  out << "int32_t _aidl_start_pos = AParcel_getDataPosition(parcel);\n";
-  out << "binder_status_t _aidl_ret_status = AParcel_readInt32(parcel, &_aidl_parcelable_size);\n";
+  out << "int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+  out << "binder_status_t _aidl_ret_status = AParcel_readInt32(_aidl_parcel, "
+         "&_aidl_parcelable_size);\n";
   out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
   out << "if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;\n";
   StatusCheckReturn(out);
 
   for (const auto& variable : defined_type.GetFields()) {
-    out << "if (AParcel_getDataPosition(parcel) - _aidl_start_pos >= _aidl_parcelable_size) {\n"
-        << "  AParcel_setDataPosition(parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
+    out << "if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) "
+           "{\n"
+        << "  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
         << "  return _aidl_ret_status;\n"
         << "}\n";
     out << "_aidl_ret_status = ";
-    ReadFromParcelFor({out, types, variable->GetType(), "parcel", "&" + variable->GetName()});
+    ReadFromParcelFor({out, types, variable->GetType(), "_aidl_parcel", "&" + variable->GetName()});
     out << ";\n";
     StatusCheckReturn(out);
   }
-  out << "AParcel_setDataPosition(parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
+  out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
       << "return _aidl_ret_status;\n";
   out.Dedent();
   out << "}\n";
 
   out << cpp::TemplateDecl(defined_type);
-  out << "binder_status_t " << clazz << "::writeToParcel(AParcel* parcel) const {\n";
+  out << "binder_status_t " << clazz << "::writeToParcel(AParcel* _aidl_parcel) const {\n";
   out.Indent();
   out << "binder_status_t _aidl_ret_status;\n";
 
-  out << "size_t _aidl_start_pos = AParcel_getDataPosition(parcel);\n";
-  out << "_aidl_ret_status = AParcel_writeInt32(parcel, 0);\n";
+  out << "size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+  out << "_aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);\n";
   StatusCheckReturn(out);
 
   for (const auto& variable : defined_type.GetFields()) {
     out << "_aidl_ret_status = ";
-    WriteToParcelFor({out, types, variable->GetType(), "parcel", variable->GetName()});
+    WriteToParcelFor({out, types, variable->GetType(), "_aidl_parcel", variable->GetName()});
     out << ";\n";
     StatusCheckReturn(out);
   }
-  out << "size_t _aidl_end_pos = AParcel_getDataPosition(parcel);\n";
-  out << "AParcel_setDataPosition(parcel, _aidl_start_pos);\n";
-  out << "AParcel_writeInt32(parcel, _aidl_end_pos - _aidl_start_pos);\n";
-  out << "AParcel_setDataPosition(parcel, _aidl_end_pos);\n";
+  out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+  out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";
+  out << "AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);\n";
+  out << "AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);\n";
 
   out << "return _aidl_ret_status;\n";
   out.Dedent();
@@ -1216,9 +1221,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   }
   out << "static const char* descriptor;\n";
   out << "\n";
-  for (const auto& nested : defined_type.GetNestedTypes()) {
-    GenerateClassDecl(out, types, *nested, options);
-  }
+  GenerateNestedTypeDecls(out, types, defined_type, options);
   uw.PublicFields(out);
 
   out << "binder_status_t readFromParcel(const AParcel* _parcel);\n";

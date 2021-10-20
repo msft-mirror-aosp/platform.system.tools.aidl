@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2015, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +55,7 @@ const char kFlagsVarName[] = "_aidl_flags";
 const char kDataVarName[] = "_aidl_data";
 const char kErrorLabel[] = "_aidl_error";
 const char kImplVarName[] = "_aidl_impl";
+const char kDelegateImplVarName[] = "_aidl_delegate";
 const char kParcelVarName[] = "_aidl_parcel";
 const char kReplyVarName[] = "_aidl_reply";
 const char kReturnVarName[] = "_aidl_return";
@@ -870,7 +871,7 @@ void GenerateClientHeader(CodeWriter& out, const AidlInterface& interface,
 }
 
 void GenerateServerHeader(CodeWriter& out, const AidlInterface& interface,
-                          const AidlTypenames& /* typenames */, const Options& options) {
+                          const AidlTypenames& typenames, const Options& options) {
   const string bn_name = ClassName(interface, ClassNames::SERVER);
   const string iface = ClassName(interface, ClassNames::INTERFACE);
 
@@ -899,7 +900,7 @@ void GenerateServerHeader(CodeWriter& out, const AidlInterface& interface,
                      kAndroidStatusLiteral, kCodeVarName, kAndroidParcelLiteral, kDataVarName,
                      kAndroidParcelLiteral, kReplyVarName, kFlagsVarName);
   if (options.Version() > 0) {
-    out << "int32_t " << kGetInterfaceVersion << "() final;\n";
+    out << "int32_t " << kGetInterfaceVersion << "();\n";
   }
   if (!options.Hash().empty()) {
     out << "std::string " << kGetInterfaceHash << "();\n";
@@ -909,12 +910,73 @@ void GenerateServerHeader(CodeWriter& out, const AidlInterface& interface,
     out << "static std::function<void(const TransactionLog&)> logFunc;\n";
   }
   out.Dedent();
-  out << "};  // class " << bn_name << "\n";
+  out << "};  // class " << bn_name << "\n\n";
+
+  std::string d_name = ClassName(interface, ClassNames::DELEGATOR_IMPL);
+  out << "class";
+  cpp::GenerateDeprecated(out, interface);
+  out << " " << d_name << " : public " << bn_name << " {\n";
+  out << "public:\n";
+  out.Indent();
+  out << "explicit " << d_name << "(" << StringPrintf("::android::sp<%s> &impl", iface.c_str())
+      << ") " << StringPrintf(": %s(impl)", kDelegateImplVarName) << " {}\n\n";
+
+  for (const auto& method : interface.GetMethods()) {
+    if (method->IsUserDefined()) {
+      out << kBinderStatusLiteral << " " << method->GetName()
+          << BuildArgList(typenames, *method, true).ToString() << " override";
+      cpp::GenerateDeprecated(out, *method);
+
+      std::vector<std::string> args;
+      for (const auto& arg : method->GetArguments()) {
+        if (IsNonCopyableType(arg->GetType(), typenames)) {
+          args.push_back(StringPrintf("std::move(%s)", arg->GetName().c_str()));
+        } else {
+          args.push_back(arg->GetName());
+        }
+      }
+      if (method->GetType().GetName() != "void") {
+        args.push_back(kReturnVarName);
+      }
+      out << " {\n"
+          << "  return " << kDelegateImplVarName << "->" << method->GetName() << "("
+          << base::Join(args, ", ") << ");\n";
+      out << "}\n";
+    } else if (method->GetName() == kGetInterfaceVersion && options.Version()) {
+      out << "int32_t " << kGetInterfaceVersion << "()"
+          << " override {\n";
+      out.Indent();
+      out << "int32_t _delegator_ver = " << bn_name << "::" << kGetInterfaceVersion << "();\n";
+      out << "int32_t _impl_ver = " << kDelegateImplVarName << "->" << kGetInterfaceVersion
+          << "();\n";
+      out << "return _delegator_ver < _impl_ver ? _delegator_ver : _impl_ver;\n";
+      out.Dedent();
+      out << "}\n";
+    } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+      out << "std::string " << kGetInterfaceHash << "()"
+          << " override {\n";
+      out << "  return " << kDelegateImplVarName << "->" << kGetInterfaceHash << "();\n";
+      out << "}\n";
+    }
+  }
+  out.Dedent();
+  out << "private:\n";
+  out.Indent();
+  out << "::android::sp<" << iface << "> " << kDelegateImplVarName << ";\n";
+  out.Dedent();
+  out << "};  // class " << d_name << "\n";
+
   LeaveNamespace(out, interface);
 }
 
 void GenerateClassDecl(CodeWriter& out, const AidlDefinedType& defined_type,
                        const AidlTypenames& typenames, const Options& options);
+
+void GenerateNestedTypeDecls(CodeWriter& out, const AidlDefinedType& type,
+                             const AidlTypenames& typenames, const Options& options) {
+  auto visit = [&](const auto& nested) { GenerateClassDecl(out, nested, typenames, options); };
+  AIDL_FATAL_IF(!TopologicalVisit(type.GetNestedTypes(), visit), type) << "Cycle detected.";
+}
 
 void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
                                 const AidlTypenames& typenames, const Options& options) {
@@ -932,10 +994,7 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
   if (!options.Hash().empty()) {
     out << "const std::string HASH = \"" << options.Hash() << "\";\n";
   }
-  // TODO(b/201376182) consider re-ordering nested type decls.
-  for (const auto& nested : interface.GetNestedTypes()) {
-    GenerateClassDecl(out, *nested, typenames, options);
-  }
+  GenerateNestedTypeDecls(out, interface, typenames, options);
   GenerateConstantDeclarations(out, interface, typenames);
   for (const auto& method : interface.GetMethods()) {
     if (method->IsUserDefined()) {
@@ -1110,13 +1169,8 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
   out.Indent();
 
   GenerateParcelableComparisonOperators(out, parcel);
-  // TODO(b/201376182) consider re-ordering nested type decls.
-  for (const auto& nested : parcel.GetNestedTypes()) {
-    GenerateClassDecl(out, *nested, typenames, options);
-  }
-
+  GenerateNestedTypeDecls(out, parcel, typenames, options);
   GenerateParcelFields(out, parcel, typenames);
-
   GenerateConstantDeclarations(out, parcel, typenames);
 
   if (parcel.IsVintfStability()) {
