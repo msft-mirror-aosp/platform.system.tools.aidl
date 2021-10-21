@@ -75,6 +75,24 @@ bool IsJavaKeyword(const char* str) {
 }
 }  // namespace
 
+AidlNode::~AidlNode() {
+  if (!visited_) {
+    unvisited_locations_.push_back(location_);
+  }
+}
+
+void AidlNode::ClearUnvisitedNodes() {
+  unvisited_locations_.clear();
+}
+
+const std::vector<AidlLocation>& AidlNode::GetLocationsOfUnvisitedNodes() {
+  return unvisited_locations_;
+}
+
+void AidlNode::MarkVisited() const {
+  visited_ = true;
+}
+
 AidlNode::AidlNode(const AidlLocation& location, const Comments& comments)
     : location_(location), comments_(comments) {}
 
@@ -90,6 +108,8 @@ std::string AidlNode::PrintLocation() const {
      << location_.end_.line << ":" << location_.end_.column;
   return ss.str();
 }
+
+std::vector<AidlLocation> AidlNode::unvisited_locations_;
 
 static const AidlTypeSpecifier kStringType{AIDL_LOCATION_HERE, "String", false, nullptr,
                                            Comments{}};
@@ -664,8 +684,9 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
       AIDL_ERROR(this) << "Binder type cannot be an array";
       return false;
     }
-    if (GetName() == "ParcelableHolder") {
-      AIDL_ERROR(this) << "Arrays of ParcelableHolder are not supported.";
+    if (GetName() == "ParcelableHolder" || GetName() == "List" || GetName() == "Map" ||
+        GetName() == "CharSequence") {
+      AIDL_ERROR(this) << "Arrays of " << GetName() << " are not supported.";
       return false;
     }
   }
@@ -782,8 +803,8 @@ std::string AidlVariableDeclaration::ValueString(const ConstantValueDecorator& d
 void AidlVariableDeclaration::TraverseChildren(
     std::function<void(const AidlNode&)> traverse) const {
   traverse(GetType());
-  if (IsDefaultUserSpecified()) {
-    traverse(*GetDefaultValue());
+  if (auto default_value = GetDefaultValue(); default_value) {
+    traverse(*default_value);
   }
 }
 
@@ -1264,67 +1285,11 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
 }
 
 // TODO: we should treat every backend all the same in future.
-bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typenames,
-                                                   Options::Language lang) const {
-  if (IsGeneric()) {
-    const auto& types = GetTypeParameters();
-    for (const auto& arg : types) {
-      if (!arg->LanguageSpecificCheckValid(typenames, lang)) {
-        return false;
-      }
-    }
-  }
-
-  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
-      GetName() == "IBinder") {
-    AIDL_ERROR(this) << "The " << to_string(lang) << " backend does not support array of IBinder";
-    return false;
-  }
-  if ((lang == Options::Language::NDK || lang == Options::Language::RUST) && IsArray() &&
-      IsNullable()) {
-    if (GetName() == "ParcelFileDescriptor") {
-      AIDL_ERROR(this) << "The " << to_string(lang)
-                       << " backend does not support nullable array of ParcelFileDescriptor";
-      return false;
-    }
-
-    const auto defined_type = typenames.TryGetDefinedType(GetName());
-    if (defined_type != nullptr && defined_type->AsParcelable() != nullptr) {
-      AIDL_ERROR(this) << "The " << to_string(lang)
-                       << " backend does not support nullable array of parcelable";
-      return false;
-    }
-  }
+bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const {
   if (this->GetName() == "FileDescriptor" &&
       (lang == Options::Language::NDK || lang == Options::Language::RUST)) {
     AIDL_ERROR(this) << "FileDescriptor isn't supported by the " << to_string(lang) << " backend.";
     return false;
-  }
-  if (this->IsGeneric()) {
-    if (this->GetName() == "List") {
-      if (lang == Options::Language::NDK) {
-        const AidlTypeSpecifier& contained_type = *GetTypeParameters()[0];
-        const string& contained_type_name = contained_type.GetName();
-        if (typenames.GetInterface(contained_type)) {
-          AIDL_ERROR(this) << "List<" << contained_type_name
-                           << "> is not supported. List in NDK doesn't support interface.";
-          return false;
-        }
-        if (contained_type_name == "IBinder") {
-          AIDL_ERROR(this) << "List<" << contained_type_name
-                           << "> is not supported. List in NDK doesn't support IBinder.";
-          return false;
-        }
-      }
-    }
-  }
-
-  if (this->IsArray()) {
-    if (this->GetName() == "List" || this->GetName() == "Map" ||
-        this->GetName() == "CharSequence") {
-      AIDL_ERROR(this) << this->GetName() << "[] is not supported.";
-      return false;
-    }
   }
 
   if (lang != Options::Language::JAVA) {
@@ -1342,18 +1307,15 @@ bool AidlTypeSpecifier::LanguageSpecificCheckValid(const AidlTypenames& typename
 }
 
 // TODO: we should treat every backend all the same in future.
-bool AidlDefinedType::LanguageSpecificCheckValid(const AidlTypenames& typenames,
-                                                 Options::Language lang) const {
+bool AidlDefinedType::LanguageSpecificCheckValid(Options::Language lang) const {
   struct Visitor : AidlVisitor {
-    Visitor(const AidlTypenames& typenames, Options::Language lang)
-        : typenames(typenames), lang(lang) {}
+    Visitor(Options::Language lang) : lang(lang) {}
     void Visit(const AidlTypeSpecifier& type) override {
-      success = success && type.LanguageSpecificCheckValid(typenames, lang);
+      success = success && type.LanguageSpecificCheckValid(lang);
     }
-    const AidlTypenames& typenames;
     Options::Language lang;
     bool success = true;
-  } v(typenames, lang);
+  } v(lang);
   VisitTopDown(v, *this);
   return v.success;
 }
@@ -1420,12 +1382,10 @@ bool AidlEnumDeclaration::Autofill(const AidlTypenames& typenames) {
       return false;
     }
     auto type = annot->ParamValue<std::string>("type").value();
-    backing_type_ =
-        std::make_unique<AidlTypeSpecifier>(annot->GetLocation(), type, false, nullptr, Comments{});
+    backing_type_ = typenames.MakeResolvedType(annot->GetLocation(), type, false);
   } else {
     // Default to byte type for enums.
-    backing_type_ =
-        std::make_unique<AidlTypeSpecifier>(AIDL_LOCATION_HERE, "byte", false, nullptr, Comments{});
+    backing_type_ = typenames.MakeResolvedType(GetLocation(), "byte", false);
   }
 
   // we only support/test a few backing types, so make sure this is a supported
@@ -1437,11 +1397,6 @@ bool AidlEnumDeclaration::Autofill(const AidlTypenames& typenames) {
                      << ". Backing type must be one of: " << Join(kBackingTypes, ", ");
     return false;
   }
-
-  // Autofill() is called before type resolution, we resolve the backing type manually.
-  AIDL_FATAL_IF(!backing_type_->Resolve(typenames, nullptr),
-                "supporting backing types must resolve");
-
   return true;
 }
 

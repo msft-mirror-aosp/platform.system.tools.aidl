@@ -144,7 +144,7 @@ class AidlNode {
  public:
   AidlNode(const AidlLocation& location, const Comments& comments = {});
 
-  virtual ~AidlNode() = default;
+  virtual ~AidlNode();
 
   AidlNode(AidlNode&) = delete;
   AidlNode& operator=(AidlNode&) = delete;
@@ -163,11 +163,19 @@ class AidlNode {
   const Comments& GetComments() const { return comments_; }
   void SetComments(const Comments& comments) { comments_ = comments; }
 
+  static void ClearUnvisitedNodes();
+  static const std::vector<AidlLocation>& GetLocationsOfUnvisitedNodes();
+  void MarkVisited() const;
+
  private:
   std::string PrintLine() const;
   std::string PrintLocation() const;
   const AidlLocation location_;
   Comments comments_;
+
+  // make sure we are able to abort if types are not visited
+  mutable bool visited_ = false;
+  static std::vector<AidlLocation> unvisited_locations_;
 };
 
 // unique_ptr<AidlTypeSpecifier> for type arugment,
@@ -423,7 +431,7 @@ class AidlTypeSpecifier final : public AidlAnnotatable,
   bool Resolve(const AidlTypenames& typenames, const AidlScope* scope);
 
   bool CheckValid(const AidlTypenames& typenames) const;
-  bool LanguageSpecificCheckValid(const AidlTypenames& typenames, Options::Language lang) const;
+  bool LanguageSpecificCheckValid(Options::Language lang) const;
   const AidlNode& AsAidlNode() const override { return *this; }
 
   const AidlDefinedType* GetDefinedType() const;
@@ -543,9 +551,6 @@ class AidlArgument : public AidlVariableDeclaration {
   // e.g) "in @utf8InCpp String[] names"
   std::string ToString() const;
 
-  void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override {
-    traverse(GetType());
-  }
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 
  private:
@@ -919,7 +924,7 @@ class AidlDefinedType : public AidlMember, public AidlScope {
   virtual const AidlInterface* AsInterface() const { return nullptr; }
   virtual const AidlParameterizable<std::string>* AsParameterizable() const { return nullptr; }
   virtual bool CheckValid(const AidlTypenames& typenames) const;
-  bool LanguageSpecificCheckValid(const AidlTypenames& typenames, Options::Language lang) const;
+  bool LanguageSpecificCheckValid(Options::Language lang) const;
   AidlStructuredParcelable* AsStructuredParcelable() {
     return const_cast<AidlStructuredParcelable*>(
         const_cast<const AidlDefinedType*>(this)->AsStructuredParcelable());
@@ -963,7 +968,10 @@ class AidlDefinedType : public AidlMember, public AidlScope {
     return constants_;
   }
   const std::vector<std::unique_ptr<AidlMethod>>& GetMethods() const { return methods_; }
-  void AddMethod(std::unique_ptr<AidlMethod> method) { methods_.push_back(std::move(method)); }
+  void AddMethod(std::unique_ptr<AidlMethod> method) {
+    members_.push_back(method.get());
+    methods_.push_back(std::move(method));
+  }
   const std::vector<const AidlMember*>& GetMembers() const { return members_; }
   void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override {
     AidlAnnotatable::TraverseChildren(traverse);
@@ -1221,17 +1229,20 @@ std::optional<T> AidlAnnotation::ParamValue(const std::string& param_name) const
   return it->second->EvaluatedValue<T>();
 }
 
-// Utility to make a visitor to visit AST tree in top-down order
+// Utilities to make a visitor to visit AST tree in top-down order
 // Given:       foo
 //              / \
 //            bar baz
 // VisitTopDown(v, foo) makes v visit foo -> bar -> baz.
-inline void VisitTopDown(AidlVisitor& v, const AidlNode& node) {
+inline void VisitTopDown(std::function<void(const AidlNode&)> v, const AidlNode& node) {
   std::function<void(const AidlNode&)> top_down = [&](const AidlNode& n) {
-    n.DispatchVisit(v);
+    v(n);
     n.TraverseChildren(top_down);
   };
   top_down(node);
+}
+inline void VisitTopDown(AidlVisitor& v, const AidlNode& node) {
+  VisitTopDown([&](const AidlNode& n) { n.DispatchVisit(v); }, node);
 }
 
 // Utility to make a visitor to visit AST tree in bottom-up order

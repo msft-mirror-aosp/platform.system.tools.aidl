@@ -29,6 +29,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,6 +67,20 @@ public class NullableTests {
     }
 
     @Test
+    public void testRepeatNullableParcelableArray() throws RemoteException {
+      ITestService.Empty[] input = {new ITestService.Empty(), null};
+      assertThat(mService.RepeatNullableParcelableArray(input), is(input));
+      assertThat(mService.RepeatNullableParcelableArray(null), is(nullValue()));
+    }
+
+    @Test
+    public void testRepeatNullableParcelableList() throws RemoteException {
+      List<ITestService.Empty> input = Arrays.asList(new ITestService.Empty(), null);
+      assertThat(mService.RepeatNullableParcelableList(input), is(input));
+      assertThat(mService.RepeatNullableParcelableList(null), is(nullValue()));
+    }
+
+    @Test
     public void testExpectNpeWithNullBinder() throws RemoteException {
         try {
             mService.TakesAnIBinder(null);
@@ -80,12 +95,10 @@ public class NullableTests {
 
     @Test
     public void testExpectNpeWithNullBinderList() throws RemoteException {
-        assumeTrue(mCppJavaTests != null);
-
         List<IBinder> listWithNulls = new ArrayList<IBinder>();
         listWithNulls.add(null);
         try {
-            mCppJavaTests.TakesAnIBinderList(listWithNulls);
+          mService.TakesAnIBinderList(listWithNulls);
         } catch (NullPointerException ex) {
             return;
         }
@@ -96,11 +109,9 @@ public class NullableTests {
 
     @Test
     public void testReverseIBinderArray() throws RemoteException {
-      assumeTrue(mCppJavaTests != null);
-
       IBinder[] input = {new Binder(), new Binder()};
       IBinder[] repeated = new IBinder[input.length];
-      IBinder[] reversed = mCppJavaTests.ReverseIBinderArray(input, repeated);
+      IBinder[] reversed = mService.ReverseIBinderArray(input, repeated);
 
       assertThat(repeated, is(input));
       assertThat(reversed.length, is(input.length));
@@ -112,11 +123,9 @@ public class NullableTests {
 
     @Test
     public void testReverseNullableIBinderArray() throws RemoteException {
-      assumeTrue(mCppJavaTests != null);
-
       IBinder[] input = {new Binder(), null};
       IBinder[] repeated = new IBinder[input.length];
-      IBinder[] reversed = mCppJavaTests.ReverseNullableIBinderArray(input, repeated);
+      IBinder[] reversed = mService.ReverseNullableIBinderArray(input, repeated);
 
       assertThat(repeated, is(input));
       assertThat(reversed.length, is(input.length));

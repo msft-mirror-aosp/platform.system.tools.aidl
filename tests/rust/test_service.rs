@@ -17,7 +17,7 @@
 //! Test Rust service for the AIDL compiler.
 
 use aidl_test_interface::aidl::android::aidl::tests::ITestService::{
-    self, BnTestService, BpTestService,
+    self, BnTestService, BpTestService, Empty::Empty,
 };
 use aidl_test_interface::aidl::android::aidl::tests::{
     BackendType::BackendType, ByteEnum::ByteEnum, ConstantExpressionEnum::ConstantExpressionEnum,
@@ -216,16 +216,27 @@ impl ITestService::ITestService for TestService {
 
     fn RepeatNullableParcelable(
         &self,
-        input: Option<&StructuredParcelable::StructuredParcelable>,
-    ) -> binder::Result<Option<StructuredParcelable::StructuredParcelable>> {
+        input: Option<&Empty>,
+    ) -> binder::Result<Option<Empty>> {
         Ok(input.cloned())
     }
+
+    impl_repeat_nullable! {RepeatNullableParcelableArray, Option<Empty>}
+    impl_repeat_nullable! {RepeatNullableParcelableList, Option<Empty>}
 
     fn TakesAnIBinder(&self, _: &SpIBinder) -> binder::Result<()> {
         Ok(())
     }
 
     fn TakesANullableIBinder(&self, _: Option<&SpIBinder>) -> binder::Result<()> {
+        Ok(())
+    }
+
+    fn TakesAnIBinderList(&self, _: &[SpIBinder]) -> binder::Result<()> {
+        Ok(())
+    }
+
+    fn TakesANullableIBinderList(&self, _: Option<&[Option<SpIBinder>]>) -> binder::Result<()> {
         Ok(())
     }
 
@@ -324,6 +335,25 @@ impl ITestService::ITestService for TestService {
         };
         // `list` is always not empty, so is `reversed`.
         Ok(reversed.unwrap())
+    }
+
+    fn ReverseIBinderArray(
+        &self,
+        input: &[SpIBinder],
+        repeated: &mut Vec<Option<SpIBinder>>,
+    ) -> binder::Result<Vec<SpIBinder>> {
+        *repeated = input.iter().cloned().map(Some).collect();
+        Ok(input.iter().rev().cloned().collect())
+    }
+
+    fn ReverseNullableIBinderArray(
+        &self,
+        input: Option<&[Option<SpIBinder>]>,
+        repeated: &mut Option<Vec<Option<SpIBinder>>>,
+    ) -> binder::Result<Option<Vec<Option<SpIBinder>>>> {
+        let input = input.expect("input is null");
+        *repeated = Some(input.to_vec());
+        Ok(Some(input.iter().rev().cloned().collect()))
     }
 
     fn GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn IOldName::IOldName>> {

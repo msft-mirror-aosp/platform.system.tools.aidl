@@ -20,7 +20,7 @@ use ::binder::{Parcel, parcel::Parcelable};
 use aidl_test_interface::aidl::android::aidl::tests::INewName::{self, BpNewName};
 use aidl_test_interface::aidl::android::aidl::tests::IOldName::{self, BpOldName};
 use aidl_test_interface::aidl::android::aidl::tests::ITestService::{
-    self, BpTestService, ITestServiceDefault, ITestServiceDefaultRef,
+    self, BpTestService, ITestServiceDefault, ITestServiceDefaultRef, Empty::Empty,
 };
 use aidl_test_interface::aidl::android::aidl::tests::{
     BackendType::BackendType, ByteEnum::ByteEnum, IntEnum::IntEnum, LongEnum::LongEnum,
@@ -425,10 +425,7 @@ test_nullable! {
 
 #[test]
 fn test_nullable_parcelable() {
-    let value = StructuredParcelable::StructuredParcelable{
-        f: 42,
-        ..Default::default()
-    };
+    let value = Empty {};
 
     let service = get_test_service();
     let value = Some(value);
@@ -437,6 +434,24 @@ fn test_nullable_parcelable() {
 
     let result = service.RepeatNullableParcelable(None);
     assert_eq!(result, Ok(None));
+}
+
+test_nullable! {
+    test_nullable_parcelable_array,
+    RepeatNullableParcelableArray,
+    vec![
+        Some(Empty {}),
+        None,
+    ]
+}
+
+test_nullable! {
+    test_nullable_parcelable_list,
+    RepeatNullableParcelableList,
+    vec![
+        Some(Empty {}),
+        None,
+    ]
 }
 
 #[test]
@@ -1016,3 +1031,64 @@ fn test_nested_type() {
         status: ParcelableWithNested::Status::Status::NOT_OK,
     }));
 }
+
+#[test]
+fn test_nonnull_binder() {
+    let service = get_test_service();
+    let result = service.TakesAnIBinder(&service.as_binder());
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_binder_list_without_null() {
+    let service = get_test_service();
+    let result = service.TakesAnIBinderList(&[service.as_binder()]);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_null_binder_to_annotated_method() {
+    let service = get_test_service();
+    let result = service.TakesANullableIBinder(None);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_binder_list_with_null_to_annotated_method() {
+    let service = get_test_service();
+    let result = service.TakesANullableIBinderList(Some(&[Some(service.as_binder()), None]));
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_binder_array() {
+    let service = get_test_service();
+    let callback = service
+        .GetCallback(false)
+        .expect("error calling GetCallback")
+        .expect("expected Some from GetCallback");
+
+    let mut array = vec![service.as_binder(), callback.as_binder()];
+
+    // Java needs initial values here (can't resize arrays)
+    let mut repeated = vec![Default::default(); array.len()];
+
+    let result = service.ReverseIBinderArray(&array, &mut repeated);
+    assert_eq!(repeated.into_iter().collect::<Option<Vec<_>>>().as_ref(), Some(&array));
+    array.reverse();
+    assert_eq!(result, Ok(array));
+}
+
+#[test]
+fn test_nullable_binder_array() {
+    let service = get_test_service();
+    let mut array = vec![Some(service.as_binder()), None];
+
+    // Java needs initial values here (can't resize arrays)
+    let mut repeated = Some(vec![Default::default(); array.len()]);
+
+    let result = service.ReverseNullableIBinderArray(Some(&array[..]), &mut repeated);
+    assert_eq!(repeated.as_ref(), Some(&array));
+    array.reverse();
+    assert_eq!(result, Ok(Some(array)));
+  }
