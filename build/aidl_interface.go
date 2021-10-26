@@ -324,6 +324,9 @@ type aidlInterfaceProperties struct {
 	// Whether the library can be installed on the product image.
 	Product_available *bool
 
+	// Whether the library can be installed on the recovery image.
+	Recovery_available *bool
+
 	// Whether the library can be loaded multiple times into the same process
 	Double_loadable *bool
 
@@ -362,6 +365,12 @@ type aidlInterfaceProperties struct {
 	// the list is considered as the most recent version.
 	Versions []string
 
+	// The minimum version of the sdk that the compiled artifacts will run against
+	// For native modules, the property needs to be set when a module is a part of mainline modules(APEX).
+	// Forwarded to generated java/native module. This can be overridden by
+	// backend.<name>.min_sdk_version.
+	Min_sdk_version *string
+
 	Backend struct {
 		// Backend of the compiler generating code for Java clients.
 		// When enabled, this creates a target called "<name>-java".
@@ -373,6 +382,9 @@ type aidlInterfaceProperties struct {
 			// Whether to compile against platform APIs instead of
 			// an SDK.
 			Platform_apis *bool
+			// Whether RPC features are enabled (requires API level 32)
+			// TODO(b/175819535): enable this automatically?
+			Gen_rpc *bool
 		}
 		// Backend of the compiler generating code for C++ clients using
 		// libbinder (unstable C++ interface)
@@ -464,6 +476,26 @@ func (i *aidlInterface) gatherInterface(mctx android.LoadHookContext) {
 	aidlInterfaceMutex.Lock()
 	defer aidlInterfaceMutex.Unlock()
 	*aidlInterfaces = append(*aidlInterfaces, i)
+}
+
+func (i *aidlInterface) minSdkVersion(lang string) *string {
+	var ver *string
+	switch lang {
+	case langCpp:
+		ver = i.properties.Backend.Cpp.Min_sdk_version
+	case langJava:
+		ver = i.properties.Backend.Java.Min_sdk_version
+	case langNdk, langNdkPlatform:
+		ver = i.properties.Backend.Ndk.Min_sdk_version
+	case langRust:
+		ver = i.properties.Backend.Rust.Min_sdk_version
+	default:
+		panic(fmt.Errorf("unsupported language backend %q\n", lang))
+	}
+	if ver == nil {
+		return i.properties.Min_sdk_version
+	}
+	return ver
 }
 
 func addUnstableModule(mctx android.LoadHookContext, moduleName string) {
@@ -830,6 +862,11 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	preprocessed := android.PathForModuleOut(ctx, version, "preprocessed.aidl")
 	rb := android.NewRuleBuilder(pctx, ctx)
 	srcs, root_dir := i.srcsForVersion(ctx, version)
+
+	if len(srcs) == 0 {
+		ctx.PropertyErrorf("srcs", "No sources for a previous version in %v. Was a version manually added to .bp file? This is added automatically by <module>-freeze-api.", root_dir)
+	}
+
 	paths, imports := getPaths(ctx, srcs, root_dir)
 
 	preprocessCommand := rb.Command().BuiltTool("aidl").

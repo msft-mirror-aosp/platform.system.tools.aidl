@@ -53,6 +53,7 @@ type ccProperties struct {
 	Vendor_available          *bool
 	Odm_available             *bool
 	Product_available         *bool
+	Recovery_available        *bool
 	Host_supported            *bool
 	Generated_sources         []string
 	Generated_headers         []string
@@ -67,7 +68,6 @@ type ccProperties struct {
 	Stem                      *string
 	Apex_available            []string
 	Min_sdk_version           *string
-	UseApexNameMacro          bool
 	Target                    ccTargetProperties
 	Tidy                      *bool
 	Tidy_flags                []string

@@ -2,6 +2,7 @@
  * This file is auto-generated.  DO NOT MODIFY.
  */
 package android.aidl.tests;
+/** interface comment */
 public interface ITestService extends android.os.IInterface
 {
   /** Default implementation for ITestService. */
@@ -23,9 +24,9 @@ public interface ITestService extends android.os.IInterface
       return 0;
     }
     /**
-         * @deprecated to make sure we have something in system/tools/aidl which does a compile check
-         *     of deprecated and make sure this is reflected in goldens
-         */
+     * @deprecated to make sure we have something in system/tools/aidl which does a compile check
+     *     of deprecated and make sure this is reflected in goldens
+     */
     @Override public void Deprecated() throws android.os.RemoteException
     {
     }
@@ -173,7 +174,15 @@ public interface ITestService extends android.os.IInterface
     {
       return null;
     }
-    @Override public android.aidl.tests.StructuredParcelable RepeatNullableParcelable(android.aidl.tests.StructuredParcelable input) throws android.os.RemoteException
+    @Override public android.aidl.tests.ITestService.Empty RepeatNullableParcelable(android.aidl.tests.ITestService.Empty input) throws android.os.RemoteException
+    {
+      return null;
+    }
+    @Override public android.aidl.tests.ITestService.Empty[] RepeatNullableParcelableArray(android.aidl.tests.ITestService.Empty[] input) throws android.os.RemoteException
+    {
+      return null;
+    }
+    @Override public java.util.List<android.aidl.tests.ITestService.Empty> RepeatNullableParcelableList(java.util.List<android.aidl.tests.ITestService.Empty> input) throws android.os.RemoteException
     {
       return null;
     }
@@ -181,6 +190,12 @@ public interface ITestService extends android.os.IInterface
     {
     }
     @Override public void TakesANullableIBinder(android.os.IBinder input) throws android.os.RemoteException
+    {
+    }
+    @Override public void TakesAnIBinderList(java.util.List<android.os.IBinder> input) throws android.os.RemoteException
+    {
+    }
+    @Override public void TakesANullableIBinderList(java.util.List<android.os.IBinder> input) throws android.os.RemoteException
     {
     }
     // Test utf8 decoding from utf16 wire format
@@ -204,6 +219,7 @@ public interface ITestService extends android.os.IInterface
     {
       return null;
     }
+    /** comment before annotation */
     @Override public android.aidl.tests.INamedCallback GetCallback(boolean return_null) throws android.os.RemoteException
     {
       return null;
@@ -213,7 +229,18 @@ public interface ITestService extends android.os.IInterface
     @Override public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException
     {
     }
+    @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
+    {
+    }
     @Override public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException
+    {
+      return null;
+    }
+    @Override public android.os.IBinder[] ReverseIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException
+    {
+      return null;
+    }
+    @Override public android.os.IBinder[] ReverseNullableIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException
     {
       return null;
     }
@@ -733,14 +760,14 @@ public interface ITestService extends android.os.IInterface
         }
         case TRANSACTION_RepeatNullableParcelable:
         {
-          android.aidl.tests.StructuredParcelable _arg0;
+          android.aidl.tests.ITestService.Empty _arg0;
           if ((0!=data.readInt())) {
-            _arg0 = android.aidl.tests.StructuredParcelable.CREATOR.createFromParcel(data);
+            _arg0 = android.aidl.tests.ITestService.Empty.CREATOR.createFromParcel(data);
           }
           else {
             _arg0 = null;
           }
-          android.aidl.tests.StructuredParcelable _result = this.RepeatNullableParcelable(_arg0);
+          android.aidl.tests.ITestService.Empty _result = this.RepeatNullableParcelable(_arg0);
           reply.writeNoException();
           if ((_result!=null)) {
             reply.writeInt(1);
@@ -749,6 +776,24 @@ public interface ITestService extends android.os.IInterface
           else {
             reply.writeInt(0);
           }
+          break;
+        }
+        case TRANSACTION_RepeatNullableParcelableArray:
+        {
+          android.aidl.tests.ITestService.Empty[] _arg0;
+          _arg0 = data.createTypedArray(android.aidl.tests.ITestService.Empty.CREATOR);
+          android.aidl.tests.ITestService.Empty[] _result = this.RepeatNullableParcelableArray(_arg0);
+          reply.writeNoException();
+          reply.writeTypedArray(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+          break;
+        }
+        case TRANSACTION_RepeatNullableParcelableList:
+        {
+          java.util.List<android.aidl.tests.ITestService.Empty> _arg0;
+          _arg0 = data.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
+          java.util.List<android.aidl.tests.ITestService.Empty> _result = this.RepeatNullableParcelableList(_arg0);
+          reply.writeNoException();
+          reply.writeTypedList(_result);
           break;
         }
         case TRANSACTION_TakesAnIBinder:
@@ -764,6 +809,22 @@ public interface ITestService extends android.os.IInterface
           android.os.IBinder _arg0;
           _arg0 = data.readStrongBinder();
           this.TakesANullableIBinder(_arg0);
+          reply.writeNoException();
+          break;
+        }
+        case TRANSACTION_TakesAnIBinderList:
+        {
+          java.util.List<android.os.IBinder> _arg0;
+          _arg0 = data.createBinderArrayList();
+          this.TakesAnIBinderList(_arg0);
+          reply.writeNoException();
+          break;
+        }
+        case TRANSACTION_TakesANullableIBinderList:
+        {
+          java.util.List<android.os.IBinder> _arg0;
+          _arg0 = data.createBinderArrayList();
+          this.TakesANullableIBinderList(_arg0);
           reply.writeNoException();
           break;
         }
@@ -862,6 +923,28 @@ public interface ITestService extends android.os.IInterface
           }
           break;
         }
+        case TRANSACTION_RepeatExtendableParcelable:
+        {
+          android.aidl.tests.extension.ExtendableParcelable _arg0;
+          if ((0!=data.readInt())) {
+            _arg0 = android.aidl.tests.extension.ExtendableParcelable.CREATOR.createFromParcel(data);
+          }
+          else {
+            _arg0 = null;
+          }
+          android.aidl.tests.extension.ExtendableParcelable _arg1;
+          _arg1 = new android.aidl.tests.extension.ExtendableParcelable();
+          this.RepeatExtendableParcelable(_arg0, _arg1);
+          reply.writeNoException();
+          if ((_arg1!=null)) {
+            reply.writeInt(1);
+            _arg1.writeToParcel(reply, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+          }
+          else {
+            reply.writeInt(0);
+          }
+          break;
+        }
         case TRANSACTION_ReverseList:
         {
           android.aidl.tests.RecursiveList _arg0;
@@ -880,6 +963,42 @@ public interface ITestService extends android.os.IInterface
           else {
             reply.writeInt(0);
           }
+          break;
+        }
+        case TRANSACTION_ReverseIBinderArray:
+        {
+          android.os.IBinder[] _arg0;
+          _arg0 = data.createBinderArray();
+          android.os.IBinder[] _arg1;
+          int _arg1_length = data.readInt();
+          if ((_arg1_length<0)) {
+            _arg1 = null;
+          }
+          else {
+            _arg1 = new android.os.IBinder[_arg1_length];
+          }
+          android.os.IBinder[] _result = this.ReverseIBinderArray(_arg0, _arg1);
+          reply.writeNoException();
+          reply.writeBinderArray(_result);
+          reply.writeBinderArray(_arg1);
+          break;
+        }
+        case TRANSACTION_ReverseNullableIBinderArray:
+        {
+          android.os.IBinder[] _arg0;
+          _arg0 = data.createBinderArray();
+          android.os.IBinder[] _arg1;
+          int _arg1_length = data.readInt();
+          if ((_arg1_length<0)) {
+            _arg1 = null;
+          }
+          else {
+            _arg1 = new android.os.IBinder[_arg1_length];
+          }
+          android.os.IBinder[] _result = this.ReverseNullableIBinderArray(_arg0, _arg1);
+          reply.writeNoException();
+          reply.writeBinderArray(_result);
+          reply.writeBinderArray(_arg1);
           break;
         }
         case TRANSACTION_GetOldNameInterface:
@@ -945,8 +1064,9 @@ public interface ITestService extends android.os.IInterface
       // methods to be added and removed.
       @Override public int UnimplementedMethod(int arg) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         int _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -967,13 +1087,14 @@ public interface ITestService extends android.os.IInterface
         return _result;
       }
       /**
-           * @deprecated to make sure we have something in system/tools/aidl which does a compile check
-           *     of deprecated and make sure this is reflected in goldens
-           */
+       * @deprecated to make sure we have something in system/tools/aidl which does a compile check
+       *     of deprecated and make sure this is reflected in goldens
+       */
       @Override public void Deprecated() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_Deprecated, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
@@ -992,8 +1113,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public void TestOneway() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();try {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        try {
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_TestOneway, _data, null, android.os.IBinder.FLAG_ONEWAY | android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
@@ -1010,8 +1132,9 @@ public interface ITestService extends android.os.IInterface
       // Test that primitives work as parameters and return types.
       @Override public boolean RepeatBoolean(boolean token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         boolean _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1033,8 +1156,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte RepeatByte(byte token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         byte _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1056,8 +1180,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public char RepeatChar(char token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         char _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1079,8 +1204,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public int RepeatInt(int token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         int _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1102,8 +1228,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public long RepeatLong(long token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         long _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1125,8 +1252,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public float RepeatFloat(float token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         float _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1148,8 +1276,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public double RepeatDouble(double token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         double _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1171,8 +1300,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String RepeatString(java.lang.String token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1194,8 +1324,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte RepeatByteEnum(byte token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         byte _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1217,8 +1348,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public int RepeatIntEnum(int token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         int _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1240,8 +1372,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public long RepeatLongEnum(long token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         long _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1264,8 +1397,9 @@ public interface ITestService extends android.os.IInterface
       // Test that arrays work as parameters and return types.
       @Override public boolean[] ReverseBoolean(boolean[] input, boolean[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         boolean[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1294,8 +1428,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte[] ReverseByte(byte[] input, byte[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         byte[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1324,8 +1459,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public char[] ReverseChar(char[] input, char[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         char[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1354,8 +1490,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public int[] ReverseInt(int[] input, int[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         int[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1384,8 +1521,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public long[] ReverseLong(long[] input, long[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         long[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1414,8 +1552,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public float[] ReverseFloat(float[] input, float[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         float[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1444,8 +1583,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public double[] ReverseDouble(double[] input, double[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         double[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1474,8 +1614,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String[] ReverseString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1504,8 +1645,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte[] ReverseByteEnum(byte[] input, byte[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         byte[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1534,8 +1676,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public int[] ReverseIntEnum(int[] input, int[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         int[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1564,8 +1707,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public long[] ReverseLongEnum(long[] input, long[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         long[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1595,8 +1739,9 @@ public interface ITestService extends android.os.IInterface
       // Test that clients can send and receive Binders.
       @Override public android.aidl.tests.INamedCallback GetOtherTestService(java.lang.String name) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.aidl.tests.INamedCallback _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1618,8 +1763,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public boolean VerifyName(android.aidl.tests.INamedCallback service, java.lang.String name) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         boolean _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1643,8 +1789,9 @@ public interface ITestService extends android.os.IInterface
       // Test that List<T> types work correctly.
       @Override public java.util.List<java.lang.String> ReverseStringList(java.util.List<java.lang.String> input, java.util.List<java.lang.String> repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.util.List<java.lang.String> _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1667,8 +1814,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public android.os.ParcelFileDescriptor RepeatParcelFileDescriptor(android.os.ParcelFileDescriptor read) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.os.ParcelFileDescriptor _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1701,8 +1849,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public android.os.ParcelFileDescriptor[] ReverseParcelFileDescriptorArray(android.os.ParcelFileDescriptor[] input, android.os.ParcelFileDescriptor[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.os.ParcelFileDescriptor[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1732,8 +1881,9 @@ public interface ITestService extends android.os.IInterface
       // Test that service specific exceptions work correctly.
       @Override public void ThrowServiceException(int code) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeInt(code);
@@ -1754,8 +1904,9 @@ public interface ITestService extends android.os.IInterface
       // Test nullability
       @Override public int[] RepeatNullableIntArray(int[] input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         int[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1777,8 +1928,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte[] RepeatNullableByteEnumArray(byte[] input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         byte[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1800,8 +1952,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public int[] RepeatNullableIntEnumArray(int[] input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         int[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1823,8 +1976,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public long[] RepeatNullableLongEnumArray(long[] input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         long[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1846,8 +2000,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String RepeatNullableString(java.lang.String input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1869,8 +2024,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.util.List<java.lang.String> RepeatNullableStringList(java.util.List<java.lang.String> input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.util.List<java.lang.String> _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1890,11 +2046,12 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
-      @Override public android.aidl.tests.StructuredParcelable RepeatNullableParcelable(android.aidl.tests.StructuredParcelable input) throws android.os.RemoteException
+      @Override public android.aidl.tests.ITestService.Empty RepeatNullableParcelable(android.aidl.tests.ITestService.Empty input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
-        android.aidl.tests.StructuredParcelable _result;
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.aidl.tests.ITestService.Empty _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           if ((input!=null)) {
@@ -1912,7 +2069,7 @@ public interface ITestService extends android.os.IInterface
           }
           _reply.readException();
           if ((0!=_reply.readInt())) {
-            _result = android.aidl.tests.StructuredParcelable.CREATOR.createFromParcel(_reply);
+            _result = android.aidl.tests.ITestService.Empty.CREATOR.createFromParcel(_reply);
           }
           else {
             _result = null;
@@ -1924,10 +2081,59 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
+      @Override public android.aidl.tests.ITestService.Empty[] RepeatNullableParcelableArray(android.aidl.tests.ITestService.Empty[] input) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.aidl.tests.ITestService.Empty[] _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeTypedArray(input, 0);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableParcelableArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              return getDefaultImpl().RepeatNullableParcelableArray(input);
+            }
+          }
+          _reply.readException();
+          _result = _reply.createTypedArray(android.aidl.tests.ITestService.Empty.CREATOR);
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
+      @Override public java.util.List<android.aidl.tests.ITestService.Empty> RepeatNullableParcelableList(java.util.List<android.aidl.tests.ITestService.Empty> input) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        java.util.List<android.aidl.tests.ITestService.Empty> _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeTypedList(input);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableParcelableList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              return getDefaultImpl().RepeatNullableParcelableList(input);
+            }
+          }
+          _reply.readException();
+          _result = _reply.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
       @Override public void TakesAnIBinder(android.os.IBinder input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeStrongBinder(input);
@@ -1947,8 +2153,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public void TakesANullableIBinder(android.os.IBinder input) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeStrongBinder(input);
@@ -1966,11 +2173,56 @@ public interface ITestService extends android.os.IInterface
           _data.recycle();
         }
       }
+      @Override public void TakesAnIBinderList(java.util.List<android.os.IBinder> input) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeBinderList(input);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_TakesAnIBinderList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              getDefaultImpl().TakesAnIBinderList(input);
+              return;
+            }
+          }
+          _reply.readException();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
+      @Override public void TakesANullableIBinderList(java.util.List<android.os.IBinder> input) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeBinderList(input);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_TakesANullableIBinderList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              getDefaultImpl().TakesANullableIBinderList(input);
+              return;
+            }
+          }
+          _reply.readException();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
       // Test utf8 decoding from utf16 wire format
       @Override public java.lang.String RepeatUtf8CppString(java.lang.String token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -1992,8 +2244,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String RepeatNullableUtf8CppString(java.lang.String token) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2015,8 +2268,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String[] ReverseUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2045,8 +2299,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String[] ReverseNullableUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String[] _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2075,8 +2330,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.util.List<java.lang.String> ReverseUtf8CppStringList(java.util.List<java.lang.String> input, java.util.List<java.lang.String> repeated) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         java.util.List<java.lang.String> _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2097,10 +2353,12 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
+      /** comment before annotation */
       @Override public android.aidl.tests.INamedCallback GetCallback(boolean return_null) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.aidl.tests.INamedCallback _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2124,8 +2382,9 @@ public interface ITestService extends android.os.IInterface
       // inefficient to use an IPC to fill it out in practice.
       @Override public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           if ((parcel!=null)) {
@@ -2152,10 +2411,42 @@ public interface ITestService extends android.os.IInterface
           _data.recycle();
         }
       }
+      @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          if ((ep!=null)) {
+            _data.writeInt(1);
+            ep.writeToParcel(_data, 0);
+          }
+          else {
+            _data.writeInt(0);
+          }
+          boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatExtendableParcelable, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              getDefaultImpl().RepeatExtendableParcelable(ep, ep2);
+              return;
+            }
+          }
+          _reply.readException();
+          if ((0!=_reply.readInt())) {
+            ep2.readFromParcel(_reply);
+          }
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
       @Override public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.aidl.tests.RecursiveList _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2186,10 +2477,73 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
+      @Override public android.os.IBinder[] ReverseIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.IBinder[] _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeBinderArray(input);
+          if ((repeated==null)) {
+            _data.writeInt(-1);
+          }
+          else {
+            _data.writeInt(repeated.length);
+          }
+          boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseIBinderArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              return getDefaultImpl().ReverseIBinderArray(input, repeated);
+            }
+          }
+          _reply.readException();
+          _result = _reply.createBinderArray();
+          _reply.readBinderArray(repeated);
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
+      @Override public android.os.IBinder[] ReverseNullableIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.IBinder[] _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeBinderArray(input);
+          if ((repeated==null)) {
+            _data.writeInt(-1);
+          }
+          else {
+            _data.writeInt(repeated.length);
+          }
+          boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseNullableIBinderArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              return getDefaultImpl().ReverseNullableIBinderArray(input, repeated);
+            }
+          }
+          _reply.readException();
+          _result = _reply.createBinderArray();
+          _reply.readBinderArray(repeated);
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
       @Override public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.aidl.tests.IOldName _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2210,8 +2564,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public android.aidl.tests.INewName GetNewNameInterface() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.aidl.tests.INewName _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2233,8 +2588,9 @@ public interface ITestService extends android.os.IInterface
       // Retrieve the ICppJavaTests if the server supports it
       @Override public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         android.os.IBinder _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2255,8 +2611,9 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte getBackendType() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
-        _data.markSensitive();android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
         byte _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -2315,20 +2672,27 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_RepeatNullableString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 35);
     static final int TRANSACTION_RepeatNullableStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 36);
     static final int TRANSACTION_RepeatNullableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 37);
-    static final int TRANSACTION_TakesAnIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 38);
-    static final int TRANSACTION_TakesANullableIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 39);
-    static final int TRANSACTION_RepeatUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 40);
-    static final int TRANSACTION_RepeatNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 41);
-    static final int TRANSACTION_ReverseUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 42);
-    static final int TRANSACTION_ReverseNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 43);
-    static final int TRANSACTION_ReverseUtf8CppStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 44);
-    static final int TRANSACTION_GetCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 45);
-    static final int TRANSACTION_FillOutStructuredParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 46);
-    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 47);
-    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 48);
-    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 49);
-    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 50);
-    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 51);
+    static final int TRANSACTION_RepeatNullableParcelableArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 38);
+    static final int TRANSACTION_RepeatNullableParcelableList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 39);
+    static final int TRANSACTION_TakesAnIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 40);
+    static final int TRANSACTION_TakesANullableIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 41);
+    static final int TRANSACTION_TakesAnIBinderList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 42);
+    static final int TRANSACTION_TakesANullableIBinderList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 43);
+    static final int TRANSACTION_RepeatUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 44);
+    static final int TRANSACTION_RepeatNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 45);
+    static final int TRANSACTION_ReverseUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 46);
+    static final int TRANSACTION_ReverseNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 47);
+    static final int TRANSACTION_ReverseUtf8CppStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 48);
+    static final int TRANSACTION_GetCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 49);
+    static final int TRANSACTION_FillOutStructuredParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 50);
+    static final int TRANSACTION_RepeatExtendableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 51);
+    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 52);
+    static final int TRANSACTION_ReverseIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 53);
+    static final int TRANSACTION_ReverseNullableIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 54);
+    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 55);
+    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 56);
+    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 57);
+    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 58);
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
       // at a time. This is a heuristic to detect if two different
@@ -2348,6 +2712,10 @@ public interface ITestService extends android.os.IInterface
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService".replace('$', '.');
   // Test that constants are accessible
+  /** extra doc comment */
+  // extra line comment
+  /* extra regular comment */
+  /** const comment */
   public static final int TEST_CONSTANT = 42;
   public static final int TEST_CONSTANT2 = -42;
   public static final int TEST_CONSTANT3 = 42;
@@ -2438,9 +2806,9 @@ public interface ITestService extends android.os.IInterface
   // methods to be added and removed.
   public int UnimplementedMethod(int arg) throws android.os.RemoteException;
   /**
-       * @deprecated to make sure we have something in system/tools/aidl which does a compile check
-       *     of deprecated and make sure this is reflected in goldens
-       */
+   * @deprecated to make sure we have something in system/tools/aidl which does a compile check
+   *     of deprecated and make sure this is reflected in goldens
+   */
   @Deprecated
   public void Deprecated() throws android.os.RemoteException;
   public void TestOneway() throws android.os.RemoteException;
@@ -2484,23 +2852,282 @@ public interface ITestService extends android.os.IInterface
   public long[] RepeatNullableLongEnumArray(long[] input) throws android.os.RemoteException;
   public java.lang.String RepeatNullableString(java.lang.String input) throws android.os.RemoteException;
   public java.util.List<java.lang.String> RepeatNullableStringList(java.util.List<java.lang.String> input) throws android.os.RemoteException;
-  public android.aidl.tests.StructuredParcelable RepeatNullableParcelable(android.aidl.tests.StructuredParcelable input) throws android.os.RemoteException;
+  public android.aidl.tests.ITestService.Empty RepeatNullableParcelable(android.aidl.tests.ITestService.Empty input) throws android.os.RemoteException;
+  public android.aidl.tests.ITestService.Empty[] RepeatNullableParcelableArray(android.aidl.tests.ITestService.Empty[] input) throws android.os.RemoteException;
+  public java.util.List<android.aidl.tests.ITestService.Empty> RepeatNullableParcelableList(java.util.List<android.aidl.tests.ITestService.Empty> input) throws android.os.RemoteException;
   public void TakesAnIBinder(android.os.IBinder input) throws android.os.RemoteException;
   public void TakesANullableIBinder(android.os.IBinder input) throws android.os.RemoteException;
+  public void TakesAnIBinderList(java.util.List<android.os.IBinder> input) throws android.os.RemoteException;
+  public void TakesANullableIBinderList(java.util.List<android.os.IBinder> input) throws android.os.RemoteException;
   // Test utf8 decoding from utf16 wire format
   public java.lang.String RepeatUtf8CppString(java.lang.String token) throws android.os.RemoteException;
   public java.lang.String RepeatNullableUtf8CppString(java.lang.String token) throws android.os.RemoteException;
   public java.lang.String[] ReverseUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException;
   public java.lang.String[] ReverseNullableUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException;
   public java.util.List<java.lang.String> ReverseUtf8CppStringList(java.util.List<java.lang.String> input, java.util.List<java.lang.String> repeated) throws android.os.RemoteException;
+  /** comment before annotation */
   public android.aidl.tests.INamedCallback GetCallback(boolean return_null) throws android.os.RemoteException;
   // Since this paracelable has clearly defined default values, it would be
   // inefficient to use an IPC to fill it out in practice.
   public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException;
+  public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException;
   public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException;
+  public android.os.IBinder[] ReverseIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
+  public android.os.IBinder[] ReverseNullableIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
   public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException;
   public android.aidl.tests.INewName GetNewNameInterface() throws android.os.RemoteException;
   // Retrieve the ICppJavaTests if the server supports it
   public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException;
   public byte getBackendType() throws android.os.RemoteException;
+  // Small empty parcelable for nullability check
+  public static class Empty implements android.os.Parcelable
+  {
+    public static final android.os.Parcelable.Creator<Empty> CREATOR = new android.os.Parcelable.Creator<Empty>() {
+      @Override
+      public Empty createFromParcel(android.os.Parcel _aidl_source) {
+        Empty _aidl_out = new Empty();
+        _aidl_out.readFromParcel(_aidl_source);
+        return _aidl_out;
+      }
+      @Override
+      public Empty[] newArray(int _aidl_size) {
+        return new Empty[_aidl_size];
+      }
+    };
+    @Override public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.writeInt(0);
+      int _aidl_end_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.setDataPosition(_aidl_start_pos);
+      _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
+      _aidl_parcel.setDataPosition(_aidl_end_pos);
+    }
+    public final void readFromParcel(android.os.Parcel _aidl_parcel)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      int _aidl_parcelable_size = _aidl_parcel.readInt();
+      try {
+        if (_aidl_parcelable_size < 0) return;
+      } finally {
+        if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
+          throw new android.os.BadParcelableException("Overflow in the size of parcelable");
+        }
+        _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+      }
+    }
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) return true;
+      if (other == null) return false;
+      if (!(other instanceof Empty)) return false;
+      Empty that = (Empty)other;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return java.util.Arrays.deepHashCode(java.util.Arrays.asList().toArray());
+    }
+    @Override
+    public int describeContents() {
+      int _mask = 0;
+      return _mask;
+    }
+  }
+  public static class CompilerChecks implements android.os.Parcelable
+  {
+    // IBinder
+    public android.os.IBinder binder;
+    public android.os.IBinder nullable_binder;
+    public android.os.IBinder[] binder_array;
+    public android.os.IBinder[] nullable_binder_array;
+    public java.util.List<android.os.IBinder> binder_list;
+    public java.util.List<android.os.IBinder> nullable_binder_list;
+    // ParcelFileDescriptor
+    public android.os.ParcelFileDescriptor pfd;
+    public android.os.ParcelFileDescriptor nullable_pfd;
+    public android.os.ParcelFileDescriptor[] pfd_array;
+    public android.os.ParcelFileDescriptor[] nullable_pfd_array;
+    public java.util.List<android.os.ParcelFileDescriptor> pfd_list;
+    public java.util.List<android.os.ParcelFileDescriptor> nullable_pfd_list;
+    // parcelable
+    public android.aidl.tests.ITestService.Empty parcel;
+    public android.aidl.tests.ITestService.Empty nullable_parcel;
+    public android.aidl.tests.ITestService.Empty[] parcel_array;
+    public android.aidl.tests.ITestService.Empty[] nullable_parcel_array;
+    public java.util.List<android.aidl.tests.ITestService.Empty> parcel_list;
+    public java.util.List<android.aidl.tests.ITestService.Empty> nullable_parcel_list;
+    public static final android.os.Parcelable.Creator<CompilerChecks> CREATOR = new android.os.Parcelable.Creator<CompilerChecks>() {
+      @Override
+      public CompilerChecks createFromParcel(android.os.Parcel _aidl_source) {
+        CompilerChecks _aidl_out = new CompilerChecks();
+        _aidl_out.readFromParcel(_aidl_source);
+        return _aidl_out;
+      }
+      @Override
+      public CompilerChecks[] newArray(int _aidl_size) {
+        return new CompilerChecks[_aidl_size];
+      }
+    };
+    @Override public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.writeInt(0);
+      _aidl_parcel.writeStrongBinder(binder);
+      _aidl_parcel.writeStrongBinder(nullable_binder);
+      _aidl_parcel.writeBinderArray(binder_array);
+      _aidl_parcel.writeBinderArray(nullable_binder_array);
+      _aidl_parcel.writeBinderList(binder_list);
+      _aidl_parcel.writeBinderList(nullable_binder_list);
+      if ((pfd!=null)) {
+        _aidl_parcel.writeInt(1);
+        pfd.writeToParcel(_aidl_parcel, 0);
+      }
+      else {
+        _aidl_parcel.writeInt(0);
+      }
+      if ((nullable_pfd!=null)) {
+        _aidl_parcel.writeInt(1);
+        nullable_pfd.writeToParcel(_aidl_parcel, 0);
+      }
+      else {
+        _aidl_parcel.writeInt(0);
+      }
+      _aidl_parcel.writeTypedArray(pfd_array, 0);
+      _aidl_parcel.writeTypedArray(nullable_pfd_array, 0);
+      _aidl_parcel.writeTypedList(pfd_list);
+      _aidl_parcel.writeTypedList(nullable_pfd_list);
+      if ((parcel!=null)) {
+        _aidl_parcel.writeInt(1);
+        parcel.writeToParcel(_aidl_parcel, 0);
+      }
+      else {
+        _aidl_parcel.writeInt(0);
+      }
+      if ((nullable_parcel!=null)) {
+        _aidl_parcel.writeInt(1);
+        nullable_parcel.writeToParcel(_aidl_parcel, 0);
+      }
+      else {
+        _aidl_parcel.writeInt(0);
+      }
+      _aidl_parcel.writeTypedArray(parcel_array, 0);
+      _aidl_parcel.writeTypedArray(nullable_parcel_array, 0);
+      _aidl_parcel.writeTypedList(parcel_list);
+      _aidl_parcel.writeTypedList(nullable_parcel_list);
+      int _aidl_end_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.setDataPosition(_aidl_start_pos);
+      _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
+      _aidl_parcel.setDataPosition(_aidl_end_pos);
+    }
+    public final void readFromParcel(android.os.Parcel _aidl_parcel)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      int _aidl_parcelable_size = _aidl_parcel.readInt();
+      try {
+        if (_aidl_parcelable_size < 0) return;
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        binder = _aidl_parcel.readStrongBinder();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        nullable_binder = _aidl_parcel.readStrongBinder();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        binder_array = _aidl_parcel.createBinderArray();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        nullable_binder_array = _aidl_parcel.createBinderArray();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        binder_list = _aidl_parcel.createBinderArrayList();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        nullable_binder_list = _aidl_parcel.createBinderArrayList();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        if ((0!=_aidl_parcel.readInt())) {
+          pfd = android.os.ParcelFileDescriptor.CREATOR.createFromParcel(_aidl_parcel);
+        }
+        else {
+          pfd = null;
+        }
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        if ((0!=_aidl_parcel.readInt())) {
+          nullable_pfd = android.os.ParcelFileDescriptor.CREATOR.createFromParcel(_aidl_parcel);
+        }
+        else {
+          nullable_pfd = null;
+        }
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        pfd_array = _aidl_parcel.createTypedArray(android.os.ParcelFileDescriptor.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        nullable_pfd_array = _aidl_parcel.createTypedArray(android.os.ParcelFileDescriptor.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        pfd_list = _aidl_parcel.createTypedArrayList(android.os.ParcelFileDescriptor.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        nullable_pfd_list = _aidl_parcel.createTypedArrayList(android.os.ParcelFileDescriptor.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        if ((0!=_aidl_parcel.readInt())) {
+          parcel = android.aidl.tests.ITestService.Empty.CREATOR.createFromParcel(_aidl_parcel);
+        }
+        else {
+          parcel = null;
+        }
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        if ((0!=_aidl_parcel.readInt())) {
+          nullable_parcel = android.aidl.tests.ITestService.Empty.CREATOR.createFromParcel(_aidl_parcel);
+        }
+        else {
+          nullable_parcel = null;
+        }
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        parcel_array = _aidl_parcel.createTypedArray(android.aidl.tests.ITestService.Empty.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        nullable_parcel_array = _aidl_parcel.createTypedArray(android.aidl.tests.ITestService.Empty.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        parcel_list = _aidl_parcel.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        nullable_parcel_list = _aidl_parcel.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
+      } finally {
+        if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
+          throw new android.os.BadParcelableException("Overflow in the size of parcelable");
+        }
+        _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+      }
+    }
+    @Override
+    public int describeContents() {
+      int _mask = 0;
+      _mask |= describeContents(pfd);
+      _mask |= describeContents(nullable_pfd);
+      _mask |= describeContents(pfd_array);
+      _mask |= describeContents(nullable_pfd_array);
+      _mask |= describeContents(pfd_list);
+      _mask |= describeContents(nullable_pfd_list);
+      _mask |= describeContents(parcel);
+      _mask |= describeContents(nullable_parcel);
+      _mask |= describeContents(parcel_array);
+      _mask |= describeContents(nullable_parcel_array);
+      _mask |= describeContents(parcel_list);
+      _mask |= describeContents(nullable_parcel_list);
+      return _mask;
+    }
+    private int describeContents(Object _v) {
+      if (_v == null) return 0;
+      Class<?> _clazz = _v.getClass();
+      if (_clazz.isArray() && _clazz.getComponentType() == Object.class) {
+        int _mask = 0;
+        for (Object o : (Object[]) _v) {
+          _mask |= describeContents(o);
+        }
+        return _mask;
+      }
+      if (_v instanceof java.util.Collection) {
+        int _mask = 0;
+        for (Object o : (java.util.Collection) _v) {
+          _mask |= describeContents(o);
+        }
+        return _mask;
+      }
+      if (_v instanceof android.os.Parcelable) {
+        return ((android.os.Parcelable) _v).describeContents();
+      }
+      return 0;
+    }
+  }
 }

@@ -25,7 +25,6 @@ import (
 	"github.com/google/blueprint/proptools"
 
 	"android/soong/android"
-	"android/soong/apex"
 	"android/soong/cc"
 	"android/soong/genrule"
 	"android/soong/java"
@@ -87,15 +86,18 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		}
 		cc_library {
 			name: "libbinder",
+			recovery_available: true,
 		}
 		cc_library {
 			name: "libutils",
+			recovery_available: true,
 		}
 		cc_library {
 			name: "libcutils",
 		}
 		cc_library {
 			name: "libbinder_ndk",
+			recovery_available: true,
 			stubs: {
 				versions: ["29"],
 			}
@@ -156,7 +158,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 	preparers = append(preparers, customizers...)
 
 	preparers = append(preparers,
-		apex.PrepareForTestWithApexBuildComponents,
 		rust.PrepareForTestWithRustBuildComponents,
 		android.FixtureRegisterWithContext(func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
@@ -390,7 +391,7 @@ func TestImportInRelease(t *testing.T) {
 		srcs: [
 			"IFoo.aidl",
 		],
-		imports: ["bar"],
+		imports: ["bar-V1"],
 		versions: ["1"],
 	}
 
@@ -562,7 +563,7 @@ func TestCreatesModulesWithNoVersions(t *testing.T) {
 
 func TestCreatesModulesWithFrozenVersions(t *testing.T) {
 	// Each version should be under aidl_api/<name>/<ver>
-	testAidlError(t, `aidl_api/foo/1`, `
+	testAidlError(t, `No sources for a previous version in aidl_api/foo/1. Was a version manually added to .bp file?`, `
 		aidl_interface {
 			name: "foo",
 			srcs: [
@@ -774,7 +775,7 @@ func TestImports(t *testing.T) {
 				"IFoo.aidl",
 			],
 			imports: [
-				"bar",
+				"bar-V1",
 			]
 		}
 		aidl_interface {
@@ -797,7 +798,7 @@ func TestImports(t *testing.T) {
 				"IFoo.aidl",
 			],
 			imports: [
-				"bar",
+				"bar-V1",
 			]
 		}
 		aidl_interface {
@@ -825,7 +826,7 @@ func TestImports(t *testing.T) {
 				},
 			},
 			imports: [
-				"bar.1",
+				"bar.1-V1",
 			]
 		}
 		aidl_interface {
@@ -893,7 +894,7 @@ func TestDuplicatedVersions(t *testing.T) {
 		aidl_interface {
 			name: "myiface2",
 			srcs: ["IBar.aidl"],
-			imports: ["myiface"]
+			imports: ["myiface-V2"]
 		}
 
 		cc_library {
@@ -920,7 +921,7 @@ func TestDuplicatedVersions(t *testing.T) {
 		aidl_interface {
 			name: "myiface2",
 			srcs: ["IBar.aidl"],
-			imports: ["myiface"]
+			imports: ["myiface-V2"]
 		}
 
 		cc_library {
@@ -948,7 +949,7 @@ func TestDuplicatedVersions(t *testing.T) {
 		aidl_interface {
 			name: "myiface2",
 			srcs: ["IBar.aidl"],
-			imports: ["myiface"]
+			imports: ["myiface-V2"]
 		}
 
 		cc_library {
@@ -971,7 +972,7 @@ func TestDuplicatedVersions(t *testing.T) {
 		aidl_interface {
 			name: "myiface2",
 			srcs: ["IBar.aidl"],
-			imports: ["myiface"]
+			imports: ["myiface-V2"]
 		}
 
 		cc_library {
@@ -1023,36 +1024,16 @@ func TestUnstableVndkModule(t *testing.T) {
 	`)
 }
 
-func TestCcModuleWithApexNameMacro(t *testing.T) {
+func TestRecoveryAvailable(t *testing.T) {
 	ctx, _ := testAidl(t, `
 		aidl_interface {
 			name: "myiface",
+			recovery_available: true,
 			srcs: ["IFoo.aidl"],
-			backend: {
-				ndk: {
-					apex_available: ["myapex"],
-				},
-			},
 		}
-		apex {
-			name: "myapex",
-			key: "myapex.key",
-			native_shared_libs: ["myiface-V1-ndk_platform"],
-			updatable: false,
-		}
-		apex_key {
-			name: "myapex.key",
-			public_key: "testkey.avbpubkey",
-			private_key: "testkey.pem",
-		}
-	`, withFiles(map[string][]byte{
-		"system/sepolicy/apex/myapex-file_contexts": nil,
-	}))
-
-	ccRule := ctx.ModuleForTests("myiface-V1-ndk_platform", "android_arm64_armv8-a_static_myapex").Rule("cc")
-	assertContains(t, ccRule.Args["cFlags"], "-D__ANDROID_APEX__")
-	assertContains(t, ccRule.Args["cFlags"], "-D__ANDROID_APEX_NAME__='\"myapex\"'")
-	assertContains(t, ccRule.Args["cFlags"], "-D__ANDROID_APEX_MYAPEX__")
+	`)
+	ctx.ModuleForTests("myiface-V1-ndk", "android_recovery_arm64_armv8-a_shared")
+	ctx.ModuleForTests("myiface-V1-cpp", "android_recovery_arm64_armv8-a_shared")
 }
 
 func TestSrcsAvailable(t *testing.T) {
@@ -1114,7 +1095,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 			aidl_interface {
 				name: "foo-iface",
 				srcs: ["a/Foo.aidl"],
-				imports: ["bar-iface"],
+				imports: ["bar-iface-V2"],
 				versions: ["1"],
 			}
 		`),
@@ -1127,7 +1108,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 			aidl_interface {
 				name: "bar-iface",
 				srcs: ["b/Bar.aidl"],
-				imports: ["baz-iface"],
+				imports: ["baz-iface-V1"],
 				versions: ["1"],
 			}
 		`),
@@ -1175,7 +1156,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 		android.AssertStringEquals(t, "compile(old=1) should import aidl_api/1", "-Ifoo/aidl_api/foo-iface/1", rule.Args["imports"])
 		android.AssertStringDoesContain(t, "compile(old=1) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
-			"-pout/soong/.intermediates/bar/bar-iface_interface/1/preprocessed.aidl")
+			"-pout/soong/.intermediates/bar/bar-iface_interface/2/preprocessed.aidl")
 	}
 	// compile ToT(v2)
 	{
@@ -1285,7 +1266,7 @@ func TestSupportsGenruleAndFilegroup(t *testing.T) {
 						":gen1",
 				],
 				imports: [
-						"bar-iface",
+						"bar-iface-V1",
 				],
 				versions: ["1"],
 			}
@@ -1482,7 +1463,7 @@ func TestUseVersionedPreprocessedWhenImporotedWithVersions(t *testing.T) {
 			name: "unstable-foo",
 			srcs: ["foo/Foo.aidl"],
 			imports: [
-					"bar",
+					"bar-V2",
 					"baz-V1",
 					"unstable-bar",
 			],
@@ -1492,7 +1473,7 @@ func TestUseVersionedPreprocessedWhenImporotedWithVersions(t *testing.T) {
 			name: "foo",
 			srcs: ["foo/Foo.aidl"],
 			imports: [
-					"bar",
+					"bar-V1",
 					"baz-V1",
 			],
 			versions: ["1"],
@@ -1501,7 +1482,7 @@ func TestUseVersionedPreprocessedWhenImporotedWithVersions(t *testing.T) {
 			name: "foo-no-versions",
 			srcs: ["foo/Foo.aidl"],
 			imports: [
-					"bar",
+					"bar-V2",
 			],
 		}
 		aidl_interface {
@@ -1532,8 +1513,8 @@ func TestUseVersionedPreprocessedWhenImporotedWithVersions(t *testing.T) {
 	}))
 	{
 		rule := ctx.ModuleForTests("foo-V2-java-source", "").Output("foo/Foo.java")
-		android.AssertStringDoesContain(t, "foo-V2(tot) imports bar-V2(tot) for 'bar'", rule.Args["optionalFlags"],
-			"-pout/soong/.intermediates/bar_interface/2/preprocessed.aidl")
+		android.AssertStringDoesContain(t, "foo-V2(tot) imports bar-V1 for 'bar-V1'", rule.Args["optionalFlags"],
+			"-pout/soong/.intermediates/bar_interface/1/preprocessed.aidl")
 		android.AssertStringDoesContain(t, "foo-V2(tot) imports baz-V1 for 'baz-V1'", rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/baz_interface/1/preprocessed.aidl")
 	}

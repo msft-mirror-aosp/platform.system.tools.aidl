@@ -90,7 +90,7 @@ public interface IOldName extends android.os.IInterface
       }
       @Override public java.lang.String RealName() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String _result;
         try {

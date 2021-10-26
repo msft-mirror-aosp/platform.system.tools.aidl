@@ -41,6 +41,7 @@ cc_defaults {
     header_libs: ["libgtest_prod_headers"],
     static_libs: [
         "libbase",
+        "libaidl-perm",
         "libcutils",
         "libgtest",
     ],
@@ -119,6 +120,7 @@ cc_binary_host {
     srcs: ["main.cpp"],
     static_libs: [
         "libaidl-common",
+        "libaidl-perm",
         "libbase",
         "liblog",
     ],
@@ -132,6 +134,7 @@ cc_binary_host {
     cflags: ["-DAIDL_CPP_BUILD"],
     static_libs: [
         "libaidl-common",
+        "libaidl-perm",
         "libbase",
         "liblog",
     ],
@@ -167,11 +170,16 @@ cc_test {
 
     static_libs: [
         "libaidl-common",
+        "libaidl-perm",
         "libbase",
         "libcutils",
         "libgmock",
         "liblog",
     ],
+
+    sanitize: {
+        address: true,
+    },
 
     required: ["aidl-golden-test-build-hook"],
 }
@@ -186,11 +194,7 @@ cc_fuzz {
 
     fuzz_config: {
         cc: [
-            "devinmoore@google.com",
-            "smoreland@google.com",
-            "jiyong@google.com",
-            "jeongik@google.com",
-            "jooyung@google.com",
+            "aidl-bugs@google.com",
         ],
     },
 
@@ -201,6 +205,7 @@ cc_fuzz {
     ],
     static_libs: [
         "libaidl-common",
+        "libaidl-perm",
         "libbase",
         "libcutils",
         "libgtest",
@@ -221,6 +226,7 @@ python_test_host {
     test_config: "tests/aidl_integration_test.xml",
     target_required: [
         "aidl_test_client",
+        "aidl_test_client_ndk",
         "aidl_test_service",
         "aidl_test_java_client",
         "aidl_test_java_service",
@@ -283,6 +289,7 @@ filegroup {
         "tests/android/aidl/tests/INamedCallback.aidl",
         "tests/android/aidl/tests/INewName.aidl",
         "tests/android/aidl/tests/IOldName.aidl",
+        "tests/android/aidl/tests/IProtected.aidl",
         "tests/android/aidl/tests/ITestService.aidl",
         "tests/android/aidl/tests/IntEnum.aidl",
         "tests/android/aidl/tests/LongEnum.aidl",
@@ -292,7 +299,9 @@ filegroup {
         "tests/android/aidl/tests/StructuredParcelable.aidl",
         "tests/android/aidl/tests/Union.aidl",
         "tests/android/aidl/tests/UnionWithFd.aidl",
+        "tests/android/aidl/tests/extension/*.aidl",
         "tests/android/aidl/tests/unions/*.aidl",
+        "tests/android/aidl/tests/nested/*.aidl",
     ],
     path: "tests",
 }
@@ -302,7 +311,6 @@ filegroup {
     srcs: [
         "tests/android/aidl/tests/ICppJavaTests.aidl",
         "tests/android/aidl/tests/SimpleParcelable.aidl",
-        "tests/android/aidl/tests/extension/*.aidl",
     ],
     path: "tests",
 }
@@ -376,9 +384,11 @@ cc_test {
         "tests/aidl_test_client_utf8_strings.cpp",
         "tests/aidl_test_client_service_exceptions.cpp",
         "tests/aidl_test_client_defaultimpl.cpp",
+        "tests/aidl_test_client_delegate.cpp",
         "tests/aidl_test_client_versioned_interface.cpp",
         "tests/aidl_test_client_renamed_interface.cpp",
         "tests/aidl_test_client_loggable_interface.cpp",
+        "tests/aidl_test_client_nested.cpp",
     ],
 }
 
@@ -391,7 +401,7 @@ cc_test {
         //  client uses the latest version
         "aidl-test-versioned-interface-V2-ndk",
         "aidl-test-interface-ndk",
-        "aidl_test_loggable_interface-ndk"
+        "aidl_test_loggable_interface-ndk",
     ],
     shared_libs: [
         "libbinder_ndk",
@@ -400,6 +410,9 @@ cc_test {
         "tests/aidl_test_client_ndk_loggable_interface.cpp",
         "tests/aidl_test_client_ndk_parcelables.cpp",
         "tests/aidl_test_client_ndk_versioned_interface.cpp",
+        "tests/aidl_test_client_ndk_nested.cpp",
+        "tests/aidl_test_client_ndk_nullables.cpp",
+        "tests/aidl_test_client_ndk_strings_test.cpp",
     ],
 }
 
@@ -429,6 +442,7 @@ java_defaults {
         "tests/android/aidl/tests/immutable/*.aidl",
         "tests/android/aidl/tests/map/*.aidl",
         "tests/android/aidl/tests/extension/*.aidl",
+        "tests/android/aidl/tests/nested/*.aidl",
         "tests/android/aidl/tests/unions/*.aidl",
         "tests/java/src/android/aidl/tests/SimpleParcelable.java",
         "tests/java/src/android/aidl/tests/generic/Pair.java",
@@ -458,6 +472,7 @@ java_test {
         "tests/java/src/android/aidl/tests/AidlJavaTests.java",
         "tests/java/src/android/aidl/tests/BuiltInTests.java",
         "tests/java/src/android/aidl/tests/GenericTests.java",
+        "tests/java/src/android/aidl/tests/NestedTypesTests.java",
         "tests/java/src/android/aidl/tests/TestVersionedInterface.java",
         "tests/java/src/android/aidl/tests/UnionTests.java",
         "tests/java/src/android/aidl/tests/ExtensionTests.java",
@@ -561,6 +576,7 @@ aidl_interface {
         java: {
             platform_apis: true,
             srcs_available: true,
+            gen_rpc: true,
         },
         rust: {
             enabled: true,
@@ -581,7 +597,14 @@ rust_test {
     rustlibs: [
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V2-rust",
+        "aidl_test_nonvintf_parcelable-V1-rust",
+        "aidl_test_unstable_parcelable-rust",
+        "aidl_test_vintf_parcelable-V1-rust",
         "liblibc",
+        // We need to import binder_rs directly
+        // for a few internal types like Parcel
+        // and traits like Parcelable
+        "libbinder_rs",
     ],
     prefer_rlib: true,
     compile_multilib: "both",
