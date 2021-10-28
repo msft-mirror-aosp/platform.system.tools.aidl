@@ -553,7 +553,7 @@ public class TestServiceClient {
 
     @Test
     public void testReverseUtf8StringArray() throws RemoteException {
-        String[] input = (String[])utf8_queries.toArray();
+        String[] input = utf8_queries.toArray(new String[0]);
         String echoed[] = new String[input.length];
 
         String[] reversed = service.ReverseUtf8CppString(input, echoed);
@@ -576,7 +576,7 @@ public class TestServiceClient {
                 null,
                 // Java doesn't handle unicode code points above U+FFFF well.
                 new String(Character.toChars(0x1F701)) + "\u03A9");
-        String[] input = (String[])utf8_queries_and_nulls.toArray();
+        String[] input = utf8_queries_and_nulls.toArray(new String[0]);
         String echoed[] = new String[input.length];
 
         String[] reversed = service.ReverseNullableUtf8CppString(input, echoed);
@@ -669,6 +669,9 @@ public class TestServiceClient {
         assertThat(p.int32_max, is(Integer.MAX_VALUE));
         assertThat(p.int64_max, is(Long.MAX_VALUE));
         assertThat(p.hexInt32_neg_1, is(-1));
+        for (int ndx = 0; ndx < p.int8_1.length; ndx++) {
+          assertThat(p.int8_1[ndx], is((byte) 1));
+        }
         for (int ndx = 0; ndx < p.int32_1.length; ndx++) {
             assertThat(p.int32_1[ndx], is(1));
         }
@@ -728,6 +731,7 @@ public class TestServiceClient {
             + "int64_max: 9223372036854775807, "
             + "hexInt32_neg_1: -1, "
             + "ibinder: null, "
+            + "int8_1: [1, 1, 1, 1, 1], "
             + "int32_1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
             + "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
             + "1, 1, 1, 1], "
