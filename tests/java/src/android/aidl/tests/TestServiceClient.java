@@ -284,6 +284,27 @@ public class TestServiceClient {
     }
 
     @Test
+    public void testBinderArrayExchange() throws RemoteException {
+      String[] names = {"Fizz", "Buzz"};
+      INamedCallback[] got = service.GetInterfaceArray(names);
+      assertThat(got[0].GetName(), is(names[0]));
+      assertThat(got[1].GetName(), is(names[1]));
+
+      assertThat(service.VerifyNamesWithInterfaceArray(got, names), is(true));
+    }
+
+    @Test
+    public void testNullableBinderArrayExchange() throws RemoteException {
+      String[] names = {"Fizz", null, "Buzz"};
+      INamedCallback[] got = service.GetNullableInterfaceArray(names);
+      assertThat(got[0].GetName(), is(names[0]));
+      assertNull(got[1]);
+      assertThat(got[2].GetName(), is(names[2]));
+
+      assertThat(service.VerifyNamesWithNullableInterfaceArray(got, names), is(true));
+    }
+
+    @Test
     public void testListReversal() throws RemoteException {
         List<String> input = Arrays.asList("Walk", "into", "Córdoba");
         List<String> echoed = new ArrayList<String>();
@@ -669,6 +690,9 @@ public class TestServiceClient {
         assertThat(p.int32_max, is(Integer.MAX_VALUE));
         assertThat(p.int64_max, is(Long.MAX_VALUE));
         assertThat(p.hexInt32_neg_1, is(-1));
+        for (int ndx = 0; ndx < p.int8_1.length; ndx++) {
+          assertThat(p.int8_1[ndx], is((byte) 1));
+        }
         for (int ndx = 0; ndx < p.int32_1.length; ndx++) {
             assertThat(p.int32_1[ndx], is(1));
         }
@@ -728,6 +752,7 @@ public class TestServiceClient {
             + "int64_max: 9223372036854775807, "
             + "hexInt32_neg_1: -1, "
             + "ibinder: null, "
+            + "int8_1: [1, 1, 1, 1, 1], "
             + "int32_1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
             + "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
             + "1, 1, 1, 1], "

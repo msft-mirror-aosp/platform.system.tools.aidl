@@ -106,6 +106,14 @@ public class TestServiceServer extends ITestService.Stub {
       }
       return result;
     }
+    @Override
+    public final void flipStatusWithCallback(byte st, ICallback cb) throws RemoteException {
+      if (st == ParcelableWithNested.Status.OK) {
+        cb.done(ParcelableWithNested.Status.NOT_OK);
+      } else {
+        cb.done(ParcelableWithNested.Status.OK);
+      }
+    }
   }
 
   @Override
@@ -291,6 +299,49 @@ public class TestServiceServer extends ITestService.Stub {
   @Override
   public boolean VerifyName(INamedCallback service, String name) throws RemoteException {
     return name.equals(service.GetName());
+  }
+  @Override
+  public INamedCallback[] GetInterfaceArray(String[] names) throws RemoteException {
+    return GetNullableInterfaceArray(names);
+  }
+  @Override
+  public boolean VerifyNamesWithInterfaceArray(INamedCallback[] services, String[] names)
+      throws RemoteException {
+    return VerifyNamesWithNullableInterfaceArray(services, names);
+  }
+  @Override
+  public INamedCallback[] GetNullableInterfaceArray(String[] names) throws RemoteException {
+    if (names == null)
+      return null;
+    INamedCallback[] services = new INamedCallback[names.length];
+    for (int i = 0; i < names.length; i++) {
+      if (names[i] == null) {
+        services[i] = null;
+      } else {
+        services[i] = GetOtherTestService(names[i]);
+      }
+    }
+    return services;
+  }
+  @Override
+  public boolean VerifyNamesWithNullableInterfaceArray(INamedCallback[] services, String[] names)
+      throws RemoteException {
+    if (services != null && names != null) {
+      for (int i = 0; i < names.length; i++) {
+        if (services[i] != null && names[i] != null) {
+          if (!VerifyName(services[i], names[i])) {
+            return false;
+          }
+        } else if (services[i] != null || names[i] != null) {
+          return false;
+        }
+      }
+      return true;
+    } else if (services != null || names != null) {
+      return false;
+    } else {
+      return true;
+    }
   }
   @Override
   public List<String> ReverseStringList(List<String> input, List<String> repeated)
