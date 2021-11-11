@@ -71,22 +71,7 @@ struct TypeInfo {
 };
 
 std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value) {
-  if (type.IsArray()) {
-    return raw_value;
-  }
-
-  if (type.GetName() == "long" && !type.IsArray()) {
-    return raw_value + "L";
-  }
-
-  if (auto defined_type = type.GetDefinedType(); defined_type) {
-    auto enum_type = defined_type->AsEnumDeclaration();
-    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
-    return NdkFullClassName(*enum_type, cpp::ClassNames::RAW) +
-           "::" + raw_value.substr(raw_value.find_last_of('.') + 1);
-  }
-
-  return raw_value;
+  return cpp::CppConstantValueDecorator(type, raw_value, /*is_ndk=*/true);
 };
 
 static std::function<void(const CodeGeneratorContext& c)> StandardRead(const std::string& name) {
@@ -138,14 +123,24 @@ TypeInfo InterfaceTypeInfo(const AidlInterface& type) {
               .read_func = StandardRead(clazz + "::readFromParcel"),
               .write_func = StandardWrite(clazz + "::writeToParcel"),
           },
-      .array = nullptr,
+      .array = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
+          .cpp_name = "std::vector<std::shared_ptr<" + clazz + ">>",
+          .value_is_cheap = false,
+          .read_func = StandardRead("::ndk::AParcel_readVector"),
+          .write_func = StandardWrite("::ndk::AParcel_writeVector"),
+      }),
       .nullable = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
           .cpp_name = "std::shared_ptr<" + clazz + ">",
           .value_is_cheap = false,
           .read_func = StandardRead(clazz + "::readFromParcel"),
           .write_func = StandardWrite(clazz + "::writeToParcel"),
       }),
-      .nullable_array = nullptr,
+      .nullable_array = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
+          .cpp_name = "std::optional<std::vector<std::shared_ptr<" + clazz + ">>>",
+          .value_is_cheap = false,
+          .read_func = StandardRead("::ndk::AParcel_readVector"),
+          .write_func = StandardWrite("::ndk::AParcel_writeVector"),
+      }),
   };
 }
 
