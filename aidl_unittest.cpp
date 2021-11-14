@@ -34,6 +34,7 @@
 #include "aidl_to_cpp.h"
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_java.h"
+#include "aidl_to_ndk.h"
 #include "comments.h"
 #include "logging.h"
 #include "options.h"
@@ -94,6 +95,7 @@ class AidlTest : public ::testing::TestWithParam<Options::Language> {
     io_delegate_.SetFileContents(path, contents);
     vector<string> args;
     args.emplace_back("aidl");
+    args.emplace_back("--min_sdk_version=current");
     args.emplace_back("--lang=" + to_string(lang));
     for (const string& s : additional_arguments) {
       args.emplace_back(s);
@@ -1429,10 +1431,47 @@ TEST_P(AidlTest, ParseNegativeConstHexValue) {
   EXPECT_EQ("-1", cpp_constants[0]->ValueString(cpp::ConstantValueDecorator));
 }
 
+TEST_F(AidlTest, ByteAndByteArrayDifferInCpp) {
+  auto type = Parse("p/Foo.aidl",
+                    R"(
+                      package p;
+                      parcelable Foo {
+                        byte a = -1;
+                        byte[] b = {-1, 1};
+                        @nullable byte[] c = {-1, 1};
+                      }
+                    )",
+                    typenames_, Options::Language::CPP);
+  ASSERT_NE(nullptr, type);
+  auto& fields = type->GetFields();
+  ASSERT_EQ(3ul, fields.size());
+  EXPECT_EQ("-1", fields[0]->ValueString(cpp::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[1]->ValueString(cpp::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[2]->ValueString(cpp::ConstantValueDecorator));
+}
+
+TEST_F(AidlTest, ByteAndByteArrayDifferInNdk) {
+  auto type = Parse("p/Foo.aidl",
+                    R"(
+                      package p;
+                      parcelable Foo {
+                        byte a = -1;
+                        byte[] b = {-1, 1};
+                        @nullable byte[] c = {-1, 1};
+                      }
+                    )",
+                    typenames_, Options::Language::NDK);
+  ASSERT_NE(nullptr, type);
+  auto& fields = type->GetFields();
+  ASSERT_EQ(3ul, fields.size());
+  EXPECT_EQ("-1", fields[0]->ValueString(ndk::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[1]->ValueString(ndk::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[2]->ValueString(ndk::ConstantValueDecorator));
+}
+
 TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
-  io_delegate_.SetFileContents(
-      "p/Outer.aidl",
-      "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
+  io_delegate_.SetFileContents("p/Outer.aidl",
+                               "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; import p.Outer; interface IFoo"
@@ -2049,6 +2088,7 @@ TEST_P(AidlTest, ExtensionTest) {
   EXPECT_NE(nullptr, Parse("a/Data.aidl", extendable_parcelable, typenames_, GetLanguage()));
   EXPECT_EQ("", GetCapturedStderr());
 }
+
 TEST_P(AidlTest, ParcelableHolderAsReturnType) {
   CaptureStderr();
   string parcelableholder_return_interface =
@@ -4472,7 +4512,7 @@ parcelable Foo {
 
   string code;
   EXPECT_TRUE(io_delegate_.GetWrittenContents("out/p/Foo.h", &code));
-  EXPECT_THAT(code, testing::HasSubstr("::p::Enum e = ::p::Enum(::p::Enum::BAR);"));
+  EXPECT_THAT(code, testing::HasSubstr("::p::Enum e = ::p::Enum::BAR;"));
 }
 
 TEST_F(AidlTest, EnumWithDefaults_Ndk) {
@@ -4817,6 +4857,26 @@ TEST_F(AidlTest, VoidCantBeUsedInMethodParameterType) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("'void' is an invalid type for the parameter 'n'"));
 }
 
+TEST_F(AidlTest, InterfaceVectorIsAvailableAfterTiramisu) {
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "interface IFoo{\n"
+                               "  void foo(in IFoo[] n);\n"
+                               "  void bar(in List<IFoo> n);\n"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(
+      Options::From("aidl --lang=java --min_sdk_version 30 -o out p/IFoo.aidl"), io_delegate_));
+  auto captured_stderr = GetCapturedStderr();
+  EXPECT_THAT(captured_stderr, HasSubstr("Array of interfaces is available since"));
+  EXPECT_THAT(captured_stderr, HasSubstr("List of interfaces is available since"));
+
+  CaptureStderr();
+  EXPECT_TRUE(
+      compile_aidl(Options::From("aidl --lang=java --min_sdk_version Tiramisu -o out p/IFoo.aidl"),
+                   io_delegate_));
+  EXPECT_EQ(GetCapturedStderr(), "");
+}
+
 struct TypeParam {
   string kind;
   string literal;
@@ -4860,10 +4920,10 @@ const std::map<std::string, ExpectedResult> kListSupportExpectations = {
     {"java_ParcelFileDescriptor", {"", ""}},
     {"ndk_ParcelFileDescriptor", {"", ""}},
     {"rust_ParcelFileDescriptor", {"", ""}},
-    {"cpp_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
-    {"java_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
-    {"ndk_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
-    {"rust_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
+    {"cpp_interface", {"", ""}},
+    {"java_interface", {"", ""}},
+    {"ndk_interface", {"", ""}},
+    {"rust_interface", {"", ""}},
     {"cpp_parcelable", {"", ""}},
     {"java_parcelable", {"", ""}},
     {"ndk_parcelable", {"", ""}},
@@ -4985,8 +5045,8 @@ class AidlTypeParamTest
     }
     io.SetFileContents("a/Target.aidl", "package a; parcelable Target { " + decl + " f; }");
 
-    const auto options =
-        Options::From(fmt::format("aidl -I . --lang={} a/Target.aidl -o out -h out", lang));
+    const auto options = Options::From(fmt::format(
+        "aidl -I . --min_sdk_version current --lang={} a/Target.aidl -o out -h out", lang));
     CaptureStderr();
     compile_aidl(options, io);
     auto it = expectations.find(lang + "_" + kind);
