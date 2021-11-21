@@ -27,7 +27,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/google/blueprint"
 	"github.com/google/blueprint/proptools"
@@ -72,8 +71,7 @@ func registerPreArchMutators(ctx android.RegisterMutatorsContext) {
 }
 
 func registerPostDepsMutators(ctx android.RegisterMutatorsContext) {
-	ctx.BottomUp("checkUnstableModule", checkUnstableModuleMutator).Parallel()
-	ctx.BottomUp("checkDuplicatedVersions", checkDuplicatedVersions).Parallel()
+	ctx.BottomUp("checkAidlGeneratedModules", checkAidlGeneratedModules).Parallel()
 }
 
 func createAidlInterfaceMutator(mctx android.TopDownMutatorContext) {
@@ -82,42 +80,36 @@ func createAidlInterfaceMutator(mctx android.TopDownMutatorContext) {
 	}
 }
 
-func checkUnstableModuleMutator(mctx android.BottomUpMutatorContext) {
-	// If it is an aidl interface, we don't need to check its dependencies.
-	if isAidlModule(mctx.ModuleName(), mctx.Config()) {
-		return
-	}
-	mctx.VisitDirectDepsIf(func(m android.Module) bool {
-		return android.InList(m.Name(), *unstableModules(mctx.Config()))
-	}, func(m android.Module) {
-		if mctx.ModuleName() == m.Name() {
-			return
-		}
-		// TODO(b/154066686): Replace it with a common method instead of listing up module types.
-		// Test libraries are exempted.
-		if android.InList(mctx.ModuleType(), []string{"cc_test_library", "android_test", "cc_benchmark", "cc_test"}) {
-			return
-		}
+// A marker struct for AIDL-generated library modules
+type AidlGeneratedModuleProperties struct{}
 
-		mctx.ModuleErrorf(m.Name() + " is disallowed in release version because it is unstable, and its \"owner\" property is missing.")
-	})
+func wrapLibraryFactory(factory func() android.Module) func() android.Module {
+	return func() android.Module {
+		m := factory()
+		// put a marker struct for AIDL-generated modules
+		m.AddProperties(&AidlGeneratedModuleProperties{})
+		return m
+	}
 }
 
-func isAidlModule(moduleName string, config android.Config) bool {
-	for _, i := range *aidlInterfaces(config) {
-		if android.InList(moduleName, i.internalModuleNames) {
+func isAidlGeneratedModule(module android.Module) bool {
+	for _, props := range module.GetProperties() {
+		// check if there's a marker struct
+		if _, ok := props.(*AidlGeneratedModuleProperties); ok {
 			return true
 		}
 	}
 	return false
 }
 
-// AildVersionInfo keeps the *-source module for each (aidl_interface & lang)
+// AildVersionInfo keeps the *-source module for each (aidl_interface & lang) and the list of
+// not-frozen versions (which shouldn't be used by other modules)
 type AildVersionInfo struct {
+	notFrozen []string
 	sourceMap map[string]string
 }
 
-var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AildVersionInfo{}, "checkDuplicatedVersions")
+var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AildVersionInfo{}, "checkAidlGeneratedModules")
 
 // Merges `other` version info into this one.
 // Returns the pair of mismatching versions when there's conflict. Otherwise returns nil.
@@ -125,6 +117,8 @@ var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AildVersionInfo{}, "c
 // Merging (foo, foo-V1-ndk-source) and (foo, foo-V2-ndk-source) will fail and returns
 // {foo-V1-ndk-source, foo-V2-ndk-source}.
 func (info *AildVersionInfo) merge(other AildVersionInfo) []string {
+	info.notFrozen = append(info.notFrozen, other.notFrozen...)
+
 	if other.sourceMap == nil {
 		return nil
 	}
@@ -143,6 +137,18 @@ func (info *AildVersionInfo) merge(other AildVersionInfo) []string {
 	return nil
 }
 
+func reportUsingNotFrozenError(ctx android.BaseModuleContext, notFrozen []string) {
+	// TODO(b/154066686): Replace it with a common method instead of listing up module types.
+	// Test libraries are exempted.
+	if android.InList(ctx.ModuleType(), []string{"cc_test_library", "android_test", "cc_benchmark", "cc_test"}) {
+		return
+	}
+	for _, name := range notFrozen {
+		ctx.ModuleErrorf("%v is disallowed in release version because it is unstable, and its \"owner\" property is missing.",
+			name)
+	}
+}
+
 func reportMultipleVersionError(ctx android.BaseModuleContext, violators []string) {
 	sort.Strings(violators)
 	ctx.ModuleErrorf("depends on multiple versions of the same aidl_interface: %s", strings.Join(violators, ", "))
@@ -155,7 +161,7 @@ func reportMultipleVersionError(ctx android.BaseModuleContext, violators []strin
 	})
 }
 
-func checkDuplicatedVersions(mctx android.BottomUpMutatorContext) {
+func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 	switch mctx.Module().(type) {
 	case *java.Library:
 	case *cc.Module:
@@ -165,7 +171,12 @@ func checkDuplicatedVersions(mctx android.BottomUpMutatorContext) {
 		return
 	}
 	if gen, ok := mctx.Module().(*aidlGenRule); ok {
+		var notFrozen []string
+		if gen.properties.NotFrozen {
+			notFrozen = []string{strings.TrimSuffix(mctx.ModuleName(), "-source")}
+		}
 		mctx.SetProvider(AidlVersionInfoProvider, AildVersionInfo{
+			notFrozen: notFrozen,
 			sourceMap: map[string]string{
 				gen.properties.BaseName + "-" + gen.properties.Lang: gen.Name(),
 			},
@@ -182,10 +193,13 @@ func checkDuplicatedVersions(mctx android.BottomUpMutatorContext) {
 			}
 		}
 	})
+	if !isAidlGeneratedModule(mctx.Module()) && len(info.notFrozen) > 0 {
+		reportUsingNotFrozenError(mctx, info.notFrozen)
+	}
 	if mctx.Failed() {
 		return
 	}
-	if info.sourceMap != nil {
+	if info.sourceMap != nil || len(info.notFrozen) > 0 {
 		mctx.SetProvider(AidlVersionInfoProvider, info)
 	}
 }
@@ -432,13 +446,6 @@ func (i *aidlInterface) shouldGenerateRustBackend() bool {
 	return i.properties.Backend.Rust.Enabled != nil && *i.properties.Backend.Rust.Enabled
 }
 
-func (i *aidlInterface) gatherInterface(mctx android.LoadHookContext) {
-	aidlInterfaces := aidlInterfaces(mctx.Config())
-	aidlInterfaceMutex.Lock()
-	defer aidlInterfaceMutex.Unlock()
-	*aidlInterfaces = append(*aidlInterfaces, i)
-}
-
 func (i *aidlInterface) minSdkVersion(lang string) *string {
 	var ver *string
 	switch lang {
@@ -457,13 +464,6 @@ func (i *aidlInterface) minSdkVersion(lang string) *string {
 		return i.properties.Min_sdk_version
 	}
 	return ver
-}
-
-func addUnstableModule(mctx android.LoadHookContext, moduleName string) {
-	unstableModules := unstableModules(mctx.Config())
-	unstableModuleMutex.Lock()
-	defer unstableModuleMutex.Unlock()
-	*unstableModules = append(*unstableModules, moduleName)
 }
 
 // Dep to *-api module(aidlApi)
@@ -724,7 +724,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		mctx.PropertyErrorf("local_include_dir", "must be relative path: "+i.properties.Local_include_dir)
 	}
 
-	i.gatherInterface(mctx)
 	i.checkStability(mctx)
 	i.checkVersions(mctx)
 	i.checkVndkUseVersion(mctx)
@@ -783,12 +782,9 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		if lang == langNdkPlatform && !proptools.BoolDefault(i.properties.Backend.Ndk.Separate_platform_variant, true) {
 			continue
 		}
-		libs = append(libs, addLibrary(mctx, i, nextVersion, lang))
-		if requireFrozenVersion {
-			addUnstableModule(mctx, libs[len(libs)-1])
-		}
+		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion))
 		for _, version := range versions {
-			libs = append(libs, addLibrary(mctx, i, version, lang))
+			libs = append(libs, addLibrary(mctx, i, version, lang, false))
 		}
 	}
 
@@ -939,25 +935,6 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 
 func (i *aidlInterface) DepsMutator(ctx android.BottomUpMutatorContext) {
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
-}
-
-var (
-	aidlInterfacesKey   = android.NewOnceKey("aidlInterfaces")
-	unstableModulesKey  = android.NewOnceKey("unstableModules")
-	aidlInterfaceMutex  sync.Mutex
-	unstableModuleMutex sync.Mutex
-)
-
-func aidlInterfaces(config android.Config) *[]*aidlInterface {
-	return config.Once(aidlInterfacesKey, func() interface{} {
-		return &[]*aidlInterface{}
-	}).(*[]*aidlInterface)
-}
-
-func unstableModules(config android.Config) *[]string {
-	return config.Once(unstableModulesKey, func() interface{} {
-		return &[]string{}
-	}).(*[]string)
 }
 
 func aidlInterfaceFactory() android.Module {

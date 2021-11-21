@@ -1682,6 +1682,25 @@ TEST_F(AidlTest, UnderstandsNestedTypesViaQualifiedInTheSameScope) {
   EXPECT_EQ(TypeFinder::Get(*foo, "t3"), "p.IFoo.Baz");
 }
 
+TEST_F(AidlTest, NestedTypeResolutionWithNoPackage) {
+  const string input_path = "Foo.aidl";
+  const string input =
+      "parcelable Foo {\n"
+      "  parcelable Bar {\n"
+      "    enum Baz { BAZ }\n"
+      "    Baz baz = Baz.BAZ;\n"
+      "  }\n"
+      "  Bar bar;\n"
+      "}";
+  CaptureStderr();
+  auto foo = Parse(input_path, input, typenames_, Options::Language::CPP);
+  EXPECT_EQ(GetCapturedStderr(), "");
+  ASSERT_NE(nullptr, foo);
+
+  EXPECT_EQ(TypeFinder::Get(*foo, "bar"), "Foo.Bar");
+  EXPECT_EQ(TypeFinder::Get(*foo, "baz"), "Foo.Bar.Baz");
+}
+
 TEST_F(AidlTest, RejectsNestedTypesWithParentsName) {
   const string input_path = "p/Foo.aidl";
   const string input =
@@ -3558,6 +3577,45 @@ TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize_Union) {
+  const string expected_stderr =
+      "ERROR: Foo.aidl:2.8-10: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "a.\n"
+      "ERROR: Foo.aidl:3.6-8: The @FixedSize parcelable 'Foo' has a non-fixed size field named b.\n"
+      "ERROR: Foo.aidl:4.9-11: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "c.\n"
+      "ERROR: Foo.aidl:5.23-25: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "d.\n"
+      "ERROR: Foo.aidl:6.10-12: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "e.\n"
+      "ERROR: Foo.aidl:7.15-17: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "f.\n"
+      "ERROR: Foo.aidl:9.23-33: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "nullable1.\n"
+      "ERROR: Foo.aidl:10.34-44: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "nullable2.\n";
+
+  io_delegate_.SetFileContents("Foo.aidl",
+                               "@FixedSize union Foo {\n"
+                               "  int[] a = {};\n"
+                               "  Bar b;\n"
+                               "  String c;\n"
+                               "  ParcelFileDescriptor d;\n"
+                               "  IBinder e;\n"
+                               "  List<String> f;\n"
+                               "  int isFixedSize;\n"
+                               "  @nullable OtherFixed nullable1;\n"
+                               "  @nullable(heap=true) OtherFixed nullable2;\n"
+                               "}");
+  io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { int a; }");
+  io_delegate_.SetFileContents("OtherFixed.aidl", "@FixedSize parcelable OtherFixed { int a; }");
+  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_P(AidlTest, AcceptFixedSizeFromFixedSize) {
   const string expected_stderr = "";
 
@@ -3844,7 +3902,6 @@ TEST_F(AidlTest, ParseRustDerive) {
 }
 
 TEST_F(AidlTest, EmptyEnforceAnnotation) {
-  const string expected_stderr = "ERROR: a/IFoo.aidl:3.1-19: Missing 'condition' on @Enforce.\n";
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
         @Enforce()
@@ -3854,40 +3911,38 @@ TEST_F(AidlTest, EmptyEnforceAnnotation) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Missing 'value' on @Enforce."));
 }
 
 TEST_F(AidlTest, EmptyEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
-        @Enforce(condition="")
+        @Enforce("")
         void Protected();
     })");
 
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("ERROR: a/IFoo.aidl:3.1-31: Unable to parse @Enforce annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @Enforce annotation"));
 }
 
 TEST_F(AidlTest, InvalidEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
-        @Enforce(condition="invalid")
+        @Enforce("invalid")
         void Protected();
     })");
 
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("ERROR: a/IFoo.aidl:3.1-38: Unable to parse @Enforce annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @Enforce annotation"));
 }
 
 TEST_F(AidlTest, InterfaceEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce(condition="permission = INTERNET")
+    @Enforce("permission = INTERNET")
     interface IFoo {
         void Protected();
     })");
@@ -3898,9 +3953,9 @@ TEST_F(AidlTest, InterfaceEnforceCondition) {
 
 TEST_F(AidlTest, InterfaceAndMethodEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce(condition="permission = INTERNET")
+    @Enforce("permission = INTERNET")
     interface IFoo {
-        @Enforce(condition="uid = SYSTEM_UID")
+        @Enforce("uid = SYSTEM_UID")
         void Protected();
     })");
 
@@ -3912,7 +3967,7 @@ TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     @NoPermissionRequired
     interface IFoo {
-        @Enforce(condition="permission = INTERNET")
+        @Enforce("permission = INTERNET")
         void Protected();
     })");
 
@@ -3927,7 +3982,7 @@ TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     @PermissionManuallyEnforced
     interface IFoo {
-        @Enforce(condition="permission = INTERNET")
+        @Enforce("permission = INTERNET")
         void Protected();
     })");
 
@@ -3941,7 +3996,7 @@ TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
 
 TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce(condition="permission = INTERNET")
+    @Enforce("permission = INTERNET")
     interface IFoo {
         @NoPermissionRequired
         void Protected();
@@ -3956,7 +4011,7 @@ TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
 
 TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce(condition="permission = INTERNET")
+    @Enforce("permission = INTERNET")
     interface IFoo {
         @PermissionManuallyEnforced
         void Protected();

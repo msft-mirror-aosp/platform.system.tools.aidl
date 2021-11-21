@@ -160,7 +160,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION |
            CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
        {}},
-      {AidlAnnotation::Type::FIXED_SIZE, "FixedSize", CONTEXT_TYPE_STRUCTURED_PARCELABLE, {}},
+      {AidlAnnotation::Type::FIXED_SIZE,
+       "FixedSize",
+       CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION,
+       {}},
       {AidlAnnotation::Type::DESCRIPTOR,
        "Descriptor",
        CONTEXT_TYPE_INTERFACE,
@@ -182,7 +185,7 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
       {AidlAnnotation::Type::PERMISSION_ENFORCE,
        "Enforce",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
-       {{"condition", kStringType, /* required= */ true}}},
+       {{"value", kStringType, /* required= */ true}}},
       {AidlAnnotation::Type::PERMISSION_MANUAL,
        "PermissionManuallyEnforced",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
@@ -312,11 +315,11 @@ bool AidlAnnotation::CheckValid() const {
 }
 
 Result<unique_ptr<perm::Expression>> AidlAnnotation::EnforceExpression() const {
-  auto perm_expr = ParamValue<std::string>("condition");
+  auto perm_expr = ParamValue<std::string>("value");
   if (perm_expr.has_value()) {
     return perm::Parser::Parse(perm_expr.value());
   }
-  return Error() << "No condition parameter for @Enforce";
+  return Error() << "No value parameter for @Enforce";
 }
 
 // Checks if the annotation is applicable to the current context.
@@ -1084,11 +1087,11 @@ bool AidlDefinedType::CheckValid(const AidlTypenames& typenames) const {
 }
 
 std::string AidlDefinedType::GetCanonicalName() const {
-  if (package_.empty()) {
-    return GetName();
-  }
   if (auto parent = GetParentType(); parent) {
     return parent->GetCanonicalName() + "." + GetName();
+  }
+  if (package_.empty()) {
+    return GetName();
   }
   return GetPackage() + "." + GetName();
 }
@@ -1299,7 +1302,18 @@ bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
     return false;
   }
 
-  return true;
+  bool success = true;
+  if (IsFixedSize()) {
+    for (const auto& v : GetFields()) {
+      if (!typenames.CanBeFixedSize(v->GetType())) {
+        AIDL_ERROR(v) << "The @FixedSize parcelable '" << this->GetName() << "' has a "
+                      << "non-fixed size field named " << v->GetName() << ".";
+        success = false;
+      }
+    }
+  }
+
+  return success;
 }
 
 AidlStructuredParcelable::AidlStructuredParcelable(
@@ -1314,16 +1328,6 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
   }
 
   bool success = true;
-
-  if (IsFixedSize()) {
-    for (const auto& v : GetFields()) {
-      if (!typenames.CanBeFixedSize(v->GetType())) {
-        AIDL_ERROR(v) << "The @FixedSize parcelable '" << this->GetName() << "' has a "
-                      << "non-fixed size field named " << v->GetName() << ".";
-        success = false;
-      }
-    }
-  }
 
   if (IsJavaOnlyImmutable()) {
     // Immutable parcelables provide getters
