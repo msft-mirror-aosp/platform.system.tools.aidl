@@ -114,7 +114,8 @@ struct UnionWriter {
   const AidlTypenames& typenames;
   const std::function<std::string(const AidlTypeSpecifier&, const AidlTypenames&)> name_of;
   const ::ConstantValueDecorator& decorator;
-  static const std::vector<std::string> headers;
+
+  static std::set<std::string> GetHeaders(const AidlUnionDecl&);
 
   void PrivateFields(CodeWriter& out) const;
   void PublicFields(CodeWriter& out) const;
@@ -122,6 +123,8 @@ struct UnionWriter {
   void WriteToParcel(CodeWriter& out, const ParcelWriterContext&) const;
 };
 
+std::string CppConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value,
+                                      bool is_ndk);
 }  // namespace cpp
 }  // namespace aidl
 }  // namespace android

@@ -63,21 +63,22 @@ var (
 )
 
 type aidlGenProperties struct {
-	Srcs                  []string `android:"path"`
-	AidlRoot              string   // base directory for the input aidl file
-	ImportsWithoutVersion []string
-	Stability             *string
-	Min_sdk_version       *string
-	Platform_apis         bool
-	Lang                  string // target language [java|cpp|ndk|rust]
-	BaseName              string
-	GenLog                bool
-	Version               string
-	GenRpc                bool
-	GenTrace              bool
-	Unstable              *bool
-	Visibility            []string
-	Flags                 []string
+	Srcs            []string `android:"path"`
+	AidlRoot        string   // base directory for the input aidl file
+	Imports         []string
+	Stability       *string
+	Min_sdk_version *string
+	Platform_apis   bool
+	Lang            string // target language [java|cpp|ndk|rust]
+	BaseName        string
+	GenLog          bool
+	Version         string
+	GenRpc          bool
+	GenTrace        bool
+	Unstable        *bool
+	NotFrozen       bool
+	Visibility      []string
+	Flags           []string
 }
 
 type aidlGenRule struct {
@@ -101,8 +102,12 @@ type aidlGenRule struct {
 var _ android.SourceFileProducer = (*aidlGenRule)(nil)
 var _ genrule.SourceFileGenerator = (*aidlGenRule)(nil)
 
+func (g *aidlGenRule) aidlInterface(ctx android.BaseModuleContext) *aidlInterface {
+	return ctx.GetDirectDepWithTag(g.properties.BaseName, interfaceDep).(*aidlInterface)
+}
+
 func (g *aidlGenRule) getImports(ctx android.ModuleContext) map[string]string {
-	iface := ctx.GetDirectDepWithTag(g.properties.BaseName, interfaceDep).(*aidlInterface)
+	iface := g.aidlInterface(ctx)
 	return iface.getImports(g.properties.Version)
 }
 
@@ -192,10 +197,8 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	if g.properties.Platform_apis {
 		optionalFlags = append(optionalFlags, "--min_sdk_version platform_apis")
 	} else {
-		minSdkVer := g.properties.Min_sdk_version
-		if minSdkVer != nil {
-			optionalFlags = append(optionalFlags, "--min_sdk_version "+*minSdkVer)
-		}
+		minSdkVer := proptools.StringDefault(g.properties.Min_sdk_version, "current")
+		optionalFlags = append(optionalFlags, "--min_sdk_version "+minSdkVer)
 	}
 	optionalFlags = append(optionalFlags, wrap("-p", g.deps.preprocessed.Strings(), "")...)
 
@@ -293,17 +296,6 @@ func (g *aidlGenRule) GeneratedHeaderDirs() android.Paths {
 }
 
 func (g *aidlGenRule) DepsMutator(ctx android.BottomUpMutatorContext) {
-	// original interface
-	ctx.AddDependency(ctx.Module(), interfaceDep, g.properties.BaseName+aidlInterfaceSuffix)
-
-	if !proptools.Bool(g.properties.Unstable) {
-		// for checkapi timestamps
-		ctx.AddDependency(ctx.Module(), apiDep, g.properties.BaseName+aidlApiSuffix)
-	}
-
-	// imported interfaces
-	ctx.AddDependency(ctx.Module(), importInterfaceDep, wrap("", g.properties.ImportsWithoutVersion, aidlInterfaceSuffix)...)
-
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
 

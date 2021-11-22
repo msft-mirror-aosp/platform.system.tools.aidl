@@ -88,9 +88,9 @@ void GenerateGotoErrorOnBadStatus(CodeWriter& out) {
 }
 
 // Format three types of arg list for method.
-//  for_declaration & !type_name_only: int a     // for method decl with type and arg
-//  for_declaration &  type_name_only: int       // for method decl with type
-// !for_declaration                  :     in_a  // for method call with arg (with direction)
+//  for_declaration & !type_name_only: int a      // for method decl with type and arg
+//  for_declaration &  type_name_only: int /*a*/  // for method decl with type
+// !for_declaration                  :     a      // for method call with arg (with direction)
 string GenerateArgList(const AidlTypenames& typenames, const AidlMethod& method,
                        bool for_declaration, bool type_name_only) {
   vector<string> method_arguments;
@@ -120,7 +120,9 @@ string GenerateArgList(const AidlTypenames& typenames, const AidlMethod& method,
           literal = "const " + literal + "&";
         }
       }
-      if (!type_name_only) {
+      if (type_name_only) {
+        literal += " /*" + a->GetName() + "*/";
+      } else {
         literal += " " + a->GetName();
       }
     } else {
@@ -140,7 +142,9 @@ string GenerateArgList(const AidlTypenames& typenames, const AidlMethod& method,
     string literal;
     if (for_declaration) {
       literal = CppNameOf(method.GetType(), typenames) + "*";
-      if (!type_name_only) {
+      if (type_name_only) {
+        literal += " /*" + string(kReturnVarName) + "*/";
+      } else {
         literal += " " + string(kReturnVarName);
       }
     } else {
@@ -954,11 +958,6 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
   }
 }
 
-string GetInitializer(const AidlTypenames& typenames, const AidlVariableDeclaration& variable) {
-  string cppType = CppNameOf(variable.GetType(), typenames);
-  return cppType + "(" + variable.ValueString(ConstantValueDecorator) + ")";
-}
-
 void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& parcel,
                             const AidlTypenames& typenames) {
   out << "::android::status_t _aidl_ret_status = ::android::OK;\n";
@@ -1044,7 +1043,7 @@ void GenerateParcelFields(CodeWriter& out, const AidlStructuredParcelable& decl,
     GenerateDeprecated(out, *variable);
     out << " " << variable->GetName();
     if (variable->GetDefaultValue()) {
-      out << " = " << GetInitializer(typenames, *variable);
+      out << " = " << variable->ValueString(ConstantValueDecorator);
     } else if (variable->GetType().GetName() == "ParcelableHolder") {
       if (decl.IsVintfStability()) {
         out << " { ::android::Parcelable::Stability::STABILITY_VINTF }";
@@ -1074,9 +1073,9 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
   out << "public:\n";
   out.Indent();
 
-  GenerateParcelableComparisonOperators(out, parcel);
   GenerateNestedTypeDecls(out, parcel, typenames, options);
   GenerateParcelFields(out, parcel, typenames);
+  GenerateParcelableComparisonOperators(out, parcel);
   GenerateConstantDeclarations(out, parcel, typenames);
 
   if (parcel.IsVintfStability()) {
@@ -1230,9 +1229,10 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlDefinedType& defined_type
       includes.insert("tuple");  // std::tie in comparison operators
     }
 
-    void Visit(const AidlUnionDecl&) override {
+    void Visit(const AidlUnionDecl& union_decl) override {
       AddParcelableCommonHeaders();
-      includes.insert(std::begin(UnionWriter::headers), std::end(UnionWriter::headers));
+      auto union_headers = cpp::UnionWriter::GetHeaders(union_decl);
+      includes.insert(std::begin(union_headers), std::end(union_headers));
     }
 
     void Visit(const AidlEnumDeclaration&) override {
