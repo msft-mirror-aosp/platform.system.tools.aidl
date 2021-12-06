@@ -26,16 +26,16 @@ import (
 	"github.com/google/blueprint/proptools"
 )
 
-func addLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string) string {
+func addLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
 	if lang == langJava {
-		return addJavaLibrary(mctx, i, version)
+		return addJavaLibrary(mctx, i, version, notFrozen)
 	} else if lang == langRust {
-		return addRustLibrary(mctx, i, version)
+		return addRustLibrary(mctx, i, version, notFrozen)
 	}
-	return addCppLibrary(mctx, i, version, lang)
+	return addCppLibrary(mctx, i, version, lang, notFrozen)
 }
 
-func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string) string {
+func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
 	cppSourceGen := i.versionedName(version) + "-" + lang + "-source"
 	cppModuleGen := i.versionedName(version) + "-" + lang
 
@@ -73,19 +73,20 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
 	}, &aidlGenProperties{
-		Srcs:                  srcs,
-		AidlRoot:              aidlRoot,
-		ImportsWithoutVersion: i.properties.ImportsWithoutVersion,
-		Stability:             i.properties.Stability,
-		Min_sdk_version:       i.minSdkVersion(lang),
-		Lang:                  lang,
-		BaseName:              i.ModuleBase.Name(),
-		GenLog:                genLog,
-		Version:               i.versionForAidlGenRule(version),
-		GenTrace:              genTrace,
-		Unstable:              i.properties.Unstable,
-		Visibility:            srcsVisibility(mctx, lang),
-		Flags:                 i.flagsForAidlGenRule(version),
+		Srcs:            srcs,
+		AidlRoot:        aidlRoot,
+		Imports:         i.properties.Imports,
+		Stability:       i.properties.Stability,
+		Min_sdk_version: i.minSdkVersion(lang),
+		Lang:            lang,
+		BaseName:        i.ModuleBase.Name(),
+		GenLog:          genLog,
+		Version:         i.versionForAidlGenRule(version),
+		GenTrace:        genTrace,
+		Unstable:        i.properties.Unstable,
+		NotFrozen:       notFrozen,
+		Visibility:      srcsVisibility(mctx, lang),
+		Flags:           i.flagsForAidlGenRule(version),
 	})
 
 	importExportDependencies := []string{}
@@ -166,6 +167,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		Lang:              lang,
 		AidlInterfaceName: i.ModuleBase.Name(),
 		Version:           version,
+		Imports:           i.properties.Imports,
 		ModuleProperties: []interface{}{
 			&ccProperties{
 				Name:                      proptools.StringPtr(cppModuleGen),
@@ -202,7 +204,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	return cppModuleGen
 }
 
-func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version string) string {
+func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	javaSourceGen := i.versionedName(version) + "-java-source"
 	javaModuleGen := i.versionedName(version) + "-java"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -212,30 +214,35 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		// Don't create a library for the yet-to-be-frozen version.
 		return ""
 	}
-
+	minSdkVersion := i.minSdkVersion(langJava)
 	sdkVersion := i.properties.Backend.Java.Sdk_version
 	if !proptools.Bool(i.properties.Backend.Java.Platform_apis) && sdkVersion == nil {
 		// platform apis requires no default
 		sdkVersion = proptools.StringPtr("system_current")
 	}
+	// use sdkVersion if minSdkVersion is not set
+	if sdkVersion != nil && minSdkVersion == nil {
+		minSdkVersion = proptools.StringPtr(android.SdkSpecFrom(mctx, *sdkVersion).ApiLevel.String())
+	}
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(javaSourceGen),
 	}, &aidlGenProperties{
-		Srcs:                  srcs,
-		AidlRoot:              aidlRoot,
-		ImportsWithoutVersion: i.properties.ImportsWithoutVersion,
-		Stability:             i.properties.Stability,
-		Min_sdk_version:       i.minSdkVersion(langJava),
-		Platform_apis:         proptools.Bool(i.properties.Backend.Java.Platform_apis),
-		Lang:                  langJava,
-		BaseName:              i.ModuleBase.Name(),
-		Version:               i.versionForAidlGenRule(version),
-		GenRpc:                proptools.Bool(i.properties.Backend.Java.Gen_rpc),
-		GenTrace:              proptools.Bool(i.properties.Gen_trace),
-		Unstable:              i.properties.Unstable,
-		Visibility:            srcsVisibility(mctx, langJava),
-		Flags:                 i.flagsForAidlGenRule(version),
+		Srcs:            srcs,
+		AidlRoot:        aidlRoot,
+		Imports:         i.properties.Imports,
+		Stability:       i.properties.Stability,
+		Min_sdk_version: minSdkVersion,
+		Platform_apis:   proptools.Bool(i.properties.Backend.Java.Platform_apis),
+		Lang:            langJava,
+		BaseName:        i.ModuleBase.Name(),
+		Version:         i.versionForAidlGenRule(version),
+		GenRpc:          proptools.Bool(i.properties.Backend.Java.Gen_rpc),
+		GenTrace:        proptools.Bool(i.properties.Gen_trace),
+		Unstable:        i.properties.Unstable,
+		NotFrozen:       notFrozen,
+		Visibility:      srcsVisibility(mctx, langJava),
+		Flags:           i.flagsForAidlGenRule(version),
 	})
 
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
@@ -244,6 +251,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		Lang:              langJava,
 		AidlInterfaceName: i.ModuleBase.Name(),
 		Version:           version,
+		Imports:           i.properties.Imports,
 		ModuleProperties: []interface{}{&javaProperties{
 			Name:            proptools.StringPtr(javaModuleGen),
 			Installable:     proptools.BoolPtr(true),
@@ -259,7 +267,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	return javaModuleGen
 }
 
-func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version string) string {
+func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	rustSourceGen := i.versionedName(version) + "-rust-source"
 	rustModuleGen := i.versionedName(version) + "-rust"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -273,30 +281,33 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(rustSourceGen),
 	}, &aidlGenProperties{
-		Srcs:                  srcs,
-		AidlRoot:              aidlRoot,
-		ImportsWithoutVersion: i.properties.ImportsWithoutVersion,
-		Stability:             i.properties.Stability,
-		Min_sdk_version:       i.minSdkVersion(langRust),
-		Lang:                  langRust,
-		BaseName:              i.ModuleBase.Name(),
-		Version:               i.versionForAidlGenRule(version),
-		Unstable:              i.properties.Unstable,
-		Visibility:            srcsVisibility(mctx, langRust),
-		Flags:                 i.flagsForAidlGenRule(version),
+		Srcs:            srcs,
+		AidlRoot:        aidlRoot,
+		Imports:         i.properties.Imports,
+		Stability:       i.properties.Stability,
+		Min_sdk_version: i.minSdkVersion(langRust),
+		Lang:            langRust,
+		BaseName:        i.ModuleBase.Name(),
+		Version:         i.versionForAidlGenRule(version),
+		Unstable:        i.properties.Unstable,
+		NotFrozen:       notFrozen,
+		Visibility:      srcsVisibility(mctx, langRust),
+		Flags:           i.flagsForAidlGenRule(version),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
-	mctx.CreateModule(aidlRustLibraryFactory, &rustProperties{
-		Name:           proptools.StringPtr(rustModuleGen),
-		Crate_name:     rustCrateName,
-		Stem:           proptools.StringPtr("lib" + versionedRustName),
-		Defaults:       []string{"aidl-rust-module-defaults"},
-		Host_supported: i.properties.Host_supported,
-		Apex_available: i.properties.Backend.Rust.Apex_available,
-		Target:         rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
+	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
+		Name:             proptools.StringPtr(rustModuleGen),
+		Crate_name:       rustCrateName,
+		Stem:             proptools.StringPtr("lib" + versionedRustName),
+		Defaults:         []string{"aidl-rust-module-defaults"},
+		Host_supported:   i.properties.Host_supported,
+		Vendor_available: i.properties.Vendor_available,
+		Apex_available:   i.properties.Backend.Rust.Apex_available,
+		Min_sdk_version:  i.minSdkVersion(langRust),
+		Target:           rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),
 	}, &aidlRustSourceProviderProperties{
@@ -380,11 +391,10 @@ func (i *aidlInterface) isModuleForVndk(version string) bool {
 // ToT version(including unstable)     | whatever                | ToT version(unstable if unstable)
 // otherwise                           | whatever                | the latest stable version
 // In the case that import specifies the version which it wants to use, use that version.
-func (i *aidlInterface) getImportWithVersion(version string, anImport string, config android.Config) string {
+func (i *aidlInterface) getImportWithVersion(version string, anImport string, other *aidlInterface) string {
 	if hasVersionSuffix(anImport) {
 		return anImport
 	}
-	other := lookupInterface(anImport, config)
 	if proptools.Bool(other.properties.Unstable) {
 		return anImport
 	}
@@ -392,6 +402,21 @@ func (i *aidlInterface) getImportWithVersion(version string, anImport string, co
 		return other.versionedName(other.nextVersion())
 	}
 	return other.versionedName(other.latestVersion())
+}
+
+// Assuming that the context module has deps to its original aidl_interface and imported
+// aidl_interface modules with interfaceDepTag and importInterfaceDepTag, returns the list of
+// imported interfaces with versions.
+func getImportsWithVersion(ctx android.BaseMutatorContext, interfaceName, version string) []string {
+	i := ctx.GetDirectDepWithTag(interfaceName+aidlInterfaceSuffix, interfaceDep).(*aidlInterface)
+	var imports []string
+	ctx.VisitDirectDeps(func(dep android.Module) {
+		if tag, ok := ctx.OtherModuleDependencyTag(dep).(importInterfaceDepTag); ok {
+			other := dep.(*aidlInterface)
+			imports = append(imports, i.getImportWithVersion(version, tag.anImport, other))
+		}
+	})
+	return imports
 }
 
 func aidlImplementationGeneratorFactory() android.Module {
@@ -410,6 +435,7 @@ type aidlImplementationGeneratorProperties struct {
 	Lang              string
 	AidlInterfaceName string
 	Version           string
+	Imports           []string
 	ModuleProperties  []interface{}
 }
 
@@ -420,31 +446,17 @@ func (g *aidlImplementationGenerator) GenerateAndroidBuildActions(ctx android.Mo
 }
 
 func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDownMutatorContext) {
-	i := lookupInterface(g.properties.AidlInterfaceName, ctx.Config())
-	version := g.properties.Version
-	lang := g.properties.Lang
-	imports := make([]string, len(i.properties.Imports))
-	for idx, anImport := range i.properties.Imports {
-		importModule, _ := parseModuleWithVersion(anImport)
-		if lookupInterface(importModule, ctx.Config()) == nil {
-			if ctx.Config().AllowMissingDependencies() {
-				continue
-			}
-			panic(anImport + " doesn't exist, it should be checked in 'checkImports' mutator.")
-		}
-		imports[idx] = i.getImportWithVersion(version, anImport, ctx.Config()) + "-" + lang
-	}
-
+	imports := wrap("", getImportsWithVersion(ctx, g.properties.AidlInterfaceName, g.properties.Version), "-"+g.properties.Lang)
 	if g.properties.Lang == langJava {
 		if p, ok := g.properties.ModuleProperties[0].(*javaProperties); ok {
 			p.Static_libs = imports
 		}
-		ctx.CreateModule(java.LibraryFactory, g.properties.ModuleProperties...)
+		ctx.CreateModule(wrapLibraryFactory(java.LibraryFactory), g.properties.ModuleProperties...)
 	} else {
 		if p, ok := g.properties.ModuleProperties[0].(*ccProperties); ok {
 			p.Shared_libs = append(p.Shared_libs, imports...)
 			p.Export_shared_lib_headers = append(p.Export_shared_lib_headers, imports...)
 		}
-		ctx.CreateModule(cc.LibraryFactory, g.properties.ModuleProperties...)
+		ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
 	}
 }

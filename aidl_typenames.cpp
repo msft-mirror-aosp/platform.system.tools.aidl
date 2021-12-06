@@ -219,12 +219,16 @@ const AidlDefinedType* AidlTypenames::TryGetDefinedType(const string& type_name)
   return nullptr;
 }
 
-std::vector<AidlDefinedType*> AidlTypenames::AllDefinedTypes() const {
-  std::vector<AidlDefinedType*> res;
-  for (const auto& d : AllDocuments()) {
-    for (const auto& t : d->DefinedTypes()) {
-      res.push_back(t.get());
-    }
+std::vector<const AidlDefinedType*> AidlTypenames::AllDefinedTypes() const {
+  std::vector<const AidlDefinedType*> res;
+  for (const auto& doc : AllDocuments()) {
+    VisitTopDown(
+        [&](const AidlNode& node) {
+          if (auto defined_type = AidlCast<AidlDefinedType>(node); defined_type) {
+            res.push_back(defined_type);
+          }
+        },
+        *doc);
   }
   return res;
 }
@@ -248,8 +252,12 @@ AidlTypenames::ResolvedTypename AidlTypenames::ResolveTypename(const string& typ
 std::unique_ptr<AidlTypeSpecifier> AidlTypenames::MakeResolvedType(const AidlLocation& location,
                                                                    const string& name,
                                                                    bool is_array) const {
+  std::optional<ArrayType> array;
+  if (is_array) {
+    array = DynamicArray{};
+  }
   std::unique_ptr<AidlTypeSpecifier> type(
-      new AidlTypeSpecifier(location, name, is_array, nullptr, {}));
+      new AidlTypeSpecifier(location, name, std::move(array), nullptr, {}));
   AIDL_FATAL_IF(!type->Resolve(*this, nullptr), type) << "Can't make unknown type: " << name;
   type->MarkVisited();
   return type;
@@ -283,10 +291,16 @@ bool AidlTypenames::CanBeJavaOnlyImmutable(const AidlTypeSpecifier& type) const 
   return t->IsJavaOnlyImmutable();
 }
 
-// Only FixedSize Parcelable, primitive types, and enum types can be FixedSize.
+// Followings can be FixedSize:
+// - @FixedSize parcelables
+// - primitive types and enum types
+// - fixed-size arrays of FixedSize types
 bool AidlTypenames::CanBeFixedSize(const AidlTypeSpecifier& type) const {
   const string& name = type.GetName();
-  if (type.IsGeneric() || type.IsArray() || type.IsNullable()) {
+  if (type.IsGeneric() || type.IsNullable()) {
+    return false;
+  }
+  if (type.IsArray() && !type.IsFixedSizeArray()) {
     return false;
   }
   if (IsPrimitiveTypename(name)) {

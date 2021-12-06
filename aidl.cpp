@@ -40,6 +40,7 @@
 #include "aidl_dumpapi.h"
 #include "aidl_language.h"
 #include "aidl_typenames.h"
+#include "check_valid.h"
 #include "generate_aidl_mappings.h"
 #include "generate_cpp.h"
 #include "generate_java.h"
@@ -251,7 +252,7 @@ string GetOutputFilePath(const Options& options, const AidlDefinedType& defined_
   return result;
 }
 
-bool check_and_assign_method_ids(const std::vector<std::unique_ptr<AidlMethod>>& items) {
+bool CheckAndAssignMethodIDs(const std::vector<std::unique_ptr<AidlMethod>>& items) {
   // Check whether there are any methods with manually assigned id's and any
   // that are not. Either all method id's must be manually assigned or all of
   // them must not. Also, check for uplicates of user set ID's and that the
@@ -423,15 +424,15 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   vector<string> import_paths;
   ImportResolver import_resolver{io_delegate, input_file_name, options.ImportDirs()};
   for (const auto& import : document->Imports()) {
-    if (typenames->IsIgnorableImport(import->GetNeededClass())) {
+    if (typenames->IsIgnorableImport(import)) {
       // There are places in the Android tree where an import doesn't resolve,
       // but we'll pick the type up through the preprocessed types.
       // This seems like an error, but legacy support demands we support it...
       continue;
     }
-    string import_path = import_resolver.FindImportFile(import->GetNeededClass());
+    string import_path = import_resolver.FindImportFile(import);
     if (import_path.empty()) {
-      AIDL_ERROR(input_file_name) << "Couldn't find import for class " << import->GetNeededClass();
+      AIDL_ERROR(input_file_name) << "Couldn't find import for class " << import;
       err = AidlError::BAD_IMPORT;
       continue;
     }
@@ -440,8 +441,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
 
     auto imported_doc = Parser::Parse(import_path, io_delegate, *typenames);
     if (imported_doc == nullptr) {
-      AIDL_ERROR(import_path) << "error while importing " << import_path << " for "
-                              << import->GetNeededClass();
+      AIDL_ERROR(import_path) << "error while importing " << import_path << " for " << import;
       err = AidlError::BAD_IMPORT;
       continue;
     }
@@ -524,14 +524,16 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
 
     if (unstructured_parcelable != nullptr) {
-      bool isStable = unstructured_parcelable->IsStableApiParcelable(options.TargetLanguage());
+      auto lang = options.TargetLanguage();
+      bool isStable = unstructured_parcelable->IsStableApiParcelable(lang);
       if (options.IsStructured() && !isStable) {
         AIDL_ERROR(unstructured_parcelable)
             << "Cannot declare unstructured parcelable in a --structured interface. Parcelable "
                "must be defined in AIDL directly.";
         return AidlError::NOT_STRUCTURED;
       }
-      if (options.FailOnParcelable()) {
+      if (options.FailOnParcelable() || lang == Options::Language::NDK ||
+          lang == Options::Language::RUST) {
         AIDL_ERROR(unstructured_parcelable)
             << "Refusing to generate code with unstructured parcelables. Declared parcelables "
                "should be in their own file and/or cannot be used with --structured interfaces.";
@@ -554,6 +556,23 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       if (!success) return AidlError::NOT_STRUCTURED;
     }
 
+    // Verify the var/const declarations.
+    // const expressions should be non-empty when evaluated with the var/const type.
+    for (const auto& constant : defined_type->GetConstantDeclarations()) {
+      if (constant->ValueString(AidlConstantValueDecorator).empty()) {
+        return AidlError::BAD_TYPE;
+      }
+    }
+    for (const auto& var : defined_type->GetFields()) {
+      if (var->GetDefaultValue() && var->ValueString(AidlConstantValueDecorator).empty()) {
+        return AidlError::BAD_TYPE;
+      }
+    }
+  }
+
+  // Add meta methods and assign method IDs to each interface
+  typenames->IterateTypes([&](const AidlDefinedType& type) {
+    auto interface = const_cast<AidlInterface*>(type.AsInterface());
     if (interface != nullptr) {
       // add the meta-method 'int getInterfaceVersion()' if version is specified.
       if (options.Version() > 0) {
@@ -573,26 +592,21 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
             kGetInterfaceHashId, false /* is_user_defined */);
         interface->AddMethod(std::move(method));
       }
-      if (!check_and_assign_method_ids(interface->GetMethods())) {
-        return AidlError::BAD_METHOD_ID;
+      if (!CheckAndAssignMethodIDs(interface->GetMethods())) {
+        err = AidlError::BAD_METHOD_ID;
       }
     }
-    // Verify the var/const declarations.
-    // const expressions should be non-empty when evaluated with the var/const type.
-    for (const auto& constant : defined_type->GetConstantDeclarations()) {
-      if (constant->ValueString(AidlConstantValueDecorator).empty()) {
-        return AidlError::BAD_TYPE;
-      }
-    }
-    for (const auto& var : defined_type->GetFields()) {
-      if (var->GetDefaultValue() && var->ValueString(AidlConstantValueDecorator).empty()) {
-        return AidlError::BAD_TYPE;
-      }
-    }
+  });
+  if (err != AidlError::OK) {
+    return err;
   }
 
   for (const auto& doc : typenames->AllDocuments()) {
     VisitTopDown([](const AidlNode& n) { n.MarkVisited(); }, *doc);
+  }
+
+  if (!CheckValid(*document, options)) {
+    return AidlError::BAD_TYPE;
   }
 
   if (!ValidateAnnotationContext(*document)) {
@@ -743,7 +757,7 @@ bool dump_mappings(const Options& options, const IoDelegate& io_delegate) {
       return false;
     }
     for (const auto& defined_type : typenames.MainDocument().DefinedTypes()) {
-      auto mappings = mappings::generate_mappings(defined_type.get(), typenames);
+      auto mappings = mappings::generate_mappings(defined_type.get());
       all_mappings.insert(mappings.begin(), mappings.end());
     }
   }

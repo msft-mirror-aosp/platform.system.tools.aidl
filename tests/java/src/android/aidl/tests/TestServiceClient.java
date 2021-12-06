@@ -284,6 +284,38 @@ public class TestServiceClient {
     }
 
     @Test
+    public void testBinderArrayExchange() throws RemoteException {
+      String[] names = {"Fizz", "Buzz"};
+      INamedCallback[] got = service.GetInterfaceArray(names);
+      assertThat(got[0].GetName(), is(names[0]));
+      assertThat(got[1].GetName(), is(names[1]));
+
+      assertThat(service.VerifyNamesWithInterfaceArray(got, names), is(true));
+    }
+
+    @Test
+    public void testNullableBinderArrayExchange() throws RemoteException {
+      String[] names = {"Fizz", null, "Buzz"};
+      INamedCallback[] got = service.GetNullableInterfaceArray(names);
+      assertThat(got[0].GetName(), is(names[0]));
+      assertNull(got[1]);
+      assertThat(got[2].GetName(), is(names[2]));
+
+      assertThat(service.VerifyNamesWithNullableInterfaceArray(got, names), is(true));
+    }
+
+    @Test
+    public void testInterfaceListExchange() throws RemoteException {
+      String[] names = {"Fizz", null, "Buzz"};
+      List<INamedCallback> got = service.GetInterfaceList(names);
+      assertThat(got.get(0).GetName(), is(names[0]));
+      assertNull(got.get(1));
+      assertThat(got.get(2).GetName(), is(names[2]));
+
+      assertThat(service.VerifyNamesWithInterfaceList(got, names), is(true));
+    }
+
+    @Test
     public void testListReversal() throws RemoteException {
         List<String> input = Arrays.asList("Walk", "into", "Córdoba");
         List<String> echoed = new ArrayList<String>();

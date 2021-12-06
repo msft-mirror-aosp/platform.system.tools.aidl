@@ -200,30 +200,14 @@ std::string GetCppName(const AidlTypeSpecifier& raw_type, const AidlTypenames& t
   return WrapIfNullable(cpp_name, raw_type, typenames);
 }
 }  // namespace
-std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value) {
-  if (type.IsArray()) {
-    return raw_value;
-  }
-
-  if (type.GetName() == "long") {
-    return raw_value + "L";
-  }
-
-  if (type.GetName() == "String" && !type.IsUtf8InCpp()) {
-    return "::android::String16(" + raw_value + ")";
-  }
-
-  if (auto defined_type = type.GetDefinedType(); defined_type) {
-    auto enum_type = defined_type->AsEnumDeclaration();
-    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
-    return GetRawCppName(type) + "::" + raw_value.substr(raw_value.find_last_of('.') + 1);
-  }
-
-  return raw_value;
+std::string ConstantValueDecorator(
+    const AidlTypeSpecifier& type,
+    const std::variant<std::string, std::vector<std::string>>& raw_value) {
+  return CppConstantValueDecorator(type, raw_value, /*is_ndk=*/false);
 };
 
-std::string GetTransactionIdFor(const AidlInterface& iface, const AidlMethod& method) {
-  return ClassName(iface, ClassNames::SERVER) + "::TRANSACTION_" + method.GetName();
+std::string GetTransactionIdFor(const std::string& clazz, const AidlMethod& method) {
+  return clazz + "::TRANSACTION_" + method.GetName();
 }
 
 std::string CppNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
@@ -279,11 +263,6 @@ std::string ParcelWriteCastOf(const AidlTypeSpecifier& type, const AidlTypenames
                         CppNameOf(enum_decl->GetBackingType(), typenames).c_str(),
                         variable_name.c_str());
   }
-
-  if (typenames.GetInterface(type) != nullptr) {
-    return GetRawCppName(type) + "::asBinder(" + variable_name + ")";
-  }
-
   return variable_name;
 }
 

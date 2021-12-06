@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![rustfmt::skip]
 #[derive(Debug, Clone, PartialEq)]
 pub enum UnionInUnion {
   First(crate::mangled::_7_android_4_aidl_5_tests_6_unions_9_EnumUnion),
@@ -10,7 +11,7 @@ impl Default for UnionInUnion {
   }
 }
 impl binder::parcel::Parcelable for UnionInUnion {
-  fn write_to_parcel(&self, parcel: &mut binder::parcel::Parcel) -> binder::Result<()> {
+  fn write_to_parcel(&self, parcel: &mut binder::parcel::BorrowedParcel) -> binder::Result<()> {
     match self {
       Self::First(v) => {
         parcel.write(&0i32)?;
@@ -22,7 +23,7 @@ impl binder::parcel::Parcelable for UnionInUnion {
       }
     }
   }
-  fn read_from_parcel(&mut self, parcel: &binder::parcel::Parcel) -> binder::Result<()> {
+  fn read_from_parcel(&mut self, parcel: &binder::parcel::BorrowedParcel) -> binder::Result<()> {
     let tag: i32 = parcel.read()?;
     match tag {
       0 => {

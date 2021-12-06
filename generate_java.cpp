@@ -188,7 +188,7 @@ void GenerateParcelableDescribeContents(CodeWriter& out, const AidlUnionDecl& de
 }
 
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcel,
-                      const AidlTypenames& typenames) {
+                      const AidlTypenames& typenames, const Options& options) {
   out << "@Override\n";
   out << "public String toString() {\n";
   out.Indent();
@@ -200,6 +200,7 @@ void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcel,
         .typenames = typenames,
         .type = field->GetType(),
         .var = field->GetName(),
+        .min_sdk_version = options.GetMinSdkVersion(),
     };
     out << "_aidl_sj.add(\"" << field->GetName() << ": \" + (";
     ToStringFor(ctx);
@@ -210,8 +211,8 @@ void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcel,
   out << "}\n";
 }
 
-void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel,
-                      const AidlTypenames& typenames) {
+void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel, const AidlTypenames& typenames,
+                      const Options& options) {
   out << "@Override\n";
   out << "public String toString() {\n";
   out.Indent();
@@ -222,6 +223,7 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel,
         .typenames = typenames,
         .type = field->GetType(),
         .var = GetterName(*field) + "()",
+        .min_sdk_version = options.GetMinSdkVersion(),
     };
     out << "case " << field->GetName() << ": return \"" << parcel.GetCanonicalName() << "."
         << field->GetName() << "(\" + (";
@@ -333,12 +335,12 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
     if (variable->GetType().GetName() == "ParcelableHolder" || parcel->IsJavaOnlyImmutable()) {
       out << "final ";
     }
-    out << JavaSignatureOf(variable->GetType(), typenames) << " " << variable->GetName();
+    out << JavaSignatureOf(variable->GetType()) << " " << variable->GetName();
     if (!parcel->IsJavaOnlyImmutable() && variable->GetDefaultValue()) {
       out << " = " << variable->ValueString(ConstantValueDecorator);
     } else if (variable->GetType().GetName() == "ParcelableHolder") {
       out << std::boolalpha;
-      out << " = new " << JavaSignatureOf(variable->GetType(), typenames) << "(";
+      out << " = new " << JavaSignatureOf(variable->GetType()) << "(";
       if (parcel->IsVintfStability()) {
         out << "android.os.Parcelable.PARCELABLE_STABILITY_VINTF";
       } else {
@@ -360,15 +362,13 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
 
     out.str("");
     for (const auto& variable : parcel->GetFields()) {
-      out << "private " << JavaSignatureOf(variable->GetType(), typenames) << " "
-          << variable->GetName();
+      out << "private " << JavaSignatureOf(variable->GetType()) << " " << variable->GetName();
       if (variable->GetDefaultValue()) {
         out << " = " << variable->ValueString(ConstantValueDecorator);
       }
       out << ";\n";
       out << "public Builder " << SetterName(*variable) << "("
-          << JavaSignatureOf(variable->GetType(), typenames) << " " << variable->GetName()
-          << ") {\n"
+          << JavaSignatureOf(variable->GetType()) << " " << variable->GetName() << ") {\n"
           << "  "
           << "this." << variable->GetName() << " = " << variable->GetName() << ";\n"
           << "  return this;\n"
@@ -436,6 +436,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .type = field->GetType(),
         .parcel = parcel_variable->name,
         .var = field->GetName(),
+        .min_sdk_version = options.GetMinSdkVersion(),
         .is_return_value = false,
     };
     WriteToParcelFor(context);
@@ -459,8 +460,8 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
     constructor->name = parcel->GetName();
     constructor->statements = std::make_shared<StatementBlock>();
     for (const auto& field : parcel->GetFields()) {
-      constructor->parameters.push_back(std::make_shared<Variable>(
-          JavaSignatureOf(field->GetType(), typenames), field->GetName()));
+      constructor->parameters.push_back(
+          std::make_shared<Variable>(JavaSignatureOf(field->GetType()), field->GetName()));
       out.str("");
 
       out << "this." << field->GetName() << " = ";
@@ -534,11 +535,12 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .type = field->GetType(),
         .parcel = parcel_variable->name,
         .var = field_variable_name,
+        .min_sdk_version = options.GetMinSdkVersion(),
         .is_classloader_created = &is_classloader_created,
     };
     context.writer.Indent();
     if (parcel->IsJavaOnlyImmutable()) {
-      context.writer.Write("%s %s;\n", JavaSignatureOf(field->GetType(), typenames).c_str(),
+      context.writer.Write("%s %s;\n", JavaSignatureOf(field->GetType()).c_str(),
                            field_variable_name.c_str());
     }
     CreateFromParcelFor(context);
@@ -572,7 +574,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
 
   if (parcel->JavaDerive("toString")) {
     string to_string;
-    GenerateToString(*CodeWriter::ForString(&to_string), *parcel, typenames);
+    GenerateToString(*CodeWriter::ForString(&to_string), *parcel, typenames, options);
     parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(to_string));
   }
 
@@ -588,19 +590,19 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
   parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(describe_contents));
 
   // all the nested types
+  string code;
+  auto writer = CodeWriter::ForString(&code);
   for (const auto& nested : parcel->GetNestedTypes()) {
-    string code;
-    auto writer = CodeWriter::ForString(&code);
     GenerateClass(*writer, *nested, typenames, options);
-    writer->Close();
-    parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(code));
   }
+  GenerateParcelHelpers(*writer, *parcel, options);
+  writer->Close();
+  parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(code));
 
   return parcel_class;
 }
 
-void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl,
-                       const AidlTypenames& typenames) {
+void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl) {
   out << GenerateComments(enum_decl);
   out << GenerateAnnotations(enum_decl);
   out << "public ";
@@ -613,8 +615,7 @@ void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl,
     out << GenerateComments(*enumerator);
     out << GenerateAnnotations(*enumerator);
     out << fmt::format("public static final {} {} = {};\n",
-                       JavaSignatureOf(enum_decl.GetBackingType(), typenames),
-                       enumerator->GetName(),
+                       JavaSignatureOf(enum_decl.GetBackingType()), enumerator->GetName(),
                        enumerator->ValueString(enum_decl.GetBackingType(), ConstantValueDecorator));
   }
   out.Dedent();
@@ -654,15 +655,14 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
 
   AIDL_FATAL_IF(decl->GetFields().empty(), *decl) << "Union '" << clazz << "' is empty.";
   const auto& first_field = decl->GetFields()[0];
-  const auto& first_type = JavaSignatureOf(first_field->GetType(), typenames);
+  const auto& first_type = JavaSignatureOf(first_field->GetType());
   const auto& first_value = first_field->ValueString(ConstantValueDecorator);
 
   // default ctor() inits with first member's default value
   out << "public " + clazz + "() {\n";
   out.Indent();
   out << first_type + " _value = "
-      << (first_value.empty() ? DefaultJavaValueOf(first_field->GetType(), typenames) : first_value)
-      << ";\n";
+      << (first_value.empty() ? DefaultJavaValueOf(first_field->GetType()) : first_value) << ";\n";
   out << "this._tag = " << first_field->GetName() << ";\n";
   out << "this._value = _value;\n";
   out.Dedent();
@@ -695,7 +695,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
     out << "// " + variable->Signature() + ";\n\n";
 
     auto var_name = variable->GetName();
-    auto var_type = JavaSignatureOf(variable->GetType(), typenames);
+    auto var_type = JavaSignatureOf(variable->GetType());
 
     // value ctor
     out << GenerateComments(*variable);
@@ -759,6 +759,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
         .type = type,
         .parcel = parcel,
         .var = name,
+        .min_sdk_version = options.GetMinSdkVersion(),
         .is_return_value = false,
     };
     WriteToParcelFor(context);
@@ -794,6 +795,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
         .type = type,
         .parcel = parcel,
         .var = name,
+        .min_sdk_version = options.GetMinSdkVersion(),
         .is_classloader_created = &is_classloader_created,
     };
     CreateFromParcelFor(context);
@@ -815,7 +817,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
   out << "switch (_aidl_tag) {\n";
   for (const auto& variable : decl->GetFields()) {
     auto var_name = variable->GetName();
-    auto var_type = JavaSignatureOf(variable->GetType(), typenames);
+    auto var_type = JavaSignatureOf(variable->GetType());
     out << "case " + var_name + ": {\n";
     out.Indent();
     out << var_type + " _aidl_value;\n";
@@ -838,7 +840,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
   GenerateParcelableDescribeContents(out, *decl, typenames);
   out << "\n";
   if (decl->JavaDerive("toString")) {
-    GenerateToString(out, *decl, typenames);
+    GenerateToString(out, *decl, typenames, options);
   }
 
   if (decl->JavaDerive("equals")) {
@@ -878,6 +880,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
   for (const auto& nested : decl->GetNestedTypes()) {
     GenerateClass(out, *nested, typenames, options);
   }
+  GenerateParcelHelpers(out, *decl, options);
 
   out.Dedent();
   out << "}\n";
@@ -972,7 +975,7 @@ void GenerateClass(CodeWriter& out, const AidlDefinedType& defined_type, const A
     GenerateParcelableClass(parcelable, types, options)->Write(&out);
   } else if (const AidlEnumDeclaration* enum_decl = defined_type.AsEnumDeclaration();
              enum_decl != nullptr) {
-    GenerateEnumClass(out, *enum_decl, types);
+    GenerateEnumClass(out, *enum_decl);
   } else if (const AidlInterface* interface = defined_type.AsInterface(); interface != nullptr) {
     GenerateInterfaceClass(interface, types, options)->Write(&out);
   } else if (const AidlUnionDecl* union_decl = defined_type.AsUnionDeclaration();

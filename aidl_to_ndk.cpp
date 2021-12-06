@@ -70,23 +70,10 @@ struct TypeInfo {
   std::shared_ptr<Aspect> nullable_array;
 };
 
-std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value) {
-  if (type.IsArray()) {
-    return raw_value;
-  }
-
-  if (type.GetName() == "long" && !type.IsArray()) {
-    return raw_value + "L";
-  }
-
-  if (auto defined_type = type.GetDefinedType(); defined_type) {
-    auto enum_type = defined_type->AsEnumDeclaration();
-    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
-    return NdkFullClassName(*enum_type, cpp::ClassNames::RAW) +
-           "::" + raw_value.substr(raw_value.find_last_of('.') + 1);
-  }
-
-  return raw_value;
+std::string ConstantValueDecorator(
+    const AidlTypeSpecifier& type,
+    const std::variant<std::string, std::vector<std::string>>& raw_value) {
+  return cpp::CppConstantValueDecorator(type, raw_value, /*is_ndk=*/true);
 };
 
 static std::function<void(const CodeGeneratorContext& c)> StandardRead(const std::string& name) {
@@ -138,14 +125,24 @@ TypeInfo InterfaceTypeInfo(const AidlInterface& type) {
               .read_func = StandardRead(clazz + "::readFromParcel"),
               .write_func = StandardWrite(clazz + "::writeToParcel"),
           },
-      .array = nullptr,
+      .array = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
+          .cpp_name = "std::vector<std::shared_ptr<" + clazz + ">>",
+          .value_is_cheap = false,
+          .read_func = StandardRead("::ndk::AParcel_readVector"),
+          .write_func = StandardWrite("::ndk::AParcel_writeVector"),
+      }),
       .nullable = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
           .cpp_name = "std::shared_ptr<" + clazz + ">",
           .value_is_cheap = false,
           .read_func = StandardRead(clazz + "::readFromParcel"),
           .write_func = StandardWrite(clazz + "::writeToParcel"),
       }),
-      .nullable_array = nullptr,
+      .nullable_array = std::shared_ptr<TypeInfo::Aspect>(new TypeInfo::Aspect{
+          .cpp_name = "std::optional<std::vector<std::shared_ptr<" + clazz + ">>>",
+          .value_is_cheap = false,
+          .read_func = StandardRead("::ndk::AParcel_readVector"),
+          .write_func = StandardWrite("::ndk::AParcel_writeVector"),
+      }),
   };
 }
 
@@ -459,26 +456,6 @@ std::string NdkNameOf(const AidlTypenames& types, const AidlTypeSpecifier& aidl,
     default:
       AIDL_FATAL(aidl.GetName()) << "Unrecognized mode type: " << static_cast<int>(mode);
   }
-}
-
-size_t NdkAlignmentOf(const AidlTypenames& types, const AidlTypeSpecifier& aidl) {
-  // map from NDK type name to the corresponding alignment size
-  static map<string, int> alignment = {
-      {"bool", 1},  {"int8_t", 1},  {"char16_t", 2}, {"double", 8},
-      {"float", 4}, {"int32_t", 4}, {"int64_t", 8},
-  };
-
-  const string& name = NdkNameOf(types, aidl, StorageMode::STACK);
-  if (alignment.find(name) != alignment.end()) {
-    return alignment[name];
-  } else {
-    const auto& definedType = types.TryGetDefinedType(aidl.GetName());
-    AIDL_FATAL_IF(definedType == nullptr, aidl) << "Failed to resolve type.";
-    if (const auto& enumType = definedType->AsEnumDeclaration(); enumType != nullptr) {
-      return NdkAlignmentOf(types, enumType->GetBackingType());
-    }
-  }
-  return 0;
 }
 
 void WriteToParcelFor(const CodeGeneratorContext& c) {

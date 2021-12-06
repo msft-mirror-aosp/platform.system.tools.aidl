@@ -28,7 +28,6 @@ namespace android {
 namespace aidl {
 namespace ndk {
 
-static constexpr const char* kClazz = "_g_aidl_clazz";
 static constexpr const char* kDescriptor = "descriptor";
 static constexpr const char* kVersion = "version";
 static constexpr const char* kHash = "hash";
@@ -82,6 +81,16 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
 // Source for union
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
                           const AidlUnionDecl& defined_type, const Options& options);
+
+// Compare headers so that <android/..> and <aidl/..> comes after other (probably) std headers.
+struct HeaderComp {
+  static int rank(const string& a) {
+    return base::StartsWith(a, "aidl/") ? 2 : base::StartsWith(a, "android/") ? 1 : 0;
+  }
+  bool operator()(const string& a, const string& b) const {
+    return std::make_tuple(rank(a), a) < std::make_tuple(rank(b), b);
+  }
+};
 }  // namespace internals
 
 using namespace internals;
@@ -181,10 +190,6 @@ void GenerateHeaderDefinitions(CodeWriter& out, const AidlTypenames& types,
 
 void GenerateHeader(CodeWriter& out, const AidlTypenames& types,
                     const AidlDefinedType& defined_type, const Options& options) {
-  if (auto parcelable = AidlCast<AidlParcelable>(defined_type); parcelable) {
-    out << "#error TODO(b/111362593) parcelables do not have headers";
-    return;
-  }
   out << "#pragma once\n\n";
   GenerateHeaderIncludes(out, types, defined_type, options);
   EnterNdkNamespace(out, defined_type);
@@ -203,8 +208,6 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
     out << "#error TODO(b/111362593) defined_types do not have bp classes\n";
   } else if (auto enum_decl = AidlCast<AidlEnumDeclaration>(defined_type); enum_decl) {
     out << "#error TODO(b/111362593) enums do not have bp classes\n";
-  } else if (auto parcelable = AidlCast<AidlParcelable>(defined_type); parcelable) {
-    out << "#error TODO(b/111362593) defined_types do not have bp classes\n";
   } else {
     AIDL_FATAL(defined_type) << "Unrecognized type sent for NDK generation.";
   }
@@ -220,8 +223,6 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
     out << "#error TODO(b/111362593) defined_types do not have bn classes\n";
   } else if (auto enum_decl = AidlCast<AidlEnumDeclaration>(defined_type); enum_decl) {
     out << "#error TODO(b/111362593) enums do not have bn classes\n";
-  } else if (auto parcelable = AidlCast<AidlParcelable>(defined_type); parcelable) {
-    out << "#error TODO(b/111362593) parcelables do not have bn classes\n";
   } else {
     AIDL_FATAL(defined_type) << "Unrecognized type sent for CPP generation.";
   }
@@ -257,28 +258,12 @@ void GenerateSource(CodeWriter& out, const AidlTypenames& types,
         out << "// This file is intentionally left blank as placeholder for enum declaration.\n";
       }
     }
-
-    void Visit(const AidlParcelable& parcelable) override {
-      AIDL_FATAL_IF(parcelable.GetParentType(), parcelable)
-          << "Unstructured parcelable can't be nested.";
-      out << "// This file is intentionally left blank as placeholder for parcel declaration.\n";
-    }
   } v(out, types, options);
   VisitTopDown(v, defined_type);
 }
 
 void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
                             const AidlDefinedType& defined_type, const Options& options) {
-  // Compare headers so that <android/..> and <aidl/..> comes after other (probably) std headers.
-  struct HeaderComp {
-    static int rank(const string& a) {
-      return base::StartsWith(a, "aidl/") ? 2 : base::StartsWith(a, "android/") ? 1 : 0;
-    }
-    bool operator()(const string& a, const string& b) const {
-      return std::make_tuple(rank(a), a) < std::make_tuple(rank(b), b);
-    }
-  };
-
   // Collect implementation related headers and referenced defined types by recursivly visiting
   // nested types
   struct Visitor : AidlVisitor {
@@ -291,11 +276,7 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
     void Visit(const AidlTypeSpecifier& type) override {
       auto defined = type.GetDefinedType();
       if (!defined) return;
-      if (auto unstructured = defined->AsUnstructuredParcelable(); unstructured) {
-        includes.insert(unstructured->GetCppHeader());
-      } else {
-        includes.insert(NdkHeaderFile(*defined, ClassNames::RAW, false /*use_os_sep*/));
-      }
+      includes.insert(NdkHeaderFile(*defined, ClassNames::RAW, false /*use_os_sep*/));
     }
 
     // Collect implementation-specific includes for each type definition
@@ -306,6 +287,14 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
         includes.insert("functional");
         includes.insert("chrono");
         includes.insert("sstream");
+      }
+      // For nested interfacees client/server classes are defined in the same header.
+      // So we need includes for client/server class as well.
+      if (interface.GetParentType()) {
+        includes.insert("android/binder_ibinder.h");
+        if (options.GenTraces()) {
+          includes.insert("android/trace.h");
+        }
       }
     }
 
@@ -321,7 +310,8 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
       includes.insert("android/binder_interface_utils.h");
       includes.insert("android/binder_parcelable_utils.h");
       includes.insert("android/binder_to_string.h");  // used by toString()
-      includes.insert(std::begin(cpp::UnionWriter::headers), std::end(cpp::UnionWriter::headers));
+      auto union_headers = cpp::UnionWriter::GetHeaders(union_decl);
+      includes.insert(std::begin(union_headers), std::end(union_headers));
     }
 
     void Visit(const AidlEnumDeclaration& enum_decl) override {
@@ -374,19 +364,55 @@ void GenerateClassDecl(CodeWriter& out, const AidlTypenames& types,
 }
 
 static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
-                                   const AidlDefinedType& /*defined_type*/) {
-  out << "#include <android/binder_parcel_utils.h>\n";
+                                   const AidlDefinedType& defined_type, const Options& options) {
+  // Once in a .cpp file
+  if (defined_type.GetParentType() != nullptr) {
+    return;
+  }
 
+  const string self_header = NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/);
+  out << "#include \"" << self_header << "\"\n";
+  out << "\n";
+
+  std::set<std::string, HeaderComp> includes = {self_header};
+  includes.insert("android/binder_parcel_utils.h");
   types.IterateTypes([&](const AidlDefinedType& a_defined_type) {
     if (a_defined_type.AsInterface() != nullptr) {
-      out << "#include <" << NdkHeaderFile(a_defined_type, ClassNames::CLIENT, false /*use_os_sep*/)
-          << ">\n";
-      out << "#include <" << NdkHeaderFile(a_defined_type, ClassNames::SERVER, false /*use_os_sep*/)
-          << ">\n";
-      out << "#include <" << NdkHeaderFile(a_defined_type, ClassNames::RAW, false /*use_os_sep*/)
-          << ">\n";
+      includes.insert(NdkHeaderFile(a_defined_type, ClassNames::CLIENT, false /*use_os_sep*/));
+      includes.insert(NdkHeaderFile(a_defined_type, ClassNames::SERVER, false /*use_os_sep*/));
+      includes.insert(NdkHeaderFile(a_defined_type, ClassNames::RAW, false /*use_os_sep*/));
     }
   });
+
+  struct Visitor : AidlVisitor {
+    bool has_interface = false;
+    void Visit(const AidlInterface&) override { has_interface = true; }
+  } v;
+  VisitTopDown(v, defined_type);
+
+  if (v.has_interface && options.GenLog()) {
+    includes.insert("android/binder_to_string.h");
+  }
+
+  // Emit includes except self_header
+  includes.erase(includes.find(self_header));
+  for (const auto& inc : includes) {
+    out << "#include <" << inc << ">\n";
+  }
+  out << "\n";
+
+  // Emit additional definition for gen_traces
+  if (v.has_interface && options.GenTraces()) {
+    out << "namespace {\n";
+    out << "struct ScopedTrace {\n";
+    out.Indent();
+    out << "inline explicit ScopedTrace(const char* name) { ATrace_beginSection(name); }\n";
+    out << "inline ~ScopedTrace() { ATrace_endSection(); }\n";
+    out.Dedent();
+    out << "};\n";
+    out << "}  // namespace\n";
+    out << "\n";
+  }
 }
 
 static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& types,
@@ -425,12 +451,7 @@ static void GenerateConstantDefinitions(CodeWriter& out, const AidlDefinedType& 
 
 void GenerateSource(CodeWriter& out, const AidlTypenames& types, const AidlInterface& defined_type,
                     const Options& options) {
-  GenerateSourceIncludes(out, types, defined_type);
-  if (options.GenLog()) {
-    out << "#include <android/binder_to_string.h>\n";
-  }
-  out << "\n";
-
+  GenerateSourceIncludes(out, types, defined_type, options);
   EnterNdkNamespace(out, defined_type);
   GenerateClassSource(out, types, defined_type, options);
   GenerateClientSource(out, types, defined_type, options);
@@ -446,9 +467,10 @@ static std::string MethodId(const AidlMethod& m) {
 static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames& types,
                                            const AidlInterface& defined_type,
                                            const AidlMethod& method, const Options& options) {
+  const std::string q_name = GetQualifiedName(defined_type, ClassNames::CLIENT);
   const std::string clazz = ClassName(defined_type, ClassNames::CLIENT);
 
-  out << NdkMethodDecl(types, method, clazz) << " {\n";
+  out << NdkMethodDecl(types, method, q_name) << " {\n";
   out.Indent();
   out << "binder_status_t _aidl_ret_status = STATUS_OK;\n";
   out << "::ndk::ScopedAStatus _aidl_status;\n";
@@ -476,8 +498,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << "\n";
 
   if (options.GenLog()) {
-    out << cpp::GenLogBeforeExecute(ClassName(defined_type, ClassNames::CLIENT), method,
-                                    false /* isServer */, true /* isNdk */);
+    out << cpp::GenLogBeforeExecute(q_name, method, false /* isServer */, true /* isNdk */);
   }
   if (options.GenTraces()) {
     out << "ScopedTrace _aidl_trace(\"AIDL::" << to_string(options.TargetLanguage())
@@ -567,9 +588,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << "_aidl_status.set(AStatus_fromStatus(_aidl_ret_status));\n";
   out << "_aidl_status_return:\n";
   if (options.GenLog()) {
-    out << cpp::GenLogAfterExecute(ClassName(defined_type, ClassNames::CLIENT), defined_type,
-                                   method, "_aidl_status", "_aidl_return", false /* isServer */,
-                                   true /* isNdk */);
+    out << cpp::GenLogAfterExecute(q_name, defined_type, method, "_aidl_status", "_aidl_return",
+                                   false /* isServer */, true /* isNdk */);
   }
 
   out << "return _aidl_status;\n";
@@ -580,6 +600,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
 static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& types,
                                          const AidlInterface& defined_type,
                                          const AidlMethod& method, const Options& options) {
+  const string q_name = GetQualifiedName(defined_type, ClassNames::SERVER);
+
   out << "case " << MethodId(method) << ": {\n";
   out.Indent();
   for (const auto& arg : method.GetArguments()) {
@@ -610,16 +632,14 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     }
   }
   if (options.GenLog()) {
-    out << cpp::GenLogBeforeExecute(ClassName(defined_type, ClassNames::SERVER), method,
-                                    true /* isServer */, true /* isNdk */);
+    out << cpp::GenLogBeforeExecute(q_name, method, true /* isServer */, true /* isNdk */);
   }
   out << "::ndk::ScopedAStatus _aidl_status = _aidl_impl->" << method.GetName() << "("
       << NdkArgList(types, method, FormatArgForCall) << ");\n";
 
   if (options.GenLog()) {
-    out << cpp::GenLogAfterExecute(ClassName(defined_type, ClassNames::SERVER), defined_type,
-                                   method, "_aidl_status", "_aidl_return", true /* isServer */,
-                                   true /* isNdk */);
+    out << cpp::GenLogAfterExecute(q_name, defined_type, method, "_aidl_status", "_aidl_return",
+                                   true /* isServer */, true /* isNdk */);
   }
   if (method.IsOneway()) {
     // For a oneway transaction, the kernel will have already returned a result. This is for the
@@ -649,23 +669,24 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
   out << "}\n";
 }
 
+static string OnTransactFuncName(const AidlInterface& interface) {
+  string name = interface.GetCanonicalName();
+  std::replace(name.begin(), name.end(), '.', '_');
+  return "_aidl_" + name + "_onTransact";
+}
+
+static string GlobalClassVarName(const AidlInterface& interface) {
+  string name = interface.GetCanonicalName();
+  std::replace(name.begin(), name.end(), '.', '_');
+  return "_g_aidl_" + name + "_clazz";
+}
+
 void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
                          const AidlInterface& defined_type, const Options& options) {
-  const std::string clazz = ClassName(defined_type, ClassNames::INTERFACE);
-  const std::string bn_clazz = ClassName(defined_type, ClassNames::SERVER);
-  if (options.GenTraces()) {
-    out << "class ScopedTrace {\n";
-    out.Indent();
-    out << "public:\n"
-        << "inline explicit ScopedTrace(const char* name) {\n"
-        << "ATrace_beginSection(name);\n"
-        << "}\n"
-        << "inline ~ScopedTrace() {\n"
-        << "ATrace_endSection();\n"
-        << "}\n";
-    out.Dedent();
-    out << "};\n";
-  }
+  const std::string i_name = GetQualifiedName(defined_type, ClassNames::INTERFACE);
+  const std::string q_name = GetQualifiedName(defined_type, ClassNames::SERVER);
+
+  const string on_transact = OnTransactFuncName(defined_type);
   bool deprecated = defined_type.IsDeprecated() ||
                     std::any_of(defined_type.GetMethods().begin(), defined_type.GetMethods().end(),
                                 [](const auto& m) { return m->IsDeprecated(); });
@@ -673,8 +694,7 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
     out << "#pragma clang diagnostic push\n";
     out << "#pragma clang diagnostic ignored \"-Wdeprecated\"\n";
   }
-  out << "static binder_status_t "
-      << "_aidl_onTransact"
+  out << "static binder_status_t " << on_transact
       << "(AIBinder* _aidl_binder, transaction_code_t _aidl_code, const AParcel* _aidl_in, "
          "AParcel* _aidl_out) {\n";
   out.Indent();
@@ -684,7 +704,7 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
   if (!defined_type.GetMethods().empty()) {
     // we know this cast is valid because this method is only called by the ICInterface
     // AIBinder_Class object which is associated with this class.
-    out << "std::shared_ptr<" << bn_clazz << "> _aidl_impl = std::static_pointer_cast<" << bn_clazz
+    out << "std::shared_ptr<" << q_name << "> _aidl_impl = std::static_pointer_cast<" << q_name
         << ">(::ndk::ICInterface::asInterface(_aidl_binder));\n";
     out << "switch (_aidl_code) {\n";
     out.Indent();
@@ -701,8 +721,9 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "}\n\n";
 
-  out << "static AIBinder_Class* " << kClazz << " = ::ndk::ICInterface::defineClass(" << clazz
-      << "::" << kDescriptor << ", _aidl_onTransact);\n\n";
+  out << "static AIBinder_Class* " << GlobalClassVarName(defined_type)
+      << " = ::ndk::ICInterface::defineClass(" << i_name << "::" << kDescriptor << ", "
+      << on_transact << ");\n\n";
   if (deprecated) {
     out << "#pragma clang diagnostic pop\n";
   }
@@ -710,32 +731,38 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
 
 void GenerateClientSource(CodeWriter& out, const AidlTypenames& types,
                           const AidlInterface& defined_type, const Options& options) {
+  const std::string q_name = GetQualifiedName(defined_type, ClassNames::CLIENT);
   const std::string clazz = ClassName(defined_type, ClassNames::CLIENT);
 
-  out << clazz << "::" << clazz << "(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}\n";
-  out << clazz << "::~" << clazz << "() {}\n";
+  out << q_name << "::" << clazz << "(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}\n";
+  out << q_name << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " << q_name << "::TransactionLog&)> " << q_name
+        << "::logFunc;\n";
   }
   out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
     GenerateClientMethodDefinition(out, types, defined_type, *method, options);
   }
 }
+
 void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
                           const AidlInterface& defined_type, const Options& options) {
+  const std::string q_name = GetQualifiedName(defined_type, ClassNames::SERVER);
   const std::string clazz = ClassName(defined_type, ClassNames::SERVER);
   const std::string iface = ClassName(defined_type, ClassNames::INTERFACE);
 
   out << "// Source for " << clazz << "\n";
-  out << clazz << "::" << clazz << "() {}\n";
-  out << clazz << "::~" << clazz << "() {}\n";
+  out << q_name << "::" << clazz << "() {}\n";
+  out << q_name << "::~" << clazz << "() {}\n";
   if (options.GenLog()) {
-    out << "std::function<void(const " + clazz + "::TransactionLog&)> " << clazz << "::logFunc;\n";
+    out << "std::function<void(const " << q_name << "::TransactionLog&)> " << q_name
+        << "::logFunc;\n";
   }
-  out << "::ndk::SpAIBinder " << clazz << "::createBinder() {\n";
+  out << "::ndk::SpAIBinder " << q_name << "::createBinder() {\n";
   out.Indent();
-  out << "AIBinder* binder = AIBinder_new(" << kClazz << ", static_cast<void*>(this));\n";
+  out << "AIBinder* binder = AIBinder_new(" << GlobalClassVarName(defined_type)
+      << ", static_cast<void*>(this));\n";
 
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
   if (defined_type.IsVintfStability()) {
@@ -755,7 +782,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
       continue;
     }
     if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
-      out << NdkMethodDecl(types, *method, clazz) << " {\n";
+      out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
       out << "*_aidl_return = " << iface << "::" << kVersion << ";\n";
       out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
@@ -763,7 +790,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
       out << "}\n";
     }
     if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
-      out << NdkMethodDecl(types, *method, clazz) << " {\n";
+      out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
       out << "*_aidl_return = " << iface << "::" << kHash << ";\n";
       out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
@@ -774,22 +801,24 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
 }
 void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
                              const AidlInterface& defined_type, const Options& options) {
+  const std::string q_name = GetQualifiedName(defined_type, ClassNames::INTERFACE);
   const std::string clazz = ClassName(defined_type, ClassNames::INTERFACE);
   const std::string bp_clazz = ClassName(defined_type, ClassNames::CLIENT);
 
   out << "// Source for " << clazz << "\n";
-  out << "const char* " << clazz << "::" << kDescriptor << " = \"" << defined_type.GetDescriptor()
+  out << "const char* " << q_name << "::" << kDescriptor << " = \"" << defined_type.GetDescriptor()
       << "\";\n";
-  out << clazz << "::" << clazz << "() {}\n";
-  out << clazz << "::~" << clazz << "() {}\n";
+  out << q_name << "::" << clazz << "() {}\n";
+  out << q_name << "::~" << clazz << "() {}\n";
   out << "\n";
-  GenerateConstantDefinitions(out, defined_type, clazz);
+  GenerateConstantDefinitions(out, defined_type, q_name);
   out << "\n";
 
-  out << "std::shared_ptr<" << clazz << "> " << clazz
+  out << "std::shared_ptr<" << q_name << "> " << q_name
       << "::fromBinder(const ::ndk::SpAIBinder& binder) {\n";
   out.Indent();
-  out << "if (!AIBinder_associateClass(binder.get(), " << kClazz << ")) { return nullptr; }\n";
+  out << "if (!AIBinder_associateClass(binder.get(), " << GlobalClassVarName(defined_type)
+      << ")) { return nullptr; }\n";
   out << "std::shared_ptr<::ndk::ICInterface> interface = "
          "::ndk::ICInterface::asInterface(binder.get());\n";
   out << "if (interface) {\n";
@@ -797,11 +826,12 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << "return std::static_pointer_cast<" << clazz << ">(interface);\n";
   out.Dedent();
   out << "}\n";
-  out << "return ::ndk::SharedRefBase::make<" << bp_clazz << ">(binder);\n";
+  out << "return ::ndk::SharedRefBase::make<" << GetQualifiedName(defined_type, ClassNames::CLIENT)
+      << ">(binder);\n";
   out.Dedent();
   out << "}\n\n";
 
-  out << "binder_status_t " << clazz << "::writeToParcel(AParcel* parcel, const std::shared_ptr<"
+  out << "binder_status_t " << q_name << "::writeToParcel(AParcel* parcel, const std::shared_ptr<"
       << clazz << ">& instance) {\n";
   out.Indent();
   out << "return AParcel_writeStrongBinder(parcel, instance ? instance->asBinder().get() : "
@@ -809,7 +839,7 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "}\n";
 
-  out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* parcel, std::shared_ptr<"
+  out << "binder_status_t " << q_name << "::readFromParcel(const AParcel* parcel, std::shared_ptr<"
       << clazz << ">* instance) {\n";
   out.Indent();
   out << "::ndk::SpAIBinder binder;\n";
@@ -821,7 +851,7 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << "}\n";
 
   // defintion for static member setDefaultImpl
-  out << "bool " << clazz << "::setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl) {\n";
+  out << "bool " << q_name << "::setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl) {\n";
   out.Indent();
   out << "// Only one user of this interface can use this function\n";
   out << "// at a time. This is a heuristic to detect if two different\n";
@@ -838,17 +868,17 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << "}\n";
 
   // definition for static member getDefaultImpl
-  out << "const std::shared_ptr<" << clazz << ">& " << clazz << "::getDefaultImpl() {\n";
+  out << "const std::shared_ptr<" << q_name << ">& " << q_name << "::getDefaultImpl() {\n";
   out.Indent();
   out << "return " << clazz << "::default_impl;\n";
   out.Dedent();
   out << "}\n";
 
   // definition for the static field default_impl
-  out << "std::shared_ptr<" << clazz << "> " << clazz << "::default_impl = nullptr;\n";
+  out << "std::shared_ptr<" << q_name << "> " << q_name << "::default_impl = nullptr;\n";
 
   // default implementation for the <Name>Default class members
-  const std::string defaultClazz = clazz + "Default";
+  const std::string defaultClazz = q_name + "Default";
   for (const auto& method : defined_type.GetMethods()) {
     if (method->IsUserDefined()) {
       out << "::ndk::ScopedAStatus " << defaultClazz << "::" << method->GetName() << "("
@@ -894,25 +924,10 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << "}\n";
 }
 
-void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
-                          const AidlInterface& defined_type, const Options& options) {
+void GenerateClientClassDecl(CodeWriter& out, const AidlTypenames& types,
+                             const AidlInterface& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::CLIENT);
 
-  out << "#pragma once\n\n";
-  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
-      << "\"\n";
-  out << "\n";
-  out << "#include <android/binder_ibinder.h>\n";
-  if (options.GenLog()) {
-    out << "#include <functional>\n";
-    out << "#include <chrono>\n";
-    out << "#include <sstream>\n";
-  }
-  if (options.GenTraces()) {
-    out << "#include <android/trace.h>\n";
-  }
-  out << "\n";
-  EnterNdkNamespace(out, defined_type);
   out << "class";
   cpp::GenerateDeprecated(out, defined_type);
   out << " " << clazz << " : public ::ndk::BpCInterface<"
@@ -942,20 +957,34 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   }
   out.Dedent();
   out << "};\n";
-  LeaveNdkNamespace(out, defined_type);
 }
-void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
-                          const AidlInterface& defined_type, const Options& options) {
-  const std::string clazz = ClassName(defined_type, ClassNames::SERVER);
-  const std::string iface = ClassName(defined_type, ClassNames::INTERFACE);
 
+void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
+                          const AidlInterface& defined_type, const Options& options) {
   out << "#pragma once\n\n";
   out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
       << "\"\n";
   out << "\n";
   out << "#include <android/binder_ibinder.h>\n";
+  if (options.GenLog()) {
+    out << "#include <functional>\n";
+    out << "#include <chrono>\n";
+    out << "#include <sstream>\n";
+  }
+  if (options.GenTraces()) {
+    out << "#include <android/trace.h>\n";
+  }
   out << "\n";
   EnterNdkNamespace(out, defined_type);
+  GenerateClientClassDecl(out, types, defined_type, options);
+  LeaveNdkNamespace(out, defined_type);
+}
+
+void GenerateServerClassDecl(CodeWriter& out, const AidlTypenames& types,
+                             const AidlInterface& defined_type, const Options& options) {
+  const std::string clazz = ClassName(defined_type, ClassNames::SERVER);
+  const std::string iface = ClassName(defined_type, ClassNames::INTERFACE);
+
   out << "class";
   cpp::GenerateDeprecated(out, defined_type);
   out << " " << clazz << " : public ::ndk::BnCInterface<" << iface << "> {\n";
@@ -990,8 +1019,21 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
   out.Indent();
   out.Dedent();
   out << "};\n";
+}
+
+void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
+                          const AidlInterface& defined_type, const Options& options) {
+  out << "#pragma once\n\n";
+  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
+      << "\"\n";
+  out << "\n";
+  out << "#include <android/binder_ibinder.h>\n";
+  out << "\n";
+  EnterNdkNamespace(out, defined_type);
+  GenerateServerClassDecl(out, types, defined_type, options);
   LeaveNdkNamespace(out, defined_type);
 }
+
 void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
                                 const AidlInterface& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::INTERFACE);
@@ -1066,6 +1108,14 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "bool isRemote() override;\n";
   out.Dedent();
   out << "};\n";
+
+  // When an interface is nested, every class should be defined together here
+  // because we don't have separate headers for them.
+  // (e.g. IFoo, IFooDefault, BpFoo, BnFoo, IFooDelegator)
+  if (defined_type.GetParentType()) {
+    GenerateClientClassDecl(out, types, defined_type, options);
+    GenerateServerClassDecl(out, types, defined_type, options);
+  }
 }
 
 void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
@@ -1094,7 +1144,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
           << "}";
     }
     if (defined_type.IsFixedSize()) {
-      int alignment = NdkAlignmentOf(types, variable->GetType());
+      int alignment = cpp::AlignmentOf(variable->GetType(), types);
       if (alignment > 0) {
         out << " __attribute__((aligned (" << std::to_string(alignment) << ")))";
       }
@@ -1121,8 +1171,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "};\n";
 }
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
-                          const AidlStructuredParcelable& defined_type,
-                          const Options& /*options*/) {
+                          const AidlStructuredParcelable& defined_type, const Options& options) {
   std::string clazz = GetQualifiedName(defined_type);
   if (defined_type.IsGeneric()) {
     std::vector<std::string> template_params;
@@ -1132,11 +1181,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     clazz += base::StringPrintf("<%s>", base::Join(template_params, ", ").c_str());
   }
 
-  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
-      << "\"\n";
-  out << "\n";
-  GenerateSourceIncludes(out, types, defined_type);
-  out << "\n";
+  GenerateSourceIncludes(out, types, defined_type, options);
   EnterNdkNamespace(out, defined_type);
   out << cpp::TemplateDecl(defined_type);
   out << "const char* " << clazz << "::" << kDescriptor << " = \""
@@ -1242,7 +1287,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "};\n";
 }
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
-                          const AidlUnionDecl& defined_type, const Options& /*options*/) {
+                          const AidlUnionDecl& defined_type, const Options& options) {
   std::string clazz = GetQualifiedName(defined_type);
   if (defined_type.IsGeneric()) {
     std::vector<std::string> template_params;
@@ -1271,11 +1316,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
           },
   };
 
-  out << "#include \"" << NdkHeaderFile(defined_type, ClassNames::RAW, false /*use_os_sep*/)
-      << "\"\n";
-  out << "\n";
-  GenerateSourceIncludes(out, types, defined_type);
-  out << "\n";
+  GenerateSourceIncludes(out, types, defined_type, options);
   EnterNdkNamespace(out, defined_type);
   out << cpp::TemplateDecl(defined_type);
   out << "const char* " << clazz << "::" << kDescriptor << " = \""

@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![rustfmt::skip]
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructuredParcelable {
   pub shouldContainThreeFs: Vec<i32>,
@@ -79,8 +80,8 @@ impl Default for StructuredParcelable {
       charDefaultsToC: 'C' as u16,
       floatDefaultsToPi: 3.140000f32,
       doubleWithDefault: -314000000000000000.000000f64,
-      arrayDefaultsTo123: vec!{1, 2, 3},
-      arrayDefaultsToEmpty: vec!{},
+      arrayDefaultsTo123: vec![1, 2, 3],
+      arrayDefaultsToEmpty: vec![],
       boolDefault: false,
       byteDefault: 0,
       intDefault: 0,
@@ -88,16 +89,16 @@ impl Default for StructuredParcelable {
       floatDefault: 0.000000f32,
       doubleDefault: 0.000000f64,
       checkDoubleFromFloat: 3.140000f64,
-      checkStringArray1: vec!{"a".into(), "b".into()},
-      checkStringArray2: vec!{"a".into(), "b".into()},
+      checkStringArray1: vec!["a".into(), "b".into()],
+      checkStringArray2: vec!["a".into(), "b".into()],
       int32_min: -2147483648,
       int32_max: 2147483647,
       int64_max: 9223372036854775807,
       hexInt32_neg_1: -1,
       ibinder: Default::default(),
-      int8_1: vec!{1, 1, 1, 1, 1},
-      int32_1: vec!{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-      int64_1: vec!{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+      int8_1: vec![1, 1, 1, 1, 1],
+      int32_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      int64_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       hexInt32_pos_1: 1,
       hexInt64_pos_1: 1,
       const_exprs_1: Default::default(),
@@ -120,7 +121,7 @@ impl Default for StructuredParcelable {
   }
 }
 impl binder::parcel::Parcelable for StructuredParcelable {
-  fn write_to_parcel(&self, parcel: &mut binder::parcel::Parcel) -> binder::Result<()> {
+  fn write_to_parcel(&self, parcel: &mut binder::parcel::BorrowedParcel) -> binder::Result<()> {
     parcel.sized_write(|subparcel| {
       subparcel.write(&self.shouldContainThreeFs)?;
       subparcel.write(&self.f)?;
@@ -179,7 +180,7 @@ impl binder::parcel::Parcelable for StructuredParcelable {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::parcel::Parcel) -> binder::Result<()> {
+  fn read_from_parcel(&mut self, parcel: &binder::parcel::BorrowedParcel) -> binder::Result<()> {
     parcel.sized_read(|subparcel| {
       if subparcel.has_more_data() {
         self.shouldContainThreeFs = subparcel.read()?;

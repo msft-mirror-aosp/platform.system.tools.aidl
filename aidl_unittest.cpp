@@ -32,7 +32,9 @@
 #include "aidl_dumpapi.h"
 #include "aidl_language.h"
 #include "aidl_to_cpp.h"
+#include "aidl_to_cpp_common.h"
 #include "aidl_to_java.h"
+#include "aidl_to_ndk.h"
 #include "comments.h"
 #include "logging.h"
 #include "options.h"
@@ -93,6 +95,7 @@ class AidlTest : public ::testing::TestWithParam<Options::Language> {
     io_delegate_.SetFileContents(path, contents);
     vector<string> args;
     args.emplace_back("aidl");
+    args.emplace_back("--min_sdk_version=current");
     args.emplace_back("--lang=" + to_string(lang));
     for (const string& s : additional_arguments) {
       args.emplace_back(s);
@@ -183,21 +186,6 @@ TEST_P(AidlTest, EnumRequiresCorrectPath) {
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/Foo.aidl", file_contents, typenames_, GetLanguage()));
   EXPECT_EQ(expected_stderr, GetCapturedStderr()) << file_contents;
-}
-
-TEST_P(AidlTest, RejectsArraysOfBinders) {
-  import_paths_.emplace("");
-  io_delegate_.SetFileContents("bar/IBar.aidl",
-                               "package bar; interface IBar {}");
-  const string path = "foo/IFoo.aidl";
-  const string contents =
-      "package foo;\n"
-      "import bar.IBar;\n"
-      "interface IFoo { void f(in IBar[] input); }";
-  const string expected_stderr = "ERROR: foo/IFoo.aidl:3.27-32: Binder type cannot be an array\n";
-  CaptureStderr();
-  EXPECT_EQ(nullptr, Parse(path, contents, typenames_, GetLanguage()));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 TEST_P(AidlTest, SupportOnlyOutParameters) {
@@ -375,20 +363,11 @@ TEST_P(AidlTest, RejectUnsupportedTypeAnnotations) {
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
-TEST_P(AidlTest, RejectUnsupportedParcelableAnnotations) {
-  AidlError error;
-  const string method = "package a; @nullable parcelable IFoo cpp_header \"IFoo.h\";";
-  CaptureStderr();
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@nullable is not available."));
-  EXPECT_EQ(AidlError::BAD_TYPE, error);
-}
-
 TEST_P(AidlTest, RejectUnsupportedParcelableDefineAnnotations) {
   AidlError error;
-  const string method = "package a; @nullable parcelable IFoo { String a; String b; }";
+  const string method = "package a; @nullable parcelable Foo { String a; String b; }";
   CaptureStderr();
-  EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", method, typenames_, GetLanguage(), &error));
+  EXPECT_EQ(nullptr, Parse("a/Foo.aidl", method, typenames_, GetLanguage(), &error));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("@nullable is not available."));
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
@@ -695,6 +674,28 @@ TEST_P(AidlTest, AnnotationsInMultiplePlaces) {
   ASSERT_TRUE(ret_type.IsHide());
 }
 
+TEST_P(AidlTest, AnnotationValueAttribute) {
+  const string content =
+      "package a; @Descriptor(\"descriptor_value\") interface IFoo { void f(int a); }";
+  const AidlDefinedType* defined = Parse("a/IFoo.aidl", content, typenames_, GetLanguage());
+  ASSERT_NE(nullptr, defined);
+  const AidlInterface* iface = defined->AsInterface();
+  ASSERT_NE(nullptr, iface);
+
+  ASSERT_EQ("descriptor_value", iface->GetDescriptor());
+}
+
+TEST_F(AidlTest, CheckApiForAnnotationValueAttribute) {
+  Options options = Options::From("aidl --checkapi=equal old new");
+
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p; @Descriptor(value=\"v1\") interface IFoo{ void foo();}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p; @Descriptor(\"v1\") interface IFoo{ void foo();}");
+
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+}
+
 TEST_P(AidlTest, WritesComments) {
   string foo_interface =
       R"(package a;
@@ -791,7 +792,7 @@ TEST_P(AidlTest, PreferImportToPreprocessed) {
   EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").is_resolved);
   EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").is_resolved);
   // But if we request just "IBar" we should get our imported one.
-  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, {});
+  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", /*array=*/std::nullopt, nullptr, {});
   ambiguous_type.Resolve(typenames_, parse_result);
   EXPECT_EQ("one.IBar", ambiguous_type.GetName());
 }
@@ -813,7 +814,7 @@ TEST_P(AidlTest, B147918827) {
   EXPECT_TRUE(typenames_.ResolveTypename("one.IBar").is_resolved);
   EXPECT_TRUE(typenames_.ResolveTypename("another.IBar").is_resolved);
   // But if we request just "IBar" we should get our imported one.
-  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", false, nullptr, {});
+  AidlTypeSpecifier ambiguous_type(AIDL_LOCATION_HERE, "IBar", /*array=*/std::nullopt, nullptr, {});
   ambiguous_type.Resolve(typenames_, parse_result);
   EXPECT_EQ("one.IBar", ambiguous_type.GetName());
 }
@@ -1129,8 +1130,7 @@ TEST_P(AidlTest, SupportDeprecated) {
                       {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
                       {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
                       {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
-                      // TODO(b/177860423) support "deprecated" in Rust enum
-                      // {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
                   });
 }
 
@@ -1246,6 +1246,25 @@ TEST_P(AidlTest, FailOnDuplicateConstantNames) {
                            typenames_, GetLanguage(), &error));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
   EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, RejectUnstructuredParcelablesInNDKandRust) {
+  io_delegate_.SetFileContents("o/Foo.aidl", "package o; parcelable Foo cpp_header \"cpp/Foo.h\";");
+  const auto options =
+      Options::From("aidl --lang=" + to_string(GetLanguage()) + " -o out -h out -I. o/Foo.aidl");
+  const bool reject_unstructured_parcelables =
+      GetLanguage() == Options::Language::NDK || GetLanguage() == Options::Language::RUST;
+  const string expected_err = reject_unstructured_parcelables
+                                  ? "Refusing to generate code with unstructured parcelables"
+                                  : "";
+  CaptureStderr();
+  EXPECT_EQ(compile_aidl(options, io_delegate_), !reject_unstructured_parcelables);
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_err));
+}
+
+TEST_F(AidlTest, CosntantValueType) {
+  unique_ptr<AidlConstantValue> num{AidlConstantValue::Integral(AIDL_LOCATION_HERE, "1")};
+  EXPECT_EQ(num->GetType(), AidlConstantValue::Type::INT8);
 }
 
 TEST_P(AidlTest, FailOnTooBigConstant) {
@@ -1416,10 +1435,47 @@ TEST_P(AidlTest, ParseNegativeConstHexValue) {
   EXPECT_EQ("-1", cpp_constants[0]->ValueString(cpp::ConstantValueDecorator));
 }
 
+TEST_F(AidlTest, ByteAndByteArrayDifferInCpp) {
+  auto type = Parse("p/Foo.aidl",
+                    R"(
+                      package p;
+                      parcelable Foo {
+                        byte a = -1;
+                        byte[] b = {-1, 1};
+                        @nullable byte[] c = {-1, 1};
+                      }
+                    )",
+                    typenames_, Options::Language::CPP);
+  ASSERT_NE(nullptr, type);
+  auto& fields = type->GetFields();
+  ASSERT_EQ(3ul, fields.size());
+  EXPECT_EQ("-1", fields[0]->ValueString(cpp::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[1]->ValueString(cpp::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[2]->ValueString(cpp::ConstantValueDecorator));
+}
+
+TEST_F(AidlTest, ByteAndByteArrayDifferInNdk) {
+  auto type = Parse("p/Foo.aidl",
+                    R"(
+                      package p;
+                      parcelable Foo {
+                        byte a = -1;
+                        byte[] b = {-1, 1};
+                        @nullable byte[] c = {-1, 1};
+                      }
+                    )",
+                    typenames_, Options::Language::NDK);
+  ASSERT_NE(nullptr, type);
+  auto& fields = type->GetFields();
+  ASSERT_EQ(3ul, fields.size());
+  EXPECT_EQ("-1", fields[0]->ValueString(ndk::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[1]->ValueString(ndk::ConstantValueDecorator));
+  EXPECT_EQ("{uint8_t(-1), 1}", fields[2]->ValueString(ndk::ConstantValueDecorator));
+}
+
 TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
-  io_delegate_.SetFileContents(
-      "p/Outer.aidl",
-      "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
+  io_delegate_.SetFileContents("p/Outer.aidl",
+                               "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; import p.Outer; interface IFoo"
@@ -1430,7 +1486,8 @@ TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
 
   EXPECT_TRUE(typenames_.ResolveTypename("p.Outer.Inner").is_resolved);
   // C++ uses "::" instead of "." to refer to a inner class.
-  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", false, nullptr, {});
+  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", /*array=*/std::nullopt,
+                                nullptr, {});
   EXPECT_EQ("::p::Outer::Inner", cpp::CppNameOf(nested_type, typenames_));
 }
 
@@ -1446,7 +1503,8 @@ TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelablesWithoutImports) {
 
   EXPECT_TRUE(typenames_.ResolveTypename("p.Outer.Inner").is_resolved);
   // C++ uses "::" instead of "." to refer to a inner class.
-  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", false, nullptr, {});
+  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.Outer.Inner", /*array=*/std::nullopt,
+                                nullptr, {});
   EXPECT_EQ("::p::Outer::Inner", cpp::CppNameOf(nested_type, typenames_));
 }
 
@@ -1470,7 +1528,8 @@ TEST_F(AidlTest, UnderstandsNestedTypes) {
 
   EXPECT_TRUE(typenames_.ResolveTypename("p.IOuter.Inner").is_resolved);
   // C++ uses "::" instead of "." to refer to a inner class.
-  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.IOuter.Inner", false, nullptr, {});
+  AidlTypeSpecifier nested_type(AIDL_LOCATION_HERE, "p.IOuter.Inner", /*array=*/std::nullopt,
+                                nullptr, {});
   EXPECT_EQ("::p::IOuter::Inner", cpp::CppNameOf(nested_type, typenames_));
 }
 
@@ -1526,6 +1585,21 @@ TEST_F(AidlTest, UnderstandsNestedTypesViaFullyQualifiedName) {
   EXPECT_EQ(GetCapturedStderr(), "");
 
   EXPECT_TRUE(typenames_.ResolveTypename("p.IOuter.Inner").is_resolved);
+}
+
+TEST_F(AidlTest, IncludeParentsRawHeaderForNestedInterface) {
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse("p/Outer.aidl",
+                           "package p;\n"
+                           "parcelable Outer {\n"
+                           "  interface IInner {}\n"
+                           "}",
+                           typenames_, Options::Language::CPP));
+
+  EXPECT_EQ(GetCapturedStderr(), "");
+  auto resolved = typenames_.ResolveTypename("p.Outer.IInner");
+  ASSERT_TRUE(resolved.defined_type);
+  EXPECT_EQ(cpp::HeaderFile(*resolved.defined_type, cpp::ClassNames::CLIENT), "p/Outer.h");
 }
 
 TEST_F(AidlTest, UnderstandsNestedTypesViaFullyQualifiedImport) {
@@ -1615,6 +1689,25 @@ TEST_F(AidlTest, UnderstandsNestedTypesViaQualifiedInTheSameScope) {
   EXPECT_EQ(TypeFinder::Get(*foo, "t3"), "p.IFoo.Baz");
 }
 
+TEST_F(AidlTest, NestedTypeResolutionWithNoPackage) {
+  const string input_path = "Foo.aidl";
+  const string input =
+      "parcelable Foo {\n"
+      "  parcelable Bar {\n"
+      "    enum Baz { BAZ }\n"
+      "    Baz baz = Baz.BAZ;\n"
+      "  }\n"
+      "  Bar bar;\n"
+      "}";
+  CaptureStderr();
+  auto foo = Parse(input_path, input, typenames_, Options::Language::CPP);
+  EXPECT_EQ(GetCapturedStderr(), "");
+  ASSERT_NE(nullptr, foo);
+
+  EXPECT_EQ(TypeFinder::Get(*foo, "bar"), "Foo.Bar");
+  EXPECT_EQ(TypeFinder::Get(*foo, "baz"), "Foo.Bar.Baz");
+}
+
 TEST_F(AidlTest, RejectsNestedTypesWithParentsName) {
   const string input_path = "p/Foo.aidl";
   const string input =
@@ -1625,19 +1718,6 @@ TEST_F(AidlTest, RejectsNestedTypesWithParentsName) {
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Nested type 'Foo' has the same name as its parent."));
-}
-
-TEST_F(AidlTest, RejectsInterfaceAsNestedTypes) {
-  const string input_path = "p/IFoo.aidl";
-  const string input =
-      "package p;\n"
-      "interface IFoo {\n"
-      "  interface ICallback { void done(); }\n"
-      "  void doTask(ICallback cb);\n"
-      "}";
-  CaptureStderr();
-  EXPECT_EQ(nullptr, Parse(input_path, input, typenames_, Options::Language::CPP));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Interfaces should be at the root scope"));
 }
 
 TEST_F(AidlTest, RejectUnstructuredParcelableAsNestedTypes) {
@@ -1841,7 +1921,8 @@ TEST_F(AidlTest, CppNameOf_GenericType) {
   auto type = [](std::string name, auto&&... type_params) -> std::unique_ptr<AidlTypeSpecifier> {
     auto params = new std::vector<std::unique_ptr<AidlTypeSpecifier>>;
     (..., params->emplace_back(std::move(type_params)));
-    return std::make_unique<AidlTypeSpecifier>(AIDL_LOCATION_HERE, name, false, params, Comments{});
+    return std::make_unique<AidlTypeSpecifier>(AIDL_LOCATION_HERE, name, std::nullopt, params,
+                                               Comments{});
   };
 
   auto set_nullable = [](std::unique_ptr<AidlTypeSpecifier>&& type) {
@@ -1853,7 +1934,7 @@ TEST_F(AidlTest, CppNameOf_GenericType) {
   };
 
   auto set_array = [](std::unique_ptr<AidlTypeSpecifier>&& type) {
-    (void)type->SetArray();
+    (void)type->MakeArray(DynamicArray{});
     return std::move(type);
   };
 
@@ -1891,10 +1972,10 @@ TEST_P(AidlTest, UnderstandsNativeParcelables) {
   auto parse_result = Parse(input_path, input, typenames_, GetLanguage());
   EXPECT_NE(nullptr, parse_result);
   EXPECT_TRUE(typenames_.ResolveTypename("p.Bar").is_resolved);
-  AidlTypeSpecifier native_type(AIDL_LOCATION_HERE, "p.Bar", false, nullptr, {});
+  AidlTypeSpecifier native_type(AIDL_LOCATION_HERE, "p.Bar", /*array=*/std::nullopt, nullptr, {});
   native_type.Resolve(typenames_, parse_result);
 
-  EXPECT_EQ("p.Bar", java::InstantiableJavaSignatureOf(native_type, typenames_));
+  EXPECT_EQ("p.Bar", java::InstantiableJavaSignatureOf(native_type));
   // C++ understands C++ specific stuff
   EXPECT_EQ("::p::Bar", cpp::CppNameOf(native_type, typenames_));
   set<string> headers;
@@ -2034,6 +2115,7 @@ TEST_P(AidlTest, ExtensionTest) {
   EXPECT_NE(nullptr, Parse("a/Data.aidl", extendable_parcelable, typenames_, GetLanguage()));
   EXPECT_EQ("", GetCapturedStderr());
 }
+
 TEST_P(AidlTest, ParcelableHolderAsReturnType) {
   CaptureStderr();
   string parcelableholder_return_interface =
@@ -2114,6 +2196,7 @@ TEST_F(AidlTest, ApiDump) {
       "    int foo(out int[] a, String b, boolean c, inout List<String> d);\n"
       "    int foo2(@utf8InCpp String x, inout List<String> y);\n"
       "    IFoo foo3(IFoo foo);\n"
+      "    void foo4(in int[2][3] fixedArray);\n"
       "    Data getData();\n"
       "    // @hide not applied\n"
       "    /** blahblah\n"
@@ -2155,6 +2238,7 @@ interface IFoo {
   int foo(out int[] a, String b, boolean c, inout List<String> d);
   int foo2(@utf8InCpp String x, inout List<String> y);
   foo.bar.IFoo foo3(foo.bar.IFoo foo);
+  void foo4(in int[2][3] fixedArray);
   foo.bar.Data getData();
   /**
    * @deprecated reason why...
@@ -2918,6 +3002,22 @@ TEST_F(AidlTestCompatibleChanges, CompatibleExplicitDefaults) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, NewNestedTypes) {
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;\n"
+                               "parcelable Data {\n"
+                               "  int n;\n"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;\n"
+                               "parcelable Data {\n"
+                               "  enum NewEnum { N = 3 }\n"
+                               "  int n;\n"
+                               "  NewEnum e = NewEnum.N;\n"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 class AidlTestIncompatibleChanges : public AidlTest {
  protected:
   Options options_ = Options::From("aidl --checkapi old new");
@@ -3426,6 +3526,28 @@ TEST_F(AidlTestIncompatibleChanges, FixedSizeRemovedField) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTestIncompatibleChanges, IncompatibleChangesInNestedType) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.33-37: Number of fields in p.Foo is reduced from 2 to 1.\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;\n"
+                               "parcelable Foo {\n"
+                               "  interface IBar {\n"
+                               "    void foo();"
+                               "  }\n"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;\n"
+                               "parcelable Foo {\n"
+                               "  interface IBar {\n"
+                               "    void foo(int n);"  // incompatible: signature changed
+                               "  }\n"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Removed or changed method: p.Foo.IBar.foo()"));
+}
+
 TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
   const string expected_stderr =
       "ERROR: Foo.aidl:2.8-10: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
@@ -3455,6 +3577,47 @@ TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
                                "  int isFixedSize;\n"
                                "  @nullable OtherFixed nullable1;\n"
                                "  @nullable(heap=true) OtherFixed nullable2;\n"
+                               "  float[16] floats;\n"
+                               "}");
+  io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { int a; }");
+  io_delegate_.SetFileContents("OtherFixed.aidl", "@FixedSize parcelable OtherFixed { int a; }");
+  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize_Union) {
+  const string expected_stderr =
+      "ERROR: Foo.aidl:2.8-10: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "a.\n"
+      "ERROR: Foo.aidl:3.6-8: The @FixedSize parcelable 'Foo' has a non-fixed size field named b.\n"
+      "ERROR: Foo.aidl:4.9-11: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "c.\n"
+      "ERROR: Foo.aidl:5.23-25: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "d.\n"
+      "ERROR: Foo.aidl:6.10-12: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "e.\n"
+      "ERROR: Foo.aidl:7.15-17: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "f.\n"
+      "ERROR: Foo.aidl:9.23-33: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "nullable1.\n"
+      "ERROR: Foo.aidl:10.34-44: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
+      "nullable2.\n";
+
+  io_delegate_.SetFileContents("Foo.aidl",
+                               "@FixedSize union Foo {\n"
+                               "  int[] a = {};\n"
+                               "  Bar b;\n"
+                               "  String c;\n"
+                               "  ParcelFileDescriptor d;\n"
+                               "  IBinder e;\n"
+                               "  List<String> f;\n"
+                               "  int isFixedSize;\n"
+                               "  @nullable OtherFixed nullable1;\n"
+                               "  @nullable(heap=true) OtherFixed nullable2;\n"
+                               "  float[16] floats;\n"
                                "}");
   io_delegate_.SetFileContents("Bar.aidl", "parcelable Bar { int a; }");
   io_delegate_.SetFileContents("OtherFixed.aidl", "@FixedSize parcelable OtherFixed { int a; }");
@@ -3631,6 +3794,29 @@ TEST_F(AidlTest, FailOnPartiallyAssignedIds) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTest, AssignedIds) {
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse("IFoo.aidl",
+                           "interface IFoo {\n"
+                           "  void foo();\n"
+                           "  void bar();\n"
+                           "  interface INested {\n"
+                           "    void foo();\n"
+                           "    void bar();\n"
+                           "  }\n"
+                           "}",
+                           typenames_, Options::Language::JAVA));
+  EXPECT_EQ("", GetCapturedStderr());
+  auto foo = typenames_.ResolveTypename("IFoo").defined_type;
+  ASSERT_EQ(2u, foo->GetMethods().size());
+  EXPECT_EQ(0, foo->GetMethods()[0]->GetId());
+  EXPECT_EQ(1, foo->GetMethods()[1]->GetId());
+  auto nested = typenames_.ResolveTypename("IFoo.INested").defined_type;
+  ASSERT_EQ(2u, nested->GetMethods().size());
+  EXPECT_EQ(0, nested->GetMethods()[0]->GetId());
+  EXPECT_EQ(1, nested->GetMethods()[1]->GetId());
+}
+
 TEST_F(AidlTest, AllowDuplicatedImportPaths) {
   Options options = Options::From("aidl --lang=java -I dir -I dir IFoo.aidl");
   io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
@@ -3751,7 +3937,6 @@ TEST_F(AidlTest, ParseRustDerive) {
 }
 
 TEST_F(AidlTest, EmptyEnforceAnnotation) {
-  const string expected_stderr = "ERROR: a/IFoo.aidl:3.1-19: Missing 'condition' on @Enforce.\n";
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
         @Enforce()
@@ -3761,27 +3946,63 @@ TEST_F(AidlTest, EmptyEnforceAnnotation) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Missing 'value' on @Enforce."));
 }
 
 TEST_F(AidlTest, EmptyEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
-        @Enforce(condition="")
+        @Enforce("")
         void Protected();
     })");
 
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("ERROR: a/IFoo.aidl:3.1-31: Unable to parse @Enforce annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @Enforce annotation"));
 }
 
 TEST_F(AidlTest, InvalidEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
-        @Enforce(condition="invalid")
+        @Enforce("invalid")
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @Enforce annotation"));
+}
+
+TEST_F(AidlTest, InterfaceEnforceCondition) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @Enforce("permission = INTERNET")
+    interface IFoo {
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, InterfaceAndMethodEnforceCondition) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @Enforce("permission = INTERNET")
+    interface IFoo {
+        @Enforce("uid = SYSTEM_UID")
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @NoPermissionRequired
+    interface IFoo {
+        @Enforce("permission = INTERNET")
         void Protected();
     })");
 
@@ -3789,7 +4010,53 @@ TEST_F(AidlTest, InvalidEnforceCondition) {
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("ERROR: a/IFoo.aidl:3.1-38: Unable to parse @Enforce annotation"));
+              HasSubstr("The interface IFoo is annotated as requiring no permission"));
+}
+
+TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @PermissionManuallyEnforced
+    interface IFoo {
+        @Enforce("permission = INTERNET")
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(
+      GetCapturedStderr(),
+      HasSubstr("The interface IFoo is annotated as manually implementing permission checks"));
+}
+
+TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @Enforce("permission = INTERNET")
+    interface IFoo {
+        @NoPermissionRequired
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("The interface IFoo enforces permissions using annotations"));
+}
+
+TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @Enforce("permission = INTERNET")
+    interface IFoo {
+        @PermissionManuallyEnforced
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("The interface IFoo enforces permissions using annotations"));
 }
 
 class AidlOutputPathTest : public AidlTest {
@@ -4134,15 +4401,58 @@ TEST_F(AidlTest, NestedTypeArgs) {
                   "a.Baz<a.Bar<a.Bar<java.lang.String[]>>[],a.Bar<java.lang.String>> barss;"));
 }
 
-TEST_F(AidlTest, DoubleArrayError) {
+TEST_F(AidlTest, AcceptMultiDimensionalFixedSizeArray) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[2][3] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
+TEST_F(AidlTest, RejectArrayOfFixedSizeArray) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[2][] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Multi-dimensional arrays must be fixed size."));
+}
+
+TEST_F(AidlTest, RejectFixedSizeArrayOfDynamicArray) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[][3] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Multi-dimensional arrays must be fixed size."));
+}
+
+TEST_F(AidlTest, RejectArrayOfArray) {
   io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[][] a; }");
 
   Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
-  const string expected_stderr =
-      "ERROR: a/Bar.aidl:1.28-37: Can only have one dimensional arrays.\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Multi-dimensional arrays must be fixed size."));
+}
+
+TEST_F(AidlTest, RejectInvalidArraySize_Negative) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[-1] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Array size must be a positive number"));
+}
+
+TEST_F(AidlTest, RejectInvalidArraySize_WrongType) {
+  io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[\"3\"] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Array size must be a positive number"));
 }
 
 TEST_F(AidlTest, DoubleGenericError) {
@@ -4185,6 +4495,46 @@ TEST_F(AidlTest, ListOfNullablesAreNotSupported) {
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(),
               testing::HasSubstr("Annotations for type arguments are not supported."));
+}
+
+TEST_F(AidlTest, DefaultShouldMatchWithFixedSizeArray) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a;\n"
+                               "parcelable Bar {\n"
+                               "  int[2][3] a = {{1,2,3}, {4,5,6}};\n"
+                               "}");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
+TEST_F(AidlTest, FixedSizeArrayWithWrongTypeDefaultValue) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a;\n"
+                               "parcelable Bar {\n"
+                               "  int[2][3] a = {{\"1\",\"2\",\"3\"}, {4,5,6}};\n"
+                               "}");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Invalid type specifier for a literal string: int"));
+}
+
+TEST_F(AidlTest, FixedSizeArrayWithWrongSizeDefaultValue) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a;\n"
+                               "parcelable Bar {\n"
+                               "  int[2][3] a = {{1,2,3,4}, {4,5,6}};\n"
+                               "}");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Expected an array of 3 elements, but found one with 4 elements"));
 }
 
 struct GenericAidlTest : ::testing::Test {
@@ -4335,7 +4685,7 @@ parcelable Foo {
 
   string code;
   EXPECT_TRUE(io_delegate_.GetWrittenContents("out/p/Foo.h", &code));
-  EXPECT_THAT(code, testing::HasSubstr("::p::Enum e = ::p::Enum(::p::Enum::BAR);"));
+  EXPECT_THAT(code, testing::HasSubstr("::p::Enum e = ::p::Enum::BAR;"));
 }
 
 TEST_F(AidlTest, EnumWithDefaults_Ndk) {
@@ -4664,7 +5014,7 @@ TEST_F(AidlTest, SuppressWarningsIsNotForArgs) {
   io_delegate_.SetFileContents(
       "IFoo.aidl",
       "interface IFoo {\n"
-      "  void foo(in @SuppressWarnings(value=\"inout-parameter\") int x);\n"
+      "  void foo(in @SuppressWarnings(value={\"inout-parameter\"}) int x);\n"
       "}");
   auto options = Options::From("aidl --lang=java IFoo.aidl");
   CaptureStderr();
@@ -4680,17 +5030,43 @@ TEST_F(AidlTest, VoidCantBeUsedInMethodParameterType) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("'void' is an invalid type for the parameter 'n'"));
 }
 
+TEST_F(AidlTest, InterfaceVectorIsAvailableAfterTiramisu) {
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "interface IFoo{\n"
+                               "  void foo(in IFoo[] n);\n"
+                               "  void bar(in List<IFoo> n);\n"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(
+      Options::From("aidl --lang=java --min_sdk_version 30 -o out p/IFoo.aidl"), io_delegate_));
+  auto captured_stderr = GetCapturedStderr();
+  EXPECT_THAT(captured_stderr, HasSubstr("Array of interfaces is available since"));
+  EXPECT_THAT(captured_stderr, HasSubstr("List of interfaces is available since"));
+
+  CaptureStderr();
+  EXPECT_TRUE(
+      compile_aidl(Options::From("aidl --lang=java --min_sdk_version Tiramisu -o out p/IFoo.aidl"),
+                   io_delegate_));
+  EXPECT_EQ(GetCapturedStderr(), "");
+}
+
 struct TypeParam {
   string kind;
   string literal;
 };
 
 const TypeParam kTypeParams[] = {
-    {"primitive", "int"},    {"primitiveArray", "int[]"},
-    {"String", "String"},    {"StringArray", "String[]"},
-    {"IBinder", "IBinder"},  {"ParcelFileDescriptor", "ParcelFileDescriptor"},
-    {"parcelable", "a.Foo"}, {"enum", "a.Enum"},
-    {"union", "a.Union"},    {"interface", "a.IBar"},
+    {"primitive", "int"},
+    {"primitiveArray", "int[]"},
+    {"primitiveFixedArray", "int[3]"},
+    {"String", "String"},
+    {"StringArray", "String[]"},
+    {"IBinder", "IBinder"},
+    {"ParcelFileDescriptor", "ParcelFileDescriptor"},
+    {"parcelable", "a.Foo"},
+    {"enum", "a.Enum"},
+    {"union", "a.Union"},
+    {"interface", "a.IBar"},
 };
 
 struct ExpectedResult {
@@ -4707,6 +5083,14 @@ const std::map<std::string, ExpectedResult> kListSupportExpectations = {
     {"java_primitiveArray", {"List of arrays is not supported", "List of arrays is not supported"}},
     {"ndk_primitiveArray", {"List of arrays is not supported", "List of arrays is not supported"}},
     {"rust_primitiveArray", {"List of arrays is not supported", "List of arrays is not supported"}},
+    {"cpp_primitiveFixedArray",
+     {"List of arrays is not supported", "List of arrays is not supported"}},
+    {"java_primitiveFixedArray",
+     {"List of arrays is not supported", "List of arrays is not supported"}},
+    {"ndk_primitiveFixedArray",
+     {"List of arrays is not supported", "List of arrays is not supported"}},
+    {"rust_primitiveFixedArray",
+     {"List of arrays is not supported", "List of arrays is not supported"}},
     {"cpp_String", {"", ""}},
     {"java_String", {"", ""}},
     {"ndk_String", {"", ""}},
@@ -4723,10 +5107,10 @@ const std::map<std::string, ExpectedResult> kListSupportExpectations = {
     {"java_ParcelFileDescriptor", {"", ""}},
     {"ndk_ParcelFileDescriptor", {"", ""}},
     {"rust_ParcelFileDescriptor", {"", ""}},
-    {"cpp_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
-    {"java_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
-    {"ndk_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
-    {"rust_interface", {"List<a.IBar> is not supported", "List<a.IBar> is not supported"}},
+    {"cpp_interface", {"", ""}},
+    {"java_interface", {"", ""}},
+    {"ndk_interface", {"", ""}},
+    {"rust_interface", {"", ""}},
     {"cpp_parcelable", {"", ""}},
     {"java_parcelable", {"", ""}},
     {"ndk_parcelable", {"", ""}},
@@ -4746,18 +5130,46 @@ const std::map<std::string, ExpectedResult> kArraySupportExpectations = {
     {"java_primitive", {"", ""}},
     {"ndk_primitive", {"", ""}},
     {"rust_primitive", {"", ""}},
-    {"cpp_primitiveArray", {"Can only have one dimensional", "Can only have one dimensional"}},
-    {"java_primitiveArray", {"Can only have one dimensional", "Can only have one dimensional"}},
-    {"ndk_primitiveArray", {"Can only have one dimensional", "Can only have one dimensional"}},
-    {"rust_primitiveArray", {"Can only have one dimensional", "Can only have one dimensional"}},
+    {"cpp_primitiveArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"java_primitiveArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"ndk_primitiveArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"rust_primitiveArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"cpp_primitiveFixedArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"java_primitiveFixedArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"ndk_primitiveFixedArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"rust_primitiveFixedArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
     {"cpp_String", {"", ""}},
     {"java_String", {"", ""}},
     {"ndk_String", {"", ""}},
     {"rust_String", {"", ""}},
-    {"cpp_StringArray", {"Can only have one dimensional", "Can only have one dimensional"}},
-    {"java_StringArray", {"Can only have one dimensional", "Can only have one dimensional"}},
-    {"ndk_StringArray", {"Can only have one dimensional", "Can only have one dimensional"}},
-    {"rust_StringArray", {"Can only have one dimensional", "Can only have one dimensional"}},
+    {"cpp_StringArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"java_StringArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"ndk_StringArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
+    {"rust_StringArray",
+     {"Multi-dimensional arrays must be fixed size.",
+      "Multi-dimensional arrays must be fixed size."}},
     {"cpp_IBinder", {"", ""}},
     {"java_IBinder", {"", ""}},
     {"ndk_IBinder", {"", ""}},
@@ -4766,10 +5178,10 @@ const std::map<std::string, ExpectedResult> kArraySupportExpectations = {
     {"java_ParcelFileDescriptor", {"", ""}},
     {"ndk_ParcelFileDescriptor", {"", ""}},
     {"rust_ParcelFileDescriptor", {"", ""}},
-    {"cpp_interface", {"Binder type cannot be an array", "Binder type cannot be an array"}},
-    {"java_interface", {"Binder type cannot be an array", "Binder type cannot be an array"}},
-    {"ndk_interface", {"Binder type cannot be an array", "Binder type cannot be an array"}},
-    {"rust_interface", {"Binder type cannot be an array", "Binder type cannot be an array"}},
+    {"cpp_interface", {"", ""}},
+    {"java_interface", {"", ""}},
+    {"ndk_interface", {"", ""}},
+    {"rust_interface", {"", ""}},
     {"cpp_parcelable", {"", ""}},
     {"java_parcelable", {"", ""}},
     {"ndk_parcelable", {"", ""}},
@@ -4793,6 +5205,10 @@ const std::map<std::string, ExpectedResult> kFieldSupportExpectations = {
     {"java_primitiveArray", {"", ""}},
     {"ndk_primitiveArray", {"", ""}},
     {"rust_primitiveArray", {"", ""}},
+    {"cpp_primitiveFixedArray", {"", ""}},
+    {"java_primitiveFixedArray", {"", ""}},
+    {"ndk_primitiveFixedArray", {"", ""}},
+    {"rust_primitiveFixedArray", {"", ""}},
     {"cpp_String", {"", ""}},
     {"java_String", {"", ""}},
     {"ndk_String", {"", ""}},
@@ -4848,8 +5264,8 @@ class AidlTypeParamTest
     }
     io.SetFileContents("a/Target.aidl", "package a; parcelable Target { " + decl + " f; }");
 
-    const auto options =
-        Options::From(fmt::format("aidl -I . --lang={} a/Target.aidl -o out -h out", lang));
+    const auto options = Options::From(fmt::format(
+        "aidl -I . --min_sdk_version current --lang={} a/Target.aidl -o out -h out", lang));
     CaptureStderr();
     compile_aidl(options, io);
     auto it = expectations.find(lang + "_" + kind);

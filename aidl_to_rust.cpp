@@ -39,40 +39,44 @@ namespace rust {
 namespace {
 std::string GetRawRustName(const AidlTypeSpecifier& type);
 
-std::string ConstantValueDecoratorInternal(const AidlTypeSpecifier& type,
-                                           const std::string& raw_value, bool by_ref) {
+std::string ConstantValueDecoratorInternal(
+    const AidlTypeSpecifier& type,
+    const std::variant<std::string, std::vector<std::string>>& raw_value, bool by_ref) {
   if (type.IsArray()) {
-    // Convert `{ ... }` to `vec!{ ... }`
-    return "vec!" + raw_value;
+    // Convert `{ ... }` to `vec![ ... ]`
+    const auto& values = std::get<std::vector<std::string>>(raw_value);
+    return "vec![" + Join(values, ", ") + "]";
   }
+
+  const std::string& value = std::get<std::string>(raw_value);
 
   const auto& aidl_name = type.GetName();
   if (aidl_name == "char") {
-    return raw_value + " as u16";
+    return value + " as u16";
   }
 
   if (aidl_name == "float") {
-    // raw_value already ends in `f`, so just add `32`
-    return raw_value + "32";
+    // value already ends in `f`, so just add `32`
+    return value + "32";
   }
 
   if (aidl_name == "double") {
-    return raw_value + "f64";
+    return value + "f64";
   }
 
   if (aidl_name == "String" && !by_ref) {
     // The actual type might be String or &str,
     // and .into() transparently converts into either one
-    return raw_value + ".into()";
+    return value + ".into()";
   }
 
   if (auto defined_type = type.GetDefinedType(); defined_type) {
     auto enum_type = defined_type->AsEnumDeclaration();
-    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
-    return GetRawRustName(type) + "::" + raw_value.substr(raw_value.find_last_of('.') + 1);
+    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << value << "\"";
+    return GetRawRustName(type) + "::" + value.substr(value.find_last_of('.') + 1);
   }
 
-  return raw_value;
+  return value;
 }
 
 std::string GetRawRustName(const AidlTypeSpecifier& type) {
@@ -127,15 +131,22 @@ std::string GetRustName(const AidlTypeSpecifier& type, const AidlTypenames& type
     }
     return m[element_type_name];
   }
+  auto name = GetRawRustName(element_type);
   if (TypeIsInterface(element_type, typenames)) {
-    return "binder::Strong<dyn " + GetRawRustName(element_type) + ">";
+    name = "binder::Strong<dyn " + name + ">";
+    if (is_vector && mode == StorageMode::DEFAULT_VALUE) {
+      // Out-arguments of interface arrays need to be Vec<Option<...>> so resize_out_vec
+      // can initialize all elements to None.
+      name = "Option<" + name + ">";
+    }
   }
-
-  return GetRawRustName(element_type);
+  return name;
 }
 }  // namespace
 
-std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value) {
+std::string ConstantValueDecorator(
+    const AidlTypeSpecifier& type,
+    const std::variant<std::string, std::vector<std::string>>& raw_value) {
   auto rust_value = ConstantValueDecoratorInternal(type, raw_value, false);
   if (type.IsNullable()) {
     return "Some(" + rust_value + ")";
@@ -143,7 +154,9 @@ std::string ConstantValueDecorator(const AidlTypeSpecifier& type, const std::str
   return rust_value;
 }
 
-std::string ConstantValueDecoratorRef(const AidlTypeSpecifier& type, const std::string& raw_value) {
+std::string ConstantValueDecoratorRef(
+    const AidlTypeSpecifier& type,
+    const std::variant<std::string, std::vector<std::string>>& raw_value) {
   auto rust_value = ConstantValueDecoratorInternal(type, raw_value, true);
   if (type.IsNullable()) {
     return "Some(" + rust_value + ")";
@@ -166,8 +179,26 @@ bool UsesOptionInNullableVector(const AidlTypeSpecifier& type, const AidlTypenam
   return true;
 }
 
+std::string RustLifetimeName(Lifetime lifetime) {
+  switch (lifetime) {
+    case Lifetime::NONE:
+      return "";
+    case Lifetime::A:
+      return "'a ";
+  }
+}
+
+std::string RustLifetimeGeneric(Lifetime lifetime) {
+  switch (lifetime) {
+    case Lifetime::NONE:
+      return "";
+    case Lifetime::A:
+      return "<'a>";
+  }
+}
+
 std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
-                       StorageMode mode) {
+                       StorageMode mode, Lifetime lifetime) {
   std::string rust_name;
   if (type.IsArray() || typenames.IsList(type)) {
     StorageMode element_mode;
@@ -199,7 +230,7 @@ std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typen
   if (mode == StorageMode::IN_ARGUMENT || mode == StorageMode::UNSIZED_ARGUMENT) {
     // If this is a nullable input argument, put the reference inside the option,
     // e.g., `Option<&str>` instead of `&Option<str>`
-    rust_name = "&" + rust_name;
+    rust_name = "&" + RustLifetimeName(lifetime) + rust_name;
   }
 
   if (type.IsNullable() ||
@@ -216,7 +247,7 @@ std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typen
   }
 
   if (mode == StorageMode::OUT_ARGUMENT || mode == StorageMode::INOUT_ARGUMENT) {
-    rust_name = "&mut " + rust_name;
+    rust_name = "&" + RustLifetimeName(lifetime) + "mut " + rust_name;
   }
 
   return rust_name;

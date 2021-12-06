@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![rustfmt::skip]
 #[derive(Debug)]
 pub struct ParcelableWithNested {
   pub status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status,
@@ -11,13 +12,13 @@ impl Default for ParcelableWithNested {
   }
 }
 impl binder::parcel::Parcelable for ParcelableWithNested {
-  fn write_to_parcel(&self, parcel: &mut binder::parcel::Parcel) -> binder::Result<()> {
+  fn write_to_parcel(&self, parcel: &mut binder::parcel::BorrowedParcel) -> binder::Result<()> {
     parcel.sized_write(|subparcel| {
       subparcel.write(&self.status)?;
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::parcel::Parcel) -> binder::Result<()> {
+  fn read_from_parcel(&mut self, parcel: &binder::parcel::BorrowedParcel) -> binder::Result<()> {
     parcel.sized_read(|subparcel| {
       if subparcel.has_more_data() {
         self.status = subparcel.read()?;
@@ -34,10 +35,12 @@ impl binder::parcel::ParcelableMetadata for ParcelableWithNested {
 pub mod Status {
   #![allow(non_upper_case_globals)]
   use binder::declare_binder_enum;
-  declare_binder_enum! { Status : [i8; 2] {
-    OK = 0,
-    NOT_OK = 1,
-  } }
+  declare_binder_enum! {
+    Status : [i8; 2] {
+      OK = 0,
+      NOT_OK = 1,
+    }
+  }
 }
 pub(crate) mod mangled {
  pub use super::ParcelableWithNested as _7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested;
