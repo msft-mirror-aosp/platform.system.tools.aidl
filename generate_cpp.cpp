@@ -214,7 +214,7 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
                 ParcelWriteMethodOf(a->GetType(), typenames).c_str(),
                 ParcelWriteCastOf(a->GetType(), typenames, var_name).c_str());
       GenerateGotoErrorOnBadStatus(out);
-    } else if (a->IsOut() && a->GetType().IsArray()) {
+    } else if (a->IsOut() && a->GetType().IsDynamicArray()) {
       // Special case, the length of the out array is written into the parcel.
       //     _aidl_ret_status = _aidl_data.writeVectorSize(&out_param_name);
       //     if (_aidl_ret_status != ::android::OK) { goto error; }
@@ -480,7 +480,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
                 ParcelReadMethodOf(a->GetType(), typenames).c_str(),
                 ParcelReadCastOf(a->GetType(), typenames, var_name).c_str());
       GenerateBreakOnStatusNotOk(out);
-    } else if (a->IsOut() && a->GetType().IsArray()) {
+    } else if (a->IsOut() && a->GetType().IsDynamicArray()) {
       // Special case, the length of the out array is written into the parcel.
       //     _aidl_ret_status = _aidl_data.resizeOutVector(&out_param_name);
       //     if (_aidl_ret_status != ::android::OK) { break; }
@@ -1049,6 +1049,13 @@ void GenerateParcelFields(CodeWriter& out, const AidlStructuredParcelable& decl,
         out << " { ::android::Parcelable::Stability::STABILITY_VINTF }";
       } else {
         out << " { ::android::Parcelable::Stability::STABILITY_LOCAL }";
+      }
+    } else if (auto type = variable->GetType().GetDefinedType(); type) {
+      if (auto enum_type = type->AsEnumDeclaration(); enum_type) {
+        if (!variable->GetType().IsArray()) {
+          // if an enum doesn't have explicit default value, do zero-initialization
+          out << " = " << cppType << "(0)";
+        }
       }
     }
     out << ";\n";
