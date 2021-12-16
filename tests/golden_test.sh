@@ -46,6 +46,8 @@ function _golden_test() {
     "aidl_test_loggable_interface-java-source"
     "aidl_test_loggable_interface-ndk-source"
     "aidl-test-interface-platform-java-source"
+    "aidl-test-fixedsizearray-cpp-source"
+    "aidl-test-fixedsizearray-ndk-source"
   )
 
   local root="."
@@ -70,7 +72,7 @@ function _golden_test() {
       mkdir -p "$golden"
       cp -r "$built/gen" "$golden"
     else
-      diff -r "$built" "$golden" || e=1
+      diff -r "$built/gen" "$golden/gen" || e=1
     fi
   done
 

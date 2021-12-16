@@ -521,7 +521,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
       WriteToParcelFor({out, types, arg->GetType(), "_aidl_in.get()", prefix + var_name});
       out << ";\n";
       StatusCheckGoto(out);
-    } else if (arg->IsOut() && arg->GetType().IsArray()) {
+    } else if (arg->IsOut() && arg->GetType().IsDynamicArray()) {
       out << "_aidl_ret_status = ::ndk::AParcel_writeVectorSize(_aidl_in.get(), *" << var_name
           << ");\n";
       StatusCheckGoto(out);
@@ -626,7 +626,7 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
       ReadFromParcelFor({out, types, arg->GetType(), "_aidl_in", "&" + var_name});
       out << ";\n";
       StatusCheckBreak(out);
-    } else if (arg->IsOut() && arg->GetType().IsArray()) {
+    } else if (arg->IsOut() && arg->GetType().IsDynamicArray()) {
       out << "_aidl_ret_status = ::ndk::AParcel_resizeVector(_aidl_in, &" << var_name << ");\n";
       StatusCheckBreak(out);
     }
@@ -1151,6 +1151,13 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
     }
     if (variable->GetDefaultValue()) {
       out << " = " << variable->ValueString(ConstantValueDecorator);
+    } else if (auto type = variable->GetType().GetDefinedType(); type) {
+      if (auto enum_type = type->AsEnumDeclaration(); enum_type) {
+        if (!variable->GetType().IsArray()) {
+          // if an enum doesn't have explicit default value, do zero-initialization
+          out << " = " << NdkNameOf(types, variable->GetType(), StorageMode::STACK) << "(0)";
+        }
+      }
     }
     out << ";\n";
   }
