@@ -214,7 +214,7 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
                 ParcelWriteMethodOf(a->GetType(), typenames).c_str(),
                 ParcelWriteCastOf(a->GetType(), typenames, var_name).c_str());
       GenerateGotoErrorOnBadStatus(out);
-    } else if (a->IsOut() && a->GetType().IsArray()) {
+    } else if (a->IsOut() && a->GetType().IsDynamicArray()) {
       // Special case, the length of the out array is written into the parcel.
       //     _aidl_ret_status = _aidl_data.writeVectorSize(&out_param_name);
       //     if (_aidl_ret_status != ::android::OK) { goto error; }
@@ -480,7 +480,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
                 ParcelReadMethodOf(a->GetType(), typenames).c_str(),
                 ParcelReadCastOf(a->GetType(), typenames, var_name).c_str());
       GenerateBreakOnStatusNotOk(out);
-    } else if (a->IsOut() && a->GetType().IsArray()) {
+    } else if (a->IsOut() && a->GetType().IsDynamicArray()) {
       // Special case, the length of the out array is written into the parcel.
       //     _aidl_ret_status = _aidl_data.resizeOutVector(&out_param_name);
       //     if (_aidl_ret_status != ::android::OK) { break; }
@@ -492,6 +492,13 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
 
   if (options.GenLog()) {
     out << GenLogBeforeExecute(bn_name, method, true /* isServer */, false /* isNdk */);
+  }
+
+  if (!method.GetArguments().empty() && options.GetMinSdkVersion() >= SDK_VERSION_Tiramisu) {
+    out << "if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {\n";
+    out << "  _aidl_ret_status = st.writeToParcel(_aidl_reply);\n";
+    out << "  break;\n";
+    out << "}\n";
   }
 
   // Call the actual method.  This is implemented by the subclass.
@@ -961,27 +968,28 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
 void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& parcel,
                             const AidlTypenames& typenames) {
   out << "::android::status_t _aidl_ret_status = ::android::OK;\n";
-  out << "[[maybe_unused]] size_t _aidl_start_pos = " << kParcelVarName << "->dataPosition();\n";
-  out << "int32_t _aidl_parcelable_raw_size = " << kParcelVarName << "->readInt32();\n";
+  out << "size_t _aidl_start_pos = _aidl_parcel->dataPosition();\n";
+  out << "int32_t _aidl_parcelable_raw_size = 0;\n";
+  out << "_aidl_ret_status = _aidl_parcel->readInt32(&_aidl_parcelable_raw_size);\n";
+  out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
+  out << "  return _aidl_ret_status;\n";
+  out << "}\n";
   out << "if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;\n";
-  out << "[[maybe_unused]] size_t _aidl_parcelable_size = "
-      << "static_cast<size_t>(_aidl_parcelable_raw_size);\n";
+  out << "size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);\n";
   out << "if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;\n";
   for (const auto& variable : parcel.GetFields()) {
     string method = ParcelReadMethodOf(variable->GetType(), typenames);
     string arg = ParcelReadCastOf(variable->GetType(), typenames, "&" + variable->GetName());
-    out << "if (" << kParcelVarName
-        << "->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n";
-    out << "  " << kParcelVarName
-        << "->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
+    out << "if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {\n";
+    out << "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
-    out << "_aidl_ret_status = " << kParcelVarName << "->" << method << "(" << arg << ");\n";
+    out << "_aidl_ret_status = _aidl_parcel->" << method << "(" << arg << ");\n";
     out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
   }
-  out << "" << kParcelVarName << "->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
+  out << "_aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
   out << "return _aidl_ret_status;\n";
 }
 
@@ -1049,6 +1057,13 @@ void GenerateParcelFields(CodeWriter& out, const AidlStructuredParcelable& decl,
         out << " { ::android::Parcelable::Stability::STABILITY_VINTF }";
       } else {
         out << " { ::android::Parcelable::Stability::STABILITY_LOCAL }";
+      }
+    } else if (auto type = variable->GetType().GetDefinedType(); type) {
+      if (auto enum_type = type->AsEnumDeclaration(); enum_type) {
+        if (!variable->GetType().IsArray()) {
+          // if an enum doesn't have explicit default value, do zero-initialization
+          out << " = " << cppType << "(0)";
+        }
       }
     }
     out << ";\n";

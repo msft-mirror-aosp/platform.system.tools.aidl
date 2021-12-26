@@ -176,7 +176,7 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
       } else {
         out << "aidl_data.write(&" << arg_name << ")?;\n";
       }
-    } else if (arg->GetType().IsArray()) {
+    } else if (arg->GetType().IsDynamicArray()) {
       // For out-only arrays, send the array size
       if (arg->GetType().IsNullable()) {
         out << "aidl_data.write_slice_size(" << arg_name << ".as_deref())?;\n";
@@ -395,7 +395,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlMethod& method,
     string arg_mut = arg->IsOut() ? "mut " : "";
     string arg_init = arg->IsIn() ? "_aidl_data.read()?" : "Default::default()";
     out << "let " << arg_mut << arg_name << ": " << arg_type << " = " << arg_init << ";\n";
-    if (!arg->IsIn() && arg->GetType().IsArray()) {
+    if (!arg->IsIn() && arg->GetType().IsDynamicArray()) {
       // _aidl_data.resize_[nullable_]out_vec(&mut _arg_foo)?;
       auto resize_name = arg->GetType().IsNullable() ? "resize_nullable_out_vec" : "resize_out_vec";
       out << "_aidl_data." << resize_name << "(&mut " << arg_name << ")?;\n";

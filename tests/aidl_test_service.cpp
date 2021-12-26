@@ -59,6 +59,8 @@
 #include "android/aidl/loggable/BnLoggableInterface.h"
 #include "android/aidl/loggable/Data.h"
 
+#include "android/aidl/fixedsizearray/FixedSizeArrayExample.h"
+
 // Used implicitly.
 #undef LOG_TAG
 #define LOG_TAG "aidl_native_service"
@@ -85,6 +87,7 @@ using android::binder::Status;
 
 // Generated code:
 using android::aidl::tests::BackendType;
+using android::aidl::tests::BadParcelable;
 using android::aidl::tests::BnCppJavaTests;
 using android::aidl::tests::BnNamedCallback;
 using android::aidl::tests::BnNewName;
@@ -180,6 +183,11 @@ class CppJavaTests : public BnCppJavaTests {
  public:
   CppJavaTests() = default;
   ~CppJavaTests() = default;
+
+  Status RepeatBadParcelable(const BadParcelable& input, BadParcelable* _aidl_return) override {
+    *_aidl_return = input;
+    return Status::ok();
+  }
 
   Status RepeatSimpleParcelable(const SimpleParcelable& input, SimpleParcelable* repeat,
                                 SimpleParcelable* _aidl_return) override {
@@ -831,6 +839,70 @@ class NestedService : public BnNestedService {
   }
 };
 
+using android::aidl::fixedsizearray::FixedSizeArrayExample;
+class FixedSizeArrayService : public FixedSizeArrayExample::BnRepeatFixedSizeArray {
+ public:
+  FixedSizeArrayService() {}
+  virtual ~FixedSizeArrayService() = default;
+
+  Status RepeatBytes(const std::array<uint8_t, 3>& in_input, std::array<uint8_t, 3>* out_repeated,
+                     std::array<uint8_t, 3>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+  Status RepeatInts(const std::array<int32_t, 3>& in_input, std::array<int32_t, 3>* out_repeated,
+                    std::array<int32_t, 3>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+  Status RepeatBinders(const std::array<sp<IBinder>, 3>& in_input,
+                       std::array<sp<IBinder>, 3>* out_repeated,
+                       std::array<sp<IBinder>, 3>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+  Status RepeatParcelables(
+      const std::array<FixedSizeArrayExample::IntParcelable, 3>& in_input,
+      std::array<FixedSizeArrayExample::IntParcelable, 3>* out_repeated,
+      std::array<FixedSizeArrayExample::IntParcelable, 3>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+  Status Repeat2dBytes(const std::array<std::array<uint8_t, 3>, 2>& in_input,
+                       std::array<std::array<uint8_t, 3>, 2>* out_repeated,
+                       std::array<std::array<uint8_t, 3>, 2>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+  Status Repeat2dInts(const std::array<std::array<int32_t, 3>, 2>& in_input,
+                      std::array<std::array<int32_t, 3>, 2>* out_repeated,
+                      std::array<std::array<int32_t, 3>, 2>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+  Status Repeat2dBinders(const std::array<std::array<sp<IBinder>, 3>, 2>& in_input,
+                         std::array<std::array<sp<IBinder>, 3>, 2>* out_repeated,
+                         std::array<std::array<sp<IBinder>, 3>, 2>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+  Status Repeat2dParcelables(
+      const std::array<std::array<FixedSizeArrayExample::IntParcelable, 3>, 2>& in_input,
+      std::array<std::array<FixedSizeArrayExample::IntParcelable, 3>, 2>* out_repeated,
+      std::array<std::array<FixedSizeArrayExample::IntParcelable, 3>, 2>* _aidl_return) override {
+    *out_repeated = in_input;
+    *_aidl_return = in_input;
+    return Status::ok();
+  }
+};
+
 int Run() {
   android::sp<NativeService> service = new NativeService;
   sp<Looper> looper(Looper::prepare(0 /* opts */));
@@ -877,6 +949,15 @@ int Run() {
       defaultServiceManager()->addService(nestedService->getInterfaceDescriptor(), nestedService);
   if (status != OK) {
     ALOGE("Failed to add service %s", String8(nestedService->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
+
+  android::sp<FixedSizeArrayService> fixedSizeArrayService = new FixedSizeArrayService;
+  status = defaultServiceManager()->addService(fixedSizeArrayService->getInterfaceDescriptor(),
+                                               fixedSizeArrayService);
+  if (status != OK) {
+    ALOGE("Failed to add service %s",
+          String8(fixedSizeArrayService->getInterfaceDescriptor()).c_str());
     return -1;
   }
 
