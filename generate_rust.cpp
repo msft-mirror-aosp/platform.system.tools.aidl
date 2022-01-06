@@ -176,7 +176,7 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
       } else {
         out << "aidl_data.write(&" << arg_name << ")?;\n";
       }
-    } else if (arg->GetType().IsArray()) {
+    } else if (arg->GetType().IsDynamicArray()) {
       // For out-only arrays, send the array size
       if (arg->GetType().IsNullable()) {
         out << "aidl_data.write_slice_size(" << arg_name << ".as_deref())?;\n";
@@ -395,7 +395,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlMethod& method,
     string arg_mut = arg->IsOut() ? "mut " : "";
     string arg_init = arg->IsIn() ? "_aidl_data.read()?" : "Default::default()";
     out << "let " << arg_mut << arg_name << ": " << arg_type << " = " << arg_init << ";\n";
-    if (!arg->IsIn() && arg->GetType().IsArray()) {
+    if (!arg->IsIn() && arg->GetType().IsDynamicArray()) {
       // _aidl_data.resize_[nullable_]out_vec(&mut _arg_foo)?;
       auto resize_name = arg->GetType().IsNullable() ? "resize_nullable_out_vec" : "resize_out_vec";
       out << "_aidl_data." << resize_name << "(&mut " << arg_name << ")?;\n";
@@ -979,18 +979,24 @@ void GenerateRustEnumDeclaration(CodeWriter* code_writer, const AidlEnumDeclarat
   const auto& aidl_backing_type = enum_decl->GetBackingType();
   auto backing_type = RustNameOf(aidl_backing_type, typenames, StorageMode::VALUE, Lifetime::NONE);
 
-  // TODO(b/177860423) support "deprecated" for enum types
   *code_writer << "#![allow(non_upper_case_globals)]\n";
   *code_writer << "use binder::declare_binder_enum;\n";
-  *code_writer << "declare_binder_enum! { " << enum_decl->GetName() << " : [" << backing_type
-               << "; " << std::to_string(enum_decl->GetEnumerators().size()) << "] {\n";
+  *code_writer << "declare_binder_enum! {\n";
+  code_writer->Indent();
+
+  GenerateDeprecated(*code_writer, *enum_decl);
+  *code_writer << enum_decl->GetName() << " : [" << backing_type << "; "
+               << std::to_string(enum_decl->GetEnumerators().size()) << "] {\n";
   code_writer->Indent();
   for (const auto& enumerator : enum_decl->GetEnumerators()) {
     auto value = enumerator->GetValue()->ValueString(aidl_backing_type, ConstantValueDecorator);
     *code_writer << enumerator->GetName() << " = " << value << ",\n";
   }
   code_writer->Dedent();
-  *code_writer << "} }\n";
+  *code_writer << "}\n";
+
+  code_writer->Dedent();
+  *code_writer << "}\n";
 }
 
 void GenerateClass(CodeWriter* code_writer, const AidlDefinedType& defined_type,

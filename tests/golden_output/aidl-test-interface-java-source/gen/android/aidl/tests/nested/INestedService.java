@@ -66,6 +66,7 @@ public interface INestedService extends android.os.IInterface
         {
           android.aidl.tests.nested.ParcelableWithNested _arg0;
           _arg0 = data.readTypedObject(android.aidl.tests.nested.ParcelableWithNested.CREATOR);
+          data.enforceNoDataAvail();
           android.aidl.tests.nested.INestedService.Result _result = this.flipStatus(_arg0);
           reply.writeNoException();
           reply.writeTypedObject(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
@@ -77,6 +78,7 @@ public interface INestedService extends android.os.IInterface
           _arg0 = data.readByte();
           android.aidl.tests.nested.INestedService.ICallback _arg1;
           _arg1 = android.aidl.tests.nested.INestedService.ICallback.Stub.asInterface(data.readStrongBinder());
+          data.enforceNoDataAvail();
           this.flipStatusWithCallback(_arg0, _arg1);
           reply.writeNoException();
           break;
@@ -112,11 +114,6 @@ public interface INestedService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeTypedObject(p, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_flipStatus, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              return getDefaultImpl().flipStatus(p);
-            }
-          }
           _reply.readException();
           _result = _reply.readTypedObject(android.aidl.tests.nested.INestedService.Result.CREATOR);
         }
@@ -135,12 +132,6 @@ public interface INestedService extends android.os.IInterface
           _data.writeByte(status);
           _data.writeStrongInterface(cb);
           boolean _status = mRemote.transact(Stub.TRANSACTION_flipStatusWithCallback, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              getDefaultImpl().flipStatusWithCallback(status, cb);
-              return;
-            }
-          }
           _reply.readException();
         }
         finally {
@@ -148,26 +139,9 @@ public interface INestedService extends android.os.IInterface
           _data.recycle();
         }
       }
-      public static android.aidl.tests.nested.INestedService sDefaultImpl;
     }
     static final int TRANSACTION_flipStatus = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     static final int TRANSACTION_flipStatusWithCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-    public static boolean setDefaultImpl(android.aidl.tests.nested.INestedService impl) {
-      // Only one user of this interface can use this function
-      // at a time. This is a heuristic to detect if two different
-      // users in the same process use this function.
-      if (Stub.Proxy.sDefaultImpl != null) {
-        throw new IllegalStateException("setDefaultImpl() called twice");
-      }
-      if (impl != null) {
-        Stub.Proxy.sDefaultImpl = impl;
-        return true;
-      }
-      return false;
-    }
-    public static android.aidl.tests.nested.INestedService getDefaultImpl() {
-      return Stub.Proxy.sDefaultImpl;
-    }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$nested$INestedService".replace('$', '.');
   public android.aidl.tests.nested.INestedService.Result flipStatus(android.aidl.tests.nested.ParcelableWithNested p) throws android.os.RemoteException;
@@ -278,6 +252,7 @@ public interface INestedService extends android.os.IInterface
           {
             byte _arg0;
             _arg0 = data.readByte();
+            data.enforceNoDataAvail();
             this.done(_arg0);
             reply.writeNoException();
             break;
@@ -312,12 +287,6 @@ public interface INestedService extends android.os.IInterface
             _data.writeInterfaceToken(DESCRIPTOR);
             _data.writeByte(status);
             boolean _status = mRemote.transact(Stub.TRANSACTION_done, _data, _reply, 0);
-            if (!_status) {
-              if (getDefaultImpl() != null) {
-                getDefaultImpl().done(status);
-                return;
-              }
-            }
             _reply.readException();
           }
           finally {
@@ -325,25 +294,8 @@ public interface INestedService extends android.os.IInterface
             _data.recycle();
           }
         }
-        public static android.aidl.tests.nested.INestedService.ICallback sDefaultImpl;
       }
       static final int TRANSACTION_done = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-      public static boolean setDefaultImpl(android.aidl.tests.nested.INestedService.ICallback impl) {
-        // Only one user of this interface can use this function
-        // at a time. This is a heuristic to detect if two different
-        // users in the same process use this function.
-        if (Stub.Proxy.sDefaultImpl != null) {
-          throw new IllegalStateException("setDefaultImpl() called twice");
-        }
-        if (impl != null) {
-          Stub.Proxy.sDefaultImpl = impl;
-          return true;
-        }
-        return false;
-      }
-      public static android.aidl.tests.nested.INestedService.ICallback getDefaultImpl() {
-        return Stub.Proxy.sDefaultImpl;
-      }
     }
     public static final java.lang.String DESCRIPTOR = "android$aidl$tests$nested$INestedService$ICallback".replace('$', '.');
     public void done(byte status) throws android.os.RemoteException;

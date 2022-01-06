@@ -38,7 +38,7 @@
 #include "aidl_language_y.h"
 #include "comments.h"
 #include "logging.h"
-#include "permission/parser.h"
+#include "permission.h"
 
 #ifdef _WIN32
 int isatty(int  fd)
@@ -111,14 +111,16 @@ std::string AidlNode::PrintLocation() const {
 
 std::vector<AidlLocation> AidlNode::unvisited_locations_;
 
-static const AidlTypeSpecifier kStringType{AIDL_LOCATION_HERE, "String", false, nullptr,
-                                           Comments{}};
-static const AidlTypeSpecifier kStringArrayType{AIDL_LOCATION_HERE, "String", true, nullptr,
-                                                Comments{}};
-static const AidlTypeSpecifier kIntType{AIDL_LOCATION_HERE, "int", false, nullptr, Comments{}};
-static const AidlTypeSpecifier kLongType{AIDL_LOCATION_HERE, "long", false, nullptr, Comments{}};
-static const AidlTypeSpecifier kBooleanType{AIDL_LOCATION_HERE, "boolean", false, nullptr,
-                                            Comments{}};
+static const AidlTypeSpecifier kStringType{AIDL_LOCATION_HERE, "String", /*array=*/std::nullopt,
+                                           nullptr, Comments{}};
+static const AidlTypeSpecifier kStringArrayType{AIDL_LOCATION_HERE, "String", DynamicArray{},
+                                                nullptr, Comments{}};
+static const AidlTypeSpecifier kIntType{AIDL_LOCATION_HERE, "int", /*array=*/std::nullopt, nullptr,
+                                        Comments{}};
+static const AidlTypeSpecifier kLongType{AIDL_LOCATION_HERE, "long", /*array=*/std::nullopt,
+                                         nullptr, Comments{}};
+static const AidlTypeSpecifier kBooleanType{AIDL_LOCATION_HERE, "boolean", /*array=*/std::nullopt,
+                                            nullptr, Comments{}};
 
 const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
   static const std::vector<Schema> kSchemas{
@@ -155,6 +157,7 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "JavaDerive",
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION,
        {{"toString", kBooleanType}, {"equals", kBooleanType}}},
+      {AidlAnnotation::Type::JAVA_DEFAULT, "JavaDefault", CONTEXT_TYPE_INTERFACE, {}},
       {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
        "JavaOnlyImmutable",
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION |
@@ -183,15 +186,15 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        CONTEXT_TYPE | CONTEXT_MEMBER,
        {{"value", kStringArrayType, /* required= */ true}}},
       {AidlAnnotation::Type::PERMISSION_ENFORCE,
-       "Enforce",
+       "EnforcePermission",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
-       {{"value", kStringType, /* required= */ true}}},
+       {{"value", kStringType}, {"anyOf", kStringArrayType}, {"allOf", kStringArrayType}}},
       {AidlAnnotation::Type::PERMISSION_MANUAL,
        "PermissionManuallyEnforced",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
        {}},
       {AidlAnnotation::Type::PERMISSION_NONE,
-       "NoPermissionRequired",
+       "RequiresNoPermission",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
        {}},
   };
@@ -307,19 +310,27 @@ bool AidlAnnotation::CheckValid() const {
   if (schema_.type == AidlAnnotation::Type::PERMISSION_ENFORCE) {
     auto expr = EnforceExpression();
     if (!expr.ok()) {
-      AIDL_ERROR(this) << "Unable to parse @Enforce annotation: " << expr.error();
+      AIDL_ERROR(this) << "Unable to parse @EnforcePermission annotation: " << expr.error();
       return false;
     }
   }
   return true;
 }
 
-Result<unique_ptr<perm::Expression>> AidlAnnotation::EnforceExpression() const {
-  auto perm_expr = ParamValue<std::string>("value");
-  if (perm_expr.has_value()) {
-    return perm::Parser::Parse(perm_expr.value());
+Result<unique_ptr<android::aidl::perm::Expression>> AidlAnnotation::EnforceExpression() const {
+  auto single = ParamValue<std::string>("value");
+  auto anyOf = ParamValue<std::vector<std::string>>("anyOf");
+  auto allOf = ParamValue<std::vector<std::string>>("allOf");
+  if (single.has_value()) {
+    return std::make_unique<android::aidl::perm::Expression>(single.value());
+  } else if (anyOf.has_value()) {
+    auto v = android::aidl::perm::AnyOf{anyOf.value()};
+    return std::make_unique<android::aidl::perm::Expression>(v);
+  } else if (allOf.has_value()) {
+    auto v = android::aidl::perm::AllOf{allOf.value()};
+    return std::make_unique<android::aidl::perm::Expression>(v);
   }
-  return Error() << "No value parameter for @Enforce";
+  return Error() << "No parameter for @EnforcePermission";
 }
 
 // Checks if the annotation is applicable to the current context.
@@ -453,13 +464,13 @@ std::vector<std::string> AidlAnnotatable::SuppressWarnings() const {
 }
 
 // Parses the @Enforce annotation expression.
-std::unique_ptr<perm::Expression> AidlAnnotatable::EnforceExpression() const {
+std::unique_ptr<android::aidl::perm::Expression> AidlAnnotatable::EnforceExpression() const {
   auto annot = GetAnnotation(annotations_, AidlAnnotation::Type::PERMISSION_ENFORCE);
   if (annot) {
     auto perm_expr = annot->EnforceExpression();
     if (!perm_expr.ok()) {
       // This should have been caught during validation.
-      AIDL_FATAL(this) << "Unable to parse @Enforce annotation: " << perm_expr.error();
+      AIDL_FATAL(this) << "Unable to parse @EnforcePermission annotation: " << perm_expr.error();
     }
     return std::move(perm_expr.value());
   }
@@ -489,6 +500,10 @@ bool AidlAnnotatable::JavaDerive(const std::string& method) const {
     return annotation->ParamValue<bool>(method).value_or(false);
   }
   return false;
+}
+
+bool AidlAnnotatable::IsJavaDefault() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DEFAULT);
 }
 
 std::string AidlAnnotatable::GetDescriptor() const {
@@ -530,23 +545,64 @@ string AidlAnnotatable::ToString() const {
 }
 
 AidlTypeSpecifier::AidlTypeSpecifier(const AidlLocation& location, const string& unresolved_name,
-                                     bool is_array,
+                                     std::optional<ArrayType> array,
                                      vector<unique_ptr<AidlTypeSpecifier>>* type_params,
                                      const Comments& comments)
     : AidlAnnotatable(location, comments),
       AidlParameterizable<unique_ptr<AidlTypeSpecifier>>(type_params),
       unresolved_name_(unresolved_name),
-      is_array_(is_array),
+      array_(std::move(array)),
       split_name_(Split(unresolved_name, ".")) {}
 
 void AidlTypeSpecifier::ViewAsArrayBase(std::function<void(const AidlTypeSpecifier&)> func) const {
-  AIDL_FATAL_IF(!is_array_, this);
+  AIDL_FATAL_IF(!array_.has_value(), this);
   // Declaring array of generic type cannot happen, it is grammar error.
   AIDL_FATAL_IF(IsGeneric(), this);
 
-  is_array_ = false;
-  func(*this);
-  is_array_ = true;
+  bool is_mutated = mutated_;
+  mutated_ = true;
+  // mutate the array type to its base by removing a single dimension
+  // e.g.) T[] => T, T[N][M] => T[M] (note that, M is removed)
+  if (IsFixedSizeArray() && std::get<FixedSizeArray>(*array_).dimensions.size() > 1) {
+    auto& dimensions = std::get<FixedSizeArray>(*array_).dimensions;
+    auto dim = std::move(dimensions.front());
+    dimensions.erase(dimensions.begin());
+    func(*this);
+    dimensions.insert(dimensions.begin(), std::move(dim));
+  } else {
+    ArrayType array_type = std::move(array_.value());
+    array_ = std::nullopt;
+    func(*this);
+    array_ = std::move(array_type);
+  }
+  mutated_ = is_mutated;
+}
+
+bool AidlTypeSpecifier::MakeArray(ArrayType array_type) {
+  // T becomes T[] or T[N]
+  if (!IsArray()) {
+    array_ = std::move(array_type);
+    return true;
+  }
+  // T[N] becomes T[N][M]
+  if (auto fixed_size_array = std::get_if<FixedSizeArray>(&array_type);
+      fixed_size_array != nullptr && IsFixedSizeArray()) {
+    // concat dimensions
+    for (auto& dim : fixed_size_array->dimensions) {
+      std::get<FixedSizeArray>(*array_).dimensions.push_back(std::move(dim));
+    }
+    return true;
+  }
+  return false;
+}
+
+std::vector<int32_t> AidlTypeSpecifier::GetFixedSizeArrayDimensions() const {
+  AIDL_FATAL_IF(!IsFixedSizeArray(), "not a fixed-size array");
+  std::vector<int32_t> dimensions;
+  for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
+    dimensions.push_back(dim->EvaluatedValue<int32_t>());
+  }
+  return dimensions;
 }
 
 string AidlTypeSpecifier::Signature() const {
@@ -559,7 +615,13 @@ string AidlTypeSpecifier::Signature() const {
     ret += "<" + Join(arg_names, ",") + ">";
   }
   if (IsArray()) {
-    ret += "[]";
+    if (IsFixedSizeArray()) {
+      for (const auto& dim : GetFixedSizeArrayDimensions()) {
+        ret += "[" + std::to_string(dim) + "]";
+      }
+    } else {
+      ret += "[]";
+    }
   }
   return ret;
 }
@@ -717,21 +779,54 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
       }
     }
   }
+
+  if (IsFixedSizeArray()) {
+    for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
+      if (!dim->CheckValid()) {
+        return false;
+      }
+      if (dim->GetType() > AidlConstantValue::Type::INT32) {
+        AIDL_ERROR(this) << "Array size must be a positive number: " << dim->Literal();
+        return false;
+      }
+      auto value = dim->EvaluatedValue<int32_t>();
+      if (value < 0) {
+        AIDL_ERROR(this) << "Array size must be a positive number: " << value;
+        return false;
+      }
+    }
+  }
   return true;
 }
 
-std::string AidlConstantValueDecorator(const AidlTypeSpecifier& type,
-                                       const std::string& raw_value) {
-  if (type.IsArray()) {
-    return raw_value;
+void AidlTypeSpecifier::TraverseChildren(std::function<void(const AidlNode&)> traverse) const {
+  AidlAnnotatable::TraverseChildren(traverse);
+  if (IsGeneric()) {
+    for (const auto& tp : GetTypeParameters()) {
+      traverse(*tp);
+    }
   }
+  if (IsFixedSizeArray()) {
+    for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
+      traverse(*dim);
+    }
+  }
+}
 
+std::string AidlConstantValueDecorator(
+    const AidlTypeSpecifier& type,
+    const std::variant<std::string, std::vector<std::string>>& raw_value) {
+  if (type.IsArray()) {
+    const auto& values = std::get<std::vector<std::string>>(raw_value);
+    return "{" + Join(values, ", ") + "}";
+  }
+  const std::string& value = std::get<std::string>(raw_value);
   if (auto defined_type = type.GetDefinedType(); defined_type) {
     auto enum_type = defined_type->AsEnumDeclaration();
-    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
-    return type.GetName() + "." + raw_value.substr(raw_value.find_last_of('.') + 1);
+    AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << value << "\"";
+    return type.GetName() + "." + value.substr(value.find_last_of('.') + 1);
   }
-  return raw_value;
+  return value;
 }
 
 AidlVariableDeclaration::AidlVariableDeclaration(const AidlLocation& location,

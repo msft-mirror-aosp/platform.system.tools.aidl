@@ -63,8 +63,8 @@ public interface IProtectedInterface extends android.os.IInterface
       {
         case TRANSACTION_Method1:
         {
-          if (((android.permission.PermissionManager.checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), this.getCallingUid())==android.content.pm.PackageManager.PERMISSION_GRANTED)!=true)) {
-            throw new SecurityException("Access denied, requires: permission = ACCESS_FINE_LOCATION");
+          if ((this.permissionCheckerWrapper(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
+            throw new SecurityException("Access denied, requires: ACCESS_FINE_LOCATION");
           }
           this.Method1();
           reply.writeNoException();
@@ -72,8 +72,11 @@ public interface IProtectedInterface extends android.os.IInterface
         }
         case TRANSACTION_Method2:
         {
-          if ((((android.permission.PermissionManager.checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), this.getCallingUid())==android.content.pm.PackageManager.PERMISSION_GRANTED)&&(android.permission.PermissionManager.checkPermission(android.Manifest.permission.INTERNET, this.getCallingPid(), this.getCallingUid())==android.content.pm.PackageManager.PERMISSION_GRANTED))!=true)) {
-            throw new SecurityException("Access denied, requires: permission = ACCESS_FINE_LOCATION && permission = INTERNET");
+          if ((this.permissionCheckerWrapper(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
+            throw new SecurityException("Access denied, requires: ACCESS_FINE_LOCATION");
+          }
+          if ((this.permissionCheckerWrapper(android.Manifest.permission.INTERNET, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
+            throw new SecurityException("Access denied, requires: INTERNET");
           }
           this.Method2();
           reply.writeNoException();
@@ -108,12 +111,6 @@ public interface IProtectedInterface extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_Method1, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              getDefaultImpl().Method1();
-              return;
-            }
-          }
           _reply.readException();
         }
         finally {
@@ -128,12 +125,6 @@ public interface IProtectedInterface extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_Method2, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              getDefaultImpl().Method2();
-              return;
-            }
-          }
           _reply.readException();
         }
         finally {
@@ -141,26 +132,17 @@ public interface IProtectedInterface extends android.os.IInterface
           _data.recycle();
         }
       }
-      public static android.aidl.tests.permission.IProtectedInterface sDefaultImpl;
+    }
+    private boolean permissionCheckerWrapper(
+        String permission, int pid, android.content.AttributionSource attributionSource) {
+      android.content.Context ctx =
+          android.app.ActivityThread.currentActivityThread().getSystemContext();
+      return (android.content.PermissionChecker.checkPermissionForDataDelivery(
+              ctx, permission, pid, attributionSource, "" /*message*/) ==
+          android.content.PermissionChecker.PERMISSION_GRANTED);
     }
     static final int TRANSACTION_Method1 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     static final int TRANSACTION_Method2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-    public static boolean setDefaultImpl(android.aidl.tests.permission.IProtectedInterface impl) {
-      // Only one user of this interface can use this function
-      // at a time. This is a heuristic to detect if two different
-      // users in the same process use this function.
-      if (Stub.Proxy.sDefaultImpl != null) {
-        throw new IllegalStateException("setDefaultImpl() called twice");
-      }
-      if (impl != null) {
-        Stub.Proxy.sDefaultImpl = impl;
-        return true;
-      }
-      return false;
-    }
-    public static android.aidl.tests.permission.IProtectedInterface getDefaultImpl() {
-      return Stub.Proxy.sDefaultImpl;
-    }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$IProtectedInterface".replace('$', '.');
   public void Method1() throws android.os.RemoteException;

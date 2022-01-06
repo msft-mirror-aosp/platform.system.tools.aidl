@@ -9,13 +9,14 @@ namespace tests {
 const char* ArrayOfInterfaces::descriptor = "android.aidl.tests.ArrayOfInterfaces";
 
 binder_status_t ArrayOfInterfaces::readFromParcel(const AParcel* _aidl_parcel) {
-  int32_t _aidl_parcelable_size;
+  binder_status_t _aidl_ret_status = STATUS_OK;
   int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
-  binder_status_t _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
-  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
-  if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;
+  int32_t _aidl_parcelable_size = 0;
+  _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
+  if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
   return _aidl_ret_status;
 }
@@ -135,28 +136,28 @@ static binder_status_t _aidl_android_aidl_tests_ArrayOfInterfaces_IMyInterface_o
       std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>> in_nullable_iface_array_inout;
       std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>> _aidl_return;
 
-      _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::readFromParcel(_aidl_in, &in_iface);
+      _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_iface);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::readFromParcel(_aidl_in, &in_nullable_iface);
+      _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_in, &in_nullable_iface);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_in, &in_iface_array_in);
+      _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_iface_array_in);
       if (_aidl_ret_status != STATUS_OK) break;
 
       _aidl_ret_status = ::ndk::AParcel_resizeVector(_aidl_in, &out_iface_array_out);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_in, &in_iface_array_inout);
+      _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_iface_array_inout);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_in, &in_nullable_iface_array_in);
+      _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_in, &in_nullable_iface_array_in);
       if (_aidl_ret_status != STATUS_OK) break;
 
       _aidl_ret_status = ::ndk::AParcel_resizeVector(_aidl_in, &out_nullable_iface_array_out);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_in, &in_nullable_iface_array_inout);
+      _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_in, &in_nullable_iface_array_inout);
       if (_aidl_ret_status != STATUS_OK) break;
 
       ::ndk::ScopedAStatus _aidl_status = _aidl_impl->methodWithInterfaces(in_iface, in_nullable_iface, in_iface_array_in, &out_iface_array_out, &in_iface_array_inout, in_nullable_iface_array_in, &out_nullable_iface_array_out, &in_nullable_iface_array_inout, &_aidl_return);
@@ -165,19 +166,19 @@ static binder_status_t _aidl_android_aidl_tests_ArrayOfInterfaces_IMyInterface_o
 
       if (!AStatus_isOk(_aidl_status.get())) break;
 
-      _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_out, _aidl_return);
+      _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_out, _aidl_return);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_out, out_iface_array_out);
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, out_iface_array_out);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_out, in_iface_array_inout);
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, in_iface_array_inout);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_out, out_nullable_iface_array_out);
+      _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_out, out_nullable_iface_array_out);
       if (_aidl_ret_status != STATUS_OK) break;
 
-      _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_out, in_nullable_iface_array_inout);
+      _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_out, in_nullable_iface_array_inout);
       if (_aidl_ret_status != STATUS_OK) break;
 
       break;
@@ -200,28 +201,28 @@ ArrayOfInterfaces::BpMyInterface::~BpMyInterface() {}
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::writeToParcel(_aidl_in.get(), in_iface);
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_iface);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::writeToParcel(_aidl_in.get(), in_nullable_iface);
+  _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_in.get(), in_nullable_iface);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_in.get(), in_iface_array_in);
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_iface_array_in);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeVectorSize(_aidl_in.get(), *out_iface_array_out);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_in.get(), *in_iface_array_inout);
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), *in_iface_array_inout);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_in.get(), in_nullable_iface_array_in);
+  _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_in.get(), in_nullable_iface_array_in);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeVectorSize(_aidl_in.get(), *out_nullable_iface_array_out);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_in.get(), *in_nullable_iface_array_inout);
+  _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_in.get(), *in_nullable_iface_array_inout);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
@@ -244,19 +245,19 @@ ArrayOfInterfaces::BpMyInterface::~BpMyInterface() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
-  _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_out.get(), _aidl_return);
+  _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_out.get(), _aidl_return);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_out.get(), out_iface_array_out);
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), out_iface_array_out);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_out.get(), in_iface_array_inout);
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), in_iface_array_inout);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_out.get(), out_nullable_iface_array_out);
+  _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_out.get(), out_nullable_iface_array_out);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
-  _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_out.get(), in_nullable_iface_array_inout);
+  _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_out.get(), in_nullable_iface_array_inout);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_error:
@@ -336,39 +337,40 @@ namespace tests {
 const char* ArrayOfInterfaces::MyParcelable::descriptor = "android.aidl.tests.ArrayOfInterfaces.MyParcelable";
 
 binder_status_t ArrayOfInterfaces::MyParcelable::readFromParcel(const AParcel* _aidl_parcel) {
-  int32_t _aidl_parcelable_size;
+  binder_status_t _aidl_ret_status = STATUS_OK;
   int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
-  binder_status_t _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
-  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
+  int32_t _aidl_parcelable_size = 0;
+  _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
   if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &iface);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
     AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
   }
-  _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::readFromParcel(_aidl_parcel, &iface);
+  _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_parcel, &nullable_iface);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
     AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
   }
-  _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::readFromParcel(_aidl_parcel, &nullable_iface);
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &iface_array);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
     AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
   }
-  _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_parcel, &iface_array);
-  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
-
-  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
-    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
-    return _aidl_ret_status;
-  }
-  _aidl_ret_status = ::ndk::AParcel_readVector(_aidl_parcel, &nullable_iface_array);
+  _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_parcel, &nullable_iface_array);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
@@ -380,16 +382,16 @@ binder_status_t ArrayOfInterfaces::MyParcelable::writeToParcel(AParcel* _aidl_pa
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::writeToParcel(_aidl_parcel, iface);
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, iface);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  _aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::writeToParcel(_aidl_parcel, nullable_iface);
+  _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_parcel, nullable_iface);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_parcel, iface_array);
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, iface_array);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  _aidl_ret_status = ::ndk::AParcel_writeVector(_aidl_parcel, nullable_iface_array);
+  _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_parcel, nullable_iface_array);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
@@ -412,11 +414,11 @@ const char* ArrayOfInterfaces::MyUnion::descriptor = "android.aidl.tests.ArrayOf
 binder_status_t ArrayOfInterfaces::MyUnion::readFromParcel(const AParcel* _parcel) {
   binder_status_t _aidl_ret_status;
   int32_t _aidl_tag;
-  if ((_aidl_ret_status = AParcel_readInt32(_parcel, &_aidl_tag)) != STATUS_OK) return _aidl_ret_status;
+  if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_tag)) != STATUS_OK) return _aidl_ret_status;
   switch (_aidl_tag) {
   case iface: {
     std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface> _aidl_value;
-    if ((_aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::readFromParcel(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
     if constexpr (std::is_trivially_copyable_v<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>) {
       set<iface>(_aidl_value);
     } else {
@@ -426,7 +428,7 @@ binder_status_t ArrayOfInterfaces::MyUnion::readFromParcel(const AParcel* _parce
     return STATUS_OK; }
   case nullable_iface: {
     std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface> _aidl_value;
-    if ((_aidl_ret_status = ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::readFromParcel(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if ((_aidl_ret_status = ::ndk::AParcel_readNullableData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
     if constexpr (std::is_trivially_copyable_v<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>) {
       set<nullable_iface>(_aidl_value);
     } else {
@@ -436,7 +438,7 @@ binder_status_t ArrayOfInterfaces::MyUnion::readFromParcel(const AParcel* _parce
     return STATUS_OK; }
   case iface_array: {
     std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>> _aidl_value;
-    if ((_aidl_ret_status = ::ndk::AParcel_readVector(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
     if constexpr (std::is_trivially_copyable_v<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>) {
       set<iface_array>(_aidl_value);
     } else {
@@ -446,7 +448,7 @@ binder_status_t ArrayOfInterfaces::MyUnion::readFromParcel(const AParcel* _parce
     return STATUS_OK; }
   case nullable_iface_array: {
     std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>> _aidl_value;
-    if ((_aidl_ret_status = ::ndk::AParcel_readVector(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if ((_aidl_ret_status = ::ndk::AParcel_readNullableData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
     if constexpr (std::is_trivially_copyable_v<std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>>) {
       set<nullable_iface_array>(_aidl_value);
     } else {
@@ -458,13 +460,13 @@ binder_status_t ArrayOfInterfaces::MyUnion::readFromParcel(const AParcel* _parce
   return STATUS_BAD_VALUE;
 }
 binder_status_t ArrayOfInterfaces::MyUnion::writeToParcel(AParcel* _parcel) const {
-  binder_status_t _aidl_ret_status = AParcel_writeInt32(_parcel, getTag());
+  binder_status_t _aidl_ret_status = ::ndk::AParcel_writeData(_parcel, getTag());
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
   switch (getTag()) {
-  case iface: return ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::writeToParcel(_parcel, get<iface>());
-  case nullable_iface: return ::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface::writeToParcel(_parcel, get<nullable_iface>());
-  case iface_array: return ::ndk::AParcel_writeVector(_parcel, get<iface_array>());
-  case nullable_iface_array: return ::ndk::AParcel_writeVector(_parcel, get<nullable_iface_array>());
+  case iface: return ::ndk::AParcel_writeData(_parcel, get<iface>());
+  case nullable_iface: return ::ndk::AParcel_writeNullableData(_parcel, get<nullable_iface>());
+  case iface_array: return ::ndk::AParcel_writeData(_parcel, get<iface_array>());
+  case nullable_iface_array: return ::ndk::AParcel_writeNullableData(_parcel, get<nullable_iface_array>());
   }
   __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
 }

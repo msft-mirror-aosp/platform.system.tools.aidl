@@ -105,6 +105,7 @@ public interface ILoggableInterface extends android.os.IInterface
             _arg19 = data.readTypedObject(android.os.ParcelFileDescriptor.CREATOR);
             android.os.ParcelFileDescriptor[] _arg20;
             _arg20 = data.createTypedArray(android.os.ParcelFileDescriptor.CREATOR);
+            data.enforceNoDataAvail();
             java.lang.String[] _result = this.LogThis(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8, _arg9, _arg10, _arg11, _arg12, _arg13, _arg14, _arg15, _arg16, _arg17, _arg18, _arg19, _arg20);
             reply.writeNoException();
             reply.writeStringArray(_result);
@@ -177,11 +178,6 @@ public interface ILoggableInterface extends android.os.IInterface
           _data.writeTypedObject(pfdValue, 0);
           _data.writeTypedArray(pfdArray, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_LogThis, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              return getDefaultImpl().LogThis(boolValue, boolArray, byteValue, byteArray, charValue, charArray, intValue, intArray, longValue, longArray, floatValue, floatArray, doubleValue, doubleArray, stringValue, stringArray, listValue, dataValue, binderValue, pfdValue, pfdArray);
-            }
-          }
           _reply.readException();
           _result = _reply.createStringArray();
           _reply.readBooleanArray(boolArray);
@@ -205,25 +201,8 @@ public interface ILoggableInterface extends android.os.IInterface
         }
         return _result;
       }
-      public static android.aidl.loggable.ILoggableInterface sDefaultImpl;
     }
     static final int TRANSACTION_LogThis = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-    public static boolean setDefaultImpl(android.aidl.loggable.ILoggableInterface impl) {
-      // Only one user of this interface can use this function
-      // at a time. This is a heuristic to detect if two different
-      // users in the same process use this function.
-      if (Stub.Proxy.sDefaultImpl != null) {
-        throw new IllegalStateException("setDefaultImpl() called twice");
-      }
-      if (impl != null) {
-        Stub.Proxy.sDefaultImpl = impl;
-        return true;
-      }
-      return false;
-    }
-    public static android.aidl.loggable.ILoggableInterface getDefaultImpl() {
-      return Stub.Proxy.sDefaultImpl;
-    }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$loggable$ILoggableInterface".replace('$', '.');
   public java.lang.String[] LogThis(boolean boolValue, boolean[] boolArray, byte byteValue, byte[] byteArray, char charValue, char[] charArray, int intValue, int[] intArray, long longValue, long[] longArray, float floatValue, float[] floatArray, double doubleValue, double[] doubleArray, java.lang.String stringValue, java.lang.String[] stringArray, java.util.List<java.lang.String> listValue, android.aidl.loggable.Data dataValue, android.os.IBinder binderValue, android.os.ParcelFileDescriptor pfdValue, android.os.ParcelFileDescriptor[] pfdArray) throws android.os.RemoteException;
@@ -289,6 +268,7 @@ public interface ILoggableInterface extends android.os.IInterface
               android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, "AIDL::java::ISub::Log::server");
               int _arg0;
               _arg0 = data.readInt();
+              data.enforceNoDataAvail();
               this.Log(_arg0);
               reply.writeNoException();
             }
@@ -328,12 +308,6 @@ public interface ILoggableInterface extends android.os.IInterface
             _data.writeInterfaceToken(DESCRIPTOR);
             _data.writeInt(value);
             boolean _status = mRemote.transact(Stub.TRANSACTION_Log, _data, _reply, 0);
-            if (!_status) {
-              if (getDefaultImpl() != null) {
-                getDefaultImpl().Log(value);
-                return;
-              }
-            }
             _reply.readException();
           }
           finally {
@@ -342,25 +316,8 @@ public interface ILoggableInterface extends android.os.IInterface
             android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);
           }
         }
-        public static android.aidl.loggable.ILoggableInterface.ISub sDefaultImpl;
       }
       static final int TRANSACTION_Log = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-      public static boolean setDefaultImpl(android.aidl.loggable.ILoggableInterface.ISub impl) {
-        // Only one user of this interface can use this function
-        // at a time. This is a heuristic to detect if two different
-        // users in the same process use this function.
-        if (Stub.Proxy.sDefaultImpl != null) {
-          throw new IllegalStateException("setDefaultImpl() called twice");
-        }
-        if (impl != null) {
-          Stub.Proxy.sDefaultImpl = impl;
-          return true;
-        }
-        return false;
-      }
-      public static android.aidl.loggable.ILoggableInterface.ISub getDefaultImpl() {
-        return Stub.Proxy.sDefaultImpl;
-      }
     }
     public static final java.lang.String DESCRIPTOR = "android$aidl$loggable$ILoggableInterface$ISub".replace('$', '.');
     public void Log(int value) throws android.os.RemoteException;

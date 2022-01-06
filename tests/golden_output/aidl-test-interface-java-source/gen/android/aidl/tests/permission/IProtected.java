@@ -10,10 +10,10 @@ public interface IProtected extends android.os.IInterface
     @Override public void PermissionProtected() throws android.os.RemoteException
     {
     }
-    @Override public void MultiplePermissions() throws android.os.RemoteException
+    @Override public void MultiplePermissionsAll() throws android.os.RemoteException
     {
     }
-    @Override public void MultiplePermissions2() throws android.os.RemoteException
+    @Override public void MultiplePermissionsAny() throws android.os.RemoteException
     {
     }
     @Override
@@ -66,28 +66,28 @@ public interface IProtected extends android.os.IInterface
       {
         case TRANSACTION_PermissionProtected:
         {
-          if (((android.permission.PermissionManager.checkPermission(android.Manifest.permission.READ_PHONE_STATE, this.getCallingPid(), this.getCallingUid())==android.content.pm.PackageManager.PERMISSION_GRANTED)!=true)) {
-            throw new SecurityException("Access denied, requires: permission = READ_PHONE_STATE");
+          if ((this.permissionCheckerWrapper(android.Manifest.permission.READ_PHONE_STATE, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
+            throw new SecurityException("Access denied, requires: READ_PHONE_STATE");
           }
           this.PermissionProtected();
           reply.writeNoException();
           break;
         }
-        case TRANSACTION_MultiplePermissions:
+        case TRANSACTION_MultiplePermissionsAll:
         {
-          if ((((android.permission.PermissionManager.checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), this.getCallingUid())==android.content.pm.PackageManager.PERMISSION_GRANTED)||(this.getCallingUid()==android.os.Process.SYSTEM_UID))!=true)) {
-            throw new SecurityException("Access denied, requires: permission = ACCESS_FINE_LOCATION || uid = SYSTEM_UID");
+          if (((this.permissionCheckerWrapper(android.Manifest.permission.INTERNET, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))&&this.permissionCheckerWrapper(android.Manifest.permission.VIBRATE, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null)))!=true)) {
+            throw new SecurityException("Access denied, requires: allOf = {INTERNET,VIBRATE}");
           }
-          this.MultiplePermissions();
+          this.MultiplePermissionsAll();
           reply.writeNoException();
           break;
         }
-        case TRANSACTION_MultiplePermissions2:
+        case TRANSACTION_MultiplePermissionsAny:
         {
-          if (((((android.permission.PermissionManager.checkPermission(android.Manifest.permission.INTERNET, this.getCallingPid(), this.getCallingUid())==android.content.pm.PackageManager.PERMISSION_GRANTED)&&(android.permission.PermissionManager.checkPermission(android.Manifest.permission.VIBRATE, this.getCallingPid(), this.getCallingUid())==android.content.pm.PackageManager.PERMISSION_GRANTED))||(this.getCallingUid()==android.os.Process.SYSTEM_UID))!=true)) {
-            throw new SecurityException("Access denied, requires: permission = INTERNET && permission = VIBRATE || uid = SYSTEM_UID");
+          if (((this.permissionCheckerWrapper(android.Manifest.permission.INTERNET, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))||this.permissionCheckerWrapper(android.Manifest.permission.VIBRATE, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null)))!=true)) {
+            throw new SecurityException("Access denied, requires: anyOf = {INTERNET,VIBRATE}");
           }
-          this.MultiplePermissions2();
+          this.MultiplePermissionsAny();
           reply.writeNoException();
           break;
         }
@@ -120,12 +120,6 @@ public interface IProtected extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_PermissionProtected, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              getDefaultImpl().PermissionProtected();
-              return;
-            }
-          }
           _reply.readException();
         }
         finally {
@@ -133,19 +127,13 @@ public interface IProtected extends android.os.IInterface
           _data.recycle();
         }
       }
-      @Override public void MultiplePermissions() throws android.os.RemoteException
+      @Override public void MultiplePermissionsAll() throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
-          boolean _status = mRemote.transact(Stub.TRANSACTION_MultiplePermissions, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              getDefaultImpl().MultiplePermissions();
-              return;
-            }
-          }
+          boolean _status = mRemote.transact(Stub.TRANSACTION_MultiplePermissionsAll, _data, _reply, 0);
           _reply.readException();
         }
         finally {
@@ -153,19 +141,13 @@ public interface IProtected extends android.os.IInterface
           _data.recycle();
         }
       }
-      @Override public void MultiplePermissions2() throws android.os.RemoteException
+      @Override public void MultiplePermissionsAny() throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
-          boolean _status = mRemote.transact(Stub.TRANSACTION_MultiplePermissions2, _data, _reply, 0);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              getDefaultImpl().MultiplePermissions2();
-              return;
-            }
-          }
+          boolean _status = mRemote.transact(Stub.TRANSACTION_MultiplePermissionsAny, _data, _reply, 0);
           _reply.readException();
         }
         finally {
@@ -173,30 +155,21 @@ public interface IProtected extends android.os.IInterface
           _data.recycle();
         }
       }
-      public static android.aidl.tests.permission.IProtected sDefaultImpl;
+    }
+    private boolean permissionCheckerWrapper(
+        String permission, int pid, android.content.AttributionSource attributionSource) {
+      android.content.Context ctx =
+          android.app.ActivityThread.currentActivityThread().getSystemContext();
+      return (android.content.PermissionChecker.checkPermissionForDataDelivery(
+              ctx, permission, pid, attributionSource, "" /*message*/) ==
+          android.content.PermissionChecker.PERMISSION_GRANTED);
     }
     static final int TRANSACTION_PermissionProtected = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-    static final int TRANSACTION_MultiplePermissions = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-    static final int TRANSACTION_MultiplePermissions2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-    public static boolean setDefaultImpl(android.aidl.tests.permission.IProtected impl) {
-      // Only one user of this interface can use this function
-      // at a time. This is a heuristic to detect if two different
-      // users in the same process use this function.
-      if (Stub.Proxy.sDefaultImpl != null) {
-        throw new IllegalStateException("setDefaultImpl() called twice");
-      }
-      if (impl != null) {
-        Stub.Proxy.sDefaultImpl = impl;
-        return true;
-      }
-      return false;
-    }
-    public static android.aidl.tests.permission.IProtected getDefaultImpl() {
-      return Stub.Proxy.sDefaultImpl;
-    }
+    static final int TRANSACTION_MultiplePermissionsAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    static final int TRANSACTION_MultiplePermissionsAny = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$IProtected".replace('$', '.');
   public void PermissionProtected() throws android.os.RemoteException;
-  public void MultiplePermissions() throws android.os.RemoteException;
-  public void MultiplePermissions2() throws android.os.RemoteException;
+  public void MultiplePermissionsAll() throws android.os.RemoteException;
+  public void MultiplePermissionsAny() throws android.os.RemoteException;
 }

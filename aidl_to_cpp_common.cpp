@@ -482,8 +482,10 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
                                 first_field->ValueString(decorator) + ")";
 
     out << "Tag _tag __attribute__((aligned (1))) = " << default_name << ";\n";
-    out << "union {\n";
+    out << "union _value_t {\n";
     out.Indent();
+    out << "_value_t() {}\n";
+    out << "~_value_t() {}\n";
     for (const auto& f : decl.GetFields()) {
       const auto& fn = f->GetName();
       out << name_of(f->GetType(), typenames) << " " << fn;
@@ -691,56 +693,76 @@ void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx)
   out << "__assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, \"can't reach here\");\n";
 }
 
-std::string CppConstantValueDecorator(const AidlTypeSpecifier& type, const std::string& raw_value,
-                                      bool is_ndk) {
-  AIDL_FATAL_IF(raw_value.empty(), type) << "Empty value for constants";
+std::string CppConstantValueDecorator(
+    const AidlTypeSpecifier& type,
+    const std::variant<std::string, std::vector<std::string>>& raw_value, bool is_ndk) {
+  if (type.IsArray()) {
+    auto values = std::get<std::vector<std::string>>(raw_value);
+    // Hexadecimal literals for byte arrays should be casted to uint8_t
+    if (type.GetName() == "byte" &&
+        std::any_of(values.begin(), values.end(),
+                    [](const auto& value) { return !value.empty() && value[0] == '-'; })) {
+      for (auto& value : values) {
+        // cast only if necessary
+        if (value[0] == '-') {
+          value = "uint8_t(" + value + ")";
+        }
+      }
+    }
+    std::string value = "{" + Join(values, ", ") + "}";
 
-  // apply array type only if raw_value is actually an array value(`{...}`).
-  if (type.IsArray() && raw_value[0] == '{') {
-    return raw_value;
+    if (type.IsFixedSizeArray()) {
+      // For arrays, use double braces because arrays can be nested.
+      //  e.g.) array<array<int, 2>, 3> ints = {{ {{1,2}}, {{3,4}}, {{5,6}} }};
+      // Vectors might need double braces, but since we don't have nested vectors (yet)
+      // single brace would work even for optional vectors.
+      value = "{" + value + "}";
+    }
+
+    if (!type.IsMutated() && type.IsNullable()) {
+      // For outermost std::optional<>, we need an additional brace pair to initialize its value.
+      value = "{" + value + "}";
+    }
+    return value;
   }
 
+  const std::string& value = std::get<std::string>(raw_value);
   if (AidlTypenames::IsBuiltinTypename(type.GetName())) {
     if (type.GetName() == "boolean") {
-      return raw_value;
+      return value;
     } else if (type.GetName() == "byte") {
-      // cast only if necessary
-      if (type.IsArray() && raw_value[0] == '-') {
-        return "uint8_t(" + raw_value + ")";
-      } else {
-        return raw_value;
-      }
+      return value;
     } else if (type.GetName() == "char") {
       // TODO: consider 'L'-prefix for wide char literal
-      return raw_value;
+      return value;
     } else if (type.GetName() == "double") {
-      return raw_value;
+      return value;
     } else if (type.GetName() == "float") {
-      return raw_value;  // raw_value has 'f' suffix
+      return value;  // value has 'f' suffix
     } else if (type.GetName() == "int") {
-      return raw_value;
+      return value;
     } else if (type.GetName() == "long") {
-      return raw_value + "L";
+      return value + "L";
     } else if (type.GetName() == "String") {
       if (is_ndk || type.IsUtf8InCpp()) {
-        return raw_value;
+        return value;
       } else {
-        return "::android::String16(" + raw_value + ")";
+        return "::android::String16(" + value + ")";
       }
     }
     AIDL_FATAL(type) << "Unknown built-in type: " << type.GetName();
   }
 
   auto defined_type = type.GetDefinedType();
-  AIDL_FATAL_IF(!defined_type, type) << "Invalid type for \"" << raw_value << "\"";
+  AIDL_FATAL_IF(!defined_type, type) << "Invalid type for \"" << value << "\"";
   auto enum_type = defined_type->AsEnumDeclaration();
-  AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << raw_value << "\"";
+  AIDL_FATAL_IF(!enum_type, type) << "Invalid type for \"" << value << "\"";
 
   auto cpp_type_name = "::" + Join(Split(enum_type->GetCanonicalName(), "."), "::");
   if (is_ndk) {
     cpp_type_name = "::aidl" + cpp_type_name;
   }
-  return cpp_type_name + "::" + raw_value.substr(raw_value.find_last_of('.') + 1);
+  return cpp_type_name + "::" + value.substr(value.find_last_of('.') + 1);
 }
 }  // namespace cpp
 }  // namespace aidl
