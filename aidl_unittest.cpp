@@ -3019,6 +3019,21 @@ TEST_F(AidlTestCompatibleChanges, NewNestedTypes) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, NewJavaSuppressLint) {
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {"
+                               "  void foo(int a);"
+                               "}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
+                               "@JavaSuppressLint({\"NewApi\"})"
+                               "interface IFoo {"
+                               "  void foo(int a);"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 class AidlTestIncompatibleChanges : public AidlTest {
  protected:
   Options options_ = Options::From("aidl --checkapi old new");
@@ -4056,6 +4071,21 @@ TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
               HasSubstr("The interface IFoo enforces permissions using annotations"));
 }
 
+TEST_F(AidlTest, JavaSuppressLint) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @JavaSuppressLint({"NewApi"})
+    interface IFoo {
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(GetCapturedStderr(), "");
+  string code;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/IFoo.java", &code));
+  EXPECT_THAT(code, HasSubstr("@android.annotation.SuppressLint(value = {\"NewApi\"})"));
+}
+
 class AidlOutputPathTest : public AidlTest {
  protected:
   void SetUp() override {
@@ -5055,31 +5085,31 @@ TEST_F(AidlTest, RustNameOf_PfdFixedArray) {
       std::unique_ptr<AidlConstantValue>(AidlConstantValue::Integral(AIDL_LOCATION_HERE, "3"))}));
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::PARCELABLE_FIELD, rust::Lifetime::NONE),
-      "[[Option<binder::parcel::ParcelFileDescriptor>; 3]; 2]");
+      "[[Option<binder::ParcelFileDescriptor>; 3]; 2]");
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::DEFAULT_VALUE, rust::Lifetime::NONE),
-      "[[Option<binder::parcel::ParcelFileDescriptor>; 3]; 2]");
+      "[[Option<binder::ParcelFileDescriptor>; 3]; 2]");
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::IN_ARGUMENT, rust::Lifetime::NONE),
-      "&[[binder::parcel::ParcelFileDescriptor; 3]; 2]");
+      "&[[binder::ParcelFileDescriptor; 3]; 2]");
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::VALUE, rust::Lifetime::NONE),
-            "[[binder::parcel::ParcelFileDescriptor; 3]; 2]");
+            "[[binder::ParcelFileDescriptor; 3]; 2]");
 }
 
 TEST_F(AidlTest, RustNameOf_PfdDynamicArray) {
   auto pfd = typenames_.MakeResolvedType(AIDL_LOCATION_HERE, "ParcelFileDescriptor", true);
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::PARCELABLE_FIELD, rust::Lifetime::NONE),
-      "Vec<binder::parcel::ParcelFileDescriptor>");
+      "Vec<binder::ParcelFileDescriptor>");
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::DEFAULT_VALUE, rust::Lifetime::NONE),
-      "Vec<Option<binder::parcel::ParcelFileDescriptor>>");
+      "Vec<Option<binder::ParcelFileDescriptor>>");
   // we use UNSIZED_ARGUMENT mode for input argument of dynamic array
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::UNSIZED_ARGUMENT, rust::Lifetime::NONE),
-      "&[binder::parcel::ParcelFileDescriptor]");
+      "&[binder::ParcelFileDescriptor]");
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::VALUE, rust::Lifetime::NONE),
-            "Vec<binder::parcel::ParcelFileDescriptor>");
+            "Vec<binder::ParcelFileDescriptor>");
 }
 
 struct TypeParam {
