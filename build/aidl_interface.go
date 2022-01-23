@@ -376,10 +376,6 @@ type aidlInterfaceProperties struct {
 			// available to applications. Default is true (i.e. available to both
 			// applications and platform).
 			Apps_enabled *bool
-
-			// TODO(b/161456198): remove workaround to support AOSP-first development
-			// default is true
-			Separate_platform_variant *bool
 		}
 		// Backend of the compiler generating code for Rust clients.
 		// When enabled, this creates a target called "<name>-rust".
@@ -784,10 +780,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		if !shouldGenerate {
 			continue
 		}
-		// TODO(b/161456198): here to avoid merge conflicts and support AOSP-first development
-		if lang == langNdkPlatform && !proptools.BoolDefault(i.properties.Backend.Ndk.Separate_platform_variant, true) {
-			continue
-		}
 		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion))
 		for _, version := range versions {
 			libs = append(libs, addLibrary(mctx, i, version, lang, false))
@@ -842,7 +834,7 @@ func srcsVisibility(mctx android.LoadHookContext, lang string) []string {
 	if a, ok := mctx.Module().(*aidlInterface); !ok {
 		panic(fmt.Errorf("%q is not aidl_interface", mctx.Module().String()))
 	} else {
-		if proptools.Bool(a.commonBackendProperties(lang).Srcs_available) {
+		if proptools.BoolDefault(a.commonBackendProperties(lang).Srcs_available, true) {
 			// Returning nil so that the visibility of the source module defaults to the
 			// the package-level default visibility. This way, the source module gets
 			// the same visibility as the library modules.
