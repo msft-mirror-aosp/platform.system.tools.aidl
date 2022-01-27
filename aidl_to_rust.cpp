@@ -48,13 +48,6 @@ std::string ConstantValueDecoratorInternal(
     if (type.IsDynamicArray()) {
       value = "vec!" + value;
     }
-    if (type.IsFixedSizeArray() && values.empty()) {
-      auto dimensions = type.GetFixedSizeArrayDimensions();
-      value = "Default::default()";
-      for (auto it = rbegin(dimensions), end = rend(dimensions); it != end; it++) {
-        value = "[" + Join(std::vector<std::string>(*it, value), ", ") + "]";
-      }
-    }
     if (!type.IsMutated() && type.IsNullable()) {
       value = "Some(" + value + ")";
     }
@@ -121,8 +114,8 @@ std::string GetRustName(const AidlTypeSpecifier& type, const AidlTypenames& type
       {"double", "f64"},
       {"String", "String"},
       {"IBinder", "binder::SpIBinder"},
-      {"ParcelFileDescriptor", "binder::parcel::ParcelFileDescriptor"},
-      {"ParcelableHolder", "binder::parcel::ParcelableHolder"},
+      {"ParcelFileDescriptor", "binder::ParcelFileDescriptor"},
+      {"ParcelableHolder", "binder::ParcelableHolder"},
   };
   const bool is_vector = type.IsArray() || typenames.IsList(type);
   // If the type is an array/List<T>, get the inner element type
@@ -171,6 +164,17 @@ std::string ConstantValueDecoratorRef(
     const AidlTypeSpecifier& type,
     const std::variant<std::string, std::vector<std::string>>& raw_value) {
   return ConstantValueDecoratorInternal(type, raw_value, true);
+}
+
+// Returns default value for array.
+std::string ArrayDefaultValue(const AidlTypeSpecifier& type) {
+  AIDL_FATAL_IF(!type.IsFixedSizeArray(), type) << "not a fixed-size array";
+  auto dimensions = type.GetFixedSizeArrayDimensions();
+  std::string value = "Default::default()";
+  for (auto it = rbegin(dimensions), end = rend(dimensions); it != end; it++) {
+    value = "[" + Join(std::vector<std::string>(*it, value), ", ") + "]";
+  }
+  return value;
 }
 
 // Returns true if @nullable T[] should be mapped Option<Vec<Option<T>>

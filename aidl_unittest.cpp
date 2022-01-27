@@ -4550,7 +4550,7 @@ TEST_F(AidlTest, FixedSizeArrayWithWrongTypeDefaultValue) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Invalid type specifier for a literal string: int"));
 }
 
-TEST_F(AidlTest, FixedSizeArrayWithWrongSizeDefaultValue) {
+TEST_F(AidlTest, FixedSizeArrayWithMoreElements) {
   io_delegate_.SetFileContents("a/Bar.aidl",
                                "package a;\n"
                                "parcelable Bar {\n"
@@ -4562,6 +4562,20 @@ TEST_F(AidlTest, FixedSizeArrayWithWrongSizeDefaultValue) {
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(),
               HasSubstr("Expected an array of 3 elements, but found one with 4 elements"));
+}
+
+TEST_F(AidlTest, FixedSizeArrayWithFewerElements) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a;\n"
+                               "parcelable Bar {\n"
+                               "  int[2][3] a = {};\n"
+                               "}");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Expected an array of 2 elements, but found one with 0 elements"));
 }
 
 struct GenericAidlTest : ::testing::Test {
@@ -5085,31 +5099,31 @@ TEST_F(AidlTest, RustNameOf_PfdFixedArray) {
       std::unique_ptr<AidlConstantValue>(AidlConstantValue::Integral(AIDL_LOCATION_HERE, "3"))}));
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::PARCELABLE_FIELD, rust::Lifetime::NONE),
-      "[[Option<binder::parcel::ParcelFileDescriptor>; 3]; 2]");
+      "[[Option<binder::ParcelFileDescriptor>; 3]; 2]");
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::DEFAULT_VALUE, rust::Lifetime::NONE),
-      "[[Option<binder::parcel::ParcelFileDescriptor>; 3]; 2]");
+      "[[Option<binder::ParcelFileDescriptor>; 3]; 2]");
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::IN_ARGUMENT, rust::Lifetime::NONE),
-      "&[[binder::parcel::ParcelFileDescriptor; 3]; 2]");
+      "&[[binder::ParcelFileDescriptor; 3]; 2]");
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::VALUE, rust::Lifetime::NONE),
-            "[[binder::parcel::ParcelFileDescriptor; 3]; 2]");
+            "[[binder::ParcelFileDescriptor; 3]; 2]");
 }
 
 TEST_F(AidlTest, RustNameOf_PfdDynamicArray) {
   auto pfd = typenames_.MakeResolvedType(AIDL_LOCATION_HERE, "ParcelFileDescriptor", true);
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::PARCELABLE_FIELD, rust::Lifetime::NONE),
-      "Vec<binder::parcel::ParcelFileDescriptor>");
+      "Vec<binder::ParcelFileDescriptor>");
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::DEFAULT_VALUE, rust::Lifetime::NONE),
-      "Vec<Option<binder::parcel::ParcelFileDescriptor>>");
+      "Vec<Option<binder::ParcelFileDescriptor>>");
   // we use UNSIZED_ARGUMENT mode for input argument of dynamic array
   EXPECT_EQ(
       rust::RustNameOf(*pfd, typenames_, rust::StorageMode::UNSIZED_ARGUMENT, rust::Lifetime::NONE),
-      "&[binder::parcel::ParcelFileDescriptor]");
+      "&[binder::ParcelFileDescriptor]");
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::VALUE, rust::Lifetime::NONE),
-            "Vec<binder::parcel::ParcelFileDescriptor>");
+            "Vec<binder::ParcelFileDescriptor>");
 }
 
 struct TypeParam {
