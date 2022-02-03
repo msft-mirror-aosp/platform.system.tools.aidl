@@ -201,6 +201,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "RequiresNoPermission",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
        {}},
+      {AidlAnnotation::Type::PROPAGATE_ALLOW_BLOCKING,
+       "PropagateAllowBlocking",
+       CONTEXT_METHOD,
+       {}},
   };
   return kSchemas;
 }
@@ -504,6 +508,10 @@ bool AidlAnnotatable::IsPermissionNone() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::PERMISSION_NONE);
 }
 
+bool AidlAnnotatable::IsPropagateAllowBlocking() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::PROPAGATE_ALLOW_BLOCKING);
+}
+
 bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
   return lang == Options::Language::JAVA &&
          GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_STABLE_PARCELABLE);
@@ -801,7 +809,7 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
 
   if (IsFixedSizeArray()) {
     for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
-      if (!dim->CheckValid()) {
+      if (!dim->Evaluate()) {
         return false;
       }
       if (dim->GetType() > AidlConstantValue::Type::INT32) {
