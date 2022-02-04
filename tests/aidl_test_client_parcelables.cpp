@@ -29,7 +29,9 @@
 using android::IInterface;
 using android::sp;
 using android::String16;
+using android::String8;
 using android::aidl::fixedsizearray::FixedSizeArrayExample;
+using android::aidl::tests::BadParcelable;
 using android::aidl::tests::ConstantExpressionEnum;
 using android::aidl::tests::GenericStructuredParcelable;
 using android::aidl::tests::INamedCallback;
@@ -56,6 +58,24 @@ using android::binder::Status;
 using android::os::PersistableBundle;
 using std::string;
 using std::vector;
+
+TEST_F(AidlTest, BadParcelable) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
+  BadParcelable output;
+  {
+    BadParcelable bad(/*bad=*/true, "Booya", 42);
+    Status status = cpp_java_tests->RepeatBadParcelable(bad, &output);
+    ASSERT_FALSE(status.isOk());
+    EXPECT_EQ(status.exceptionCode(), Status::Exception::EX_BAD_PARCELABLE);
+  }
+  {
+    BadParcelable not_bad(/*bad=*/false, "Booya", 42);
+    Status status = cpp_java_tests->RepeatBadParcelable(not_bad, &output);
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(not_bad, output);
+  }
+}
 
 TEST_F(AidlTest, RepeatSimpleParcelable) {
   if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
@@ -628,8 +648,8 @@ void CheckRepeat(Service service, MemFn fn, Input input) {
 }
 
 template <typename T>
-std::array<std::array<T, 2>, 3> Make2dArray(std::initializer_list<T> values) {
-  std::array<std::array<T, 2>, 3> arr = {};
+std::array<std::array<T, 3>, 2> Make2dArray(std::initializer_list<T> values) {
+  std::array<std::array<T, 3>, 2> arr = {};
   auto it = std::begin(values);
   for (auto& row : arr) {
     for (auto& el : row) {
@@ -641,11 +661,6 @@ std::array<std::array<T, 2>, 3> Make2dArray(std::initializer_list<T> values) {
 }
 
 TEST_F(AidlTest, FixedSizeArrayOverBinder) {
-  BackendType backend;
-  auto status = service->getBackendType(&backend);
-  EXPECT_TRUE(status.isOk());
-  if (backend != BackendType::CPP) GTEST_SKIP();
-
   sp<IRepeatFixedSizeArray> service;
   ASSERT_EQ(OK, getService(IRepeatFixedSizeArray::descriptor, &service));
 

@@ -980,6 +980,62 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
   LeaveNdkNamespace(out, defined_type);
 }
 
+void GenerateDelegatorClassDecl(CodeWriter& out, const AidlTypenames& types,
+                                const AidlInterface& defined_type, const Options& options) {
+  const std::string clazz = ClassName(defined_type, ClassNames::DELEGATOR_IMPL);
+  const std::string iface = ClassName(defined_type, ClassNames::INTERFACE);
+  const std::string bn_name = ClassName(defined_type, ClassNames::SERVER);
+  const std::string kDelegateImplVarName = "_impl";
+  const std::string kStatusType = "::ndk::ScopedAStatus";
+
+  out << "class";
+  cpp::GenerateDeprecated(out, defined_type);
+  out << " " << clazz << " : public " << bn_name << " {\n";
+  out << "public:\n";
+  out.Indent();
+  out << "explicit " << clazz << "(const std::shared_ptr<" << iface << "> &impl)"
+      << " : " << kDelegateImplVarName << "(impl) {}\n\n";
+  for (const auto& method : defined_type.GetMethods()) {
+    if (method->IsUserDefined()) {
+      out << kStatusType << " " << method->GetName() << "("
+          << NdkArgList(types, *method, FormatArgForDecl) << ") override";
+      cpp::GenerateDeprecated(out, *method);
+      out << " {\n"
+          << "  return " << kDelegateImplVarName << "->" << method->GetName() << "("
+          << NdkArgList(types, *method, FormatArgNameOnly) << ");\n";
+      out << "}\n";
+    } else {
+      if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+        out << kStatusType << " " << kGetInterfaceVersion << "(int32_t *aidl_return) override {\n"
+            << "  int32_t _delegator_ver  = " << iface << "::" << kVersion << ";\n"
+            << "  int32_t _impl_ver = 0;\n"
+            << "  " << kStatusType << " _ret = " << kDelegateImplVarName << "->"
+            << kGetInterfaceVersion << "(&_impl_ver);\n"
+            << "  if (!_ret.isOk()) return _ret;\n"
+            << "  *aidl_return = _delegator_ver < _impl_ver ? _delegator_ver : _impl_ver;\n"
+            << "  return _ret;\n"
+            << "}\n";
+      } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+        out << kStatusType << " " << kGetInterfaceHash << "(std::string *aidl_return) override {\n"
+            << "  return " << kDelegateImplVarName << "->" << kGetInterfaceHash
+            << "(aidl_return);\n"
+            << "}\n";
+      } else {
+        AIDL_FATAL(defined_type) << "Meta method '" << method->GetName() << "' is unimplemented.";
+      }
+    }
+  }
+  out.Dedent();
+  out << "protected:\n";
+  out.Indent();
+  out.Dedent();
+  out << "private:\n";
+  out.Indent();
+  out << "std::shared_ptr<" << iface << "> " << kDelegateImplVarName << ";\n";
+  out.Dedent();
+  out << "};\n\n";
+}
+
 void GenerateServerClassDecl(CodeWriter& out, const AidlTypenames& types,
                              const AidlInterface& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::SERVER);
@@ -999,9 +1055,9 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlTypenames& types,
       continue;
     }
     if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
-      out << NdkMethodDecl(types, *method) << " final;\n";
+      out << NdkMethodDecl(types, *method) << ";\n";
     } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
-      out << NdkMethodDecl(types, *method) << " final;\n";
+      out << NdkMethodDecl(types, *method) << ";\n";
     } else {
       AIDL_FATAL(defined_type) << "Meta method '" << method->GetName() << "' is unimplemented.";
     }
@@ -1031,6 +1087,7 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   EnterNdkNamespace(out, defined_type);
   GenerateServerClassDecl(out, types, defined_type, options);
+  GenerateDelegatorClassDecl(out, types, defined_type, options);
   LeaveNdkNamespace(out, defined_type);
 }
 
@@ -1136,27 +1193,34 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   GenerateNestedTypeDecls(out, types, defined_type, options);
   for (const auto& variable : defined_type.GetFields()) {
-    out << NdkNameOf(types, variable->GetType(), StorageMode::STACK);
+    const auto& type = variable->GetType();
+    std::string cpp_type = NdkNameOf(types, type, StorageMode::STACK);
+    out << cpp_type;
     cpp::GenerateDeprecated(out, *variable);
     out << " " << variable->GetName();
-    if (variable->GetType().GetName() == "ParcelableHolder") {
-      out << "{::ndk::" << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL")
-          << "}";
-    }
     if (defined_type.IsFixedSize()) {
-      int alignment = cpp::AlignmentOf(variable->GetType(), types);
+      int alignment = cpp::AlignmentOf(type, types);
       if (alignment > 0) {
         out << " __attribute__((aligned (" << std::to_string(alignment) << ")))";
       }
     }
     if (variable->GetDefaultValue()) {
       out << " = " << variable->ValueString(ConstantValueDecorator);
-    } else if (auto type = variable->GetType().GetDefinedType(); type) {
-      if (auto enum_type = type->AsEnumDeclaration(); enum_type) {
-        if (!variable->GetType().IsArray()) {
-          // if an enum doesn't have explicit default value, do zero-initialization
-          out << " = " << NdkNameOf(types, variable->GetType(), StorageMode::STACK) << "(0)";
+    } else {
+      // Some types needs to be explicitly initialized even when no default value is set.
+      // - ParcelableHolder should be initialized with stability.
+      // - enum should be zero initialized, otherwise the value will be indeterminate
+      // - fixed-size arrays should be initialized, otherwise the value will be indeterminate
+      if (type.GetName() == "ParcelableHolder") {
+        if (defined_type.IsVintfStability()) {
+          out << "{::ndk::STABILITY_VINTF}";
+        } else {
+          out << "{::ndk::STABILITY_LOCAL}";
         }
+      } else if (types.GetEnumDeclaration(type) && !type.IsArray()) {
+        out << " = " << cpp_type << "(0)";
+      } else if (type.IsFixedSizeArray() && !type.IsNullable()) {
+        out << " = {{}}";
       }
     }
     out << ";\n";
@@ -1200,14 +1264,13 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   out << cpp::TemplateDecl(defined_type);
   out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _aidl_parcel) {\n";
   out.Indent();
-  out << "int32_t _aidl_parcelable_size;\n";
+  out << "binder_status_t _aidl_ret_status = STATUS_OK;\n";
   out << "int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
-  out << "binder_status_t _aidl_ret_status = AParcel_readInt32(_aidl_parcel, "
-         "&_aidl_parcelable_size);\n";
-  out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
-  out << "if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;\n";
+  out << "int32_t _aidl_parcelable_size = 0;\n";
+  out << "_aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);\n";
   StatusCheckReturn(out);
-
+  out << "if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;\n";
+  out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
   for (const auto& variable : defined_type.GetFields()) {
     out << "if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) "
            "{\n"

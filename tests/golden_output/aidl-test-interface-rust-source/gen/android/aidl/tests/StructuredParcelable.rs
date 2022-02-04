@@ -35,6 +35,7 @@ pub struct StructuredParcelable {
   pub int64_max: i64,
   pub hexInt32_neg_1: i32,
   pub ibinder: Option<binder::SpIBinder>,
+  pub empty: crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable_5_Empty,
   pub int8_1: Vec<u8>,
   pub int32_1: Vec<i32>,
   pub int64_1: Vec<i64>,
@@ -96,6 +97,7 @@ impl Default for StructuredParcelable {
       int64_max: 9223372036854775807,
       hexInt32_neg_1: -1,
       ibinder: Default::default(),
+      empty: Default::default(),
       int8_1: vec![1, 1, 1, 1, 1],
       int32_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       int64_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -120,8 +122,8 @@ impl Default for StructuredParcelable {
     }
   }
 }
-impl binder::parcel::Parcelable for StructuredParcelable {
-  fn write_to_parcel(&self, parcel: &mut binder::parcel::BorrowedParcel) -> binder::Result<()> {
+impl binder::Parcelable for StructuredParcelable {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       subparcel.write(&self.shouldContainThreeFs)?;
       subparcel.write(&self.f)?;
@@ -156,6 +158,7 @@ impl binder::parcel::Parcelable for StructuredParcelable {
       subparcel.write(&self.int64_max)?;
       subparcel.write(&self.hexInt32_neg_1)?;
       subparcel.write(&self.ibinder)?;
+      subparcel.write(&self.empty)?;
       subparcel.write(&self.int8_1)?;
       subparcel.write(&self.int32_1)?;
       subparcel.write(&self.int64_1)?;
@@ -180,7 +183,7 @@ impl binder::parcel::Parcelable for StructuredParcelable {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::parcel::BorrowedParcel) -> binder::Result<()> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       if subparcel.has_more_data() {
         self.shouldContainThreeFs = subparcel.read()?;
@@ -282,6 +285,9 @@ impl binder::parcel::Parcelable for StructuredParcelable {
         self.ibinder = subparcel.read()?;
       }
       if subparcel.has_more_data() {
+        self.empty = subparcel.read()?;
+      }
+      if subparcel.has_more_data() {
         self.int8_1 = subparcel.read()?;
       }
       if subparcel.has_more_data() {
@@ -350,9 +356,38 @@ impl binder::parcel::Parcelable for StructuredParcelable {
 }
 binder::impl_serialize_for_parcelable!(StructuredParcelable);
 binder::impl_deserialize_for_parcelable!(StructuredParcelable);
-impl binder::parcel::ParcelableMetadata for StructuredParcelable {
+impl binder::binder_impl::ParcelableMetadata for StructuredParcelable {
   fn get_descriptor() -> &'static str { "android.aidl.tests.StructuredParcelable" }
+}
+pub mod Empty {
+  #[derive(Debug, Clone, PartialEq)]
+  pub struct Empty {
+  }
+  impl Default for Empty {
+    fn default() -> Self {
+      Self {
+      }
+    }
+  }
+  impl binder::Parcelable for Empty {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+      parcel.sized_write(|subparcel| {
+        Ok(())
+      })
+    }
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+      parcel.sized_read(|subparcel| {
+        Ok(())
+      })
+    }
+  }
+  binder::impl_serialize_for_parcelable!(Empty);
+  binder::impl_deserialize_for_parcelable!(Empty);
+  impl binder::binder_impl::ParcelableMetadata for Empty {
+    fn get_descriptor() -> &'static str { "android.aidl.tests.StructuredParcelable.Empty" }
+  }
 }
 pub(crate) mod mangled {
  pub use super::StructuredParcelable as _7_android_4_aidl_5_tests_20_StructuredParcelable;
+ pub use super::Empty::Empty as _7_android_4_aidl_5_tests_20_StructuredParcelable_5_Empty;
 }

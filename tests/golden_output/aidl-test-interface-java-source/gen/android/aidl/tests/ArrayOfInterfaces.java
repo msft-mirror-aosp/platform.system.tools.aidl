@@ -30,7 +30,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
     int _aidl_start_pos = _aidl_parcel.dataPosition();
     int _aidl_parcelable_size = _aidl_parcel.readInt();
     try {
-      if (_aidl_parcelable_size < 0) return;
+      if (_aidl_parcelable_size < 4) throw new android.os.BadParcelableException("Parcelable too small");;
     } finally {
       if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
         throw new android.os.BadParcelableException("Overflow in the size of parcelable");
@@ -185,10 +185,9 @@ public class ArrayOfInterfaces implements android.os.Parcelable
             _arg2 = data.createInterfaceArray(android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[]::new, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface.Stub::asInterface);
             android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] _arg3;
             int _arg3_length = data.readInt();
-            if ((_arg3_length<0)) {
+            if (_arg3_length < 0) {
               _arg3 = null;
-            }
-            else {
+            } else {
               _arg3 = new android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[_arg3_length];
             }
             android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] _arg4;
@@ -197,10 +196,9 @@ public class ArrayOfInterfaces implements android.os.Parcelable
             _arg5 = data.createInterfaceArray(android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[]::new, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface.Stub::asInterface);
             android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] _arg6;
             int _arg6_length = data.readInt();
-            if ((_arg6_length<0)) {
+            if (_arg6_length < 0) {
               _arg6 = null;
-            }
-            else {
+            } else {
               _arg6 = new android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[_arg6_length];
             }
             android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] _arg7;
@@ -318,7 +316,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
       int _aidl_start_pos = _aidl_parcel.dataPosition();
       int _aidl_parcelable_size = _aidl_parcel.readInt();
       try {
-        if (_aidl_parcelable_size < 0) return;
+        if (_aidl_parcelable_size < 4) throw new android.os.BadParcelableException("Parcelable too small");;
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
         iface = android.aidl.tests.ArrayOfInterfaces.IEmptyInterface.Stub.asInterface(_aidl_parcel.readStrongBinder());
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;

@@ -38,7 +38,7 @@
 #include "aidl_language_y.h"
 #include "comments.h"
 #include "logging.h"
-#include "permission/parser.h"
+#include "permission.h"
 
 #ifdef _WIN32
 int isatty(int  fd)
@@ -158,11 +158,16 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION,
        {{"toString", kBooleanType}, {"equals", kBooleanType}}},
       {AidlAnnotation::Type::JAVA_DEFAULT, "JavaDefault", CONTEXT_TYPE_INTERFACE, {}},
+      {AidlAnnotation::Type::JAVA_DELEGATOR, "JavaDelegator", CONTEXT_TYPE_INTERFACE, {}},
       {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
        "JavaOnlyImmutable",
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION |
            CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
        {}},
+      {AidlAnnotation::Type::JAVA_SUPPRESS_LINT,
+       "JavaSuppressLint",
+       CONTEXT_ALL,
+       {{"value", kStringArrayType, /* required= */ true}}},
       {AidlAnnotation::Type::FIXED_SIZE,
        "FixedSize",
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION,
@@ -186,16 +191,20 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        CONTEXT_TYPE | CONTEXT_MEMBER,
        {{"value", kStringArrayType, /* required= */ true}}},
       {AidlAnnotation::Type::PERMISSION_ENFORCE,
-       "Enforce",
+       "EnforcePermission",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
-       {{"value", kStringType, /* required= */ true}}},
+       {{"value", kStringType}, {"anyOf", kStringArrayType}, {"allOf", kStringArrayType}}},
       {AidlAnnotation::Type::PERMISSION_MANUAL,
        "PermissionManuallyEnforced",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
        {}},
       {AidlAnnotation::Type::PERMISSION_NONE,
-       "NoPermissionRequired",
+       "RequiresNoPermission",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
+       {}},
+      {AidlAnnotation::Type::PROPAGATE_ALLOW_BLOCKING,
+       "PropagateAllowBlocking",
+       CONTEXT_METHOD,
        {}},
   };
   return kSchemas;
@@ -310,19 +319,27 @@ bool AidlAnnotation::CheckValid() const {
   if (schema_.type == AidlAnnotation::Type::PERMISSION_ENFORCE) {
     auto expr = EnforceExpression();
     if (!expr.ok()) {
-      AIDL_ERROR(this) << "Unable to parse @Enforce annotation: " << expr.error();
+      AIDL_ERROR(this) << "Unable to parse @EnforcePermission annotation: " << expr.error();
       return false;
     }
   }
   return true;
 }
 
-Result<unique_ptr<perm::Expression>> AidlAnnotation::EnforceExpression() const {
-  auto perm_expr = ParamValue<std::string>("value");
-  if (perm_expr.has_value()) {
-    return perm::Parser::Parse(perm_expr.value());
+Result<unique_ptr<android::aidl::perm::Expression>> AidlAnnotation::EnforceExpression() const {
+  auto single = ParamValue<std::string>("value");
+  auto anyOf = ParamValue<std::vector<std::string>>("anyOf");
+  auto allOf = ParamValue<std::vector<std::string>>("allOf");
+  if (single.has_value()) {
+    return std::make_unique<android::aidl::perm::Expression>(single.value());
+  } else if (anyOf.has_value()) {
+    auto v = android::aidl::perm::AnyOf{anyOf.value()};
+    return std::make_unique<android::aidl::perm::Expression>(v);
+  } else if (allOf.has_value()) {
+    auto v = android::aidl::perm::AllOf{allOf.value()};
+    return std::make_unique<android::aidl::perm::Expression>(v);
   }
-  return Error() << "No value parameter for @Enforce";
+  return Error() << "No parameter for @EnforcePermission";
 }
 
 // Checks if the annotation is applicable to the current context.
@@ -398,6 +415,19 @@ static const AidlAnnotation* GetAnnotation(
   return nullptr;
 }
 
+static const AidlAnnotation* GetScopedAnnotation(const AidlDefinedType& defined_type,
+                                                 AidlAnnotation::Type type) {
+  const AidlAnnotation* annotation = GetAnnotation(defined_type.GetAnnotations(), type);
+  if (annotation) {
+    return annotation;
+  }
+  const AidlDefinedType* enclosing_type = defined_type.GetParentType();
+  if (enclosing_type) {
+    return GetScopedAnnotation(*enclosing_type, type);
+  }
+  return nullptr;
+}
+
 AidlAnnotatable::AidlAnnotatable(const AidlLocation& location, const Comments& comments)
     : AidlCommentable(location, comments) {}
 
@@ -422,7 +452,9 @@ bool AidlAnnotatable::IsSensitiveData() const {
 }
 
 bool AidlAnnotatable::IsVintfStability() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::VINTF_STABILITY);
+  auto defined_type = AidlCast<AidlDefinedType>(*this);
+  AIDL_FATAL_IF(!defined_type, *this) << "@VintfStability is not attached to a type";
+  return GetScopedAnnotation(*defined_type, AidlAnnotation::Type::VINTF_STABILITY);
 }
 
 bool AidlAnnotatable::IsJavaOnlyImmutable() const {
@@ -456,13 +488,13 @@ std::vector<std::string> AidlAnnotatable::SuppressWarnings() const {
 }
 
 // Parses the @Enforce annotation expression.
-std::unique_ptr<perm::Expression> AidlAnnotatable::EnforceExpression() const {
+std::unique_ptr<android::aidl::perm::Expression> AidlAnnotatable::EnforceExpression() const {
   auto annot = GetAnnotation(annotations_, AidlAnnotation::Type::PERMISSION_ENFORCE);
   if (annot) {
     auto perm_expr = annot->EnforceExpression();
     if (!perm_expr.ok()) {
       // This should have been caught during validation.
-      AIDL_FATAL(this) << "Unable to parse @Enforce annotation: " << perm_expr.error();
+      AIDL_FATAL(this) << "Unable to parse @EnforcePermission annotation: " << perm_expr.error();
     }
     return std::move(perm_expr.value());
   }
@@ -475,6 +507,10 @@ bool AidlAnnotatable::IsPermissionManual() const {
 
 bool AidlAnnotatable::IsPermissionNone() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::PERMISSION_NONE);
+}
+
+bool AidlAnnotatable::IsPropagateAllowBlocking() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::PROPAGATE_ALLOW_BLOCKING);
 }
 
 bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
@@ -496,6 +532,10 @@ bool AidlAnnotatable::JavaDerive(const std::string& method) const {
 
 bool AidlAnnotatable::IsJavaDefault() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DEFAULT);
+}
+
+bool AidlAnnotatable::IsJavaDelegator() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DELEGATOR);
 }
 
 std::string AidlAnnotatable::GetDescriptor() const {
@@ -551,6 +591,10 @@ void AidlTypeSpecifier::ViewAsArrayBase(std::function<void(const AidlTypeSpecifi
   // Declaring array of generic type cannot happen, it is grammar error.
   AIDL_FATAL_IF(IsGeneric(), this);
 
+  bool is_mutated = mutated_;
+  mutated_ = true;
+  // mutate the array type to its base by removing a single dimension
+  // e.g.) T[] => T, T[N][M] => T[M] (note that, M is removed)
   if (IsFixedSizeArray() && std::get<FixedSizeArray>(*array_).dimensions.size() > 1) {
     auto& dimensions = std::get<FixedSizeArray>(*array_).dimensions;
     auto dim = std::move(dimensions.front());
@@ -563,6 +607,7 @@ void AidlTypeSpecifier::ViewAsArrayBase(std::function<void(const AidlTypeSpecifi
     func(*this);
     array_ = std::move(array_type);
   }
+  mutated_ = is_mutated;
 }
 
 bool AidlTypeSpecifier::MakeArray(ArrayType array_type) {
@@ -583,6 +628,15 @@ bool AidlTypeSpecifier::MakeArray(ArrayType array_type) {
   return false;
 }
 
+std::vector<int32_t> AidlTypeSpecifier::GetFixedSizeArrayDimensions() const {
+  AIDL_FATAL_IF(!IsFixedSizeArray(), "not a fixed-size array");
+  std::vector<int32_t> dimensions;
+  for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
+    dimensions.push_back(dim->EvaluatedValue<int32_t>());
+  }
+  return dimensions;
+}
+
 string AidlTypeSpecifier::Signature() const {
   string ret = GetName();
   if (IsGeneric()) {
@@ -594,8 +648,8 @@ string AidlTypeSpecifier::Signature() const {
   }
   if (IsArray()) {
     if (IsFixedSizeArray()) {
-      for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
-        ret += "[" + dim->ValueString(kIntType, AidlConstantValueDecorator) + "]";
+      for (const auto& dim : GetFixedSizeArrayDimensions()) {
+        ret += "[" + std::to_string(dim) + "]";
       }
     } else {
       ret += "[]";
@@ -760,7 +814,7 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
 
   if (IsFixedSizeArray()) {
     for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
-      if (!dim->CheckValid()) {
+      if (!dim->Evaluate()) {
         return false;
       }
       if (dim->GetType() > AidlConstantValue::Type::INT32) {
@@ -1697,7 +1751,7 @@ std::string AidlInterface::GetDescriptor() const {
 }
 
 AidlDocument::AidlDocument(const AidlLocation& location, const Comments& comments,
-                           std::set<string> imports,
+                           std::vector<string> imports,
                            std::vector<std::unique_ptr<AidlDefinedType>> defined_types,
                            bool is_preprocessed)
     : AidlCommentable(location, comments),

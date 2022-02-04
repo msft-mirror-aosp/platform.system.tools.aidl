@@ -9,11 +9,19 @@ namespace fixedsizearray {
 const char* FixedSizeArrayExample::descriptor = "android.aidl.fixedsizearray.FixedSizeArrayExample";
 
 binder_status_t FixedSizeArrayExample::readFromParcel(const AParcel* _aidl_parcel) {
-  int32_t _aidl_parcelable_size;
+  binder_status_t _aidl_ret_status = STATUS_OK;
   int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
-  binder_status_t _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
+  int32_t _aidl_parcelable_size = 0;
+  _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;
   if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
-  if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &int2x3);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
@@ -403,6 +411,9 @@ binder_status_t FixedSizeArrayExample::writeToParcel(AParcel* _aidl_parcel) cons
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, int2x3);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, boolArray);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
@@ -675,9 +686,9 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
       break;
     }
     case (FIRST_CALL_TRANSACTION + 4 /*Repeat2dBytes*/): {
-      std::array<std::array<uint8_t, 2>, 3> in_input;
-      std::array<std::array<uint8_t, 2>, 3> out_repeated;
-      std::array<std::array<uint8_t, 2>, 3> _aidl_return;
+      std::array<std::array<uint8_t, 3>, 2> in_input;
+      std::array<std::array<uint8_t, 3>, 2> out_repeated;
+      std::array<std::array<uint8_t, 3>, 2> _aidl_return;
 
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
@@ -697,9 +708,9 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
       break;
     }
     case (FIRST_CALL_TRANSACTION + 5 /*Repeat2dInts*/): {
-      std::array<std::array<int32_t, 2>, 3> in_input;
-      std::array<std::array<int32_t, 2>, 3> out_repeated;
-      std::array<std::array<int32_t, 2>, 3> _aidl_return;
+      std::array<std::array<int32_t, 3>, 2> in_input;
+      std::array<std::array<int32_t, 3>, 2> out_repeated;
+      std::array<std::array<int32_t, 3>, 2> _aidl_return;
 
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
@@ -719,9 +730,9 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
       break;
     }
     case (FIRST_CALL_TRANSACTION + 6 /*Repeat2dBinders*/): {
-      std::array<std::array<::ndk::SpAIBinder, 2>, 3> in_input;
-      std::array<std::array<::ndk::SpAIBinder, 2>, 3> out_repeated;
-      std::array<std::array<::ndk::SpAIBinder, 2>, 3> _aidl_return;
+      std::array<std::array<::ndk::SpAIBinder, 3>, 2> in_input;
+      std::array<std::array<::ndk::SpAIBinder, 3>, 2> out_repeated;
+      std::array<std::array<::ndk::SpAIBinder, 3>, 2> _aidl_return;
 
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
@@ -741,9 +752,9 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
       break;
     }
     case (FIRST_CALL_TRANSACTION + 7 /*Repeat2dParcelables*/): {
-      std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3> in_input;
-      std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3> out_repeated;
-      std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3> _aidl_return;
+      std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2> in_input;
+      std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2> out_repeated;
+      std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2> _aidl_return;
 
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
@@ -943,7 +954,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   _aidl_status_return:
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBytes(const std::array<std::array<uint8_t, 2>, 3>& in_input, std::array<std::array<uint8_t, 2>, 3>* out_repeated, std::array<std::array<uint8_t, 2>, 3>* _aidl_return) {
+::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBytes(const std::array<std::array<uint8_t, 3>, 2>& in_input, std::array<std::array<uint8_t, 3>, 2>* out_repeated, std::array<std::array<uint8_t, 3>, 2>* _aidl_return) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   ::ndk::ScopedAStatus _aidl_status;
   ::ndk::ScopedAParcel _aidl_in;
@@ -986,7 +997,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   _aidl_status_return:
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dInts(const std::array<std::array<int32_t, 2>, 3>& in_input, std::array<std::array<int32_t, 2>, 3>* out_repeated, std::array<std::array<int32_t, 2>, 3>* _aidl_return) {
+::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dInts(const std::array<std::array<int32_t, 3>, 2>& in_input, std::array<std::array<int32_t, 3>, 2>* out_repeated, std::array<std::array<int32_t, 3>, 2>* _aidl_return) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   ::ndk::ScopedAStatus _aidl_status;
   ::ndk::ScopedAParcel _aidl_in;
@@ -1029,7 +1040,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   _aidl_status_return:
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBinders(const std::array<std::array<::ndk::SpAIBinder, 2>, 3>& in_input, std::array<std::array<::ndk::SpAIBinder, 2>, 3>* out_repeated, std::array<std::array<::ndk::SpAIBinder, 2>, 3>* _aidl_return) {
+::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBinders(const std::array<std::array<::ndk::SpAIBinder, 3>, 2>& in_input, std::array<std::array<::ndk::SpAIBinder, 3>, 2>* out_repeated, std::array<std::array<::ndk::SpAIBinder, 3>, 2>* _aidl_return) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   ::ndk::ScopedAStatus _aidl_status;
   ::ndk::ScopedAParcel _aidl_in;
@@ -1072,7 +1083,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   _aidl_status_return:
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dParcelables(const std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>& in_input, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>* out_repeated, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>* _aidl_return) {
+::ndk::ScopedAStatus FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dParcelables(const std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>& in_input, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* out_repeated, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* _aidl_return) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   ::ndk::ScopedAStatus _aidl_status;
   ::ndk::ScopedAParcel _aidl_in;
@@ -1185,22 +1196,22 @@ std::shared_ptr<FixedSizeArrayExample::IRepeatFixedSizeArray> FixedSizeArrayExam
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dBytes(const std::array<std::array<uint8_t, 2>, 3>& /*in_input*/, std::array<std::array<uint8_t, 2>, 3>* /*out_repeated*/, std::array<std::array<uint8_t, 2>, 3>* /*_aidl_return*/) {
+::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dBytes(const std::array<std::array<uint8_t, 3>, 2>& /*in_input*/, std::array<std::array<uint8_t, 3>, 2>* /*out_repeated*/, std::array<std::array<uint8_t, 3>, 2>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dInts(const std::array<std::array<int32_t, 2>, 3>& /*in_input*/, std::array<std::array<int32_t, 2>, 3>* /*out_repeated*/, std::array<std::array<int32_t, 2>, 3>* /*_aidl_return*/) {
+::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dInts(const std::array<std::array<int32_t, 3>, 2>& /*in_input*/, std::array<std::array<int32_t, 3>, 2>* /*out_repeated*/, std::array<std::array<int32_t, 3>, 2>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dBinders(const std::array<std::array<::ndk::SpAIBinder, 2>, 3>& /*in_input*/, std::array<std::array<::ndk::SpAIBinder, 2>, 3>* /*out_repeated*/, std::array<std::array<::ndk::SpAIBinder, 2>, 3>* /*_aidl_return*/) {
+::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dBinders(const std::array<std::array<::ndk::SpAIBinder, 3>, 2>& /*in_input*/, std::array<std::array<::ndk::SpAIBinder, 3>, 2>* /*out_repeated*/, std::array<std::array<::ndk::SpAIBinder, 3>, 2>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
 }
-::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dParcelables(const std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>& /*in_input*/, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>* /*out_repeated*/, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>* /*_aidl_return*/) {
+::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::Repeat2dParcelables(const std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>& /*in_input*/, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* /*out_repeated*/, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
@@ -1222,13 +1233,14 @@ namespace fixedsizearray {
 const char* FixedSizeArrayExample::IntParcelable::descriptor = "android.aidl.fixedsizearray.FixedSizeArrayExample.IntParcelable";
 
 binder_status_t FixedSizeArrayExample::IntParcelable::readFromParcel(const AParcel* _aidl_parcel) {
-  int32_t _aidl_parcelable_size;
+  binder_status_t _aidl_ret_status = STATUS_OK;
   int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
-  binder_status_t _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
-  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
-  if (_aidl_parcelable_size < 0) return STATUS_BAD_VALUE;
+  int32_t _aidl_parcelable_size = 0;
+  _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
+  if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
   if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
     AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;

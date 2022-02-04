@@ -138,6 +138,12 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			crate_name: "binder",
 			srcs: [""],
 		}
+		rust_proc_macro {
+			name: "libasync_trait",
+			crate_name: "async_trait",
+			srcs: [""],
+			no_stdlibs: true,
+		}
 	`
 	preparers = append(preparers, android.FixtureWithRootAndroidBp(bp))
 	preparers = append(preparers, android.FixtureAddTextFile("system/tools/aidl/build/Android.bp", `
@@ -933,11 +939,6 @@ func TestDuplicatedVersions(t *testing.T) {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
 			versions: ["1"],
-			backend: {
-				ndk: {
-					srcs_available: true,
-				},
-			},
 		}
 
 		aidl_interface {
@@ -976,11 +977,6 @@ func TestDuplicatedVersions(t *testing.T) {
 			name: "myiface",
 			srcs: ["IFoo.aidl"],
 			versions: ["1"],
-			backend: {
-				ndk: {
-					srcs_available: true,
-				},
-			},
 		}
 
 		aidl_interface {
@@ -1071,45 +1067,6 @@ func TestRecoveryAvailable(t *testing.T) {
 	`)
 	ctx.ModuleForTests("myiface-V1-ndk", "android_recovery_arm64_armv8-a_shared")
 	ctx.ModuleForTests("myiface-V1-cpp", "android_recovery_arm64_armv8-a_shared")
-}
-
-func TestSrcsAvailable(t *testing.T) {
-	bp := `
-		aidl_interface {
-			name: "myiface",
-			srcs: ["IFoo.aidl"],
-			backend: {
-				java: {
-					srcs_available: %s,
-				},
-				cpp: {
-					srcs_available: %s,
-				},
-			},
-		}
-	`
-	customizer := withFiles(map[string][]byte{
-		"otherpackage/Android.bp": []byte(`
-			java_library {
-				name: "javalib",
-				srcs: [":myiface-V1-java-source"],
-			}
-			cc_library_shared {
-				name: "cclib",
-				srcs: [":myiface-V1-cpp-source"],
-			}
-		`),
-	})
-	ctx, _ := testAidl(t, fmt.Sprintf(bp, "true", "true"), customizer)
-	javaInputs := ctx.ModuleForTests("javalib", "android_common").Rule("javac").Inputs.Strings()
-	assertListContains(t, javaInputs, "myiface-V1-java-source/gen/IFoo.java")
-	ccInput := ctx.ModuleForTests("cclib", "android_arm64_armv8-a_shared").Rule("cc").Input.String()
-	assertContains(t, ccInput, "myiface-V1-cpp-source/gen/IFoo.cpp")
-
-	testAidlError(t, `depends on //.:myiface-V1-java-source which is not visible to this module`,
-		fmt.Sprintf(bp, "false", "true"), customizer)
-	testAidlError(t, `depends on //.:myiface-V1-cpp-source which is not visible to this module`,
-		fmt.Sprintf(bp, "true", "false"), customizer)
 }
 
 func TestRustDuplicateNames(t *testing.T) {

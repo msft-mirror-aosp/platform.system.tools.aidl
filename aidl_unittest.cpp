@@ -35,6 +35,7 @@
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_java.h"
 #include "aidl_to_ndk.h"
+#include "aidl_to_rust.h"
 #include "comments.h"
 #include "logging.h"
 #include "options.h"
@@ -459,6 +460,28 @@ TEST_P(AidlTest, ParsesStabilityAnnotations) {
   const AidlInterface* interface = parse_result->AsInterface();
   ASSERT_NE(nullptr, interface);
   ASSERT_TRUE(interface->IsVintfStability());
+}
+
+TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
+  CaptureStderr();
+  string code =
+      "@VintfStability\n"
+      "parcelable Foo {\n"
+      "  interface INested {}"
+      "}";
+  EXPECT_NE(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr,
+                           {"--structured", "--stability", "vintf"}));
+  EXPECT_EQ(GetCapturedStderr(), "");
+  auto nested = typenames_.TryGetDefinedType("Foo.INested");
+  ASSERT_NE(nullptr, nested);
+  ASSERT_TRUE(nested->IsVintfStability());
+}
+
+TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage(), nullptr,
+                           {"--structured", "--stability", "vintf"}));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Foo does not have VINTF level stability"));
 }
 
 TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
@@ -1151,9 +1174,7 @@ TEST_P(AidlTest, ParseCompoundParcelableFromPreprocess) {
   preprocessed_files_.push_back("preprocessed");
   auto parse_result = Parse("p/IFoo.aidl", "package p; interface IFoo { void f(in Inner c); }",
                             typenames_, GetLanguage());
-  // TODO(wiley): This should actually return nullptr because we require
-  //              the outer class name.  However, for legacy reasons,
-  //              this behavior must be maintained.  b/17415692
+  // Require legacy behavior - inner class name can be used without outer class name.
   EXPECT_NE(nullptr, parse_result);
 }
 
@@ -1241,6 +1262,23 @@ TEST_P(AidlTest, FailOnDuplicateConstantNames) {
                       interface IFoo {
                         const String DUPLICATED = "d";
                         const int DUPLICATED = 1;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, InvalidConstString) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.47-60: Found invalid character '\\' at index 4 in string constant "
+      "'\"test\\\"test\"'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const String someVar = "test\"test";
                       }
                    )",
                            typenames_, GetLanguage(), &error));
@@ -1451,7 +1489,7 @@ TEST_F(AidlTest, ByteAndByteArrayDifferInCpp) {
   ASSERT_EQ(3ul, fields.size());
   EXPECT_EQ("-1", fields[0]->ValueString(cpp::ConstantValueDecorator));
   EXPECT_EQ("{uint8_t(-1), 1}", fields[1]->ValueString(cpp::ConstantValueDecorator));
-  EXPECT_EQ("{uint8_t(-1), 1}", fields[2]->ValueString(cpp::ConstantValueDecorator));
+  EXPECT_EQ("{{uint8_t(-1), 1}}", fields[2]->ValueString(cpp::ConstantValueDecorator));
 }
 
 TEST_F(AidlTest, ByteAndByteArrayDifferInNdk) {
@@ -1470,7 +1508,7 @@ TEST_F(AidlTest, ByteAndByteArrayDifferInNdk) {
   ASSERT_EQ(3ul, fields.size());
   EXPECT_EQ("-1", fields[0]->ValueString(ndk::ConstantValueDecorator));
   EXPECT_EQ("{uint8_t(-1), 1}", fields[1]->ValueString(ndk::ConstantValueDecorator));
-  EXPECT_EQ("{uint8_t(-1), 1}", fields[2]->ValueString(ndk::ConstantValueDecorator));
+  EXPECT_EQ("{{uint8_t(-1), 1}}", fields[2]->ValueString(ndk::ConstantValueDecorator));
 }
 
 TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
@@ -3018,6 +3056,21 @@ TEST_F(AidlTestCompatibleChanges, NewNestedTypes) {
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 
+TEST_F(AidlTestCompatibleChanges, NewJavaSuppressLint) {
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {"
+                               "  void foo(int a);"
+                               "}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
+                               "@JavaSuppressLint({\"NewApi\"})"
+                               "interface IFoo {"
+                               "  void foo(int a);"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 class AidlTestIncompatibleChanges : public AidlTest {
  protected:
   Options options_ = Options::From("aidl --checkapi old new");
@@ -3939,46 +3992,42 @@ TEST_F(AidlTest, ParseRustDerive) {
 TEST_F(AidlTest, EmptyEnforceAnnotation) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
-        @Enforce()
+        @EnforcePermission()
         void Protected();
     })");
 
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Missing 'value' on @Enforce."));
-}
-
-TEST_F(AidlTest, EmptyEnforceCondition) {
-  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    interface IFoo {
-        @Enforce("")
-        void Protected();
-    })");
-
-  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
-  CaptureStderr();
-  EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @Enforce annotation"));
-}
-
-TEST_F(AidlTest, InvalidEnforceCondition) {
-  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    interface IFoo {
-        @Enforce("invalid")
-        void Protected();
-    })");
-
-  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
-  CaptureStderr();
-  EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @Enforce annotation"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @EnforcePermission annotation"));
 }
 
 TEST_F(AidlTest, InterfaceEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce("permission = INTERNET")
+    @EnforcePermission("INTERNET")
     interface IFoo {
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, EnforceConditionAny) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @EnforcePermission(anyOf={"INTERNET", "READ_PHONE_STATE"})
+        void Protected();
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+}
+
+TEST_F(AidlTest, EnforceConditionAll) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    interface IFoo {
+        @EnforcePermission(allOf={"INTERNET", "READ_PHONE_STATE"})
         void Protected();
     })");
 
@@ -3988,9 +4037,9 @@ TEST_F(AidlTest, InterfaceEnforceCondition) {
 
 TEST_F(AidlTest, InterfaceAndMethodEnforceCondition) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce("permission = INTERNET")
+    @EnforcePermission("INTERNET")
     interface IFoo {
-        @Enforce("uid = SYSTEM_UID")
+        @EnforcePermission("SYSTEM_UID")
         void Protected();
     })");
 
@@ -4000,9 +4049,9 @@ TEST_F(AidlTest, InterfaceAndMethodEnforceCondition) {
 
 TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @NoPermissionRequired
+    @RequiresNoPermission
     interface IFoo {
-        @Enforce("permission = INTERNET")
+        @EnforcePermission("INTERNET")
         void Protected();
     })");
 
@@ -4017,7 +4066,7 @@ TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     @PermissionManuallyEnforced
     interface IFoo {
-        @Enforce("permission = INTERNET")
+        @EnforcePermission("INTERNET")
         void Protected();
     })");
 
@@ -4031,9 +4080,9 @@ TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
 
 TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce("permission = INTERNET")
+    @EnforcePermission("INTERNET")
     interface IFoo {
-        @NoPermissionRequired
+        @RequiresNoPermission
         void Protected();
     })");
 
@@ -4046,7 +4095,7 @@ TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
 
 TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
-    @Enforce("permission = INTERNET")
+    @EnforcePermission("INTERNET")
     interface IFoo {
         @PermissionManuallyEnforced
         void Protected();
@@ -4057,6 +4106,21 @@ TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(),
               HasSubstr("The interface IFoo enforces permissions using annotations"));
+}
+
+TEST_F(AidlTest, JavaSuppressLint) {
+  io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
+    @JavaSuppressLint({"NewApi"})
+    interface IFoo {
+    })");
+
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(GetCapturedStderr(), "");
+  string code;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/IFoo.java", &code));
+  EXPECT_THAT(code, HasSubstr("@android.annotation.SuppressLint(value = {\"NewApi\"})"));
 }
 
 class AidlOutputPathTest : public AidlTest {
@@ -4410,6 +4474,26 @@ TEST_F(AidlTest, AcceptMultiDimensionalFixedSizeArray) {
   EXPECT_EQ("", GetCapturedStderr());
 }
 
+TEST_F(AidlTest, AcceptBinarySizeArray) {
+  io_delegate_.SetFileContents(
+      "a/Bar.aidl", "package a; parcelable Bar { const int CONST = 3; String[CONST + 1] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=ndk");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
+TEST_F(AidlTest, AcceptRefSizeArray) {
+  io_delegate_.SetFileContents(
+      "a/Bar.aidl", "package a; parcelable Bar { const int CONST = 3; String[CONST] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=ndk");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
 TEST_F(AidlTest, RejectArrayOfFixedSizeArray) {
   io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[2][] a; }");
 
@@ -4523,7 +4607,7 @@ TEST_F(AidlTest, FixedSizeArrayWithWrongTypeDefaultValue) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Invalid type specifier for a literal string: int"));
 }
 
-TEST_F(AidlTest, FixedSizeArrayWithWrongSizeDefaultValue) {
+TEST_F(AidlTest, FixedSizeArrayWithMoreElements) {
   io_delegate_.SetFileContents("a/Bar.aidl",
                                "package a;\n"
                                "parcelable Bar {\n"
@@ -4535,6 +4619,20 @@ TEST_F(AidlTest, FixedSizeArrayWithWrongSizeDefaultValue) {
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(),
               HasSubstr("Expected an array of 3 elements, but found one with 4 elements"));
+}
+
+TEST_F(AidlTest, FixedSizeArrayWithFewerElements) {
+  io_delegate_.SetFileContents("a/Bar.aidl",
+                               "package a;\n"
+                               "parcelable Bar {\n"
+                               "  int[2][3] a = {};\n"
+                               "}");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=java");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Expected an array of 2 elements, but found one with 0 elements"));
 }
 
 struct GenericAidlTest : ::testing::Test {
@@ -5050,6 +5148,59 @@ TEST_F(AidlTest, InterfaceVectorIsAvailableAfterTiramisu) {
   EXPECT_EQ(GetCapturedStderr(), "");
 }
 
+TEST_F(AidlTest, PropagateBeforeTiramisu) {
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "interface IFoo{\n"
+                               "  @PropagateAllowBlocking IBinder foo();\n"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(
+      Options::From("aidl --lang=java --min_sdk_version 30 -o out p/IFoo.aidl"), io_delegate_));
+  auto captured_stderr = GetCapturedStderr();
+  EXPECT_THAT(captured_stderr, HasSubstr("@PropagateAllowBlocking requires"));
+
+  CaptureStderr();
+  EXPECT_TRUE(
+      compile_aidl(Options::From("aidl --lang=java --min_sdk_version Tiramisu -o out p/IFoo.aidl"),
+                   io_delegate_));
+  EXPECT_EQ(GetCapturedStderr(), "");
+}
+
+TEST_F(AidlTest, RustNameOf_PfdFixedArray) {
+  auto pfd = typenames_.MakeResolvedType(AIDL_LOCATION_HERE, "ParcelFileDescriptor", false);
+  ASSERT_TRUE(pfd->MakeArray(FixedSizeArray{
+      std::unique_ptr<AidlConstantValue>(AidlConstantValue::Integral(AIDL_LOCATION_HERE, "2"))}));
+  ASSERT_TRUE(pfd->MakeArray(FixedSizeArray{
+      std::unique_ptr<AidlConstantValue>(AidlConstantValue::Integral(AIDL_LOCATION_HERE, "3"))}));
+  EXPECT_EQ(
+      rust::RustNameOf(*pfd, typenames_, rust::StorageMode::PARCELABLE_FIELD, rust::Lifetime::NONE),
+      "[[Option<binder::ParcelFileDescriptor>; 3]; 2]");
+  EXPECT_EQ(
+      rust::RustNameOf(*pfd, typenames_, rust::StorageMode::DEFAULT_VALUE, rust::Lifetime::NONE),
+      "[[Option<binder::ParcelFileDescriptor>; 3]; 2]");
+  EXPECT_EQ(
+      rust::RustNameOf(*pfd, typenames_, rust::StorageMode::IN_ARGUMENT, rust::Lifetime::NONE),
+      "&[[binder::ParcelFileDescriptor; 3]; 2]");
+  EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::VALUE, rust::Lifetime::NONE),
+            "[[binder::ParcelFileDescriptor; 3]; 2]");
+}
+
+TEST_F(AidlTest, RustNameOf_PfdDynamicArray) {
+  auto pfd = typenames_.MakeResolvedType(AIDL_LOCATION_HERE, "ParcelFileDescriptor", true);
+  EXPECT_EQ(
+      rust::RustNameOf(*pfd, typenames_, rust::StorageMode::PARCELABLE_FIELD, rust::Lifetime::NONE),
+      "Vec<binder::ParcelFileDescriptor>");
+  EXPECT_EQ(
+      rust::RustNameOf(*pfd, typenames_, rust::StorageMode::DEFAULT_VALUE, rust::Lifetime::NONE),
+      "Vec<Option<binder::ParcelFileDescriptor>>");
+  // we use UNSIZED_ARGUMENT mode for input argument of dynamic array
+  EXPECT_EQ(
+      rust::RustNameOf(*pfd, typenames_, rust::StorageMode::UNSIZED_ARGUMENT, rust::Lifetime::NONE),
+      "&[binder::ParcelFileDescriptor]");
+  EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::VALUE, rust::Lifetime::NONE),
+            "Vec<binder::ParcelFileDescriptor>");
+}
+
 struct TypeParam {
   string kind;
   string literal;
@@ -5206,9 +5357,9 @@ const std::map<std::string, ExpectedResult> kFieldSupportExpectations = {
     {"ndk_primitiveArray", {"", ""}},
     {"rust_primitiveArray", {"", ""}},
     {"cpp_primitiveFixedArray", {"", ""}},
-    {"java_primitiveFixedArray", {"not supported yet", "not supported yet"}},
+    {"java_primitiveFixedArray", {"", ""}},
     {"ndk_primitiveFixedArray", {"", ""}},
-    {"rust_primitiveFixedArray", {"not supported yet", "not supported yet"}},
+    {"rust_primitiveFixedArray", {"", ""}},
     {"cpp_String", {"", ""}},
     {"java_String", {"", ""}},
     {"ndk_String", {"", ""}},

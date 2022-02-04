@@ -87,6 +87,7 @@ using android::binder::Status;
 
 // Generated code:
 using android::aidl::tests::BackendType;
+using android::aidl::tests::BadParcelable;
 using android::aidl::tests::BnCppJavaTests;
 using android::aidl::tests::BnNamedCallback;
 using android::aidl::tests::BnNewName;
@@ -182,6 +183,11 @@ class CppJavaTests : public BnCppJavaTests {
  public:
   CppJavaTests() = default;
   ~CppJavaTests() = default;
+
+  Status RepeatBadParcelable(const BadParcelable& input, BadParcelable* _aidl_return) override {
+    *_aidl_return = input;
+    return Status::ok();
+  }
 
   Status RepeatSimpleParcelable(const SimpleParcelable& input, SimpleParcelable* repeat,
                                 SimpleParcelable* _aidl_return) override {
@@ -866,31 +872,31 @@ class FixedSizeArrayService : public FixedSizeArrayExample::BnRepeatFixedSizeArr
     *_aidl_return = in_input;
     return Status::ok();
   }
-  Status Repeat2dBytes(const std::array<std::array<uint8_t, 2>, 3>& in_input,
-                       std::array<std::array<uint8_t, 2>, 3>* out_repeated,
-                       std::array<std::array<uint8_t, 2>, 3>* _aidl_return) override {
+  Status Repeat2dBytes(const std::array<std::array<uint8_t, 3>, 2>& in_input,
+                       std::array<std::array<uint8_t, 3>, 2>* out_repeated,
+                       std::array<std::array<uint8_t, 3>, 2>* _aidl_return) override {
     *out_repeated = in_input;
     *_aidl_return = in_input;
     return Status::ok();
   }
-  Status Repeat2dInts(const std::array<std::array<int32_t, 2>, 3>& in_input,
-                      std::array<std::array<int32_t, 2>, 3>* out_repeated,
-                      std::array<std::array<int32_t, 2>, 3>* _aidl_return) override {
+  Status Repeat2dInts(const std::array<std::array<int32_t, 3>, 2>& in_input,
+                      std::array<std::array<int32_t, 3>, 2>* out_repeated,
+                      std::array<std::array<int32_t, 3>, 2>* _aidl_return) override {
     *out_repeated = in_input;
     *_aidl_return = in_input;
     return Status::ok();
   }
-  Status Repeat2dBinders(const std::array<std::array<sp<IBinder>, 2>, 3>& in_input,
-                         std::array<std::array<sp<IBinder>, 2>, 3>* out_repeated,
-                         std::array<std::array<sp<IBinder>, 2>, 3>* _aidl_return) override {
+  Status Repeat2dBinders(const std::array<std::array<sp<IBinder>, 3>, 2>& in_input,
+                         std::array<std::array<sp<IBinder>, 3>, 2>* out_repeated,
+                         std::array<std::array<sp<IBinder>, 3>, 2>* _aidl_return) override {
     *out_repeated = in_input;
     *_aidl_return = in_input;
     return Status::ok();
   }
   Status Repeat2dParcelables(
-      const std::array<std::array<FixedSizeArrayExample::IntParcelable, 2>, 3>& in_input,
-      std::array<std::array<FixedSizeArrayExample::IntParcelable, 2>, 3>* out_repeated,
-      std::array<std::array<FixedSizeArrayExample::IntParcelable, 2>, 3>* _aidl_return) override {
+      const std::array<std::array<FixedSizeArrayExample::IntParcelable, 3>, 2>& in_input,
+      std::array<std::array<FixedSizeArrayExample::IntParcelable, 3>, 2>* out_repeated,
+      std::array<std::array<FixedSizeArrayExample::IntParcelable, 3>, 2>* _aidl_return) override {
     *out_repeated = in_input;
     *_aidl_return = in_input;
     return Status::ok();

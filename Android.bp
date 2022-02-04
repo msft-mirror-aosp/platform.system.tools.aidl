@@ -41,7 +41,6 @@ cc_defaults {
     header_libs: ["libgtest_prod_headers"],
     static_libs: [
         "libbase",
-        "libaidl-perm",
         "libcutils",
         "libgtest",
     ],
@@ -105,6 +104,7 @@ cc_library_static {
         "logging.cpp",
         "options.cpp",
         "parser.cpp",
+        "permission.cpp",
         "preprocess.cpp",
     ],
     yacc: {
@@ -120,7 +120,6 @@ cc_binary_host {
     srcs: ["main.cpp"],
     static_libs: [
         "libaidl-common",
-        "libaidl-perm",
         "libbase",
         "liblog",
     ],
@@ -134,7 +133,6 @@ cc_binary_host {
     cflags: ["-DAIDL_CPP_BUILD"],
     static_libs: [
         "libaidl-common",
-        "libaidl-perm",
         "libbase",
         "liblog",
     ],
@@ -169,7 +167,6 @@ cc_test {
 
     static_libs: [
         "libaidl-common",
-        "libaidl-perm",
         "libbase",
         "libcutils",
         "libgmock",
@@ -204,7 +201,6 @@ cc_fuzz {
     ],
     static_libs: [
         "libaidl-common",
-        "libaidl-perm",
         "libbase",
         "libcutils",
         "libgtest",
@@ -231,6 +227,7 @@ python_test_host {
         "aidl_test_java_service",
         "aidl_test_rust_client",
         "aidl_test_rust_service",
+        "aidl_test_rust_service_async",
         "aidl_test_java_client_sdk1",
         "aidl_test_java_service_sdk1",
         "aidl_test_java_client_sdk29",
@@ -316,6 +313,7 @@ filegroup {
 filegroup {
     name: "libaidl-integration-cpp-java-test-files",
     srcs: [
+        "tests/android/aidl/tests/BadParcelable.aidl",
         "tests/android/aidl/tests/ICppJavaTests.aidl",
         "tests/android/aidl/tests/SimpleParcelable.aidl",
     ],
@@ -362,6 +360,7 @@ cc_library_static {
     srcs: [
         ":libaidl-integration-test-files",
         ":libaidl-integration-cpp-java-test-files",
+        "tests/bad_parcelable.cpp",
         "tests/simple_parcelable.cpp",
     ],
 }
@@ -427,6 +426,7 @@ cc_test {
         "libbinder_ndk",
     ],
     srcs: [
+        "tests/aidl_test_client_ndk_delegate.cpp",
         "tests/aidl_test_client_ndk_loggable_interface.cpp",
         "tests/aidl_test_client_ndk_nested.cpp",
         "tests/aidl_test_client_ndk_nullables.cpp",
@@ -445,17 +445,15 @@ aidl_interface {
     backend: {
         cpp: {
             enabled: true,
-            srcs_available: true,
         },
         java: {
-            enabled: false,
+            enabled: true,
         },
         ndk: {
             enabled: true,
-            srcs_available: true,
         },
         rust: {
-            enabled: false,
+            enabled: true,
         },
     }
 }
@@ -476,6 +474,7 @@ java_defaults {
         "aidl_test_nonvintf_parcelable-V1-java",
         "aidl_test_unstable_parcelable-java",
         "aidl_test_vintf_parcelable-V1-java",
+        "aidl-test-fixedsizearray-java",
         // TODO: remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",
@@ -488,6 +487,7 @@ java_defaults {
         "tests/android/aidl/tests/extension/*.aidl",
         "tests/android/aidl/tests/nested/*.aidl",
         "tests/android/aidl/tests/unions/*.aidl",
+        "tests/java/src/android/aidl/tests/BadParcelable.java",
         "tests/java/src/android/aidl/tests/SimpleParcelable.java",
         "tests/java/src/android/aidl/tests/generic/Pair.java",
     ],
@@ -506,7 +506,7 @@ java_test {
     defaults: ["aidl_test_java_defaults"],
     static_libs: [
         // client uses the new version
-        "aidl-test-versioned-interface-V2-java",
+        "aidl-test-versioned-interface-V3-java",
     ],
     // tests are included in defaults
     srcs: [
@@ -515,6 +515,7 @@ java_test {
         "tests/java/src/android/aidl/tests/JavaOnlyImmutableAnnotationTests.java",
         "tests/java/src/android/aidl/tests/AidlJavaTests.java",
         "tests/java/src/android/aidl/tests/BuiltInTests.java",
+        "tests/java/src/android/aidl/tests/DelegatorTests.java",
         "tests/java/src/android/aidl/tests/GenericTests.java",
         "tests/java/src/android/aidl/tests/NestedTypesTests.java",
         "tests/java/src/android/aidl/tests/TestVersionedInterface.java",
@@ -632,7 +633,9 @@ genrule {
         ":aidl_test_loggable_interface-ndk-source",
         ":aidl-test-interface-platform-java-source",
         ":aidl-test-fixedsizearray-cpp-source",
+        ":aidl-test-fixedsizearray-java-source",
         ":aidl-test-fixedsizearray-ndk-source",
+        ":aidl-test-fixedsizearray-rust-source",
         "tests/golden_output/**/*",
     ],
     out: ["TODO_b_37575883.cpp"],
@@ -662,15 +665,12 @@ aidl_interface {
     gen_trace: true,
     backend: {
         cpp: {
-            srcs_available: true,
             gen_log: true,
         },
         ndk: {
-            srcs_available: true,
             gen_log: true,
         },
         java: {
-            srcs_available: true,
             platform_apis: true,
         },
     },
@@ -684,21 +684,16 @@ aidl_interface {
     local_include_dir: "tests",
     backend: {
         cpp: {
-            srcs_available: true,
         },
         java: {
             platform_apis: true,
-            srcs_available: true,
-            gen_rpc: true,
+            require_rpc: true,
         },
         rust: {
             enabled: true,
-            srcs_available: true,
         },
         ndk: {
             apps_enabled: false,
-            separate_platform_variant: false, // TODO(b/161456198): remove as test
-            srcs_available: true,
         },
     },
 }
@@ -718,7 +713,6 @@ aidl_interface {
         },
         java: {
             platform_apis: true,
-            srcs_available: true,
         },
         rust: {
             enabled: false,
@@ -744,6 +738,7 @@ rust_test {
         "aidl_test_nonvintf_parcelable-V1-rust",
         "aidl_test_unstable_parcelable-rust",
         "aidl_test_vintf_parcelable-V1-rust",
+        "aidl-test-fixedsizearray-rust",
         "liblibc",
         // We need to import binder_rs directly
         // for a few internal types like Parcel
@@ -772,8 +767,36 @@ rust_test {
     rustlibs: [
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
+        "aidl-test-fixedsizearray-rust",
         "liblibc",
     ],
+    prefer_rlib: true,
+    compile_multilib: "both",
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "64",
+        },
+    },
+    test_suites: ["general-tests"],
+}
+
+rust_test {
+    name: "aidl_test_rust_service_async",
+    test_harness: false,
+    srcs: [
+        "tests/rust/test_service_async.rs",
+    ],
+    rustlibs: [
+        "aidl-test-interface-rust",
+        "aidl-test-versioned-interface-V1-rust",
+        "liblibc",
+        "libbinder_tokio_rs",
+        "libtokio",
+    ],
+    proc_macros: ["libasync_trait"],
     prefer_rlib: true,
     compile_multilib: "both",
     multilib: {

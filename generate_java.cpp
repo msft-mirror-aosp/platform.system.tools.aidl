@@ -69,8 +69,7 @@ const map<string, string> kContentsDescribers {
   }
   return _mask;
 })"},
-  {"Array", R"(Class<?> _clazz = _v.getClass();
-if (_clazz.isArray() && _clazz.getComponentType() == Object.class) {
+  {"Array", R"(if (_v instanceof Object[]) {
   int _mask = 0;
   for (Object o : (Object[]) _v) {
     _mask |= describeContents(o);
@@ -504,7 +503,8 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
   out << "int _aidl_start_pos = _aidl_parcel.dataPosition();\n"
       << "int _aidl_parcelable_size = _aidl_parcel.readInt();\n"
       << "try {\n"
-      << "  if (_aidl_parcelable_size < 0) return";
+      << "  if (_aidl_parcelable_size < 4) throw new "
+         "android.os.BadParcelableException(\"Parcelable too small\");";
   if (parcel->IsJavaOnlyImmutable()) {
     out << " " << builder_variable << ".build()";
   }
@@ -918,7 +918,21 @@ std::vector<std::string> GenerateJavaAnnotations(const AidlAnnotatable& a) {
     if (annotation->GetType() == AidlAnnotation::Type::JAVA_PASSTHROUGH) {
       result.emplace_back(annotation->ParamValue<std::string>("annotation").value());
     }
+    if (annotation->GetType() == AidlAnnotation::Type::JAVA_SUPPRESS_LINT) {
+      std::vector<std::string> values;
+      for (const auto& [name, value] : annotation->AnnotationParams(ConstantValueDecorator)) {
+        values.emplace_back(name + " = " + value);
+      }
+      result.emplace_back("@android.annotation.SuppressLint(" + Join(values, ", ") + ")");
+    }
   }
+
+  if (auto enforce_expr = a.EnforceExpression(); enforce_expr) {
+    result.emplace_back("@android.annotation.EnforcePermission(" +
+                        android::aidl::perm::AsJavaAnnotation(*enforce_expr.get()) + ")");
+  } else if (a.IsPermissionNone()) {
+    result.emplace_back("@android.annotation.RequiresNoPermission");
+  }  // TODO: Add annoation for @PermissionManuallyEnforced
 
   return result;
 }

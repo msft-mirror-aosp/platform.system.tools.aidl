@@ -159,8 +159,8 @@ void CheckRepeat(Service service, MemFn fn, Input input) {
 }
 
 template <typename T>
-std::array<std::array<T, 2>, 3> Make2dArray(std::initializer_list<T> values) {
-  std::array<std::array<T, 2>, 3> arr = {};
+std::array<std::array<T, 3>, 2> Make2dArray(std::initializer_list<T> values) {
+  std::array<std::array<T, 3>, 2> arr = {};
   auto it = std::begin(values);
   for (auto& row : arr) {
     for (auto& el : row) {
@@ -172,12 +172,6 @@ std::array<std::array<T, 2>, 3> Make2dArray(std::initializer_list<T> values) {
 }
 
 TEST_F(AidlTest, FixedSizeArrayOverBinder) {
-  auto test_service = getService<ITestService>();
-  BackendType backend;
-  auto status = test_service->getBackendType(&backend);
-  EXPECT_TRUE(status.isOk());
-  if (backend != BackendType::CPP) GTEST_SKIP();
-
   auto service = getService<IRepeatFixedSizeArray>();
 
   CheckRepeat(service, &IRepeatFixedSizeArray::RepeatBytes, (std::array<uint8_t, 3>{1, 2, 3}));

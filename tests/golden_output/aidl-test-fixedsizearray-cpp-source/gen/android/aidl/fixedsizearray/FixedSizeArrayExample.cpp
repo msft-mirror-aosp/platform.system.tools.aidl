@@ -5,11 +5,23 @@ namespace aidl {
 namespace fixedsizearray {
 ::android::status_t FixedSizeArrayExample::readFromParcel(const ::android::Parcel* _aidl_parcel) {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  [[maybe_unused]] size_t _aidl_start_pos = _aidl_parcel->dataPosition();
-  int32_t _aidl_parcelable_raw_size = _aidl_parcel->readInt32();
-  if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;
-  [[maybe_unused]] size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
+  int32_t _aidl_parcelable_raw_size = 0;
+  _aidl_ret_status = _aidl_parcel->readInt32(&_aidl_parcelable_raw_size);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcelable_raw_size < 4) return ::android::BAD_VALUE;
+  size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
   if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;
+  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
+    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->readFixedArray(&int2x3);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
   if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
     _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
@@ -449,6 +461,10 @@ namespace fixedsizearray {
   ::android::status_t _aidl_ret_status = ::android::OK;
   auto _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
+  _aidl_ret_status = _aidl_parcel->writeFixedArray(int2x3);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
   _aidl_ret_status = _aidl_parcel->writeFixedArray(boolArray);
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
@@ -860,7 +876,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
   return _aidl_status;
 }
 
-::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBytes(const std::array<std::array<uint8_t, 2>, 3>& input, std::array<std::array<uint8_t, 2>, 3>* repeated, std::array<std::array<uint8_t, 2>, 3>* _aidl_return) {
+::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBytes(const std::array<std::array<uint8_t, 3>, 2>& input, std::array<std::array<uint8_t, 3>, 2>* repeated, std::array<std::array<uint8_t, 3>, 2>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
@@ -901,7 +917,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
   return _aidl_status;
 }
 
-::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dInts(const std::array<std::array<int32_t, 2>, 3>& input, std::array<std::array<int32_t, 2>, 3>* repeated, std::array<std::array<int32_t, 2>, 3>* _aidl_return) {
+::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dInts(const std::array<std::array<int32_t, 3>, 2>& input, std::array<std::array<int32_t, 3>, 2>* repeated, std::array<std::array<int32_t, 3>, 2>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
@@ -942,7 +958,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
   return _aidl_status;
 }
 
-::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBinders(const std::array<std::array<::android::sp<::android::IBinder>, 2>, 3>& input, std::array<std::array<::android::sp<::android::IBinder>, 2>, 3>* repeated, std::array<std::array<::android::sp<::android::IBinder>, 2>, 3>* _aidl_return) {
+::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dBinders(const std::array<std::array<::android::sp<::android::IBinder>, 3>, 2>& input, std::array<std::array<::android::sp<::android::IBinder>, 3>, 2>* repeated, std::array<std::array<::android::sp<::android::IBinder>, 3>, 2>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
@@ -983,7 +999,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
   return _aidl_status;
 }
 
-::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dParcelables(const std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>& input, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>* repeated, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3>* _aidl_return) {
+::android::binder::Status FixedSizeArrayExample::BpRepeatFixedSizeArray::Repeat2dParcelables(const std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>& input, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* repeated, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markForBinder(remoteStrong());
   ::android::Parcel _aidl_reply;
@@ -1056,6 +1072,10 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
     ::android::binder::Status _aidl_status(RepeatBytes(in_input, &out_repeated, &_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -1085,6 +1105,10 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
     }
     _aidl_ret_status = _aidl_data.readFixedArray(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
       break;
     }
     ::android::binder::Status _aidl_status(RepeatInts(in_input, &out_repeated, &_aidl_return));
@@ -1118,6 +1142,10 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
     ::android::binder::Status _aidl_status(RepeatBinders(in_input, &out_repeated, &_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -1149,6 +1177,10 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
     ::android::binder::Status _aidl_status(RepeatParcelables(in_input, &out_repeated, &_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -1169,15 +1201,19 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
   break;
   case BnRepeatFixedSizeArray::TRANSACTION_Repeat2dBytes:
   {
-    std::array<std::array<uint8_t, 2>, 3> in_input;
-    std::array<std::array<uint8_t, 2>, 3> out_repeated;
-    std::array<std::array<uint8_t, 2>, 3> _aidl_return;
+    std::array<std::array<uint8_t, 3>, 2> in_input;
+    std::array<std::array<uint8_t, 3>, 2> out_repeated;
+    std::array<std::array<uint8_t, 3>, 2> _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
     _aidl_ret_status = _aidl_data.readFixedArray(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
       break;
     }
     ::android::binder::Status _aidl_status(Repeat2dBytes(in_input, &out_repeated, &_aidl_return));
@@ -1200,15 +1236,19 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
   break;
   case BnRepeatFixedSizeArray::TRANSACTION_Repeat2dInts:
   {
-    std::array<std::array<int32_t, 2>, 3> in_input;
-    std::array<std::array<int32_t, 2>, 3> out_repeated;
-    std::array<std::array<int32_t, 2>, 3> _aidl_return;
+    std::array<std::array<int32_t, 3>, 2> in_input;
+    std::array<std::array<int32_t, 3>, 2> out_repeated;
+    std::array<std::array<int32_t, 3>, 2> _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
     _aidl_ret_status = _aidl_data.readFixedArray(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
       break;
     }
     ::android::binder::Status _aidl_status(Repeat2dInts(in_input, &out_repeated, &_aidl_return));
@@ -1231,15 +1271,19 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
   break;
   case BnRepeatFixedSizeArray::TRANSACTION_Repeat2dBinders:
   {
-    std::array<std::array<::android::sp<::android::IBinder>, 2>, 3> in_input;
-    std::array<std::array<::android::sp<::android::IBinder>, 2>, 3> out_repeated;
-    std::array<std::array<::android::sp<::android::IBinder>, 2>, 3> _aidl_return;
+    std::array<std::array<::android::sp<::android::IBinder>, 3>, 2> in_input;
+    std::array<std::array<::android::sp<::android::IBinder>, 3>, 2> out_repeated;
+    std::array<std::array<::android::sp<::android::IBinder>, 3>, 2> _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
     _aidl_ret_status = _aidl_data.readFixedArray(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
       break;
     }
     ::android::binder::Status _aidl_status(Repeat2dBinders(in_input, &out_repeated, &_aidl_return));
@@ -1262,15 +1306,19 @@ FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
   break;
   case BnRepeatFixedSizeArray::TRANSACTION_Repeat2dParcelables:
   {
-    std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3> in_input;
-    std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3> out_repeated;
-    std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 2>, 3> _aidl_return;
+    std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2> in_input;
+    std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2> out_repeated;
+    std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2> _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
     _aidl_ret_status = _aidl_data.readFixedArray(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
       break;
     }
     ::android::binder::Status _aidl_status(Repeat2dParcelables(in_input, &out_repeated, &_aidl_return));
@@ -1313,10 +1361,14 @@ namespace aidl {
 namespace fixedsizearray {
 ::android::status_t FixedSizeArrayExample::IntParcelable::readFromParcel(const ::android::Parcel* _aidl_parcel) {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  [[maybe_unused]] size_t _aidl_start_pos = _aidl_parcel->dataPosition();
-  int32_t _aidl_parcelable_raw_size = _aidl_parcel->readInt32();
-  if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;
-  [[maybe_unused]] size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
+  int32_t _aidl_parcelable_raw_size = 0;
+  _aidl_ret_status = _aidl_parcel->readInt32(&_aidl_parcelable_raw_size);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcelable_raw_size < 4) return ::android::BAD_VALUE;
+  size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
   if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;
   if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
     _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);

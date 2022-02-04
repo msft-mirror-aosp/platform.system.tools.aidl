@@ -34,7 +34,7 @@
 #include "location.h"
 #include "logging.h"
 #include "options.h"
-#include "permission/parser.h"
+#include "permission.h"
 
 using android::aidl::AidlTypenames;
 using android::aidl::CodeWriter;
@@ -234,14 +234,17 @@ class AidlAnnotation : public AidlNode {
     JAVA_PASSTHROUGH,
     JAVA_DERIVE,
     JAVA_DEFAULT,
+    JAVA_DELEGATOR,
     JAVA_ONLY_IMMUTABLE,
+    JAVA_SUPPRESS_LINT,
     FIXED_SIZE,
     DESCRIPTOR,
     RUST_DERIVE,
     SUPPRESS_WARNINGS,
     PERMISSION_ENFORCE,
     PERMISSION_NONE,
-    PERMISSION_MANUAL
+    PERMISSION_MANUAL,
+    PROPAGATE_ALLOW_BLOCKING,
   };
 
   using TargetContext = uint16_t;
@@ -289,7 +292,7 @@ class AidlAnnotation : public AidlNode {
   void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override;
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 
-  Result<unique_ptr<perm::Expression>> EnforceExpression() const;
+  Result<unique_ptr<android::aidl::perm::Expression>> EnforceExpression() const;
 
  private:
   struct ParamType {
@@ -354,15 +357,17 @@ class AidlAnnotatable : public AidlCommentable {
   bool IsHide() const;
   bool JavaDerive(const std::string& method) const;
   bool IsJavaDefault() const;
+  bool IsJavaDelegator() const;
   std::string GetDescriptor() const;
 
   const AidlAnnotation* UnsupportedAppUsage() const;
   const AidlAnnotation* RustDerive() const;
   const AidlAnnotation* BackingType() const;
   std::vector<std::string> SuppressWarnings() const;
-  std::unique_ptr<perm::Expression> EnforceExpression() const;
+  std::unique_ptr<android::aidl::perm::Expression> EnforceExpression() const;
   bool IsPermissionManual() const;
   bool IsPermissionNone() const;
+  bool IsPropagateAllowBlocking() const;
 
   // ToString is for dumping AIDL.
   // Returns string representation of annotations.
@@ -404,6 +409,8 @@ class AidlTypeSpecifier final : public AidlAnnotatable,
   // View of this type which has one-less dimension(s).
   // e.g.) T[] => T, T[N][M] => T[M]
   void ViewAsArrayBase(std::function<void(const AidlTypeSpecifier&)> func) const;
+  // ViewAsArrayBase passes "mutated" type to its callback.
+  bool IsMutated() const { return mutated_; }
 
   // Returns the full-qualified name of the base type.
   // int -> int
@@ -443,6 +450,7 @@ class AidlTypeSpecifier final : public AidlAnnotatable,
   bool IsFixedSizeArray() const {
     return array_.has_value() && std::get_if<FixedSizeArray>(&*array_) != nullptr;
   }
+  std::vector<int32_t> GetFixedSizeArrayDimensions() const;
 
   const ArrayType& GetArray() const {
     AIDL_FATAL_IF(!array_.has_value(), this) << "GetArray() for non-array type";
@@ -471,6 +479,8 @@ class AidlTypeSpecifier final : public AidlAnnotatable,
   const string unresolved_name_;
   string fully_qualified_name_;
   mutable std::optional<ArrayType> array_;
+  mutable bool mutated_ = false;  // ViewAsArrayBase() sets this as true to distinguish mutated one
+                                  // from the original type
   vector<string> split_name_;
   const AidlDefinedType* defined_type_ = nullptr;  // set when Resolve() for defined types
 };
@@ -671,6 +681,7 @@ class AidlConstantValue : public AidlNode {
   Type GetType() const { return final_type_; }
   const std::string& Literal() const { return value_; }
 
+  bool Evaluate() const;
   virtual bool CheckValid() const;
 
   // Raw value of type (currently valid in C++ and Java). Empty string on error.
@@ -1196,7 +1207,7 @@ inline std::string SimpleName(const std::string& qualified_name) {
 class AidlDocument : public AidlCommentable, public AidlScope {
  public:
   AidlDocument(const AidlLocation& location, const Comments& comments,
-               std::set<std::string> imports,
+               std::vector<std::string> imports,
                std::vector<std::unique_ptr<AidlDefinedType>> defined_types, bool is_preprocessed);
   ~AidlDocument() = default;
 
@@ -1207,7 +1218,7 @@ class AidlDocument : public AidlCommentable, public AidlScope {
   AidlDocument& operator=(AidlDocument&&) = delete;
 
   std::string ResolveName(const std::string& name) const override;
-  const std::set<std::string>& Imports() const { return imports_; }
+  const std::vector<std::string>& Imports() const { return imports_; }
   const std::vector<std::unique_ptr<AidlDefinedType>>& DefinedTypes() const {
     return defined_types_;
   }
@@ -1221,7 +1232,7 @@ class AidlDocument : public AidlCommentable, public AidlScope {
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 
  private:
-  const std::set<std::string> imports_;
+  const std::vector<std::string> imports_;
   const std::vector<std::unique_ptr<AidlDefinedType>> defined_types_;
   bool is_preprocessed_;
 };

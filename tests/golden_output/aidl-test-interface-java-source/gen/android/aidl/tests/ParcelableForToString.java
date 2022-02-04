@@ -76,7 +76,7 @@ public class ParcelableForToString implements android.os.Parcelable
     int _aidl_start_pos = _aidl_parcel.dataPosition();
     int _aidl_parcelable_size = _aidl_parcel.readInt();
     try {
-      if (_aidl_parcelable_size < 0) return;
+      if (_aidl_parcelable_size < 4) throw new android.os.BadParcelableException("Parcelable too small");;
       if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
       intValue = _aidl_parcel.readInt();
       if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
@@ -169,8 +169,7 @@ public class ParcelableForToString implements android.os.Parcelable
   }
   private int describeContents(Object _v) {
     if (_v == null) return 0;
-    Class<?> _clazz = _v.getClass();
-    if (_clazz.isArray() && _clazz.getComponentType() == Object.class) {
+    if (_v instanceof Object[]) {
       int _mask = 0;
       for (Object o : (Object[]) _v) {
         _mask |= describeContents(o);
