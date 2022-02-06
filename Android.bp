@@ -446,7 +446,7 @@ aidl_interface {
             enabled: true,
         },
         java: {
-            enabled: false,
+            enabled: true,
         },
         ndk: {
             enabled: true,
@@ -473,6 +473,7 @@ java_defaults {
         "aidl_test_nonvintf_parcelable-V1-java",
         "aidl_test_unstable_parcelable-java",
         "aidl_test_vintf_parcelable-V1-java",
+        "aidl-test-fixedsizearray-java",
         // TODO: remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",
@@ -504,7 +505,7 @@ java_test {
     defaults: ["aidl_test_java_defaults"],
     static_libs: [
         // client uses the new version
-        "aidl-test-versioned-interface-V2-java",
+        "aidl-test-versioned-interface-V3-java",
     ],
     // tests are included in defaults
     srcs: [
@@ -513,6 +514,7 @@ java_test {
         "tests/java/src/android/aidl/tests/JavaOnlyImmutableAnnotationTests.java",
         "tests/java/src/android/aidl/tests/AidlJavaTests.java",
         "tests/java/src/android/aidl/tests/BuiltInTests.java",
+        "tests/java/src/android/aidl/tests/DelegatorTests.java",
         "tests/java/src/android/aidl/tests/GenericTests.java",
         "tests/java/src/android/aidl/tests/NestedTypesTests.java",
         "tests/java/src/android/aidl/tests/TestVersionedInterface.java",
@@ -630,6 +632,7 @@ genrule {
         ":aidl_test_loggable_interface-ndk-source",
         ":aidl-test-interface-platform-java-source",
         ":aidl-test-fixedsizearray-cpp-source",
+        ":aidl-test-fixedsizearray-java-source",
         ":aidl-test-fixedsizearray-ndk-source",
         ":aidl-test-fixedsizearray-rust-source",
         "tests/golden_output/**/*",

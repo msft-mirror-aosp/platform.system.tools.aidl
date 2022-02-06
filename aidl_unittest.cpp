@@ -1174,9 +1174,7 @@ TEST_P(AidlTest, ParseCompoundParcelableFromPreprocess) {
   preprocessed_files_.push_back("preprocessed");
   auto parse_result = Parse("p/IFoo.aidl", "package p; interface IFoo { void f(in Inner c); }",
                             typenames_, GetLanguage());
-  // TODO(wiley): This should actually return nullptr because we require
-  //              the outer class name.  However, for legacy reasons,
-  //              this behavior must be maintained.  b/17415692
+  // Require legacy behavior - inner class name can be used without outer class name.
   EXPECT_NE(nullptr, parse_result);
 }
 
@@ -1264,6 +1262,23 @@ TEST_P(AidlTest, FailOnDuplicateConstantNames) {
                       interface IFoo {
                         const String DUPLICATED = "d";
                         const int DUPLICATED = 1;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, InvalidConstString) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.47-60: Found invalid character '\\' at index 4 in string constant "
+      "'\"test\\\"test\"'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const String someVar = "test\"test";
                       }
                    )",
                            typenames_, GetLanguage(), &error));
@@ -4459,6 +4474,26 @@ TEST_F(AidlTest, AcceptMultiDimensionalFixedSizeArray) {
   EXPECT_EQ("", GetCapturedStderr());
 }
 
+TEST_F(AidlTest, AcceptBinarySizeArray) {
+  io_delegate_.SetFileContents(
+      "a/Bar.aidl", "package a; parcelable Bar { const int CONST = 3; String[CONST + 1] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=ndk");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
+TEST_F(AidlTest, AcceptRefSizeArray) {
+  io_delegate_.SetFileContents(
+      "a/Bar.aidl", "package a; parcelable Bar { const int CONST = 3; String[CONST] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=ndk");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
 TEST_F(AidlTest, RejectArrayOfFixedSizeArray) {
   io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[2][] a; }");
 
@@ -5304,7 +5339,7 @@ const std::map<std::string, ExpectedResult> kFieldSupportExpectations = {
     {"ndk_primitiveArray", {"", ""}},
     {"rust_primitiveArray", {"", ""}},
     {"cpp_primitiveFixedArray", {"", ""}},
-    {"java_primitiveFixedArray", {"not supported yet", "not supported yet"}},
+    {"java_primitiveFixedArray", {"", ""}},
     {"ndk_primitiveFixedArray", {"", ""}},
     {"rust_primitiveFixedArray", {"", ""}},
     {"cpp_String", {"", ""}},
