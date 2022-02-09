@@ -426,7 +426,6 @@ cc_test {
         "libbinder_ndk",
     ],
     srcs: [
-        "tests/aidl_test_client_ndk_delegate.cpp",
         "tests/aidl_test_client_ndk_loggable_interface.cpp",
         "tests/aidl_test_client_ndk_nested.cpp",
         "tests/aidl_test_client_ndk_nullables.cpp",
@@ -687,7 +686,7 @@ aidl_interface {
         },
         java: {
             platform_apis: true,
-            require_rpc: true,
+            gen_rpc: true,
         },
         rust: {
             enabled: true,

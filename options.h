@@ -41,7 +41,6 @@ constexpr uint32_t DEFAULT_SDK_VERSION_RUST = 31;
 constexpr uint32_t SDK_VERSION_current = 10000;
 constexpr uint32_t SDK_VERSION_Tiramisu = SDK_VERSION_current;
 
-constexpr uint32_t JAVA_PARCEL_HAS_BINDER_VERSION = SDK_VERSION_Tiramisu;
 constexpr uint32_t JAVA_PROPAGATE_VERSION = SDK_VERSION_Tiramisu;
 
 // A simple wrapper around ostringstream. This is just to make Options class
@@ -138,6 +137,8 @@ class Options final {
 
   bool AutoDepFile() const { return auto_dep_file_; }
 
+  bool GenRpc() const { return gen_rpc_; }
+
   bool GenTraces() const { return gen_traces_; }
 
   bool GenTransactionNames() const { return gen_transaction_names_; }
@@ -195,6 +196,7 @@ class Options final {
   set<string> import_dirs_;
   vector<string> preprocessed_files_;
   string dependency_file_;
+  bool gen_rpc_ = false;
   bool gen_traces_ = false;
   bool gen_transaction_names_ = false;
   bool dependency_file_ninja_ = false;
