@@ -252,11 +252,6 @@ type CommonBackendProperties struct {
 	// For native modules, the property needs to be set when a module is a part of mainline modules(APEX).
 	// Forwarded to generated java/native module.
 	Min_sdk_version *string
-
-	// Determines whether the generated source files are available or not. When set to true,
-	// the source files can be added to `srcs` property via `:<ifacename>-<backend>-source`,
-	// e.g., ":myaidl-java-source"
-	Srcs_available *bool
 }
 
 type CommonNativeBackendProperties struct {
@@ -356,6 +351,8 @@ type aidlInterfaceProperties struct {
 			// Whether RPC features are enabled (requires API level 32)
 			// TODO(b/175819535): enable this automatically?
 			Gen_rpc *bool
+			// Lint properties for generated java module
+			java.LintProperties
 		}
 		// Backend of the compiler generating code for C++ clients using
 		// libbinder (unstable C++ interface)
@@ -376,10 +373,6 @@ type aidlInterfaceProperties struct {
 			// available to applications. Default is true (i.e. available to both
 			// applications and platform).
 			Apps_enabled *bool
-
-			// TODO(b/161456198): remove workaround to support AOSP-first development
-			// default is true
-			Separate_platform_variant *bool
 		}
 		// Backend of the compiler generating code for Rust clients.
 		// When enabled, this creates a target called "<name>-rust".
@@ -784,10 +777,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		if !shouldGenerate {
 			continue
 		}
-		// TODO(b/161456198): here to avoid merge conflicts and support AOSP-first development
-		if lang == langNdkPlatform && !proptools.BoolDefault(i.properties.Backend.Ndk.Separate_platform_variant, true) {
-			continue
-		}
 		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion))
 		for _, version := range versions {
 			libs = append(libs, addLibrary(mctx, i, version, lang, false))
@@ -831,29 +820,6 @@ func (i *aidlInterface) commonBackendProperties(lang string) CommonBackendProper
 		return i.properties.Backend.Rust.CommonBackendProperties
 	default:
 		panic(fmt.Errorf("unsupported language backend %q\n", lang))
-	}
-}
-
-// srcsVisibility gives the value for the `visibility` property of the source gen module for the
-// language backend `lang`. By default, the source gen module is not visible to the clients of
-// aidl_interface (because it's an impl detail), but when `backend.<backend>.srcs_available` is set
-// to true, the source gen module follows the visibility of the aidl_interface module.
-func srcsVisibility(mctx android.LoadHookContext, lang string) []string {
-	if a, ok := mctx.Module().(*aidlInterface); !ok {
-		panic(fmt.Errorf("%q is not aidl_interface", mctx.Module().String()))
-	} else {
-		if proptools.Bool(a.commonBackendProperties(lang).Srcs_available) {
-			// Returning nil so that the visibility of the source module defaults to the
-			// the package-level default visibility. This way, the source module gets
-			// the same visibility as the library modules.
-			return nil
-		}
-	}
-	return []string{
-		"//" + mctx.ModuleDir(),
-		// system/tools/aidl/build is always added because aidl_metadata_json in the
-		// directory has dependencies to all aidl_interface modules.
-		"//system/tools/aidl/build",
 	}
 }
 

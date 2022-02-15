@@ -378,20 +378,6 @@ ProxyClass::ProxyClass(const AidlInterface* interfaceType, const Options& option
 ProxyClass::~ProxyClass() {}
 
 // =================================================
-static void GenerateNewArray(const AidlTypeSpecifier& type, std::shared_ptr<StatementBlock> addTo,
-                             std::shared_ptr<Variable> v, std::shared_ptr<Variable> parcel) {
-  auto len = std::make_shared<Variable>("int", v->name + "_length");
-  addTo->Add(
-      std::make_shared<VariableDeclaration>(len, std::make_shared<MethodCall>(parcel, "readInt")));
-  auto lencheck = std::make_shared<IfStatement>();
-  lencheck->expression =
-      std::make_shared<Comparison>(len, "<", std::make_shared<LiteralExpression>("0"));
-  lencheck->statements->Add(std::make_shared<Assignment>(v, NULL_VALUE));
-  lencheck->elseif = std::make_shared<IfStatement>();
-  lencheck->elseif->statements->Add(std::make_shared<Assignment>(
-      v, std::make_shared<NewArrayExpression>(InstantiableJavaSignatureOf(type), len)));
-  addTo->Add(lencheck);
-}
 
 static void GenerateWriteToParcel(std::shared_ptr<StatementBlock> addTo,
                                   const AidlTypenames& typenames, const AidlTypeSpecifier& type,
@@ -442,93 +428,53 @@ static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlMethod& method)
   return decl;
 }
 
-// Visitor for the permission declared in the @Enforce annotation.
-// The visitor pattern evaluates one node at a time, recursive evaluations should be dispatched
-// by creating a new instance of the visitor. Visit methods should use SetResult to return their
-// current value. For example:
-//
-//   Visit(const perm::Expression& permissionExpression) {
-//     std::shared_ptr<Expression> expr = Evaluate(permissionExpression.FirstChild());
-//     ...
-//     SetResult(TRUE_VALUE);
-//   }
-class PermissionVisitor : public perm::Visitor {
- public:
-  // Converts a permission expression (e.g., "permission = CALL_PHONE") into an equivalent Java
-  // expression (e.g., "(checkPermission("CALL_PHONE", ...) == GRANTED").
-  static std::shared_ptr<Expression> Evaluate(const AidlMethod& method,
-                                              const perm::Expression& expr) {
-    PermissionVisitor visitor(method);
-    expr.DispatchVisit(visitor);
-    return visitor.GetResult();
-  }
-
- private:
-  void Visit(const perm::AndQuantifier& quantifier) {
+// Visitor for the permission declared in the @EnforcePermission annotation.
+struct PermissionVisitor {
+  shared_ptr<Expression> operator()(const perm::AllOf& quantifier) {
     std::shared_ptr<Expression> result;
-    for (const auto& operand : quantifier.GetOperands()) {
-      auto expr = Evaluate(method_, *operand);
+    for (const auto& operand : quantifier.operands) {
+      auto expr = (*this)(operand);
       if (result) {
         result = std::make_shared<Comparison>(result, "&&", expr);
       } else {
         result = expr;
       }
     }
-    SetResult(result);
+    return result;
   }
 
-  void Visit(const perm::OrQuantifier& quantifier) {
+  shared_ptr<Expression> operator()(const perm::AnyOf& quantifier) {
     std::shared_ptr<Expression> result;
-    for (const auto& operand : quantifier.GetOperands()) {
-      auto expr = Evaluate(method_, *operand);
+    for (const auto& operand : quantifier.operands) {
+      auto expr = (*this)(operand);
       if (result) {
         result = std::make_shared<Comparison>(result, "||", expr);
       } else {
         result = expr;
       }
     }
-    SetResult(result);
+    return result;
   }
 
-  void Visit(const perm::Predicate& p) {
-    switch (p.GetType()) {
-      case perm::Predicate::Type::kPermission: {
-        auto attributionSource =
-            std::string("new android.content.AttributionSource(getCallingUid(), null, null)");
-        for (size_t i = 0; i < method_.GetArguments().size(); i++) {
-          const auto& arg = method_.GetArguments()[i];
-          if (arg->GetType().GetName() == "android.content.AttributionSource") {
-            attributionSource = android::base::StringPrintf("_arg%zu", i);
-            break;
-          }
-        }
-        auto checkPermission = std::make_shared<MethodCall>(
-            THIS_VALUE, "permissionCheckerWrapper",
-            std::vector<std::shared_ptr<Expression>>{
-                std::make_shared<LiteralExpression>("android.Manifest.permission." + p.GetValue()),
-                std::make_shared<MethodCall>(THIS_VALUE, "getCallingPid"),
-                std::make_shared<LiteralExpression>(attributionSource)});
-        SetResult(checkPermission);
-        break;
-      }
-      case perm::Predicate::Type::kUid: {
-        auto uid = std::make_shared<LiteralExpression>("android.os.Process." + p.GetValue());
-        auto getCallingUid = std::make_shared<MethodCall>(THIS_VALUE, "getCallingUid");
-        SetResult(std::make_shared<Comparison>(getCallingUid, "==", uid));
-        break;
-      }
-      default: {
-        AIDL_FATAL(AIDL_LOCATION_HERE) << "Unsupported predicate: " << p.ToString();
+  shared_ptr<Expression> operator()(const std::string& permission) {
+    auto attributionSource =
+        std::string("new android.content.AttributionSource(getCallingUid(), null, null)");
+    for (size_t i = 0; i < method_.GetArguments().size(); i++) {
+      const auto& arg = method_.GetArguments()[i];
+      if (arg->GetType().GetName() == "android.content.AttributionSource") {
+        attributionSource = android::base::StringPrintf("_arg%zu", i);
         break;
       }
     }
+    auto checkPermission = std::make_shared<MethodCall>(
+        THIS_VALUE, "permissionCheckerWrapper",
+        std::vector<std::shared_ptr<Expression>>{
+            std::make_shared<LiteralExpression>("android.Manifest.permission." + permission),
+            std::make_shared<MethodCall>(THIS_VALUE, "getCallingPid"),
+            std::make_shared<LiteralExpression>(attributionSource)});
+    return checkPermission;
   }
 
-  PermissionVisitor(const AidlMethod& method) : method_(method){};
-
-  std::shared_ptr<Expression> GetResult() { return result_; }
-  void SetResult(std::shared_ptr<Expression> expr) { result_ = expr; }
-  std::shared_ptr<Expression> result_;
   const AidlMethod& method_;
 };
 
@@ -548,33 +494,28 @@ static void GeneratePermissionWrapper(Class* stubClass) {
   stubClass->elements.push_back(permissionCheckerWrapper);
 }
 
-static void GeneratePermissionChecks(const AidlInterface& iface, const AidlMethod& method,
-                                     std::shared_ptr<StatementBlock> addTo) {
-  std::unique_ptr<perm::Expression> combinedPermExpr;
-  auto ifacePermExpr = iface.EnforceExpression();
-  auto methodPermExpr = method.GetType().EnforceExpression();
-  if (ifacePermExpr) {
-    if (methodPermExpr) {
-      auto andPermExpr = std::make_unique<perm::AndQuantifier>();
-      andPermExpr->Append(std::move(ifacePermExpr));
-      andPermExpr->Append(std::move(methodPermExpr));
-      combinedPermExpr = std::move(andPermExpr);
-    } else {
-      combinedPermExpr = std::move(ifacePermExpr);
-    }
-  } else if (methodPermExpr) {
-    combinedPermExpr = std::move(methodPermExpr);
-  } else {
-    return;
-  }
+static void GeneratePermissionCheck(const AidlMethod& method, const perm::Expression& expr,
+                                    std::shared_ptr<StatementBlock> addTo) {
   auto ifstatement = std::make_shared<IfStatement>();
-  auto combinedExpr = PermissionVisitor::Evaluate(method, *combinedPermExpr.get());
+  auto combinedExpr = std::visit(PermissionVisitor{method}, expr);
   ifstatement->expression = std::make_shared<Comparison>(combinedExpr, "!=", TRUE_VALUE);
   ifstatement->statements = std::make_shared<StatementBlock>();
   ifstatement->statements->Add(std::make_shared<LiteralStatement>(
       android::base::StringPrintf("throw new SecurityException(\"Access denied, requires: %s\");\n",
-                                  combinedPermExpr->ToString().c_str())));
+                                  perm::AsJavaAnnotation(expr).c_str())));
   addTo->Add(ifstatement);
+}
+
+static void GeneratePermissionChecks(const AidlInterface& iface, const AidlMethod& method,
+                                     std::shared_ptr<StatementBlock> addTo) {
+  auto ifacePermExpr = iface.EnforceExpression();
+  if (ifacePermExpr) {
+    GeneratePermissionCheck(method, *ifacePermExpr.get(), addTo);
+  }
+  auto methodPermExpr = method.GetType().EnforceExpression();
+  if (methodPermExpr) {
+    GeneratePermissionCheck(method, *methodPermExpr.get(), addTo);
+  }
 }
 
 static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& method, bool oneway,
@@ -617,9 +558,10 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
 
       statements->Add(std::make_shared<VariableDeclaration>(v));
 
+      string code;
+      CodeWriterPtr writer = CodeWriter::ForString(&code);
       if (arg->GetDirection() & AidlArgument::IN_DIR) {
-        string code;
-        CodeWriterPtr writer = CodeWriter::ForString(&code);
+        // "in/inout" parameter should be created from parcel.
         CodeGeneratorContext context{.writer = *(writer.get()),
                                      .typenames = typenames,
                                      .type = arg->GetType(),
@@ -628,16 +570,33 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
                                      .min_sdk_version = options.GetMinSdkVersion(),
                                      .is_classloader_created = &is_classloader_created};
         CreateFromParcelFor(context);
-        writer->Close();
-        statements->Add(std::make_shared<LiteralStatement>(code));
       } else {
-        if (!arg->GetType().IsArray()) {
-          statements->Add(std::make_shared<Assignment>(
-              v, std::make_shared<NewExpression>(InstantiableJavaSignatureOf(arg->GetType()))));
+        // "out" parameter should be instantiated before calling the real impl.
+        string java_type = InstantiableJavaSignatureOf(arg->GetType());
+
+        if (arg->GetType().IsDynamicArray()) {
+          // dynamic array should be created with a passed length.
+          string var_length = v->name + "_length";
+          (*writer) << "int " << var_length << " = data.readInt();\n";
+          (*writer) << "if (" << var_length << " < 0) {\n";
+          (*writer) << "  " << v->name << " = null;\n";
+          (*writer) << "} else {\n";
+          (*writer) << "  " << v->name << " = new " << java_type << "[" << var_length << "];\n";
+          (*writer) << "}\n";
+        } else if (arg->GetType().IsFixedSizeArray()) {
+          // fixed-size array can be created with a known size
+          string dimensions;
+          for (auto dim : arg->GetType().GetFixedSizeArrayDimensions()) {
+            dimensions += "[" + std::to_string(dim) + "]";
+          }
+          (*writer) << v->name << " = new " << java_type << dimensions << ";\n";
         } else {
-          GenerateNewArray(arg->GetType(), statements, v, transact_data);
+          // otherwise, create a new instance with a default constructor
+          (*writer) << v->name << " = new " << java_type << "();\n";
         }
       }
+      writer->Close();
+      statements->Add(std::make_shared<LiteralStatement>(code));
 
       realCall->arguments.push_back(v);
     }
@@ -807,7 +766,7 @@ static std::shared_ptr<Method> GenerateProxyMethod(const AidlInterface& iface,
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
     auto v = std::make_shared<Variable>(JavaSignatureOf(arg->GetType()), arg->GetName());
     AidlArgument::Direction dir = arg->GetDirection();
-    if (dir == AidlArgument::OUT_DIR && arg->GetType().IsArray()) {
+    if (dir == AidlArgument::OUT_DIR && arg->GetType().IsDynamicArray()) {
       auto checklen = std::make_shared<IfStatement>();
       checklen->expression = std::make_shared<Comparison>(v, "==", NULL_VALUE);
       checklen->statements->Add(std::make_shared<MethodCall>(
@@ -837,6 +796,12 @@ static std::shared_ptr<Method> GenerateProxyMethod(const AidlInterface& iface,
           std::make_shared<LiteralExpression>(flags.empty() ? "0" : Join(flags, " | "))});
   auto _status = std::make_shared<Variable>("boolean", "_status");
   tryStatement->statements->Add(std::make_shared<VariableDeclaration>(_status, call));
+
+  // TODO(b/151102494): annotation is applied on the return type
+  if (method.GetType().IsPropagateAllowBlocking()) {
+    tryStatement->statements->Add(
+        std::make_shared<LiteralStatement>("_reply.setPropagateAllowBlocking();\n"));
+  }
 
   // If the transaction returns false, which means UNKNOWN_TRANSACTION, fall back to the local
   // method in the default impl, if set before. Otherwise, throw a RuntimeException if the interface
@@ -1246,6 +1211,84 @@ static shared_ptr<Class> GenerateDefaultImplClass(const AidlInterface& iface,
   return default_class;
 }
 
+static shared_ptr<ClassElement> GenerateDelegatorMethod(const AidlMethod& method) {
+  auto delegator_method = std::make_shared<Method>();
+  delegator_method->comment = GenerateComments(method);
+  delegator_method->modifiers = PUBLIC | OVERRIDE;
+  delegator_method->returnType = JavaSignatureOf(method.GetType());
+  delegator_method->name = method.GetName();
+  delegator_method->statements = std::make_shared<StatementBlock>();
+  std::vector<std::string> argNames;
+  for (const auto& arg : method.GetArguments()) {
+    delegator_method->parameters.push_back(
+        std::make_shared<Variable>(JavaSignatureOf(arg->GetType()), arg->GetName()));
+    argNames.push_back(arg->GetName());
+  }
+  delegator_method->exceptions.push_back("android.os.RemoteException");
+
+  std::string return_str;
+  if (method.GetType().GetName() != "void") {
+    return_str = "return ";
+  }
+  delegator_method->statements->Add(
+      std::make_shared<LiteralStatement>(return_str + "mImpl." + method.GetName() + "(" +
+                                         android::base::Join(argNames, ",") + ");\n"));
+  return delegator_method;
+}
+
+static shared_ptr<Class> GenerateDelegatorClass(const AidlInterface& iface,
+                                                const Options& options) {
+  auto delegator_class = std::make_shared<Class>();
+  delegator_class->comment = "/** Delegator implementation for " + iface.GetName() + ". */";
+  delegator_class->modifiers = PUBLIC | STATIC;
+  delegator_class->what = Class::CLASS;
+  delegator_class->type = iface.GetCanonicalName() + ".Delegator";
+  delegator_class->extends = iface.GetCanonicalName() + ".Stub";
+
+  // constructor
+  delegator_class->elements.emplace_back(
+      std::make_shared<LiteralClassElement>("public Delegator(" + iface.GetCanonicalName() +
+                                            " impl) {\n"
+                                            "  this.mImpl = impl;\n"
+                                            "}\n"));
+  // meta methods
+  if (!options.Hash().empty()) {
+    delegator_class->elements.emplace_back(
+        std::make_shared<LiteralClassElement>("@Override\n"
+                                              "public String " +
+                                              kGetInterfaceHash +
+                                              "() throws android.os.RemoteException {\n"
+                                              "  return mImpl." +
+                                              kGetInterfaceHash +
+                                              "();\n"
+                                              "}\n"));
+  }
+  if (options.Version() > 0) {
+    delegator_class->elements.emplace_back(
+        std::make_shared<LiteralClassElement>("@Override\n"
+                                              "public int " +
+                                              kGetInterfaceVersion +
+                                              "() throws android.os.RemoteException {\n"
+                                              "  int implVer = mImpl." +
+                                              kGetInterfaceVersion +
+                                              "();\n"
+                                              "  return VERSION < implVer ? VERSION : implVer;\n"
+                                              "}\n"));
+  }
+
+  // user defined methods
+  for (const auto& m : iface.GetMethods()) {
+    if (m->IsUserDefined()) {
+      delegator_class->elements.emplace_back(GenerateDelegatorMethod(*m));
+    }
+  }
+
+  delegator_class->elements.emplace_back(
+      std::make_shared<LiteralClassElement>(iface.GetCanonicalName() + " mImpl;\n"));
+
+  return delegator_class;
+}
+
 static shared_ptr<ClassElement> GenerateMaxTransactionId(int max_transaction_id) {
   auto getMaxTransactionId = std::make_shared<Method>();
   getMaxTransactionId->comment = "/** @hide */";
@@ -1290,6 +1333,12 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   // the default impl class
   auto default_impl = GenerateDefaultImplClass(*iface, options);
   interface->elements.emplace_back(default_impl);
+
+  // the delegator class
+  if (iface->IsJavaDelegator()) {
+    auto delegator = GenerateDelegatorClass(*iface, options);
+    interface->elements.emplace_back(delegator);
+  }
 
   // the stub inner class
   auto stub = std::make_shared<StubClass>(iface, options);

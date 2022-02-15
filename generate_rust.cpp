@@ -94,7 +94,11 @@ string BuildArg(const AidlArgument& arg, const AidlTypenames& typenames, Lifetim
 enum class MethodKind {
   // This is a normal non-async method.
   NORMAL,
-  // This is an async function, using a Box to return it via the trait.
+  // This is an async method. Identical to NORMAL except that async is added
+  // in front of `fn`.
+  ASYNC,
+  // This is an async function, but using a boxed future instead of the async
+  // keyword.
   BOXED_FUTURE,
   // This could have been a non-async method, but it returns a Future so that
   // it would not be breaking to make the function do async stuff in the future.
@@ -108,22 +112,25 @@ string BuildMethod(const AidlMethod& method, const AidlTypenames& typenames,
   Lifetime lifetime;
   switch (kind) {
     case MethodKind::NORMAL:
+    case MethodKind::ASYNC:
+    case MethodKind::READY_FUTURE:
       lifetime = Lifetime::NONE;
       break;
     case MethodKind::BOXED_FUTURE:
       lifetime = Lifetime::A;
       break;
-    case MethodKind::READY_FUTURE:
-      lifetime = Lifetime::NONE;
-      break;
   }
 
   auto method_type = RustNameOf(method.GetType(), typenames, StorageMode::VALUE, lifetime);
-  auto return_type = string{"binder::public_api::Result<"} + method_type + ">";
+  auto return_type = string{"binder::Result<"} + method_type + ">";
+  auto fn_prefix = string{""};
 
   switch (kind) {
     case MethodKind::NORMAL:
       // Don't wrap the return type in anything.
+      break;
+    case MethodKind::ASYNC:
+      fn_prefix = "async ";
       break;
     case MethodKind::BOXED_FUTURE:
       return_type = "binder::BoxFuture<'a, " + return_type + ">";
@@ -141,7 +148,8 @@ string BuildMethod(const AidlMethod& method, const AidlTypenames& typenames,
     parameters += BuildArg(*arg, typenames, lifetime);
   }
 
-  return "fn " + method.GetName() + lifetime_str + "(" + parameters + ") -> " + return_type;
+  return fn_prefix + "fn " + method.GetName() + lifetime_str + "(" + parameters + ") -> " +
+         return_type;
 }
 
 void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
@@ -155,7 +163,7 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
 
   // Generate build_parcel helper.
   out << "fn build_parcel_" + method.GetName() + "(" + parameters +
-             ") -> binder::public_api::Result<binder::Parcel> {\n";
+             ") -> binder::Result<binder::binder_impl::Parcel> {\n";
   out.Indent();
 
   out << "let mut aidl_data = self.binder.prepare_transact()?;\n";
@@ -176,7 +184,7 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
       } else {
         out << "aidl_data.write(&" << arg_name << ")?;\n";
       }
-    } else if (arg->GetType().IsArray()) {
+    } else if (arg->GetType().IsDynamicArray()) {
       // For out-only arrays, send the array size
       if (arg->GetType().IsNullable()) {
         out << "aidl_data.write_slice_size(" << arg_name << ".as_deref())?;\n";
@@ -193,7 +201,8 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
   // Generate read_response helper.
   auto return_type = RustNameOf(method.GetType(), typenames, StorageMode::VALUE, Lifetime::NONE);
   out << "fn read_response_" + method.GetName() + "(" + parameters +
-             ", _aidl_reply: binder::Result<binder::Parcel>) -> binder::public_api::Result<" +
+             ", _aidl_reply: std::result::Result<binder::binder_impl::Parcel, "
+             "binder::StatusCode>) -> binder::Result<" +
              return_type + "> {\n";
   out.Indent();
 
@@ -267,6 +276,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
              "self.cached_version.load(std::sync::atomic::Ordering::Relaxed);\n";
       switch (kind) {
         case MethodKind::NORMAL:
+        case MethodKind::ASYNC:
           out << "if _aidl_version != -1 { return Ok(_aidl_version); }\n";
           break;
         case MethodKind::BOXED_FUTURE:
@@ -285,6 +295,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
       out << "  if let Some(ref _aidl_hash) = *_aidl_hash_lock {\n";
       switch (kind) {
         case MethodKind::NORMAL:
+        case MethodKind::ASYNC:
           out << "    return Ok(_aidl_hash.clone());\n";
           break;
         case MethodKind::BOXED_FUTURE:
@@ -312,14 +323,15 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
       build_parcel_args.empty() ? "_aidl_reply" : build_parcel_args + ", _aidl_reply";
 
   vector<string> flags;
-  if (method.IsOneway()) flags.push_back("binder::FLAG_ONEWAY");
-  if (iface.IsSensitiveData()) flags.push_back("binder::FLAG_CLEAR_BUF");
-  flags.push_back("binder::FLAG_PRIVATE_LOCAL");
+  if (method.IsOneway()) flags.push_back("binder::binder_impl::FLAG_ONEWAY");
+  if (iface.IsSensitiveData()) flags.push_back("binder::binder_impl::FLAG_CLEAR_BUF");
+  flags.push_back("binder::binder_impl::FLAG_PRIVATE_LOCAL");
 
   string transact_flags = flags.empty() ? "0" : Join(flags, " | ");
 
   switch (kind) {
     case MethodKind::NORMAL:
+    case MethodKind::ASYNC:
       // Prepare transaction.
       out << "let _aidl_data = self.build_parcel_" + method.GetName() + "(" + build_parcel_args +
                  ")?;\n";
@@ -395,7 +407,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlMethod& method,
     string arg_mut = arg->IsOut() ? "mut " : "";
     string arg_init = arg->IsIn() ? "_aidl_data.read()?" : "Default::default()";
     out << "let " << arg_mut << arg_name << ": " << arg_type << " = " << arg_init << ";\n";
-    if (!arg->IsIn() && arg->GetType().IsArray()) {
+    if (!arg->IsIn() && arg->GetType().IsDynamicArray()) {
       // _aidl_data.resize_[nullable_]out_vec(&mut _arg_foo)?;
       auto resize_name = arg->GetType().IsNullable() ? "resize_nullable_out_vec" : "resize_out_vec";
       out << "_aidl_data." << resize_name << "(&mut " << arg_name << ")?;\n";
@@ -456,7 +468,7 @@ void GenerateServerItems(CodeWriter& out, const AidlInterface* iface,
   auto server_name = ClassName(*iface, cpp::ClassNames::SERVER);
 
   // Forward all IFoo functions from Binder to the inner object
-  out << "impl " << trait_name << " for binder::Binder<" << server_name << "> {\n";
+  out << "impl " << trait_name << " for binder::binder_impl::Binder<" << server_name << "> {\n";
   out.Indent();
   for (const auto& method : iface->GetMethods()) {
     string args;
@@ -477,9 +489,11 @@ void GenerateServerItems(CodeWriter& out, const AidlInterface* iface,
          "_aidl_service: &dyn "
       << trait_name
       << ", "
-         "_aidl_code: binder::TransactionCode, "
-         "_aidl_data: &binder::parcel::BorrowedParcel<'_>, "
-         "_aidl_reply: &mut binder::parcel::BorrowedParcel<'_>) -> binder::Result<()> {\n";
+         "_aidl_code: binder::binder_impl::TransactionCode, "
+         "_aidl_data: &binder::binder_impl::BorrowedParcel<'_>, "
+         "_aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), "
+         "binder::StatusCode> "
+         "{\n";
   out.Indent();
   out << "match _aidl_code {\n";
   out.Indent();
@@ -531,10 +545,11 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer << "#![allow(non_upper_case_globals)]\n";
   *code_writer << "#![allow(non_snake_case)]\n";
   // Import IBinderInternal for transact()
-  *code_writer << "#[allow(unused_imports)] use binder::IBinderInternal;\n";
+  *code_writer << "#[allow(unused_imports)] use binder::binder_impl::IBinderInternal;\n";
 
   auto trait_name = ClassName(*iface, cpp::ClassNames::INTERFACE);
   auto trait_name_async = trait_name + "Async";
+  auto trait_name_async_server = trait_name + "AsyncServer";
   auto client_name = ClassName(*iface, cpp::ClassNames::CLIENT);
   auto server_name = ClassName(*iface, cpp::ClassNames::SERVER);
   *code_writer << "use binder::declare_binder_interface;\n";
@@ -561,7 +576,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer << "},\n";
   *code_writer << "async: " << trait_name_async << ",\n";
   if (iface->IsVintfStability()) {
-    *code_writer << "stability: binder::Stability::Vintf,\n";
+    *code_writer << "stability: binder::binder_impl::Stability::Vintf,\n";
   }
   code_writer->Dedent();
   *code_writer << "}\n";
@@ -639,6 +654,94 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   code_writer->Dedent();
   *code_writer << "}\n";
 
+  // Emit the async server trait.
+  GenerateDeprecated(*code_writer, *iface);
+  *code_writer << "#[::async_trait::async_trait]\n";
+  *code_writer << "pub trait " << trait_name_async_server << ": binder::Interface + Send {\n";
+  code_writer->Indent();
+  *code_writer << "fn get_descriptor() -> &'static str where Self: Sized { \""
+               << iface->GetDescriptor() << "\" }\n";
+
+  for (const auto& method : iface->GetMethods()) {
+    // Generate the method
+    if (method->IsUserDefined()) {
+      GenerateDeprecated(*code_writer, *method);
+      *code_writer << BuildMethod(*method, typenames, MethodKind::ASYNC) << ";\n";
+    }
+  }
+  code_writer->Dedent();
+  *code_writer << "}\n";
+
+  // Emit a new_async_binder method for binding an async server.
+  *code_writer << "impl " << server_name << " {\n";
+  code_writer->Indent();
+  *code_writer << "/// Create a new async binder service.\n";
+  *code_writer << "pub fn new_async_binder<T, R>(inner: T, rt: R, features: "
+                  "binder::BinderFeatures) -> binder::Strong<dyn "
+               << trait_name << ">\n";
+  *code_writer << "where\n";
+  code_writer->Indent();
+  *code_writer << "T: " << trait_name_async_server
+               << " + binder::Interface + Send + Sync + 'static,\n";
+  *code_writer << "R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,\n";
+  code_writer->Dedent();
+  *code_writer << "{\n";
+  code_writer->Indent();
+  // Define a wrapper struct that implements the non-async trait by calling block_on.
+  *code_writer << "struct Wrapper<T, R> {\n";
+  code_writer->Indent();
+  *code_writer << "_inner: T,\n";
+  *code_writer << "_rt: R,\n";
+  code_writer->Dedent();
+  *code_writer << "}\n";
+  *code_writer << "impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: "
+                  "Send + Sync {\n";
+  code_writer->Indent();
+  *code_writer << "fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }\n";
+  *code_writer
+      << "fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> "
+         "std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }\n";
+  code_writer->Dedent();
+  *code_writer << "}\n";
+  *code_writer << "impl<T, R> " << trait_name << " for Wrapper<T, R>\n";
+  *code_writer << "where\n";
+  code_writer->Indent();
+  *code_writer << "T: " << trait_name_async_server << " + Send + Sync + 'static,\n";
+  *code_writer << "R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,\n";
+  code_writer->Dedent();
+  *code_writer << "{\n";
+  code_writer->Indent();
+  for (const auto& method : iface->GetMethods()) {
+    // Generate the method
+    if (method->IsUserDefined()) {
+      string args = "";
+      for (const std::unique_ptr<AidlArgument>& arg : method->GetArguments()) {
+        if (!args.empty()) {
+          args += ", ";
+        }
+        args += kArgumentPrefix;
+        args += arg->GetName();
+      }
+
+      *code_writer << BuildMethod(*method, typenames) << " {\n";
+      code_writer->Indent();
+      *code_writer << "self._rt.block_on(self._inner." << method->GetName() << "(" << args
+                   << "))\n";
+      code_writer->Dedent();
+      *code_writer << "}\n";
+    }
+  }
+  code_writer->Dedent();
+  *code_writer << "}\n";
+
+  *code_writer << "let wrapped = Wrapper { _inner: inner, _rt: rt };\n";
+  *code_writer << "Self::new_binder(wrapped, features)\n";
+
+  code_writer->Dedent();
+  *code_writer << "}\n";
+  code_writer->Dedent();
+  *code_writer << "}\n";
+
   // Emit the default trait
   *code_writer << "pub trait " << default_trait_name << ": Send + Sync {\n";
   code_writer->Indent();
@@ -664,8 +767,8 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   for (const auto& method : iface->GetMethods()) {
     // Generate the transaction code constant
     *code_writer << "pub const " << method->GetName()
-                 << ": binder::TransactionCode = "
-                    "binder::FIRST_CALL_TRANSACTION + " +
+                 << ": binder::binder_impl::TransactionCode = "
+                    "binder::binder_impl::FIRST_CALL_TRANSACTION + " +
                         std::to_string(method->GetId()) + ";\n";
   }
   code_writer->Dedent();
@@ -756,16 +859,23 @@ void GenerateParcelDefault(CodeWriter& out, const AidlStructuredParcelable* parc
     out << variable->GetName() << ": ";
     if (variable->GetDefaultValue()) {
       out << variable->ValueString(ConstantValueDecorator);
-    } else if (variable->GetType().GetName() == "ParcelableHolder") {
-      out << "binder::parcel::ParcelableHolder::new(";
-      if (parcel->IsVintfStability()) {
-        out << "binder::Stability::Vintf";
-      } else {
-        out << "binder::Stability::Local";
-      }
-      out << ")";
     } else {
-      out << "Default::default()";
+      // Some types don't implement "Default".
+      // - ParcelableHolder
+      // - Arrays
+      if (variable->GetType().GetName() == "ParcelableHolder") {
+        out << "binder::ParcelableHolder::new(";
+        if (parcel->IsVintfStability()) {
+          out << "binder::binder_impl::Stability::Vintf";
+        } else {
+          out << "binder::binder_impl::Stability::Local";
+        }
+        out << ")";
+      } else if (variable->GetType().IsFixedSizeArray() && !variable->GetType().IsNullable()) {
+        out << ArrayDefaultValue(variable->GetType());
+      } else {
+        out << "Default::default()";
+      }
     }
     out << ",\n";
   }
@@ -910,18 +1020,21 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
 template <typename ParcelableType>
 void GenerateParcelableTrait(CodeWriter& out, const ParcelableType* parcel,
                              const AidlTypenames& typenames) {
-  out << "impl binder::parcel::Parcelable for " << parcel->GetName() << " {\n";
+  out << "impl binder::Parcelable for " << parcel->GetName() << " {\n";
   out.Indent();
 
   out << "fn write_to_parcel(&self, "
-         "parcel: &mut binder::parcel::BorrowedParcel) -> binder::Result<()> {\n";
+         "parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), "
+         "binder::StatusCode> "
+         "{\n";
   out.Indent();
   GenerateParcelSerializeBody(out, parcel, typenames);
   out.Dedent();
   out << "}\n";
 
   out << "fn read_from_parcel(&mut self, "
-         "parcel: &binder::parcel::BorrowedParcel) -> binder::Result<()> {\n";
+         "parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), "
+         "binder::StatusCode> {\n";
   out.Indent();
   GenerateParcelDeserializeBody(out, parcel, typenames);
   out.Dedent();
@@ -937,13 +1050,14 @@ void GenerateParcelableTrait(CodeWriter& out, const ParcelableType* parcel,
 
 template <typename ParcelableType>
 void GenerateMetadataTrait(CodeWriter& out, const ParcelableType* parcel) {
-  out << "impl binder::parcel::ParcelableMetadata for " << parcel->GetName() << " {\n";
+  out << "impl binder::binder_impl::ParcelableMetadata for " << parcel->GetName() << " {\n";
   out.Indent();
 
   out << "fn get_descriptor() -> &'static str { \"" << parcel->GetCanonicalName() << "\" }\n";
 
   if (parcel->IsVintfStability()) {
-    out << "fn get_stability(&self) -> binder::Stability { binder::Stability::Vintf }\n";
+    out << "fn get_stability(&self) -> binder::binder_impl::Stability { "
+           "binder::binder_impl::Stability::Vintf }\n";
   }
 
   out.Dedent();

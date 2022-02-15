@@ -80,18 +80,15 @@ bool CheckValid(const AidlDocument& doc, const Options& options) {
     return true;
   });
 
-  if (options.GetTask() == Options::Task::COMPILE) {
-    v.Check([&](const AidlTypeSpecifier& type) {
-      if (type.IsFixedSizeArray()) {
-        if (lang != Options::Language::NDK) {
-          AIDL_ERROR(type) << "Fixed-size arrays are not supported yet in " << to_string(lang)
-                           << " backend.";
-          return false;
-        }
-      }
-      return true;
-    });
-  }
+  v.Check([&](const AidlTypeSpecifier& type) {
+    // TODO(b/151102494): annotation is applied on the return type
+    if (type.IsPropagateAllowBlocking() && options.GetMinSdkVersion() < JAVA_PROPAGATE_VERSION) {
+      AIDL_ERROR(type) << "@PropagateAllowBlocking requires " << JAVA_PROPAGATE_VERSION
+                       << ". Current min_sdk_version is " << min_sdk_version << ".";
+      return false;
+    }
+    return true;
+  });
 
   VisitTopDown(v, doc);
   return v.success;

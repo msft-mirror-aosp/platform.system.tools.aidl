@@ -130,6 +130,10 @@ BnNestedService::BnNestedService()
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
     ::android::binder::Status _aidl_status(flipStatus(in_p, &_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -160,6 +164,10 @@ BnNestedService::BnNestedService()
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
     ::android::binder::Status _aidl_status(flipStatusWithCallback(in_status, in_cb));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -177,7 +185,7 @@ BnNestedService::BnNestedService()
   break;
   }
   if (_aidl_ret_status == ::android::UNEXPECTED_NULL) {
-    _aidl_ret_status = ::android::binder::Status::fromExceptionCode(::android::binder::Status::EX_NULL_POINTER).writeToParcel(_aidl_reply);
+    _aidl_ret_status = ::android::binder::Status::fromExceptionCode(::android::binder::Status::EX_NULL_POINTER).writeOverParcel(_aidl_reply);
   }
   return _aidl_ret_status;
 }
@@ -194,10 +202,14 @@ namespace tests {
 namespace nested {
 ::android::status_t INestedService::Result::readFromParcel(const ::android::Parcel* _aidl_parcel) {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  [[maybe_unused]] size_t _aidl_start_pos = _aidl_parcel->dataPosition();
-  int32_t _aidl_parcelable_raw_size = _aidl_parcel->readInt32();
-  if (_aidl_parcelable_raw_size < 0) return ::android::BAD_VALUE;
-  [[maybe_unused]] size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
+  int32_t _aidl_parcelable_raw_size = 0;
+  _aidl_ret_status = _aidl_parcel->readInt32(&_aidl_parcelable_raw_size);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcelable_raw_size < 4) return ::android::BAD_VALUE;
+  size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
   if (_aidl_start_pos > SIZE_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;
   if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
     _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
@@ -318,6 +330,10 @@ INestedService::BnCallback::BnCallback()
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
     ::android::binder::Status _aidl_status(done(in_status));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -335,7 +351,7 @@ INestedService::BnCallback::BnCallback()
   break;
   }
   if (_aidl_ret_status == ::android::UNEXPECTED_NULL) {
-    _aidl_ret_status = ::android::binder::Status::fromExceptionCode(::android::binder::Status::EX_NULL_POINTER).writeToParcel(_aidl_reply);
+    _aidl_ret_status = ::android::binder::Status::fromExceptionCode(::android::binder::Status::EX_NULL_POINTER).writeOverParcel(_aidl_reply);
   }
   return _aidl_ret_status;
 }

@@ -85,7 +85,6 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		GenTrace:        genTrace,
 		Unstable:        i.properties.Unstable,
 		NotFrozen:       notFrozen,
-		Visibility:      srcsVisibility(mctx, lang),
 		Flags:           i.flagsForAidlGenRule(version),
 	})
 
@@ -98,16 +97,6 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	var hostSupported *bool
 	var addCflags []string
 	targetProp := ccTargetProperties{
-		// Currently necessary for host builds
-		// TODO(b/31559095): bionic on host should define this
-		// TODO(b/146436251): default isn't applied because the module is created
-		// in PreArchMutators, when import behavior becomes explicit, the logic can
-		// be moved back to LoadHook
-		Host: hostProperties{Cflags: []string{
-			"-D__INTRODUCED_IN(n)=",
-			"-D__assert(a,b,c)=",
-			// We want all the APIs to be available on the host.
-			"-D__ANDROID_API__=10000"}},
 		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
 	}
 
@@ -241,7 +230,6 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		GenTrace:        proptools.Bool(i.properties.Gen_trace),
 		Unstable:        i.properties.Unstable,
 		NotFrozen:       notFrozen,
-		Visibility:      srcsVisibility(mctx, langJava),
 		Flags:           i.flagsForAidlGenRule(version),
 	})
 
@@ -261,7 +249,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 			Srcs:            []string{":" + javaSourceGen},
 			Apex_available:  i.properties.Backend.Java.Apex_available,
 			Min_sdk_version: i.minSdkVersion(langJava),
-		}},
+		}, &i.properties.Backend.Java.LintProperties},
 	})
 
 	return javaModuleGen
@@ -291,7 +279,6 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		Version:         i.versionForAidlGenRule(version),
 		Unstable:        i.properties.Unstable,
 		NotFrozen:       notFrozen,
-		Visibility:      srcsVisibility(mctx, langRust),
 		Flags:           i.flagsForAidlGenRule(version),
 	})
 

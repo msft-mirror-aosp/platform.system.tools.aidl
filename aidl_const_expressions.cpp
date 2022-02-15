@@ -242,6 +242,12 @@ bool handleLogical(const AidlConstantValue& context, bool lval, const string& op
   return false;
 }
 
+static bool isValidLiteralChar(char c) {
+  return !(c <= 0x1f ||  // control characters are < 0x20
+           c >= 0x7f ||  // DEL is 0x7f
+           c == '\\');   // Disallow backslashes for future proofing.
+}
+
 bool ParseFloating(std::string_view sv, double* parsed) {
   // float literal should be parsed successfully.
   android::base::ConsumeSuffix(&sv, "f");
@@ -328,12 +334,6 @@ AidlConstantValue::Type AidlBinaryConstExpression::IntegralPromotion(Type in) {
 AidlConstantValue* AidlConstantValue::Default(const AidlTypeSpecifier& specifier) {
   AidlLocation location = specifier.GetLocation();
 
-  // Initialize non-nullable fixed-size arrays with {}("empty list").
-  // Each backend will handle it differently. For example, in Rust, it can be mapped to
-  // "Default::default()".
-  if (specifier.IsFixedSizeArray() && !specifier.IsNullable()) {
-    return Array(location, std::make_unique<std::vector<std::unique_ptr<AidlConstantValue>>>());
-  }
   // allocation of int[0] is a bit wasteful in Java
   if (specifier.IsArray()) {
     return nullptr;
@@ -364,6 +364,19 @@ AidlConstantValue* AidlConstantValue::Boolean(const AidlLocation& location, bool
 
 AidlConstantValue* AidlConstantValue::Character(const AidlLocation& location,
                                                 const std::string& value) {
+  static const char* kZeroString = "'\\0'";
+
+  // We should have better supports for escapes in the future, but for now
+  // allow only what is needed for defaults.
+  if (value != kZeroString) {
+    AIDL_FATAL_IF(value.size() != 3 || value[0] != '\'' || value[2] != '\'', location) << value;
+
+    if (!isValidLiteralChar(value[1])) {
+      AIDL_ERROR(location) << "Invalid character literal " << value[1];
+      return new AidlConstantValue(location, Type::ERROR, value);
+    }
+  }
+
   return new AidlConstantValue(location, Type::CHARACTER, value);
 }
 
@@ -476,6 +489,17 @@ AidlConstantValue* AidlConstantValue::Array(
 }
 
 AidlConstantValue* AidlConstantValue::String(const AidlLocation& location, const string& value) {
+  AIDL_FATAL_IF(value.size() == 0, "If this is unquoted, we need to update the index log");
+  AIDL_FATAL_IF(value[0] != '\"', "If this is unquoted, we need to update the index log");
+
+  for (size_t i = 0; i < value.length(); ++i) {
+    if (!isValidLiteralChar(value[i])) {
+      AIDL_ERROR(location) << "Found invalid character '" << value[i] << "' at index " << i - 1
+                           << " in string constant '" << value << "'";
+      return new AidlConstantValue(location, Type::ERROR, value);
+    }
+  }
+
   return new AidlConstantValue(location, Type::STRING, value);
 }
 
@@ -581,7 +605,7 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
       if (type.IsFixedSizeArray()) {
         auto size =
             std::get<FixedSizeArray>(type.GetArray()).dimensions.front()->EvaluatedValue<int32_t>();
-        if (values_.size() > static_cast<size_t>(size)) {
+        if (values_.size() != static_cast<size_t>(size)) {
           AIDL_ERROR(this) << "Expected an array of " << size << " elements, but found one with "
                            << values_.size() << " elements";
           err = -1;
@@ -653,6 +677,14 @@ bool AidlConstantValue::CheckValid() const {
   }
 
   return true;
+}
+
+bool AidlConstantValue::Evaluate() const {
+  if (CheckValid()) {
+    return evaluate();
+  } else {
+    return false;
+  }
 }
 
 bool AidlConstantValue::evaluate() const {
