@@ -36,8 +36,8 @@
 
 identifier  [_a-zA-Z][_a-zA-Z0-9]*
 whitespace  ([ \t\r]+)
-intvalue    [0-9]+[lL]?
-hexvalue    0[x|X][0-9a-fA-F]+[lL]?
+intvalue    [0-9]+[lL]?(u8)?
+hexvalue    0[x|X][0-9a-fA-F]+[lL]?(u8)?
 floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
 
 %%
@@ -58,7 +58,7 @@ floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
 <LONG_COMMENT>\n+     { extra_text += yytext; yylloc->lines(yyleng); }
 <LONG_COMMENT>[^*\n]+ { extra_text += yytext; }
 
-\"[^\"]*\"            { yylval->token = new AidlToken(yytext, comments);
+\"([^\"]|\\.)*\"      { yylval->token = new AidlToken(yytext, comments);
                         return yy::parser::token::C_STR; }
 
 \/\/.*                { extra_text += yytext; extra_text += "\n";
@@ -142,7 +142,7 @@ union                 { yylval->token = new AidlToken("union", comments);
 {identifier}          { yylval->token = new AidlToken(yytext, comments);
                         return yy::parser::token::IDENTIFIER;
                       }
-'.'                   { yylval->token = new AidlToken(yytext, comments);
+'.'                   { yylval->token = new AidlToken(std::string(yytext, yyleng), comments);
                         return yy::parser::token::CHARVALUE; }
 {intvalue}            { yylval->token = new AidlToken(yytext, comments);
                         return yy::parser::token::INTVALUE; }
