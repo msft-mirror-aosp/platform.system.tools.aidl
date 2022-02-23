@@ -799,8 +799,14 @@ static std::shared_ptr<Method> GenerateProxyMethod(const AidlInterface& iface,
 
   // TODO(b/151102494): annotation is applied on the return type
   if (method.GetType().IsPropagateAllowBlocking()) {
-    tryStatement->statements->Add(
-        std::make_shared<LiteralStatement>("_reply.setPropagateAllowBlocking();\n"));
+    if (options.GetMinSdkVersion() < JAVA_PROPAGATE_VERSION) {
+      tryStatement->statements->Add(std::make_shared<LiteralStatement>(
+          "if (android.os.Build.VERSION.SDK_INT >= " + std::to_string(JAVA_PROPAGATE_VERSION) +
+          ") { _reply.setPropagateAllowBlocking(); }\n"));
+    } else {
+      tryStatement->statements->Add(
+          std::make_shared<LiteralStatement>("_reply.setPropagateAllowBlocking();\n"));
+    }
   }
 
   // If the transaction returns false, which means UNKNOWN_TRANSACTION, fall back to the local
@@ -994,13 +1000,14 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
            << "public int " << kGetInterfaceVersion << "()"
            << " throws "
            << "android.os.RemoteException {\n"
-           << "  if (mCachedVersion == -1) {\n"
-           << "    android.os.Parcel data = android.os.Parcel.obtain();\n"
-           << "    android.os.Parcel reply = android.os.Parcel.obtain();\n";
+           << "  if (mCachedVersion == -1) {\n";
       if (options.GenRpc()) {
-        code << "    data.markForBinder(asBinder());\n";
+        code << "    android.os.Parcel data = android.os.Parcel.obtain(asBinder());\n";
+      } else {
+        code << "    android.os.Parcel data = android.os.Parcel.obtain();\n";
       }
-      code << "    try {\n"
+      code << "    android.os.Parcel reply = android.os.Parcel.obtain();\n"
+           << "    try {\n"
            << "      data.writeInterfaceToken(DESCRIPTOR);\n"
            << "      boolean _status = mRemote.transact(Stub." << transactCodeName << ", "
            << "data, reply, 0);\n";
@@ -1028,13 +1035,14 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
            << "public synchronized String " << kGetInterfaceHash << "()"
            << " throws "
            << "android.os.RemoteException {\n"
-           << "  if (\"-1\".equals(mCachedHash)) {\n"
-           << "    android.os.Parcel data = android.os.Parcel.obtain();\n"
-           << "    android.os.Parcel reply = android.os.Parcel.obtain();\n";
+           << "  if (\"-1\".equals(mCachedHash)) {\n";
       if (options.GenRpc()) {
-        code << "    data.markForBinder(asBinder());\n";
+        code << "    android.os.Parcel data = android.os.Parcel.obtain(asBinder());\n";
+      } else {
+        code << "    android.os.Parcel data = android.os.Parcel.obtain();\n";
       }
-      code << "    try {\n"
+      code << "    android.os.Parcel reply = android.os.Parcel.obtain();\n"
+           << "    try {\n"
            << "      data.writeInterfaceToken(DESCRIPTOR);\n"
            << "      boolean _status = mRemote.transact(Stub." << transactCodeName << ", "
            << "data, reply, 0);\n";
