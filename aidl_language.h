@@ -225,7 +225,6 @@ class AidlAnnotation : public AidlNode {
  public:
   enum class Type {
     BACKING = 1,
-    HIDE,
     JAVA_STABLE_PARCELABLE,
     UNSUPPORTED_APP_USAGE,
     VINTF_STABILITY,
@@ -355,7 +354,6 @@ class AidlAnnotatable : public AidlCommentable {
   bool IsJavaOnlyImmutable() const;
   bool IsFixedSize() const;
   bool IsStableApiParcelable(Options::Language lang) const;
-  bool IsHide() const;
   bool JavaDerive(const std::string& method) const;
   bool IsJavaDefault() const;
   bool IsJavaDelegator() const;
@@ -1001,16 +999,23 @@ class AidlDefinedType : public AidlMember, public AidlScope {
     return constants_;
   }
   const std::vector<std::unique_ptr<AidlMethod>>& GetMethods() const { return methods_; }
-  void AddMethod(std::unique_ptr<AidlMethod> method) {
-    members_.push_back(method.get());
-    methods_.push_back(std::move(method));
-  }
   const std::vector<const AidlMember*>& GetMembers() const { return members_; }
   void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override {
     AidlAnnotatable::TraverseChildren(traverse);
     for (const auto c : GetMembers()) {
       traverse(*c);
     }
+  }
+
+  // Modifiers
+  void AddMethod(std::unique_ptr<AidlMethod> method) {
+    members_.push_back(method.get());
+    methods_.push_back(std::move(method));
+  }
+  void AddType(std::unique_ptr<AidlDefinedType> type) {
+    type->SetEnclosingScope(this);
+    members_.push_back(type.get());
+    types_.push_back(std::move(type));
   }
 
  protected:
