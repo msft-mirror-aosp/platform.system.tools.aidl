@@ -620,14 +620,6 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
     EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
     EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
   }
-
-  {
-    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDerive enum IFoo { A=1, }");
-    Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
-    CaptureStderr();
-    EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
-    EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
-  }
 }
 
 TEST_P(AidlTest, ParseDescriptorAnnotation) {
@@ -1140,6 +1132,19 @@ TEST_P(AidlTest, SupportDeprecated) {
   CheckDeprecated("Foo.aidl",
                   "/** @deprecated use IBar */\n"
                   "enum Foo { FOO }",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
+
+  CheckDeprecated("Foo.aidl",
+                  "enum Foo {\n"
+                  " /** @deprecated */\n"
+                  " FOO,\n"
+                  " BAR,\n"
+                  "}",
                   {
                       {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
                       {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
