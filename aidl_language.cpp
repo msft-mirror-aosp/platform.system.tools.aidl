@@ -143,7 +143,6 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "JavaOnlyStableParcelable",
        CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
        {}},
-      {AidlAnnotation::Type::HIDE, "Hide", CONTEXT_TYPE | CONTEXT_MEMBER, {}},
       {AidlAnnotation::Type::BACKING,
        "Backing",
        CONTEXT_TYPE_ENUM,
@@ -155,9 +154,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        /* repeatable= */ true},
       {AidlAnnotation::Type::JAVA_DERIVE,
        "JavaDerive",
-       CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION,
+       CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION | CONTEXT_TYPE_ENUM,
        {{"toString", kBooleanType}, {"equals", kBooleanType}}},
       {AidlAnnotation::Type::JAVA_DEFAULT, "JavaDefault", CONTEXT_TYPE_INTERFACE, {}},
+      {AidlAnnotation::Type::JAVA_DELEGATOR, "JavaDelegator", CONTEXT_TYPE_INTERFACE, {}},
       {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
        "JavaOnlyImmutable",
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION |
@@ -200,6 +200,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
       {AidlAnnotation::Type::PERMISSION_NONE,
        "RequiresNoPermission",
        CONTEXT_TYPE_INTERFACE | CONTEXT_METHOD,
+       {}},
+      {AidlAnnotation::Type::PROPAGATE_ALLOW_BLOCKING,
+       "PropagateAllowBlocking",
+       CONTEXT_METHOD,
        {}},
   };
   return kSchemas;
@@ -410,6 +414,19 @@ static const AidlAnnotation* GetAnnotation(
   return nullptr;
 }
 
+static const AidlAnnotation* GetScopedAnnotation(const AidlDefinedType& defined_type,
+                                                 AidlAnnotation::Type type) {
+  const AidlAnnotation* annotation = GetAnnotation(defined_type.GetAnnotations(), type);
+  if (annotation) {
+    return annotation;
+  }
+  const AidlDefinedType* enclosing_type = defined_type.GetParentType();
+  if (enclosing_type) {
+    return GetScopedAnnotation(*enclosing_type, type);
+  }
+  return nullptr;
+}
+
 AidlAnnotatable::AidlAnnotatable(const AidlLocation& location, const Comments& comments)
     : AidlCommentable(location, comments) {}
 
@@ -434,7 +451,9 @@ bool AidlAnnotatable::IsSensitiveData() const {
 }
 
 bool AidlAnnotatable::IsVintfStability() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::VINTF_STABILITY);
+  auto defined_type = AidlCast<AidlDefinedType>(*this);
+  AIDL_FATAL_IF(!defined_type, *this) << "@VintfStability is not attached to a type";
+  return GetScopedAnnotation(*defined_type, AidlAnnotation::Type::VINTF_STABILITY);
 }
 
 bool AidlAnnotatable::IsJavaOnlyImmutable() const {
@@ -489,13 +508,13 @@ bool AidlAnnotatable::IsPermissionNone() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::PERMISSION_NONE);
 }
 
+bool AidlAnnotatable::IsPropagateAllowBlocking() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::PROPAGATE_ALLOW_BLOCKING);
+}
+
 bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
   return lang == Options::Language::JAVA &&
          GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_STABLE_PARCELABLE);
-}
-
-bool AidlAnnotatable::IsHide() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::HIDE);
 }
 
 bool AidlAnnotatable::JavaDerive(const std::string& method) const {
@@ -508,6 +527,10 @@ bool AidlAnnotatable::JavaDerive(const std::string& method) const {
 
 bool AidlAnnotatable::IsJavaDefault() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DEFAULT);
+}
+
+bool AidlAnnotatable::IsJavaDelegator() const {
+  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DELEGATOR);
 }
 
 std::string AidlAnnotatable::GetDescriptor() const {
@@ -786,7 +809,7 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
 
   if (IsFixedSizeArray()) {
     for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
-      if (!dim->CheckValid()) {
+      if (!dim->Evaluate()) {
         return false;
       }
       if (dim->GetType() > AidlConstantValue::Type::INT32) {
@@ -1040,20 +1063,19 @@ string AidlConstantDeclaration::Signature() const {
 AidlMethod::AidlMethod(const AidlLocation& location, bool oneway, AidlTypeSpecifier* type,
                        const std::string& name, std::vector<std::unique_ptr<AidlArgument>>* args,
                        const Comments& comments)
-    : AidlMethod(location, oneway, type, name, args, comments, 0, true) {
+    : AidlMethod(location, oneway, type, name, args, comments, 0) {
   has_id_ = false;
 }
 
 AidlMethod::AidlMethod(const AidlLocation& location, bool oneway, AidlTypeSpecifier* type,
                        const std::string& name, std::vector<std::unique_ptr<AidlArgument>>* args,
-                       const Comments& comments, int id, bool is_user_defined)
+                       const Comments& comments, int id)
     : AidlMember(location, comments),
       oneway_(oneway),
       type_(type),
       name_(name),
       arguments_(std::move(*args)),
-      id_(id),
-      is_user_defined_(is_user_defined) {
+      id_(id) {
   has_id_ = true;
   delete args;
   for (const unique_ptr<AidlArgument>& a : arguments_) {
@@ -1723,7 +1745,7 @@ std::string AidlInterface::GetDescriptor() const {
 }
 
 AidlDocument::AidlDocument(const AidlLocation& location, const Comments& comments,
-                           std::set<string> imports,
+                           std::vector<string> imports,
                            std::vector<std::unique_ptr<AidlDefinedType>> defined_types,
                            bool is_preprocessed)
     : AidlCommentable(location, comments),

@@ -322,16 +322,6 @@ TEST_P(AidlTest, RejectsDuplicatedFieldNames) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_P(AidlTest, RejectsRepeatedAnnotations) {
-  const string method = R"(@Hide @Hide parcelable Foo {})";
-  const string expected_stderr =
-      "ERROR: Foo.aidl:1.23-27: 'Hide' is repeated, but not allowed. Previous location: "
-      "Foo.aidl:1.1-6\n";
-  CaptureStderr();
-  EXPECT_EQ(nullptr, Parse("Foo.aidl", method, typenames_, GetLanguage()));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
-}
-
 TEST_P(AidlTest, AcceptsEmptyParcelable) {
   CaptureStderr();
   EXPECT_NE(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage()));
@@ -460,6 +450,28 @@ TEST_P(AidlTest, ParsesStabilityAnnotations) {
   const AidlInterface* interface = parse_result->AsInterface();
   ASSERT_NE(nullptr, interface);
   ASSERT_TRUE(interface->IsVintfStability());
+}
+
+TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
+  CaptureStderr();
+  string code =
+      "@VintfStability\n"
+      "parcelable Foo {\n"
+      "  interface INested {}"
+      "}";
+  EXPECT_NE(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr,
+                           {"--structured", "--stability", "vintf"}));
+  EXPECT_EQ(GetCapturedStderr(), "");
+  auto nested = typenames_.TryGetDefinedType("Foo.INested");
+  ASSERT_NE(nullptr, nested);
+  ASSERT_TRUE(nested->IsVintfStability());
+}
+
+TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage(), nullptr,
+                           {"--structured", "--stability", "vintf"}));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Foo does not have VINTF level stability"));
 }
 
 TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
@@ -608,14 +620,6 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
     EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
     EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
   }
-
-  {
-    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDerive enum IFoo { A=1, }");
-    Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
-    CaptureStderr();
-    EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
-    EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
-  }
 }
 
 TEST_P(AidlTest, ParseDescriptorAnnotation) {
@@ -659,7 +663,8 @@ TEST_P(AidlTest, AcceptsAnnotatedOnewayMethod) {
 
 TEST_P(AidlTest, AnnotationsInMultiplePlaces) {
   const string oneway_method =
-      "package a; interface IFoo { @UnsupportedAppUsage oneway @Hide void f(int a); }";
+      "package a; interface IFoo { @UnsupportedAppUsage oneway @PropagateAllowBlocking void f(int "
+      "a); }";
   const AidlDefinedType* defined = Parse("a/IFoo.aidl", oneway_method, typenames_, GetLanguage());
   ASSERT_NE(nullptr, defined);
   const AidlInterface* iface = defined->AsInterface();
@@ -672,7 +677,7 @@ TEST_P(AidlTest, AnnotationsInMultiplePlaces) {
 
   // TODO(b/151102494): these annotations should be on the method
   ASSERT_NE(nullptr, ret_type.UnsupportedAppUsage());
-  ASSERT_TRUE(ret_type.IsHide());
+  ASSERT_TRUE(ret_type.IsPropagateAllowBlocking());
 }
 
 TEST_P(AidlTest, AnnotationValueAttribute) {
@@ -1133,6 +1138,19 @@ TEST_P(AidlTest, SupportDeprecated) {
                       {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
                       {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
                   });
+
+  CheckDeprecated("Foo.aidl",
+                  "enum Foo {\n"
+                  " /** @deprecated */\n"
+                  " FOO,\n"
+                  " BAR,\n"
+                  "}",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
 }
 
 TEST_P(AidlTest, RequireOuterClass) {
@@ -1152,9 +1170,7 @@ TEST_P(AidlTest, ParseCompoundParcelableFromPreprocess) {
   preprocessed_files_.push_back("preprocessed");
   auto parse_result = Parse("p/IFoo.aidl", "package p; interface IFoo { void f(in Inner c); }",
                             typenames_, GetLanguage());
-  // TODO(wiley): This should actually return nullptr because we require
-  //              the outer class name.  However, for legacy reasons,
-  //              this behavior must be maintained.  b/17415692
+  // Require legacy behavior - inner class name can be used without outer class name.
   EXPECT_NE(nullptr, parse_result);
 }
 
@@ -1249,6 +1265,35 @@ TEST_P(AidlTest, FailOnDuplicateConstantNames) {
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
+TEST_P(AidlTest, InvalidConstString) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.47-60: Found invalid character '\\' at index 4 in string constant "
+      "'\"test\\\"test\"'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const String someVar = "test\"test";
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_F(AidlTest, InvalidCharLiteral) {
+  auto filename = "Foo.aidl";
+  char code[] = "parcelable Foo { char a = '\0'; char b = '\t'; }";
+  io_delegate_.SetFileContents(filename,
+                               string{code, sizeof(code) - 1});  // -1 to drop nil at the end
+  CaptureStderr();
+  EXPECT_TRUE(Parser::Parse(filename, io_delegate_, typenames_, /*is_preprocessed=*/false));
+  auto err = GetCapturedStderr();
+  EXPECT_THAT(err, HasSubstr("Invalid character literal \\0"));
+  EXPECT_THAT(err, HasSubstr("Invalid character literal \\t"));
+}
+
 TEST_P(AidlTest, RejectUnstructuredParcelablesInNDKandRust) {
   io_delegate_.SetFileContents("o/Foo.aidl", "package o; parcelable Foo cpp_header \"cpp/Foo.h\";");
   const auto options =
@@ -1299,7 +1344,7 @@ TEST_F(AidlTest, AidlConstantValue_EvaluatedValue) {
   using Ptr = unique_ptr<AidlConstantValue>;
   const AidlLocation& loc = AIDL_LOCATION_HERE;
 
-  EXPECT_EQ('c', Ptr(AidlConstantValue::Character(loc, 'c'))->EvaluatedValue<char>());
+  EXPECT_EQ('c', Ptr(AidlConstantValue::Character(loc, "'c'"))->EvaluatedValue<char16_t>());
   EXPECT_EQ("abc", Ptr(AidlConstantValue::String(loc, "\"abc\""))->EvaluatedValue<string>());
   EXPECT_FLOAT_EQ(1.0f, Ptr(AidlConstantValue::Floating(loc, "1.0f"))->EvaluatedValue<float>());
   EXPECT_EQ(true, Ptr(AidlConstantValue::Boolean(loc, true))->EvaluatedValue<bool>());
@@ -1315,6 +1360,14 @@ TEST_F(AidlTest, AidlConstantValue_EvaluatedValue) {
   EXPECT_EQ(
       expected,
       Ptr(AidlConstantValue::Array(loc, std::move(values)))->EvaluatedValue<vector<string>>());
+}
+
+TEST_F(AidlTest, AidlConstantCharacterDefault) {
+  auto char_type = typenames_.MakeResolvedType(AIDL_LOCATION_HERE, "char", false);
+  auto default_value = unique_ptr<AidlConstantValue>(AidlConstantValue::Default(*char_type));
+  EXPECT_EQ("'\\0'", default_value->ValueString(*char_type, cpp::ConstantValueDecorator));
+  EXPECT_EQ("'\\0'", default_value->ValueString(*char_type, ndk::ConstantValueDecorator));
+  EXPECT_EQ("'\\0'", default_value->ValueString(*char_type, java::ConstantValueDecorator));
 }
 
 TEST_P(AidlTest, FailOnManyDefinedTypes) {
@@ -4437,6 +4490,26 @@ TEST_F(AidlTest, AcceptMultiDimensionalFixedSizeArray) {
   EXPECT_EQ("", GetCapturedStderr());
 }
 
+TEST_F(AidlTest, AcceptBinarySizeArray) {
+  io_delegate_.SetFileContents(
+      "a/Bar.aidl", "package a; parcelable Bar { const int CONST = 3; String[CONST + 1] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=ndk");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
+TEST_F(AidlTest, AcceptRefSizeArray) {
+  io_delegate_.SetFileContents(
+      "a/Bar.aidl", "package a; parcelable Bar { const int CONST = 3; String[CONST] a; }");
+
+  Options options = Options::From("aidl a/Bar.aidl -I . -o out --lang=ndk");
+  CaptureStderr();
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
 TEST_F(AidlTest, RejectArrayOfFixedSizeArray) {
   io_delegate_.SetFileContents("a/Bar.aidl", "package a; parcelable Bar { String[2][] a; }");
 
@@ -4973,7 +5046,7 @@ interface IFoo {}
 TEST_P(AidlTest, WarningInterfaceName) {
   io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
   auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
-                               " -Weverything -o out -h out p/Foo.aidl");
+                               " -Winterface-name -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("WARNING: p/Foo.aidl:1.1-10: Interface names should start with I. [-Winterface-name]\n",
@@ -4983,7 +5056,7 @@ TEST_P(AidlTest, WarningInterfaceName) {
 TEST_P(AidlTest, ErrorInterfaceName) {
   io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
   auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
-                               " -Weverything -Werror -o out -h out p/Foo.aidl");
+                               " -Winterface-name -Werror -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("ERROR: p/Foo.aidl:1.1-10: Interface names should start with I. [-Winterface-name]\n",
@@ -5038,17 +5111,6 @@ TEST_F(AidlTest, FormatCommentsForJava) {
   for (const auto& [input, formatted] : testcases) {
     EXPECT_EQ(formatted, FormatCommentsForJava(input));
   }
-}
-
-TEST_F(AidlTest, HideIsNotForArgs) {
-  io_delegate_.SetFileContents("IFoo.aidl",
-                               "interface IFoo {\n"
-                               "  void foo(in @Hide int x);\n"
-                               "}");
-  auto options = Options::From("aidl --lang=java IFoo.aidl");
-  CaptureStderr();
-  EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@Hide is not available"));
 }
 
 TEST_F(AidlTest, SuppressWarningsIsNotForArgs) {
@@ -5282,7 +5344,7 @@ const std::map<std::string, ExpectedResult> kFieldSupportExpectations = {
     {"ndk_primitiveArray", {"", ""}},
     {"rust_primitiveArray", {"", ""}},
     {"cpp_primitiveFixedArray", {"", ""}},
-    {"java_primitiveFixedArray", {"not supported yet", "not supported yet"}},
+    {"java_primitiveFixedArray", {"", ""}},
     {"ndk_primitiveFixedArray", {"", ""}},
     {"rust_primitiveFixedArray", {"", ""}},
     {"cpp_String", {"", ""}},

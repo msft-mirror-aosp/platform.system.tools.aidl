@@ -135,25 +135,30 @@ const string& JavaNameOf(const AidlTypeSpecifier& aidl, bool instantiable = fals
 }
 
 namespace {
-string JavaSignatureOfInternal(
-    const AidlTypeSpecifier& aidl, bool instantiable, bool omit_array,
-    bool boxing = false /* boxing can be true only if it is a type parameter */) {
+string JavaSignatureOfInternal(const AidlTypeSpecifier& aidl, bool instantiable, bool omit_array,
+                               bool boxing) {
   string ret = JavaNameOf(aidl, instantiable, boxing && !aidl.IsArray());
   if (aidl.IsGeneric()) {
     vector<string> arg_names;
     for (const auto& ta : aidl.GetTypeParameters()) {
-      arg_names.emplace_back(JavaSignatureOfInternal(*ta, false, false, true /* boxing */));
+      arg_names.emplace_back(JavaSignatureOfInternal(*ta, /*instantiable=*/false,
+                                                     /*omit_array=*/false, /*boxing=*/true));
     }
     ret += "<" + Join(arg_names, ",") + ">";
   }
   if (aidl.IsArray() && !omit_array) {
-    ret += "[]";
+    if (aidl.IsFixedSizeArray()) {
+      ret += Join(std::vector<std::string>(aidl.GetFixedSizeArrayDimensions().size(), "[]"), "");
+    } else {
+      ret += "[]";
+    }
   }
   return ret;
 }
 
-// Returns the name of the backing type for the specified type. Note: this
-// returns type names as used in AIDL, not a Java signature.
+// Returns the name of the backing type for the specified type.
+// Note: Do not use the result in the generated code! It's supposed to be used as a key.
+// This returns type names as used in AIDL, not a Java signature.
 // For enums, this is the enum's backing type.
 // For all other types, this is the type itself.
 string AidlBackingTypeName(const AidlTypeSpecifier& type) {
@@ -166,7 +171,13 @@ string AidlBackingTypeName(const AidlTypeSpecifier& type) {
     type_name = type.GetName();
   }
   if (type.IsArray()) {
-    type_name += "[]";
+    if (type.IsFixedSizeArray()) {
+      for (const auto& dim : type.GetFixedSizeArrayDimensions()) {
+        type_name += "[" + std::to_string(dim) + "]";
+      }
+    } else {
+      type_name += "[]";
+    }
   }
   return type_name;
 }
@@ -174,11 +185,20 @@ string AidlBackingTypeName(const AidlTypeSpecifier& type) {
 }  // namespace
 
 string JavaSignatureOf(const AidlTypeSpecifier& aidl) {
-  return JavaSignatureOfInternal(aidl, false, false);
+  return JavaSignatureOfInternal(aidl, /*instantiable=*/false, /*omit_array=*/false,
+                                 /*boxing=*/false);
 }
 
+// Used for "new" expression. Ignore arrays because "new" expression handles it.
 string InstantiableJavaSignatureOf(const AidlTypeSpecifier& aidl) {
-  return JavaSignatureOfInternal(aidl, true, true);
+  return JavaSignatureOfInternal(aidl, /*instantiable=*/true, /*omit_array=*/true,
+                                 /*boxing=*/false);
+}
+
+string JavaBoxingTypeOf(const AidlTypeSpecifier& aidl) {
+  AIDL_FATAL_IF(!AidlTypenames::IsPrimitiveTypename(aidl.GetName()), aidl);
+  return JavaSignatureOfInternal(aidl, /*instantiable=*/false, /*omit_array=*/false,
+                                 /*boxing=*/true);
 }
 
 string DefaultJavaValueOf(const AidlTypeSpecifier& aidl) {
@@ -466,6 +486,12 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
   const auto found = method_map.find(type_name);
   if (found != method_map.end()) {
     found->second(c);
+  } else if (c.type.IsFixedSizeArray()) {
+    std::vector<std::string> args = {c.var, GetFlagFor(c)};
+    for (auto dim : c.type.GetFixedSizeArrayDimensions()) {
+      args.push_back(std::to_string(dim));
+    }
+    c.writer << c.parcel << ".writeFixedArray(" << Join(args, ", ") << ");\n";
   } else {
     const AidlDefinedType* t = c.typenames.TryGetDefinedType(c.type.GetName());
     AIDL_FATAL_IF(t == nullptr, c.type) << "Unknown type: " << c.type.GetName();
@@ -687,6 +713,17 @@ bool CreateFromParcelFor(const CodeGeneratorContext& c) {
   const auto found = method_map.find(AidlBackingTypeName(c.type));
   if (found != method_map.end()) {
     found->second(c);
+  } else if (c.type.IsFixedSizeArray()) {
+    std::vector<std::string> args = {JavaSignatureOf(c.type) + ".class"};
+    if (c.typenames.IsParcelable(c.type.GetName())) {
+      args.push_back(JavaNameOf(c.type) + ".CREATOR");
+    } else if (c.typenames.GetInterface(c.type)) {
+      args.push_back(c.type.GetName() + ".Stub::asInterface");
+    }
+    for (auto dim : c.type.GetFixedSizeArrayDimensions()) {
+      args.push_back(std::to_string(dim));
+    }
+    c.writer << c.var << " = " << c.parcel << ".createFixedArray(" << Join(args, ", ") << ");\n";
   } else {
     const AidlDefinedType* t = c.typenames.TryGetDefinedType(c.type.GetName());
     AIDL_FATAL_IF(t == nullptr, c.type) << "Unknown type: " << c.type.GetName();
@@ -833,6 +870,14 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
   const auto& found = method_map.find(AidlBackingTypeName(c.type));
   if (found != method_map.end()) {
     found->second(c);
+  } else if (c.type.IsFixedSizeArray()) {
+    std::vector<std::string> args = {c.var};
+    if (c.typenames.IsParcelable(c.type.GetName())) {
+      args.push_back(c.type.GetName() + ".CREATOR");
+    } else if (c.typenames.GetInterface(c.type)) {
+      args.push_back(c.type.GetName() + ".Stub::asInterface");
+    }
+    c.writer << c.parcel << ".readFixedArray(" << Join(args, ", ") << ");\n";
   } else {
     const AidlDefinedType* t = c.typenames.TryGetDefinedType(c.type.GetName());
     AIDL_FATAL_IF(t == nullptr, c.type) << "Unknown type: " << c.type.GetName();
@@ -857,8 +902,23 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
 }
 
 void ToStringFor(const CodeGeneratorContext& c) {
+  // Use derived toString() for enum type annotated with @JavaDerive(toString=true)
+  if (auto t = c.type.GetDefinedType();
+      t != nullptr && t->AsEnumDeclaration() && t->JavaDerive("toString")) {
+    if (c.type.IsArray()) {
+      c.writer << c.type.GetName() << ".$.arrayToString(" << c.var << ")";
+    } else {
+      c.writer << c.type.GetName() << ".$.toString(" << c.var << ")";
+    }
+    return;
+  }
+
   if (c.type.IsArray()) {
-    c.writer << "java.util.Arrays.toString(" << c.var << ")";
+    if (c.type.IsDynamicArray() || c.type.GetFixedSizeArrayDimensions().size() == 1) {
+      c.writer << "java.util.Arrays.toString(" << c.var << ")";
+    } else {
+      c.writer << "java.util.Arrays.deepToString(" << c.var << ")";
+    }
     return;
   }
 

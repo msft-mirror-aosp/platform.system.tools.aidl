@@ -252,11 +252,6 @@ type CommonBackendProperties struct {
 	// For native modules, the property needs to be set when a module is a part of mainline modules(APEX).
 	// Forwarded to generated java/native module.
 	Min_sdk_version *string
-
-	// Determines whether the generated source files are available or not. When set to true,
-	// the source files can be added to `srcs` property via `:<ifacename>-<backend>-source`,
-	// e.g., ":myaidl-java-source"
-	Srcs_available *bool
 }
 
 type CommonNativeBackendProperties struct {
@@ -332,9 +327,20 @@ type aidlInterfaceProperties struct {
 	// interface must be kept stable as long as it is used.
 	Stability *string
 
+	// Deprecated: Use `versions_with_info` instead. Don't use `versions` property directly.
+	Versions []string
+
 	// Previous API versions that are now frozen. The version that is last in
 	// the list is considered as the most recent version.
-	Versions []string
+	// The struct contains both version and imports information per a version.
+	// Until versions property is removed, don't use `versions_with_info` directly.
+	Versions_with_info []struct {
+		Version string
+		Imports []string
+	}
+
+	// Use aidlInterface.getVersions()
+	VersionsInternal []string `blueprint:"mutated"`
 
 	// The minimum version of the sdk that the compiled artifacts will run against
 	// For native modules, the property needs to be set when a module is a part of mainline modules(APEX).
@@ -373,6 +379,11 @@ type aidlInterfaceProperties struct {
 		// the same purpose.
 		Ndk struct {
 			CommonNativeBackendProperties
+
+			// Set to the version of the sdk to compile against, for the NDK
+			// variant.
+			// Default: current
+			Sdk_version *string
 
 			// If set to false, the ndk backend is exclusive to platform and is not
 			// available to applications. Default is true (i.e. available to both
@@ -564,7 +575,7 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 			anImportWithVersion := tag.anImport
 			_, version := parseModuleWithVersion(tag.anImport)
 			if version != "" {
-				candidateVersions := concat(other.properties.Versions, []string{other.nextVersion()})
+				candidateVersions := concat(other.getVersions(), []string{other.nextVersion()})
 				if !android.InList(version, candidateVersions) {
 					mctx.PropertyErrorf("imports", "%q depends on %q version %q(%q), which doesn't exist. The version must be one of %q", i.ModuleBase.Name(), anImport, version, anImportWithVersion, candidateVersions)
 				}
@@ -618,9 +629,29 @@ func (i *aidlInterface) checkStability(mctx android.LoadHookContext) {
 	}
 }
 func (i *aidlInterface) checkVersions(mctx android.LoadHookContext) {
+	if len(i.properties.Versions) > 0 && len(i.properties.Versions_with_info) > 0 {
+		mctx.ModuleErrorf("versions:%q and versions_with_info:%q cannot be used at the same time. Use versions_with_info instead of versions.", i.properties.Versions, i.properties.Versions_with_info)
+	}
+
+	if len(i.properties.Versions) > 0 {
+		i.properties.VersionsInternal = make([]string, len(i.properties.Versions))
+		copy(i.properties.VersionsInternal, i.properties.Versions)
+	} else if len(i.properties.Versions_with_info) > 0 {
+		i.properties.VersionsInternal = make([]string, len(i.properties.Versions_with_info))
+		for idx, value := range i.properties.Versions_with_info {
+			i.properties.VersionsInternal[idx] = value.Version
+			for _, im := range value.Imports {
+				if !hasVersionSuffix(im) {
+					mctx.ModuleErrorf("imports in versions_with_info must specify its version, but %s. Add a version suffix(such as %s-V1).", im, im)
+					return
+				}
+			}
+		}
+	}
+
 	versions := make(map[string]bool)
-	intVersions := make([]int, 0, len(i.properties.Versions))
-	for _, ver := range i.properties.Versions {
+	intVersions := make([]int, 0, len(i.getVersions()))
+	for _, ver := range i.getVersions() {
 		if _, dup := versions[ver]; dup {
 			mctx.PropertyErrorf("versions", "duplicate found", ver)
 			continue
@@ -639,7 +670,7 @@ func (i *aidlInterface) checkVersions(mctx android.LoadHookContext) {
 
 	}
 	if !mctx.Failed() && !sort.IntsAreSorted(intVersions) {
-		mctx.PropertyErrorf("versions", "should be sorted, but is %v", i.properties.Versions)
+		mctx.PropertyErrorf("versions", "should be sorted, but is %v", i.getVersions())
 	}
 }
 func (i *aidlInterface) checkVndkUseVersion(mctx android.LoadHookContext) {
@@ -653,7 +684,7 @@ func (i *aidlInterface) checkVndkUseVersion(mctx android.LoadHookContext) {
 	if *i.properties.Vndk_use_version == i.nextVersion() {
 		return
 	}
-	for _, ver := range i.properties.Versions {
+	for _, ver := range i.getVersions() {
 		if *i.properties.Vndk_use_version == ver {
 			return
 		}
@@ -665,7 +696,7 @@ func (i *aidlInterface) nextVersion() string {
 	if proptools.Bool(i.properties.Unstable) {
 		return ""
 	}
-	return nextVersion(i.properties.Versions)
+	return nextVersion(i.getVersions())
 }
 
 func nextVersion(versions []string) string {
@@ -684,11 +715,15 @@ func (i *aidlInterface) latestVersion() string {
 	if !i.hasVersion() {
 		return "0"
 	}
-	return i.properties.Versions[len(i.properties.Versions)-1]
+	return i.getVersions()[len(i.getVersions())-1]
 }
 
 func (i *aidlInterface) hasVersion() bool {
-	return len(i.properties.Versions) > 0
+	return len(i.getVersions()) > 0
+}
+
+func (i *aidlInterface) getVersions() []string {
+	return i.properties.VersionsInternal
 }
 
 func hasVersionSuffix(moduleName string) bool {
@@ -764,7 +799,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false, PLATFORM_VERSION_CODENAME is REL, and \"owner\" property is missing.")
 	}
 
-	versions := i.properties.Versions
+	versions := i.getVersions()
 	nextVersion := i.nextVersion()
 	shouldGenerateLangBackendMap := map[string]bool{
 		langCpp:  i.shouldGenerateCppBackend(),
@@ -828,29 +863,6 @@ func (i *aidlInterface) commonBackendProperties(lang string) CommonBackendProper
 	}
 }
 
-// srcsVisibility gives the value for the `visibility` property of the source gen module for the
-// language backend `lang`. By default, the source gen module is not visible to the clients of
-// aidl_interface (because it's an impl detail), but when `backend.<backend>.srcs_available` is set
-// to true, the source gen module follows the visibility of the aidl_interface module.
-func srcsVisibility(mctx android.LoadHookContext, lang string) []string {
-	if a, ok := mctx.Module().(*aidlInterface); !ok {
-		panic(fmt.Errorf("%q is not aidl_interface", mctx.Module().String()))
-	} else {
-		if proptools.BoolDefault(a.commonBackendProperties(lang).Srcs_available, true) {
-			// Returning nil so that the visibility of the source module defaults to the
-			// the package-level default visibility. This way, the source module gets
-			// the same visibility as the library modules.
-			return nil
-		}
-	}
-	return []string{
-		"//" + mctx.ModuleDir(),
-		// system/tools/aidl/build is always added because aidl_metadata_json in the
-		// directory has dependencies to all aidl_interface modules.
-		"//system/tools/aidl/build",
-	}
-}
-
 func (i *aidlInterface) Name() string {
 	return i.ModuleBase.Name() + aidlInterfaceSuffix
 }
@@ -864,7 +876,7 @@ func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 
 	i.preprocessed = make(map[string]android.WritablePath)
 	// generate (len(versions) + 1) preprocessed.aidl files
-	for _, version := range concat(i.properties.Versions, []string{i.nextVersion()}) {
+	for _, version := range concat(i.getVersions(), []string{i.nextVersion()}) {
 		i.preprocessed[version] = i.buildPreprocessed(ctx, version)
 	}
 	// helpful aliases
@@ -879,18 +891,27 @@ func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	}
 }
 
-// imported interfaces
-// TODO(b/146436251) use imports in versions_with_info
-// For example, foo-V1 should use bar-V1 while foo-V2 should use bar-V2
-//   name: "foo",
-//   versions_with_info: [
-//     { version: "1", imports: ["bar-V1"]},
-//     { version: "2", imports: ["bar-V2"]},
-//   ]
+func (i *aidlInterface) getImportsForVersion(version string) []string {
+	// `Imports` is used when version == i.nextVersion() or`versions` is defined instead of `versions_with_info`
+	importsSrc := i.properties.Imports
+	for _, v := range i.properties.Versions_with_info {
+		if v.Version == version {
+			importsSrc = v.Imports
+			break
+		}
+	}
+	imports := make([]string, len(importsSrc))
+	copy(imports, importsSrc)
+
+	return imports
+}
+
 func (i *aidlInterface) getImports(version string) map[string]string {
 	imports := make(map[string]string)
+	imports_src := i.getImportsForVersion(version)
+
 	useLatestStable := !proptools.Bool(i.properties.Unstable) && version != "" && version != i.nextVersion()
-	for _, importString := range i.properties.Imports {
+	for _, importString := range imports_src {
 		name, targetVersion := parseModuleWithVersion(importString)
 		if targetVersion == "" && useLatestStable {
 			targetVersion = "latest"

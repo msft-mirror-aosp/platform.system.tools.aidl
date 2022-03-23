@@ -3,9 +3,13 @@
 #include <android/aidl/tests/IntEnum.h>
 #include <android/aidl/tests/LongEnum.h>
 #include <android/binder_to_string.h>
+#include <array>
+#include <binder/Enums.h>
 #include <binder/Parcel.h>
 #include <binder/Status.h>
 #include <cassert>
+#include <cstdint>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <utils/String16.h>
@@ -21,15 +25,18 @@ namespace tests {
 namespace unions {
 class EnumUnion : public ::android::Parcelable {
 public:
-  enum Tag : int32_t {
-    intEnum = 0,  // android.aidl.tests.IntEnum intEnum;
-    longEnum,  // android.aidl.tests.LongEnum longEnum;
+  enum class Tag : int32_t {
+    intEnum = 0,
+    longEnum = 1,
   };
+  // Expose tag symbols for legacy code
+  static const inline Tag intEnum = Tag::intEnum;
+  static const inline Tag longEnum = Tag::longEnum;
 
   template<typename _Tp>
   static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, EnumUnion>;
 
-  EnumUnion() : _value(std::in_place_index<intEnum>, ::android::aidl::tests::IntEnum(::android::aidl::tests::IntEnum::FOO)) { }
+  EnumUnion() : _value(std::in_place_index<static_cast<size_t>(intEnum)>, ::android::aidl::tests::IntEnum(::android::aidl::tests::IntEnum::FOO)) { }
 
   template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -42,12 +49,12 @@ public:
 
   template <Tag _tag, typename... _Tp>
   static EnumUnion make(_Tp&&... _args) {
-    return EnumUnion(std::in_place_index<_tag>, std::forward<_Tp>(_args)...);
+    return EnumUnion(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
   }
 
   template <Tag _tag, typename _Tp, typename... _Up>
   static EnumUnion make(std::initializer_list<_Tp> _il, _Up&&... _args) {
-    return EnumUnion(std::in_place_index<_tag>, std::move(_il), std::forward<_Up>(_args)...);
+    return EnumUnion(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
   }
 
   Tag getTag() const {
@@ -57,18 +64,18 @@ public:
   template <Tag _tag>
   const auto& get() const {
     if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-    return std::get<_tag>(_value);
+    return std::get<static_cast<size_t>(_tag)>(_value);
   }
 
   template <Tag _tag>
   auto& get() {
     if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-    return std::get<_tag>(_value);
+    return std::get<static_cast<size_t>(_tag)>(_value);
   }
 
   template <Tag _tag, typename... _Tp>
   void set(_Tp&&... _args) {
-    _value.emplace<_tag>(std::forward<_Tp>(_args)...);
+    _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
   }
 
   inline bool operator!=(const EnumUnion& rhs) const {
@@ -112,4 +119,34 @@ private:
 }  // namespace unions
 }  // namespace tests
 }  // namespace aidl
+}  // namespace android
+namespace android {
+namespace aidl {
+namespace tests {
+namespace unions {
+[[nodiscard]] static inline std::string toString(EnumUnion::Tag val) {
+  switch(val) {
+  case EnumUnion::Tag::intEnum:
+    return "intEnum";
+  case EnumUnion::Tag::longEnum:
+    return "longEnum";
+  default:
+    return std::to_string(static_cast<int32_t>(val));
+  }
+}
+}  // namespace unions
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+namespace android {
+namespace internal {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template <>
+constexpr inline std::array<::android::aidl::tests::unions::EnumUnion::Tag, 2> enum_values<::android::aidl::tests::unions::EnumUnion::Tag> = {
+  ::android::aidl::tests::unions::EnumUnion::Tag::intEnum,
+  ::android::aidl::tests::unions::EnumUnion::Tag::longEnum,
+};
+#pragma clang diagnostic pop
+}  // namespace internal
 }  // namespace android

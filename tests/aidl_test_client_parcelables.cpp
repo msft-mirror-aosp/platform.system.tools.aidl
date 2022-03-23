@@ -211,7 +211,8 @@ TEST_F(AidlTest, UnionUsage) {
 
   // Use std::in_place_index<tag> to avoid "move"
   // Note that make<tag>(...) involves "move" of the content value
-  EXPECT_EQ(Union::make<Union::ns>(3, 0), Union(std::in_place_index<Union::ns>, 3, 0));
+  EXPECT_EQ(Union::make<Union::ns>(3, 0),
+            Union(std::in_place_index<static_cast<size_t>(Union::ns)>, 3, 0));
 
   Union one_two = one_two_three;
   // get<tag> can be used to modify the content
@@ -574,6 +575,21 @@ TEST_F(AidlTest, ReverseRecursiveList) {
   EXPECT_EQ(nullptr, cur);
 }
 
+TEST_F(AidlTest, GetUnionTags) {
+  std::vector<Union> unions;
+  std::vector<Union::Tag> tags;
+  // test empty
+  auto status = service->GetUnionTags(unions, &tags);
+  ASSERT_TRUE(status.isOk()) << status.toString8();
+  EXPECT_EQ(tags, (std::vector<Union::Tag>{}));
+  // test non-empty
+  unions.push_back(Union::make<Union::n>());
+  unions.push_back(Union::make<Union::ns>());
+  status = service->GetUnionTags(unions, &tags);
+  ASSERT_TRUE(status.isOk()) << status.toString8();
+  EXPECT_EQ(tags, (std::vector<Union::Tag>{Union::n, Union::ns}));
+}
+
 TEST_F(AidlTest, FixedSizeArray) {
   android::Parcel parcel;
 
@@ -661,11 +677,6 @@ std::array<std::array<T, 3>, 2> Make2dArray(std::initializer_list<T> values) {
 }
 
 TEST_F(AidlTest, FixedSizeArrayOverBinder) {
-  BackendType backend;
-  auto status = service->getBackendType(&backend);
-  EXPECT_TRUE(status.isOk());
-  if (backend == BackendType::JAVA) GTEST_SKIP();
-
   sp<IRepeatFixedSizeArray> service;
   ASSERT_EQ(OK, getService(IRepeatFixedSizeArray::descriptor, &service));
 

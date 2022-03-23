@@ -18,6 +18,7 @@ package android.aidl.tests;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -26,6 +27,8 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray;
+import android.aidl.fixedsizearray.FixedSizeArrayExample.IntParcelable;
 import android.aidl.tests.BadParcelable;
 import android.aidl.tests.ByteEnum;
 import android.aidl.tests.GenericStructuredParcelable;
@@ -56,6 +59,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -753,10 +757,10 @@ public class TestServiceClient {
             + "f: 17, "
             + "shouldBeJerry: Jerry, "
             + "shouldBeByteBar: 2, "
-            + "shouldBeIntBar: 2000, "
+            + "shouldBeIntBar: BAR, "
             + "shouldBeLongBar: 200000000000, "
             + "shouldContainTwoByteFoos: [1, 1], "
-            + "shouldContainTwoIntFoos: [1000, 1000], "
+            + "shouldContainTwoIntFoos: [FOO, FOO], "
             + "shouldContainTwoLongFoos: [100000000000, 100000000000], "
             + "stringDefaultsToFoo: foo, "
             + "byteDefaultsToFour: 4, "
@@ -805,7 +809,7 @@ public class TestServiceClient {
             + "shouldSetBit0AndBit2: 5, "
             + "u: android.aidl.tests.Union.ns([1, 2, 3]), "
             + "shouldBeConstS1: android.aidl.tests.Union.s(a string constant in union), "
-            + "defaultWithFoo: 1000"
+            + "defaultWithFoo: FOO"
             + "}";
         assertThat(p.toString(), is(expected));
     }
@@ -884,8 +888,8 @@ public class TestServiceClient {
             + "parcelableArray: ["
             + "android.aidl.tests.OtherParcelableForToString{field: other}, "
             + "android.aidl.tests.OtherParcelableForToString{field: other}], "
-            + "enumValue: 1000, "
-            + "enumArray: [1000, 2000], "
+            + "enumValue: FOO, "
+            + "enumArray: [FOO, BAR], "
             + "nullArray: null, "
             + "nullList: null, "
             + "parcelableGeneric: android.aidl.tests.GenericStructuredParcelable{a: 1, b: 2}, "
@@ -893,6 +897,21 @@ public class TestServiceClient {
             + "}";
 
         assertThat(p.toString(), is(expected));
+    }
+
+    @Test
+    public void testEnumToString() {
+      assertThat(IntEnum.$.toString(IntEnum.FOO), is("FOO"));
+      assertThat(IntEnum.$.toString(0), is("0"));
+      assertThat(IntEnum.$.arrayToString(null), is("null"));
+      assertThat(IntEnum.$.arrayToString(new int[] {}), is("[]"));
+      assertThat(IntEnum.$.arrayToString(new int[] {IntEnum.FOO, IntEnum.BAR}), is("[FOO, BAR]"));
+      assertThat(IntEnum.$.arrayToString(new int[] {IntEnum.FOO, 0}), is("[FOO, 0]"));
+      assertThat(IntEnum.$.arrayToString(new int[][] {{IntEnum.FOO, IntEnum.BAR}, {IntEnum.BAZ}}),
+          is("[[FOO, BAR], [BAZ]]"));
+      assertThrows(IllegalArgumentException.class, () -> IntEnum.$.arrayToString(IntEnum.FOO));
+      assertThrows(
+          IllegalArgumentException.class, () -> IntEnum.$.arrayToString(new long[] {LongEnum.FOO}));
     }
 
     @Test
@@ -952,6 +971,13 @@ public class TestServiceClient {
     }
 
     @Test
+    public void testGetUnionTags() throws RemoteException {
+      assertArrayEquals(new int[] {}, service.GetUnionTags(new Union[] {}));
+      assertArrayEquals(new int[] {Union.n, Union.ns},
+          service.GetUnionTags(new Union[] {Union.n(0), Union.ns(new int[] {})}));
+    }
+
+    @Test
     public void testDescribeContents() throws Exception {
       CompilerChecks cc = new CompilerChecks();
       cc.pfd_array = new ParcelFileDescriptor[] {null, null, null};
@@ -961,5 +987,41 @@ public class TestServiceClient {
       cc.pfd_array[1] = ParcelFileDescriptor.open(
           new File(file), ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_WRITE_ONLY);
       assertThat(cc.describeContents(), is(Parcelable.CONTENTS_FILE_DESCRIPTOR));
+    }
+
+    @Test
+    public void testFixedSizeArrayOverBinder() throws Exception {
+      IBinder binder = ServiceManager.waitForService(IRepeatFixedSizeArray.DESCRIPTOR);
+      assertNotNull(binder);
+      IRepeatFixedSizeArray service = IRepeatFixedSizeArray.Stub.asInterface(binder);
+      assertNotNull(service);
+
+      {
+        byte[] input = new byte[] {1, 2, 3};
+        byte[] repeated = new byte[3];
+        byte[] output = service.RepeatBytes(input, repeated);
+        assertArrayEquals(input, repeated);
+        assertArrayEquals(input, output);
+      }
+      {
+        int[] input = new int[] {1, 2, 3};
+        int[] repeated = new int[3];
+        int[] output = service.RepeatInts(input, repeated);
+        assertArrayEquals(input, repeated);
+        assertArrayEquals(input, output);
+      }
+      {
+        IntParcelable p1 = new IntParcelable();
+        p1.value = 1;
+        IntParcelable p2 = new IntParcelable();
+        p2.value = 1;
+        IntParcelable p3 = new IntParcelable();
+        p3.value = 1;
+        IntParcelable[][] input = new IntParcelable[][] {{p1, p2, p3}, {p1, p2, p3}};
+        IntParcelable[][] repeated = new IntParcelable[2][3];
+        IntParcelable[][] output = service.Repeat2dParcelables(input, repeated);
+        assertArrayEquals(input, repeated);
+        assertArrayEquals(input, output);
+      }
     }
 }

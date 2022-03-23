@@ -25,6 +25,7 @@ import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.RecursiveList;
 import android.aidl.tests.StructuredParcelable;
+import android.aidl.tests.Union;
 import android.aidl.tests.extension.ExtendableParcelable;
 
 /**
@@ -33,6 +34,7 @@ import android.aidl.tests.extension.ExtendableParcelable;
 @SuppressWarnings(value={"inout-parameter", "mixed-oneway", "out-array"})
 @SensitiveData
 @JavaDefault
+@JavaDelegator
 interface ITestService {
     // Test that constants are accessible
 
@@ -115,7 +117,7 @@ interface ITestService {
     LongEnum[] ReverseLongEnum(in LongEnum[] input, out LongEnum[] repeated);
 
     // Test that clients can send and receive Binders.
-    INamedCallback GetOtherTestService(String name);
+    @PropagateAllowBlocking INamedCallback GetOtherTestService(String name);
     boolean VerifyName(INamedCallback service, String name);
     INamedCallback[] GetInterfaceArray(in String[] names);
     boolean VerifyNamesWithInterfaceArray(in INamedCallback[] services, in String[] names);
@@ -257,6 +259,8 @@ interface ITestService {
 
     IOldName GetOldNameInterface();
     INewName GetNewNameInterface();
+
+    Union.Tag[] GetUnionTags(in Union[] input);
 
     // Retrieve the ICppJavaTests if the server supports it
     @nullable IBinder GetCppJavaTests();

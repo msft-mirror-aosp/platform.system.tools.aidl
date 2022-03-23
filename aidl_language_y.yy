@@ -94,7 +94,6 @@ AidlLocation loc(const yy::parser::location_type& l) {
     std::vector<std::unique_ptr<AidlDefinedType>>* declarations;
 }
 
-%destructor { } <character>
 %destructor { } <direction>
 %destructor { delete ($$); } <*>
 
@@ -110,7 +109,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token<token> UNION "union"
 %token<token> CONST "const"
 
-%token<character> CHARVALUE "char literal"
+%token<token> CHARVALUE "char literal"
 %token<token> FLOATVALUE "float literal"
 %token<token> HEXVALUE "hex literal"
 %token<token> INTVALUE "int literal"
@@ -188,10 +187,9 @@ document
     } else if (!$2->empty()) {
       comments = $2->front()->GetComments();
     }
-    // dedup imports
-    std::set<std::string> imports;
+    std::vector<std::string> imports;
     for (const auto& import : *$2) {
-      imports.insert(import->GetText());
+      imports.push_back(import->GetText());
     }
     ps->MakeDocument(loc(@1), comments, std::move(imports), std::move(*$3));
     delete $1;
@@ -409,7 +407,10 @@ interface_members
 const_expr
  : TRUE_LITERAL { $$ = AidlConstantValue::Boolean(loc(@1), true); }
  | FALSE_LITERAL { $$ = AidlConstantValue::Boolean(loc(@1), false); }
- | CHARVALUE { $$ = AidlConstantValue::Character(loc(@1), $1); }
+ | CHARVALUE {
+    $$ = AidlConstantValue::Character(loc(@1), $1->GetText());
+    delete $1;
+  }
  | INTVALUE {
     $$ = AidlConstantValue::Integral(loc(@1), $1->GetText());
     if ($$ == nullptr) {

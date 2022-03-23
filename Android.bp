@@ -152,6 +152,11 @@ cc_test {
         "-g",
     ],
 
+    tidy_timeout_srcs: [
+        "aidl_unittest.cpp",
+        "options_unittest.cpp",
+    ],
+
     srcs: [
         "aidl_unittest.cpp",
         "ast_java_unittest.cpp",
@@ -303,8 +308,6 @@ filegroup {
         "tests/android/aidl/tests/UnionWithFd.aidl",
         "tests/android/aidl/tests/extension/*.aidl",
         "tests/android/aidl/tests/nested/*.aidl",
-        "tests/android/aidl/tests/permission/IProtected.aidl",
-        "tests/android/aidl/tests/permission/IProtectedInterface.aidl",
         "tests/android/aidl/tests/unions/*.aidl",
     ],
     path: "tests",
@@ -321,8 +324,10 @@ filegroup {
 }
 
 filegroup {
-    name: "libaidl-integration-platform-test-files",
+    name: "libaidl-integration-permission-test-files",
     srcs: [
+        "tests/android/aidl/tests/permission/IProtected.aidl",
+        "tests/android/aidl/tests/permission/IProtectedInterface.aidl",
         "tests/android/aidl/tests/permission/platform/*.aidl",
     ],
     path: "tests",
@@ -340,6 +345,9 @@ aidl_interface {
         "2",
     ],
     backend: {
+        java: {
+            gen_rpc: true,
+        },
         rust: {
             enabled: true,
         },
@@ -391,6 +399,10 @@ cc_test {
         "aidl-test-versioned-interface-V2-cpp",
         "aidl_test_loggable_interface-cpp",
         "aidl-test-fixedsizearray-cpp",
+    ],
+    tidy_timeout_srcs: [
+        "tests/aidl_test_client_parcelables.cpp",
+        "tests/aidl_test_client_primitives.cpp",
     ],
     srcs: [
         "tests/aidl_test_client.cpp",
@@ -446,7 +458,7 @@ aidl_interface {
             enabled: true,
         },
         java: {
-            enabled: false,
+            enabled: true,
         },
         ndk: {
             enabled: true,
@@ -473,6 +485,7 @@ java_defaults {
         "aidl_test_nonvintf_parcelable-V1-java",
         "aidl_test_unstable_parcelable-java",
         "aidl_test_vintf_parcelable-V1-java",
+        "aidl-test-fixedsizearray-java",
         // TODO: remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",
@@ -504,7 +517,7 @@ java_test {
     defaults: ["aidl_test_java_defaults"],
     static_libs: [
         // client uses the new version
-        "aidl-test-versioned-interface-V2-java",
+        "aidl-test-versioned-interface-V3-java",
     ],
     // tests are included in defaults
     srcs: [
@@ -513,6 +526,7 @@ java_test {
         "tests/java/src/android/aidl/tests/JavaOnlyImmutableAnnotationTests.java",
         "tests/java/src/android/aidl/tests/AidlJavaTests.java",
         "tests/java/src/android/aidl/tests/BuiltInTests.java",
+        "tests/java/src/android/aidl/tests/DelegatorTests.java",
         "tests/java/src/android/aidl/tests/GenericTests.java",
         "tests/java/src/android/aidl/tests/NestedTypesTests.java",
         "tests/java/src/android/aidl/tests/TestVersionedInterface.java",
@@ -622,14 +636,18 @@ genrule {
         // warning: keep this list up to date with tests/golden_test.sh
         ":aidl-test-interface-cpp-source",
         ":aidl-test-interface-java-source",
-        ":aidl-test-versioned-interface-V2-java-source",
+        ":aidl-test-versioned-interface-V1-cpp-source",
+        ":aidl-test-versioned-interface-V1-java-source",
+        ":aidl-test-versioned-interface-V1-ndk-source",
+        ":aidl-test-versioned-interface-V1-rust-source",
         ":aidl-test-interface-ndk-source",
         ":aidl-test-interface-rust-source",
         ":aidl_test_loggable_interface-cpp-source",
         ":aidl_test_loggable_interface-java-source",
         ":aidl_test_loggable_interface-ndk-source",
-        ":aidl-test-interface-platform-java-source",
+        ":aidl-test-interface-permission-java-source",
         ":aidl-test-fixedsizearray-cpp-source",
+        ":aidl-test-fixedsizearray-java-source",
         ":aidl-test-fixedsizearray-ndk-source",
         ":aidl-test-fixedsizearray-rust-source",
         "tests/golden_output/**/*",
@@ -695,10 +713,10 @@ aidl_interface {
 }
 
 aidl_interface {
-    name: "aidl-test-interface-platform",
+    name: "aidl-test-interface-permission",
     unstable: true,
     flags: ["-Werror"],
-    srcs: [":libaidl-integration-platform-test-files"],
+    srcs: [":libaidl-integration-permission-test-files"],
     include_dirs: [
         "frameworks/base/core/java",
     ],

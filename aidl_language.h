@@ -165,6 +165,7 @@ class AidlNode {
   static void ClearUnvisitedNodes();
   static const std::vector<AidlLocation>& GetLocationsOfUnvisitedNodes();
   void MarkVisited() const;
+  bool IsUserDefined() const { return !GetLocation().IsInternal(); }
 
  private:
   std::string PrintLine() const;
@@ -224,7 +225,6 @@ class AidlAnnotation : public AidlNode {
  public:
   enum class Type {
     BACKING = 1,
-    HIDE,
     JAVA_STABLE_PARCELABLE,
     UNSUPPORTED_APP_USAGE,
     VINTF_STABILITY,
@@ -234,6 +234,7 @@ class AidlAnnotation : public AidlNode {
     JAVA_PASSTHROUGH,
     JAVA_DERIVE,
     JAVA_DEFAULT,
+    JAVA_DELEGATOR,
     JAVA_ONLY_IMMUTABLE,
     JAVA_SUPPRESS_LINT,
     FIXED_SIZE,
@@ -242,7 +243,8 @@ class AidlAnnotation : public AidlNode {
     SUPPRESS_WARNINGS,
     PERMISSION_ENFORCE,
     PERMISSION_NONE,
-    PERMISSION_MANUAL
+    PERMISSION_MANUAL,
+    PROPAGATE_ALLOW_BLOCKING,
   };
 
   using TargetContext = uint16_t;
@@ -352,9 +354,9 @@ class AidlAnnotatable : public AidlCommentable {
   bool IsJavaOnlyImmutable() const;
   bool IsFixedSize() const;
   bool IsStableApiParcelable(Options::Language lang) const;
-  bool IsHide() const;
   bool JavaDerive(const std::string& method) const;
   bool IsJavaDefault() const;
+  bool IsJavaDelegator() const;
   std::string GetDescriptor() const;
 
   const AidlAnnotation* UnsupportedAppUsage() const;
@@ -364,6 +366,7 @@ class AidlAnnotatable : public AidlCommentable {
   std::unique_ptr<android::aidl::perm::Expression> EnforceExpression() const;
   bool IsPermissionManual() const;
   bool IsPermissionNone() const;
+  bool IsPropagateAllowBlocking() const;
 
   // ToString is for dumping AIDL.
   // Returns string representation of annotations.
@@ -640,7 +643,7 @@ class AidlConstantValue : public AidlNode {
     } else if constexpr (is_one_of<T, int8_t, int32_t, int64_t>::value) {
       AIDL_FATAL_IF(final_type_ < Type::INT8 && final_type_ > Type::INT64, this);
       return static_cast<T>(final_value_);
-    } else if constexpr (std::is_same<T, char>::value) {
+    } else if constexpr (std::is_same<T, char16_t>::value) {
       AIDL_FATAL_IF(final_type_ != Type::CHARACTER, this);
       return final_string_value_.at(1);  // unquote '
     } else if constexpr (std::is_same<T, bool>::value) {
@@ -665,9 +668,9 @@ class AidlConstantValue : public AidlNode {
   static AidlConstantValue* Default(const AidlTypeSpecifier& specifier);
 
   static AidlConstantValue* Boolean(const AidlLocation& location, bool value);
-  static AidlConstantValue* Character(const AidlLocation& location, char value);
+  static AidlConstantValue* Character(const AidlLocation& location, const std::string& value);
   // example: 123, -5498, maybe any size
-  static AidlConstantValue* Integral(const AidlLocation& location, const string& value);
+  static AidlConstantValue* Integral(const AidlLocation& location, const std::string& value);
   static AidlConstantValue* Floating(const AidlLocation& location, const std::string& value);
   static AidlConstantValue* Array(const AidlLocation& location,
                                   std::unique_ptr<vector<unique_ptr<AidlConstantValue>>> values);
@@ -677,6 +680,7 @@ class AidlConstantValue : public AidlNode {
   Type GetType() const { return final_type_; }
   const std::string& Literal() const { return value_; }
 
+  bool Evaluate() const;
   virtual bool CheckValid() const;
 
   // Raw value of type (currently valid in C++ and Java). Empty string on error.
@@ -849,8 +853,7 @@ class AidlMethod : public AidlMember {
   AidlMethod(const AidlLocation& location, bool oneway, AidlTypeSpecifier* type, const string& name,
              vector<unique_ptr<AidlArgument>>* args, const Comments& comments);
   AidlMethod(const AidlLocation& location, bool oneway, AidlTypeSpecifier* type, const string& name,
-             vector<unique_ptr<AidlArgument>>* args, const Comments& comments, int id,
-             bool is_user_defined = true);
+             vector<unique_ptr<AidlArgument>>* args, const Comments& comments, int id);
   virtual ~AidlMethod() = default;
 
   // non-copyable, non-movable
@@ -871,8 +874,6 @@ class AidlMethod : public AidlMember {
   bool HasId() const { return has_id_; }
   int GetId() const { return id_; }
   void SetId(unsigned id) { id_ = id; }
-
-  bool IsUserDefined() const { return is_user_defined_; }
 
   const std::vector<std::unique_ptr<AidlArgument>>& GetArguments() const {
     return arguments_;
@@ -915,7 +916,6 @@ class AidlMethod : public AidlMember {
   std::vector<const AidlArgument*> out_arguments_;
   bool has_id_;
   int id_;
-  bool is_user_defined_ = true;
 };
 
 // AidlDefinedType represents either an interface, parcelable, or enum that is
@@ -999,16 +999,23 @@ class AidlDefinedType : public AidlMember, public AidlScope {
     return constants_;
   }
   const std::vector<std::unique_ptr<AidlMethod>>& GetMethods() const { return methods_; }
-  void AddMethod(std::unique_ptr<AidlMethod> method) {
-    members_.push_back(method.get());
-    methods_.push_back(std::move(method));
-  }
   const std::vector<const AidlMember*>& GetMembers() const { return members_; }
   void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override {
     AidlAnnotatable::TraverseChildren(traverse);
     for (const auto c : GetMembers()) {
       traverse(*c);
     }
+  }
+
+  // Modifiers
+  void AddMethod(std::unique_ptr<AidlMethod> method) {
+    members_.push_back(method.get());
+    methods_.push_back(std::move(method));
+  }
+  void AddType(std::unique_ptr<AidlDefinedType> type) {
+    type->SetEnclosingScope(this);
+    members_.push_back(type.get());
+    types_.push_back(std::move(type));
   }
 
  protected:
@@ -1202,7 +1209,7 @@ inline std::string SimpleName(const std::string& qualified_name) {
 class AidlDocument : public AidlCommentable, public AidlScope {
  public:
   AidlDocument(const AidlLocation& location, const Comments& comments,
-               std::set<std::string> imports,
+               std::vector<std::string> imports,
                std::vector<std::unique_ptr<AidlDefinedType>> defined_types, bool is_preprocessed);
   ~AidlDocument() = default;
 
@@ -1213,7 +1220,7 @@ class AidlDocument : public AidlCommentable, public AidlScope {
   AidlDocument& operator=(AidlDocument&&) = delete;
 
   std::string ResolveName(const std::string& name) const override;
-  const std::set<std::string>& Imports() const { return imports_; }
+  const std::vector<std::string>& Imports() const { return imports_; }
   const std::vector<std::unique_ptr<AidlDefinedType>>& DefinedTypes() const {
     return defined_types_;
   }
@@ -1227,7 +1234,7 @@ class AidlDocument : public AidlCommentable, public AidlScope {
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 
  private:
-  const std::set<std::string> imports_;
+  const std::vector<std::string> imports_;
   const std::vector<std::unique_ptr<AidlDefinedType>> defined_types_;
   bool is_preprocessed_;
 };

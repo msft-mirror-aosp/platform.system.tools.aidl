@@ -25,6 +25,7 @@
 #include <aidl/android/aidl/fixedsizearray/FixedSizeArrayExample.h>
 #include <aidl/android/aidl/tests/ITestService.h>
 #include <aidl/android/aidl/tests/RecursiveList.h>
+#include <aidl/android/aidl/tests/Union.h>
 
 using aidl::android::aidl::fixedsizearray::FixedSizeArrayExample;
 using BnRepeatFixedSizeArray =
@@ -39,6 +40,7 @@ using BnEmptyInterface =
 using aidl::android::aidl::tests::BackendType;
 using aidl::android::aidl::tests::ITestService;
 using aidl::android::aidl::tests::RecursiveList;
+using aidl::android::aidl::tests::Union;
 using android::OK;
 using ndk::AParcel_readData;
 using ndk::AParcel_writeData;
@@ -77,6 +79,21 @@ TEST_F(AidlTest, ReverseRecursiveList) {
     cur = cur->next.get();
   }
   EXPECT_EQ(nullptr, cur);
+}
+
+TEST_F(AidlTest, GetUnionTags) {
+  std::vector<Union> unions;
+  std::vector<Union::Tag> tags;
+  // test empty
+  auto status = getService<ITestService>()->GetUnionTags(unions, &tags);
+  ASSERT_TRUE(status.isOk());
+  EXPECT_EQ(tags, (std::vector<Union::Tag>{}));
+  // test non-empty
+  unions.push_back(Union::make<Union::n>());
+  unions.push_back(Union::make<Union::ns>());
+  status = getService<ITestService>()->GetUnionTags(unions, &tags);
+  ASSERT_TRUE(status.isOk());
+  EXPECT_EQ(tags, (std::vector<Union::Tag>{Union::n, Union::ns}));
 }
 
 TEST_F(AidlTest, FixedSizeArray) {
@@ -172,12 +189,6 @@ std::array<std::array<T, 3>, 2> Make2dArray(std::initializer_list<T> values) {
 }
 
 TEST_F(AidlTest, FixedSizeArrayOverBinder) {
-  auto test_service = getService<ITestService>();
-  BackendType backend;
-  auto status = test_service->getBackendType(&backend);
-  EXPECT_TRUE(status.isOk());
-  if (backend == BackendType::JAVA) GTEST_SKIP();
-
   auto service = getService<IRepeatFixedSizeArray>();
 
   CheckRepeat(service, &IRepeatFixedSizeArray::RepeatBytes, (std::array<uint8_t, 3>{1, 2, 3}));
