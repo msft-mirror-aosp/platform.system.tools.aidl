@@ -436,7 +436,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .parcel = parcel_variable->name,
         .var = field->GetName(),
         .min_sdk_version = options.GetMinSdkVersion(),
-        .is_return_value = false,
+        .write_to_parcel_flag = "_aidl_flag",
     };
     WriteToParcelFor(context);
     writer->Close();
@@ -603,6 +603,9 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
 }
 
 void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl) {
+  const AidlTypeSpecifier& backing_type = enum_decl.GetBackingType();
+  std::string raw_type = JavaSignatureOf(backing_type);
+  std::string boxing_type = JavaBoxingTypeOf(backing_type);
   out << GenerateComments(enum_decl);
   out << GenerateAnnotations(enum_decl);
   out << "public ";
@@ -614,9 +617,43 @@ void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl) {
   for (const auto& enumerator : enum_decl.GetEnumerators()) {
     out << GenerateComments(*enumerator);
     out << GenerateAnnotations(*enumerator);
-    out << fmt::format("public static final {} {} = {};\n",
-                       JavaSignatureOf(enum_decl.GetBackingType()), enumerator->GetName(),
-                       enumerator->ValueString(enum_decl.GetBackingType(), ConstantValueDecorator));
+    out << fmt::format("public static final {} {} = {};\n", raw_type, enumerator->GetName(),
+                       enumerator->ValueString(backing_type, ConstantValueDecorator));
+  }
+  if (enum_decl.JavaDerive("toString")) {
+    out << "interface $ {\n";
+    out.Indent();
+    out << "static String toString(" << raw_type << " _aidl_v) {\n";
+    out.Indent();
+    for (const auto& enumerator : enum_decl.GetEnumerators()) {
+      out << "if (_aidl_v == " << enumerator->GetName() << ") return \"" << enumerator->GetName()
+          << "\";\n";
+    }
+    out << "return " << boxing_type << ".toString(_aidl_v);\n";
+    out.Dedent();
+    out << "}\n";
+    out << fmt::format(R"(static String arrayToString(Object _aidl_v) {{
+  if (_aidl_v == null) return "null";
+  Class<?> _aidl_cls = _aidl_v.getClass();
+  if (!_aidl_cls.isArray()) throw new IllegalArgumentException("not an array: " + _aidl_v);
+  Class<?> comp = _aidl_cls.getComponentType();
+  java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(", ", "[", "]");
+  if (comp.isArray()) {{
+    for (int _aidl_i = 0; _aidl_i < java.lang.reflect.Array.getLength(_aidl_v); _aidl_i++) {{
+      _aidl_sj.add(arrayToString(java.lang.reflect.Array.get(_aidl_v, _aidl_i)));
+    }}
+  }} else {{
+    if (_aidl_cls != {raw_type}[].class) throw new IllegalArgumentException("wrong type: " + _aidl_cls);
+    for ({raw_type} e : ({raw_type}[]) _aidl_v) {{
+      _aidl_sj.add(toString(e));
+    }}
+  }}
+  return _aidl_sj.toString();
+}}
+)",
+                       fmt::arg("raw_type", raw_type));
+    out.Dedent();
+    out << "}\n";
   }
   out.Dedent();
   out << "}\n";
@@ -760,7 +797,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
         .parcel = parcel,
         .var = name,
         .min_sdk_version = options.GetMinSdkVersion(),
-        .is_return_value = false,
+        .write_to_parcel_flag = "_aidl_flag",
     };
     WriteToParcelFor(context);
     writer->Close();
@@ -942,6 +979,11 @@ struct JavaAnnotationsVisitor : AidlVisitor {
   void Visit(const AidlStructuredParcelable& t) override { ForDefinedType(t); }
   void Visit(const AidlUnionDecl& t) override { ForDefinedType(t); }
   void Visit(const AidlEnumDeclaration& t) override { ForDefinedType(t); }
+  void Visit(const AidlEnumerator& e) override {
+    if (e.IsDeprecated()) {
+      result.push_back("@Deprecated");
+    }
+  }
   void Visit(const AidlMethod& m) override { ForMember(m); }
   void Visit(const AidlConstantDeclaration& c) override { ForMember(c); }
   void Visit(const AidlVariableDeclaration& v) override { ForMember(v); }
