@@ -143,7 +143,6 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "JavaOnlyStableParcelable",
        CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
        {}},
-      {AidlAnnotation::Type::HIDE, "Hide", CONTEXT_TYPE | CONTEXT_MEMBER, {}},
       {AidlAnnotation::Type::BACKING,
        "Backing",
        CONTEXT_TYPE_ENUM,
@@ -155,7 +154,7 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        /* repeatable= */ true},
       {AidlAnnotation::Type::JAVA_DERIVE,
        "JavaDerive",
-       CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION,
+       CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION | CONTEXT_TYPE_ENUM,
        {{"toString", kBooleanType}, {"equals", kBooleanType}}},
       {AidlAnnotation::Type::JAVA_DEFAULT, "JavaDefault", CONTEXT_TYPE_INTERFACE, {}},
       {AidlAnnotation::Type::JAVA_DELEGATOR, "JavaDelegator", CONTEXT_TYPE_INTERFACE, {}},
@@ -516,10 +515,6 @@ bool AidlAnnotatable::IsPropagateAllowBlocking() const {
 bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
   return lang == Options::Language::JAVA &&
          GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_STABLE_PARCELABLE);
-}
-
-bool AidlAnnotatable::IsHide() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::HIDE);
 }
 
 bool AidlAnnotatable::JavaDerive(const std::string& method) const {
