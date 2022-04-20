@@ -1794,8 +1794,8 @@ func TestFreezeApiDeps(t *testing.T) {
 
 			ctx, _ := testAidl(t, ``, customizers...)
 			shouldHaveDep := transitive && testcase.bool
-			fooFreezeApiRule := ctx.ModuleForTests("foo-api", "").Output("updateapi_3.timestamp")
-			commonFreezeApiOutput := ctx.ModuleForTests("common-api", "").Output("updateapi_3.timestamp").Output.String()
+			fooFreezeApiRule := ctx.ModuleForTests("foo-api", "").Output("update_or_freeze_api_3.timestamp")
+			commonFreezeApiOutput := ctx.ModuleForTests("common-api", "").Output("update_or_freeze_api_3.timestamp").Output.String()
 			testMethod := android.AssertStringListDoesNotContain
 			if shouldHaveDep {
 				testMethod = android.AssertStringListContains
