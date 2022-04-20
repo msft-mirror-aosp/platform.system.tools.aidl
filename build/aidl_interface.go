@@ -807,6 +807,10 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		}
 	}
 
+	if !unstable && mctx.Namespace().Path != "." && i.Owner() == "" {
+		mctx.PropertyErrorf("owner", "aidl_interface in a soong_namespace must have the 'owner' property set.")
+	}
+
 	sdkIsFinal := !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview()
 	requireFrozenNoOwner := i.Owner() == "" && (sdkIsFinal || mctx.Config().IsEnvTrue("AIDL_FROZEN_REL"))
 	requireFrozenWithOwner := i.Owner() != "" && android.InList(i.Owner(), strings.Fields(mctx.Config().Getenv("AIDL_FROZEN_OWNERS")))
