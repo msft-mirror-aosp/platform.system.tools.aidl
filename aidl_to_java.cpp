@@ -135,14 +135,14 @@ const string& JavaNameOf(const AidlTypeSpecifier& aidl, bool instantiable = fals
 }
 
 namespace {
-string JavaSignatureOfInternal(
-    const AidlTypeSpecifier& aidl, bool instantiable, bool omit_array,
-    bool boxing = false /* boxing can be true only if it is a type parameter */) {
+string JavaSignatureOfInternal(const AidlTypeSpecifier& aidl, bool instantiable, bool omit_array,
+                               bool boxing) {
   string ret = JavaNameOf(aidl, instantiable, boxing && !aidl.IsArray());
   if (aidl.IsGeneric()) {
     vector<string> arg_names;
     for (const auto& ta : aidl.GetTypeParameters()) {
-      arg_names.emplace_back(JavaSignatureOfInternal(*ta, false, false, true /* boxing */));
+      arg_names.emplace_back(JavaSignatureOfInternal(*ta, /*instantiable=*/false,
+                                                     /*omit_array=*/false, /*boxing=*/true));
     }
     ret += "<" + Join(arg_names, ",") + ">";
   }
@@ -185,11 +185,20 @@ string AidlBackingTypeName(const AidlTypeSpecifier& type) {
 }  // namespace
 
 string JavaSignatureOf(const AidlTypeSpecifier& aidl) {
-  return JavaSignatureOfInternal(aidl, false, false);
+  return JavaSignatureOfInternal(aidl, /*instantiable=*/false, /*omit_array=*/false,
+                                 /*boxing=*/false);
 }
 
+// Used for "new" expression. Ignore arrays because "new" expression handles it.
 string InstantiableJavaSignatureOf(const AidlTypeSpecifier& aidl) {
-  return JavaSignatureOfInternal(aidl, true, true);
+  return JavaSignatureOfInternal(aidl, /*instantiable=*/true, /*omit_array=*/true,
+                                 /*boxing=*/false);
+}
+
+string JavaBoxingTypeOf(const AidlTypeSpecifier& aidl) {
+  AIDL_FATAL_IF(!AidlTypenames::IsPrimitiveTypename(aidl.GetName()), aidl);
+  return JavaSignatureOfInternal(aidl, /*instantiable=*/false, /*omit_array=*/false,
+                                 /*boxing=*/true);
 }
 
 string DefaultJavaValueOf(const AidlTypeSpecifier& aidl) {
@@ -206,14 +215,6 @@ string DefaultJavaValueOf(const AidlTypeSpecifier& aidl) {
     return m[name];
   } else {
     return "null";
-  }
-}
-
-static string GetFlagFor(const CodeGeneratorContext& c) {
-  if (c.is_return_value) {
-    return "android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE";
-  } else {
-    return "0";
   }
 }
 
@@ -408,9 +409,8 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
                c.parcel,
                "v",
                c.min_sdk_version,
-               c.is_return_value,
+               c.write_to_parcel_flag,
                c.is_classloader_created,
-               c.filename,
            };
            WriteToParcelFor(value_context);
            c.writer.Dedent();
@@ -441,15 +441,17 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
       {"ParcelFileDescriptor",
        [](const CodeGeneratorContext& c) {
          if (c.min_sdk_version >= 23u) {
-           c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << GetFlagFor(c) << ");\n";
+           c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << c.write_to_parcel_flag
+                    << ");\n";
          } else {
            c.writer << "_Parcel.writeTypedObject(" << c.parcel << ", " << c.var << ", "
-                    << GetFlagFor(c) << ");\n";
+                    << c.write_to_parcel_flag << ");\n";
          }
        }},
       {"ParcelFileDescriptor[]",
        [](const CodeGeneratorContext& c) {
-         c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << GetFlagFor(c) << ");\n";
+         c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << c.write_to_parcel_flag
+                  << ");\n";
        }},
       {"CharSequence",
        [](const CodeGeneratorContext& c) {
@@ -459,7 +461,7 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
          c.writer.Indent();
          c.writer << c.parcel << ".writeInt(1);\n";
          c.writer << "android.text.TextUtils.writeToParcel(" << c.var << ", " << c.parcel << ", "
-                  << GetFlagFor(c) << ");\n";
+                  << c.write_to_parcel_flag << ");\n";
          c.writer.Dedent();
          c.writer << "}\n";
          c.writer << "else {\n";
@@ -478,7 +480,7 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
   if (found != method_map.end()) {
     found->second(c);
   } else if (c.type.IsFixedSizeArray()) {
-    std::vector<std::string> args = {c.var, GetFlagFor(c)};
+    std::vector<std::string> args = {c.var, c.write_to_parcel_flag};
     for (auto dim : c.type.GetFixedSizeArrayDimensions()) {
       args.push_back(std::to_string(dim));
     }
@@ -494,13 +496,15 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
       }
     } else if (t->AsParcelable() != nullptr) {
       if (c.type.IsArray()) {
-        c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << GetFlagFor(c) << ");\n";
+        c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << c.write_to_parcel_flag
+                 << ");\n";
       } else {
         if (c.min_sdk_version >= 23u) {
-          c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << GetFlagFor(c) << ");\n";
+          c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << c.write_to_parcel_flag
+                   << ");\n";
         } else {
           c.writer << "_Parcel.writeTypedObject(" << c.parcel << ", " << c.var << ", "
-                   << GetFlagFor(c) << ");\n";
+                   << c.write_to_parcel_flag << ");\n";
         }
       }
     }
@@ -634,9 +638,8 @@ bool CreateFromParcelFor(const CodeGeneratorContext& c) {
                c.parcel,
                "v",
                c.min_sdk_version,
-               c.is_return_value,
+               c.write_to_parcel_flag,
                c.is_classloader_created,
-               c.filename,
            };
            CreateFromParcelFor(value_context);
            c.writer << c.var << ".put(k, v);\n";
@@ -822,9 +825,8 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
                c.parcel,
                "v",
                c.min_sdk_version,
-               c.is_return_value,
+               c.write_to_parcel_flag,
                c.is_classloader_created,
-               c.filename,
            };
            CreateFromParcelFor(value_context);
            c.writer << c.var << ".put(k, v);\n";
@@ -848,7 +850,9 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
        [](const CodeGeneratorContext& c) {
          c.writer << "if ((0!=" << c.parcel << ".readInt())) {\n";
          c.writer.Indent();
-         c.writer << c.var << " = " << "android.os.ParcelFileDescriptor.CREATOR.createFromParcel(" << c.parcel << ");\n";
+         c.writer << c.var << " = "
+                  << "android.os.ParcelFileDescriptor.CREATOR.createFromParcel(" << c.parcel
+                  << ");\n";
          c.writer.Dedent();
          c.writer << "}\n";
        }},
@@ -893,6 +897,17 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
 }
 
 void ToStringFor(const CodeGeneratorContext& c) {
+  // Use derived toString() for enum type annotated with @JavaDerive(toString=true)
+  if (auto t = c.type.GetDefinedType();
+      t != nullptr && t->AsEnumDeclaration() && t->JavaDerive("toString")) {
+    if (c.type.IsArray()) {
+      c.writer << c.type.GetName() << ".$.arrayToString(" << c.var << ")";
+    } else {
+      c.writer << c.type.GetName() << ".$.toString(" << c.var << ")";
+    }
+    return;
+  }
+
   if (c.type.IsArray()) {
     if (c.type.IsDynamicArray() || c.type.GetFixedSizeArrayDimensions().size() == 1) {
       c.writer << "java.util.Arrays.toString(" << c.var << ")";
