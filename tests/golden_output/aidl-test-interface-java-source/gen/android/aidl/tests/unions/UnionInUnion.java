@@ -75,7 +75,7 @@ public final class UnionInUnion implements android.os.Parcelable {
     _aidl_parcel.writeInt(_tag);
     switch (_tag) {
     case first:
-      _aidl_parcel.writeTypedObject(getFirst(), 0);
+      _aidl_parcel.writeTypedObject(getFirst(), _aidl_flag);
       break;
     case second:
       _aidl_parcel.writeInt(getSecond());
@@ -160,5 +160,9 @@ public final class UnionInUnion implements android.os.Parcelable {
   private void _set(int _tag, Object _value) {
     this._tag = _tag;
     this._value = _value;
+  }
+  public static @interface Tag {
+    public static final int first = 0;
+    public static final int second = 1;
   }
 }
