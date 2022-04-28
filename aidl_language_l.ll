@@ -22,6 +22,14 @@
 #include "parser.h"
 #include "aidl_language_y.h"
 
+#ifndef YYSTYPE
+#define YYSTYPE yy::parser::semantic_type
+#endif
+
+#ifndef YYLTYPE
+#define YYLTYPE yy::parser::location_type
+#endif
+
 #define YY_USER_ACTION yylloc->columns(yyleng);
 %}
 
@@ -142,7 +150,7 @@ union                 { yylval->token = new AidlToken("union", comments);
 {identifier}          { yylval->token = new AidlToken(yytext, comments);
                         return yy::parser::token::IDENTIFIER;
                       }
-'.'                   { yylval->token = new AidlToken(yytext, comments);
+'.'                   { yylval->token = new AidlToken(std::string(yytext, yyleng), comments);
                         return yy::parser::token::CHARVALUE; }
 {intvalue}            { yylval->token = new AidlToken(yytext, comments);
                         return yy::parser::token::INTVALUE; }

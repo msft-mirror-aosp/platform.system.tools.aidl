@@ -322,16 +322,6 @@ TEST_P(AidlTest, RejectsDuplicatedFieldNames) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_P(AidlTest, RejectsRepeatedAnnotations) {
-  const string method = R"(@Hide @Hide parcelable Foo {})";
-  const string expected_stderr =
-      "ERROR: Foo.aidl:1.23-27: 'Hide' is repeated, but not allowed. Previous location: "
-      "Foo.aidl:1.1-6\n";
-  CaptureStderr();
-  EXPECT_EQ(nullptr, Parse("Foo.aidl", method, typenames_, GetLanguage()));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
-}
-
 TEST_P(AidlTest, AcceptsEmptyParcelable) {
   CaptureStderr();
   EXPECT_NE(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage()));
@@ -630,14 +620,6 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
     EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
     EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
   }
-
-  {
-    io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDerive enum IFoo { A=1, }");
-    Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
-    CaptureStderr();
-    EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
-    EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
-  }
 }
 
 TEST_P(AidlTest, ParseDescriptorAnnotation) {
@@ -681,7 +663,8 @@ TEST_P(AidlTest, AcceptsAnnotatedOnewayMethod) {
 
 TEST_P(AidlTest, AnnotationsInMultiplePlaces) {
   const string oneway_method =
-      "package a; interface IFoo { @UnsupportedAppUsage oneway @Hide void f(int a); }";
+      "package a; interface IFoo { @UnsupportedAppUsage oneway @PropagateAllowBlocking void f(int "
+      "a); }";
   const AidlDefinedType* defined = Parse("a/IFoo.aidl", oneway_method, typenames_, GetLanguage());
   ASSERT_NE(nullptr, defined);
   const AidlInterface* iface = defined->AsInterface();
@@ -694,7 +677,7 @@ TEST_P(AidlTest, AnnotationsInMultiplePlaces) {
 
   // TODO(b/151102494): these annotations should be on the method
   ASSERT_NE(nullptr, ret_type.UnsupportedAppUsage());
-  ASSERT_TRUE(ret_type.IsHide());
+  ASSERT_TRUE(ret_type.IsPropagateAllowBlocking());
 }
 
 TEST_P(AidlTest, AnnotationValueAttribute) {
@@ -1155,6 +1138,19 @@ TEST_P(AidlTest, SupportDeprecated) {
                       {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
                       {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
                   });
+
+  CheckDeprecated("Foo.aidl",
+                  "enum Foo {\n"
+                  " /** @deprecated */\n"
+                  " FOO,\n"
+                  " BAR,\n"
+                  "}",
+                  {
+                      {Options::Language::JAVA, {"out/Foo.java", "@Deprecated"}},
+                      {Options::Language::CPP, {"out/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::NDK, {"out/aidl/Foo.h", "__attribute__((deprecated"}},
+                      {Options::Language::RUST, {"out/Foo.rs", "#[deprecated"}},
+                  });
 }
 
 TEST_P(AidlTest, RequireOuterClass) {
@@ -1286,6 +1282,18 @@ TEST_P(AidlTest, InvalidConstString) {
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
+TEST_F(AidlTest, InvalidCharLiteral) {
+  auto filename = "Foo.aidl";
+  char code[] = "parcelable Foo { char a = '\0'; char b = '\t'; }";
+  io_delegate_.SetFileContents(filename,
+                               string{code, sizeof(code) - 1});  // -1 to drop nil at the end
+  CaptureStderr();
+  EXPECT_TRUE(Parser::Parse(filename, io_delegate_, typenames_, /*is_preprocessed=*/false));
+  auto err = GetCapturedStderr();
+  EXPECT_THAT(err, HasSubstr("Invalid character literal \\0"));
+  EXPECT_THAT(err, HasSubstr("Invalid character literal \\t"));
+}
+
 TEST_P(AidlTest, RejectUnstructuredParcelablesInNDKandRust) {
   io_delegate_.SetFileContents("o/Foo.aidl", "package o; parcelable Foo cpp_header \"cpp/Foo.h\";");
   const auto options =
@@ -1384,9 +1392,12 @@ TEST_P(AidlTest, FailOnManyDefinedTypes) {
 TEST_P(AidlTest, FailOnNoDefinedTypes) {
   AidlError error;
   const string expected_stderr = "ERROR: p/IFoo.aidl:1.11-11: syntax error, unexpected $end\n";
+  const string expected_stderr_newbison =
+      "ERROR: p/IFoo.aidl:1.11-11: syntax error, unexpected end of file\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl", R"(package p;)", typenames_, GetLanguage(), &error));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(),
+              testing::AnyOf(testing::Eq(expected_stderr), testing::Eq(expected_stderr_newbison)));
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
 }
 
@@ -2597,9 +2608,12 @@ TEST_F(AidlTest, FailOnMultipleTypesInSingleFile) {
 TEST_P(AidlTest, FailParseOnEmptyFile) {
   const string contents = "";
   const string expected_stderr = "ERROR: a/IFoo.aidl:1.1-1: syntax error, unexpected $end\n";
+  const string expected_stderr_newbison =
+      "ERROR: a/IFoo.aidl:1.1-1: syntax error, unexpected end of file\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", contents, typenames_, GetLanguage()));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(),
+              testing::AnyOf(testing::Eq(expected_stderr), testing::Eq(expected_stderr_newbison)));
 }
 
 TEST_F(AidlTest, MultipleInputFiles) {
@@ -5038,7 +5052,7 @@ interface IFoo {}
 TEST_P(AidlTest, WarningInterfaceName) {
   io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
   auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
-                               " -Weverything -o out -h out p/Foo.aidl");
+                               " -Winterface-name -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("WARNING: p/Foo.aidl:1.1-10: Interface names should start with I. [-Winterface-name]\n",
@@ -5048,7 +5062,7 @@ TEST_P(AidlTest, WarningInterfaceName) {
 TEST_P(AidlTest, ErrorInterfaceName) {
   io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
   auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
-                               " -Weverything -Werror -o out -h out p/Foo.aidl");
+                               " -Winterface-name -Werror -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("ERROR: p/Foo.aidl:1.1-10: Interface names should start with I. [-Winterface-name]\n",
@@ -5105,17 +5119,6 @@ TEST_F(AidlTest, FormatCommentsForJava) {
   }
 }
 
-TEST_F(AidlTest, HideIsNotForArgs) {
-  io_delegate_.SetFileContents("IFoo.aidl",
-                               "interface IFoo {\n"
-                               "  void foo(in @Hide int x);\n"
-                               "}");
-  auto options = Options::From("aidl --lang=java IFoo.aidl");
-  CaptureStderr();
-  EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("@Hide is not available"));
-}
-
 TEST_F(AidlTest, SuppressWarningsIsNotForArgs) {
   io_delegate_.SetFileContents(
       "IFoo.aidl",
@@ -5148,24 +5151,6 @@ TEST_F(AidlTest, InterfaceVectorIsAvailableAfterTiramisu) {
   auto captured_stderr = GetCapturedStderr();
   EXPECT_THAT(captured_stderr, HasSubstr("Array of interfaces is available since"));
   EXPECT_THAT(captured_stderr, HasSubstr("List of interfaces is available since"));
-
-  CaptureStderr();
-  EXPECT_TRUE(
-      compile_aidl(Options::From("aidl --lang=java --min_sdk_version Tiramisu -o out p/IFoo.aidl"),
-                   io_delegate_));
-  EXPECT_EQ(GetCapturedStderr(), "");
-}
-
-TEST_F(AidlTest, PropagateBeforeTiramisu) {
-  io_delegate_.SetFileContents("p/IFoo.aidl",
-                               "interface IFoo{\n"
-                               "  @PropagateAllowBlocking IBinder foo();\n"
-                               "}");
-  CaptureStderr();
-  EXPECT_FALSE(compile_aidl(
-      Options::From("aidl --lang=java --min_sdk_version 30 -o out p/IFoo.aidl"), io_delegate_));
-  auto captured_stderr = GetCapturedStderr();
-  EXPECT_THAT(captured_stderr, HasSubstr("@PropagateAllowBlocking requires"));
 
   CaptureStderr();
   EXPECT_TRUE(
