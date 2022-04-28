@@ -822,6 +822,15 @@ fn test_reverse_recursive_list() {
 }
 
 #[test]
+fn test_get_union_tags() {
+    let service = get_test_service();
+    let result = service.GetUnionTags(&[]);
+    assert_eq!(result, Ok(vec![]));
+    let result = service.GetUnionTags(&[Union::Union::N(0), Union::Union::Ns(vec![])]);
+    assert_eq!(result, Ok(vec![Union::Tag::Tag::n, Union::Tag::Tag::ns]));
+}
+
+#[test]
 fn test_unions() {
     assert_eq!(Union::Union::default(), Union::Union::Ns(vec![]));
     assert_eq!(EnumUnion::default(), EnumUnion::IntEnum(IntEnum::FOO));
@@ -887,7 +896,7 @@ fn test_versioned_unknown_union_field_triggers_error() {
             .expect("did not get binder service");
 
     let ret = service.acceptUnionAndReturnString(&BazUnion::LongNum(42));
-    assert!(!ret.is_ok());
+    assert!(ret.is_err());
 
     let main_service = get_test_service();
     let backend = main_service.getBackendType().expect("error getting backend type");
