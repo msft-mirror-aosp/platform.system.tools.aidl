@@ -2,12 +2,16 @@
 
 #include <android/aidl/tests/ArrayOfInterfaces.h>
 #include <android/binder_to_string.h>
+#include <array>
+#include <binder/Enums.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/Parcel.h>
 #include <binder/Status.h>
 #include <cassert>
+#include <cstdint>
 #include <optional>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -136,17 +140,22 @@ public:
   };  // class MyParcelable
   class MyUnion : public ::android::Parcelable {
   public:
-    enum Tag : int32_t {
-      iface = 0,  // android.aidl.tests.ArrayOfInterfaces.IEmptyInterface iface;
-      nullable_iface,  // android.aidl.tests.ArrayOfInterfaces.IEmptyInterface nullable_iface;
-      iface_array,  // android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] iface_array;
-      nullable_iface_array,  // android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] nullable_iface_array;
+    enum class Tag : int32_t {
+      iface = 0,
+      nullable_iface = 1,
+      iface_array = 2,
+      nullable_iface_array = 3,
     };
+    // Expose tag symbols for legacy code
+    static const inline Tag iface = Tag::iface;
+    static const inline Tag nullable_iface = Tag::nullable_iface;
+    static const inline Tag iface_array = Tag::iface_array;
+    static const inline Tag nullable_iface_array = Tag::nullable_iface_array;
 
     template<typename _Tp>
     static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, MyUnion>;
 
-    MyUnion() : _value(std::in_place_index<iface>, ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>()) { }
+    MyUnion() : _value(std::in_place_index<static_cast<size_t>(iface)>, ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>()) { }
 
     template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
     // NOLINTNEXTLINE(google-explicit-constructor)
@@ -159,12 +168,12 @@ public:
 
     template <Tag _tag, typename... _Tp>
     static MyUnion make(_Tp&&... _args) {
-      return MyUnion(std::in_place_index<_tag>, std::forward<_Tp>(_args)...);
+      return MyUnion(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
     }
 
     template <Tag _tag, typename _Tp, typename... _Up>
     static MyUnion make(std::initializer_list<_Tp> _il, _Up&&... _args) {
-      return MyUnion(std::in_place_index<_tag>, std::move(_il), std::forward<_Up>(_args)...);
+      return MyUnion(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
     }
 
     Tag getTag() const {
@@ -174,18 +183,18 @@ public:
     template <Tag _tag>
     const auto& get() const {
       if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return std::get<_tag>(_value);
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
 
     template <Tag _tag>
     auto& get() {
       if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return std::get<_tag>(_value);
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
 
     template <Tag _tag, typename... _Tp>
     void set(_Tp&&... _args) {
-      _value.emplace<_tag>(std::forward<_Tp>(_args)...);
+      _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
     }
 
     inline bool operator!=(const MyUnion& rhs) const {
@@ -262,4 +271,38 @@ public:
 };  // class ArrayOfInterfaces
 }  // namespace tests
 }  // namespace aidl
+}  // namespace android
+namespace android {
+namespace aidl {
+namespace tests {
+[[nodiscard]] static inline std::string toString(ArrayOfInterfaces::MyUnion::Tag val) {
+  switch(val) {
+  case ArrayOfInterfaces::MyUnion::Tag::iface:
+    return "iface";
+  case ArrayOfInterfaces::MyUnion::Tag::nullable_iface:
+    return "nullable_iface";
+  case ArrayOfInterfaces::MyUnion::Tag::iface_array:
+    return "iface_array";
+  case ArrayOfInterfaces::MyUnion::Tag::nullable_iface_array:
+    return "nullable_iface_array";
+  default:
+    return std::to_string(static_cast<int32_t>(val));
+  }
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+namespace android {
+namespace internal {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template <>
+constexpr inline std::array<::android::aidl::tests::ArrayOfInterfaces::MyUnion::Tag, 4> enum_values<::android::aidl::tests::ArrayOfInterfaces::MyUnion::Tag> = {
+  ::android::aidl::tests::ArrayOfInterfaces::MyUnion::Tag::iface,
+  ::android::aidl::tests::ArrayOfInterfaces::MyUnion::Tag::nullable_iface,
+  ::android::aidl::tests::ArrayOfInterfaces::MyUnion::Tag::iface_array,
+  ::android::aidl::tests::ArrayOfInterfaces::MyUnion::Tag::nullable_iface_array,
+};
+#pragma clang diagnostic pop
+}  // namespace internal
 }  // namespace android
