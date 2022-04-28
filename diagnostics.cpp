@@ -55,6 +55,9 @@ class DiagnosticsContext {
   DiagnosticsContext(DiagnosticMapping mapping) : mapping_({std::move(mapping)}) {}
   AidlErrorLog Report(const AidlLocation& loc, DiagnosticID id,
                       DiagnosticSeverity force_severity = DiagnosticSeverity::DISABLED) {
+    if (loc.IsInternal()) {
+      return AidlErrorLog(AidlErrorLog::NO_OP, loc);
+    }
     const std::string suffix = " [-W" + to_string(id) + "]";
     auto severity = std::max(force_severity, mapping_.top().Severity(id));
     switch (severity) {
@@ -296,6 +299,44 @@ struct DiagnoseUntypedCollection : DiagnosticsVisitor {
   }
 };
 
+struct DiagnosePermissionAnnotations : DiagnosticsVisitor {
+  DiagnosePermissionAnnotations(DiagnosticsContext& diag) : DiagnosticsVisitor(diag) {}
+  void Visit(const AidlInterface& intf) override {
+    const std::string diag_message =
+        " is not annotated for permissions. Declare which permissions are "
+        "required using @EnforcePermission. If permissions are manually "
+        "verified within the implementation, use @PermissionManuallyEnforced. "
+        "If no permissions are required, use @RequiresNoPermission.";
+    if (intf.EnforceExpression() || intf.IsPermissionManual() || intf.IsPermissionNone()) {
+      return;
+    }
+    const auto& methods = intf.GetMethods();
+    std::vector<size_t> methods_without_annotations;
+    size_t num_user_defined_methods = 0;
+    for (size_t i = 0; i < methods.size(); ++i) {
+      auto& m = methods[i];
+      if (!m->IsUserDefined()) continue;
+      num_user_defined_methods++;
+      if (m->GetType().EnforceExpression() || m->GetType().IsPermissionManual() ||
+          m->GetType().IsPermissionNone()) {
+        continue;
+      }
+      methods_without_annotations.push_back(i);
+    }
+    if (methods_without_annotations.size() == num_user_defined_methods) {
+      diag.Report(intf.GetLocation(), DiagnosticID::missing_permission_annotation)
+          << intf.GetName() << diag_message
+          << " This can be done for the whole interface or for each method.";
+    } else {
+      for (size_t i : methods_without_annotations) {
+        auto& m = methods[i];
+        diag.Report(m->GetLocation(), DiagnosticID::missing_permission_annotation)
+            << m->GetName() << diag_message;
+      }
+    }
+  }
+};
+
 bool Diagnose(const AidlDocument& doc, const DiagnosticMapping& mapping) {
   DiagnosticsContext diag(mapping);
 
@@ -309,6 +350,7 @@ bool Diagnose(const AidlDocument& doc, const DiagnosticMapping& mapping) {
   DiagnoseOutNullable{diag}.Check(doc);
   DiagnoseImports{diag}.Check(doc);
   DiagnoseUntypedCollection{diag}.Check(doc);
+  DiagnosePermissionAnnotations{diag}.Check(doc);
 
   return diag.ErrorCount() == 0;
 }
