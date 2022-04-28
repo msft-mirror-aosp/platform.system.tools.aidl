@@ -78,7 +78,7 @@ public class FixedSize implements android.os.Parcelable
       _aidl_parcel.writeFloat(floatValue);
       _aidl_parcel.writeDouble(doubleValue);
       _aidl_parcel.writeLong(enumValue);
-      _aidl_parcel.writeTypedObject(parcelableValue, 0);
+      _aidl_parcel.writeTypedObject(parcelableValue, _aidl_flag);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
       _aidl_parcel.setDataPosition(_aidl_start_pos);
       _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
@@ -403,6 +403,16 @@ public class FixedSize implements android.os.Parcelable
     private void _set(int _tag, Object _value) {
       this._tag = _tag;
       this._value = _value;
+    }
+    public static @interface Tag {
+      public static final byte booleanValue = 0;
+      public static final byte byteValue = 1;
+      public static final byte charValue = 2;
+      public static final byte intValue = 3;
+      public static final byte longValue = 4;
+      public static final byte floatValue = 5;
+      public static final byte doubleValue = 6;
+      public static final byte enumValue = 7;
     }
   }
 }
