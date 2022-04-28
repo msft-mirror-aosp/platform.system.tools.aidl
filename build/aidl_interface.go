@@ -380,6 +380,11 @@ type aidlInterfaceProperties struct {
 		Ndk struct {
 			CommonNativeBackendProperties
 
+			// Set to the version of the sdk to compile against, for the NDK
+			// variant.
+			// Default: current
+			Sdk_version *string
+
 			// If set to false, the ndk backend is exclusive to platform and is not
 			// available to applications. Default is true (i.e. available to both
 			// applications and platform).
@@ -635,6 +640,12 @@ func (i *aidlInterface) checkVersions(mctx android.LoadHookContext) {
 		i.properties.VersionsInternal = make([]string, len(i.properties.Versions_with_info))
 		for idx, value := range i.properties.Versions_with_info {
 			i.properties.VersionsInternal[idx] = value.Version
+			for _, im := range value.Imports {
+				if !hasVersionSuffix(im) {
+					mctx.ModuleErrorf("imports in versions_with_info must specify its version, but %s. Add a version suffix(such as %s-V1).", im, im)
+					return
+				}
+			}
 		}
 	}
 
