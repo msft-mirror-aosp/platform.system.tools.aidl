@@ -112,7 +112,7 @@ public class StructuredParcelable implements android.os.Parcelable
     _aidl_parcel.writeLong(int64_max);
     _aidl_parcel.writeInt(hexInt32_neg_1);
     _aidl_parcel.writeStrongBinder(ibinder);
-    _aidl_parcel.writeTypedObject(empty, 0);
+    _aidl_parcel.writeTypedObject(empty, _aidl_flag);
     _aidl_parcel.writeByteArray(int8_1);
     _aidl_parcel.writeIntArray(int32_1);
     _aidl_parcel.writeLongArray(int64_1);
@@ -131,8 +131,8 @@ public class StructuredParcelable implements android.os.Parcelable
     _aidl_parcel.writeString(addString1);
     _aidl_parcel.writeString(addString2);
     _aidl_parcel.writeInt(shouldSetBit0AndBit2);
-    _aidl_parcel.writeTypedObject(u, 0);
-    _aidl_parcel.writeTypedObject(shouldBeConstS1, 0);
+    _aidl_parcel.writeTypedObject(u, _aidl_flag);
+    _aidl_parcel.writeTypedObject(shouldBeConstS1, _aidl_flag);
     _aidl_parcel.writeInt(defaultWithFoo);
     int _aidl_end_pos = _aidl_parcel.dataPosition();
     _aidl_parcel.setDataPosition(_aidl_start_pos);
@@ -272,10 +272,10 @@ public class StructuredParcelable implements android.os.Parcelable
     _aidl_sj.add("f: " + (f));
     _aidl_sj.add("shouldBeJerry: " + (java.util.Objects.toString(shouldBeJerry)));
     _aidl_sj.add("shouldBeByteBar: " + (shouldBeByteBar));
-    _aidl_sj.add("shouldBeIntBar: " + (shouldBeIntBar));
+    _aidl_sj.add("shouldBeIntBar: " + (android.aidl.tests.IntEnum.$.toString(shouldBeIntBar)));
     _aidl_sj.add("shouldBeLongBar: " + (shouldBeLongBar));
     _aidl_sj.add("shouldContainTwoByteFoos: " + (java.util.Arrays.toString(shouldContainTwoByteFoos)));
-    _aidl_sj.add("shouldContainTwoIntFoos: " + (java.util.Arrays.toString(shouldContainTwoIntFoos)));
+    _aidl_sj.add("shouldContainTwoIntFoos: " + (android.aidl.tests.IntEnum.$.arrayToString(shouldContainTwoIntFoos)));
     _aidl_sj.add("shouldContainTwoLongFoos: " + (java.util.Arrays.toString(shouldContainTwoLongFoos)));
     _aidl_sj.add("stringDefaultsToFoo: " + (java.util.Objects.toString(stringDefaultsToFoo)));
     _aidl_sj.add("byteDefaultsToFour: " + (byteDefaultsToFour));
@@ -322,7 +322,7 @@ public class StructuredParcelable implements android.os.Parcelable
     _aidl_sj.add("shouldSetBit0AndBit2: " + (shouldSetBit0AndBit2));
     _aidl_sj.add("u: " + (java.util.Objects.toString(u)));
     _aidl_sj.add("shouldBeConstS1: " + (java.util.Objects.toString(shouldBeConstS1)));
-    _aidl_sj.add("defaultWithFoo: " + (defaultWithFoo));
+    _aidl_sj.add("defaultWithFoo: " + (android.aidl.tests.IntEnum.$.toString(defaultWithFoo)));
     return "android.aidl.tests.StructuredParcelable" + _aidl_sj.toString()  ;
   }
   @Override
