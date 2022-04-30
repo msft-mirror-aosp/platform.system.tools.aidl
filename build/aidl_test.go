@@ -174,7 +174,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		rust.PrepareForTestWithRustBuildComponents,
 		android.FixtureRegisterWithContext(func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
-			ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
+			ctx.RegisterSingletonModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
 			ctx.RegisterModuleType("rust_defaults", func() android.Module {
 				return rust.DefaultsFactory()
 			})
