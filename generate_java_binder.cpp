@@ -605,7 +605,7 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
   }
 
   // EOF check
-  if (!method.GetArguments().empty() && options.GetMinSdkVersion() >= 32u) {
+  if (!method.GetArguments().empty() && options.GetMinSdkVersion() > 32u) {
     statements->Add(std::make_shared<MethodCall>(transact_data, "enforceNoDataAvail"));
   }
 
