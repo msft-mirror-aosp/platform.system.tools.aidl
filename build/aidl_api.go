@@ -256,7 +256,11 @@ func (m *aidlApi) migrateAndAppendVersion(ctx android.ModuleContext, rb *android
 				if hasVersionSuffix(im) {
 					imports = append(imports, im)
 				} else {
-					imports = append(imports, im+"-V"+importIfaces[im].latestVersion())
+					versionSuffix := importIfaces[im].latestVersion()
+					if !importIfaces[im].hasVersion() {
+						versionSuffix = importIfaces[im].nextVersion()
+					}
+					imports = append(imports, im+"-V"+versionSuffix)
 				}
 			}
 			importsStr := strings.Join(wrap(`"`, imports, `"`), ", ")
