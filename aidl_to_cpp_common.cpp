@@ -219,11 +219,24 @@ void GenerateEnumClassDecl(CodeWriter& out, const AidlEnumDeclaration& enum_decl
   out << " " << enum_decl.GetName() << " : " << backing_type << " {\n";
   out.Indent();
   for (const auto& enumerator : enum_decl.GetEnumerators()) {
-    out << enumerator->GetName() << " = "
-        << enumerator->ValueString(enum_decl.GetBackingType(), decorator) << ",\n";
+    out << enumerator->GetName();
+    GenerateDeprecated(out, *enumerator);
+    out << " = " << enumerator->ValueString(enum_decl.GetBackingType(), decorator) << ",\n";
   }
   out.Dedent();
   out << "};\n";
+}
+
+static bool IsEnumDeprecated(const AidlEnumDeclaration& enum_decl) {
+  if (enum_decl.IsDeprecated()) {
+    return true;
+  }
+  for (const auto& e : enum_decl.GetEnumerators()) {
+    if (e->IsDeprecated()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // enum_values template value is defined in its own namespace (android::internal or ndk::internal),
@@ -237,9 +250,11 @@ std::string GenerateEnumValues(const AidlEnumDeclaration& enum_decl,
   std::ostringstream code;
   code << "#pragma clang diagnostic push\n";
   code << "#pragma clang diagnostic ignored \"-Wc++17-extensions\"\n";
+  if (IsEnumDeprecated(enum_decl)) {
+    code << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
+  }
   code << "template <>\n";
   code << "constexpr inline std::array<" << fq_name << ", " << size << ">";
-  GenerateDeprecated(code, enum_decl);
   code << " enum_values<" << fq_name << "> = {\n";
   for (const auto& enumerator : enum_decl.GetEnumerators()) {
     code << "  " << fq_name << "::" << enumerator->GetName() << ",\n";
@@ -255,14 +270,12 @@ std::string GenerateEnumToString(const AidlEnumDeclaration& enum_decl,
                                  const std::string& backing_type) {
   const auto q_name = GetQualifiedName(enum_decl);
   std::ostringstream code;
-  const std::string signature =
-      "[[nodiscard]] static inline std::string toString(" + q_name + " val)";
-  if (enum_decl.IsDeprecated()) {
-    code << signature;
-    GenerateDeprecated(code, enum_decl);
-    code << ";\n";
+  bool is_enum_deprecated = IsEnumDeprecated(enum_decl);
+  if (is_enum_deprecated) {
+    code << "#pragma clang diagnostic push\n";
+    code << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
   }
-  code << signature << " {\n";
+  code << "[[nodiscard]] static inline std::string toString(" + q_name + " val) {\n";
   code << "  switch(val) {\n";
   std::set<std::string> unique_cases;
   for (const auto& enumerator : enum_decl.GetEnumerators()) {
@@ -281,6 +294,9 @@ std::string GenerateEnumToString(const AidlEnumDeclaration& enum_decl,
   code << "    return std::to_string(static_cast<" << backing_type << ">(val));\n";
   code << "  }\n";
   code << "}\n";
+  if (is_enum_deprecated) {
+    code << "#pragma clang diagnostic pop\n";
+  }
   return code.str();
 }
 
@@ -409,9 +425,16 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable) {
   out << "os << \"" + parcelable.GetName() + "{\";\n";
   out << "switch (getTag()) {\n";
   for (const auto& f : parcelable.GetFields()) {
+    if (f->IsDeprecated()) {
+      out << "#pragma clang diagnostic push\n";
+      out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
+    }
     const string tag = f->GetName();
     out << "case " << tag << ": os << \"" << tag << ": \" << "
         << "::android::internal::ToString(get<" + tag + ">()); break;\n";
+    if (f->IsDeprecated()) {
+      out << "#pragma clang diagnostic pop\n";
+    }
   }
   out << "}\n";
   out << "os << \"}\";\n";
@@ -481,7 +504,7 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
     const auto& default_value = name_of(first_field->GetType(), typenames) + "(" +
                                 first_field->ValueString(decorator) + ")";
 
-    out << "Tag _tag __attribute__((aligned (1))) = " << default_name << ";\n";
+    out << "Tag _tag = " << default_name << ";\n";
     out << "union _value_t {\n";
     out.Indent();
     out << "_value_t() {}\n";
@@ -512,23 +535,12 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
 }
 
 void UnionWriter::PublicFields(CodeWriter& out) const {
-  std::string tag_type = "int32_t";
-  if (decl.IsFixedSize()) {
-    // For @FixedSize union, we use a smaller type for a tag to minimize the size overhead.
-    AIDL_FATAL_IF(decl.GetFields().size() > std::numeric_limits<uint8_t>::max(), decl)
-        << "Too many fields for @FixedSize";
-    tag_type = "uint8_t";
-  }
-  out << "enum Tag : " << tag_type << " {\n";
-  bool is_first = true;
+  out << "// Expose tag symbols for legacy code\n";
   for (const auto& f : decl.GetFields()) {
-    out << "  " << f->GetName();
+    out << "static const inline Tag";
     GenerateDeprecated(out, *f);
-    if (is_first) out << " = 0";
-    out << ",  // " << f->Signature() << ";\n";
-    is_first = false;
+    out << " " << f->GetName() << " = Tag::" << f->GetName() << ";\n";
   }
-  out << "};\n";
 
   const auto& name = decl.GetName();
 
@@ -646,6 +658,10 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
   read_var(tag, *tag_type);
   out << fmt::format("switch (static_cast<Tag>({})) {{\n", tag);
   for (const auto& variable : decl.GetFields()) {
+    if (variable->IsDeprecated()) {
+      out << "#pragma clang diagnostic push\n";
+      out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
+    }
     out << fmt::format("case {}: {{\n", variable->GetName());
     out.Indent();
     const auto& type = variable->GetType();
@@ -665,6 +681,9 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
     out << "}\n";
     out << fmt::format("return {}; }}\n", ctx.status_ok);
     out.Dedent();
+    if (variable->IsDeprecated()) {
+      out << "#pragma clang diagnostic pop\n";
+    }
   }
   out << "}\n";
   out << fmt::format("return {};\n", ctx.status_bad);
@@ -685,9 +704,16 @@ void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx)
   out << fmt::format("if ({} != {}) return {};\n", status, ctx.status_ok, status);
   out << "switch (getTag()) {\n";
   for (const auto& variable : decl.GetFields()) {
+    if (variable->IsDeprecated()) {
+      out << "#pragma clang diagnostic push\n";
+      out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
+    }
     out << fmt::format("case {}: return ", variable->GetName());
     ctx.write_func(out, "get<" + variable->GetName() + ">()", variable->GetType());
     out << ";\n";
+    if (variable->IsDeprecated()) {
+      out << "#pragma clang diagnostic pop\n";
+    }
   }
   out << "}\n";
   out << "__assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, \"can't reach here\");\n";

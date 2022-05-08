@@ -174,7 +174,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		rust.PrepareForTestWithRustBuildComponents,
 		android.FixtureRegisterWithContext(func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
-			ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
+			ctx.RegisterSingletonModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
 			ctx.RegisterModuleType("rust_defaults", func() android.Module {
 				return rust.DefaultsFactory()
 			})
@@ -1720,6 +1720,37 @@ func TestVersionsWithInfo(t *testing.T) {
 	android.AssertStringListContains(t, "a/foo-v3 deps", fooV3Java.CompilerDeps(), "common-V3-java")
 }
 
+func TestVersionsWithInfoImport(t *testing.T) {
+	testAidlError(t, "imports in versions_with_info must specify its version", ``, withFiles(map[string][]byte{
+		"common/Android.bp": []byte(`
+		  aidl_interface {
+				name: "common",
+				srcs: ["ICommon.aidl"],
+				versions: ["1", "2"],
+			}
+		`),
+		"common/aidl_api/common/1/ICommon.aidl": nil,
+		"common/aidl_api/common/1/.hash":        nil,
+		"common/aidl_api/common/2/ICommon.aidl": nil,
+		"common/aidl_api/common/2/.hash":        nil,
+		"foo/Android.bp": []byte(`
+			aidl_interface {
+				name: "foo",
+				srcs: ["IFoo.aidl"],
+				imports: ["common"],
+				versions_with_info: [
+					{version: "1", imports: ["common"]},
+					{version: "2", imports: ["common-V2"]},
+				]
+			}
+		`),
+		"foo/aidl_api/foo/1/IFoo.aidl": nil,
+		"foo/aidl_api/foo/1/.hash":     nil,
+		"foo/aidl_api/foo/2/IFoo.aidl": nil,
+		"foo/aidl_api/foo/2/.hash":     nil,
+	}))
+}
+
 func TestFreezeApiDeps(t *testing.T) {
 	for _, transitive := range []bool{true, false} {
 		for _, testcase := range []struct {
@@ -1763,8 +1794,8 @@ func TestFreezeApiDeps(t *testing.T) {
 
 			ctx, _ := testAidl(t, ``, customizers...)
 			shouldHaveDep := transitive && testcase.bool
-			fooFreezeApiRule := ctx.ModuleForTests("foo-api", "").Output("updateapi_3.timestamp")
-			commonFreezeApiOutput := ctx.ModuleForTests("common-api", "").Output("updateapi_3.timestamp").Output.String()
+			fooFreezeApiRule := ctx.ModuleForTests("foo-api", "").Output("update_or_freeze_api_3.timestamp")
+			commonFreezeApiOutput := ctx.ModuleForTests("common-api", "").Output("update_or_freeze_api_3.timestamp").Output.String()
 			testMethod := android.AssertStringListDoesNotContain
 			if shouldHaveDep {
 				testMethod = android.AssertStringListContains

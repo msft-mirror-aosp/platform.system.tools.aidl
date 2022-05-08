@@ -392,7 +392,8 @@ static void GenerateWriteToParcel(std::shared_ptr<StatementBlock> addTo,
       .parcel = parcel,
       .var = var,
       .min_sdk_version = min_sdk_version,
-      .is_return_value = is_return_value,
+      .write_to_parcel_flag =
+          is_return_value ? "android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE" : "0",
   };
   WriteToParcelFor(context);
   writer->Close();
@@ -466,12 +467,13 @@ struct PermissionVisitor {
         break;
       }
     }
-    auto checkPermission = std::make_shared<MethodCall>(
-        THIS_VALUE, "permissionCheckerWrapper",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.Manifest.permission." + permission),
-            std::make_shared<MethodCall>(THIS_VALUE, "getCallingPid"),
-            std::make_shared<LiteralExpression>(attributionSource)});
+    auto permissionName = android::aidl::perm::JavaFullName(permission);
+    auto checkPermission =
+        std::make_shared<MethodCall>(THIS_VALUE, "permissionCheckerWrapper",
+                                     std::vector<std::shared_ptr<Expression>>{
+                                         std::make_shared<LiteralExpression>(permissionName),
+                                         std::make_shared<MethodCall>(THIS_VALUE, "getCallingPid"),
+                                         std::make_shared<LiteralExpression>(attributionSource)});
     return checkPermission;
   }
 
@@ -603,7 +605,7 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
   }
 
   // EOF check
-  if (!method.GetArguments().empty() && options.GetMinSdkVersion() >= 32u) {
+  if (!method.GetArguments().empty() && options.GetMinSdkVersion() > 32u) {
     statements->Add(std::make_shared<MethodCall>(transact_data, "enforceNoDataAvail"));
   }
 
