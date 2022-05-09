@@ -75,13 +75,13 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	}, &aidlGenProperties{
 		Srcs:            srcs,
 		AidlRoot:        aidlRoot,
-		Imports:         i.properties.Imports,
+		Imports:         i.getImportsForVersion(version),
 		Stability:       i.properties.Stability,
 		Min_sdk_version: i.minSdkVersion(lang),
 		Lang:            lang,
 		BaseName:        i.ModuleBase.Name(),
 		GenLog:          genLog,
-		Version:         i.versionForAidlGenRule(version),
+		Version:         i.versionForInitVersionCompat(version),
 		GenTrace:        genTrace,
 		Unstable:        i.properties.Unstable,
 		NotFrozen:       notFrozen,
@@ -122,7 +122,11 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		targetProp.Product = nonAppProps
 		hostSupported = i.properties.Host_supported
 		if lang == langNdk && i.shouldGenerateAppNdkBackend() {
-			sdkVersion = proptools.StringPtr("current")
+			sdkVersion = i.properties.Backend.Ndk.Sdk_version
+			if sdkVersion == nil {
+				sdkVersion = proptools.StringPtr("current")
+			}
+
 			// Don't worry! This maps to libc++.so for the platform variant.
 			stl = proptools.StringPtr("c++_shared")
 		}
@@ -156,7 +160,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		Lang:              lang,
 		AidlInterfaceName: i.ModuleBase.Name(),
 		Version:           version,
-		Imports:           i.properties.Imports,
+		Imports:           i.getImportsForVersion(version),
 		ModuleProperties: []interface{}{
 			&ccProperties{
 				Name:                      proptools.StringPtr(cppModuleGen),
@@ -219,13 +223,13 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	}, &aidlGenProperties{
 		Srcs:            srcs,
 		AidlRoot:        aidlRoot,
-		Imports:         i.properties.Imports,
+		Imports:         i.getImportsForVersion(version),
 		Stability:       i.properties.Stability,
 		Min_sdk_version: minSdkVersion,
 		Platform_apis:   proptools.Bool(i.properties.Backend.Java.Platform_apis),
 		Lang:            langJava,
 		BaseName:        i.ModuleBase.Name(),
-		Version:         i.versionForAidlGenRule(version),
+		Version:         version,
 		GenRpc:          proptools.Bool(i.properties.Backend.Java.Gen_rpc),
 		GenTrace:        proptools.Bool(i.properties.Gen_trace),
 		Unstable:        i.properties.Unstable,
@@ -239,7 +243,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		Lang:              langJava,
 		AidlInterfaceName: i.ModuleBase.Name(),
 		Version:           version,
-		Imports:           i.properties.Imports,
+		Imports:           i.getImportsForVersion(version),
 		ModuleProperties: []interface{}{&javaProperties{
 			Name:            proptools.StringPtr(javaModuleGen),
 			Installable:     proptools.BoolPtr(true),
@@ -271,12 +275,12 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	}, &aidlGenProperties{
 		Srcs:            srcs,
 		AidlRoot:        aidlRoot,
-		Imports:         i.properties.Imports,
+		Imports:         i.getImportsForVersion(version),
 		Stability:       i.properties.Stability,
 		Min_sdk_version: i.minSdkVersion(langRust),
 		Lang:            langRust,
 		BaseName:        i.ModuleBase.Name(),
-		Version:         i.versionForAidlGenRule(version),
+		Version:         i.versionForInitVersionCompat(version),
 		Unstable:        i.properties.Unstable,
 		NotFrozen:       notFrozen,
 		Flags:           i.flagsForAidlGenRule(version),
@@ -299,7 +303,7 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		Source_stem: proptools.StringPtr(versionedRustName),
 	}, &aidlRustSourceProviderProperties{
 		SourceGen:         rustSourceGen,
-		Imports:           i.properties.Imports,
+		Imports:           i.getImportsForVersion(version),
 		Version:           version,
 		AidlInterfaceName: i.ModuleBase.Name(),
 	})
@@ -339,7 +343,10 @@ func (i *aidlInterface) srcsForVersion(mctx android.EarlyModuleContext, version 
 	}
 }
 
-func (i *aidlInterface) versionForAidlGenRule(version string) string {
+// For certain backend, avoid a difference between the initial version of a versioned
+// interface and an unversioned interface. This ensures that prebuilts can't prevent
+// an interface from switching from unversioned to versioned.
+func (i *aidlInterface) versionForInitVersionCompat(version string) string {
 	if !i.hasVersion() {
 		return ""
 	}
@@ -350,7 +357,7 @@ func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
 	flags = append(flags, i.properties.Flags...)
 	// For ToT, turn on "-Weverything" (enable all warnings)
 	if version == i.nextVersion() {
-		flags = append(flags, "-Weverything")
+		flags = append(flags, "-Weverything -Wno-missing-permission-annotation")
 	}
 	return
 }

@@ -276,6 +276,10 @@ public interface ITestService extends android.os.IInterface
     {
       return null;
     }
+    @Override public int[] GetUnionTags(android.aidl.tests.Union[] input) throws android.os.RemoteException
+    {
+      return null;
+    }
     // Retrieve the ICppJavaTests if the server supports it
     @Override public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException
     {
@@ -572,6 +576,10 @@ public interface ITestService extends android.os.IInterface
     @Override public android.aidl.tests.INewName GetNewNameInterface() throws android.os.RemoteException
     {
       return mImpl.GetNewNameInterface();
+    }
+    @Override public int[] GetUnionTags(android.aidl.tests.Union[] input) throws android.os.RemoteException
+    {
+      return mImpl.GetUnionTags(input);
     }
     // Retrieve the ICppJavaTests if the server supports it
     @Override public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException
@@ -1379,6 +1387,16 @@ public interface ITestService extends android.os.IInterface
           android.aidl.tests.INewName _result = this.GetNewNameInterface();
           reply.writeNoException();
           reply.writeStrongInterface(_result);
+          break;
+        }
+        case TRANSACTION_GetUnionTags:
+        {
+          android.aidl.tests.Union[] _arg0;
+          _arg0 = data.createTypedArray(android.aidl.tests.Union.CREATOR);
+          data.enforceNoDataAvail();
+          int[] _result = this.GetUnionTags(_arg0);
+          reply.writeNoException();
+          reply.writeIntArray(_result);
           break;
         }
         case TRANSACTION_GetCppJavaTests:
@@ -3054,6 +3072,30 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
+      @Override public int[] GetUnionTags(android.aidl.tests.Union[] input) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        int[] _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeTypedArray(input, 0);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_GetUnionTags, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              return getDefaultImpl().GetUnionTags(input);
+            }
+          }
+          _reply.readException();
+          _result = _reply.createIntArray();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
       // Retrieve the ICppJavaTests if the server supports it
       @Override public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException
       {
@@ -3166,8 +3208,9 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_ReverseNullableIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 60);
     static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 61);
     static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 62);
-    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
-    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
+    static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
+    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
+    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
       // at a time. This is a heuristic to detect if two different
@@ -3357,6 +3400,7 @@ public interface ITestService extends android.os.IInterface
   public android.os.IBinder[] ReverseNullableIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
   public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException;
   public android.aidl.tests.INewName GetNewNameInterface() throws android.os.RemoteException;
+  public int[] GetUnionTags(android.aidl.tests.Union[] input) throws android.os.RemoteException;
   // Retrieve the ICppJavaTests if the server supports it
   public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException;
   public byte getBackendType() throws android.os.RemoteException;
@@ -3461,16 +3505,16 @@ public interface ITestService extends android.os.IInterface
       _aidl_parcel.writeBinderArray(nullable_binder_array);
       _aidl_parcel.writeBinderList(binder_list);
       _aidl_parcel.writeBinderList(nullable_binder_list);
-      _aidl_parcel.writeTypedObject(pfd, 0);
-      _aidl_parcel.writeTypedObject(nullable_pfd, 0);
-      _aidl_parcel.writeTypedArray(pfd_array, 0);
-      _aidl_parcel.writeTypedArray(nullable_pfd_array, 0);
+      _aidl_parcel.writeTypedObject(pfd, _aidl_flag);
+      _aidl_parcel.writeTypedObject(nullable_pfd, _aidl_flag);
+      _aidl_parcel.writeTypedArray(pfd_array, _aidl_flag);
+      _aidl_parcel.writeTypedArray(nullable_pfd_array, _aidl_flag);
       _aidl_parcel.writeTypedList(pfd_list);
       _aidl_parcel.writeTypedList(nullable_pfd_list);
-      _aidl_parcel.writeTypedObject(parcel, 0);
-      _aidl_parcel.writeTypedObject(nullable_parcel, 0);
-      _aidl_parcel.writeTypedArray(parcel_array, 0);
-      _aidl_parcel.writeTypedArray(nullable_parcel_array, 0);
+      _aidl_parcel.writeTypedObject(parcel, _aidl_flag);
+      _aidl_parcel.writeTypedObject(nullable_parcel, _aidl_flag);
+      _aidl_parcel.writeTypedArray(parcel_array, _aidl_flag);
+      _aidl_parcel.writeTypedArray(nullable_parcel_array, _aidl_flag);
       _aidl_parcel.writeTypedList(parcel_list);
       _aidl_parcel.writeTypedList(nullable_parcel_list);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
