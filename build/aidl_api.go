@@ -256,7 +256,11 @@ func (m *aidlApi) migrateAndAppendVersion(ctx android.ModuleContext, rb *android
 				if hasVersionSuffix(im) {
 					imports = append(imports, im)
 				} else {
-					imports = append(imports, im+"-V"+importIfaces[im].latestVersion())
+					versionSuffix := importIfaces[im].latestVersion()
+					if !importIfaces[im].hasVersion() {
+						versionSuffix = importIfaces[im].nextVersion()
+					}
+					imports = append(imports, im+"-V"+versionSuffix)
 				}
 			}
 			importsStr := strings.Join(wrap(`"`, imports, `"`), ", ")
@@ -307,8 +311,9 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		m.migrateAndAppendVersion(ctx, rb, nil, false)
 	}
 
-	timestampFile := android.PathForModuleOut(ctx, "updateapi_"+version+".timestamp")
-	rb.Command().Text("touch").Output(timestampFile)
+	timestampFile := android.PathForModuleOut(ctx, "update_or_freeze_api_"+version+".timestamp")
+	// explicitly don't touch timestamp, so that the command can be run repeatedly
+	rb.Command().Text("true").ImplicitOutput(timestampFile)
 
 	rb.Build("dump_aidl_api_"+m.properties.BaseName+"_"+version, actionWord+" AIDL API dump version "+version+" for "+m.properties.BaseName+" (see "+targetDir+")")
 	return timestampFile
