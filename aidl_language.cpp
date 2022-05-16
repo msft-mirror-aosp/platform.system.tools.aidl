@@ -508,6 +508,10 @@ bool AidlAnnotatable::IsPermissionNone() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::PERMISSION_NONE);
 }
 
+bool AidlAnnotatable::IsPermissionAnnotated() const {
+  return IsPermissionNone() || IsPermissionManual() || EnforceExpression();
+}
+
 bool AidlAnnotatable::IsPropagateAllowBlocking() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::PROPAGATE_ALLOW_BLOCKING);
 }
@@ -1712,26 +1716,12 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
 }
 
 bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {
-  if (IsPermissionNone() || IsPermissionManual()) {
-    if (m.GetType().IsPermissionNone() || m.GetType().IsPermissionManual() ||
-        m.GetType().EnforceExpression()) {
-      std::string interface_annotation = IsPermissionNone()
-                                             ? "requiring no permission"
-                                             : "manually implementing permission checks";
-      AIDL_ERROR(m) << "The interface " << GetName() << " is annotated as " << interface_annotation
-                    << " but the method " << m.GetName() << " is also annotated.\n"
-                    << "Consider distributing the annotation to each method.";
-      return false;
-    }
-  } else if (EnforceExpression()) {
-    if (m.GetType().IsPermissionNone() || m.GetType().IsPermissionManual()) {
-      AIDL_ERROR(m) << "The interface " << GetName()
-                    << " enforces permissions using annotations"
-                       " but the method "
-                    << m.GetName() << " is also annotated.\n"
-                    << "Consider distributing the annotation to each method.";
-      return false;
-    }
+  if (IsPermissionAnnotated() && m.GetType().IsPermissionAnnotated()) {
+    AIDL_ERROR(m) << "The interface " << GetName()
+                  << " uses a permission annotation but the method " << m.GetName()
+                  << " is also annotated.\n"
+                  << "Consider distributing the annotation to each method.";
+    return false;
   }
   return true;
 }
