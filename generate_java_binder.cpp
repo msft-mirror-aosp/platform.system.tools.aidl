@@ -410,13 +410,18 @@ void GenerateConstantDeclarations(CodeWriter& out, const AidlDefinedType& type) 
   }
 }
 
-static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlMethod& method) {
+static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlInterface& iface,
+                                                       const AidlMethod& method) {
   auto decl = std::make_shared<Method>();
   decl->comment = GenerateComments(method);
   decl->modifiers = PUBLIC;
   decl->returnType = JavaSignatureOf(method.GetType());
   decl->name = method.GetName();
   decl->annotations = JavaAnnotationsFor(method);
+  // If the interface has some permission annotation, add it to the method.
+  if (auto iface_annotation = JavaPermissionAnnotation(iface); iface_annotation) {
+    decl->annotations.push_back(*iface_annotation);
+  }
 
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
     auto var = std::make_shared<Variable>(JavaSignatureOf(arg->GetType()), arg->GetName());
@@ -941,7 +946,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
   // == the declaration in the interface ===================================
   std::shared_ptr<ClassElement> decl;
   if (method.IsUserDefined()) {
-    decl = GenerateInterfaceMethod(method);
+    decl = GenerateInterfaceMethod(iface, method);
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       std::ostringstream code;

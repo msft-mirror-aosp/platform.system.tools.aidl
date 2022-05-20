@@ -366,6 +366,7 @@ class AidlAnnotatable : public AidlCommentable {
   std::unique_ptr<android::aidl::perm::Expression> EnforceExpression() const;
   bool IsPermissionManual() const;
   bool IsPermissionNone() const;
+  bool IsPermissionAnnotated() const;
   bool IsPropagateAllowBlocking() const;
 
   // ToString is for dumping AIDL.
