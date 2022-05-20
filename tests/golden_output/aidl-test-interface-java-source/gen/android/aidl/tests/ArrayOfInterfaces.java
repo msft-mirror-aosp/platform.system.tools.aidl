@@ -245,20 +245,10 @@ public class ArrayOfInterfaces implements android.os.Parcelable
             _data.writeStrongInterface(iface);
             _data.writeStrongInterface(nullable_iface);
             _data.writeInterfaceArray(iface_array_in);
-            if ((iface_array_out==null)) {
-              _data.writeInt(-1);
-            }
-            else {
-              _data.writeInt(iface_array_out.length);
-            }
+            _data.writeInt(iface_array_out.length);
             _data.writeInterfaceArray(iface_array_inout);
             _data.writeInterfaceArray(nullable_iface_array_in);
-            if ((nullable_iface_array_out==null)) {
-              _data.writeInt(-1);
-            }
-            else {
-              _data.writeInt(nullable_iface_array_out.length);
-            }
+            _data.writeInt(nullable_iface_array_out.length);
             _data.writeInterfaceArray(nullable_iface_array_inout);
             boolean _status = mRemote.transact(Stub.TRANSACTION_methodWithInterfaces, _data, _reply, 0);
             _reply.readException();
