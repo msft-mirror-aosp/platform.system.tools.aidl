@@ -2,7 +2,6 @@
  * This file is auto-generated.  DO NOT MODIFY.
  */
 package android.aidl.tests.permission;
-@android.annotation.EnforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
 public interface IProtectedInterface extends android.os.IInterface
 {
   /** Default implementation for IProtectedInterface. */
@@ -76,9 +75,6 @@ public interface IProtectedInterface extends android.os.IInterface
           if ((this.permissionCheckerWrapper(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
             throw new SecurityException("Access denied, requires: android.Manifest.permission.ACCESS_FINE_LOCATION");
           }
-          if ((this.permissionCheckerWrapper(android.Manifest.permission.INTERNET, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
-            throw new SecurityException("Access denied, requires: android.Manifest.permission.INTERNET");
-          }
           this.Method2();
           reply.writeNoException();
           break;
@@ -146,7 +142,8 @@ public interface IProtectedInterface extends android.os.IInterface
     static final int TRANSACTION_Method2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$IProtectedInterface".replace('$', '.');
+  @android.annotation.EnforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
   public void Method1() throws android.os.RemoteException;
-  @android.annotation.EnforcePermission(android.Manifest.permission.INTERNET)
+  @android.annotation.EnforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
   public void Method2() throws android.os.RemoteException;
 }

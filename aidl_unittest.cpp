@@ -4066,7 +4066,10 @@ TEST_F(AidlTest, InterfaceAndMethodEnforceCondition) {
     })");
 
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
-  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
@@ -4080,8 +4083,8 @@ TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("The interface IFoo is annotated as requiring no permission"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
@@ -4095,9 +4098,8 @@ TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(
-      GetCapturedStderr(),
-      HasSubstr("The interface IFoo is annotated as manually implementing permission checks"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
@@ -4111,8 +4113,8 @@ TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("The interface IFoo enforces permissions using annotations"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
@@ -4126,8 +4128,8 @@ TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("The interface IFoo enforces permissions using annotations"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, JavaSuppressLint) {
