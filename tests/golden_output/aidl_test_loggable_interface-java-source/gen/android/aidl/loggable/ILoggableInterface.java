@@ -150,6 +150,17 @@ public interface ILoggableInterface extends android.os.IInterface
       }
       @Override public java.lang.String[] LogThis(boolean boolValue, boolean[] boolArray, byte byteValue, byte[] byteArray, char charValue, char[] charArray, int intValue, int[] intArray, long longValue, long[] longArray, float floatValue, float[] floatArray, double doubleValue, double[] doubleArray, java.lang.String stringValue, java.lang.String[] stringArray, java.util.List<java.lang.String> listValue, android.aidl.loggable.Data dataValue, android.os.IBinder binderValue, android.os.ParcelFileDescriptor pfdValue, android.os.ParcelFileDescriptor[] pfdArray) throws android.os.RemoteException
       {
+        java.util.Objects.requireNonNull(boolArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(byteArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(charArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(intArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(longArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(floatArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(doubleArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(stringArray, "out parameter must not be null");
+        java.util.Objects.requireNonNull(listValue, "out parameter must not be null");
+        java.util.Objects.requireNonNull(pfdValue, "out parameter must not be null");
+        java.util.Objects.requireNonNull(pfdArray, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain();
         android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String[] _result;
