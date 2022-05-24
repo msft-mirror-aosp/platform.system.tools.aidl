@@ -774,16 +774,11 @@ static std::shared_ptr<Method> GenerateProxyMethod(const AidlInterface& iface,
     auto v = std::make_shared<Variable>(JavaSignatureOf(arg->GetType()), arg->GetName());
     AidlArgument::Direction dir = arg->GetDirection();
     if (dir == AidlArgument::OUT_DIR && arg->GetType().IsDynamicArray()) {
-      auto checklen = std::make_shared<IfStatement>();
-      checklen->expression = std::make_shared<Comparison>(v, "==", NULL_VALUE);
-      checklen->statements->Add(std::make_shared<MethodCall>(
-          _data, "writeInt",
-          std::vector<std::shared_ptr<Expression>>{std::make_shared<LiteralExpression>("-1")}));
-      checklen->elseif = std::make_shared<IfStatement>();
-      checklen->elseif->statements->Add(std::make_shared<MethodCall>(
+      // In Java we pass a pre-allocated array for an 'out' argument. For transaction,
+      // we pass the size of the array so that the remote can allocate the array with the same size.
+      tryStatement->statements->Add(std::make_shared<MethodCall>(
           _data, "writeInt",
           std::vector<std::shared_ptr<Expression>>{std::make_shared<FieldVariable>(v, "length")}));
-      tryStatement->statements->Add(checklen);
     } else if (dir & AidlArgument::IN_DIR) {
       GenerateWriteToParcel(tryStatement->statements, typenames, arg->GetType(), _data->name,
                             v->name, options.GetMinSdkVersion(), /*is_return_value=*/false);
