@@ -1189,7 +1189,7 @@ public interface ITestService extends android.os.IInterface
           data.enforceNoDataAvail();
           java.util.List<android.aidl.tests.ITestService.Empty> _result = this.RepeatNullableParcelableList(_arg0);
           reply.writeNoException();
-          reply.writeTypedList(_result);
+          reply.writeTypedList(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
         }
         case TRANSACTION_TakesAnIBinder:
@@ -2563,7 +2563,7 @@ public interface ITestService extends android.os.IInterface
         java.util.List<android.aidl.tests.ITestService.Empty> _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
-          _data.writeTypedList(input);
+          _data.writeTypedList(input, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableParcelableList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -3429,14 +3429,14 @@ public interface ITestService extends android.os.IInterface
       _aidl_parcel.writeTypedObject(nullable_pfd, _aidl_flag);
       _aidl_parcel.writeTypedArray(pfd_array, _aidl_flag);
       _aidl_parcel.writeTypedArray(nullable_pfd_array, _aidl_flag);
-      _aidl_parcel.writeTypedList(pfd_list);
-      _aidl_parcel.writeTypedList(nullable_pfd_list);
+      _aidl_parcel.writeTypedList(pfd_list, _aidl_flag);
+      _aidl_parcel.writeTypedList(nullable_pfd_list, _aidl_flag);
       _aidl_parcel.writeTypedObject(parcel, _aidl_flag);
       _aidl_parcel.writeTypedObject(nullable_parcel, _aidl_flag);
       _aidl_parcel.writeTypedArray(parcel_array, _aidl_flag);
       _aidl_parcel.writeTypedArray(nullable_parcel_array, _aidl_flag);
-      _aidl_parcel.writeTypedList(parcel_list);
-      _aidl_parcel.writeTypedList(nullable_parcel_list);
+      _aidl_parcel.writeTypedList(parcel_list, _aidl_flag);
+      _aidl_parcel.writeTypedList(nullable_parcel_list, _aidl_flag);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
       _aidl_parcel.setDataPosition(_aidl_start_pos);
       _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
