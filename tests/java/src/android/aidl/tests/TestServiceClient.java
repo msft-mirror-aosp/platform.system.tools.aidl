@@ -646,6 +646,14 @@ public class TestServiceClient {
         }
     }
 
+    @Test
+    public void testOutArrayWithNull() throws RemoteException {
+        // In Java out-array parameter can't be null. The proxy code always throws NPE.
+        assertThrows(NullPointerException.class, () -> service.ReverseUtf8CppString(null, null));
+        assertThrows(NullPointerException.class,
+            () -> service.ReverseNullableUtf8CppString(null, null));
+    }
+
     private void shouldBeTheSame(StructuredParcelable a, StructuredParcelable b) {
         assertTrue(a.equals(b));
         assertTrue(b.equals(a));
