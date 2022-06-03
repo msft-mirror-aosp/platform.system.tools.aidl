@@ -799,7 +799,7 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
       << ");\n";
 
   // TODO(b/151102494): annotation is applied on the return type
-  if (method.GetType().IsPropagateAllowBlocking()) {
+  if (method.GetType().IsPropagateAllowBlocking() && !oneway) {
     if (options.GetMinSdkVersion() < JAVA_PROPAGATE_VERSION) {
       out << "if (android.os.Build.VERSION.SDK_INT >= " + std::to_string(JAVA_PROPAGATE_VERSION) +
                  ") { _reply.setPropagateAllowBlocking(); }\n";
