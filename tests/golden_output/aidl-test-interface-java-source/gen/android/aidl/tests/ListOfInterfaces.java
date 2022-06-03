@@ -227,10 +227,6 @@ public class ListOfInterfaces implements android.os.Parcelable
         }
         @Override public java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> methodWithInterfaces(android.aidl.tests.ListOfInterfaces.IEmptyInterface iface, android.aidl.tests.ListOfInterfaces.IEmptyInterface nullable_iface, java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> iface_list_in, java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> iface_list_out, java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> iface_list_inout, java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> nullable_iface_list_in, java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> nullable_iface_list_out, java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> nullable_iface_list_inout) throws android.os.RemoteException
         {
-          java.util.Objects.requireNonNull(iface_list_out, "out parameter must not be null");
-          java.util.Objects.requireNonNull(iface_list_inout, "out parameter must not be null");
-          java.util.Objects.requireNonNull(nullable_iface_list_out, "out parameter must not be null");
-          java.util.Objects.requireNonNull(nullable_iface_list_inout, "out parameter must not be null");
           android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
           android.os.Parcel _reply = android.os.Parcel.obtain();
           java.util.List<android.aidl.tests.ListOfInterfaces.IEmptyInterface> _result;
