@@ -733,17 +733,6 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
       << ArgList(method, FormatArgForDecl) << ") throws android.os.RemoteException\n{\n";
   out.Indent();
 
-  // out/inout params shouldn't be null in Java
-  // java.util.Objects is available since SDK v19
-  if (options.GetMinSdkVersion() >= 19u) {
-    for (const auto& arg : method.GetArguments()) {
-      if (arg->IsOut()) {
-        out << "java.util.Objects.requireNonNull(" << arg->GetName()
-            << ", \"out parameter must not be null\");\n";
-      }
-    }
-  }
-
   // the parcels
   if (options.GenRpc()) {
     out << "android.os.Parcel _data = android.os.Parcel.obtain(asBinder());\n";
