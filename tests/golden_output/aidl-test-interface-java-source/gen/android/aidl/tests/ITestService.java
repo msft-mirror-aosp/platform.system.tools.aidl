@@ -1781,7 +1781,6 @@ public interface ITestService extends android.os.IInterface
       // Test that arrays work as parameters and return types.
       @Override public boolean[] ReverseBoolean(boolean[] input, boolean[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1808,7 +1807,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte[] ReverseByte(byte[] input, byte[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1835,7 +1833,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public char[] ReverseChar(char[] input, char[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1862,7 +1859,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public int[] ReverseInt(int[] input, int[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1889,7 +1885,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public long[] ReverseLong(long[] input, long[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1916,7 +1911,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public float[] ReverseFloat(float[] input, float[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1943,7 +1937,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public double[] ReverseDouble(double[] input, double[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1970,7 +1963,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String[] ReverseString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -1997,7 +1989,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public byte[] ReverseByteEnum(byte[] input, byte[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2024,7 +2015,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public int[] ReverseIntEnum(int[] input, int[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2051,7 +2041,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public long[] ReverseLongEnum(long[] input, long[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2277,7 +2266,6 @@ public interface ITestService extends android.os.IInterface
       // Test that List<T> types work correctly.
       @Override public java.util.List<java.lang.String> ReverseStringList(java.util.List<java.lang.String> input, java.util.List<java.lang.String> repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2327,7 +2315,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public android.os.ParcelFileDescriptor[] ReverseParcelFileDescriptorArray(android.os.ParcelFileDescriptor[] input, android.os.ParcelFileDescriptor[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2731,7 +2718,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String[] ReverseUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2758,7 +2744,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.lang.String[] ReverseNullableUtf8CppString(java.lang.String[] input, java.lang.String[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2785,7 +2770,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public java.util.List<java.lang.String> ReverseUtf8CppStringList(java.util.List<java.lang.String> input, java.util.List<java.lang.String> repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2838,7 +2822,6 @@ public interface ITestService extends android.os.IInterface
       // inefficient to use an IPC to fill it out in practice.
       @Override public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(parcel, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2864,7 +2847,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(ep2, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2914,7 +2896,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public android.os.IBinder[] ReverseIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -2941,7 +2922,6 @@ public interface ITestService extends android.os.IInterface
       }
       @Override public android.os.IBinder[] ReverseNullableIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException
       {
-        java.util.Objects.requireNonNull(repeated, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
         android.os.Parcel _reply = android.os.Parcel.obtain();
