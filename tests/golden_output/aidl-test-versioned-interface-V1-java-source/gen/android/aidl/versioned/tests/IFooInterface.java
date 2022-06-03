@@ -206,6 +206,8 @@ public interface IFooInterface extends android.os.IInterface
       }
       @Override public int ignoreParcelablesAndRepeatInt(android.aidl.versioned.tests.Foo inFoo, android.aidl.versioned.tests.Foo inoutFoo, android.aidl.versioned.tests.Foo outFoo, int value) throws android.os.RemoteException
       {
+        java.util.Objects.requireNonNull(inoutFoo, "out parameter must not be null");
+        java.util.Objects.requireNonNull(outFoo, "out parameter must not be null");
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         int _result;
