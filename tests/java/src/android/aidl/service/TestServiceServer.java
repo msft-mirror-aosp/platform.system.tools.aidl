@@ -59,6 +59,13 @@ import java.util.List;
 
 public class TestServiceServer extends ITestService.Stub {
   public static void main(String[] args) {
+    // b/235006086: test with debug stack trace parceling feature
+    // which has been broken in the past. This does mean that we
+    // lose Java coverage for when this is false, but we do have
+    // other tests which cover this including CtsNdkBinderTestCases
+    // and other language-specific exception/Status unit tests.
+    Parcel.setStackTraceParceling(true);
+
     TestServiceServer myServer = new TestServiceServer();
     ServiceManager.addService(ITestService.class.getName(), myServer);
 
