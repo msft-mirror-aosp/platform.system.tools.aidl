@@ -37,8 +37,7 @@ struct CustomDelegator : public ITestServiceDelegator {
 };
 
 TEST_F(AidlTest, Delegator) {
-  std::unique_ptr<ITestServiceDelegator> delegator =
-      std::make_unique<ITestServiceDelegator>(service);
+  auto delegator = sp<ITestServiceDelegator>::make(service);
 
   int8_t returned_value;
   auto status = delegator->RepeatByte(12, &returned_value);
@@ -47,7 +46,7 @@ TEST_F(AidlTest, Delegator) {
 }
 
 TEST_F(AidlTest, CustomDelegator) {
-  std::unique_ptr<CustomDelegator> delegator = std::make_unique<CustomDelegator>(service);
+  auto delegator = sp<CustomDelegator>::make(service);
 
   int8_t returned_value;
   auto status = delegator->RepeatByte(12, &returned_value);
