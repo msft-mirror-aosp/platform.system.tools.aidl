@@ -1362,7 +1362,7 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   for (const auto& nested : iface->GetNestedTypes()) {
     GenerateClass(*writer, *nested, typenames, options);
   }
-  GenerateParcelHelpers(*writer, *iface, options);
+  GenerateParcelHelpers(*writer, *iface, typenames, options);
   writer->Close();
   interface->elements.push_back(std::make_shared<LiteralClassElement>(code));
 
