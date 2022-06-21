@@ -14,7 +14,7 @@ public:
 
 class __attribute__((deprecated("test"))) IDeprecatedDelegator : public BnDeprecated {
 public:
-  explicit IDeprecatedDelegator(::android::sp<IDeprecated> &impl) : _aidl_delegate(impl) {}
+  explicit IDeprecatedDelegator(const ::android::sp<IDeprecated> &impl) : _aidl_delegate(impl) {}
 
 private:
   ::android::sp<IDeprecated> _aidl_delegate;

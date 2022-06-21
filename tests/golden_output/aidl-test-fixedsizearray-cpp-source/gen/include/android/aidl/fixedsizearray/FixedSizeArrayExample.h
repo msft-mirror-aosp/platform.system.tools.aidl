@@ -129,7 +129,7 @@ public:
 
   class IRepeatFixedSizeArrayDelegator : public BnRepeatFixedSizeArray {
   public:
-    explicit IRepeatFixedSizeArrayDelegator(::android::sp<IRepeatFixedSizeArray> &impl) : _aidl_delegate(impl) {}
+    explicit IRepeatFixedSizeArrayDelegator(const ::android::sp<IRepeatFixedSizeArray> &impl) : _aidl_delegate(impl) {}
 
     ::android::binder::Status RepeatBytes(const std::array<uint8_t, 3>& input, std::array<uint8_t, 3>* repeated, std::array<uint8_t, 3>* _aidl_return) override {
       return _aidl_delegate->RepeatBytes(input, repeated, _aidl_return);
@@ -191,7 +191,7 @@ public:
 
   class IEmptyInterfaceDelegator : public BnEmptyInterface {
   public:
-    explicit IEmptyInterfaceDelegator(::android::sp<IEmptyInterface> &impl) : _aidl_delegate(impl) {}
+    explicit IEmptyInterfaceDelegator(const ::android::sp<IEmptyInterface> &impl) : _aidl_delegate(impl) {}
 
   private:
     ::android::sp<IEmptyInterface> _aidl_delegate;
