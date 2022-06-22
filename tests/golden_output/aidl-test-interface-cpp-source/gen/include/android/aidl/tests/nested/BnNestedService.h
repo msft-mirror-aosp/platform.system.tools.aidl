@@ -17,7 +17,7 @@ public:
 
 class INestedServiceDelegator : public BnNestedService {
 public:
-  explicit INestedServiceDelegator(const ::android::sp<INestedService> &impl) : _aidl_delegate(impl) {}
+  explicit INestedServiceDelegator(::android::sp<INestedService> &impl) : _aidl_delegate(impl) {}
 
   ::android::binder::Status flipStatus(const ::android::aidl::tests::nested::ParcelableWithNested& p, ::android::aidl::tests::nested::INestedService::Result* _aidl_return) override {
     return _aidl_delegate->flipStatus(p, _aidl_return);
