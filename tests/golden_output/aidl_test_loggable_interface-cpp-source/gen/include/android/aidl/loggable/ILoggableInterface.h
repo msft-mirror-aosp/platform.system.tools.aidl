@@ -80,7 +80,7 @@ public:
 
   class ISubDelegator : public BnSub {
   public:
-    explicit ISubDelegator(::android::sp<ISub> &impl) : _aidl_delegate(impl) {}
+    explicit ISubDelegator(const ::android::sp<ISub> &impl) : _aidl_delegate(impl) {}
 
     ::android::binder::Status Log(int32_t value) override {
       return _aidl_delegate->Log(value);
