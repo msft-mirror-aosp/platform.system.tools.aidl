@@ -23,7 +23,7 @@ public:
 
 class IFooInterfaceDelegator : public BnFooInterface {
 public:
-  explicit IFooInterfaceDelegator(::android::sp<IFooInterface> &impl) : _aidl_delegate(impl) {}
+  explicit IFooInterfaceDelegator(const ::android::sp<IFooInterface> &impl) : _aidl_delegate(impl) {}
 
   ::android::binder::Status originalApi() override {
     return _aidl_delegate->originalApi();

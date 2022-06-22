@@ -813,8 +813,9 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << " " << d_name << " : public " << bn_name << " {\n";
   out << "public:\n";
   out.Indent();
-  out << "explicit " << d_name << "(" << StringPrintf("::android::sp<%s> &impl", iface.c_str())
-      << ") " << StringPrintf(": %s(impl)", kDelegateImplVarName) << " {}\n\n";
+  out << "explicit " << d_name << "("
+      << StringPrintf("const ::android::sp<%s> &impl", iface.c_str()) << ") "
+      << StringPrintf(": %s(impl)", kDelegateImplVarName) << " {}\n\n";
 
   for (const auto& method : interface.GetMethods()) {
     if (method->IsUserDefined()) {
