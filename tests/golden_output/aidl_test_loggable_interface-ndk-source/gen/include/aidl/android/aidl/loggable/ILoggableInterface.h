@@ -20,14 +20,20 @@ namespace aidl {
 namespace android {
 namespace aidl {
 namespace loggable {
+class ILoggableInterfaceDelegator;
+
 class ILoggableInterface : public ::ndk::ICInterface {
 public:
+  typedef ILoggableInterfaceDelegator DefaultDelegator;
   static const char* descriptor;
   ILoggableInterface();
   virtual ~ILoggableInterface();
 
+  class ISubDelegator;
+
   class ISub : public ::ndk::ICInterface {
   public:
+    typedef ISubDelegator DefaultDelegator;
     static const char* descriptor;
     ISub();
     virtual ~ISub();
