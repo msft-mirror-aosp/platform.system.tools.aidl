@@ -184,6 +184,7 @@ aidl_interface {
     backend: {
         java: {
             platform_apis: true,
+            gen_trace: true,
         },
     },
     gen_trace: true,
