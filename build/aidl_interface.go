@@ -252,6 +252,9 @@ type CommonBackendProperties struct {
 	// For native modules, the property needs to be set when a module is a part of mainline modules(APEX).
 	// Forwarded to generated java/native module.
 	Min_sdk_version *string
+
+	// Whether tracing should be added to the interface.
+	Gen_trace *bool
 }
 
 type CommonNativeBackendProperties struct {
@@ -473,6 +476,26 @@ func (i *aidlInterface) minSdkVersion(lang string) *string {
 		return i.properties.Min_sdk_version
 	}
 	return ver
+}
+
+func (i *aidlInterface) genTrace(lang string) bool {
+	var ver *bool
+	switch lang {
+	case langCpp:
+		ver = i.properties.Backend.Cpp.Gen_trace
+	case langJava:
+		ver = i.properties.Backend.Java.Gen_trace
+	case langNdk, langNdkPlatform:
+		ver = i.properties.Backend.Ndk.Gen_trace
+	case langRust: // unsupported b/236880829
+		ver = i.properties.Backend.Rust.Gen_trace
+	default:
+		panic(fmt.Errorf("unsupported language backend %q\n", lang))
+	}
+	if ver == nil {
+		ver = i.properties.Gen_trace
+	}
+	return proptools.Bool(ver)
 }
 
 // Dep to *-api module(aidlApi)
