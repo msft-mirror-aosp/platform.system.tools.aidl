@@ -509,9 +509,12 @@ func addImportedInterfaceDeps(ctx android.BottomUpMutatorContext, imports []stri
 // Run custom "Deps" mutator between AIDL modules created at LoadHook stage.
 // We can't use the "DepsMutator" for these dependencies because
 // - We need to create library modules (cc/java/...) before "arch" mutator. Note that cc_library
-//   should be mutated by os/image/arch mutators as well.
+//
+//	should be mutated by os/image/arch mutators as well.
+//
 // - When creating library modules, we need to access the original interface and its imported
-//   interfaces to determine which version to use. See aidlInterface.getImportWithVersion.
+//
+//	interfaces to determine which version to use. See aidlInterface.getImportWithVersion.
 func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 	switch i := mctx.Module().(type) {
 	case *aidlInterface:
