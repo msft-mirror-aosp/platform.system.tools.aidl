@@ -80,7 +80,7 @@ public:
 
 class ITestServiceDelegator : public BnTestService {
 public:
-  explicit ITestServiceDelegator(::android::sp<ITestService> &impl) : _aidl_delegate(impl) {}
+  explicit ITestServiceDelegator(const ::android::sp<ITestService> &impl) : _aidl_delegate(impl) {}
 
   ::android::binder::Status UnimplementedMethod(int32_t arg, int32_t* _aidl_return) override {
     return _aidl_delegate->UnimplementedMethod(arg, _aidl_return);
