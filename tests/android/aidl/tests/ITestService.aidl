@@ -118,6 +118,8 @@ interface ITestService {
 
     // Test that clients can send and receive Binders.
     @PropagateAllowBlocking INamedCallback GetOtherTestService(String name);
+    // returns true if the same service is already registered with the same name
+    boolean SetOtherTestService(String name, INamedCallback service);
     boolean VerifyName(INamedCallback service, String name);
     INamedCallback[] GetInterfaceArray(in String[] names);
     boolean VerifyNamesWithInterfaceArray(in INamedCallback[] services, in String[] names);

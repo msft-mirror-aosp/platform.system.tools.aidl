@@ -2,6 +2,9 @@
 
 #include <binder/IInterface.h>
 #include <android/aidl/tests/IDeprecated.h>
+#include <android/aidl/tests/BnDeprecated.h>
+#include <binder/Delegate.h>
+
 
 namespace android {
 namespace aidl {
@@ -16,6 +19,7 @@ class __attribute__((deprecated("test"))) IDeprecatedDelegator : public BnDeprec
 public:
   explicit IDeprecatedDelegator(const ::android::sp<IDeprecated> &impl) : _aidl_delegate(impl) {}
 
+  ::android::sp<IDeprecated> getImpl() { return _aidl_delegate; }
 private:
   ::android::sp<IDeprecated> _aidl_delegate;
 };  // class IDeprecatedDelegator

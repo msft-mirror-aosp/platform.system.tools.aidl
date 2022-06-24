@@ -3,6 +3,7 @@
 #include <android/aidl/tests/nested/INestedService.h>
 #include <android/aidl/tests/nested/ParcelableWithNested.h>
 #include <android/binder_to_string.h>
+#include <binder/Delegate.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/Parcel.h>
@@ -92,6 +93,7 @@ public:
   public:
     explicit ICallbackDelegator(const ::android::sp<ICallback> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<ICallback> getImpl() { return _aidl_delegate; }
     ::android::binder::Status done(::android::aidl::tests::nested::ParcelableWithNested::Status status) override {
       return _aidl_delegate->done(status);
     }
