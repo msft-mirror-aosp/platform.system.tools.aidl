@@ -15,7 +15,7 @@ public:
 
 class INewNameDelegator : public BnNewName {
 public:
-  explicit INewNameDelegator(::android::sp<INewName> &impl) : _aidl_delegate(impl) {}
+  explicit INewNameDelegator(const ::android::sp<INewName> &impl) : _aidl_delegate(impl) {}
 
   ::android::binder::Status RealName(::android::String16* _aidl_return) override {
     return _aidl_delegate->RealName(_aidl_return);

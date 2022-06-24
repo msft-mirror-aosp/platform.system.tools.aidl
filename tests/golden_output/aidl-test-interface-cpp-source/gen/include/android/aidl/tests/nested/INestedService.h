@@ -84,7 +84,7 @@ public:
 
   class ICallbackDelegator : public BnCallback {
   public:
-    explicit ICallbackDelegator(::android::sp<ICallback> &impl) : _aidl_delegate(impl) {}
+    explicit ICallbackDelegator(const ::android::sp<ICallback> &impl) : _aidl_delegate(impl) {}
 
     ::android::binder::Status done(::android::aidl::tests::nested::ParcelableWithNested::Status status) override {
       return _aidl_delegate->done(status);
