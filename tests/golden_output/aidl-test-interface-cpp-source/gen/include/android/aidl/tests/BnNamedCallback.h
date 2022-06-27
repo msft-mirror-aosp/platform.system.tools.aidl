@@ -15,7 +15,7 @@ public:
 
 class INamedCallbackDelegator : public BnNamedCallback {
 public:
-  explicit INamedCallbackDelegator(::android::sp<INamedCallback> &impl) : _aidl_delegate(impl) {}
+  explicit INamedCallbackDelegator(const ::android::sp<INamedCallback> &impl) : _aidl_delegate(impl) {}
 
   ::android::binder::Status GetName(::android::String16* _aidl_return) override {
     return _aidl_delegate->GetName(_aidl_return);

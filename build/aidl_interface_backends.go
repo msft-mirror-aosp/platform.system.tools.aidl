@@ -68,7 +68,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	}
 
 	genLog := proptools.Bool(commonProperties.Gen_log)
-	genTrace := proptools.Bool(i.properties.Gen_trace)
+	genTrace := i.genTrace(lang)
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
@@ -231,7 +231,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		BaseName:        i.ModuleBase.Name(),
 		Version:         version,
 		GenRpc:          proptools.Bool(i.properties.Backend.Java.Gen_rpc),
-		GenTrace:        proptools.Bool(i.properties.Gen_trace),
+		GenTrace:        i.genTrace(langJava),
 		Unstable:        i.properties.Unstable,
 		NotFrozen:       notFrozen,
 		Flags:           i.flagsForAidlGenRule(version),

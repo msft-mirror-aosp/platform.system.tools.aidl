@@ -595,7 +595,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
   for (const auto& nested : parcel->GetNestedTypes()) {
     GenerateClass(*writer, *nested, typenames, options);
   }
-  GenerateParcelHelpers(*writer, *parcel, options);
+  GenerateParcelHelpers(*writer, *parcel, typenames, options);
   writer->Close();
   parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(code));
 
@@ -917,7 +917,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
   for (const auto& nested : decl->GetNestedTypes()) {
     GenerateClass(out, *nested, typenames, options);
   }
-  GenerateParcelHelpers(out, *decl, options);
+  GenerateParcelHelpers(out, *decl, typenames, options);
 
   out.Dedent();
   out << "}\n";
