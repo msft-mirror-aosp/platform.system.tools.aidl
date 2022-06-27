@@ -252,6 +252,9 @@ type CommonBackendProperties struct {
 	// For native modules, the property needs to be set when a module is a part of mainline modules(APEX).
 	// Forwarded to generated java/native module.
 	Min_sdk_version *string
+
+	// Whether tracing should be added to the interface.
+	Gen_trace *bool
 }
 
 type CommonNativeBackendProperties struct {
@@ -475,6 +478,26 @@ func (i *aidlInterface) minSdkVersion(lang string) *string {
 	return ver
 }
 
+func (i *aidlInterface) genTrace(lang string) bool {
+	var ver *bool
+	switch lang {
+	case langCpp:
+		ver = i.properties.Backend.Cpp.Gen_trace
+	case langJava:
+		ver = i.properties.Backend.Java.Gen_trace
+	case langNdk, langNdkPlatform:
+		ver = i.properties.Backend.Ndk.Gen_trace
+	case langRust: // unsupported b/236880829
+		ver = i.properties.Backend.Rust.Gen_trace
+	default:
+		panic(fmt.Errorf("unsupported language backend %q\n", lang))
+	}
+	if ver == nil {
+		ver = i.properties.Gen_trace
+	}
+	return proptools.Bool(ver)
+}
+
 // Dep to *-api module(aidlApi)
 type apiDepTag struct {
 	blueprint.BaseDependencyTag
@@ -509,9 +532,12 @@ func addImportedInterfaceDeps(ctx android.BottomUpMutatorContext, imports []stri
 // Run custom "Deps" mutator between AIDL modules created at LoadHook stage.
 // We can't use the "DepsMutator" for these dependencies because
 // - We need to create library modules (cc/java/...) before "arch" mutator. Note that cc_library
-//   should be mutated by os/image/arch mutators as well.
+//
+//	should be mutated by os/image/arch mutators as well.
+//
 // - When creating library modules, we need to access the original interface and its imported
-//   interfaces to determine which version to use. See aidlInterface.getImportWithVersion.
+//
+//	interfaces to determine which version to use. See aidlInterface.getImportWithVersion.
 func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 	switch i := mctx.Module().(type) {
 	case *aidlInterface:
