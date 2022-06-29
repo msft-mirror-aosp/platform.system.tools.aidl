@@ -1760,6 +1760,18 @@ bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {
   return true;
 }
 
+bool AidlInterface::UsesPermissions() const {
+  if (IsPermissionAnnotated()) {
+    return true;
+  }
+  for (auto& m : GetMethods()) {
+    if (m->GetType().IsPermissionAnnotated()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::string AidlInterface::GetDescriptor() const {
   std::string annotatedDescriptor = AidlAnnotatable::GetDescriptor();
   if (annotatedDescriptor != "") {
