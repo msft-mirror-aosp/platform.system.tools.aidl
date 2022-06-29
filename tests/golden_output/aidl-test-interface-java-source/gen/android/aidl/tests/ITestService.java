@@ -1189,7 +1189,7 @@ public interface ITestService extends android.os.IInterface
           data.enforceNoDataAvail();
           java.util.List<android.aidl.tests.ITestService.Empty> _result = this.RepeatNullableParcelableList(_arg0);
           reply.writeNoException();
-          reply.writeTypedList(_result);
+          reply.writeTypedList(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
         }
         case TRANSACTION_TakesAnIBinder:
@@ -1788,12 +1788,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeBooleanArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseBoolean, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -1819,12 +1814,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeByteArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseByte, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -1850,12 +1840,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeCharArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseChar, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -1881,12 +1866,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeIntArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseInt, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -1912,12 +1892,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeLongArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseLong, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -1943,12 +1918,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeFloatArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseFloat, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -1974,12 +1944,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeDoubleArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseDouble, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2005,12 +1970,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeStringArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2036,12 +1996,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeByteArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseByteEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2067,12 +2022,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeIntArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseIntEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2098,12 +2048,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeLongArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseLongEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2377,12 +2322,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeTypedArray(input, 0);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseParcelFileDescriptorArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2623,7 +2563,7 @@ public interface ITestService extends android.os.IInterface
         java.util.List<android.aidl.tests.ITestService.Empty> _result;
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
-          _data.writeTypedList(input);
+          _data.writeTypedList(input, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableParcelableList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2785,12 +2725,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeStringArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseUtf8CppString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2816,12 +2751,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeStringArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseNullableUtf8CppString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -2973,12 +2903,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeBinderArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseIBinderArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -3004,12 +2929,7 @@ public interface ITestService extends android.os.IInterface
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeBinderArray(input);
-          if ((repeated==null)) {
-            _data.writeInt(-1);
-          }
-          else {
-            _data.writeInt(repeated.length);
-          }
+          _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseNullableIBinderArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
@@ -3509,14 +3429,14 @@ public interface ITestService extends android.os.IInterface
       _aidl_parcel.writeTypedObject(nullable_pfd, _aidl_flag);
       _aidl_parcel.writeTypedArray(pfd_array, _aidl_flag);
       _aidl_parcel.writeTypedArray(nullable_pfd_array, _aidl_flag);
-      _aidl_parcel.writeTypedList(pfd_list);
-      _aidl_parcel.writeTypedList(nullable_pfd_list);
+      _aidl_parcel.writeTypedList(pfd_list, _aidl_flag);
+      _aidl_parcel.writeTypedList(nullable_pfd_list, _aidl_flag);
       _aidl_parcel.writeTypedObject(parcel, _aidl_flag);
       _aidl_parcel.writeTypedObject(nullable_parcel, _aidl_flag);
       _aidl_parcel.writeTypedArray(parcel_array, _aidl_flag);
       _aidl_parcel.writeTypedArray(nullable_parcel_array, _aidl_flag);
-      _aidl_parcel.writeTypedList(parcel_list);
-      _aidl_parcel.writeTypedList(nullable_parcel_list);
+      _aidl_parcel.writeTypedList(parcel_list, _aidl_flag);
+      _aidl_parcel.writeTypedList(nullable_parcel_list, _aidl_flag);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
       _aidl_parcel.setDataPosition(_aidl_start_pos);
       _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);

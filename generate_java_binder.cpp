@@ -15,9 +15,11 @@
  */
 
 #include "aidl.h"
+#include "aidl_language.h"
 #include "aidl_to_java.h"
 #include "aidl_typenames.h"
 #include "ast_java.h"
+#include "code_writer.h"
 #include "generate_java.h"
 #include "logging.h"
 #include "options.h"
@@ -379,14 +381,12 @@ ProxyClass::~ProxyClass() {}
 
 // =================================================
 
-static void GenerateWriteToParcel(std::shared_ptr<StatementBlock> addTo,
-                                  const AidlTypenames& typenames, const AidlTypeSpecifier& type,
-                                  const std::string& parcel, const std::string& var,
-                                  uint32_t min_sdk_version, bool is_return_value) {
-  string code;
-  CodeWriterPtr writer = CodeWriter::ForString(&code);
-  CodeGeneratorContext context{
-      .writer = *(writer.get()),
+static void GenerateWriteToParcel(CodeWriter& out, const AidlTypenames& typenames,
+                                  const AidlTypeSpecifier& type, const std::string& parcel,
+                                  const std::string& var, uint32_t min_sdk_version,
+                                  bool is_return_value) {
+  WriteToParcelFor(CodeGeneratorContext{
+      .writer = out,
       .typenames = typenames,
       .type = type,
       .parcel = parcel,
@@ -394,9 +394,16 @@ static void GenerateWriteToParcel(std::shared_ptr<StatementBlock> addTo,
       .min_sdk_version = min_sdk_version,
       .write_to_parcel_flag =
           is_return_value ? "android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE" : "0",
-  };
-  WriteToParcelFor(context);
-  writer->Close();
+  });
+}
+
+static void GenerateWriteToParcel(std::shared_ptr<StatementBlock> addTo,
+                                  const AidlTypenames& typenames, const AidlTypeSpecifier& type,
+                                  const std::string& parcel, const std::string& var,
+                                  uint32_t min_sdk_version, bool is_return_value) {
+  string code;
+  GenerateWriteToParcel(*CodeWriter::ForString(&code), typenames, type, parcel, var,
+                        min_sdk_version, is_return_value);
   addTo->Add(std::make_shared<LiteralStatement>(code));
 }
 
@@ -410,13 +417,18 @@ void GenerateConstantDeclarations(CodeWriter& out, const AidlDefinedType& type) 
   }
 }
 
-static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlMethod& method) {
+static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlInterface& iface,
+                                                       const AidlMethod& method) {
   auto decl = std::make_shared<Method>();
   decl->comment = GenerateComments(method);
   decl->modifiers = PUBLIC;
   decl->returnType = JavaSignatureOf(method.GetType());
   decl->name = method.GetName();
   decl->annotations = JavaAnnotationsFor(method);
+  // If the interface has some permission annotation, add it to the method.
+  if (auto iface_annotation = JavaPermissionAnnotation(iface); iface_annotation) {
+    decl->annotations.push_back(*iface_annotation);
+  }
 
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
     auto var = std::make_shared<Variable>(JavaSignatureOf(arg->GetType()), arg->GetName());
@@ -697,91 +709,72 @@ static void GenerateStubCaseOutline(const AidlInterface& iface, const AidlMethod
   }
 }
 
-static std::shared_ptr<Method> GenerateProxyMethod(const AidlInterface& iface,
-                                                   const AidlMethod& method,
-                                                   const std::string& transactCodeName, bool oneway,
-                                                   std::shared_ptr<ProxyClass> proxyClass,
-                                                   const AidlTypenames& typenames,
-                                                   const Options& options) {
-  auto proxy = std::make_shared<Method>();
-  proxy->comment = GenerateComments(method);
-  proxy->modifiers = PUBLIC | OVERRIDE;
-  proxy->returnType = JavaSignatureOf(method.GetType());
-  proxy->name = method.GetName();
-  proxy->statements = std::make_shared<StatementBlock>();
-  for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
-    proxy->parameters.push_back(
-        std::make_shared<Variable>(JavaSignatureOf(arg->GetType()), arg->GetName()));
+template <typename Formatter>
+static std::string ArgList(const AidlMethod& method, Formatter formatter) {
+  vector<string> args;
+  for (const auto& arg : method.GetArguments()) {
+    args.push_back(std::invoke(formatter, *arg));
   }
-  proxy->exceptions.push_back("android.os.RemoteException");
+  return Join(args, ", ");
+}
+
+static std::string FormatArgForDecl(const AidlArgument& arg) {
+  return JavaSignatureOf(arg.GetType()) + " " + arg.GetName();
+}
+
+static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
+                                const AidlMethod& method, const std::string& transactCodeName,
+                                bool oneway, const AidlTypenames& typenames,
+                                const Options& options) {
+  bool is_void = method.GetType().GetName() == "void";
+
+  out << GenerateComments(method);
+  out << "@Override public " << JavaSignatureOf(method.GetType()) << " " << method.GetName() << "("
+      << ArgList(method, FormatArgForDecl) << ") throws android.os.RemoteException\n{\n";
+  out.Indent();
 
   // the parcels
-  auto _data = std::make_shared<Variable>("android.os.Parcel", "_data");
   if (options.GenRpc()) {
-    proxy->statements->Add(std::make_shared<LiteralStatement>(
-        "android.os.Parcel _data = android.os.Parcel.obtain(asBinder());\n"));
+    out << "android.os.Parcel _data = android.os.Parcel.obtain(asBinder());\n";
   } else {
-    proxy->statements->Add(std::make_shared<LiteralStatement>(
-        "android.os.Parcel _data = android.os.Parcel.obtain();\n"));
+    out << "android.os.Parcel _data = android.os.Parcel.obtain();\n";
   }
 
   if (iface.IsSensitiveData()) {
-    proxy->statements->Add(std::make_shared<LiteralStatement>("_data.markSensitive();\n"));
+    out << "_data.markSensitive();\n";
   }
 
-  std::shared_ptr<Variable> _reply = nullptr;
   if (!oneway) {
-    _reply = std::make_shared<Variable>("android.os.Parcel", "_reply");
-    proxy->statements->Add(std::make_shared<VariableDeclaration>(
-        _reply, std::make_shared<MethodCall>("android.os.Parcel", "obtain")));
+    out << "android.os.Parcel _reply = android.os.Parcel.obtain();\n";
   }
 
   // the return value
-  std::shared_ptr<Variable> _result = nullptr;
-  if (method.GetType().GetName() != "void") {
-    _result = std::make_shared<Variable>(*proxy->returnType, "_result");
-    proxy->statements->Add(std::make_shared<VariableDeclaration>(_result));
+  if (!is_void) {
+    out << JavaSignatureOf(method.GetType()) << " _result;\n";
   }
 
-  // try and finally
-  auto tryStatement = std::make_shared<TryStatement>();
-  proxy->statements->Add(tryStatement);
-  auto finallyStatement = std::make_shared<FinallyStatement>();
-  proxy->statements->Add(finallyStatement);
+  out << "try {\n";
+  out.Indent();
 
   if (options.GenTraces()) {
-    tryStatement->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
-            std::make_shared<StringLiteralExpression>("AIDL::java::" + iface.GetName() +
-                                                      "::" + method.GetName() + "::client")}));
+    auto tag = "AIDL::java::" + iface.GetName() + "::" + method.GetName() + "::client";
+    out << "android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, \"" << tag << "\");\n";
   }
 
   // the interface identifier token: the DESCRIPTOR constant, marshalled as a
   // string
-  tryStatement->statements->Add(std::make_shared<MethodCall>(
-      _data, "writeInterfaceToken",
-      std::vector<std::shared_ptr<Expression>>{std::make_shared<LiteralExpression>("DESCRIPTOR")}));
+  out << "_data.writeInterfaceToken(DESCRIPTOR);\n";
 
   // the parameters
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
-    auto v = std::make_shared<Variable>(JavaSignatureOf(arg->GetType()), arg->GetName());
     AidlArgument::Direction dir = arg->GetDirection();
     if (dir == AidlArgument::OUT_DIR && arg->GetType().IsDynamicArray()) {
-      auto checklen = std::make_shared<IfStatement>();
-      checklen->expression = std::make_shared<Comparison>(v, "==", NULL_VALUE);
-      checklen->statements->Add(std::make_shared<MethodCall>(
-          _data, "writeInt",
-          std::vector<std::shared_ptr<Expression>>{std::make_shared<LiteralExpression>("-1")}));
-      checklen->elseif = std::make_shared<IfStatement>();
-      checklen->elseif->statements->Add(std::make_shared<MethodCall>(
-          _data, "writeInt",
-          std::vector<std::shared_ptr<Expression>>{std::make_shared<FieldVariable>(v, "length")}));
-      tryStatement->statements->Add(checklen);
+      // In Java we pass a pre-allocated array for an 'out' argument. For transaction,
+      // we pass the size of the array so that the remote can allocate the array with the same size.
+      out << "_data.writeInt(" << arg->GetName() << ".length);\n";
     } else if (dir & AidlArgument::IN_DIR) {
-      GenerateWriteToParcel(tryStatement->statements, typenames, arg->GetType(), _data->name,
-                            v->name, options.GetMinSdkVersion(), /*is_return_value=*/false);
+      GenerateWriteToParcel(out, typenames, arg->GetType(), "_data", arg->GetName(),
+                            options.GetMinSdkVersion(), /*is_return_value=*/false);
     }
   }
 
@@ -790,24 +783,17 @@ static std::shared_ptr<Method> GenerateProxyMethod(const AidlInterface& iface,
   if (iface.IsSensitiveData()) flags.push_back("android.os.IBinder.FLAG_CLEAR_BUF");
 
   // the transact call
-  auto call = std::make_shared<MethodCall>(
-      proxyClass->mRemote, "transact",
-      std::vector<std::shared_ptr<Expression>>{
-          std::make_shared<LiteralExpression>("Stub." + transactCodeName), _data,
-          _reply ? _reply : NULL_VALUE,
-          std::make_shared<LiteralExpression>(flags.empty() ? "0" : Join(flags, " | "))});
-  auto _status = std::make_shared<Variable>("boolean", "_status");
-  tryStatement->statements->Add(std::make_shared<VariableDeclaration>(_status, call));
+  out << "boolean _status = mRemote.transact(Stub." << transactCodeName << ", _data, "
+      << (oneway ? "null" : "_reply") << ", " << (flags.empty() ? "0" : Join(flags, " | "))
+      << ");\n";
 
   // TODO(b/151102494): annotation is applied on the return type
-  if (method.GetType().IsPropagateAllowBlocking()) {
+  if (method.GetType().IsPropagateAllowBlocking() && !oneway) {
     if (options.GetMinSdkVersion() < JAVA_PROPAGATE_VERSION) {
-      tryStatement->statements->Add(std::make_shared<LiteralStatement>(
-          "if (android.os.Build.VERSION.SDK_INT >= " + std::to_string(JAVA_PROPAGATE_VERSION) +
-          ") { _reply.setPropagateAllowBlocking(); }\n"));
+      out << "if (android.os.Build.VERSION.SDK_INT >= " + std::to_string(JAVA_PROPAGATE_VERSION) +
+                 ") { _reply.setPropagateAllowBlocking(); }\n";
     } else {
-      tryStatement->statements->Add(
-          std::make_shared<LiteralStatement>("_reply.setPropagateAllowBlocking();\n"));
+      out << "_reply.setPropagateAllowBlocking();\n";
     }
   }
 
@@ -815,103 +801,89 @@ static std::shared_ptr<Method> GenerateProxyMethod(const AidlInterface& iface,
   // method in the default impl, if set before. Otherwise, throw a RuntimeException if the interface
   // is versioned. We can't throw the exception for unversioned interface because that would be an
   // app breaking change.
-  vector<string> arg_names;
-  for (const auto& arg : method.GetArguments()) {
-    arg_names.emplace_back(arg->GetName());
-  }
-  bool has_return_type = method.GetType().GetName() != "void";
-
-  auto checkDefaultImpl = std::make_shared<IfStatement>();
-  checkDefaultImpl->expression = std::make_shared<LiteralExpression>("getDefaultImpl() != null");
-  if (has_return_type) {
-    checkDefaultImpl->statements->Add(std::make_shared<LiteralStatement>(
-        android::base::StringPrintf("return getDefaultImpl().%s(%s);\n", method.GetName().c_str(),
-                                    Join(arg_names, ", ").c_str())));
-  } else {
-    checkDefaultImpl->statements->Add(std::make_shared<LiteralStatement>(
-        android::base::StringPrintf("getDefaultImpl().%s(%s);\n", method.GetName().c_str(),
-                                    Join(arg_names, ", ").c_str())));
-    checkDefaultImpl->statements->Add(std::make_shared<LiteralStatement>("return;\n"));
-  }
-
-  auto checkTransactionError = std::make_shared<IfStatement>();
-  checkTransactionError->expression = std::make_shared<LiteralExpression>("!_status");
-
-  if (iface.IsJavaDefault()) {
-    checkTransactionError->statements->Add(checkDefaultImpl);
-  }
-
-  if (options.Version() > 0) {
-    checkTransactionError->statements->Add(
-        std::make_shared<LiteralStatement>(android::base::StringPrintf(
-            "throw new android.os.RemoteException(\"Method %s is unimplemented.\");\n",
-            method.GetName().c_str())));
-  }
-
   if (iface.IsJavaDefault() || options.Version() > 0) {
-    tryStatement->statements->Add(checkTransactionError);
+    out << "if (!_status) {\n";
+    out.Indent();
+
+    if (iface.IsJavaDefault()) {
+      out << "if (getDefaultImpl() != null) {\n";
+      out.Indent();
+      if (is_void) {
+        out << "getDefaultImpl()." << method.GetName() << "("
+            << ArgList(method, &AidlArgument::GetName) << ");\n";
+        out << "return;\n";
+      } else {
+        out << "return getDefaultImpl()." << method.GetName() << "("
+            << ArgList(method, &AidlArgument::GetName) << ");\n";
+      }
+      out.Dedent();
+      out << "}\n";
+    }
+
+    if (options.Version() > 0) {
+      out << "throw new android.os.RemoteException(\"Method " << method.GetName()
+          << " is unimplemented.\");\n";
+    }
+
+    out.Dedent();
+    out << "}\n";
   }
 
-  // throw back exceptions.
-  if (_reply) {
-    auto ex = std::make_shared<MethodCall>(_reply, "readException");
-    tryStatement->statements->Add(ex);
-  }
-
-  // returning and cleanup
-  if (_reply != nullptr) {
+  if (!oneway) {
     // keep this across return value and arguments in order to create the
     // classloader at most once.
     bool is_classloader_created = false;
-    if (_result != nullptr) {
-      string code;
-      CodeWriterPtr writer = CodeWriter::ForString(&code);
-      CodeGeneratorContext context{.writer = *(writer.get()),
-                                   .typenames = typenames,
-                                   .type = method.GetType(),
-                                   .parcel = _reply->name,
-                                   .var = _result->name,
-                                   .min_sdk_version = options.GetMinSdkVersion(),
-                                   .is_classloader_created = &is_classloader_created};
-      CreateFromParcelFor(context);
-      writer->Close();
-      tryStatement->statements->Add(std::make_shared<LiteralStatement>(code));
+
+    // throw back exceptions.
+    out << "_reply.readException();\n";
+
+    if (!is_void) {
+      CreateFromParcelFor(CodeGeneratorContext{.writer = out,
+                                               .typenames = typenames,
+                                               .type = method.GetType(),
+                                               .parcel = "_reply",
+                                               .var = "_result",
+                                               .min_sdk_version = options.GetMinSdkVersion(),
+                                               .is_classloader_created = &is_classloader_created});
     }
 
     // the out/inout parameters
     for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
       if (arg->GetDirection() & AidlArgument::OUT_DIR) {
-        string code;
-        CodeWriterPtr writer = CodeWriter::ForString(&code);
-        CodeGeneratorContext context{.writer = *(writer.get()),
-                                     .typenames = typenames,
-                                     .type = arg->GetType(),
-                                     .parcel = _reply->name,
-                                     .var = arg->GetName(),
-                                     .min_sdk_version = options.GetMinSdkVersion(),
-                                     .is_classloader_created = &is_classloader_created};
-        ReadFromParcelFor(context);
-        writer->Close();
-        tryStatement->statements->Add(std::make_shared<LiteralStatement>(code));
+        ReadFromParcelFor(CodeGeneratorContext{.writer = out,
+                                               .typenames = typenames,
+                                               .type = arg->GetType(),
+                                               .parcel = "_reply",
+                                               .var = arg->GetName(),
+                                               .min_sdk_version = options.GetMinSdkVersion(),
+                                               .is_classloader_created = &is_classloader_created});
       }
     }
-
-    finallyStatement->statements->Add(std::make_shared<MethodCall>(_reply, "recycle"));
   }
-  finallyStatement->statements->Add(std::make_shared<MethodCall>(_data, "recycle"));
+
+  out.Dedent();
+  out << "}\nfinally {\n";
+  out.Indent();
+
+  // returning and cleanup
+  if (!oneway) {
+    out << "_reply.recycle();\n";
+  }
+  out << "_data.recycle();\n";
 
   if (options.GenTraces()) {
-    finallyStatement->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceEnd",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")}));
+    out << "android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);\n";
   }
 
-  if (_result != nullptr) {
-    proxy->statements->Add(std::make_shared<ReturnStatement>(_result));
+  out.Dedent();
+  out << "}\n";  // finally
+
+  if (!is_void) {
+    out << "return _result;\n";
   }
 
-  return proxy;
+  out.Dedent();
+  out << "}\n";  // method body
 }
 
 static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method, Class* interface,
@@ -941,7 +913,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
   // == the declaration in the interface ===================================
   std::shared_ptr<ClassElement> decl;
   if (method.IsUserDefined()) {
-    decl = GenerateInterfaceMethod(method);
+    decl = GenerateInterfaceMethod(iface, method);
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       std::ostringstream code;
@@ -990,14 +962,13 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
   }
 
   // == the proxy method ===================================================
-  std::shared_ptr<ClassElement> proxy = nullptr;
+  string proxy_code;
+  CodeWriterPtr writer = CodeWriter::ForString(&proxy_code);
+  CodeWriter& code = *writer;
   if (method.IsUserDefined()) {
-    proxy = GenerateProxyMethod(iface, method, transactCodeName, oneway, proxyClass, typenames,
-                                options);
-
+    GenerateProxyMethod(code, iface, method, transactCodeName, oneway, typenames, options);
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
-      std::ostringstream code;
       code << "@Override\n"
            << "public int " << kGetInterfaceVersion << "()"
            << " throws "
@@ -1029,10 +1000,8 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
            << "  }\n"
            << "  return mCachedVersion;\n"
            << "}\n";
-      proxy = std::make_shared<LiteralClassElement>(code.str());
     }
     if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
-      std::ostringstream code;
       code << "@Override\n"
            << "public synchronized String " << kGetInterfaceHash << "()"
            << " throws "
@@ -1064,11 +1033,11 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
            << "  }\n"
            << "  return mCachedHash;\n"
            << "}\n";
-      proxy = std::make_shared<LiteralClassElement>(code.str());
     }
   }
-  if (proxy != nullptr) {
-    proxyClass->elements.push_back(proxy);
+  code.Close();
+  if (!proxy_code.empty()) {
+    proxyClass->elements.push_back(std::make_shared<LiteralClassElement>(proxy_code));
   }
 }
 
@@ -1393,7 +1362,7 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   for (const auto& nested : iface->GetNestedTypes()) {
     GenerateClass(*writer, *nested, typenames, options);
   }
-  GenerateParcelHelpers(*writer, *iface, options);
+  GenerateParcelHelpers(*writer, *iface, typenames, options);
   writer->Close();
   interface->elements.push_back(std::make_shared<LiteralClassElement>(code));
 

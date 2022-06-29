@@ -68,7 +68,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	}
 
 	genLog := proptools.Bool(commonProperties.Gen_log)
-	genTrace := proptools.Bool(i.properties.Gen_trace)
+	genTrace := i.genTrace(lang)
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
@@ -231,7 +231,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		BaseName:        i.ModuleBase.Name(),
 		Version:         version,
 		GenRpc:          proptools.Bool(i.properties.Backend.Java.Gen_rpc),
-		GenTrace:        proptools.Bool(i.properties.Gen_trace),
+		GenTrace:        i.genTrace(langJava),
 		Unstable:        i.properties.Unstable,
 		NotFrozen:       notFrozen,
 		Flags:           i.flagsForAidlGenRule(version),
@@ -451,6 +451,9 @@ func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDown
 			p.Shared_libs = append(p.Shared_libs, imports...)
 			p.Export_shared_lib_headers = append(p.Export_shared_lib_headers, imports...)
 		}
-		ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
+		module := ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
+		// AIDL-generated CC modules can't be used across system/vendor boundary. So marking it
+		// as MustUseVendorVariant. See build/soong/cc/config/vndk.go
+		module.(*cc.Module).Properties.MustUseVendorVariant = true
 	}
 }
