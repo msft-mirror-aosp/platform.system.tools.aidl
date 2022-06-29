@@ -100,3 +100,9 @@ TEST_F(VersionedInterfaceTest, newerDelegatorReturnsImplHash) {
   auto delegator = sp<IFooInterfaceDelegator>::make(versioned);
   EXPECT_EQ("9e7be1859820c59d9d55dd133e71a3687b5d2e5b", delegator->getInterfaceHash());
 }
+
+TEST_F(VersionedInterfaceTest, errorWhenCallingV2Api) {
+  auto status = versioned->newApi();
+  EXPECT_EQ(::android::UNKNOWN_TRANSACTION, status.transactionError()) << status;
+  EXPECT_FALSE(status.isOk());
+}
