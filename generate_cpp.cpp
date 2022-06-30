@@ -890,12 +890,13 @@ void GenerateNestedTypeDecls(CodeWriter& out, const AidlDefinedType& type,
 void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
                                 const AidlTypenames& typenames, const Options& options) {
   const string i_name = ClassName(interface, ClassNames::INTERFACE);
-
+  out << "class " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << ";\n\n";
   out << "class";
   GenerateDeprecated(out, interface);
   out << " " << i_name << " : public ::android::IInterface {\n";
   out << "public:\n";
   out.Indent();
+  out << "typedef " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << " DefaultDelegator;\n";
   out << "DECLARE_META_INTERFACE(" << ClassName(interface, ClassNames::BASE) << ")\n";
   if (options.Version() > 0) {
     out << "const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
