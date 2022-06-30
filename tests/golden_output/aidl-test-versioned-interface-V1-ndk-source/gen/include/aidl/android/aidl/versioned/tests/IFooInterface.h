@@ -17,8 +17,11 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
+class IFooInterfaceDelegator;
+
 class IFooInterface : public ::ndk::ICInterface {
 public:
+  typedef IFooInterfaceDelegator DefaultDelegator;
   static const char* descriptor;
   IFooInterface();
   virtual ~IFooInterface();
