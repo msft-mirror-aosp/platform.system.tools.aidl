@@ -29,8 +29,11 @@
 namespace android {
 namespace aidl {
 namespace tests {
+class ITestServiceDelegator;
+
 class ITestService : public ::android::IInterface {
 public:
+  typedef ITestServiceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TestService)
   class Empty : public ::android::Parcelable {
   public:

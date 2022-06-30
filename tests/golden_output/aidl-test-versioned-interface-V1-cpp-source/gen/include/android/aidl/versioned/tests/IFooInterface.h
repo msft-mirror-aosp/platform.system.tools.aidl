@@ -15,8 +15,11 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
+class IFooInterfaceDelegator;
+
 class IFooInterface : public ::android::IInterface {
 public:
+  typedef IFooInterfaceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(FooInterface)
   const int32_t VERSION = 1;
   const std::string HASH = "9e7be1859820c59d9d55dd133e71a3687b5d2e5b";

@@ -9,8 +9,11 @@
 namespace android {
 namespace aidl {
 namespace tests {
+class INamedCallbackDelegator;
+
 class INamedCallback : public ::android::IInterface {
 public:
+  typedef INamedCallbackDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(NamedCallback)
   virtual ::android::binder::Status GetName(::android::String16* _aidl_return) = 0;
 };  // class INamedCallback
