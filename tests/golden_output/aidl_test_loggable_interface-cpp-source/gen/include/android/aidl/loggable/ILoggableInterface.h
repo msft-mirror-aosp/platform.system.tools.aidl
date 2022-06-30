@@ -17,11 +17,17 @@
 namespace android {
 namespace aidl {
 namespace loggable {
+class ILoggableInterfaceDelegator;
+
 class ILoggableInterface : public ::android::IInterface {
 public:
+  typedef ILoggableInterfaceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(LoggableInterface)
+  class ISubDelegator;
+
   class ISub : public ::android::IInterface {
   public:
+    typedef ISubDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(Sub)
     virtual ::android::binder::Status Log(int32_t value) = 0;
   };  // class ISub
