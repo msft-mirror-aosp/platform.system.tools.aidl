@@ -1104,12 +1104,14 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
 void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
                                 const AidlInterface& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::INTERFACE);
-
+  out << "class " << ClassName(defined_type, ClassNames::DELEGATOR_IMPL) << ";\n\n";
   out << "class";
   cpp::GenerateDeprecated(out, defined_type);
   out << " " << clazz << " : public ::ndk::ICInterface {\n";
   out << "public:\n";
   out.Indent();
+  out << "typedef " << ClassName(defined_type, ClassNames::DELEGATOR_IMPL)
+      << " DefaultDelegator;\n";
   out << "static const char* " << kDescriptor << ";\n";
   out << clazz << "();\n";
   out << "virtual ~" << clazz << "();\n";
