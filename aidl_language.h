@@ -392,6 +392,7 @@ struct DynamicArray {};
 struct FixedSizeArray {
   FixedSizeArray(std::unique_ptr<AidlConstantValue> dim) { dimensions.push_back(std::move(dim)); }
   std::vector<std::unique_ptr<AidlConstantValue>> dimensions;
+  std::vector<int32_t> GetDimensionInts() const;
 };
 // Represents `[]` or `[N]` part of type specifier
 using ArrayType = std::variant<DynamicArray, FixedSizeArray>;
