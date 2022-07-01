@@ -627,13 +627,17 @@ bool AidlTypeSpecifier::MakeArray(ArrayType array_type) {
   return false;
 }
 
+std::vector<int32_t> FixedSizeArray::GetDimensionInts() const {
+  std::vector<int32_t> ints;
+  for (const auto& dim : dimensions) {
+    ints.push_back(dim->EvaluatedValue<int32_t>());
+  }
+  return ints;
+}
+
 std::vector<int32_t> AidlTypeSpecifier::GetFixedSizeArrayDimensions() const {
   AIDL_FATAL_IF(!IsFixedSizeArray(), "not a fixed-size array");
-  std::vector<int32_t> dimensions;
-  for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
-    dimensions.push_back(dim->EvaluatedValue<int32_t>());
-  }
-  return dimensions;
+  return std::get<FixedSizeArray>(GetArray()).GetDimensionInts();
 }
 
 string AidlTypeSpecifier::Signature() const {
