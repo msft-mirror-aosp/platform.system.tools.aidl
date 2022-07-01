@@ -30,8 +30,11 @@ namespace aidl {
 namespace android {
 namespace aidl {
 namespace tests {
+class ITestServiceDelegator;
+
 class ITestService : public ::ndk::ICInterface {
 public:
+  typedef ITestServiceDelegator DefaultDelegator;
   static const char* descriptor;
   ITestService();
   virtual ~ITestService();
