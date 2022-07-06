@@ -547,6 +547,11 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	// API dump from source is frozen as the next stable version. Triggered by `m <name>-freeze-api`
 	nextVersion := m.nextVersion()
 	m.freezeApiTimestamp = m.makeApiDumpAsVersion(ctx, totApiDump, nextVersion, latestVersionDump)
+
+	nextApiDir := filepath.Join(ctx.ModuleDir(), m.apiDir(), nextVersion)
+	if android.ExistentPathForSource(ctx, nextApiDir).Valid() {
+		ctx.ModuleErrorf("API Directory exists for version %s path %s exists, but it is not specified in versions field.", nextVersion, nextApiDir)
+	}
 }
 
 func (m *aidlApi) AndroidMk() android.AndroidMkData {
