@@ -1071,18 +1071,12 @@ void GenerateMetadataTrait(CodeWriter& out, const ParcelableType* parcel) {
 template <typename ParcelableType>
 void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
                         const AidlTypenames& typenames) {
+  vector<string> derives = parcel->RustDerive();
+
   // Debug is always derived because all Rust AIDL types implement it
   // ParcelFileDescriptor doesn't support any of the others because
   // it's a newtype over std::fs::File which only implements Debug
-  vector<string> derives{"Debug"};
-  const AidlAnnotation* derive_annotation = parcel->RustDerive();
-  if (derive_annotation != nullptr) {
-    for (const auto& name_and_param : derive_annotation->AnnotationParams(ConstantValueDecorator)) {
-      if (name_and_param.second == "true") {
-        derives.push_back(name_and_param.first);
-      }
-    }
-  }
+  derives.insert(derives.begin(), "Debug");
 
   *code_writer << "#[derive(" << Join(derives, ", ") << ")]\n";
   GenerateParcelBody(*code_writer, parcel, typenames);

@@ -360,7 +360,7 @@ class AidlAnnotatable : public AidlCommentable {
   std::string GetDescriptor() const;
 
   const AidlAnnotation* UnsupportedAppUsage() const;
-  const AidlAnnotation* RustDerive() const;
+  std::vector<std::string> RustDerive() const;
   const AidlAnnotation* BackingType() const;
   std::vector<std::string> SuppressWarnings() const;
   std::unique_ptr<android::aidl::perm::Expression> EnforceExpression() const;
