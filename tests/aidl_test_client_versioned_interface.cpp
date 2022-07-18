@@ -62,7 +62,6 @@ TEST_F(VersionedInterfaceTest, errorWhenPassingAUnionWithNewField) {
   std::string result;
   auto status =
       versioned->acceptUnionAndReturnString(BazUnion::make<BazUnion::longNum>(42L), &result);
-  EXPECT_FALSE(status.isOk());
   // b/173458620 - Java and C++ return different errors
   if (backend == BackendType::JAVA) {
     EXPECT_EQ(::android::binder::Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode()) << status;
@@ -99,4 +98,9 @@ TEST_F(VersionedInterfaceTest, newerDelegatorReturnsImplVersion) {
 TEST_F(VersionedInterfaceTest, newerDelegatorReturnsImplHash) {
   auto delegator = sp<IFooInterfaceDelegator>::make(versioned);
   EXPECT_EQ("9e7be1859820c59d9d55dd133e71a3687b5d2e5b", delegator->getInterfaceHash());
+}
+
+TEST_F(VersionedInterfaceTest, errorWhenCallingV2Api) {
+  auto status = versioned->newApi();
+  EXPECT_EQ(::android::UNKNOWN_TRANSACTION, status.transactionError()) << status;
 }

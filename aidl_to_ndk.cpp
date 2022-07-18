@@ -30,9 +30,6 @@ namespace android {
 namespace aidl {
 namespace ndk {
 
-static const AidlTypeSpecifier kIntType{AIDL_LOCATION_HERE, "int", /*array=*/std::nullopt, nullptr,
-                                        Comments{}};
-
 std::string NdkHeaderFile(const AidlDefinedType& defined_type, cpp::ClassNames name,
                           bool use_os_sep) {
   char seperator = (use_os_sep) ? OS_PATH_SEPARATOR : '/';
@@ -123,10 +120,9 @@ static TypeInfo WrapArrayType(TypeInfo info, const ArrayType* array) {
   if (std::get_if<DynamicArray>(array)) {
     info.cpp_name = "std::vector<" + info.cpp_name + ">";
   } else {
-    const auto& dimensions = std::get<FixedSizeArray>(*array).dimensions;
+    auto dimensions = std::get<FixedSizeArray>(*array).GetDimensionInts();
     for (auto it = rbegin(dimensions), end = rend(dimensions); it != end; it++) {
-      info.cpp_name = "std::array<" + info.cpp_name + ", " +
-                      (*it)->ValueString(kIntType, ConstantValueDecorator) + ">";
+      info.cpp_name = "std::array<" + info.cpp_name + ", " + std::to_string(*it) + ">";
     }
   }
   info.value_is_cheap = false;

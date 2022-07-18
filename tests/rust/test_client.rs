@@ -935,6 +935,17 @@ fn test_read_data_correctly_after_parcelable_with_new_field() {
     assert_eq!(out_foo.intDefault42, 0);
 }
 
+#[test]
+fn test_calling_v2_api_triggers_error() {
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
+        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
+            .expect("did not get binder service");
+
+    let ret = service.newApi();
+
+    assert_eq!(ret.unwrap_err().transaction_error(), binder::StatusCode::UNKNOWN_TRANSACTION);
+}
+
 fn test_renamed_interface<F>(f: F)
 where
     F: FnOnce(binder::Strong<dyn IOldName::IOldName>, binder::Strong<dyn INewName::INewName>),
