@@ -468,8 +468,16 @@ const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE);
 }
 
-const AidlAnnotation* AidlAnnotatable::RustDerive() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::RUST_DERIVE);
+std::vector<std::string> AidlAnnotatable::RustDerive() const {
+  std::vector<std::string> ret;
+  if (const auto* ann = GetAnnotation(annotations_, AidlAnnotation::Type::RUST_DERIVE)) {
+    for (const auto& name_and_param : ann->AnnotationParams(AidlConstantValueDecorator)) {
+      if (name_and_param.second == "true") {
+        ret.push_back(name_and_param.first);
+      }
+    }
+  }
+  return ret;
 }
 
 const AidlAnnotation* AidlAnnotatable::BackingType() const {
