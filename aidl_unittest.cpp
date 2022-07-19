@@ -457,7 +457,7 @@ TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
   string code =
       "@VintfStability\n"
       "parcelable Foo {\n"
-      "  interface INested {}"
+      "  interface INested { interface INastyNester {} }"
       "}";
   EXPECT_NE(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr,
                            {"--structured", "--stability", "vintf"}));
@@ -465,6 +465,10 @@ TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
   auto nested = typenames_.TryGetDefinedType("Foo.INested");
   ASSERT_NE(nullptr, nested);
   ASSERT_TRUE(nested->IsVintfStability());
+
+  auto nastyNester = typenames_.TryGetDefinedType("Foo.INested.INastyNester");
+  ASSERT_NE(nullptr, nastyNester);
+  ASSERT_TRUE(nastyNester->IsVintfStability());
 }
 
 TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
