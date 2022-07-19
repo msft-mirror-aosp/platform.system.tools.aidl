@@ -1300,6 +1300,26 @@ bool AidlDefinedType::CheckValidWithMembers(const AidlTypenames& typenames) cons
     }
   }
 
+  // Rust derive fields must be transitive
+  const std::vector<std::string> rust_derives = RustDerive();
+  for (const auto& v : GetFields()) {
+    const AidlDefinedType* field = typenames.TryGetDefinedType(v->GetType().GetName());
+    if (!field) continue;
+
+    // could get this from CONTEXT_*, but we don't currently save this info when we validated
+    // contexts
+    if (!field->AsStructuredParcelable() && !field->AsUnionDeclaration()) continue;
+
+    auto subs = field->RustDerive();
+    for (const std::string& derive : rust_derives) {
+      if (std::find(subs.begin(), subs.end(), derive) == subs.end()) {
+        AIDL_ERROR(v) << "Field " << v->GetName() << " of type with @RustDerive " << derive
+                      << " also needs to derive this";
+        success = false;
+      }
+    }
+  }
+
   set<string> constant_names;
   for (const auto& constant : GetConstantDeclarations()) {
     if (constant_names.count(constant->GetName()) > 0) {
