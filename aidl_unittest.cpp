@@ -4015,6 +4015,20 @@ TEST_F(AidlTest, ParseRustDerive) {
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
 }
 
+TEST_P(AidlTest, TypesShouldHaveRustDerive) {
+  CaptureStderr();
+  string code =
+      "@RustDerive(PartialEq=true)\n"
+      "parcelable Foo {\n"
+      "  parcelable Bar {}\n"
+      "  Bar bar;\n"
+      "}";
+  EXPECT_EQ(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr, {}));
+  EXPECT_THAT(
+      GetCapturedStderr(),
+      testing::HasSubstr("Field bar of type with @RustDerive PartialEq also needs to derive this"));
+}
+
 TEST_F(AidlTest, EmptyEnforceAnnotation) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
