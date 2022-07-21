@@ -457,7 +457,7 @@ TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
   string code =
       "@VintfStability\n"
       "parcelable Foo {\n"
-      "  interface INested {}"
+      "  interface INested { interface INastyNester {} }"
       "}";
   EXPECT_NE(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr,
                            {"--structured", "--stability", "vintf"}));
@@ -465,6 +465,10 @@ TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
   auto nested = typenames_.TryGetDefinedType("Foo.INested");
   ASSERT_NE(nullptr, nested);
   ASSERT_TRUE(nested->IsVintfStability());
+
+  auto nastyNester = typenames_.TryGetDefinedType("Foo.INested.INastyNester");
+  ASSERT_NE(nullptr, nastyNester);
+  ASSERT_TRUE(nastyNester->IsVintfStability());
 }
 
 TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
@@ -4009,6 +4013,20 @@ TEST_F(AidlTest, ParseRustDerive) {
 
   Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
+}
+
+TEST_P(AidlTest, TypesShouldHaveRustDerive) {
+  CaptureStderr();
+  string code =
+      "@RustDerive(PartialEq=true)\n"
+      "parcelable Foo {\n"
+      "  parcelable Bar {}\n"
+      "  Bar bar;\n"
+      "}";
+  EXPECT_EQ(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr, {}));
+  EXPECT_THAT(
+      GetCapturedStderr(),
+      testing::HasSubstr("Field bar of type with @RustDerive PartialEq also needs to derive this"));
 }
 
 TEST_F(AidlTest, EmptyEnforceAnnotation) {
