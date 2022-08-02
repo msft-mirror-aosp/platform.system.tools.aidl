@@ -120,6 +120,6 @@ func aidlRustLibraryFactory() android.Module {
 		properties:         aidlRustSourceProviderProperties{},
 	}
 
-	module := rust.NewSourceProviderModule(android.HostAndDeviceSupported, sourceProvider, false, false)
+	module := rust.NewSourceProviderModule(android.HostAndDeviceSupported, sourceProvider, false)
 	return module.Init()
 }
