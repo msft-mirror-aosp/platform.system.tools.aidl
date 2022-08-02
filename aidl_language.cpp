@@ -1056,6 +1056,7 @@ bool AidlConstantDeclaration::CheckValid(const AidlTypenames& typenames) const {
   bool valid = true;
   valid &= type_->CheckValid(typenames);
   valid &= value_->CheckValid();
+  valid = valid && !ValueString(AidlConstantValueDecorator).empty();
   if (!valid) return false;
 
   const static set<string> kSupportedConstTypes = {"String", "byte", "int", "long"};
