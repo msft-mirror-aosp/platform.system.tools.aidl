@@ -1591,6 +1591,7 @@ func TestDuplicateInterfacesWithTheSameNameInDifferentSoongNamespaces(t *testing
 		"vendor/a/foo/Android.bp": []byte(`
 			aidl_interface {
 				name: "foo",
+				owner: "vendor",
 				srcs: ["IFoo.aidl"],
 				imports: ["common-V1"],
 			}
@@ -1601,6 +1602,7 @@ func TestDuplicateInterfacesWithTheSameNameInDifferentSoongNamespaces(t *testing
 		"vendor/b/foo/Android.bp": []byte(`
 			aidl_interface {
 				name: "foo",
+				owner: "vendor",
 				srcs: ["IFoo.aidl"],
 				imports: ["common-V2"],
 			}
@@ -1622,6 +1624,7 @@ func TestUnstableChecksForAidlInterfacesInDifferentNamespaces(t *testing.T) {
 		"vendor/a/foo/Android.bp": []byte(`
 			aidl_interface {
 				name: "foo",
+				owner: "vendor",
 				srcs: ["IFoo.aidl"],
 				versions: ["1", "2"],
 			}
@@ -1640,6 +1643,7 @@ func TestUnstableChecksForAidlInterfacesInDifferentNamespaces(t *testing.T) {
 		"vendor/b/foo/Android.bp": []byte(`
 			aidl_interface {
 				name: "foo",
+				owner: "vendor",
 				srcs: ["IFoo.aidl"],
 				versions: ["1"],
 			}
