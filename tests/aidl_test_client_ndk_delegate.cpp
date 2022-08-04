@@ -27,6 +27,8 @@ using aidl::android::aidl::tests::ITestServiceDelegator;
 
 static constexpr int8_t kCustomByte = 8;
 
+static_assert(std::is_same<ITestService::DefaultDelegator, ITestServiceDelegator>::value);
+
 struct CustomDelegator : public ITestServiceDelegator {
  public:
   CustomDelegator(std::shared_ptr<ITestService>& impl) : ITestServiceDelegator(impl) {}
