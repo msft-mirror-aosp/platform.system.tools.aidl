@@ -555,19 +555,6 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       }
       if (!success) return AidlError::NOT_STRUCTURED;
     }
-
-    // Verify the var/const declarations.
-    // const expressions should be non-empty when evaluated with the var/const type.
-    for (const auto& constant : defined_type->GetConstantDeclarations()) {
-      if (constant->ValueString(AidlConstantValueDecorator).empty()) {
-        return AidlError::BAD_TYPE;
-      }
-    }
-    for (const auto& var : defined_type->GetFields()) {
-      if (var->GetDefaultValue() && var->ValueString(AidlConstantValueDecorator).empty()) {
-        return AidlError::BAD_TYPE;
-      }
-    }
   }
 
   // Add meta methods and assign method IDs to each interface
