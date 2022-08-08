@@ -1056,6 +1056,7 @@ bool AidlConstantDeclaration::CheckValid(const AidlTypenames& typenames) const {
   bool valid = true;
   valid &= type_->CheckValid(typenames);
   valid &= value_->CheckValid();
+  valid = valid && !ValueString(AidlConstantValueDecorator).empty();
   if (!valid) return false;
 
   const static set<string> kSupportedConstTypes = {"String", "byte", "int", "long"};
@@ -1734,17 +1735,7 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
     }
   }
 
-  bool success = true;
-  set<string> constant_names;
-  for (const auto& constant : GetConstantDeclarations()) {
-    if (constant_names.count(constant->GetName()) > 0) {
-      AIDL_ERROR(constant) << "Found duplicate constant name '" << constant->GetName() << "'";
-      success = false;
-    }
-    constant_names.insert(constant->GetName());
-    success = success && constant->CheckValid(typenames);
-  }
-  return success;
+  return true;
 }
 
 bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {
