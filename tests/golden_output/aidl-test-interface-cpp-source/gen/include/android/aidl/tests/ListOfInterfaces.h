@@ -29,8 +29,11 @@ namespace aidl {
 namespace tests {
 class ListOfInterfaces : public ::android::Parcelable {
 public:
+  class IEmptyInterfaceDelegator;
+
   class IEmptyInterface : public ::android::IInterface {
   public:
+    typedef IEmptyInterfaceDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(EmptyInterface)
   };  // class IEmptyInterface
 
@@ -58,8 +61,11 @@ public:
   private:
     ::android::sp<IEmptyInterface> _aidl_delegate;
   };  // class IEmptyInterfaceDelegator
+  class IMyInterfaceDelegator;
+
   class IMyInterface : public ::android::IInterface {
   public:
+    typedef IMyInterfaceDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(MyInterface)
     virtual ::android::binder::Status methodWithInterfaces(const ::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>& iface, const ::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>& nullable_iface, const ::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>& iface_list_in, ::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>* iface_list_out, ::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>* iface_list_inout, const ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>>& nullable_iface_list_in, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>>* nullable_iface_list_out, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>>* nullable_iface_list_inout, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>>* _aidl_return) = 0;
   };  // class IMyInterface

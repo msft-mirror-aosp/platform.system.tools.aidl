@@ -468,8 +468,16 @@ const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::UNSUPPORTED_APP_USAGE);
 }
 
-const AidlAnnotation* AidlAnnotatable::RustDerive() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::RUST_DERIVE);
+std::vector<std::string> AidlAnnotatable::RustDerive() const {
+  std::vector<std::string> ret;
+  if (const auto* ann = GetAnnotation(annotations_, AidlAnnotation::Type::RUST_DERIVE)) {
+    for (const auto& name_and_param : ann->AnnotationParams(AidlConstantValueDecorator)) {
+      if (name_and_param.second == "true") {
+        ret.push_back(name_and_param.first);
+      }
+    }
+  }
+  return ret;
 }
 
 const AidlAnnotation* AidlAnnotatable::BackingType() const {
@@ -627,13 +635,17 @@ bool AidlTypeSpecifier::MakeArray(ArrayType array_type) {
   return false;
 }
 
+std::vector<int32_t> FixedSizeArray::GetDimensionInts() const {
+  std::vector<int32_t> ints;
+  for (const auto& dim : dimensions) {
+    ints.push_back(dim->EvaluatedValue<int32_t>());
+  }
+  return ints;
+}
+
 std::vector<int32_t> AidlTypeSpecifier::GetFixedSizeArrayDimensions() const {
   AIDL_FATAL_IF(!IsFixedSizeArray(), "not a fixed-size array");
-  std::vector<int32_t> dimensions;
-  for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
-    dimensions.push_back(dim->EvaluatedValue<int32_t>());
-  }
-  return dimensions;
+  return std::get<FixedSizeArray>(GetArray()).GetDimensionInts();
 }
 
 string AidlTypeSpecifier::Signature() const {
@@ -1044,6 +1056,7 @@ bool AidlConstantDeclaration::CheckValid(const AidlTypenames& typenames) const {
   bool valid = true;
   valid &= type_->CheckValid(typenames);
   valid &= value_->CheckValid();
+  valid = valid && !ValueString(AidlConstantValueDecorator).empty();
   if (!valid) return false;
 
   const static set<string> kSupportedConstTypes = {"String", "byte", "int", "long"};
@@ -1283,6 +1296,26 @@ bool AidlDefinedType::CheckValidWithMembers(const AidlTypenames& typenames) cons
       if (!typenames.CanBeJavaOnlyImmutable(v->GetType())) {
         AIDL_ERROR(v) << "The @JavaOnlyImmutable '" << GetName() << "' has a "
                       << "non-immutable field named '" << v->GetName() << "'.";
+        success = false;
+      }
+    }
+  }
+
+  // Rust derive fields must be transitive
+  const std::vector<std::string> rust_derives = RustDerive();
+  for (const auto& v : GetFields()) {
+    const AidlDefinedType* field = typenames.TryGetDefinedType(v->GetType().GetName());
+    if (!field) continue;
+
+    // could get this from CONTEXT_*, but we don't currently save this info when we validated
+    // contexts
+    if (!field->AsStructuredParcelable() && !field->AsUnionDeclaration()) continue;
+
+    auto subs = field->RustDerive();
+    for (const std::string& derive : rust_derives) {
+      if (std::find(subs.begin(), subs.end(), derive) == subs.end()) {
+        AIDL_ERROR(v) << "Field " << v->GetName() << " of type with @RustDerive " << derive
+                      << " also needs to derive this";
         success = false;
       }
     }
@@ -1702,17 +1735,7 @@ bool AidlInterface::CheckValid(const AidlTypenames& typenames) const {
     }
   }
 
-  bool success = true;
-  set<string> constant_names;
-  for (const auto& constant : GetConstantDeclarations()) {
-    if (constant_names.count(constant->GetName()) > 0) {
-      AIDL_ERROR(constant) << "Found duplicate constant name '" << constant->GetName() << "'";
-      success = false;
-    }
-    constant_names.insert(constant->GetName());
-    success = success && constant->CheckValid(typenames);
-  }
-  return success;
+  return true;
 }
 
 bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {

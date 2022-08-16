@@ -15,8 +15,11 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace nested {
+class INestedServiceDelegator;
+
 class INestedService : public ::android::IInterface {
 public:
+  typedef INestedServiceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(NestedService)
   class Result : public ::android::Parcelable {
   public:
@@ -54,8 +57,11 @@ public:
       return os.str();
     }
   };  // class Result
+  class ICallbackDelegator;
+
   class ICallback : public ::android::IInterface {
   public:
+    typedef ICallbackDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(Callback)
     virtual ::android::binder::Status done(::android::aidl::tests::nested::ParcelableWithNested::Status status) = 0;
   };  // class ICallback
