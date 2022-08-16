@@ -1296,31 +1296,6 @@ void GenerateClassDecl(CodeWriter& out, const AidlDefinedType& defined_type,
 
 using namespace internals;
 
-// Ensures that output_file is  <out_dir>/<packagename>/<typename>.cpp
-bool ValidateOutputFilePath(const string& output_file, const Options& options,
-                            const AidlDefinedType& defined_type) {
-  const auto& out_dir =
-      !options.OutputDir().empty() ? options.OutputDir() : options.OutputHeaderDir();
-  if (output_file.empty() || !android::base::StartsWith(output_file, out_dir)) {
-    // If output_file is not set (which happens in the unit tests) or is outside of out_dir, we can
-    // help but accepting it, because the path is what the user has requested.
-    return true;
-  }
-
-  string canonical_name = defined_type.GetCanonicalName();
-  std::replace(canonical_name.begin(), canonical_name.end(), '.', OS_PATH_SEPARATOR);
-  const string expected = out_dir + canonical_name + ".cpp";
-  if (expected != output_file) {
-    AIDL_ERROR(defined_type) << "Output file is expected to be at " << expected << ", but is "
-                             << output_file << ".\n If this is an Android platform "
-                             << "build, consider providing the input AIDL files using a filegroup "
-                             << "with `path:\"<base>\"` so that the AIDL files are located at "
-                             << "<base>/<packagename>/<typename>.aidl.";
-    return false;
-  }
-  return true;
-}
-
 // Collect all includes for the type's header. Nested types are visited as well via VisitTopDown.
 void GenerateHeaderIncludes(CodeWriter& out, const AidlDefinedType& defined_type,
                             const AidlTypenames& typenames, const Options& options) {
