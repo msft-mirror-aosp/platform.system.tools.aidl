@@ -2,6 +2,9 @@
 
 #include <binder/IInterface.h>
 #include <android/aidl/versioned/tests/IFooInterface.h>
+#include <android/aidl/versioned/tests/BnFooInterface.h>
+#include <binder/Delegate.h>
+
 
 namespace android {
 namespace aidl {
@@ -25,6 +28,7 @@ class IFooInterfaceDelegator : public BnFooInterface {
 public:
   explicit IFooInterfaceDelegator(const ::android::sp<IFooInterface> &impl) : _aidl_delegate(impl) {}
 
+  ::android::sp<IFooInterface> getImpl() { return _aidl_delegate; }
   ::android::binder::Status originalApi() override {
     return _aidl_delegate->originalApi();
   }

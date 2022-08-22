@@ -311,6 +311,19 @@ public class TestServiceServer extends ITestService.Stub {
     return mNamedCallbacks.get(name);
   }
   @Override
+  public boolean SetOtherTestService(String name, INamedCallback service) throws RemoteException {
+    if (mNamedCallbacks.containsKey(name) && mNamedCallbacks.get(name) == service) {
+      return true;
+    }
+    try {
+      // This restricts the client to only setting services that it gets from this server.
+      mNamedCallbacks.put(name, (MyNamedCallback) service);
+    } catch (Exception e) {
+      Log.i("TestServiceServer", "Failed to cast service");
+    }
+    return false;
+  }
+  @Override
   public boolean VerifyName(INamedCallback service, String name) throws RemoteException {
     return name.equals(service.GetName());
   }
