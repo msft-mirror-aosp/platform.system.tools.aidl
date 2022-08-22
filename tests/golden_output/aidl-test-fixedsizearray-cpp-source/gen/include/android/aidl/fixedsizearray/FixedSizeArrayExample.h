@@ -3,6 +3,7 @@
 #include <android/aidl/fixedsizearray/FixedSizeArrayExample.h>
 #include <android/binder_to_string.h>
 #include <array>
+#include <binder/Delegate.h>
 #include <binder/Enums.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
@@ -134,6 +135,7 @@ public:
   public:
     explicit IRepeatFixedSizeArrayDelegator(const ::android::sp<IRepeatFixedSizeArray> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<IRepeatFixedSizeArray> getImpl() { return _aidl_delegate; }
     ::android::binder::Status RepeatBytes(const std::array<uint8_t, 3>& input, std::array<uint8_t, 3>* repeated, std::array<uint8_t, 3>* _aidl_return) override {
       return _aidl_delegate->RepeatBytes(input, repeated, _aidl_return);
     }
@@ -199,6 +201,7 @@ public:
   public:
     explicit IEmptyInterfaceDelegator(const ::android::sp<IEmptyInterface> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<IEmptyInterface> getImpl() { return _aidl_delegate; }
   private:
     ::android::sp<IEmptyInterface> _aidl_delegate;
   };  // class IEmptyInterfaceDelegator
