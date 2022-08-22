@@ -106,6 +106,9 @@ public:
   ::ndk::ScopedAStatus GetOtherTestService(const std::string& in_name, std::shared_ptr<::aidl::android::aidl::tests::INamedCallback>* _aidl_return) override {
     return _impl->GetOtherTestService(in_name, _aidl_return);
   }
+  ::ndk::ScopedAStatus SetOtherTestService(const std::string& in_name, const std::shared_ptr<::aidl::android::aidl::tests::INamedCallback>& in_service, bool* _aidl_return) override {
+    return _impl->SetOtherTestService(in_name, in_service, _aidl_return);
+  }
   ::ndk::ScopedAStatus VerifyName(const std::shared_ptr<::aidl::android::aidl::tests::INamedCallback>& in_service, const std::string& in_name, bool* _aidl_return) override {
     return _impl->VerifyName(in_service, in_name, _aidl_return);
   }
