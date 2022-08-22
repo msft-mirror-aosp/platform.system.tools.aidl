@@ -2,6 +2,7 @@
 
 #include <android/aidl/loggable/Data.h>
 #include <android/binder_to_string.h>
+#include <binder/Delegate.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/ParcelFileDescriptor.h>
@@ -88,6 +89,7 @@ public:
   public:
     explicit ISubDelegator(const ::android::sp<ISub> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<ISub> getImpl() { return _aidl_delegate; }
     ::android::binder::Status Log(int32_t value) override {
       return _aidl_delegate->Log(value);
     }

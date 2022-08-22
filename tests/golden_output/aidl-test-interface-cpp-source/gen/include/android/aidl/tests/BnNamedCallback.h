@@ -2,6 +2,9 @@
 
 #include <binder/IInterface.h>
 #include <android/aidl/tests/INamedCallback.h>
+#include <android/aidl/tests/BnNamedCallback.h>
+#include <binder/Delegate.h>
+
 
 namespace android {
 namespace aidl {
@@ -17,6 +20,7 @@ class INamedCallbackDelegator : public BnNamedCallback {
 public:
   explicit INamedCallbackDelegator(const ::android::sp<INamedCallback> &impl) : _aidl_delegate(impl) {}
 
+  ::android::sp<INamedCallback> getImpl() { return _aidl_delegate; }
   ::android::binder::Status GetName(::android::String16* _aidl_return) override {
     return _aidl_delegate->GetName(_aidl_return);
   }

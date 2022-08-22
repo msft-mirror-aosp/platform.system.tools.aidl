@@ -128,6 +128,11 @@ public interface ITestService extends android.os.IInterface
     {
       return null;
     }
+    // returns true if the same service is already registered with the same name
+    @Override public boolean SetOtherTestService(java.lang.String name, android.aidl.tests.INamedCallback service) throws android.os.RemoteException
+    {
+      return false;
+    }
     @Override public boolean VerifyName(android.aidl.tests.INamedCallback service, java.lang.String name) throws android.os.RemoteException
     {
       return false;
@@ -421,6 +426,11 @@ public interface ITestService extends android.os.IInterface
     @Override public android.aidl.tests.INamedCallback GetOtherTestService(java.lang.String name) throws android.os.RemoteException
     {
       return mImpl.GetOtherTestService(name);
+    }
+    // returns true if the same service is already registered with the same name
+    @Override public boolean SetOtherTestService(java.lang.String name, android.aidl.tests.INamedCallback service) throws android.os.RemoteException
+    {
+      return mImpl.SetOtherTestService(name,service);
     }
     @Override public boolean VerifyName(android.aidl.tests.INamedCallback service, java.lang.String name) throws android.os.RemoteException
     {
@@ -972,6 +982,18 @@ public interface ITestService extends android.os.IInterface
           android.aidl.tests.INamedCallback _result = this.GetOtherTestService(_arg0);
           reply.writeNoException();
           reply.writeStrongInterface(_result);
+          break;
+        }
+        case TRANSACTION_SetOtherTestService:
+        {
+          java.lang.String _arg0;
+          _arg0 = data.readString();
+          android.aidl.tests.INamedCallback _arg1;
+          _arg1 = android.aidl.tests.INamedCallback.Stub.asInterface(data.readStrongBinder());
+          data.enforceNoDataAvail();
+          boolean _result = this.SetOtherTestService(_arg0, _arg1);
+          reply.writeNoException();
+          reply.writeBoolean(_result);
           break;
         }
         case TRANSACTION_VerifyName:
@@ -2091,6 +2113,32 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
+      // returns true if the same service is already registered with the same name
+      @Override public boolean SetOtherTestService(java.lang.String name, android.aidl.tests.INamedCallback service) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        boolean _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeString(name);
+          _data.writeStrongInterface(service);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_SetOtherTestService, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              return getDefaultImpl().SetOtherTestService(name, service);
+            }
+          }
+          _reply.readException();
+          _result = _reply.readBoolean();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
       @Override public boolean VerifyName(android.aidl.tests.INamedCallback service, java.lang.String name) throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
@@ -3091,46 +3139,47 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_ReverseIntEnum = (android.os.IBinder.FIRST_CALL_TRANSACTION + 23);
     static final int TRANSACTION_ReverseLongEnum = (android.os.IBinder.FIRST_CALL_TRANSACTION + 24);
     static final int TRANSACTION_GetOtherTestService = (android.os.IBinder.FIRST_CALL_TRANSACTION + 25);
-    static final int TRANSACTION_VerifyName = (android.os.IBinder.FIRST_CALL_TRANSACTION + 26);
-    static final int TRANSACTION_GetInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 27);
-    static final int TRANSACTION_VerifyNamesWithInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 28);
-    static final int TRANSACTION_GetNullableInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 29);
-    static final int TRANSACTION_VerifyNamesWithNullableInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 30);
-    static final int TRANSACTION_GetInterfaceList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 31);
-    static final int TRANSACTION_VerifyNamesWithInterfaceList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 32);
-    static final int TRANSACTION_ReverseStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 33);
-    static final int TRANSACTION_RepeatParcelFileDescriptor = (android.os.IBinder.FIRST_CALL_TRANSACTION + 34);
-    static final int TRANSACTION_ReverseParcelFileDescriptorArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 35);
-    static final int TRANSACTION_ThrowServiceException = (android.os.IBinder.FIRST_CALL_TRANSACTION + 36);
-    static final int TRANSACTION_RepeatNullableIntArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 37);
-    static final int TRANSACTION_RepeatNullableByteEnumArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 38);
-    static final int TRANSACTION_RepeatNullableIntEnumArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 39);
-    static final int TRANSACTION_RepeatNullableLongEnumArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 40);
-    static final int TRANSACTION_RepeatNullableString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 41);
-    static final int TRANSACTION_RepeatNullableStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 42);
-    static final int TRANSACTION_RepeatNullableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 43);
-    static final int TRANSACTION_RepeatNullableParcelableArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 44);
-    static final int TRANSACTION_RepeatNullableParcelableList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 45);
-    static final int TRANSACTION_TakesAnIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 46);
-    static final int TRANSACTION_TakesANullableIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 47);
-    static final int TRANSACTION_TakesAnIBinderList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 48);
-    static final int TRANSACTION_TakesANullableIBinderList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 49);
-    static final int TRANSACTION_RepeatUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 50);
-    static final int TRANSACTION_RepeatNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 51);
-    static final int TRANSACTION_ReverseUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 52);
-    static final int TRANSACTION_ReverseNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 53);
-    static final int TRANSACTION_ReverseUtf8CppStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 54);
-    static final int TRANSACTION_GetCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 55);
-    static final int TRANSACTION_FillOutStructuredParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 56);
-    static final int TRANSACTION_RepeatExtendableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 57);
-    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 58);
-    static final int TRANSACTION_ReverseIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 59);
-    static final int TRANSACTION_ReverseNullableIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 60);
-    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 61);
-    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 62);
-    static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
-    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
-    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
+    static final int TRANSACTION_SetOtherTestService = (android.os.IBinder.FIRST_CALL_TRANSACTION + 26);
+    static final int TRANSACTION_VerifyName = (android.os.IBinder.FIRST_CALL_TRANSACTION + 27);
+    static final int TRANSACTION_GetInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 28);
+    static final int TRANSACTION_VerifyNamesWithInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 29);
+    static final int TRANSACTION_GetNullableInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 30);
+    static final int TRANSACTION_VerifyNamesWithNullableInterfaceArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 31);
+    static final int TRANSACTION_GetInterfaceList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 32);
+    static final int TRANSACTION_VerifyNamesWithInterfaceList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 33);
+    static final int TRANSACTION_ReverseStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 34);
+    static final int TRANSACTION_RepeatParcelFileDescriptor = (android.os.IBinder.FIRST_CALL_TRANSACTION + 35);
+    static final int TRANSACTION_ReverseParcelFileDescriptorArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 36);
+    static final int TRANSACTION_ThrowServiceException = (android.os.IBinder.FIRST_CALL_TRANSACTION + 37);
+    static final int TRANSACTION_RepeatNullableIntArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 38);
+    static final int TRANSACTION_RepeatNullableByteEnumArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 39);
+    static final int TRANSACTION_RepeatNullableIntEnumArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 40);
+    static final int TRANSACTION_RepeatNullableLongEnumArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 41);
+    static final int TRANSACTION_RepeatNullableString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 42);
+    static final int TRANSACTION_RepeatNullableStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 43);
+    static final int TRANSACTION_RepeatNullableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 44);
+    static final int TRANSACTION_RepeatNullableParcelableArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 45);
+    static final int TRANSACTION_RepeatNullableParcelableList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 46);
+    static final int TRANSACTION_TakesAnIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 47);
+    static final int TRANSACTION_TakesANullableIBinder = (android.os.IBinder.FIRST_CALL_TRANSACTION + 48);
+    static final int TRANSACTION_TakesAnIBinderList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 49);
+    static final int TRANSACTION_TakesANullableIBinderList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 50);
+    static final int TRANSACTION_RepeatUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 51);
+    static final int TRANSACTION_RepeatNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 52);
+    static final int TRANSACTION_ReverseUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 53);
+    static final int TRANSACTION_ReverseNullableUtf8CppString = (android.os.IBinder.FIRST_CALL_TRANSACTION + 54);
+    static final int TRANSACTION_ReverseUtf8CppStringList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 55);
+    static final int TRANSACTION_GetCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 56);
+    static final int TRANSACTION_FillOutStructuredParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 57);
+    static final int TRANSACTION_RepeatExtendableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 58);
+    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 59);
+    static final int TRANSACTION_ReverseIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 60);
+    static final int TRANSACTION_ReverseNullableIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 61);
+    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 62);
+    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
+    static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
+    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
+    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 66);
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
       // at a time. This is a heuristic to detect if two different
@@ -3276,6 +3325,8 @@ public interface ITestService extends android.os.IInterface
   public long[] ReverseLongEnum(long[] input, long[] repeated) throws android.os.RemoteException;
   // Test that clients can send and receive Binders.
   public android.aidl.tests.INamedCallback GetOtherTestService(java.lang.String name) throws android.os.RemoteException;
+  // returns true if the same service is already registered with the same name
+  public boolean SetOtherTestService(java.lang.String name, android.aidl.tests.INamedCallback service) throws android.os.RemoteException;
   public boolean VerifyName(android.aidl.tests.INamedCallback service, java.lang.String name) throws android.os.RemoteException;
   public android.aidl.tests.INamedCallback[] GetInterfaceArray(java.lang.String[] names) throws android.os.RemoteException;
   public boolean VerifyNamesWithInterfaceArray(android.aidl.tests.INamedCallback[] services, java.lang.String[] names) throws android.os.RemoteException;
