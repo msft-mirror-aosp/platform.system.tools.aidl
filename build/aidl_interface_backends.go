@@ -90,7 +90,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	})
 
 	importExportDependencies := []string{}
-	var sharedLibDependency []string
+	sharedLibDependency := commonProperties.Additional_shared_libraries
 	var headerLibs []string
 	var sdkVersion *string
 	var stl *string
