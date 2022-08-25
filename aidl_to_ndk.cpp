@@ -32,6 +32,15 @@ namespace ndk {
 
 std::string NdkHeaderFile(const AidlDefinedType& defined_type, cpp::ClassNames name,
                           bool use_os_sep) {
+  // Unstructured parcelable should set its ndk_header. use it.
+  if (auto unstructured = AidlCast<AidlParcelable>(defined_type); unstructured) {
+    AIDL_FATAL_IF(name != cpp::ClassNames::RAW, "unstructured parcelable should only use raw name");
+    const std::string ndk_header = unstructured->GetNdkHeader();
+    AIDL_FATAL_IF(ndk_header.empty(), unstructured)
+        << "Parcelable " << unstructured->GetCanonicalName() << " has no ndk_header defined.";
+    return ndk_header;
+  }
+
   char seperator = (use_os_sep) ? OS_PATH_SEPARATOR : '/';
   return std::string("aidl") + seperator + cpp::HeaderFile(defined_type, name, use_os_sep);
 }
