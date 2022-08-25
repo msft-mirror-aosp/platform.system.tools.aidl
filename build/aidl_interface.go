@@ -259,6 +259,10 @@ type CommonBackendProperties struct {
 
 type CommonNativeBackendProperties struct {
 	CommonBackendProperties
+
+	// Must be NDK libraries, for stable types.
+	Additional_shared_libraries []string
+
 	// Whether to generate additional code for gathering information
 	// about the transactions.
 	// Default: false

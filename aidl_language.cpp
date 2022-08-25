@@ -143,6 +143,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "JavaOnlyStableParcelable",
        CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
        {}},
+      {AidlAnnotation::Type::NDK_STABLE_PARCELABLE,
+       "NdkOnlyStableParcelable",
+       CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
+       {}},
       {AidlAnnotation::Type::BACKING,
        "Backing",
        CONTEXT_TYPE_ENUM,
@@ -525,8 +529,11 @@ bool AidlAnnotatable::IsPropagateAllowBlocking() const {
 }
 
 bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
-  return lang == Options::Language::JAVA &&
-         GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_STABLE_PARCELABLE);
+  if (lang == Options::Language::JAVA)
+    return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_STABLE_PARCELABLE);
+  if (lang == Options::Language::NDK)
+    return GetAnnotation(annotations_, AidlAnnotation::Type::NDK_STABLE_PARCELABLE);
+  return false;
 }
 
 bool AidlAnnotatable::JavaDerive(const std::string& method) const {
@@ -1423,14 +1430,18 @@ const AidlDocument& AidlDefinedType::GetDocument() const {
 
 AidlParcelable::AidlParcelable(const AidlLocation& location, const std::string& name,
                                const std::string& package, const Comments& comments,
-                               const std::string& cpp_header, std::vector<std::string>* type_params,
+                               const AidlUnstructuredHeaders& headers,
+                               std::vector<std::string>* type_params,
                                std::vector<std::unique_ptr<AidlMember>>* members)
     : AidlDefinedType(location, name, comments, package, members),
       AidlParameterizable<std::string>(type_params),
-      cpp_header_(cpp_header) {
-  // Strip off quotation marks if we actually have a cpp header.
-  if (cpp_header_.length() >= 2) {
-    cpp_header_ = cpp_header_.substr(1, cpp_header_.length() - 2);
+      headers_(headers) {
+  // Strip off quotation marks if we actually have headers.
+  if (headers_.cpp.length() >= 2) {
+    headers_.cpp = headers_.cpp.substr(1, headers_.cpp.length() - 2);
+  }
+  if (headers_.ndk.length() >= 2) {
+    headers_.ndk = headers_.ndk.substr(1, headers_.ndk.length() - 2);
   }
 }
 
@@ -1478,7 +1489,7 @@ AidlStructuredParcelable::AidlStructuredParcelable(
     const AidlLocation& location, const std::string& name, const std::string& package,
     const Comments& comments, std::vector<std::string>* type_params,
     std::vector<std::unique_ptr<AidlMember>>* members)
-    : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params, members) {}
+    : AidlParcelable(location, name, package, comments, {} /*headers*/, type_params, members) {}
 
 bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const {
   if (!AidlParcelable::CheckValid(typenames)) {
@@ -1637,7 +1648,7 @@ AidlUnionDecl::AidlUnionDecl(const AidlLocation& location, const std::string& na
                              const std::string& package, const Comments& comments,
                              std::vector<std::string>* type_params,
                              std::vector<std::unique_ptr<AidlMember>>* members)
-    : AidlParcelable(location, name, package, comments, "" /*cpp_header*/, type_params, members) {}
+    : AidlParcelable(location, name, package, comments, {} /*headers*/, type_params, members) {}
 
 bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
   // visit parents

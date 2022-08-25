@@ -355,32 +355,46 @@ bool ValidateAnnotationContext(const AidlDocument& doc) {
   return validator.success;
 }
 
-bool ValidateCppHeader(const AidlDocument& doc) {
-  struct CppHeaderVisitor : AidlVisitor {
+bool ValidateHeaders(Options::Language language, const AidlDocument& doc) {
+  typedef std::string (AidlParcelable::*GetHeader)() const;
+
+  struct HeaderVisitor : AidlVisitor {
     bool success = true;
-    void Visit(const AidlParcelable& p) override {
-      if (p.GetCppHeader().empty()) {
-        AIDL_ERROR(p) << "Unstructured parcelable \"" << p.GetName()
-                      << "\" must have C++ header defined.";
+    const char* str = nullptr;
+    GetHeader getHeader = nullptr;
+
+    void check(const AidlParcelable& p) {
+      if ((p.*getHeader)().empty()) {
+        AIDL_ERROR(p) << "Unstructured parcelable \"" << p.GetName() << "\" must have " << str
+                      << " defined.";
         success = false;
       }
     }
+
+    void Visit(const AidlParcelable& p) override { check(p); }
     void Visit(const AidlTypeSpecifier& m) override {
       auto type = m.GetDefinedType();
       if (type) {
         auto unstructured = type->AsUnstructuredParcelable();
-        if (unstructured && unstructured->GetCppHeader().empty()) {
-          AIDL_ERROR(m) << "Unstructured parcelable \"" << m.GetUnresolvedName()
-                        << "\" must have C++ header defined.";
-          success = false;
-        }
+        if (unstructured) check(*unstructured);
       }
     }
   };
 
-  CppHeaderVisitor validator;
-  VisitTopDown(validator, doc);
-  return validator.success;
+  if (language == Options::Language::CPP) {
+    HeaderVisitor validator;
+    validator.str = "cpp_header";
+    validator.getHeader = &AidlParcelable::GetCppHeader;
+    VisitTopDown(validator, doc);
+    return validator.success;
+  } else if (language == Options::Language::NDK) {
+    HeaderVisitor validator;
+    validator.str = "ndk_header";
+    validator.getHeader = &AidlParcelable::GetNdkHeader;
+    VisitTopDown(validator, doc);
+    return validator.success;
+  }
+  return true;
 }
 
 }  // namespace
@@ -600,9 +614,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     return AidlError::BAD_TYPE;
   }
 
-  if ((options.TargetLanguage() == Options::Language::CPP ||
-       options.TargetLanguage() == Options::Language::NDK) &&
-      !ValidateCppHeader(*document)) {
+  if (!ValidateHeaders(options.TargetLanguage(), *document)) {
     return AidlError::BAD_TYPE;
   }
 
