@@ -226,6 +226,7 @@ class AidlAnnotation : public AidlNode {
   enum class Type {
     BACKING = 1,
     JAVA_STABLE_PARCELABLE,
+    NDK_STABLE_PARCELABLE,
     UNSUPPORTED_APP_USAGE,
     VINTF_STABILITY,
     NULLABLE,
@@ -271,7 +272,6 @@ class AidlAnnotation : public AidlNode {
       std::map<std::string, std::shared_ptr<AidlConstantValue>> parameter_list,
       const Comments& comments);
 
-  AidlAnnotation(AidlAnnotation&&) = default;
   virtual ~AidlAnnotation() = default;
   bool CheckValid() const;
   bool CheckContext(TargetContext context) const;
@@ -1036,11 +1036,16 @@ class AidlDefinedType : public AidlMember, public AidlScope {
   std::vector<const AidlMember*> members_;  // keep members in order of appearance.
 };
 
+struct AidlUnstructuredHeaders {
+  std::string cpp;
+  std::string ndk;
+};
+
 class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::string> {
  public:
   AidlParcelable(const AidlLocation& location, const std::string& name, const std::string& package,
-                 const Comments& comments, const std::string& cpp_header = "",
-                 std::vector<std::string>* type_params = nullptr,
+                 const Comments& comments, const AidlUnstructuredHeaders& headers,
+                 std::vector<std::string>* type_params,
                  std::vector<std::unique_ptr<AidlMember>>* members = nullptr);
   virtual ~AidlParcelable() = default;
 
@@ -1050,7 +1055,8 @@ class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::s
   AidlParcelable& operator=(const AidlParcelable&) = delete;
   AidlParcelable& operator=(AidlParcelable&&) = delete;
 
-  std::string GetCppHeader() const { return cpp_header_; }
+  std::string GetCppHeader() const { return headers_.cpp; }
+  std::string GetNdkHeader() const { return headers_.ndk; }
 
   bool CheckValid(const AidlTypenames& typenames) const override;
   const AidlParcelable* AsParcelable() const override { return this; }
@@ -1061,7 +1067,7 @@ class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::s
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 
  private:
-  std::string cpp_header_;
+  AidlUnstructuredHeaders headers_;
 };
 
 class AidlStructuredParcelable : public AidlParcelable {

@@ -3,6 +3,7 @@
 #include <android/aidl/tests/ArrayOfInterfaces.h>
 #include <android/binder_to_string.h>
 #include <array>
+#include <binder/Delegate.h>
 #include <binder/Enums.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
@@ -58,6 +59,7 @@ public:
   public:
     explicit IEmptyInterfaceDelegator(const ::android::sp<IEmptyInterface> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<IEmptyInterface> getImpl() { return _aidl_delegate; }
   private:
     ::android::sp<IEmptyInterface> _aidl_delegate;
   };  // class IEmptyInterfaceDelegator
@@ -96,8 +98,17 @@ public:
   public:
     explicit IMyInterfaceDelegator(const ::android::sp<IMyInterface> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<IMyInterface> getImpl() { return _aidl_delegate; }
     ::android::binder::Status methodWithInterfaces(const ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& iface, const ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& nullable_iface, const ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>& iface_array_in, ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* iface_array_out, ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* iface_array_inout, const ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>& nullable_iface_array_in, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* nullable_iface_array_out, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* nullable_iface_array_inout, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* _aidl_return) override {
-      return _aidl_delegate->methodWithInterfaces(iface, nullable_iface, iface_array_in, iface_array_out, iface_array_inout, nullable_iface_array_in, nullable_iface_array_out, nullable_iface_array_inout, _aidl_return);
+      ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterfaceDelegator> _iface;
+      if (iface) {
+        _iface = ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterfaceDelegator>::cast(delegate(iface));
+      }
+      ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterfaceDelegator> _nullable_iface;
+      if (nullable_iface) {
+        _nullable_iface = ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterfaceDelegator>::cast(delegate(nullable_iface));
+      }
+      return _aidl_delegate->methodWithInterfaces(_iface, _nullable_iface, iface_array_in, iface_array_out, iface_array_inout, nullable_iface_array_in, nullable_iface_array_out, nullable_iface_array_inout, _aidl_return);
     }
   private:
     ::android::sp<IMyInterface> _aidl_delegate;
