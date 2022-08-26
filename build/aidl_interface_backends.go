@@ -326,16 +326,29 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		AidlInterfaceName: i.ModuleBase.Name(),
 		Version:           version,
 		Imports:           i.getImportsForVersion(version),
-		ModuleProperties: []interface{}{&javaProperties{
-			Name:            proptools.StringPtr(javaModuleGen),
-			Installable:     proptools.BoolPtr(true),
-			Defaults:        []string{"aidl-java-module-defaults"},
-			Sdk_version:     sdkVersion,
-			Platform_apis:   i.properties.Backend.Java.Platform_apis,
-			Srcs:            []string{":" + javaSourceGen},
-			Apex_available:  i.properties.Backend.Java.Apex_available,
-			Min_sdk_version: i.minSdkVersion(langJava),
-		}, &i.properties.Backend.Java.LintProperties},
+		ModuleProperties: []interface{}{
+			&javaProperties{
+				Name:            proptools.StringPtr(javaModuleGen),
+				Installable:     proptools.BoolPtr(true),
+				Defaults:        []string{"aidl-java-module-defaults"},
+				Sdk_version:     sdkVersion,
+				Platform_apis:   i.properties.Backend.Java.Platform_apis,
+				Srcs:            []string{":" + javaSourceGen},
+				Apex_available:  i.properties.Backend.Java.Apex_available,
+				Min_sdk_version: i.minSdkVersion(langJava),
+			},
+			&i.properties.Backend.Java.LintProperties,
+			// the logic to create implementation libraries has been reimplemented
+			// in a Bazel macro, so these libraries should not be converted with
+			// bp2build
+			// TODO(b/237810289) perhaps do something different here so that we aren't
+			// also disabling these modules in mixed builds
+			&bazelProperties{
+				&Bazel_module{
+					Bp2build_available: proptools.BoolPtr(false),
+				},
+			},
+		},
 	})
 
 	return javaModuleGen
