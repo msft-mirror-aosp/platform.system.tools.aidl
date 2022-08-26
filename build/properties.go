@@ -104,6 +104,13 @@ type rustProperties struct {
 	Min_sdk_version  *string
 }
 
+type Bazel_module struct {
+	Bp2build_available *bool
+}
+type bazelProperties struct {
+	*Bazel_module
+}
+
 type phonyProperties struct {
 	Name     *string
 	Required []string
