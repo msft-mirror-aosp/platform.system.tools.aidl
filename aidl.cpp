@@ -43,6 +43,7 @@
 #include "check_valid.h"
 #include "generate_aidl_mappings.h"
 #include "generate_cpp.h"
+#include "generate_cpp_analyzer.h"
 #include "generate_java.h"
 #include "generate_ndk.h"
 #include "generate_rust.h"
@@ -733,6 +734,9 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
       } else if (lang == Options::Language::RUST) {
         rust::GenerateRust(output_file_name, options, typenames, *defined_type, io_delegate);
         success = true;
+      } else if (lang == Options::Language::CPP_ANALYZER) {
+        success = cpp::GenerateCppAnalyzer(output_file_name, options, typenames, *defined_type,
+                                           io_delegate);
       } else {
         AIDL_FATAL(input_file) << "Should not reach here.";
       }

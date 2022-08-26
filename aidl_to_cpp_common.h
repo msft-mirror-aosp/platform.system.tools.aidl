@@ -56,6 +56,9 @@ size_t AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames
 std::string HeaderFile(const AidlDefinedType& defined_type, ClassNames class_type,
                        bool use_os_sep = true);
 
+bool ValidateOutputFilePath(const string& output_file, const Options& options,
+                            const AidlDefinedType& defined_type);
+
 void EnterNamespace(CodeWriter& out, const AidlDefinedType& defined_type);
 void LeaveNamespace(CodeWriter& out, const AidlDefinedType& defined_type);
 
