@@ -41,6 +41,7 @@ const (
 	langJava                  = "java"
 	langNdk                   = "ndk"
 	langRust                  = "rust"
+	langCppAnalyzer           = "cpp-analyzer"
 	// TODO(b/161456198) remove the NDK platform backend as the 'platform' variant of the NDK
 	// backend serves the same purpose.
 	langNdkPlatform = "ndk_platform"
@@ -497,6 +498,8 @@ func (i *aidlInterface) genTrace(lang string) bool {
 		ver = i.properties.Backend.Ndk.Gen_trace
 	case langRust: // unsupported b/236880829
 		ver = i.properties.Backend.Rust.Gen_trace
+	case langCppAnalyzer:
+		*ver = false
 	default:
 		panic(fmt.Errorf("unsupported language backend %q\n", lang))
 	}
@@ -875,6 +878,12 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		for _, version := range versions {
 			libs = append(libs, addLibrary(mctx, i, version, lang, false))
 		}
+	}
+
+	// In the future, we may want to force the -cpp backend to be on host,
+	// and limit its visibility, even if it's not created normally
+	if i.shouldGenerateCppBackend() {
+		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false))
 	}
 
 	if unstable {

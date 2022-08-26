@@ -95,6 +95,12 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			name: "libbinder",
 			recovery_available: true,
 		}
+		cc_library_static {
+			name: "aidl-analyzer-main",
+			host_supported: true,
+			vendor_available: true,
+			recovery_available: true,
+		}
 		cc_library {
 			name: "libutils",
 			recovery_available: true,
