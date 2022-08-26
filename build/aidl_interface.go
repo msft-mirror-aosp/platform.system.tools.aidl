@@ -259,6 +259,10 @@ type CommonBackendProperties struct {
 
 type CommonNativeBackendProperties struct {
 	CommonBackendProperties
+
+	// Must be NDK libraries, for stable types.
+	Additional_shared_libraries []string
+
 	// Whether to generate additional code for gathering information
 	// about the transactions.
 	// Default: false
@@ -409,6 +413,10 @@ type aidlInterfaceProperties struct {
 
 	// --dumpapi options
 	Dumpapi DumpApiProperties
+
+	// List of aidl_interface_headers modules that provide include dependencies
+	// for the AIDL tool.
+	Headers []string
 }
 
 type aidlInterface struct {
@@ -513,6 +521,10 @@ type interfaceDepTag struct {
 	blueprint.BaseDependencyTag
 }
 
+type interfaceHeadersDepTag struct {
+	blueprint.BaseDependencyTag
+}
+
 var (
 	// Dep from *-source (aidlGenRule) to *-api (aidlApi)
 	apiDep = apiDepTag{name: "api"}
@@ -520,6 +532,8 @@ var (
 	importApiDep = apiDepTag{name: "imported-api"}
 	// Dep to original *-interface (aidlInterface)
 	interfaceDep = interfaceDepTag{}
+	// Dep for a header interface
+	interfaceHeadersDep = interfaceHeadersDepTag{}
 )
 
 func addImportedInterfaceDeps(ctx android.BottomUpMutatorContext, imports []string) {
@@ -555,6 +569,10 @@ func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 			return
 		}
 		addImportedInterfaceDeps(mctx, i.properties.Imports)
+
+		for _, header := range i.properties.Headers {
+			mctx.AddDependency(i, interfaceHeadersDep, header)
+		}
 	case *aidlImplementationGenerator:
 		mctx.AddDependency(i, interfaceDep, i.properties.AidlInterfaceName+aidlInterfaceSuffix)
 		addImportedInterfaceDeps(mctx, i.properties.Imports)
@@ -573,12 +591,18 @@ func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 			name, _ := parseModuleWithVersion(anImport)
 			mctx.AddDependency(i, importApiDep, name+aidlApiSuffix)
 		}
+		for _, header := range i.properties.Headers {
+			mctx.AddDependency(i, interfaceHeadersDep, header)
+		}
 	case *aidlGenRule:
 		mctx.AddDependency(i, interfaceDep, i.properties.BaseName+aidlInterfaceSuffix)
 		addImportedInterfaceDeps(mctx, i.properties.Imports)
 		if !proptools.Bool(i.properties.Unstable) {
 			// for checkapi timestamps
 			mctx.AddDependency(i, apiDep, i.properties.BaseName+aidlApiSuffix)
+		}
+		for _, header := range i.properties.Headers {
+			mctx.AddDependency(i, interfaceHeadersDep, header)
 		}
 	}
 }
@@ -966,6 +990,8 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	}
 
 	paths, imports := getPaths(ctx, srcs, root_dir)
+	imports = append(imports, deps.imports...)
+	imports = append(imports, i.properties.Include_dirs...)
 
 	preprocessCommand := rb.Command().BuiltTool("aidl").
 		FlagWithOutput("--preprocess ", preprocessed).
@@ -974,7 +1000,7 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 		preprocessCommand.FlagWithArg("--stability ", *i.properties.Stability)
 	}
 	preprocessCommand.FlagForEachInput("-p", deps.preprocessed)
-	preprocessCommand.FlagForEachArg("-I", concat(imports, i.properties.Include_dirs))
+	preprocessCommand.FlagForEachArg("-I", imports)
 	preprocessCommand.Inputs(paths)
 	name := i.BaseModuleName()
 	if version != "" {

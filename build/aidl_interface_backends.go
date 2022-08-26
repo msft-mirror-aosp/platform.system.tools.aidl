@@ -76,6 +76,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 		Srcs:            srcs,
 		AidlRoot:        aidlRoot,
 		Imports:         i.getImportsForVersion(version),
+		Headers:         i.properties.Headers,
 		Stability:       i.properties.Stability,
 		Min_sdk_version: i.minSdkVersion(lang),
 		Lang:            lang,
@@ -89,7 +90,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	})
 
 	importExportDependencies := []string{}
-	var sharedLibDependency []string
+	sharedLibDependency := commonProperties.Additional_shared_libraries
 	var headerLibs []string
 	var sdkVersion *string
 	var stl *string
@@ -224,6 +225,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		Srcs:            srcs,
 		AidlRoot:        aidlRoot,
 		Imports:         i.getImportsForVersion(version),
+		Headers:         i.properties.Headers,
 		Stability:       i.properties.Stability,
 		Min_sdk_version: minSdkVersion,
 		Platform_apis:   proptools.Bool(i.properties.Backend.Java.Platform_apis),
@@ -276,6 +278,7 @@ func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		Srcs:            srcs,
 		AidlRoot:        aidlRoot,
 		Imports:         i.getImportsForVersion(version),
+		Headers:         i.properties.Headers,
 		Stability:       i.properties.Stability,
 		Min_sdk_version: i.minSdkVersion(langRust),
 		Lang:            langRust,
