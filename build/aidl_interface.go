@@ -16,6 +16,7 @@ package aidl
 
 import (
 	"android/soong/android"
+	"android/soong/bazel"
 	"android/soong/cc"
 	"android/soong/java"
 	"android/soong/phony"
@@ -49,9 +50,7 @@ const (
 	currentVersion = "current"
 )
 
-var (
-	pctx = android.NewPackageContext("android/aidl")
-)
+var pctx = android.NewPackageContext("android/aidl")
 
 func init() {
 	pctx.Import("android/soong/android")
@@ -59,7 +58,7 @@ func init() {
 	pctx.HostBinToolVariable("aidlHashGen", "aidl_hash_gen")
 	pctx.SourcePathVariable("aidlToJniCmd", "system/tools/aidl/build/aidl_to_jni.py")
 	pctx.SourcePathVariable("aidlRustGlueCmd", "system/tools/aidl/build/aidl_rust_glue.py")
-	android.RegisterModuleType("aidl_interface", aidlInterfaceFactory)
+	android.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 	android.PreArchMutators(registerPreArchMutators)
 	android.PreArchBp2BuildMutators(registerPreArchMutators)
 	android.PostDepsMutators(registerPostDepsMutators)
@@ -422,6 +421,7 @@ type aidlInterfaceProperties struct {
 
 type aidlInterface struct {
 	android.ModuleBase
+	android.BazelModuleBase
 
 	properties aidlInterfaceProperties
 
@@ -1023,10 +1023,110 @@ func (i *aidlInterface) DepsMutator(ctx android.BottomUpMutatorContext) {
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
 
-func aidlInterfaceFactory() android.Module {
+func AidlInterfaceFactory() android.Module {
 	i := &aidlInterface{}
 	i.AddProperties(&i.properties)
 	android.InitAndroidModule(i)
+	android.InitBazelModule(i)
 	android.AddLoadHook(i, func(ctx android.LoadHookContext) { aidlInterfaceHook(ctx, i) })
 	return i
+}
+
+type aidlInterfaceAttributes struct {
+	aidlLibraryAttributes
+	Versions bazel.StringListAttribute
+	Backends bazel.StringListAttribute
+}
+
+type aidlLibraryAttributes struct {
+	Srcs                bazel.LabelListAttribute
+	Hdrs                bazel.LabelListAttribute
+	Deps                bazel.LabelListAttribute
+	Strip_import_prefix *string
+	Flags               []string
+}
+
+func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+	type importModuleWithVersion struct {
+		name    string
+		version string
+	}
+	// An aidl_interface with a version designation doesn't correspond to a specific
+	// module, but rather just imforms Soong on which collection of sources to provide
+	// from a particular interface module.
+	// However in Bazel, we will be creating an aidl_library for each version, so we can
+	// depend directly on a "versioned" module. But, we must look up the "unversioned"
+	// module name in BazelLabelForModuleDeps and then re-attach the version information.
+	importsWithVersions := make([]importModuleWithVersion, len(i.properties.Imports))
+	for i, importName := range i.properties.Imports {
+		moduleName, version := parseModuleWithVersion(importName)
+		if version == "" {
+			version = "-latest"
+		} else {
+			version = "-V" + version
+		}
+		importsWithVersions[i] = importModuleWithVersion{
+			name:    moduleName,
+			version: version,
+		}
+	}
+	unversionedImports := make([]string, len(importsWithVersions))
+	for i, iv := range importsWithVersions {
+		unversionedImports[i] = iv.name
+	}
+	imports := android.BazelLabelForModuleDeps(ctx, unversionedImports)
+	for i := range imports.Includes {
+		imports.Includes[i].Label = imports.Includes[i].Label + importsWithVersions[i].version
+	}
+	headers := android.BazelLabelForModuleDeps(ctx, i.properties.Headers)
+	imports.Append(headers)
+
+	var deps bazel.LabelListAttribute
+	if !imports.IsEmpty() {
+		deps = bazel.MakeLabelListAttribute(imports)
+	}
+
+	var versions bazel.StringListAttribute
+	if len(i.properties.Versions) > 0 {
+		versions = bazel.MakeStringListAttribute(append([]string{}, i.properties.Versions...))
+	}
+
+	var backends bazel.StringListAttribute
+	backendList := []string{}
+	shouldGenerateLangBackendMap := map[string]bool{
+		langCpp:  i.shouldGenerateCppBackend(),
+		langNdk:  i.shouldGenerateNdkBackend(),
+		langJava: i.shouldGenerateJavaBackend(),
+		langRust: i.shouldGenerateRustBackend()}
+	for backend, shouldGen := range shouldGenerateLangBackendMap {
+		if shouldGen {
+			backendList = append(backendList, backend)
+		}
+	}
+	sort.Strings(backendList)
+	if len(backendList) > 0 {
+		backends = bazel.MakeStringListAttribute(backendList)
+	}
+
+	attrs := &aidlInterfaceAttributes{
+		aidlLibraryAttributes: aidlLibraryAttributes{
+			//TODO(b/229251008) support "current" interface srcs
+			Flags: i.properties.Flags,
+			Deps:  deps,
+		},
+		Versions: versions,
+		Backends: backends,
+		//TODO(b/229251008) support local_include_dir for "current" interface srcs
+	}
+
+	interfaceName := strings.TrimSuffix(i.Name(), "_interface")
+
+	ctx.CreateBazelTargetModule(
+		bazel.BazelTargetModuleProperties{
+			Rule_class:        "aidl_interface",
+			Bzl_load_location: "//build/bazel/rules/aidl:interface.bzl",
+		},
+		android.CommonAttributes{Name: interfaceName},
+		attrs,
+	)
 }
