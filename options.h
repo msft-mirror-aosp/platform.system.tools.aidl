@@ -90,7 +90,7 @@ class WarningOptions {
 
 class Options final {
  public:
-  enum class Language { UNSPECIFIED, JAVA, CPP, NDK, RUST };
+  enum class Language { UNSPECIFIED, JAVA, CPP, NDK, RUST, CPP_ANALYZER };
 
   enum class Task { HELP, COMPILE, PREPROCESS, DUMP_API, CHECK_API, DUMP_MAPPINGS };
 
@@ -121,7 +121,10 @@ class Options final {
   uint32_t GetMinSdkVersion() const { return min_sdk_version_; }
 
   Language TargetLanguage() const { return language_; }
-  bool IsCppOutput() const { return language_ == Language::CPP || language_ == Language::NDK; }
+  bool IsCppOutput() const {
+    return language_ == Language::CPP || language_ == Language::NDK ||
+           language_ == Language::CPP_ANALYZER;
+  }
 
   Task GetTask() const { return task_; }
 
