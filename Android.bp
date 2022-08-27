@@ -94,6 +94,7 @@ cc_library_static {
         "diagnostics.cpp",
         "generate_aidl_mappings.cpp",
         "generate_cpp.cpp",
+        "generate_cpp_analyzer.cpp",
         "generate_java_binder.cpp",
         "generate_java.cpp",
         "generate_ndk.cpp",
@@ -471,7 +472,7 @@ aidl_interface {
         rust: {
             enabled: true,
         },
-    }
+    },
 }
 
 java_defaults {
@@ -655,6 +656,7 @@ genrule {
         ":aidl-test-fixedsizearray-java-source",
         ":aidl-test-fixedsizearray-ndk-source",
         ":aidl-test-fixedsizearray-rust-source",
+        ":aidl-test-interface-cpp-analyzer-source",
         "tests/golden_output/**/*",
     ],
     out: ["TODO_b_37575883.cpp"],
@@ -827,4 +829,15 @@ rust_test {
         },
     },
     test_suites: ["general-tests"],
+}
+
+cc_library_static {
+    name: "aidl-analyzer-main",
+    host_supported: true,
+    vendor_available: true,
+    srcs: [
+        "analyzer/analyzerMain.cpp",
+        "analyzer/Analyzer.cpp",
+    ],
+    export_include_dirs: ["analyzer/include"],
 }
