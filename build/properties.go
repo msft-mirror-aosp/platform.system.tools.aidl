@@ -55,9 +55,11 @@ type ccProperties struct {
 	Product_available         *bool
 	Recovery_available        *bool
 	Host_supported            *bool
+	Installable               *bool
 	Generated_sources         []string
 	Generated_headers         []string
 	Shared_libs               []string
+	Static_libs               []string
 	Export_shared_lib_headers []string
 	Export_generated_headers  []string
 	Header_libs               []string
@@ -100,6 +102,13 @@ type rustProperties struct {
 	Target           rustTargetProperties
 	Apex_available   []string
 	Min_sdk_version  *string
+}
+
+type Bazel_module struct {
+	Bp2build_available *bool
+}
+type bazelProperties struct {
+	*Bazel_module
 }
 
 type phonyProperties struct {

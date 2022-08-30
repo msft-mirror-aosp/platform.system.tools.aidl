@@ -20,6 +20,7 @@ import (
 	"android/soong/java"
 	"android/soong/rust"
 
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -31,8 +32,13 @@ func addLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, 
 		return addJavaLibrary(mctx, i, version, notFrozen)
 	} else if lang == langRust {
 		return addRustLibrary(mctx, i, version, notFrozen)
+	} else if lang == langCppAnalyzer {
+		return addCppAnalyzerLibrary(mctx, i, version, notFrozen)
+	} else if lang == langCpp || lang == langNdk || lang == langNdkPlatform {
+		return addCppLibrary(mctx, i, version, lang, notFrozen)
+	} else {
+		panic(fmt.Errorf("unsupported language backend %q\n", lang))
 	}
-	return addCppLibrary(mctx, i, version, lang, notFrozen)
 }
 
 func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
@@ -198,6 +204,80 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	return cppModuleGen
 }
 
+func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
+	cppAnalyzerSourceGen := i.versionedName("") + "-cpp-analyzer-source"
+	cppAnalyzerModuleGen := i.versionedName("") + "-cpp-analyzer"
+
+	srcs, aidlRoot := i.srcsForVersion(mctx, version)
+	if len(srcs) == 0 {
+		return ""
+	}
+
+	mctx.CreateModule(aidlGenFactory, &nameProperties{
+		Name: proptools.StringPtr(cppAnalyzerSourceGen),
+	}, &aidlGenProperties{
+		Srcs:            srcs,
+		AidlRoot:        aidlRoot,
+		Imports:         i.getImportsForVersion(version),
+		Stability:       i.properties.Stability,
+		Min_sdk_version: i.minSdkVersion(langCpp),
+		Lang:            langCppAnalyzer,
+		BaseName:        i.ModuleBase.Name(),
+		Version:         i.versionForInitVersionCompat(version),
+		Unstable:        i.properties.Unstable,
+		NotFrozen:       notFrozen,
+		Flags:           i.flagsForAidlGenRule(version),
+	})
+
+	importExportDependencies := []string{}
+	var hostSupported *bool
+	var addCflags []string
+	targetProp := ccTargetProperties{
+		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
+	}
+
+	importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
+	hostSupported = i.properties.Host_supported
+
+	vendorAvailable := i.properties.Vendor_available
+	odmAvailable := i.properties.Odm_available
+	productAvailable := i.properties.Product_available
+	recoveryAvailable := i.properties.Recovery_available
+	productAvailable = nil
+
+	g := aidlImplementationGeneratorProperties{
+		ModuleProperties: []interface{}{
+			&ccProperties{
+				Name:                      proptools.StringPtr(cppAnalyzerModuleGen),
+				Vendor_available:          vendorAvailable,
+				Odm_available:             odmAvailable,
+				Product_available:         productAvailable,
+				Recovery_available:        recoveryAvailable,
+				Host_supported:            hostSupported,
+				Defaults:                  []string{"aidl-cpp-module-defaults"},
+				Double_loadable:           i.properties.Double_loadable,
+				Installable:               proptools.BoolPtr(true),
+				Generated_sources:         []string{cppAnalyzerSourceGen},
+				Generated_headers:         []string{cppAnalyzerSourceGen},
+				Export_generated_headers:  []string{cppAnalyzerSourceGen},
+				Shared_libs:               importExportDependencies,
+				Static_libs:               []string{"aidl-analyzer-main", i.versionedName(version) + "-" + langCpp},
+				Export_shared_lib_headers: importExportDependencies,
+				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
+				Min_sdk_version:           i.minSdkVersion(langCpp),
+				Target:                    targetProp,
+				Tidy:                      proptools.BoolPtr(true),
+				// Do the tidy check only for the generated headers
+				Tidy_flags:            []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
+				Tidy_checks_as_errors: []string{"*"},
+			},
+		},
+	}
+
+	mctx.CreateModule(wrapLibraryFactory(cc.BinaryFactory), g.ModuleProperties...)
+	return cppAnalyzerModuleGen
+}
+
 func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	javaSourceGen := i.versionedName(version) + "-java-source"
 	javaModuleGen := i.versionedName(version) + "-java"
@@ -246,16 +326,29 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 		AidlInterfaceName: i.ModuleBase.Name(),
 		Version:           version,
 		Imports:           i.getImportsForVersion(version),
-		ModuleProperties: []interface{}{&javaProperties{
-			Name:            proptools.StringPtr(javaModuleGen),
-			Installable:     proptools.BoolPtr(true),
-			Defaults:        []string{"aidl-java-module-defaults"},
-			Sdk_version:     sdkVersion,
-			Platform_apis:   i.properties.Backend.Java.Platform_apis,
-			Srcs:            []string{":" + javaSourceGen},
-			Apex_available:  i.properties.Backend.Java.Apex_available,
-			Min_sdk_version: i.minSdkVersion(langJava),
-		}, &i.properties.Backend.Java.LintProperties},
+		ModuleProperties: []interface{}{
+			&javaProperties{
+				Name:            proptools.StringPtr(javaModuleGen),
+				Installable:     proptools.BoolPtr(true),
+				Defaults:        []string{"aidl-java-module-defaults"},
+				Sdk_version:     sdkVersion,
+				Platform_apis:   i.properties.Backend.Java.Platform_apis,
+				Srcs:            []string{":" + javaSourceGen},
+				Apex_available:  i.properties.Backend.Java.Apex_available,
+				Min_sdk_version: i.minSdkVersion(langJava),
+			},
+			&i.properties.Backend.Java.LintProperties,
+			// the logic to create implementation libraries has been reimplemented
+			// in a Bazel macro, so these libraries should not be converted with
+			// bp2build
+			// TODO(b/237810289) perhaps do something different here so that we aren't
+			// also disabling these modules in mixed builds
+			&bazelProperties{
+				&Bazel_module{
+					Bp2build_available: proptools.BoolPtr(false),
+				},
+			},
+		},
 	})
 
 	return javaModuleGen
