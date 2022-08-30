@@ -18,13 +18,14 @@ import (
 	"path/filepath"
 
 	"android/soong/android"
+	"android/soong/bazel"
 
 	"github.com/google/blueprint"
 	"github.com/google/blueprint/proptools"
 )
 
 func init() {
-	android.RegisterModuleType("aidl_interface_headers", aidlInterfaceHeadersFactory)
+	android.RegisterModuleType("aidl_interface_headers", AidlInterfaceHeadersFactory)
 }
 
 type AidlInterfaceHeadersInfo struct {
@@ -44,6 +45,7 @@ type aidlInterfaceHeadersProperties struct {
 
 type aidlInterfaceHeaders struct {
 	android.ModuleBase
+	android.BazelModuleBase
 
 	properties aidlInterfaceHeadersProperties
 
@@ -54,11 +56,30 @@ type aidlInterfaceHeaders struct {
 // aidl tool. No language bindings are generated from these modules. Typically this will
 // be used to provide includes for UnstructuredParcelable AIDL definitions such as those
 // coming from framework modules.
-func aidlInterfaceHeadersFactory() android.Module {
+func AidlInterfaceHeadersFactory() android.Module {
 	i := &aidlInterfaceHeaders{}
 	i.AddProperties(&i.properties)
 	android.InitAndroidModule(i)
+	android.InitBazelModule(i)
 	return i
+}
+
+func (i *aidlInterfaceHeaders) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+	srcs := android.BazelLabelForModuleSrc(ctx, i.properties.Srcs)
+
+	attrs := &aidlLibraryAttributes{
+		Hdrs:                bazel.MakeLabelListAttribute(srcs),
+		Strip_import_prefix: i.properties.Include_dir,
+	}
+
+	ctx.CreateBazelTargetModule(
+		bazel.BazelTargetModuleProperties{
+			Rule_class:        "aidl_library",
+			Bzl_load_location: "//build/bazel/rules/aidl:library.bzl",
+		},
+		android.CommonAttributes{Name: i.Name()},
+		attrs,
+	)
 }
 
 func (i *aidlInterfaceHeaders) GenerateAndroidBuildActions(ctx android.ModuleContext) {

@@ -177,6 +177,8 @@ string to_string(Options::Language language) {
       return "ndk";
     case Options::Language::RUST:
       return "rust";
+    case Options::Language::CPP_ANALYZER:
+      return "cpp-analyzer";
     case Options::Language::UNSPECIFIED:
       return "unspecified";
     default:
@@ -223,6 +225,8 @@ static uint32_t DefaultMinSdkVersionForLang(const Options::Language lang) {
       return DEFAULT_SDK_VERSION_NDK;
     case Options::Language::RUST:
       return DEFAULT_SDK_VERSION_RUST;
+    case Options::Language::CPP_ANALYZER:
+      return DEFAULT_SDK_VERSION_CPP;
     case Options::Language::UNSPECIFIED:
       return DEFAULT_SDK_VERSION_JAVA;  // The safest option
     default:
@@ -314,6 +318,9 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
             task_ = Options::Task::COMPILE;
           } else if (lang == "rust") {
             language_ = Options::Language::RUST;
+            task_ = Options::Task::COMPILE;
+          } else if (lang == "cpp-analyzer") {
+            language_ = Options::Language::CPP_ANALYZER;
             task_ = Options::Task::COMPILE;
           } else {
             error_message_ << "Unsupported language: '" << lang << "'" << endl;
