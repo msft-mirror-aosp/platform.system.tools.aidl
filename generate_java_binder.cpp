@@ -153,7 +153,7 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
   asBinder->statements->Add(std::make_shared<ReturnStatement>(THIS_VALUE));
   this->elements.push_back(asBinder);
 
-  if (options_.GenTransactionNames()) {
+  if (options_.GenTransactionNames() || options_.GenTraces()) {
     // getDefaultTransactionName
     auto getDefaultTransactionName = std::make_shared<Method>();
     getDefaultTransactionName->comment = "/** @hide */";
@@ -233,7 +233,7 @@ void StubClass::Finish() {
   transact_statements->Add(this->transact_switch_user);
 
   // getTransactionName
-  if (options_.GenTransactionNames()) {
+  if (options_.GenTransactionNames() || options_.GenTraces()) {
     // Some transaction codes are common, e.g. INTERFACE_TRANSACTION or DUMP_TRANSACTION.
     // Common transaction codes will not be resolved to a string by getTransactionName. The method
     // will return NULL in this case.
@@ -539,25 +539,7 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
                              std::shared_ptr<StatementBlock> statement_block,
                              const Options& options) {
   // try and finally
-  auto tryStatement = std::make_shared<TryStatement>();
-  auto finallyStatement = std::make_shared<FinallyStatement>();
   auto& statements = statement_block;
-
-  if (options.GenTraces()) {
-    statements->Add(tryStatement);
-    statements->Add(finallyStatement);
-    statements = tryStatement->statements;
-    tryStatement->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
-            std::make_shared<StringLiteralExpression>("AIDL::java::" + iface.GetName() +
-                                                      "::" + method.GetName() + "::server")}));
-    finallyStatement->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceEnd",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")}));
-  }
 
   auto realCall = std::make_shared<MethodCall>(THIS_VALUE, method.GetName());
 
@@ -756,11 +738,6 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
   out << "try {\n";
   out.Indent();
 
-  if (options.GenTraces()) {
-    auto tag = "AIDL::java::" + iface.GetName() + "::" + method.GetName() + "::client";
-    out << "android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, \"" << tag << "\");\n";
-  }
-
   // the interface identifier token: the DESCRIPTOR constant, marshalled as a
   // string
   out << "_data.writeInterfaceToken(DESCRIPTOR);\n";
@@ -871,10 +848,6 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
   }
   out << "_data.recycle();\n";
 
-  if (options.GenTraces()) {
-    out << "android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);\n";
-  }
-
   out.Dedent();
   out << "}\n";  // finally
 
@@ -903,7 +876,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
   stubClass->elements.push_back(transactCode);
 
   // getTransactionName
-  if (options.GenTransactionNames()) {
+  if (options.GenTransactionNames() || options.GenTraces()) {
     auto c = std::make_shared<Case>(transactCodeName);
     c->statements->Add(std::make_shared<ReturnStatement>(
         std::make_shared<StringLiteralExpression>(method.GetName())));
@@ -1352,7 +1325,7 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   }
 
   // getMaxTransactionId
-  if (options.GenTransactionNames()) {
+  if (options.GenTransactionNames() || options.GenTraces()) {
     stub->elements.push_back(GenerateMaxTransactionId(max_transaction_id));
   }
 
