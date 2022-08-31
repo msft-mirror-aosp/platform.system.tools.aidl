@@ -192,6 +192,36 @@ class JavaVersionTestServer:
                              ' /data/framework android.aidl.sdkversion.service.AidlJavaVersionTestService',
                              background=True)
 
+class JavaPermissionClient:
+    def __init__(self, host, bitness):
+        self.name = "java_client_permission_%s" % pretty_bitness(bitness)
+        self.host = host
+        self.bitness = bitness
+    def cleanup(self):
+        self.host.run('killall ' + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness),
+                      ignore_status=True)
+    def run(self):
+        result = self.host.run('CLASSPATH=/data/framework/aidl_test_java_client_permission.jar '
+                               + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
+                               ' /data/framework android.aidl.permission.tests.PermissionTests')
+        print(result.printable_string())
+        if re.search(INSTRUMENTATION_SUCCESS_PATTERN, result.stdout) is None:
+            raise TestFail(result.stdout)
+
+class JavaPermissionServer:
+    def __init__(self, host, bitness):
+        self.name = "java_server_permission_%s" % pretty_bitness(bitness)
+        self.host = host
+        self.bitness = bitness
+    def cleanup(self):
+        self.host.run('killall ' + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness),
+                      ignore_status=True)
+    def run(self):
+        return self.host.run('CLASSPATH=/data/framework/aidl_test_java_service_permission.jar '
+                             + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
+                             ' /data/framework android.aidl.permission.service.PermissionTestService',
+                             background=True)
+
 def getprop(host, prop):
     return host.run('getprop "%s"' % prop).stdout.strip()
 
@@ -291,6 +321,8 @@ if __name__ == '__main__':
         client = JavaVersionTestClient(host, c_bitness, c_version)
         server = JavaVersionTestServer(host, s_bitness, s_version)
         add_test(client, server)
+
+    add_test(JavaPermissionClient(host, bitness), JavaPermissionServer(host, bitness))
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestAidl)
     sys.exit(not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful())
