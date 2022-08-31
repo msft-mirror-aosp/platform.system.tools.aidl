@@ -855,6 +855,25 @@ func TestImports(t *testing.T) {
 		}
 	`)
 
+	testAidlError(t, `imports: unstable "foo" depends on "bar" but does not specify a version`, `
+		aidl_interface {
+			name: "foo",
+            unstable: true,
+			srcs: [
+				"IFoo.aidl",
+			],
+			imports: [
+				"bar",
+			]
+		}
+		aidl_interface {
+			name: "bar",
+			srcs: [
+				"IBar.aidl",
+			],
+		}
+	`)
+
 	ctx, _ := testAidl(t, `
 		aidl_interface {
 			name: "foo",
