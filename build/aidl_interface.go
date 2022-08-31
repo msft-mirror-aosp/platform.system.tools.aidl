@@ -627,8 +627,17 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 			anImport := other.ModuleBase.Name()
 			anImportWithVersion := tag.anImport
 			_, version := parseModuleWithVersion(tag.anImport)
-			if version != "" {
-				candidateVersions := concat(other.getVersions(), []string{other.nextVersion()})
+
+			// note: 'nextVersion' will be incorrect in a REL branch, and following this advice
+			// would lead a user to lose another cycle.
+			// TODO(b/231903487): correct this logic when we cover all versions of nextVersion
+			// with another flag
+			candidateVersions := concat(other.getVersions(), []string{other.nextVersion()})
+			if version == "" {
+				if proptools.Bool(i.properties.Unstable) && !proptools.Bool(other.properties.Unstable) {
+					mctx.PropertyErrorf("imports", "unstable %q depends on %q but does not specify a version (must be one of %q)", i.ModuleBase.Name(), anImport, candidateVersions)
+				}
+			} else {
 				if !android.InList(version, candidateVersions) {
 					mctx.PropertyErrorf("imports", "%q depends on %q version %q(%q), which doesn't exist. The version must be one of %q", i.ModuleBase.Name(), anImport, version, anImportWithVersion, candidateVersions)
 				}
