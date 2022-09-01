@@ -198,6 +198,16 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
+			// the logic to create implementation libraries has been reimplemented
+			// in a Bazel macro, so these libraries should not be converted with
+			// bp2build
+			// TODO(b/237810289) perhaps do something different here so that we aren't
+			// also disabling these modules in mixed builds
+			&bazelProperties{
+				&Bazel_module{
+					Bp2build_available: proptools.BoolPtr(false),
+				},
+			},
 		},
 	})
 
