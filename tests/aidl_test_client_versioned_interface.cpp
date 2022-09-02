@@ -17,6 +17,7 @@
 #include <android/aidl/versioned/tests/BnFooInterface.h>
 #include <android/aidl/versioned/tests/IFooInterface.h>
 #include <binder/IServiceManager.h>
+#include <binder/ProcessState.h>
 #include <gtest/gtest.h>
 #include <utils/String16.h>
 
@@ -33,7 +34,9 @@ using android::aidl::versioned::tests::IFooInterfaceDelegator;
 class VersionedInterfaceTest : public AidlTest {
  public:
   void SetUp() override {
-    ASSERT_EQ(OK, android::getService(IFooInterface::descriptor, &versioned));
+    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+    android::ProcessState::self()->startThreadPool();
+    versioned = android::waitForService<IFooInterface>(IFooInterface::descriptor);
     ASSERT_NE(nullptr, versioned);
 
     AidlTest::SetUp();
