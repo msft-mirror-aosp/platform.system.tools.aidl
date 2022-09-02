@@ -8,6 +8,7 @@
 #include <binder/IInterface.h>
 #include <binder/Parcel.h>
 #include <binder/Status.h>
+#include <binder/Trace.h>
 #include <tuple>
 #include <utils/String16.h>
 #include <utils/StrongPointer.h>
