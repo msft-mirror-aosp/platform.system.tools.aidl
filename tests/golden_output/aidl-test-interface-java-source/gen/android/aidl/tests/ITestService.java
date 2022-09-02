@@ -629,6 +629,290 @@ public interface ITestService extends android.os.IInterface
     {
       return this;
     }
+    /** @hide */
+    public static java.lang.String getDefaultTransactionName(int transactionCode)
+    {
+      switch (transactionCode)
+      {
+        case TRANSACTION_UnimplementedMethod:
+        {
+          return "UnimplementedMethod";
+        }
+        case TRANSACTION_Deprecated:
+        {
+          return "Deprecated";
+        }
+        case TRANSACTION_TestOneway:
+        {
+          return "TestOneway";
+        }
+        case TRANSACTION_RepeatBoolean:
+        {
+          return "RepeatBoolean";
+        }
+        case TRANSACTION_RepeatByte:
+        {
+          return "RepeatByte";
+        }
+        case TRANSACTION_RepeatChar:
+        {
+          return "RepeatChar";
+        }
+        case TRANSACTION_RepeatInt:
+        {
+          return "RepeatInt";
+        }
+        case TRANSACTION_RepeatLong:
+        {
+          return "RepeatLong";
+        }
+        case TRANSACTION_RepeatFloat:
+        {
+          return "RepeatFloat";
+        }
+        case TRANSACTION_RepeatDouble:
+        {
+          return "RepeatDouble";
+        }
+        case TRANSACTION_RepeatString:
+        {
+          return "RepeatString";
+        }
+        case TRANSACTION_RepeatByteEnum:
+        {
+          return "RepeatByteEnum";
+        }
+        case TRANSACTION_RepeatIntEnum:
+        {
+          return "RepeatIntEnum";
+        }
+        case TRANSACTION_RepeatLongEnum:
+        {
+          return "RepeatLongEnum";
+        }
+        case TRANSACTION_ReverseBoolean:
+        {
+          return "ReverseBoolean";
+        }
+        case TRANSACTION_ReverseByte:
+        {
+          return "ReverseByte";
+        }
+        case TRANSACTION_ReverseChar:
+        {
+          return "ReverseChar";
+        }
+        case TRANSACTION_ReverseInt:
+        {
+          return "ReverseInt";
+        }
+        case TRANSACTION_ReverseLong:
+        {
+          return "ReverseLong";
+        }
+        case TRANSACTION_ReverseFloat:
+        {
+          return "ReverseFloat";
+        }
+        case TRANSACTION_ReverseDouble:
+        {
+          return "ReverseDouble";
+        }
+        case TRANSACTION_ReverseString:
+        {
+          return "ReverseString";
+        }
+        case TRANSACTION_ReverseByteEnum:
+        {
+          return "ReverseByteEnum";
+        }
+        case TRANSACTION_ReverseIntEnum:
+        {
+          return "ReverseIntEnum";
+        }
+        case TRANSACTION_ReverseLongEnum:
+        {
+          return "ReverseLongEnum";
+        }
+        case TRANSACTION_GetOtherTestService:
+        {
+          return "GetOtherTestService";
+        }
+        case TRANSACTION_SetOtherTestService:
+        {
+          return "SetOtherTestService";
+        }
+        case TRANSACTION_VerifyName:
+        {
+          return "VerifyName";
+        }
+        case TRANSACTION_GetInterfaceArray:
+        {
+          return "GetInterfaceArray";
+        }
+        case TRANSACTION_VerifyNamesWithInterfaceArray:
+        {
+          return "VerifyNamesWithInterfaceArray";
+        }
+        case TRANSACTION_GetNullableInterfaceArray:
+        {
+          return "GetNullableInterfaceArray";
+        }
+        case TRANSACTION_VerifyNamesWithNullableInterfaceArray:
+        {
+          return "VerifyNamesWithNullableInterfaceArray";
+        }
+        case TRANSACTION_GetInterfaceList:
+        {
+          return "GetInterfaceList";
+        }
+        case TRANSACTION_VerifyNamesWithInterfaceList:
+        {
+          return "VerifyNamesWithInterfaceList";
+        }
+        case TRANSACTION_ReverseStringList:
+        {
+          return "ReverseStringList";
+        }
+        case TRANSACTION_RepeatParcelFileDescriptor:
+        {
+          return "RepeatParcelFileDescriptor";
+        }
+        case TRANSACTION_ReverseParcelFileDescriptorArray:
+        {
+          return "ReverseParcelFileDescriptorArray";
+        }
+        case TRANSACTION_ThrowServiceException:
+        {
+          return "ThrowServiceException";
+        }
+        case TRANSACTION_RepeatNullableIntArray:
+        {
+          return "RepeatNullableIntArray";
+        }
+        case TRANSACTION_RepeatNullableByteEnumArray:
+        {
+          return "RepeatNullableByteEnumArray";
+        }
+        case TRANSACTION_RepeatNullableIntEnumArray:
+        {
+          return "RepeatNullableIntEnumArray";
+        }
+        case TRANSACTION_RepeatNullableLongEnumArray:
+        {
+          return "RepeatNullableLongEnumArray";
+        }
+        case TRANSACTION_RepeatNullableString:
+        {
+          return "RepeatNullableString";
+        }
+        case TRANSACTION_RepeatNullableStringList:
+        {
+          return "RepeatNullableStringList";
+        }
+        case TRANSACTION_RepeatNullableParcelable:
+        {
+          return "RepeatNullableParcelable";
+        }
+        case TRANSACTION_RepeatNullableParcelableArray:
+        {
+          return "RepeatNullableParcelableArray";
+        }
+        case TRANSACTION_RepeatNullableParcelableList:
+        {
+          return "RepeatNullableParcelableList";
+        }
+        case TRANSACTION_TakesAnIBinder:
+        {
+          return "TakesAnIBinder";
+        }
+        case TRANSACTION_TakesANullableIBinder:
+        {
+          return "TakesANullableIBinder";
+        }
+        case TRANSACTION_TakesAnIBinderList:
+        {
+          return "TakesAnIBinderList";
+        }
+        case TRANSACTION_TakesANullableIBinderList:
+        {
+          return "TakesANullableIBinderList";
+        }
+        case TRANSACTION_RepeatUtf8CppString:
+        {
+          return "RepeatUtf8CppString";
+        }
+        case TRANSACTION_RepeatNullableUtf8CppString:
+        {
+          return "RepeatNullableUtf8CppString";
+        }
+        case TRANSACTION_ReverseUtf8CppString:
+        {
+          return "ReverseUtf8CppString";
+        }
+        case TRANSACTION_ReverseNullableUtf8CppString:
+        {
+          return "ReverseNullableUtf8CppString";
+        }
+        case TRANSACTION_ReverseUtf8CppStringList:
+        {
+          return "ReverseUtf8CppStringList";
+        }
+        case TRANSACTION_GetCallback:
+        {
+          return "GetCallback";
+        }
+        case TRANSACTION_FillOutStructuredParcelable:
+        {
+          return "FillOutStructuredParcelable";
+        }
+        case TRANSACTION_RepeatExtendableParcelable:
+        {
+          return "RepeatExtendableParcelable";
+        }
+        case TRANSACTION_ReverseList:
+        {
+          return "ReverseList";
+        }
+        case TRANSACTION_ReverseIBinderArray:
+        {
+          return "ReverseIBinderArray";
+        }
+        case TRANSACTION_ReverseNullableIBinderArray:
+        {
+          return "ReverseNullableIBinderArray";
+        }
+        case TRANSACTION_GetOldNameInterface:
+        {
+          return "GetOldNameInterface";
+        }
+        case TRANSACTION_GetNewNameInterface:
+        {
+          return "GetNewNameInterface";
+        }
+        case TRANSACTION_GetUnionTags:
+        {
+          return "GetUnionTags";
+        }
+        case TRANSACTION_GetCppJavaTests:
+        {
+          return "GetCppJavaTests";
+        }
+        case TRANSACTION_getBackendType:
+        {
+          return "getBackendType";
+        }
+        default:
+        {
+          return null;
+        }
+      }
+    }
+    /** @hide */
+    public java.lang.String getTransactionName(int transactionCode)
+    {
+      return this.getDefaultTransactionName(transactionCode);
+    }
     @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
     {
       java.lang.String descriptor = DESCRIPTOR;
@@ -3180,6 +3464,11 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
     static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
     static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 66);
+    /** @hide */
+    public int getMaxTransactionId()
+    {
+      return 66;
+    }
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
       // at a time. This is a heuristic to detect if two different
