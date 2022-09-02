@@ -400,6 +400,21 @@ class NativeService : public BnTestService {
     return ReverseArray(input, repeated, _aidl_return);
   }
 
+  Status SetOtherTestService(const String16& name, const sp<INamedCallback>& service,
+                             bool* _aidl_return) override {
+    const auto& existing = service_map_.find(name);
+    if (existing != service_map_.end() && existing->second == service) {
+      *_aidl_return = true;
+
+      return Status::ok();
+    } else {
+      *_aidl_return = false;
+      service_map_[name] = service;
+
+      return Status::ok();
+    }
+  }
+
   Status GetOtherTestService(const String16& name,
                              sp<INamedCallback>* returned_service) override {
     if (service_map_.find(name) == service_map_.end()) {

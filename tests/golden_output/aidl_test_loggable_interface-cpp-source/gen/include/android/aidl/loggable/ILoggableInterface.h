@@ -2,6 +2,7 @@
 
 #include <android/aidl/loggable/Data.h>
 #include <android/binder_to_string.h>
+#include <binder/Delegate.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/ParcelFileDescriptor.h>
@@ -17,11 +18,17 @@
 namespace android {
 namespace aidl {
 namespace loggable {
+class ILoggableInterfaceDelegator;
+
 class ILoggableInterface : public ::android::IInterface {
 public:
+  typedef ILoggableInterfaceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(LoggableInterface)
+  class ISubDelegator;
+
   class ISub : public ::android::IInterface {
   public:
+    typedef ISubDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(Sub)
     virtual ::android::binder::Status Log(int32_t value) = 0;
   };  // class ISub
@@ -80,8 +87,9 @@ public:
 
   class ISubDelegator : public BnSub {
   public:
-    explicit ISubDelegator(::android::sp<ISub> &impl) : _aidl_delegate(impl) {}
+    explicit ISubDelegator(const ::android::sp<ISub> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<ISub> getImpl() { return _aidl_delegate; }
     ::android::binder::Status Log(int32_t value) override {
       return _aidl_delegate->Log(value);
     }

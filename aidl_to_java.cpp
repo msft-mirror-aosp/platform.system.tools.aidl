@@ -218,14 +218,6 @@ string DefaultJavaValueOf(const AidlTypeSpecifier& aidl) {
   }
 }
 
-static string GetFlagFor(const CodeGeneratorContext& c) {
-  if (c.is_return_value) {
-    return "android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE";
-  } else {
-    return "0";
-  }
-}
-
 typedef void (*ParcelHelperGenerator)(CodeWriter&, const Options&);
 
 static void GenerateTypedObjectHelper(CodeWriter& out, const Options&) {
@@ -253,8 +245,26 @@ static private <T extends android.os.Parcelable> void writeTypedObject(
 )";
 }
 
+static void GenerateTypedListHelper(CodeWriter& out, const Options&) {
+  out << R"(static private <T extends android.os.Parcelable> void writeTypedList(
+    android.os.Parcel parcel, java.util.List<T> value, int parcelableFlags) {
+  if (value == null) {
+    parcel.writeInt(-1);
+  } else {
+    int N = value.size();
+    int i = 0;
+    parcel.writeInt(N);
+    while (i < N) {
+      parcel.writeTypedObject(value.get(i), parcelableFlags);
+      i++;
+    }
+  }
+}
+)";
+}
+
 void GenerateParcelHelpers(CodeWriter& out, const AidlDefinedType& defined_type,
-                           const Options& options) {
+                           const AidlTypenames& typenames, const Options& options) {
   // root-level type contains all necessary helpers
   if (defined_type.GetParentType()) {
     return;
@@ -262,9 +272,11 @@ void GenerateParcelHelpers(CodeWriter& out, const AidlDefinedType& defined_type,
   // visits method parameters and parcelable fields to collect types which
   // requires read/write/create helpers.
   struct Visitor : AidlVisitor {
+    const AidlTypenames& typenames;
     const Options& options;
     set<ParcelHelperGenerator> helpers;
-    Visitor(const Options& options) : options(options) {}
+    Visitor(const AidlTypenames& typenames, const Options& options)
+        : typenames(typenames), options(options) {}
     void Visit(const AidlTypeSpecifier& type) override {
       auto name = type.GetName();
       if (auto defined_type = type.GetDefinedType(); defined_type) {
@@ -284,9 +296,16 @@ void GenerateParcelHelpers(CodeWriter& out, const AidlDefinedType& defined_type,
             }
           }
         }
+
+        if (name == "List" && type.IsGeneric()) {
+          const auto& element_name = type.GetTypeParameters()[0]->GetName();
+          if (typenames.IsParcelable(element_name) && options.GetMinSdkVersion() <= 33u) {
+            helpers.insert(&GenerateTypedListHelper);
+          }
+        }
       }
     }
-  } v{options};
+  } v{typenames, options};
 
   VisitTopDown(v, defined_type);
   if (!v.helpers.empty()) {
@@ -386,7 +405,13 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
            } else if (element_type_name == "IBinder") {
              c.writer << c.parcel << ".writeBinderList(" << c.var << ");\n";
            } else if (c.typenames.IsParcelable(element_type_name)) {
-             c.writer << c.parcel << ".writeTypedList(" << c.var << ");\n";
+             if (c.min_sdk_version > 33u) {
+               c.writer << c.parcel << ".writeTypedList(" << c.var << ", " << c.write_to_parcel_flag
+                        << ");\n";
+             } else {
+               c.writer << "_Parcel.writeTypedList(" << c.parcel << ", " << c.var << ", "
+                        << c.write_to_parcel_flag << ");\n";
+             }
            } else if (c.typenames.GetInterface(element_type)) {
              c.writer << c.parcel << ".writeInterfaceList(" << c.var << ");\n";
            } else {
@@ -417,9 +442,8 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
                c.parcel,
                "v",
                c.min_sdk_version,
-               c.is_return_value,
+               c.write_to_parcel_flag,
                c.is_classloader_created,
-               c.filename,
            };
            WriteToParcelFor(value_context);
            c.writer.Dedent();
@@ -450,15 +474,17 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
       {"ParcelFileDescriptor",
        [](const CodeGeneratorContext& c) {
          if (c.min_sdk_version >= 23u) {
-           c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << GetFlagFor(c) << ");\n";
+           c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << c.write_to_parcel_flag
+                    << ");\n";
          } else {
            c.writer << "_Parcel.writeTypedObject(" << c.parcel << ", " << c.var << ", "
-                    << GetFlagFor(c) << ");\n";
+                    << c.write_to_parcel_flag << ");\n";
          }
        }},
       {"ParcelFileDescriptor[]",
        [](const CodeGeneratorContext& c) {
-         c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << GetFlagFor(c) << ");\n";
+         c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << c.write_to_parcel_flag
+                  << ");\n";
        }},
       {"CharSequence",
        [](const CodeGeneratorContext& c) {
@@ -468,7 +494,7 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
          c.writer.Indent();
          c.writer << c.parcel << ".writeInt(1);\n";
          c.writer << "android.text.TextUtils.writeToParcel(" << c.var << ", " << c.parcel << ", "
-                  << GetFlagFor(c) << ");\n";
+                  << c.write_to_parcel_flag << ");\n";
          c.writer.Dedent();
          c.writer << "}\n";
          c.writer << "else {\n";
@@ -487,7 +513,7 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
   if (found != method_map.end()) {
     found->second(c);
   } else if (c.type.IsFixedSizeArray()) {
-    std::vector<std::string> args = {c.var, GetFlagFor(c)};
+    std::vector<std::string> args = {c.var, c.write_to_parcel_flag};
     for (auto dim : c.type.GetFixedSizeArrayDimensions()) {
       args.push_back(std::to_string(dim));
     }
@@ -503,13 +529,15 @@ void WriteToParcelFor(const CodeGeneratorContext& c) {
       }
     } else if (t->AsParcelable() != nullptr) {
       if (c.type.IsArray()) {
-        c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << GetFlagFor(c) << ");\n";
+        c.writer << c.parcel << ".writeTypedArray(" << c.var << ", " << c.write_to_parcel_flag
+                 << ");\n";
       } else {
         if (c.min_sdk_version >= 23u) {
-          c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << GetFlagFor(c) << ");\n";
+          c.writer << c.parcel << ".writeTypedObject(" << c.var << ", " << c.write_to_parcel_flag
+                   << ");\n";
         } else {
           c.writer << "_Parcel.writeTypedObject(" << c.parcel << ", " << c.var << ", "
-                   << GetFlagFor(c) << ");\n";
+                   << c.write_to_parcel_flag << ");\n";
         }
       }
     }
@@ -643,9 +671,8 @@ bool CreateFromParcelFor(const CodeGeneratorContext& c) {
                c.parcel,
                "v",
                c.min_sdk_version,
-               c.is_return_value,
+               c.write_to_parcel_flag,
                c.is_classloader_created,
-               c.filename,
            };
            CreateFromParcelFor(value_context);
            c.writer << c.var << ".put(k, v);\n";
@@ -831,9 +858,8 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
                c.parcel,
                "v",
                c.min_sdk_version,
-               c.is_return_value,
+               c.write_to_parcel_flag,
                c.is_classloader_created,
-               c.filename,
            };
            CreateFromParcelFor(value_context);
            c.writer << c.var << ".put(k, v);\n";
@@ -857,7 +883,9 @@ bool ReadFromParcelFor(const CodeGeneratorContext& c) {
        [](const CodeGeneratorContext& c) {
          c.writer << "if ((0!=" << c.parcel << ".readInt())) {\n";
          c.writer.Indent();
-         c.writer << c.var << " = " << "android.os.ParcelFileDescriptor.CREATOR.createFromParcel(" << c.parcel << ");\n";
+         c.writer << c.var << " = "
+                  << "android.os.ParcelFileDescriptor.CREATOR.createFromParcel(" << c.parcel
+                  << ");\n";
          c.writer.Dedent();
          c.writer << "}\n";
        }},

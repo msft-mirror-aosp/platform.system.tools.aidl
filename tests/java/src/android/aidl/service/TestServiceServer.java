@@ -59,6 +59,13 @@ import java.util.List;
 
 public class TestServiceServer extends ITestService.Stub {
   public static void main(String[] args) {
+    // b/235006086: test with debug stack trace parceling feature
+    // which has been broken in the past. This does mean that we
+    // lose Java coverage for when this is false, but we do have
+    // other tests which cover this including CtsNdkBinderTestCases
+    // and other language-specific exception/Status unit tests.
+    Parcel.setStackTraceParceling(true);
+
     TestServiceServer myServer = new TestServiceServer();
     ServiceManager.addService(ITestService.class.getName(), myServer);
 
@@ -302,6 +309,19 @@ public class TestServiceServer extends ITestService.Stub {
       mNamedCallbacks.put(name, new MyNamedCallback(name));
     }
     return mNamedCallbacks.get(name);
+  }
+  @Override
+  public boolean SetOtherTestService(String name, INamedCallback service) throws RemoteException {
+    if (mNamedCallbacks.containsKey(name) && mNamedCallbacks.get(name) == service) {
+      return true;
+    }
+    try {
+      // This restricts the client to only setting services that it gets from this server.
+      mNamedCallbacks.put(name, (MyNamedCallback) service);
+    } catch (Exception e) {
+      Log.i("TestServiceServer", "Failed to cast service");
+    }
+    return false;
   }
   @Override
   public boolean VerifyName(INamedCallback service, String name) throws RemoteException {

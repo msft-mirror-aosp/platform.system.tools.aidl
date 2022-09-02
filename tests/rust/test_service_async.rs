@@ -202,6 +202,21 @@ impl ITestService::ITestServiceAsyncServer for TestService {
         Ok(other_service.to_owned())
     }
 
+    async fn SetOtherTestService(
+        &self,
+        name: &str,
+        service: &binder::Strong<dyn INamedCallback::INamedCallback>,
+    ) -> binder::Result<bool> {
+        let mut service_map = self.service_map.lock().unwrap();
+        if let Some(existing_service) = service_map.get(name) {
+            if existing_service == service {
+                return Ok(true);
+            }
+        }
+        service_map.insert(name.into(), service.clone());
+        Ok(false)
+    }
+
     async fn VerifyName(
         &self,
         service: &binder::Strong<dyn INamedCallback::INamedCallback>,

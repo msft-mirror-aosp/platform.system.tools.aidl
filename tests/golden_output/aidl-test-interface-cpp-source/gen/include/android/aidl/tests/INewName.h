@@ -9,8 +9,11 @@
 namespace android {
 namespace aidl {
 namespace tests {
+class INewNameDelegator;
+
 class INewName : public ::android::IInterface {
 public:
+  typedef INewNameDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(NewName)
   virtual ::android::binder::Status RealName(::android::String16* _aidl_return) = 0;
 };  // class INewName

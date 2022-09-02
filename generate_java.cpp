@@ -436,7 +436,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .parcel = parcel_variable->name,
         .var = field->GetName(),
         .min_sdk_version = options.GetMinSdkVersion(),
-        .is_return_value = false,
+        .write_to_parcel_flag = "_aidl_flag",
     };
     WriteToParcelFor(context);
     writer->Close();
@@ -595,7 +595,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
   for (const auto& nested : parcel->GetNestedTypes()) {
     GenerateClass(*writer, *nested, typenames, options);
   }
-  GenerateParcelHelpers(*writer, *parcel, options);
+  GenerateParcelHelpers(*writer, *parcel, typenames, options);
   writer->Close();
   parcel_class->elements.push_back(std::make_shared<LiteralClassElement>(code));
 
@@ -797,7 +797,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
         .parcel = parcel,
         .var = name,
         .min_sdk_version = options.GetMinSdkVersion(),
-        .is_return_value = false,
+        .write_to_parcel_flag = "_aidl_flag",
     };
     WriteToParcelFor(context);
     writer->Close();
@@ -917,7 +917,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
   for (const auto& nested : decl->GetNestedTypes()) {
     GenerateClass(out, *nested, typenames, options);
   }
-  GenerateParcelHelpers(out, *decl, options);
+  GenerateParcelHelpers(out, *decl, typenames, options);
 
   out.Dedent();
   out << "}\n";
@@ -961,14 +961,18 @@ std::vector<std::string> GenerateJavaAnnotations(const AidlAnnotatable& a) {
     }
   }
 
-  if (auto enforce_expr = a.EnforceExpression(); enforce_expr) {
-    result.emplace_back("@android.annotation.EnforcePermission(" +
-                        android::aidl::perm::AsJavaAnnotation(*enforce_expr.get()) + ")");
-  } else if (a.IsPermissionNone()) {
-    result.emplace_back("@android.annotation.RequiresNoPermission");
-  }  // TODO: Add annoation for @PermissionManuallyEnforced
-
   return result;
+}
+
+std::optional<std::string> JavaPermissionAnnotation(const AidlAnnotatable& a) {
+  if (auto enforce_expr = a.EnforceExpression(); enforce_expr) {
+    return "@android.annotation.EnforcePermission(" +
+           android::aidl::perm::AsJavaAnnotation(*enforce_expr.get()) + ")";
+  } else if (a.IsPermissionNone()) {
+    return "@android.annotation.RequiresNoPermission";
+  }  // TODO: Add annotation for @PermissionManuallyEnforced
+
+  return {};
 }
 
 struct JavaAnnotationsVisitor : AidlVisitor {
@@ -1000,6 +1004,9 @@ struct JavaAnnotationsVisitor : AidlVisitor {
     result = GenerateJavaAnnotations(t.GetType());
     if (t.IsDeprecated()) {
       result.push_back("@Deprecated");
+    }
+    if (auto permission_annotation = JavaPermissionAnnotation(t.GetType()); permission_annotation) {
+      result.push_back(*permission_annotation);
     }
   }
 };

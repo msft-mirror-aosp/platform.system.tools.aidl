@@ -457,7 +457,7 @@ TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
   string code =
       "@VintfStability\n"
       "parcelable Foo {\n"
-      "  interface INested {}"
+      "  interface INested { interface INastyNester {} }"
       "}";
   EXPECT_NE(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr,
                            {"--structured", "--stability", "vintf"}));
@@ -465,6 +465,10 @@ TEST_P(AidlTest, TypesShouldHaveVintfStabilityWhenCompilingWithTheVintfFlag) {
   auto nested = typenames_.TryGetDefinedType("Foo.INested");
   ASSERT_NE(nullptr, nested);
   ASSERT_TRUE(nested->IsVintfStability());
+
+  auto nastyNester = typenames_.TryGetDefinedType("Foo.INested.INastyNester");
+  ASSERT_NE(nullptr, nastyNester);
+  ASSERT_TRUE(nastyNester->IsVintfStability());
 }
 
 TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
@@ -489,6 +493,34 @@ TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
 
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(cpp_structured_options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Cannot declare unstructured"));
+
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(rust_options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Cannot declare unstructured"));
+}
+
+TEST_F(AidlTest, ParsesNdkOnlyStableParcelable) {
+  Options java_options = Options::From("aidl -o out --structured a/Foo.aidl");
+  Options ndk_structured_options =
+      Options::From("aidl --lang=ndk --structured -o out -h out/include a/Foo.aidl");
+  Options rust_options = Options::From("aidl --lang=rust -o out --structured a/Foo.aidl");
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out/include a/Foo.aidl");
+  io_delegate_.SetFileContents(
+      "a/Foo.aidl",
+      StringPrintf("package a; @NdkOnlyStableParcelable parcelable Foo cpp_header \"Foo.h\" ;"));
+
+  EXPECT_TRUE(compile_aidl(cpp_options, io_delegate_));
+
+  // not considered unstructured, but it still can't be compiled directly with
+  // --structured AIDL - it can only be used as an import
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(ndk_structured_options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Refusing to generate code with unstructured parcelables"));
+
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Cannot declare unstructured"));
 
   CaptureStderr();
@@ -732,7 +764,7 @@ TEST_P(AidlTest, WritesComments) {
 TEST_P(AidlTest, CppHeaderCanBeIdentifierAsWell) {
   io_delegate_.SetFileContents("p/cpp_header.aidl",
                                R"(package p;
-         parcelable cpp_header cpp_header "bar/header";)");
+         parcelable cpp_header cpp_header "bar/header" ndk_header "ndk/bar/header";)");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = R"(package p;
@@ -753,7 +785,7 @@ TEST_F(AidlTest, RejectsIfCppHeaderIsMissing) {
   Options options = Options::From("aidl --lang cpp -h h -o o Foo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("must have C++ header defined"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("must have cpp_header defined"));
 }
 
 TEST_F(AidlTest, RejectsIfTypeRefsCppHeaderIsMissing) {
@@ -762,7 +794,7 @@ TEST_F(AidlTest, RejectsIfTypeRefsCppHeaderIsMissing) {
   Options options = Options::From("aidl -I . --lang cpp -h h -o o IBar.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("must have C++ header defined"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("must have cpp_header defined"));
 }
 
 TEST_F(AidlTest, ParsesPreprocessedFile) {
@@ -1166,7 +1198,9 @@ TEST_P(AidlTest, RequireOuterClass) {
 }
 
 TEST_P(AidlTest, ParseCompoundParcelableFromPreprocess) {
-  io_delegate_.SetFileContents("preprocessed", "parcelable p.Outer.Inner cpp_header \"inner.h\";");
+  io_delegate_.SetFileContents(
+      "preprocessed",
+      "parcelable p.Outer.Inner cpp_header \"inner.h\" ndk_header \"ndk/inner.h\";");
   preprocessed_files_.push_back("preprocessed");
   auto parse_result = Parse("p/IFoo.aidl", "package p; interface IFoo { void f(in Inner c); }",
                             typenames_, GetLanguage());
@@ -1235,7 +1269,8 @@ TEST_P(AidlTest, StructuredFailOnUnstructuredParcelable) {
       "ERROR: o/WhoKnowsWhat.aidl:1.22-35: o.WhoKnowsWhat is not structured, but this is a "
       "structured interface.\n";
   io_delegate_.SetFileContents("o/WhoKnowsWhat.aidl",
-                               "package o; parcelable WhoKnowsWhat cpp_header \"who_knows.h\";");
+                               "package o; parcelable WhoKnowsWhat cpp_header \"who_knows.h\" "
+                               "ndk_header \"ndk/who_knows.h\";");
   import_paths_.emplace("");
   AidlError error;
   CaptureStderr();
@@ -1392,9 +1427,12 @@ TEST_P(AidlTest, FailOnManyDefinedTypes) {
 TEST_P(AidlTest, FailOnNoDefinedTypes) {
   AidlError error;
   const string expected_stderr = "ERROR: p/IFoo.aidl:1.11-11: syntax error, unexpected $end\n";
+  const string expected_stderr_newbison =
+      "ERROR: p/IFoo.aidl:1.11-11: syntax error, unexpected end of file\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl", R"(package p;)", typenames_, GetLanguage(), &error));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(),
+              testing::AnyOf(testing::Eq(expected_stderr), testing::Eq(expected_stderr_newbison)));
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
 }
 
@@ -1428,26 +1466,24 @@ TEST_P(AidlTest, FailOnMalformedConstHexValue) {
 TEST_P(AidlTest, FailOnMalformedQualifiedNameAsIdentifier) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/IFoo.aidl:1.25-26: syntax error, unexpected ';', expecting identifier or "
-      "cpp_header (which can also be used as an identifier)\n";
+      "ERROR: p/IFoo.aidl:1.25-26: syntax error, unexpected ';', expecting identifier";
   CaptureStderr();
   // Notice the trailing dot(.) in the name, which isn't a correct name
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl", R"(package p; parcelable A.; )", typenames_,
                            GetLanguage(), &error));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
 }
 
 TEST_P(AidlTest, FailOnMalformedQualifiedNameAsPackage) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/IFoo.aidl:1.11-12: syntax error, unexpected ';', expecting identifier or "
-      "cpp_header (which can also be used as an identifier)\n";
+      "ERROR: p/IFoo.aidl:1.11-12: syntax error, unexpected ';', expecting identifier";
   CaptureStderr();
   // Notice the trailing dot(.) in the package name
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl", R"(package p.; parcelable A; )", typenames_,
                            GetLanguage(), &error));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
 }
 
@@ -1528,8 +1564,9 @@ TEST_F(AidlTest, ByteAndByteArrayDifferInNdk) {
 }
 
 TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
-  io_delegate_.SetFileContents("p/Outer.aidl",
-                               "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
+  io_delegate_.SetFileContents(
+      "p/Outer.aidl",
+      "package p; parcelable Outer.Inner cpp_header \"baz/header\" ndk_header \"ndk/baz/header\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; import p.Outer; interface IFoo"
@@ -1546,8 +1583,9 @@ TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
 }
 
 TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelablesWithoutImports) {
-  io_delegate_.SetFileContents("p/Outer.aidl",
-                               "package p; parcelable Outer.Inner cpp_header \"baz/header\";");
+  io_delegate_.SetFileContents(
+      "p/Outer.aidl",
+      "package p; parcelable Outer.Inner cpp_header \"baz/header\" ndk_header \"ndk/baz/header\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; interface IFoo { p.Outer.Inner get(); }";
@@ -2605,9 +2643,12 @@ TEST_F(AidlTest, FailOnMultipleTypesInSingleFile) {
 TEST_P(AidlTest, FailParseOnEmptyFile) {
   const string contents = "";
   const string expected_stderr = "ERROR: a/IFoo.aidl:1.1-1: syntax error, unexpected $end\n";
+  const string expected_stderr_newbison =
+      "ERROR: a/IFoo.aidl:1.1-1: syntax error, unexpected end of file\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", contents, typenames_, GetLanguage()));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(),
+              testing::AnyOf(testing::Eq(expected_stderr), testing::Eq(expected_stderr_newbison)));
 }
 
 TEST_F(AidlTest, MultipleInputFiles) {
@@ -4005,6 +4046,20 @@ TEST_F(AidlTest, ParseRustDerive) {
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
 }
 
+TEST_P(AidlTest, TypesShouldHaveRustDerive) {
+  CaptureStderr();
+  string code =
+      "@RustDerive(PartialEq=true)\n"
+      "parcelable Foo {\n"
+      "  parcelable Bar {}\n"
+      "  Bar bar;\n"
+      "}";
+  EXPECT_EQ(nullptr, Parse("Foo.aidl", code, typenames_, GetLanguage(), nullptr, {}));
+  EXPECT_THAT(
+      GetCapturedStderr(),
+      testing::HasSubstr("Field bar of type with @RustDerive PartialEq also needs to derive this"));
+}
+
 TEST_F(AidlTest, EmptyEnforceAnnotation) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"(package a;
     interface IFoo {
@@ -4060,7 +4115,10 @@ TEST_F(AidlTest, InterfaceAndMethodEnforceCondition) {
     })");
 
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
-  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
@@ -4074,8 +4132,8 @@ TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("The interface IFoo is annotated as requiring no permission"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
@@ -4089,9 +4147,8 @@ TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(
-      GetCapturedStderr(),
-      HasSubstr("The interface IFoo is annotated as manually implementing permission checks"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
@@ -4105,8 +4162,8 @@ TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("The interface IFoo enforces permissions using annotations"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
@@ -4120,8 +4177,8 @@ TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
   Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_THAT(GetCapturedStderr(),
-              HasSubstr("The interface IFoo enforces permissions using annotations"));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
+                                             "the method Protected is also annotated"));
 }
 
 TEST_F(AidlTest, JavaSuppressLint) {

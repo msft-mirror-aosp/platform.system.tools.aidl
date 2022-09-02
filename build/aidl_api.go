@@ -55,6 +55,7 @@ type aidlApiProperties struct {
 	AidlRoot  string   // base directory for the input aidl file
 	Stability *string
 	Imports   []string
+	Headers   []string
 	Versions  []string
 	Dumpapi   DumpApiProperties
 }
@@ -78,6 +79,9 @@ type aidlApi struct {
 
 	// for checking for active development on unfrozen version
 	hasDevelopment android.WritablePath
+
+	// for checking hash value of the unfrozen version
+	totHashFile android.WritablePath
 }
 
 func (m *aidlApi) apiDir() string {
@@ -122,7 +126,7 @@ func (m *aidlApi) createApiDumpFromSource(ctx android.ModuleContext) apiDump {
 		apiFiles = append(apiFiles, outFile)
 	}
 	hashFile = android.PathForModuleOut(ctx, "dump", ".hash")
-
+	m.totHashFile = hashFile
 	var optionalFlags []string
 	if m.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *m.properties.Stability)
@@ -253,7 +257,11 @@ func (m *aidlApi) migrateAndAppendVersion(ctx android.ModuleContext, rb *android
 				if hasVersionSuffix(im) {
 					imports = append(imports, im)
 				} else {
-					imports = append(imports, im+"-V"+importIfaces[im].latestVersion())
+					versionSuffix := importIfaces[im].latestVersion()
+					if !importIfaces[im].hasVersion() {
+						versionSuffix = importIfaces[im].nextVersion()
+					}
+					imports = append(imports, im+"-V"+versionSuffix)
 				}
 			}
 			importsStr := strings.Join(wrap(`"`, imports, `"`), ", ")
@@ -304,8 +312,9 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		m.migrateAndAppendVersion(ctx, rb, nil, false)
 	}
 
-	timestampFile := android.PathForModuleOut(ctx, "updateapi_"+version+".timestamp")
-	rb.Command().Text("touch").Output(timestampFile)
+	timestampFile := android.PathForModuleOut(ctx, "update_or_freeze_api_"+version+".timestamp")
+	// explicitly don't touch timestamp, so that the command can be run repeatedly
+	rb.Command().Text("true").ImplicitOutput(timestampFile)
 
 	rb.Build("dump_aidl_api_"+m.properties.BaseName+"_"+version, actionWord+" AIDL API dump version "+version+" for "+m.properties.BaseName+" (see "+targetDir+")")
 	return timestampFile
@@ -340,6 +349,14 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date
 			deps.implicits = append(deps.implicits, api.checkApiTimestamps.Paths()...)
 			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
+		case interfaceHeadersDepTag:
+			headerInfo, ok := ctx.OtherModuleProvider(dep, AidlInterfaceHeadersProvider).(AidlInterfaceHeadersInfo)
+			if !ok {
+				ctx.PropertyErrorf("headers", "module %v does not provide AidlInterfaceHeadersInfo", dep.Name())
+				return
+			}
+			deps.implicits = append(deps.implicits, headerInfo.Srcs...)
+			deps.imports = append(deps.imports, headerInfo.IncludeDir)
 		}
 	})
 	return deps
@@ -539,6 +556,11 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	// API dump from source is frozen as the next stable version. Triggered by `m <name>-freeze-api`
 	nextVersion := m.nextVersion()
 	m.freezeApiTimestamp = m.makeApiDumpAsVersion(ctx, totApiDump, nextVersion, latestVersionDump)
+
+	nextApiDir := filepath.Join(ctx.ModuleDir(), m.apiDir(), nextVersion)
+	if android.ExistentPathForSource(ctx, nextApiDir).Valid() {
+		ctx.ModuleErrorf("API Directory exists for version %s path %s exists, but it is not specified in versions field.", nextVersion, nextApiDir)
+	}
 }
 
 func (m *aidlApi) AndroidMk() android.AndroidMkData {
@@ -578,6 +600,7 @@ func addApiModule(mctx android.LoadHookContext, i *aidlInterface) string {
 		AidlRoot:  aidlRoot,
 		Stability: i.properties.Stability,
 		Imports:   i.properties.Imports,
+		Headers:   i.properties.Headers,
 		Versions:  i.getVersions(),
 		Dumpapi:   i.properties.Dumpapi,
 	})
