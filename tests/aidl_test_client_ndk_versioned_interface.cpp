@@ -20,6 +20,7 @@
 
 #include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
+#include <binder/ProcessState.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -37,12 +38,15 @@ using testing::Eq;
 
 struct VersionedInterfaceTest : ::testing::Test {
   void SetUp() override {
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_getService(IFooInterface::descriptor));
+    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+    android::ProcessState::self()->startThreadPool();
+    ndk::SpAIBinder binder =
+        ndk::SpAIBinder(AServiceManager_waitForService(IFooInterface::descriptor));
     versioned = IFooInterface::fromBinder(binder);
     ASSERT_NE(nullptr, versioned);
 
     ndk::SpAIBinder testServiceBinder =
-        ndk::SpAIBinder(AServiceManager_getService(ITestService::descriptor));
+        ndk::SpAIBinder(AServiceManager_waitForService(ITestService::descriptor));
     auto service = ITestService::fromBinder(testServiceBinder);
     auto status = service->getBackendType(&backend);
     EXPECT_TRUE(status.isOk()) << status.getDescription();
