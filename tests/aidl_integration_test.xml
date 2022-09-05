@@ -52,7 +52,7 @@
 
     <test class="com.android.tradefed.testtype.python.PythonBinaryHostTest" >
         <option name="par-file-name" value="aidl_integration_test" />
-        <option name="test-timeout" value="2m" />
+        <option name="test-timeout" value="5m" />
     </test>
 </configuration>
 
