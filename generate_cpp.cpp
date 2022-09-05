@@ -72,7 +72,7 @@ const char kParcelHeader[] = "binder/Parcel.h";
 const char kStabilityHeader[] = "binder/Stability.h";
 const char kStatusHeader[] = "binder/Status.h";
 const char kString16Header[] = "utils/String16.h";
-const char kTraceHeader[] = "utils/Trace.h";
+const char kTraceHeader[] = "binder/Trace.h";
 const char kStrongPointerHeader[] = "utils/StrongPointer.h";
 const char kAndroidBaseMacrosHeader[] = "android-base/macros.h";
 
@@ -191,8 +191,9 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
   out.Write("%s %s;\n", kBinderStatusLiteral, kStatusVarName);
 
   if (options.GenTraces()) {
-    out.Write("::android::ScopedTrace %s(ATRACE_TAG_AIDL, \"AIDL::cpp::%s::%s::cppClient\");\n",
-              kTraceVarName, interface.GetName().c_str(), method.GetName().c_str());
+    out.Write(
+        "::android::binder::ScopedTrace %s(ATRACE_TAG_AIDL, \"AIDL::cpp::%s::%s::cppClient\");\n",
+        kTraceVarName, interface.GetName().c_str(), method.GetName().c_str());
   }
 
   if (options.GenLog()) {
@@ -466,8 +467,9 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
   out.Write("}\n");
 
   if (options.GenTraces()) {
-    out.Write("::android::ScopedTrace %s(ATRACE_TAG_AIDL, \"AIDL::cpp::%s::%s::cppServer\");\n",
-              kTraceVarName, interface.GetName().c_str(), method.GetName().c_str());
+    out.Write(
+        "::android::binder::ScopedTrace %s(ATRACE_TAG_AIDL, \"AIDL::cpp::%s::%s::cppServer\");\n",
+        kTraceVarName, interface.GetName().c_str(), method.GetName().c_str());
   }
 
   if (interface.EnforceExpression() || method.GetType().EnforceExpression()) {
