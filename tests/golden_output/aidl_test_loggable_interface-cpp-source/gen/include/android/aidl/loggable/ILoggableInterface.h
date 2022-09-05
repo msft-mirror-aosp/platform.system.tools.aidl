@@ -7,12 +7,12 @@
 #include <binder/IInterface.h>
 #include <binder/ParcelFileDescriptor.h>
 #include <binder/Status.h>
+#include <binder/Trace.h>
 #include <cstdint>
 #include <functional>
 #include <optional>
 #include <utils/String16.h>
 #include <utils/StrongPointer.h>
-#include <utils/Trace.h>
 #include <vector>
 
 namespace android {

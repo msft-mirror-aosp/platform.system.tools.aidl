@@ -107,6 +107,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		}
 		cc_library {
 			name: "libcutils",
+			recovery_available: true,
 		}
 		cc_library {
 			name: "libbinder_ndk",
