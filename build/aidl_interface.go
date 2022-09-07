@@ -492,6 +492,10 @@ func (i *aidlInterface) genTrace(lang string) bool {
 	switch lang {
 	case langCpp:
 		ver = i.properties.Backend.Cpp.Gen_trace
+		if ver == nil {
+			// Enable tracing for all cpp backends by default
+			ver = proptools.BoolPtr(true)
+		}
 	case langJava:
 		ver = i.properties.Backend.Java.Gen_trace
 	case langNdk, langNdkPlatform:
