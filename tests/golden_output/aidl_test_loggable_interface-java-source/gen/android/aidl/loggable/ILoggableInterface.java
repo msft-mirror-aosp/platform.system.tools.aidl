@@ -43,46 +43,26 @@ public interface ILoggableInterface extends android.os.IInterface
     {
       return this;
     }
-    /** @hide */
-    public static java.lang.String getDefaultTransactionName(int transactionCode)
-    {
-      switch (transactionCode)
-      {
-        case TRANSACTION_LogThis:
-        {
-          return "LogThis";
-        }
-        default:
-        {
-          return null;
-        }
-      }
-    }
     @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
     {
       java.lang.String descriptor = DESCRIPTOR;
-      boolean isTagEnabled = android.os.Trace.isTagEnabled(android.os.Trace.TRACE_TAG_AIDL);
-      try {
-        if (isTagEnabled) {
-          StringBuilder tagBuilder = new StringBuilder();
-          tagBuilder.append("AIDL::java").append(DESCRIPTOR).append(getDefaultTransactionName(code)).append("server");
-          android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, tagBuilder.toString());
-        }
-        if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
-          data.enforceInterface(descriptor);
-        }
-        switch (code)
+      if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
+        data.enforceInterface(descriptor);
+      }
+      switch (code)
+      {
+        case INTERFACE_TRANSACTION:
         {
-          case INTERFACE_TRANSACTION:
-          {
-            reply.writeString(descriptor);
-            return true;
-          }
+          reply.writeString(descriptor);
+          return true;
         }
-        switch (code)
+      }
+      switch (code)
+      {
+        case TRANSACTION_LogThis:
         {
-          case TRANSACTION_LogThis:
-          {
+          try {
+            android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, "AIDL::java::ILoggableInterface::LogThis::server");
             boolean _arg0;
             _arg0 = data.readBoolean();
             boolean[] _arg1;
@@ -140,20 +120,18 @@ public interface ILoggableInterface extends android.os.IInterface
             reply.writeStringList(_arg16);
             reply.writeTypedObject(_arg19, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
             reply.writeTypedArray(_arg20, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-            break;
           }
-          default:
-          {
-            return super.onTransact(code, data, reply, flags);
+          finally {
+            android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);
           }
+          break;
         }
-        return true;
-      }
-      finally {
-        if (isTagEnabled) {
-          android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);
+        default:
+        {
+          return super.onTransact(code, data, reply, flags);
         }
       }
+      return true;
     }
     private static class Proxy implements android.aidl.loggable.ILoggableInterface
     {
@@ -176,6 +154,7 @@ public interface ILoggableInterface extends android.os.IInterface
         android.os.Parcel _reply = android.os.Parcel.obtain();
         java.lang.String[] _result;
         try {
+          android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, "AIDL::java::ILoggableInterface::LogThis::client");
           _data.writeInterfaceToken(DESCRIPTOR);
           _data.writeBoolean(boolValue);
           _data.writeBooleanArray(boolArray);
@@ -218,6 +197,7 @@ public interface ILoggableInterface extends android.os.IInterface
         finally {
           _reply.recycle();
           _data.recycle();
+          android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);
         }
         return _result;
       }
@@ -266,65 +246,43 @@ public interface ILoggableInterface extends android.os.IInterface
       {
         return this;
       }
-      /** @hide */
-      public static java.lang.String getDefaultTransactionName(int transactionCode)
-      {
-        switch (transactionCode)
-        {
-          case TRANSACTION_Log:
-          {
-            return "Log";
-          }
-          default:
-          {
-            return null;
-          }
-        }
-      }
       @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
       {
         java.lang.String descriptor = DESCRIPTOR;
-        boolean isTagEnabled = android.os.Trace.isTagEnabled(android.os.Trace.TRACE_TAG_AIDL);
-        try {
-          if (isTagEnabled) {
-            StringBuilder tagBuilder = new StringBuilder();
-            tagBuilder.append("AIDL::java").append(DESCRIPTOR).append(getDefaultTransactionName(code)).append("server");
-            android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, tagBuilder.toString());
-          }
-          if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
-            data.enforceInterface(descriptor);
-          }
-          switch (code)
+        if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
+          data.enforceInterface(descriptor);
+        }
+        switch (code)
+        {
+          case INTERFACE_TRANSACTION:
           {
-            case INTERFACE_TRANSACTION:
-            {
-              reply.writeString(descriptor);
-              return true;
-            }
+            reply.writeString(descriptor);
+            return true;
           }
-          switch (code)
+        }
+        switch (code)
+        {
+          case TRANSACTION_Log:
           {
-            case TRANSACTION_Log:
-            {
+            try {
+              android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, "AIDL::java::ISub::Log::server");
               int _arg0;
               _arg0 = data.readInt();
               data.enforceNoDataAvail();
               this.Log(_arg0);
               reply.writeNoException();
-              break;
             }
-            default:
-            {
-              return super.onTransact(code, data, reply, flags);
+            finally {
+              android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);
             }
+            break;
           }
-          return true;
-        }
-        finally {
-          if (isTagEnabled) {
-            android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);
+          default:
+          {
+            return super.onTransact(code, data, reply, flags);
           }
         }
+        return true;
       }
       private static class Proxy implements android.aidl.loggable.ILoggableInterface.ISub
       {
@@ -346,6 +304,7 @@ public interface ILoggableInterface extends android.os.IInterface
           android.os.Parcel _data = android.os.Parcel.obtain();
           android.os.Parcel _reply = android.os.Parcel.obtain();
           try {
+            android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, "AIDL::java::ISub::Log::client");
             _data.writeInterfaceToken(DESCRIPTOR);
             _data.writeInt(value);
             boolean _status = mRemote.transact(Stub.TRANSACTION_Log, _data, _reply, 0);
@@ -354,6 +313,7 @@ public interface ILoggableInterface extends android.os.IInterface
           finally {
             _reply.recycle();
             _data.recycle();
+            android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);
           }
         }
       }
