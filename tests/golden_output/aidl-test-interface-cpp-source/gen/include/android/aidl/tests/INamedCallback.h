@@ -3,6 +3,7 @@
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/Status.h>
+#include <binder/Trace.h>
 #include <utils/String16.h>
 #include <utils/StrongPointer.h>
 
