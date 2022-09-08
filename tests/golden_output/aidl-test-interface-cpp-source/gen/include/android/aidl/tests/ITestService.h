@@ -18,6 +18,7 @@
 #include <binder/Parcel.h>
 #include <binder/ParcelFileDescriptor.h>
 #include <binder/Status.h>
+#include <binder/Trace.h>
 #include <cstdint>
 #include <optional>
 #include <string>
