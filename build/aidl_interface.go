@@ -1157,17 +1157,23 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		}
 	}
 
+	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
+	var stripImportPrefixAttr *string = nil
+	if i.properties.Local_include_dir != "" && !srcsAttr.IsEmpty() {
+		stripImportPrefixAttr = &i.properties.Local_include_dir
+	}
+
 	attrs := &aidlInterfaceAttributes{
 		aidlLibraryAttributes: aidlLibraryAttributes{
-			//TODO(b/229251008) support "current" interface srcs
-			Flags: i.properties.Flags,
-			Deps:  deps,
+			Srcs:                srcsAttr,
+			Flags:               i.properties.Flags,
+			Deps:                deps,
+			Strip_import_prefix: stripImportPrefixAttr,
 		},
 		Versions:           versions,
 		Backends:           backends,
 		Stability:          i.properties.Stability,
 		Versions_with_info: versionsWithInfos,
-		//TODO(b/229251008) support local_include_dir for "current" interface srcs
 	}
 
 	interfaceName := strings.TrimSuffix(i.Name(), "_interface")
