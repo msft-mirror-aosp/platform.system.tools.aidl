@@ -281,6 +281,12 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 				Tidy_flags:            []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
 				Tidy_checks_as_errors: []string{"*"},
 			},
+			// TODO(b/237810289) disable converting -cpp-analyzer module in bp2build
+			&bazelProperties{
+				&Bazel_module{
+					Bp2build_available: proptools.BoolPtr(false),
+				},
+			},
 		},
 	}
 
