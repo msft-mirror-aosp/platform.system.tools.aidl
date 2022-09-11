@@ -153,8 +153,8 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
   asBinder->statements->Add(std::make_shared<ReturnStatement>(THIS_VALUE));
   this->elements.push_back(asBinder);
 
-  // getDefaultTransactionName
-  if (options_.GenTransactionNames() || options_.GenTraces()) {
+  if (options_.GenTransactionNames()) {
+    // getDefaultTransactionName
     auto getDefaultTransactionName = std::make_shared<Method>();
     getDefaultTransactionName->comment = "/** @hide */";
     getDefaultTransactionName->modifiers = PUBLIC | STATIC;
@@ -166,10 +166,8 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
     this->code_to_method_name_switch = std::make_shared<SwitchStatement>(code);
     getDefaultTransactionName->statements->Add(this->code_to_method_name_switch);
     this->elements.push_back(getDefaultTransactionName);
-  }
 
-  // getTransactionName
-  if (options_.GenTransactionNames()) {
+    // getTransactionName
     auto getTransactionName = std::make_shared<Method>();
     getTransactionName->comment = "/** @hide */";
     getTransactionName->modifiers = PUBLIC;
@@ -212,74 +210,10 @@ void StubClass::Finish() {
       SUPER_VALUE, "onTransact",
       std::vector<std::shared_ptr<Expression>>{this->transact_code, this->transact_data,
                                                this->transact_reply, this->transact_flags});
-
-  auto statements = transact_statements;
-
   default_case->statements->Add(std::make_shared<ReturnStatement>(superCall));
 
   auto case_count = transact_switch_user->cases.size();
   transact_switch_user->cases.push_back(default_case);
-
-  if (options_.GenTraces()) {
-    auto isTagEnabledLvalue = std::make_shared<Variable>("boolean", "isTagEnabled");
-    auto isTagEnabledRvalue = std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "isTagEnabled",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")});
-    auto isTagEnabledDecl =
-        std::make_shared<VariableDeclaration>(isTagEnabledLvalue, isTagEnabledRvalue);
-
-    auto tagBuilderLvalue = std::make_shared<Variable>("StringBuilder", "tagBuilder");
-    auto tagBuilderRvalue = std::make_shared<NewExpression>("StringBuilder");
-    auto tagBuilderDecl = std::make_shared<VariableDeclaration>(tagBuilderLvalue, tagBuilderRvalue);
-
-    auto tryStatement = std::make_shared<TryStatement>();
-    auto finallyStatement = std::make_shared<FinallyStatement>();
-
-    auto ifStatementInTry = std::make_shared<IfStatement>();
-    ifStatementInTry->expression = std::make_shared<LiteralExpression>("isTagEnabled");
-    ifStatementInTry->statements = std::make_shared<StatementBlock>();
-
-    // Statements in try {if (isTagEnabled) {...}}
-    // Concat the trace name with StringBuilder
-    ifStatementInTry->statements->Add(tagBuilderDecl);
-
-    string trace_name_builder =
-        "tagBuilder.append(\"AIDL::java\")"
-        ".append(DESCRIPTOR)"
-        ".append(getDefaultTransactionName(code))"
-        ".append(\"server\")";
-
-    ifStatementInTry->statements->Add(std::make_shared<LiteralExpression>(trace_name_builder));
-
-    ifStatementInTry->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
-            std::make_shared<MethodCall>(std::make_shared<LiteralExpression>("tagBuilder"),
-                                         "toString")}));
-
-    auto ifStatementInFinally = std::make_shared<IfStatement>();
-    ifStatementInFinally->expression = std::make_shared<LiteralExpression>("isTagEnabled");
-    ifStatementInFinally->statements = std::make_shared<StatementBlock>();
-
-    // Define statements in finally {if (isTagEnabled) {...}}
-    ifStatementInFinally->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceEnd",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")}));
-
-    // Add defined 'if statements' to 'try' and 'finally'
-    tryStatement->statements->Add(ifStatementInTry);
-    finallyStatement->statements->Add(ifStatementInFinally);
-
-    // Expose the |tryStatement| for the rest of the code gen in onTransact()
-    statements = tryStatement->statements;
-
-    transact_statements->Add(isTagEnabledDecl);
-    transact_statements->Add(tryStatement);
-    transact_statements->Add(finallyStatement);
-  }
 
   // Interface token validation is done for user-defined transactions.
   if (case_count > 0) {
@@ -291,15 +225,15 @@ void StubClass::Finish() {
     ifStatement->statements->Add(std::make_shared<MethodCall>(
         this->transact_data, "enforceInterface",
         std::vector<std::shared_ptr<Expression>>{this->GetTransactDescriptor(nullptr)}));
-    statements->Add(ifStatement);
+    transact_statements->Add(ifStatement);
   }
 
   // Meta transactions are looked up prior to user-defined transactions.
-  statements->Add(this->transact_switch_meta);
-  statements->Add(this->transact_switch_user);
+  transact_statements->Add(this->transact_switch_meta);
+  transact_statements->Add(this->transact_switch_user);
 
   // getTransactionName
-  if (options_.GenTransactionNames() || options_.GenTraces()) {
+  if (options_.GenTransactionNames()) {
     // Some transaction codes are common, e.g. INTERFACE_TRANSACTION or DUMP_TRANSACTION.
     // Common transaction codes will not be resolved to a string by getTransactionName. The method
     // will return NULL in this case.
@@ -311,7 +245,7 @@ void StubClass::Finish() {
   // There will be at least one statement for the default, but if we emit a
   // return true after that default, it will be unreachable.
   if (case_count > 0) {
-    statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
+    transact_statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
   }
 }
 
@@ -605,7 +539,26 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
                              std::shared_ptr<StatementBlock> statement_block,
                              const Options& options) {
   // try and finally
+  auto tryStatement = std::make_shared<TryStatement>();
+  auto finallyStatement = std::make_shared<FinallyStatement>();
   auto& statements = statement_block;
+
+  if (options.GenTraces()) {
+    statements->Add(tryStatement);
+    statements->Add(finallyStatement);
+    statements = tryStatement->statements;
+    tryStatement->statements->Add(std::make_shared<MethodCall>(
+        std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
+        std::vector<std::shared_ptr<Expression>>{
+            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
+            std::make_shared<StringLiteralExpression>("AIDL::java::" + iface.GetName() +
+                                                      "::" + method.GetName() + "::server")}));
+    finallyStatement->statements->Add(std::make_shared<MethodCall>(
+        std::make_shared<LiteralExpression>("android.os.Trace"), "traceEnd",
+        std::vector<std::shared_ptr<Expression>>{
+            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")}));
+  }
+
   auto realCall = std::make_shared<MethodCall>(THIS_VALUE, method.GetName());
 
   // args
@@ -803,6 +756,11 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
   out << "try {\n";
   out.Indent();
 
+  if (options.GenTraces()) {
+    auto tag = "AIDL::java::" + iface.GetName() + "::" + method.GetName() + "::client";
+    out << "android.os.Trace.traceBegin(android.os.Trace.TRACE_TAG_AIDL, \"" << tag << "\");\n";
+  }
+
   // the interface identifier token: the DESCRIPTOR constant, marshalled as a
   // string
   out << "_data.writeInterfaceToken(DESCRIPTOR);\n";
@@ -913,6 +871,10 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
   }
   out << "_data.recycle();\n";
 
+  if (options.GenTraces()) {
+    out << "android.os.Trace.traceEnd(android.os.Trace.TRACE_TAG_AIDL);\n";
+  }
+
   out.Dedent();
   out << "}\n";  // finally
 
@@ -941,7 +903,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
   stubClass->elements.push_back(transactCode);
 
   // getTransactionName
-  if (options.GenTransactionNames() || options.GenTraces()) {
+  if (options.GenTransactionNames()) {
     auto c = std::make_shared<Case>(transactCodeName);
     c->statements->Add(std::make_shared<ReturnStatement>(
         std::make_shared<StringLiteralExpression>(method.GetName())));
