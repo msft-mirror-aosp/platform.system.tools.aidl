@@ -835,6 +835,10 @@ cc_library_static {
     name: "aidl-analyzer-main",
     host_supported: true,
     vendor_available: true,
+    shared_libs: [
+        "libbase",
+        "libbinder",
+    ],
     srcs: [
         "analyzer/analyzerMain.cpp",
         "analyzer/Analyzer.cpp",
