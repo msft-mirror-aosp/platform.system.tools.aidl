@@ -20,6 +20,7 @@
 #include <binder/BpBinder.h>
 #include <binder/IServiceManager.h>
 #include <binder/Parcel.h>
+#include <signal.h>
 #include <sstream>
 #include "include/Analyzer.h"
 
@@ -34,6 +35,8 @@ using std::string;
 
 namespace {
 
+static volatile size_t gCtrlCCount = 0;
+static constexpr size_t kCtrlCLimit = 3;
 static const char kRecordingDir[] = "/data/local/recordings/";
 
 status_t startRecording(const sp<IBinder>& binder, const string& instance) {
@@ -107,6 +110,75 @@ status_t inspectRecording(const string& interface, const string& fileName) {
   return NO_ERROR;
 }
 
+void incrementCtrlCCount(int signum) {
+  gCtrlCCount++;
+  if (gCtrlCCount > kCtrlCLimit) {
+    std::cout
+        << "Ctrl+C multiple times, but could not quit application. If recording still running, you "
+           "might stop it manually.\n";
+    exit(signum);
+  }
+}
+
+status_t listenToFile(const sp<IBinder>& binder, const string& instance, const string& interface) {
+  auto& analyzers = Analyzer::getAnalyzers();
+  auto analyzer = std::find_if(
+      begin(analyzers), end(analyzers),
+      [&](const std::unique_ptr<Analyzer>& a) { return a->getInterfaceName() == interface; });
+  if (analyzer == end(analyzers)) {
+    std::cout << "Failed to find analyzer for interface: " << interface << '\n';
+    return android::UNKNOWN_ERROR;
+  }
+
+  if (auto mkdir_return = mkdir(kRecordingDir, 0666); mkdir_return != 0 && errno != EEXIST) {
+    std::cout << "Failed to create recordings directory.\n";
+    return android::NO_ERROR;
+  }
+
+  string instanceFileName = instance;
+  std::replace(instanceFileName.begin(), instanceFileName.end(), '/', '.');
+  string filePath = kRecordingDir + instanceFileName + ".listen";
+  int openFlags = O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC | O_BINARY;
+  android::base::unique_fd fd(open(filePath.c_str(), openFlags, 0666));
+  if (fd.get() == -1) {
+    std::cout << "Failed to open file for listening with error: " << strerror(errno) << '\n';
+    return android::BAD_VALUE;
+  }
+  android::base::unique_fd listenFd(open(filePath.c_str(), O_RDONLY));
+  if (fd.get() == -1) {
+    std::cout << "Failed to open listening file with error: " << strerror(errno) << '\n';
+    return android::BAD_VALUE;
+  }
+
+  if (status_t err = binder->remoteBinder()->startRecordingBinder(fd); err != android::NO_ERROR) {
+    std::cout << "Failed to start recording with error: " << err << '\n';
+    return err;
+  }
+
+  signal(SIGINT, incrementCtrlCCount);
+  std::cout << "Starting to listen:\n";
+  int i = 1;
+  while (gCtrlCCount == 0) {
+    auto transaction = RecordedTransaction::fromFile(listenFd);
+    if (!transaction) {
+      sleep(1);
+      continue;
+    }
+    std::cout << "Transaction " << i << ":\n";
+    (*analyzer)->getAnalyzeFunction()(transaction->getCode(), transaction->getDataParcel(),
+                                      transaction->getReplyParcel());
+    std::cout << "Status returned from this transaction: ";
+    if (transaction->getReturnedStatus() == 0) {
+      std::cout << "NO_ERROR\n\n";
+    } else {
+      std::cout << transaction->getReturnedStatus() << '\n\n';
+    }
+    i++;
+  }
+  binder->remoteBinder()->stopRecordingBinder();
+  return NO_ERROR;
+}
+
 status_t replayFile(const sp<IBinder>& binder, const string& interface, const string& fileName) {
   auto& analyzers = Analyzer::getAnalyzers();
   auto analyzer = std::find_if(
@@ -169,6 +241,7 @@ void usageMessage() {
   std::cout << "  start   [Instance]\n";
   std::cout << "  stop    [Instance]\n";
   std::cout << "  inspect [Interface] [File Name]\n";
+  std::cout << "  listen  [Instance]  [Interface]\n";
   std::cout << "  replay  [Instance]  [Interface] [File Name]\n";
   std::cout << "(Use --list to find available interfaces)\n";
 }
@@ -188,6 +261,9 @@ int main(int argc, char* argv[]) {
     stopRecording(binder);
   } else if (argc == 4 && strcmp(argv[1], "inspect") == 0) {
     inspectRecording(argv[2], argv[3]);
+  } else if (argc == 4 && strcmp(argv[1], "listen") == 0) {
+    sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
+    listenToFile(binder, argv[2], argv[3]);
   } else if (argc == 5 && strcmp(argv[1], "replay") == 0) {
     sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
     replayFile(binder, argv[3], argv[4]);
