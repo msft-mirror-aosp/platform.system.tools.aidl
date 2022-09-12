@@ -895,7 +895,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 
 	// In the future, we may want to force the -cpp backend to be on host,
 	// and limit its visibility, even if it's not created normally
-	if i.shouldGenerateCppBackend() {
+	if i.shouldGenerateCppBackend() && len(i.properties.Imports) == 0 {
 		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false))
 	}
 
