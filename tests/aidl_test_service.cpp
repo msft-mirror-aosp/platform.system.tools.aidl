@@ -15,6 +15,7 @@
  */
 
 #include <map>
+#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -402,6 +403,7 @@ class NativeService : public BnTestService {
 
   Status SetOtherTestService(const String16& name, const sp<INamedCallback>& service,
                              bool* _aidl_return) override {
+    std::lock_guard<std::mutex> guard(service_map_mutex_);
     const auto& existing = service_map_.find(name);
     if (existing != service_map_.end() && existing->second == service) {
       *_aidl_return = true;
@@ -417,6 +419,7 @@ class NativeService : public BnTestService {
 
   Status GetOtherTestService(const String16& name,
                              sp<INamedCallback>* returned_service) override {
+    std::lock_guard<std::mutex> guard(service_map_mutex_);
     if (service_map_.find(name) == service_map_.end()) {
       sp<INamedCallback> new_item(new NamedCallback(name));
       service_map_[name] = new_item;
@@ -788,6 +791,7 @@ class NativeService : public BnTestService {
 
  private:
   map<String16, sp<INamedCallback>> service_map_;
+  std::mutex service_map_mutex_;
 };
 
 class VersionedService : public android::aidl::versioned::tests::BnFooInterface {

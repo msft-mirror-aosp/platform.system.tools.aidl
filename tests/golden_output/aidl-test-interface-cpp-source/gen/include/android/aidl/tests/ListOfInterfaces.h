@@ -9,6 +9,7 @@
 #include <binder/IInterface.h>
 #include <binder/Parcel.h>
 #include <binder/Status.h>
+#include <binder/Trace.h>
 #include <cassert>
 #include <cstdint>
 #include <optional>
