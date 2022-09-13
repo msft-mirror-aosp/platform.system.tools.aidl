@@ -51,6 +51,38 @@ public interface IProtected extends android.os.IInterface
     {
       return this;
     }
+    /** @hide */
+    public static java.lang.String getDefaultTransactionName(int transactionCode)
+    {
+      switch (transactionCode)
+      {
+        case TRANSACTION_PermissionProtected:
+        {
+          return "PermissionProtected";
+        }
+        case TRANSACTION_MultiplePermissionsAll:
+        {
+          return "MultiplePermissionsAll";
+        }
+        case TRANSACTION_MultiplePermissionsAny:
+        {
+          return "MultiplePermissionsAny";
+        }
+        case TRANSACTION_NonManifestPermission:
+        {
+          return "NonManifestPermission";
+        }
+        default:
+        {
+          return null;
+        }
+      }
+    }
+    /** @hide */
+    public java.lang.String getTransactionName(int transactionCode)
+    {
+      return this.getDefaultTransactionName(transactionCode);
+    }
     @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
     {
       java.lang.String descriptor = DESCRIPTOR;
@@ -194,6 +226,11 @@ public interface IProtected extends android.os.IInterface
     static final int TRANSACTION_MultiplePermissionsAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
     static final int TRANSACTION_MultiplePermissionsAny = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
     static final int TRANSACTION_NonManifestPermission = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
+    /** @hide */
+    public int getMaxTransactionId()
+    {
+      return 3;
+    }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$IProtected".replace('$', '.');
   @android.annotation.EnforcePermission(android.Manifest.permission.READ_PHONE_STATE)

@@ -498,6 +498,12 @@ func (i *aidlInterface) genTrace(lang string) bool {
 		}
 	case langJava:
 		ver = i.properties.Backend.Java.Gen_trace
+		if ver == nil && proptools.Bool(i.properties.Backend.Java.Platform_apis) {
+			// Enable tracing for all Java backends using platform APIs
+			// TODO(161393989) Once we generate ATRACE_TAG_APP instead of ATRACE_TAG_AIDL,
+			// this can be removed and we can start generating traces in all apps.
+			ver = proptools.BoolPtr(true)
+		}
 	case langNdk, langNdkPlatform:
 		ver = i.properties.Backend.Ndk.Gen_trace
 	case langRust: // unsupported b/236880829
