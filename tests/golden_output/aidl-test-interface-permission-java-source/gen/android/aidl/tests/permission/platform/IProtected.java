@@ -42,6 +42,26 @@ public interface IProtected extends android.os.IInterface
     {
       return this;
     }
+    /** @hide */
+    public static java.lang.String getDefaultTransactionName(int transactionCode)
+    {
+      switch (transactionCode)
+      {
+        case TRANSACTION_ProtectedWithSourceAttribution:
+        {
+          return "ProtectedWithSourceAttribution";
+        }
+        default:
+        {
+          return null;
+        }
+      }
+    }
+    /** @hide */
+    public java.lang.String getTransactionName(int transactionCode)
+    {
+      return this.getDefaultTransactionName(transactionCode);
+    }
     @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
     {
       java.lang.String descriptor = DESCRIPTOR;
@@ -117,6 +137,11 @@ public interface IProtected extends android.os.IInterface
           android.content.PermissionChecker.PERMISSION_GRANTED);
     }
     static final int TRANSACTION_ProtectedWithSourceAttribution = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    /** @hide */
+    public int getMaxTransactionId()
+    {
+      return 0;
+    }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$platform$IProtected".replace('$', '.');
   @android.annotation.EnforcePermission(allOf = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE})
