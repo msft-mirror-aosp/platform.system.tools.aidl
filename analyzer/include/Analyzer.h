@@ -16,25 +16,33 @@
 
 #pragma once
 
-#include <iostream>
+#include <binder/Parcel.h>
 #include <vector>
 
 using std::unique_ptr;
 using std::vector;
+
+using analyzeFn = android::status_t (*)(uint32_t _aidl_code, const android::Parcel& _aidl_data,
+                                        const android::Parcel& _aidl_reply);
 
 namespace android {
 namespace aidl {
 
 class Analyzer {
  public:
-  Analyzer(const std::string& name);
-  std::string getName() const;
+  Analyzer(const std::string& package, const std::string& interface, analyzeFn function);
+
+  const std::string& getPackageName() const;
+  const std::string& getInterfaceName() const;
+  const analyzeFn& getAnalyzeFunction() const;
 
   static vector<unique_ptr<Analyzer>>& getAnalyzers();
   static void installAnalyzer(std::unique_ptr<Analyzer> install);
 
  private:
-  std::string interfaceName;
+  std::string mPackageName;
+  std::string mInterfaceName;
+  analyzeFn mAnalyzeFunction;
 };
 
 }  // namespace aidl

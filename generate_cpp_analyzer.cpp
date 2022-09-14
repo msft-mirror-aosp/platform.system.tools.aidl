@@ -15,24 +15,13 @@
  */
 
 #include "generate_cpp_analyzer.h"
-#include "aidl.h"
 
-#include <algorithm>
-#include <cctype>
-#include <cstring>
-#include <memory>
-#include <random>
 #include <string>
-
-#include <android-base/format.h>
-#include <android-base/stringprintf.h>
-#include <android-base/strings.h>
-
+#include "aidl.h"
 #include "aidl_language.h"
 #include "aidl_to_cpp.h"
 #include "code_writer.h"
 #include "logging.h"
-#include "os.h"
 
 using std::string;
 using std::unique_ptr;
@@ -40,24 +29,146 @@ using std::unique_ptr;
 namespace android {
 namespace aidl {
 namespace cpp {
+namespace {
+
+const char kAndroidStatusVarName[] = "_aidl_ret_status";
+const char kReturnVarName[] = "_aidl_return";
+const char kDataVarName[] = "_aidl_data";
+const char kReplyVarName[] = "_aidl_reply";
+
+void GenerateAnalyzerTransaction(CodeWriter& out, const AidlInterface& interface,
+                                 const AidlMethod& method, const AidlTypenames& typenames,
+                                 const Options& options) {
+  // Reading past the interface descriptor and reply binder status
+  out << "_aidl_ret_status = ::android::OK;\n";
+  out.Write("if (!(%s.enforceInterface(android::String16(\"%s\")))) {\n", kDataVarName,
+            interface.GetDescriptor().c_str());
+  out.Write("  %s = ::android::BAD_TYPE;\n", kAndroidStatusVarName);
+  out << "  std::cout << \"  Failure: Parcel interface does not match.\" << std::endl;"
+      << "  break;\n"
+      << "}\n";
+
+  // Declare parameters
+  for (const unique_ptr<AidlArgument>& a : method.GetArguments()) {
+    out.Write("%s %s;\n", CppNameOf(a->GetType(), typenames).c_str(), BuildVarName(*a).c_str());
+  }
+
+  // Read past the binder status.
+  out << "::android::binder::Status binderStatus;\n";
+  out.Write("binderStatus.readFromParcel(%s);\n", kReplyVarName);
+  // Declare and read the return value.
+  if (method.GetType().GetName() != "void") {
+    out.Write("%s* %s = new %s;\n", CppNameOf(method.GetType(), typenames).c_str(), kReturnVarName,
+              CppNameOf(method.GetType(), typenames).c_str());
+  }
+
+  if (method.GetType().GetName() != "void") {
+    out.Write("%s = %s.%s(%s);\n", kAndroidStatusVarName, kReplyVarName,
+              ParcelReadMethodOf(method.GetType(), typenames).c_str(),
+              ParcelReadCastOf(method.GetType(), typenames, kReturnVarName).c_str());
+    out.Write("if (((%s) != (android::NO_ERROR))) {\n", kAndroidStatusVarName);
+    out.Write(
+        "  std::cout << \"  Failure: error in reading return value from Parcel.\" << std::endl;");
+    out.Write("  break;\n}\n");
+  }
+
+  // Reading arguments
+  for (const auto& a : method.GetArguments()) {
+    out.Write("%s = %s.%s(%s);\n", kAndroidStatusVarName, kDataVarName,
+              ParcelReadMethodOf(a->GetType(), typenames).c_str(),
+              ParcelReadCastOf(a->GetType(), typenames, "&" + BuildVarName(*a)).c_str());
+    out.Write("if (((%s) != (android::NO_ERROR))) {\n", kAndroidStatusVarName);
+    out.Write(
+        "  std::cout << \"  Failure: error in reading argument %s from Parcel.\" << std::endl;",
+        a->GetName().c_str());
+    out.Write("  break;\n}\n");
+  }
+
+  if (!method.GetArguments().empty() && options.GetMinSdkVersion() >= SDK_VERSION_Tiramisu) {
+    out.Write(
+        "if (!%s.enforceNoDataAvail().isOk()) {\n  %s = android::BAD_VALUE;\n  std::cout << \"  "
+        "Failure: Parcel has too much data.\" << std::endl;\n  break;\n}\n",
+        kDataVarName, kAndroidStatusVarName);
+  }
+
+  // Printing arguments and return
+  for (const auto& a : method.GetArguments()) {
+    out.Write(
+        "std::cout << \"  Argument \\\"%s\\\" has value: \" << ::android::internal::ToString(%s) "
+        "<< std::endl;\n",
+        a->GetName().c_str(), BuildVarName(*a).c_str());
+  }
+  if (method.GetType().GetName() != "void") {
+    out.Write(
+        "std::cout << \"  Return value: \" << ::android::internal::ToString(%s) << std::endl;\n",
+        kReturnVarName);
+  }
+}
 
 void GenerateAnalyzerSource(CodeWriter& out, const AidlDefinedType& defined_type,
-                            const AidlTypenames& /*typenames*/, const Options& /*options*/) {
+                            const AidlTypenames& typenames, const Options& options) {
   auto interface = AidlCast<AidlInterface>(defined_type);
   string q_name = GetQualifiedName(*interface, ClassNames::INTERFACE);
 
-  out << "\n#include <Analyzer.h>\n\n";
-  out << "using android::aidl::Analyzer;\n";
+  string package;
+  auto splitPackage = defined_type.GetSplitPackage();
+  if (splitPackage.size() == 0) {
+    splitPackage = {""};
+  }
+
+  // Includes
+  vector<string> include_list{
+      "iostream", "binder/Parcel.h", "android/binder_to_string.h",
+      HeaderFile(*interface, ClassNames::RAW, false),
+      // HeaderFile(*interface, ClassNames::INTERFACE, false),
+  };
+  for (const auto& include : include_list) {
+    out << "#include <" << include << ">\n";
+  }
+
+  out << "namespace {\n";
+  // Function Start
+  out.Write(
+      "android::status_t analyze%s(uint32_t _aidl_code, const android::Parcel& %s, const "
+      "android::Parcel& %s) {\n",
+      q_name.c_str(), kDataVarName, kReplyVarName);
+  out.Indent();
+  out.Write("android::status_t %s;\nswitch(_aidl_code) {\n", kAndroidStatusVarName);
+  out.Indent();
+
+  // Main Switch Statement
+  for (const auto& method : interface->GetMethods()) {
+    out.Write("case ::android::IBinder::FIRST_CALL_TRANSACTION + %d:\n{\n", (method->GetId()));
+    out.Indent();
+    out.Write("std::cout << \"Function Called: %s\" << std::endl;\n", method->GetName().c_str());
+    GenerateAnalyzerTransaction(out, *interface, *method, typenames, options);
+    out.Dedent();
+    out << "}\n";
+    out << "break;\n";
+  }
+  out << "default:\n{\n  std::cout << \"  Transaction code \" << _aidl_code << \" not known.\" << "
+         "std::endl;\n";
+  out.Write("%s = android::UNKNOWN_TRANSACTION;\n}\n", kAndroidStatusVarName);
+  out.Dedent();
+  out.Write("}\nreturn %s;\n", kAndroidStatusVarName);
+  out << "// To prevent unused variable warnings\n";
+  out.Write("(void)%s; (void)%s; (void)%s;\n", kAndroidStatusVarName, kDataVarName, kReplyVarName);
+  out.Dedent();
+  out << "}\n\n} // namespace\n";
+
+  out << "\n#include <Analyzer.h>\nusing android::aidl::Analyzer;\n";
   out.Write(
       "__attribute__((constructor)) static void addAnalyzer() {\n"
-      "  Analyzer::installAnalyzer(std::make_unique<Analyzer>(\"%s\"));\n}\n",
-      q_name.c_str());
+      "  Analyzer::installAnalyzer(std::make_unique<Analyzer>(\"%s\", \"%s\", &analyze%s));\n}\n",
+      splitPackage.back().c_str(), q_name.c_str(), q_name.c_str());
 }
 
 void GenerateAnalyzerPlaceholder(CodeWriter& out, const AidlDefinedType& /*defined_type*/,
                                  const AidlTypenames& /*typenames*/, const Options& /*options*/) {
   out << "// This file is intentionally left blank as placeholder for building an analyzer.\n";
 }
+
+}  // namespace
 
 bool GenerateCppAnalyzer(const string& output_file, const Options& options,
                          const AidlTypenames& typenames, const AidlDefinedType& defined_type,

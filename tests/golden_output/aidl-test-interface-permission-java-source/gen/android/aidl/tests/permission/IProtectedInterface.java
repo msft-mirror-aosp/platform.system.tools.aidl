@@ -45,6 +45,30 @@ public interface IProtectedInterface extends android.os.IInterface
     {
       return this;
     }
+    /** @hide */
+    public static java.lang.String getDefaultTransactionName(int transactionCode)
+    {
+      switch (transactionCode)
+      {
+        case TRANSACTION_Method1:
+        {
+          return "Method1";
+        }
+        case TRANSACTION_Method2:
+        {
+          return "Method2";
+        }
+        default:
+        {
+          return null;
+        }
+      }
+    }
+    /** @hide */
+    public java.lang.String getTransactionName(int transactionCode)
+    {
+      return this.getDefaultTransactionName(transactionCode);
+    }
     @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
     {
       java.lang.String descriptor = DESCRIPTOR;
@@ -140,6 +164,11 @@ public interface IProtectedInterface extends android.os.IInterface
     }
     static final int TRANSACTION_Method1 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     static final int TRANSACTION_Method2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    /** @hide */
+    public int getMaxTransactionId()
+    {
+      return 1;
+    }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$IProtectedInterface".replace('$', '.');
   @android.annotation.EnforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
