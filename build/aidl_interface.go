@@ -492,8 +492,18 @@ func (i *aidlInterface) genTrace(lang string) bool {
 	switch lang {
 	case langCpp:
 		ver = i.properties.Backend.Cpp.Gen_trace
+		if ver == nil {
+			// Enable tracing for all cpp backends by default
+			ver = proptools.BoolPtr(true)
+		}
 	case langJava:
 		ver = i.properties.Backend.Java.Gen_trace
+		if ver == nil && proptools.Bool(i.properties.Backend.Java.Platform_apis) {
+			// Enable tracing for all Java backends using platform APIs
+			// TODO(161393989) Once we generate ATRACE_TAG_APP instead of ATRACE_TAG_AIDL,
+			// this can be removed and we can start generating traces in all apps.
+			ver = proptools.BoolPtr(true)
+		}
 	case langNdk, langNdkPlatform:
 		ver = i.properties.Backend.Ndk.Gen_trace
 	case langRust: // unsupported b/236880829
@@ -627,8 +637,17 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 			anImport := other.ModuleBase.Name()
 			anImportWithVersion := tag.anImport
 			_, version := parseModuleWithVersion(tag.anImport)
-			if version != "" {
-				candidateVersions := concat(other.getVersions(), []string{other.nextVersion()})
+
+			// note: 'nextVersion' will be incorrect in a REL branch, and following this advice
+			// would lead a user to lose another cycle.
+			// TODO(b/231903487): correct this logic when we cover all versions of nextVersion
+			// with another flag
+			candidateVersions := concat(other.getVersions(), []string{other.nextVersion()})
+			if version == "" {
+				if proptools.Bool(i.properties.Unstable) && !proptools.Bool(other.properties.Unstable) {
+					mctx.PropertyErrorf("imports", "unstable %q depends on %q but does not specify a version (must be one of %q)", i.ModuleBase.Name(), anImport, candidateVersions)
+				}
+			} else {
 				if !android.InList(version, candidateVersions) {
 					mctx.PropertyErrorf("imports", "%q depends on %q version %q(%q), which doesn't exist. The version must be one of %q", i.ModuleBase.Name(), anImport, version, anImportWithVersion, candidateVersions)
 				}
@@ -882,7 +901,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 
 	// In the future, we may want to force the -cpp backend to be on host,
 	// and limit its visibility, even if it's not created normally
-	if i.shouldGenerateCppBackend() {
+	if i.shouldGenerateCppBackend() && len(i.properties.Imports) == 0 {
 		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false))
 	}
 
@@ -1034,8 +1053,17 @@ func AidlInterfaceFactory() android.Module {
 
 type aidlInterfaceAttributes struct {
 	aidlLibraryAttributes
-	Versions bazel.StringListAttribute
-	Backends bazel.StringListAttribute
+	Versions           bazel.StringListAttribute
+	Backends           bazel.StringListAttribute
+	Stability          *string
+	Versions_with_info []versionWithInfoAttribute
+}
+
+type versionWithInfoAttribute struct {
+	Version string
+	// Versions_with_info.Deps in Bazel is analogous to Versions_with_info.Imports in Soong.
+	// Deps is chosen to be consistent with other Bazel rules/macros for AIDL
+	Deps bazel.LabelListAttribute
 }
 
 type aidlLibraryAttributes struct {
@@ -1046,8 +1074,10 @@ type aidlLibraryAttributes struct {
 	Flags               []string
 }
 
-func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
-	type importModuleWithVersion struct {
+// getBazelLabelListForImports returns a bazel label list converted from
+// aidl_interface.imports or aidl_interface.versions_with_info.imports prop
+func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports []string) bazel.LabelList {
+	type nameAndVersion struct {
 		name    string
 		version string
 	}
@@ -1057,27 +1087,33 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 	// However in Bazel, we will be creating an aidl_library for each version, so we can
 	// depend directly on a "versioned" module. But, we must look up the "unversioned"
 	// module name in BazelLabelForModuleDeps and then re-attach the version information.
-	importsWithVersions := make([]importModuleWithVersion, len(i.properties.Imports))
-	for i, importName := range i.properties.Imports {
-		moduleName, version := parseModuleWithVersion(importName)
+	namesAndVersions := make([]nameAndVersion, len(imports))
+	names := make([]string, len(imports))
+	for i, dep := range imports {
+		// Split dep into two parts
+		name, version := parseModuleWithVersion(dep)
 		if version == "" {
 			version = "-latest"
 		} else {
 			version = "-V" + version
 		}
-		importsWithVersions[i] = importModuleWithVersion{
-			name:    moduleName,
+		namesAndVersions[i] = nameAndVersion{
+			name:    name,
 			version: version,
 		}
+		names[i] = name
 	}
-	unversionedImports := make([]string, len(importsWithVersions))
-	for i, iv := range importsWithVersions {
-		unversionedImports[i] = iv.name
+	// Look up bazel label by name without version
+	bazelLabels := android.BazelLabelForModuleDeps(ctx, names)
+	for i := range bazelLabels.Includes {
+		// Re-attach the version to the name
+		bazelLabels.Includes[i].Label = bazelLabels.Includes[i].Label + namesAndVersions[i].version
 	}
-	imports := android.BazelLabelForModuleDeps(ctx, unversionedImports)
-	for i := range imports.Includes {
-		imports.Includes[i].Label = imports.Includes[i].Label + importsWithVersions[i].version
-	}
+	return bazelLabels
+}
+
+func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
 	headers := android.BazelLabelForModuleDeps(ctx, i.properties.Headers)
 	imports.Append(headers)
 
@@ -1093,11 +1129,11 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 
 	var backends bazel.StringListAttribute
 	backendList := []string{}
+	// TODO(b/246803961): Convert backend.rust to Bazel
 	shouldGenerateLangBackendMap := map[string]bool{
 		langCpp:  i.shouldGenerateCppBackend(),
 		langNdk:  i.shouldGenerateNdkBackend(),
-		langJava: i.shouldGenerateJavaBackend(),
-		langRust: i.shouldGenerateRustBackend()}
+		langJava: i.shouldGenerateJavaBackend()}
 	for backend, shouldGen := range shouldGenerateLangBackendMap {
 		if shouldGen {
 			backendList = append(backendList, backend)
@@ -1108,15 +1144,42 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		backends = bazel.MakeStringListAttribute(backendList)
 	}
 
+	var versionsWithInfos []versionWithInfoAttribute
+	if len(i.properties.Versions_with_info) > 0 {
+		for _, versionWithInfo := range i.properties.Versions_with_info {
+			imports := getBazelLabelListForImports(ctx, versionWithInfo.Imports)
+			var attributes versionWithInfoAttribute
+			if !imports.IsEmpty() {
+				attributes = versionWithInfoAttribute{
+					Version: versionWithInfo.Version,
+					Deps:    bazel.MakeLabelListAttribute(imports),
+				}
+			} else {
+				attributes = versionWithInfoAttribute{
+					Version: versionWithInfo.Version,
+				}
+			}
+			versionsWithInfos = append(versionsWithInfos, attributes)
+		}
+	}
+
+	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
+	var stripImportPrefixAttr *string = nil
+	if i.properties.Local_include_dir != "" && !srcsAttr.IsEmpty() {
+		stripImportPrefixAttr = &i.properties.Local_include_dir
+	}
+
 	attrs := &aidlInterfaceAttributes{
 		aidlLibraryAttributes: aidlLibraryAttributes{
-			//TODO(b/229251008) support "current" interface srcs
-			Flags: i.properties.Flags,
-			Deps:  deps,
+			Srcs:                srcsAttr,
+			Flags:               i.properties.Flags,
+			Deps:                deps,
+			Strip_import_prefix: stripImportPrefixAttr,
 		},
-		Versions: versions,
-		Backends: backends,
-		//TODO(b/229251008) support local_include_dir for "current" interface srcs
+		Versions:           versions,
+		Backends:           backends,
+		Stability:          i.properties.Stability,
+		Versions_with_info: versionsWithInfos,
 	}
 
 	interfaceName := strings.TrimSuffix(i.Name(), "_interface")

@@ -198,6 +198,16 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
+			// the logic to create implementation libraries has been reimplemented
+			// in a Bazel macro, so these libraries should not be converted with
+			// bp2build
+			// TODO(b/237810289) perhaps do something different here so that we aren't
+			// also disabling these modules in mixed builds
+			&bazelProperties{
+				&Bazel_module{
+					Bp2build_available: proptools.BoolPtr(false),
+				},
+			},
 		},
 	})
 
@@ -260,8 +270,8 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 				Generated_sources:         []string{cppAnalyzerSourceGen},
 				Generated_headers:         []string{cppAnalyzerSourceGen},
 				Export_generated_headers:  []string{cppAnalyzerSourceGen},
-				Shared_libs:               importExportDependencies,
-				Static_libs:               []string{"aidl-analyzer-main", i.versionedName(version) + "-" + langCpp},
+				Shared_libs:               append(importExportDependencies, i.versionedName(version)+"-"+langCpp),
+				Static_libs:               []string{"aidl-analyzer-main"},
 				Export_shared_lib_headers: importExportDependencies,
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
 				Min_sdk_version:           i.minSdkVersion(langCpp),
@@ -270,6 +280,12 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 				// Do the tidy check only for the generated headers
 				Tidy_flags:            []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
 				Tidy_checks_as_errors: []string{"*"},
+			},
+			// TODO(b/237810289) disable converting -cpp-analyzer module in bp2build
+			&bazelProperties{
+				&Bazel_module{
+					Bp2build_available: proptools.BoolPtr(false),
+				},
 			},
 		},
 	}

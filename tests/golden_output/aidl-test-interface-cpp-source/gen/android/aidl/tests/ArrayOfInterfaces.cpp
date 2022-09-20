@@ -114,6 +114,7 @@ ArrayOfInterfaces::BpMyInterface::BpMyInterface(const ::android::sp<::android::I
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
+  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyInterface::methodWithInterfaces::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -223,6 +224,7 @@ ArrayOfInterfaces::BnMyInterface::BnMyInterface()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
+    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyInterface::methodWithInterfaces::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinder(&in_iface);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;

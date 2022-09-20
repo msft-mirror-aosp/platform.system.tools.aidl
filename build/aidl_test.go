@@ -107,6 +107,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		}
 		cc_library {
 			name: "libcutils",
+			recovery_available: true,
 		}
 		cc_library {
 			name: "libbinder_ndk",
@@ -852,6 +853,25 @@ func TestImports(t *testing.T) {
 					enabled: false,
 				},
 			},
+		}
+	`)
+
+	testAidlError(t, `imports: unstable "foo" depends on "bar" but does not specify a version`, `
+		aidl_interface {
+			name: "foo",
+            unstable: true,
+			srcs: [
+				"IFoo.aidl",
+			],
+			imports: [
+				"bar",
+			]
+		}
+		aidl_interface {
+			name: "bar",
+			srcs: [
+				"IBar.aidl",
+			],
 		}
 	`)
 
