@@ -1129,11 +1129,11 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 
 	var backends bazel.StringListAttribute
 	backendList := []string{}
+	// TODO(b/246803961): Convert backend.rust to Bazel
 	shouldGenerateLangBackendMap := map[string]bool{
 		langCpp:  i.shouldGenerateCppBackend(),
 		langNdk:  i.shouldGenerateNdkBackend(),
-		langJava: i.shouldGenerateJavaBackend(),
-		langRust: i.shouldGenerateRustBackend()}
+		langJava: i.shouldGenerateJavaBackend()}
 	for backend, shouldGen := range shouldGenerateLangBackendMap {
 		if shouldGen {
 			backendList = append(backendList, backend)
