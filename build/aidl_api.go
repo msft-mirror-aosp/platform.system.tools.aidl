@@ -55,6 +55,7 @@ type aidlApiProperties struct {
 	AidlRoot  string   // base directory for the input aidl file
 	Stability *string
 	Imports   []string
+	Headers   []string
 	Versions  []string
 	Dumpapi   DumpApiProperties
 }
@@ -340,6 +341,14 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date
 			deps.implicits = append(deps.implicits, api.checkApiTimestamps.Paths()...)
 			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
+		case interfaceHeadersDepTag:
+			headerInfo, ok := ctx.OtherModuleProvider(dep, AidlInterfaceHeadersProvider).(AidlInterfaceHeadersInfo)
+			if !ok {
+				ctx.PropertyErrorf("headers", "module %v does not provide AidlInterfaceHeadersInfo", dep.Name())
+				return
+			}
+			deps.implicits = append(deps.implicits, headerInfo.Srcs...)
+			deps.imports = append(deps.imports, headerInfo.IncludeDir)
 		}
 	})
 	return deps
@@ -578,6 +587,7 @@ func addApiModule(mctx android.LoadHookContext, i *aidlInterface) string {
 		AidlRoot:  aidlRoot,
 		Stability: i.properties.Stability,
 		Imports:   i.properties.Imports,
+		Headers:   i.properties.Headers,
 		Versions:  i.getVersions(),
 		Dumpapi:   i.properties.Dumpapi,
 	})
