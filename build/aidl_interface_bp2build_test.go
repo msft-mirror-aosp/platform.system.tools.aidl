@@ -70,22 +70,30 @@ func TestAidlInterface(t *testing.T) {
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_library", "aidl-interface-headers", bp2build.AttrNameToString{}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface-import", bp2build.AttrNameToString{
-				"backends": `[
-        "cpp",
-        "java",
-        "ndk",
-    ]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
+				"cpp_config": `{
+        "enabled": True,
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
 				"versions": `[
         "1",
         "2",
     ]`,
 			}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
-				"backends": `[
-        "cpp",
-        "java",
-        "ndk",
-    ]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
+				"cpp_config": `{
+        "enabled": True,
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
 				"deps": `[
         ":aidl-interface-import-V1",
         ":aidl-interface-headers",
@@ -110,11 +118,15 @@ func TestAidlInterfaceWithNoProperties(t *testing.T) {
 			}`,
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
-				"backends": `[
-        "cpp",
-        "java",
-        "ndk",
-    ]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
+				"cpp_config": `{
+        "enabled": True,
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
 			}),
 		},
 	})
@@ -137,7 +149,9 @@ func TestAidlInterfaceWithDisabledBackends(t *testing.T) {
 			}`,
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
-				"backends": `["java"]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
 			}),
 		},
 	})
@@ -167,22 +181,30 @@ func TestAidlInterfaceWithLatestImport(t *testing.T) {
 			}`,
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface-import", bp2build.AttrNameToString{
-				"backends": `[
-        "cpp",
-        "java",
-        "ndk",
-    ]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
+				"cpp_config": `{
+        "enabled": True,
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
 				"versions": `[
         "1",
         "2",
     ]`,
 			}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
-				"backends": `[
-        "cpp",
-        "java",
-        "ndk",
-    ]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
+				"cpp_config": `{
+        "enabled": True,
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
 				"deps": `[":aidl-interface-import-latest"]`,
 				"versions": `[
         "1",
@@ -218,28 +240,69 @@ func TestAidlInterfaceWithVersionedImport(t *testing.T) {
 			}`,
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface-import", bp2build.AttrNameToString{
-				"backends": `[
-        "cpp",
-        "java",
-        "ndk",
-    ]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
+				"cpp_config": `{
+        "enabled": True,
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
 				"versions": `[
         "1",
         "2",
     ]`,
 			}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
-				"backends": `[
-        "cpp",
-        "java",
-        "ndk",
-    ]`,
+				"java_config": `{
+        "enabled": True,
+    }`,
+				"cpp_config": `{
+        "enabled": True,
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
 				"deps": `[":aidl-interface-import-V2"]`,
 				"versions": `[
         "1",
         "2",
         "3",
     ]`,
+			}),
+		},
+	})
+}
+
+func TestAidlInterfaceWithCppAndNdkConfigs(t *testing.T) {
+	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
+		Description: `aidl_interface with cpp and ndk configs`,
+		Blueprint: `
+			aidl_interface {
+				name: "foo",
+                backend: {
+                    java: {
+                        enabled: false,
+                    },
+                    cpp: {
+                        min_sdk_version: "2",
+                    },
+                    ndk: {
+                        min_sdk_version: "1",
+                    },
+                }
+			}`,
+		ExpectedBazelTargets: []string{
+			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "foo", bp2build.AttrNameToString{
+				"cpp_config": `{
+        "enabled": True,
+        "min_sdk_version": "2",
+    }`,
+				"ndk_config": `{
+        "enabled": True,
+        "min_sdk_version": "1",
+    }`,
 			}),
 		},
 	})
