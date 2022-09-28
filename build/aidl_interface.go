@@ -1054,9 +1054,31 @@ func AidlInterfaceFactory() android.Module {
 type aidlInterfaceAttributes struct {
 	aidlLibraryAttributes
 	Versions           bazel.StringListAttribute
-	Backends           bazel.StringListAttribute
 	Stability          *string
 	Versions_with_info []versionWithInfoAttribute
+	Java_config        *javaConfigAttributes
+	Cpp_config         *cppConfigAttributes
+	Ndk_config         *ndkConfigAttributes
+	// Backend_Configs    backendConfigAttributes
+}
+
+type javaConfigAttributes struct {
+	commonBackendAttributes
+}
+type cppConfigAttributes struct {
+	commonNativeBackendAttributes
+}
+type ndkConfigAttributes struct {
+	commonNativeBackendAttributes
+}
+
+type commonBackendAttributes struct {
+	Enabled         bool
+	Min_sdk_version *string
+}
+
+type commonNativeBackendAttributes struct {
+	commonBackendAttributes
 }
 
 type versionWithInfoAttribute struct {
@@ -1127,21 +1149,23 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		versions = bazel.MakeStringListAttribute(append([]string{}, i.properties.Versions...))
 	}
 
-	var backends bazel.StringListAttribute
-	backendList := []string{}
-	// TODO(b/246803961): Convert backend.rust to Bazel
-	shouldGenerateLangBackendMap := map[string]bool{
-		langCpp:  i.shouldGenerateCppBackend(),
-		langNdk:  i.shouldGenerateNdkBackend(),
-		langJava: i.shouldGenerateJavaBackend()}
-	for backend, shouldGen := range shouldGenerateLangBackendMap {
-		if shouldGen {
-			backendList = append(backendList, backend)
-		}
+	var javaConfig *javaConfigAttributes
+	var cppConfig *cppConfigAttributes
+	var ndkConfig *ndkConfigAttributes
+	if i.shouldGenerateJavaBackend() {
+		javaConfig = &javaConfigAttributes{}
+		javaConfig.Enabled = true
+		javaConfig.Min_sdk_version = i.minSdkVersion(langJava)
 	}
-	sort.Strings(backendList)
-	if len(backendList) > 0 {
-		backends = bazel.MakeStringListAttribute(backendList)
+	if i.shouldGenerateCppBackend() {
+		cppConfig = &cppConfigAttributes{}
+		cppConfig.Enabled = true
+		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
+	}
+	if i.shouldGenerateNdkBackend() {
+		ndkConfig = &ndkConfigAttributes{}
+		ndkConfig.Enabled = true
+		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
 	}
 
 	var versionsWithInfos []versionWithInfoAttribute
@@ -1177,9 +1201,11 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 			Strip_import_prefix: stripImportPrefixAttr,
 		},
 		Versions:           versions,
-		Backends:           backends,
 		Stability:          i.properties.Stability,
 		Versions_with_info: versionsWithInfos,
+		Java_config:        javaConfig,
+		Cpp_config:         cppConfig,
+		Ndk_config:         ndkConfig,
 	}
 
 	interfaceName := strings.TrimSuffix(i.Name(), "_interface")
