@@ -3501,6 +3501,24 @@ TEST_F(AidlTestIncompatibleChanges, ChangedBackingTypeOfEnum) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTestIncompatibleChanges, ChangedFixedSizeArraySize) {
+  const string expected_stderr =
+      "ERROR: new/p/Data.aidl:1.28-33: Type changed: int[8] to int[9].\n";
+  io_delegate_.SetFileContents("old/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int[8] bar;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Data.aidl",
+                               "package p;"
+                               "parcelable Data {"
+                               "  int[9] bar;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTestIncompatibleChanges, ChangedAnnatationParams) {
   const string expected_stderr =
       "ERROR: new/p/Foo.aidl:1.55-59: Changed annotations: @JavaPassthrough(annotation=\"Alice\") "
