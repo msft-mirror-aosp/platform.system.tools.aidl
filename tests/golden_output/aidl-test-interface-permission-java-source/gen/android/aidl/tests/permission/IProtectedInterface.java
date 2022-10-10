@@ -127,7 +127,7 @@ public interface IProtectedInterface extends android.os.IInterface
       }
       @Override public void Method1() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
@@ -141,7 +141,7 @@ public interface IProtectedInterface extends android.os.IInterface
       }
       @Override public void Method2() throws android.os.RemoteException
       {
-        android.os.Parcel _data = android.os.Parcel.obtain();
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
