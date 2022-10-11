@@ -619,8 +619,6 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
     return;
   }
 
-  if (min_sdk_version_ >= rpc_version) gen_rpc_ = true;
-
   AIDL_FATAL_IF(!output_dir_.empty() && output_dir_.back() != OS_PATH_SEPARATOR, output_dir_);
   AIDL_FATAL_IF(!output_header_dir_.empty() && output_header_dir_.back() != OS_PATH_SEPARATOR,
                 output_header_dir_);
