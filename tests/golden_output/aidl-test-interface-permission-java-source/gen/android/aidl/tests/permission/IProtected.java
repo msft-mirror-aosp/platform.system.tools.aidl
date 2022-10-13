@@ -222,9 +222,17 @@ public interface IProtected extends android.os.IInterface
       }
     }
     static final int TRANSACTION_PermissionProtected = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    /** Helper method to enforce permissions for PermissionProtected */
+    protected void PermissionProtected_enforcePermission() throws SecurityException { }
     static final int TRANSACTION_MultiplePermissionsAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    /** Helper method to enforce permissions for MultiplePermissionsAll */
+    protected void MultiplePermissionsAll_enforcePermission() throws SecurityException { }
     static final int TRANSACTION_MultiplePermissionsAny = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
+    /** Helper method to enforce permissions for MultiplePermissionsAny */
+    protected void MultiplePermissionsAny_enforcePermission() throws SecurityException { }
     static final int TRANSACTION_NonManifestPermission = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
+    /** Helper method to enforce permissions for NonManifestPermission */
+    protected void NonManifestPermission_enforcePermission() throws SecurityException { }
     /** @hide */
     public int getMaxTransactionId()
     {

@@ -164,7 +164,11 @@ public interface IProtectedInterface extends android.os.IInterface
       }
     }
     static final int TRANSACTION_Method1 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    /** Helper method to enforce permissions for Method1 */
+    protected void Method1_enforcePermission() throws SecurityException { }
     static final int TRANSACTION_Method2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    /** Helper method to enforce permissions for Method2 */
+    protected void Method2_enforcePermission() throws SecurityException { }
     /** @hide */
     public int getMaxTransactionId()
     {

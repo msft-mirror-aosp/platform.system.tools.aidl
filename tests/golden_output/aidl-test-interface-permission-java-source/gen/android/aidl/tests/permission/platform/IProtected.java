@@ -139,6 +139,8 @@ public interface IProtected extends android.os.IInterface
       }
     }
     static final int TRANSACTION_ProtectedWithSourceAttribution = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    /** Helper method to enforce permissions for ProtectedWithSourceAttribution */
+    protected void ProtectedWithSourceAttribution_enforcePermission(android.content.AttributionSource source) throws SecurityException { }
     /** @hide */
     public int getMaxTransactionId()
     {
