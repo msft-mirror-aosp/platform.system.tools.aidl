@@ -193,8 +193,13 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 				Target:                    targetProp,
 				Tidy:                      proptools.BoolPtr(true),
 				// Do the tidy check only for the generated headers
-				Tidy_flags:            []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-				Tidy_checks_as_errors: []string{"*"},
+				Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
+				Tidy_checks_as_errors: []string{
+					"*",
+					"-clang-analyzer-deadcode.DeadStores", // b/253079031
+					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
+					"-clang-analyzer-optin.performance.Padding", // b/253079031
+				},
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
@@ -278,8 +283,14 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 				Target:                    targetProp,
 				Tidy:                      proptools.BoolPtr(true),
 				// Do the tidy check only for the generated headers
-				Tidy_flags:            []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-				Tidy_checks_as_errors: []string{"*"},
+				Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
+				Tidy_checks_as_errors: []string{
+					"*",
+					"-clang-diagnostic-deprecated-declarations", // b/253081572
+					"-clang-analyzer-deadcode.DeadStores",       // b/253079031
+					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
+					"-clang-analyzer-optin.performance.Padding", // b/253079031
+				},
 			},
 			// TODO(b/237810289) disable converting -cpp-analyzer module in bp2build
 			&bazelProperties{
