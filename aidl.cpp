@@ -632,7 +632,8 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         !type.AsUnstructuredParcelable()->IsStableApiParcelable(options.TargetLanguage())) {
       err = AidlError::NOT_STRUCTURED;
       AIDL_ERROR(type) << type.GetCanonicalName()
-                       << " is not structured, but this is a structured interface.";
+                       << " is not structured, but this is a structured interface in "
+                       << to_string(options.TargetLanguage());
     }
     if (options.GetStability() == Options::Stability::VINTF && !type.IsVintfStability()) {
       err = AidlError::NOT_STRUCTURED;
