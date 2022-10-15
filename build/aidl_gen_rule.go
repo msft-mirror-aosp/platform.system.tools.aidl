@@ -245,12 +245,11 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 			prefix = "aidl"
 		}
 
-		headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath,
-			typeName+".h"))
-		headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath,
-			"Bp"+baseName+".h"))
-		headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath,
-			"Bn"+baseName+".h"))
+		if g.properties.Lang != langCppAnalyzer {
+			headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath, typeName+".h"))
+			headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath, "Bp"+baseName+".h"))
+			headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath, "Bn"+baseName+".h"))
+		}
 
 		if g.properties.GenLog {
 			optionalFlags = append(optionalFlags, "--log")
