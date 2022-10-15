@@ -1266,8 +1266,7 @@ TEST_P(AidlTest, ImportingJavaStyleBuiltinTypesIsAllowed) {
 
 TEST_P(AidlTest, StructuredFailOnUnstructuredParcelable) {
   const string expected_stderr =
-      "ERROR: o/WhoKnowsWhat.aidl:1.22-35: o.WhoKnowsWhat is not structured, but this is a "
-      "structured interface.\n";
+      "o.WhoKnowsWhat is not structured, but this is a structured interface";
   io_delegate_.SetFileContents("o/WhoKnowsWhat.aidl",
                                "package o; parcelable WhoKnowsWhat cpp_header \"who_knows.h\" "
                                "ndk_header \"ndk/who_knows.h\";");
@@ -1279,7 +1278,7 @@ TEST_P(AidlTest, StructuredFailOnUnstructuredParcelable) {
       Parse("p/IFoo.aidl",
             "package p; import o.WhoKnowsWhat; interface IFoo { void f(in WhoKnowsWhat thisIs); }",
             typenames_, GetLanguage(), &error, {"--structured"}));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
   EXPECT_EQ(AidlError::NOT_STRUCTURED, error);
 }
 
