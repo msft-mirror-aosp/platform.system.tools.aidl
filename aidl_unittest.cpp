@@ -4938,8 +4938,8 @@ parcelable Foo {
   EXPECT_THAT(code, testing::HasSubstr(R"(
   fn default() -> Self {
     Self {
-      n: 42,
-      e: crate::mangled::_1_p_4_Enum::BAR,
+      r#n: 42,
+      r#e: crate::mangled::_1_p_4_Enum::BAR,
     }
   })"));
 }
