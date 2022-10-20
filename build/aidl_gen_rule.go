@@ -171,8 +171,13 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	implicits := g.implicitInputs
 
 	optionalFlags := append([]string{}, g.properties.Flags...)
-	if g.properties.Version != "" {
-		optionalFlags = append(optionalFlags, "--version "+g.properties.Version)
+	if proptools.Bool(g.properties.Unstable) != true {
+		// default version is 1 for any stable interface
+		version := "1"
+		if g.properties.Version != "" {
+			version = g.properties.Version
+		}
+		optionalFlags = append(optionalFlags, "--version "+version)
 
 		hash := "notfrozen"
 		if !strings.HasPrefix(baseDir, ctx.Config().SoongOutDir()) {
