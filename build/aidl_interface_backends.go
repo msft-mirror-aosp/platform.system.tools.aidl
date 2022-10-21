@@ -200,6 +200,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
 				},
+				Include_build_directory: proptools.BoolPtr(false), // b/254682497
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,

@@ -74,6 +74,7 @@ type ccProperties struct {
 	Tidy                      *bool
 	Tidy_flags                []string
 	Tidy_checks_as_errors     []string
+	Include_build_directory   *bool
 }
 
 type javaProperties struct {
