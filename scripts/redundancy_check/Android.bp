@@ -17,6 +17,6 @@ rust_binary_host {
         "libregex",
         "libserde",
         "libserde_json",
-        "libstructopt",
+        "libclap",
     ],
 }
