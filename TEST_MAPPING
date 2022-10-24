@@ -13,7 +13,12 @@
       "name": "CtsNdkBinderTestCases"
     },
     {
-      "name": "ServiceStateTrackerTest"
+      "name": "FrameworksTelephonyTests",
+      "options": [
+        {
+          "include-filter": "com.android.internal.telephony.ServiceStateTrackerTest"
+        }
+      ]
     }
   ],
   "imports": [
@@ -22,4 +27,3 @@
     }
   ]
 }
-
