@@ -16,6 +16,8 @@
 
 set -e
 
+clang_format=${CLANG_FORMAT_PATH:-clang-format}
+
 # future considerations:
 # - could we make this work with git-clang-format instead?
 # - should we have our own formatter?
@@ -74,7 +76,7 @@ function _aidl-format() (
       local style="$2"
       local temp="$(mktemp)"
       local styletext="$([ -f "$style" ] && cat "$style" | tr '\n' ',' 2> /dev/null)"
-      cat "$input" | clang-format \
+      cat "$input" | $clang_format \
         --style='{BasedOnStyle: Google,
         ColumnLimit: 100,
         IndentWidth: 4,
@@ -104,7 +106,7 @@ function _aidl-format() (
       # @Anno(a=1, b=2) @Anno(c=3, d=4) int foo = 3;
       # [^@,=] ensures that the match doesn't cross the characters, otherwise
       # "a = 1, b = 2" would match only once and will become "a = 1, b=2".
-      gawk -i inplace \
+      awk -i inplace \
         '/@[^@]+\(.*=.*\)/ { # matches a line having @anno(param = val) \
               print(gensub(/([^@,=]+) = ([^@,=]+|"[^"]*")/, "\\1=\\2", "g", $0)); \
               done=1;\
