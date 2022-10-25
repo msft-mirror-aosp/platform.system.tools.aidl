@@ -17,22 +17,22 @@
 //! Reports redundant AIDL libraries included in a partition.
 
 use anyhow::{Context, Result};
+use clap::Parser;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt()]
 struct Opt {
     /// JSON file with list of files installed in a partition, e.g. "$OUT/installed-files.json".
-    #[structopt(long)]
+    #[clap(long)]
     installed_files_json: PathBuf,
 
     /// JSON file with metadata for AIDL interfaces. Optional, but fewer checks are performed when
     /// unset.
-    #[structopt(long)]
+    #[clap(long)]
     aidl_metadata_json: Option<PathBuf>,
 }
 
