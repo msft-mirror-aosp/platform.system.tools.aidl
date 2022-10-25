@@ -678,7 +678,7 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 					"Rust backend not enabled in the imported AIDL interface %q", anImport)
 			}
 
-			if other.properties.Frozen != nil && proptools.Bool(i.properties.Frozen) && !proptools.Bool(other.properties.Frozen) && version == "" {
+			if i.isFrozen() && other.isExplicitlyUnFrozen() && version == "" {
 				mctx.PropertyErrorf("frozen",
 					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q",
 					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V"+other.properties.Versions[len(other.properties.Versions)-1])
@@ -810,6 +810,16 @@ func (i *aidlInterface) getVersions() []string {
 	return i.properties.VersionsInternal
 }
 
+func (i *aidlInterface) isFrozen() bool {
+	return proptools.Bool(i.properties.Frozen)
+}
+
+// in order to keep original behavior for certain operations, we may want to
+// check if frozen is set.
+func (i *aidlInterface) isExplicitlyUnFrozen() bool {
+	return i.properties.Frozen != nil && !proptools.Bool(i.properties.Frozen)
+}
+
 func hasVersionSuffix(moduleName string) bool {
 	hasVersionSuffix, _ := regexp.MatchString("-V\\d+$", moduleName)
 	return hasVersionSuffix
@@ -865,9 +875,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		}
 	}
 
-	frozen := proptools.Bool(i.properties.Frozen)
-
-	if frozen {
+	if i.isFrozen() {
 		if !i.hasVersion() {
 			mctx.PropertyErrorf("frozen", "cannot be frozen without versions")
 			return
