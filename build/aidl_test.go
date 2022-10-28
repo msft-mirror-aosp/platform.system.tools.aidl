@@ -346,6 +346,152 @@ func TestUsingUnstableVersionIndirectlyInRelease(t *testing.T) {
 	testAidl(t, unstableVersionUsageInJavaBp, files)
 }
 
+func TestFrozenTrueSimple(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "foo",
+		versions: ["1"],
+		frozen: true,
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTest, files, setReleaseEnv())
+	testAidl(t, frozenTest, files, setTestFreezeEnv())
+	testAidl(t, frozenTest, files)
+}
+
+func TestFrozenWithNoVersions(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "foo",
+		frozen: true,
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+	})
+
+	expectedError := `cannot be frozen without versions`
+	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
+	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
+	testAidlError(t, expectedError, frozenTest, files)
+}
+
+func TestFrozenImportingFrozen(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		frozen: true,
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx"],
+		versions: ["1"],
+		frozen: true,
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTest, files, setReleaseEnv())
+	testAidl(t, frozenTest, files, setTestFreezeEnv())
+	testAidl(t, frozenTest, files)
+}
+
+func TestFrozenImportingVersionUnFrozen(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		frozen: false,
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx-V1"],
+		versions: ["1"],
+		frozen: true,
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTest, files, setReleaseEnv())
+	testAidl(t, frozenTest, files, setTestFreezeEnv())
+	testAidl(t, frozenTest, files)
+}
+
+func TestFrozenImportingUnFrozen(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		frozen: false,
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx"],
+		versions: ["1"],
+		frozen: true,
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	expectedError := `"foo" imports "xxx" which is not frozen. Either "foo" must set 'frozen: false' or must explicitly import "xxx-V1"`
+	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
+	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
+	testAidlError(t, expectedError, frozenTest, files)
+}
+
+// This is allowed to keep legacy behavior. It could be prevented directly after API-freeze
+// if all frozen interfaces are explicitly marked `frozen: true,`
+func TestFrozenImportingUnSpecified(t *testing.T) {
+	frozenTrueSimple := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx-V1"],
+		versions: ["1"],
+		frozen: true,
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTrueSimple, files, setReleaseEnv())
+	testAidl(t, frozenTrueSimple, files, setTestFreezeEnv())
+	testAidl(t, frozenTrueSimple, files)
+}
+
 // The module which has never been frozen and is not "unstable" is not allowed in release version.
 func TestNonVersionedModuleUsageInRelease(t *testing.T) {
 	nonVersionedModuleUsageInJavaBp := `
