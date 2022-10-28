@@ -21,10 +21,21 @@ public interface IProtectedInterface extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.permission.IProtectedInterface
   {
-    /** Construct the stub at attach it to the interface. */
-    public Stub()
+    private final android.os.PermissionEnforcer mEnforcer;
+    /** Construct the stub using the Enforcer provided. */
+    public Stub(android.os.PermissionEnforcer enforcer)
     {
       this.attachInterface(this, DESCRIPTOR);
+      if (enforcer == null) {
+        throw new IllegalArgumentException("enforcer cannot be null");
+      }
+      mEnforcer = enforcer;
+    }
+    @Deprecated
+    /** Default constructor. */
+    public Stub() {
+      this(android.os.PermissionEnforcer.fromContext(
+         android.app.ActivityThread.currentActivityThread().getSystemContext()));
     }
     /**
      * Cast an IBinder object into an android.aidl.tests.permission.IProtectedInterface interface,
@@ -87,18 +98,16 @@ public interface IProtectedInterface extends android.os.IInterface
       {
         case TRANSACTION_Method1:
         {
-          if ((this.permissionCheckerWrapper(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
-            throw new SecurityException("Access denied, requires: android.Manifest.permission.ACCESS_FINE_LOCATION");
-          }
+          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+          mEnforcer.enforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION, source);
           this.Method1();
           reply.writeNoException();
           break;
         }
         case TRANSACTION_Method2:
         {
-          if ((this.permissionCheckerWrapper(android.Manifest.permission.ACCESS_FINE_LOCATION, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
-            throw new SecurityException("Access denied, requires: android.Manifest.permission.ACCESS_FINE_LOCATION");
-          }
+          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+          mEnforcer.enforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION, source);
           this.Method2();
           reply.writeNoException();
           break;
@@ -154,16 +163,12 @@ public interface IProtectedInterface extends android.os.IInterface
         }
       }
     }
-    private boolean permissionCheckerWrapper(
-        String permission, int pid, android.content.AttributionSource attributionSource) {
-      android.content.Context ctx =
-          android.app.ActivityThread.currentActivityThread().getSystemContext();
-      return (android.content.PermissionChecker.checkPermissionForDataDelivery(
-              ctx, permission, pid, attributionSource, "" /*message*/) ==
-          android.content.PermissionChecker.PERMISSION_GRANTED);
-    }
     static final int TRANSACTION_Method1 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    /** Helper method to enforce permissions for Method1 */
+    protected void Method1_enforcePermission() throws SecurityException { }
     static final int TRANSACTION_Method2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    /** Helper method to enforce permissions for Method2 */
+    protected void Method2_enforcePermission() throws SecurityException { }
     /** @hide */
     public int getMaxTransactionId()
     {
