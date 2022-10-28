@@ -1205,6 +1205,7 @@ class AidlInterface final : public AidlDefinedType {
 
   bool CheckValid(const AidlTypenames& typenames) const override;
   bool CheckValidPermissionAnnotations(const AidlMethod& m) const;
+  bool UsesPermissions() const;
   std::string GetDescriptor() const;
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 };
