@@ -334,6 +334,12 @@ type aidlInterfaceProperties struct {
 	// interface must be kept stable as long as it is used.
 	Stability *string
 
+	// If true, this interface is frozen and does not have any changes since the last
+	// frozen version.
+	// If false, there are changes to this interface between the last frozen version (N) and
+	// the current version (N + 1).
+	Frozen *bool
+
 	// Deprecated: Use `versions_with_info` instead. Don't use `versions` property directly.
 	Versions []string
 
@@ -671,6 +677,12 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 				mctx.PropertyErrorf("backend.rust.enabled",
 					"Rust backend not enabled in the imported AIDL interface %q", anImport)
 			}
+
+			if other.properties.Frozen != nil && proptools.Bool(i.properties.Frozen) && !proptools.Bool(other.properties.Frozen) && version == "" {
+				mctx.PropertyErrorf("frozen",
+					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q",
+					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V"+other.properties.Versions[len(other.properties.Versions)-1])
+			}
 		})
 	}
 }
@@ -849,6 +861,15 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		}
 		if i.properties.Stability != nil {
 			mctx.ModuleErrorf("unstable:true and stability:%q cannot happen at the same time", i.properties.Stability)
+			return
+		}
+	}
+
+	frozen := proptools.Bool(i.properties.Frozen)
+
+	if frozen {
+		if !i.hasVersion() {
+			mctx.PropertyErrorf("frozen", "cannot be frozen without versions")
 			return
 		}
 	}
