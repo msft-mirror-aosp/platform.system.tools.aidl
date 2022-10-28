@@ -58,6 +58,7 @@ type aidlApiProperties struct {
 	Headers   []string
 	Versions  []string
 	Dumpapi   DumpApiProperties
+	Frozen    *bool
 }
 
 type aidlApi struct {
@@ -284,6 +285,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 	targetDir := filepath.Join(moduleDir, m.apiDir(), version)
 	rb := android.NewRuleBuilder(pctx, ctx)
 	transitive := ctx.Config().IsEnvTrue("AIDL_TRANSITIVE_FREEZE")
+	frozen := proptools.Bool(m.properties.Frozen)
 	var actionWord string
 	if creatingNewVersion {
 		actionWord = "Making"
@@ -292,23 +294,31 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		// otherwise we will be unnecessarily creating many versions.
 		// Copy the given dump to the target directory only when the equality check failed
 		// (i.e. `has_development` file contains "1").
-		wrapWithDiffCheckIf(m, rb, func(rbc *android.RuleBuilderCommand) {
-			rbc.Text("mkdir -p " + targetDir + " && ").
-				Text("cp -rf " + dump.dir.String() + "/. " + targetDir).Implicits(dump.files)
-		}, true /* needToWrap */)
-		wrapWithDiffCheckIfElse(m, rb, func(rbc *android.RuleBuilderCommand) {
-			rbc.Text(fmt.Sprintf(`echo "There is change between ToT version and the latest stable version. Freezing %s-V%s."`, m.properties.BaseName, version))
-		}, func(rbc *android.RuleBuilderCommand) {
-			rbc.Text(fmt.Sprintf(`echo "There is no change from the latest stable version of %s. Nothing happened."`, m.properties.BaseName))
-		})
+		if !frozen {
+			wrapWithDiffCheckIf(m, rb, func(rbc *android.RuleBuilderCommand) {
+				rbc.Text("mkdir -p " + targetDir + " && ").
+					Text("cp -rf " + dump.dir.String() + "/. " + targetDir).Implicits(dump.files)
+			}, true /* needToWrap */)
+			wrapWithDiffCheckIfElse(m, rb, func(rbc *android.RuleBuilderCommand) {
+				rbc.Text(fmt.Sprintf(`echo "There is change between ToT version and the latest stable version. Freezing %s-V%s."`, m.properties.BaseName, version))
+			}, func(rbc *android.RuleBuilderCommand) {
+				rbc.Text(fmt.Sprintf(`echo "There is no change from the latest stable version of %s. Nothing happened."`, m.properties.BaseName))
+			})
+		} else {
+			rb.Command().Text(fmt.Sprintf(`echo "Error: can't freeze an API with 'frozen: true'. Update %s with 'frozen: false'." && exit -1`, m.properties.BaseName))
+		}
 		m.migrateAndAppendVersion(ctx, rb, &version, transitive)
 	} else {
 		actionWord = "Updating"
-		// We are updating the current version. Don't copy .hash to the current dump
-		rb.Command().Text("mkdir -p " + targetDir)
-		rb.Command().Text("rm -rf " + targetDir + "/*")
-		rb.Command().Text("cp -rf " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
-
+		if !frozen {
+			// We are updating the current version. Don't copy .hash to the current dump
+			rb.Command().Text("mkdir -p " + targetDir)
+			rb.Command().Text("rm -rf " + targetDir + "/*")
+			rb.Command().Text("cp -rf " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
+		} else {
+			// This needs to be an error when running *-update-api
+			rb.Command().Text(fmt.Sprintf(`echo "Error: can't update an API with 'frozen: true'. Update %s with 'frozen: false'." && exit -1`, m.properties.BaseName))
+		}
 		m.migrateAndAppendVersion(ctx, rb, nil, false)
 	}
 
@@ -407,7 +417,12 @@ func (m *aidlApi) checkEquality(ctx android.ModuleContext, oldDump apiDump, newD
 	// In case when it is finalized, we should never allow updating the already frozen API.
 	// If it's not finalized, we let users to update the current version by invoking
 	// `m <name>-update-api`.
-	messageFile := android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality.txt")
+	var messageFile android.SourcePath
+	if proptools.Bool(m.properties.Frozen) {
+		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality_frozen.txt")
+	} else {
+		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality.txt")
+	}
 	sdkIsFinal := !ctx.Config().DefaultAppTargetSdk(ctx).IsPreview()
 	if sdkIsFinal {
 		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality_release.txt")
@@ -603,6 +618,7 @@ func addApiModule(mctx android.LoadHookContext, i *aidlInterface) string {
 		Headers:   i.properties.Headers,
 		Versions:  i.getVersions(),
 		Dumpapi:   i.properties.Dumpapi,
+		Frozen:    i.properties.Frozen,
 	})
 	return apiModule
 }
