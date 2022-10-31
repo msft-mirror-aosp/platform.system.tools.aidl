@@ -49,7 +49,7 @@ bootstrap_go_package {
     ],
     testSrcs: [
         "aidl_test.go",
-        "aidl_interface_bp2build_test.go"
+        "aidl_interface_bp2build_test.go",
     ],
     pluginFor: ["soong_build"],
 }
@@ -121,8 +121,13 @@ aidl_interface {
         "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
     ],
     unstable: true,
-    backend: { ndk: { sdk_version: "29", }, },
+    backend: {
+        ndk: {
+            sdk_version: "29",
+        },
+    },
 }
+
 aidl_interface {
     name: "test-piece-ndk-sdk-30",
     local_include_dir: "tests_1",
@@ -133,8 +138,13 @@ aidl_interface {
         "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
     ],
     unstable: true,
-    backend: { ndk: { sdk_version: "30", }, },
+    backend: {
+        ndk: {
+            sdk_version: "30",
+        },
+    },
 }
+
 aidl_interface {
     name: "test-piece-ndk-sdk-31",
     local_include_dir: "tests_1",
@@ -145,7 +155,33 @@ aidl_interface {
         "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
     ],
     unstable: true,
-    backend: { ndk: { sdk_version: "31", }, },
+    backend: {
+        ndk: {
+            sdk_version: "31",
+        },
+    },
+}
+
+aidl_interface {
+    name: "tests-vintf",
+    local_include_dir: "tests_vintf",
+    srcs: ["tests_vintf/vintf/IFoo.aidl"],
+    stability: "vintf",
+    backend: {
+        ndk: {
+            sdk_version: "31",
+        },
+        java: {
+            sdk_version: "system_current",
+        },
+    },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+
 }
 
 aidl_interface {
