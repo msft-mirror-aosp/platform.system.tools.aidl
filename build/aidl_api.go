@@ -474,8 +474,17 @@ func (m *aidlApi) checkForDevelopment(ctx android.ModuleContext, latestVersionDu
 			FlagForEachArg("-I", deps.imports).Implicits(deps.implicits).
 			FlagForEachInput("-p", deps.preprocessed).
 			Text(latestVersionDump.dir.String()).Implicits(latestVersionDump.files).
-			Text(totDump.dir.String()).Implicits(totDump.files).
-			Text("2> /dev/null; echo $? >").Output(hasDevPath)
+			Text(totDump.dir.String()).Implicits(totDump.files)
+		iface := ctx.GetDirectDepWithTag(m.properties.BaseName, interfaceDep).(*aidlInterface)
+		if iface.properties.Frozen != nil && !proptools.Bool(iface.properties.Frozen) {
+			// Throw an error if checkapi returns with no differences
+			msg := fmt.Sprintf("echo \"Interface %s can not be marked \\`frozen: false\\` if there are no changes\"", m.properties.BaseName)
+			hasDevCommand.
+				Text(fmt.Sprintf("2> /dev/null && %s && exit -1 || echo $? >", msg)).Output(hasDevPath)
+		} else {
+			hasDevCommand.
+				Text("2> /dev/null; echo $? >").Output(hasDevPath)
+		}
 	} else {
 		rb.Command().Text("echo 1 >").Output(hasDevPath)
 	}
