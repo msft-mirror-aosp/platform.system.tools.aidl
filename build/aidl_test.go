@@ -465,7 +465,7 @@ func TestFrozenImportingUnFrozen(t *testing.T) {
 }
 
 // This is allowed to keep legacy behavior. It could be prevented directly after API-freeze
-// if all frozen interfaces are explicitly marked `frozen: true,`
+// if all frozen interfaces are explicitly marked `frozen: true,`.
 func TestFrozenImportingUnSpecified(t *testing.T) {
 	frozenTrueSimple := `
 	aidl_interface {
@@ -490,6 +490,154 @@ func TestFrozenImportingUnSpecified(t *testing.T) {
 	testAidl(t, frozenTrueSimple, files, setReleaseEnv())
 	testAidl(t, frozenTrueSimple, files, setTestFreezeEnv())
 	testAidl(t, frozenTrueSimple, files)
+}
+
+// Keeping legacy behavior if "frozen" is not specified
+func TestImportingNewLegacy(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx-V2"],
+		versions_with_info: [
+			{version: "1", imports: ["xxx-V1"]},
+		],
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTest, files, setReleaseEnv())
+	testAidl(t, frozenTest, files, setTestFreezeEnv())
+	testAidl(t, frozenTest, files)
+}
+
+// We don't have a way to know if if "xxx" has changes to it and will
+// need a new version without the "frozen" attribute. So we keep the
+// legacy behavior and assume "foo" is still importing the old version.
+func TestFrozenImportingNewLegacy(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx"],
+		frozen: true,
+		versions_with_info: [
+			{version: "1", imports: ["xxx-V1"]},
+		],
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTest, files, setReleaseEnv())
+	testAidl(t, frozenTest, files, setTestFreezeEnv())
+	testAidl(t, frozenTest, files)
+}
+
+func TestFrozenImportingNewImplicit(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		frozen: false,
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx"],
+		frozen: true,
+		versions_with_info: [
+			{version: "1", imports: ["xxx-V1"]},
+		],
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	expectedError := `"foo" imports "xxx" which is not frozen. Either "foo" must set 'frozen: false' or must explicitly import "xxx-V1"`
+	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
+	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
+	testAidlError(t, expectedError, frozenTest, files)
+}
+
+func TestFrozenImportingNewExplicit(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		frozen: false,
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx-V2"],
+		frozen: true,
+		versions_with_info: [
+			{version: "1", imports: ["xxx-V1"]},
+		],
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	expectedError := "This interface is 'frozen: true' but the imports have changed. Set 'frozen: false' to allow changes: \\n Version current imports: map\\[xxx:2\\]\\n Version 1 imports: map\\[xxx:1\\]\\n"
+	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
+	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
+	testAidlError(t, expectedError, frozenTest, files)
+}
+
+func TestNonFrozenImportingNewImplicit(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		frozen: false,
+		versions: ["1"],
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx"],
+		frozen: false,
+		versions_with_info: [
+			{version: "1", imports: ["xxx-V1"]},
+		],
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTest, files, setReleaseEnv())
+	testAidl(t, frozenTest, files, setTestFreezeEnv())
+	testAidl(t, frozenTest, files)
 }
 
 // The module which has never been frozen and is not "unstable" is not allowed in release version.
@@ -1951,6 +2099,7 @@ func TestFreezeApiDeps(t *testing.T) {
 					"common/Android.bp": []byte(`
 				  aidl_interface {
 						name: "common",
+						frozen: false,
 						srcs: ["ICommon.aidl"],
 						versions: ["1", "2"],
 					}
@@ -1964,6 +2113,7 @@ func TestFreezeApiDeps(t *testing.T) {
 						name: "foo",
 						srcs: ["IFoo.aidl"],
 						imports: ["%s"],
+						frozen: false,
 						versions_with_info: [
 							{version: "1", imports: ["common-V1"]},
 							{version: "2", imports: ["common-V2"]},

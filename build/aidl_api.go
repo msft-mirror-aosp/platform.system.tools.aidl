@@ -16,6 +16,7 @@ package aidl
 
 import (
 	"android/soong/android"
+	"reflect"
 
 	"fmt"
 	"io"
@@ -92,6 +93,27 @@ func (m *aidlApi) apiDir() string {
 // `m <iface>-freeze-api` will freeze ToT as this version
 func (m *aidlApi) nextVersion() string {
 	return nextVersion(m.properties.Versions)
+}
+
+func (m *aidlApi) hasVersion() bool {
+	return len(m.properties.Versions) > 0
+}
+
+func (m *aidlApi) latestVersion() string {
+	if !m.hasVersion() {
+		return "0"
+	}
+	return m.properties.Versions[len(m.properties.Versions)-1]
+}
+
+func (m *aidlApi) isFrozen() bool {
+	return proptools.Bool(m.properties.Frozen)
+}
+
+// in order to keep original behavior for certain operations, we may want to
+// check if frozen is set.
+func (m *aidlApi) isExplicitlyUnFrozen() bool {
+	return m.properties.Frozen != nil && !proptools.Bool(m.properties.Frozen)
 }
 
 type apiDump struct {
@@ -259,7 +281,8 @@ func (m *aidlApi) migrateAndAppendVersion(ctx android.ModuleContext, rb *android
 					imports = append(imports, im)
 				} else {
 					versionSuffix := importIfaces[im].latestVersion()
-					if !importIfaces[im].hasVersion() {
+					if !importIfaces[im].hasVersion() ||
+						importIfaces[im].isExplicitlyUnFrozen() {
 						versionSuffix = importIfaces[im].nextVersion()
 					}
 					imports = append(imports, im+"-V"+versionSuffix)
@@ -285,7 +308,6 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 	targetDir := filepath.Join(moduleDir, m.apiDir(), version)
 	rb := android.NewRuleBuilder(pctx, ctx)
 	transitive := ctx.Config().IsEnvTrue("AIDL_TRANSITIVE_FREEZE")
-	frozen := proptools.Bool(m.properties.Frozen)
 	var actionWord string
 	if creatingNewVersion {
 		actionWord = "Making"
@@ -294,7 +316,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		// otherwise we will be unnecessarily creating many versions.
 		// Copy the given dump to the target directory only when the equality check failed
 		// (i.e. `has_development` file contains "1").
-		if !frozen {
+		if !m.isFrozen() {
 			wrapWithDiffCheckIf(m, rb, func(rbc *android.RuleBuilderCommand) {
 				rbc.Text("mkdir -p " + targetDir + " && ").
 					Text("cp -rf " + dump.dir.String() + "/. " + targetDir).Implicits(dump.files)
@@ -310,7 +332,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		m.migrateAndAppendVersion(ctx, rb, &version, transitive)
 	} else {
 		actionWord = "Updating"
-		if !frozen {
+		if !m.isFrozen() {
 			// We are updating the current version. Don't copy .hash to the current dump
 			rb.Command().Text("mkdir -p " + targetDir)
 			rb.Command().Text("rm -rf " + targetDir + "/*")
@@ -418,7 +440,7 @@ func (m *aidlApi) checkEquality(ctx android.ModuleContext, oldDump apiDump, newD
 	// If it's not finalized, we let users to update the current version by invoking
 	// `m <name>-update-api`.
 	var messageFile android.SourcePath
-	if proptools.Bool(m.properties.Frozen) {
+	if m.isFrozen() {
 		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality_frozen.txt")
 	} else {
 		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality.txt")
@@ -458,32 +480,88 @@ func (m *aidlApi) checkIntegrity(ctx android.ModuleContext, dump apiDump) androi
 	return timestampFile
 }
 
+// Get the `latest` versions of the imported AIDL interfaces. If an interface is frozen, this is the
+// last frozen version, if it is `frozen: false` this is the last frozen version + 1, if `frozen` is
+// not set this is the last frozen version because we don't know if there are changes or not to the
+// interface.
+// map["foo":"3", "bar":1]
+func (m *aidlApi) getLatestImportVersions(ctx android.ModuleContext) map[string]string {
+	var latest_versions = make(map[string]string)
+	ctx.VisitDirectDeps(func(dep android.Module) {
+		switch ctx.OtherModuleDependencyTag(dep).(type) {
+		case apiDepTag:
+			api := dep.(*aidlApi)
+			if len(api.properties.Versions) > 0 {
+				if api.properties.Frozen == nil || api.isFrozen() {
+					latest_versions[api.properties.BaseName] = api.latestVersion()
+				} else {
+					latest_versions[api.properties.BaseName] = api.nextVersion()
+				}
+			} else {
+				latest_versions[api.properties.BaseName] = "1"
+			}
+		}
+	})
+	return latest_versions
+}
+
 func (m *aidlApi) checkForDevelopment(ctx android.ModuleContext, latestVersionDump *apiDump, totDump apiDump) android.WritablePath {
 	hasDevPath := android.PathForModuleOut(ctx, "has_development")
 	rb := android.NewRuleBuilder(pctx, ctx)
 	rb.Command().Text("rm -f " + hasDevPath.String())
 	if latestVersionDump != nil {
-		hasDevCommand := rb.Command()
-		hasDevCommand.BuiltTool("aidl").FlagWithArg("--checkapi=", "equal")
-		if m.properties.Stability != nil {
-			hasDevCommand.FlagWithArg("--stability ", *m.properties.Stability)
+		current_imports := m.getImports(ctx, currentVersion)
+		last_frozen_imports := m.getImports(ctx, m.properties.Versions[len(m.properties.Versions)-1])
+		var latest_versions = m.getLatestImportVersions(ctx)
+		// replace any "latest" version with the version number from latest_versions
+		for import_name, latest_version := range current_imports {
+			if latest_version == "latest" {
+				current_imports[import_name] = latest_versions[import_name]
+			}
+		}
+		for import_name, latest_version := range last_frozen_imports {
+			if latest_version == "latest" {
+				last_frozen_imports[import_name] = latest_versions[import_name]
+			}
+		}
+		different_imports := false
+		if !reflect.DeepEqual(current_imports, last_frozen_imports) {
+			if m.isFrozen() {
+				ctx.ModuleErrorf("This interface is 'frozen: true' but the imports have changed. Set 'frozen: false' to allow changes: \n Version %s imports: %s\n Version %s imports: %s\n",
+					currentVersion,
+					fmt.Sprint(current_imports),
+					m.properties.Versions[len(m.properties.Versions)-1],
+					fmt.Sprint(last_frozen_imports))
+				return hasDevPath
+			}
+			different_imports = true
 		}
 		// checkapi(latest, tot) should use imports for nextVersion(=tot)
-		deps := getDeps(ctx, m.getImports(ctx, m.nextVersion()))
-		hasDevCommand.
-			FlagForEachArg("-I", deps.imports).Implicits(deps.implicits).
-			FlagForEachInput("-p", deps.preprocessed).
-			Text(latestVersionDump.dir.String()).Implicits(latestVersionDump.files).
-			Text(totDump.dir.String()).Implicits(totDump.files)
-		iface := ctx.GetDirectDepWithTag(m.properties.BaseName, interfaceDep).(*aidlInterface)
-		if iface.properties.Frozen != nil && !proptools.Bool(iface.properties.Frozen) {
-			// Throw an error if checkapi returns with no differences
-			msg := fmt.Sprintf("echo \"Interface %s can not be marked \\`frozen: false\\` if there are no changes\"", m.properties.BaseName)
+		hasDevCommand := rb.Command()
+		// If `frozen` isn't specified, ignore the difference to keep legacy behavior
+		if !different_imports || m.properties.Frozen == nil {
+			hasDevCommand.BuiltTool("aidl").FlagWithArg("--checkapi=", "equal")
+			if m.properties.Stability != nil {
+				hasDevCommand.FlagWithArg("--stability ", *m.properties.Stability)
+			}
+			deps := getDeps(ctx, m.getImports(ctx, m.nextVersion()))
 			hasDevCommand.
-				Text(fmt.Sprintf("2> /dev/null && %s && exit -1 || echo $? >", msg)).Output(hasDevPath)
+				FlagForEachArg("-I", deps.imports).Implicits(deps.implicits).
+				FlagForEachInput("-p", deps.preprocessed).
+				Text(latestVersionDump.dir.String()).Implicits(latestVersionDump.files).
+				Text(totDump.dir.String()).Implicits(totDump.files)
+			if m.isExplicitlyUnFrozen() {
+				// Throw an error if checkapi returns with no differences
+				msg := fmt.Sprintf("echo \"Interface %s can not be marked \\`frozen: false\\` if there are no changes\"", m.properties.BaseName)
+				hasDevCommand.
+					Text(fmt.Sprintf("2> /dev/null && %s && exit -1 || echo $? >", msg)).Output(hasDevPath)
+			} else {
+				hasDevCommand.
+					Text("2> /dev/null; echo $? >").Output(hasDevPath)
+			}
 		} else {
-			hasDevCommand.
-				Text("2> /dev/null; echo $? >").Output(hasDevPath)
+			// We know there are different imports which means has_development must be true
+			hasDevCommand.Text("echo 1 >").Output(hasDevPath)
 		}
 	} else {
 		rb.Command().Text("echo 1 >").Output(hasDevPath)
