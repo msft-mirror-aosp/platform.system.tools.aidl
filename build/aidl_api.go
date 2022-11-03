@@ -543,8 +543,7 @@ func (m *aidlApi) checkForDevelopment(ctx android.ModuleContext, latestVersionDu
 		}
 		// checkapi(latest, tot) should use imports for nextVersion(=tot)
 		hasDevCommand := rb.Command()
-		// If `frozen` isn't specified, ignore the difference to keep legacy behavior
-		if !different_imports || m.properties.Frozen == nil {
+		if !different_imports {
 			hasDevCommand.BuiltTool("aidl").FlagWithArg("--checkapi=", "equal")
 			if m.properties.Stability != nil {
 				hasDevCommand.FlagWithArg("--stability ", *m.properties.Stability)
