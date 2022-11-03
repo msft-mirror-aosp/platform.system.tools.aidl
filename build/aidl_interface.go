@@ -263,6 +263,11 @@ type CommonNativeBackendProperties struct {
 	// Must be NDK libraries, for stable types.
 	Additional_shared_libraries []string
 
+	// cflags to forward to native compilation. This is expected to be
+	// used more for AIDL compiler developers than being actually
+	// practical.
+	Cflags []string
+
 	// Whether to generate additional code for gathering information
 	// about the transactions.
 	// Default: false
