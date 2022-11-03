@@ -3869,5 +3869,102 @@ public interface ITestService extends android.os.IInterface
       }
       return 0;
     }
+    // interface without I-
+    public interface Foo extends android.os.IInterface
+    {
+      /** Default implementation for Foo. */
+      public static class Default implements android.aidl.tests.ITestService.CompilerChecks.Foo
+      {
+        @Override
+        public android.os.IBinder asBinder() {
+          return null;
+        }
+      }
+      /** Local-side IPC implementation stub class. */
+      public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.Foo
+      {
+        /** Construct the stub at attach it to the interface. */
+        public Stub()
+        {
+          this.attachInterface(this, DESCRIPTOR);
+        }
+        /**
+         * Cast an IBinder object into an android.aidl.tests.ITestService.CompilerChecks.Foo interface,
+         * generating a proxy if needed.
+         */
+        public static android.aidl.tests.ITestService.CompilerChecks.Foo asInterface(android.os.IBinder obj)
+        {
+          if ((obj==null)) {
+            return null;
+          }
+          android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+          if (((iin!=null)&&(iin instanceof android.aidl.tests.ITestService.CompilerChecks.Foo))) {
+            return ((android.aidl.tests.ITestService.CompilerChecks.Foo)iin);
+          }
+          return new android.aidl.tests.ITestService.CompilerChecks.Foo.Stub.Proxy(obj);
+        }
+        @Override public android.os.IBinder asBinder()
+        {
+          return this;
+        }
+        /** @hide */
+        public static java.lang.String getDefaultTransactionName(int transactionCode)
+        {
+          switch (transactionCode)
+          {
+            default:
+            {
+              return null;
+            }
+          }
+        }
+        /** @hide */
+        public java.lang.String getTransactionName(int transactionCode)
+        {
+          return this.getDefaultTransactionName(transactionCode);
+        }
+        @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
+        {
+          java.lang.String descriptor = DESCRIPTOR;
+          switch (code)
+          {
+            case INTERFACE_TRANSACTION:
+            {
+              reply.writeString(descriptor);
+              return true;
+            }
+          }
+          switch (code)
+          {
+            default:
+            {
+              return super.onTransact(code, data, reply, flags);
+            }
+          }
+        }
+        private static class Proxy implements android.aidl.tests.ITestService.CompilerChecks.Foo
+        {
+          private android.os.IBinder mRemote;
+          Proxy(android.os.IBinder remote)
+          {
+            mRemote = remote;
+          }
+          @Override public android.os.IBinder asBinder()
+          {
+            return mRemote;
+          }
+          public java.lang.String getInterfaceDescriptor()
+          {
+            return DESCRIPTOR;
+          }
+        }
+        /** @hide */
+        public int getMaxTransactionId()
+        {
+          return 0;
+        }
+      }
+      public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService$CompilerChecks$Foo".replace('$', '.');
+    }
   }
 }

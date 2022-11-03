@@ -4329,9 +4329,87 @@ pub mod r#CompilerChecks {
   impl binder::binder_impl::ParcelableMetadata for r#CompilerChecks {
     fn get_descriptor() -> &'static str { "android.aidl.tests.ITestService.CompilerChecks" }
   }
+  pub mod r#Foo {
+    #![allow(non_upper_case_globals)]
+    #![allow(non_snake_case)]
+    #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+    use binder::declare_binder_interface;
+    declare_binder_interface! {
+      IFoo["android.aidl.tests.ITestService.CompilerChecks.Foo"] {
+        native: BnFoo(on_transact),
+        proxy: BpFoo {
+        },
+        async: IFooAsync,
+      }
+    }
+    pub trait IFoo: binder::Interface + Send {
+      fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.Foo" }
+      fn getDefaultImpl() -> IFooDefaultRef where Self: Sized {
+        DEFAULT_IMPL.lock().unwrap().clone()
+      }
+      fn setDefaultImpl(d: IFooDefaultRef) -> IFooDefaultRef where Self: Sized {
+        std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+      }
+    }
+    pub trait IFooAsync<P>: binder::Interface + Send {
+      fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.Foo" }
+    }
+    #[::async_trait::async_trait]
+    pub trait IFooAsyncServer: binder::Interface + Send {
+      fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.Foo" }
+    }
+    impl BnFoo {
+      /// Create a new async binder service.
+      pub fn new_async_binder<T, R>(inner: T, rt: R, features: binder::BinderFeatures) -> binder::Strong<dyn IFoo>
+      where
+        T: IFooAsyncServer + binder::Interface + Send + Sync + 'static,
+        R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
+      {
+        struct Wrapper<T, R> {
+          _inner: T,
+          _rt: R,
+        }
+        impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync {
+          fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+          fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }
+        }
+        impl<T, R> IFoo for Wrapper<T, R>
+        where
+          T: IFooAsyncServer + Send + Sync + 'static,
+          R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
+        {
+        }
+        let wrapped = Wrapper { _inner: inner, _rt: rt };
+        Self::new_binder(wrapped, features)
+      }
+    }
+    pub trait IFooDefault: Send + Sync {
+    }
+    pub mod transactions {
+    }
+    pub type IFooDefaultRef = Option<std::sync::Arc<dyn IFooDefault>>;
+    use lazy_static::lazy_static;
+    lazy_static! {
+      static ref DEFAULT_IMPL: std::sync::Mutex<IFooDefaultRef> = std::sync::Mutex::new(None);
+    }
+    impl BpFoo {
+    }
+    impl IFoo for BpFoo {
+    }
+    impl<P: binder::BinderAsyncPool> IFooAsync<P> for BpFoo {
+    }
+    impl IFoo for binder::binder_impl::Binder<BnFoo> {
+    }
+    fn on_transact(_aidl_service: &dyn IFoo, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
+      match _aidl_code {
+        _ => Err(binder::StatusCode::UNKNOWN_TRANSACTION)
+      }
+    }
+  }
 }
 pub(crate) mod mangled {
  pub use super::r#ITestService as _7_android_4_aidl_5_tests_12_ITestService;
  pub use super::r#Empty::r#Empty as _7_android_4_aidl_5_tests_12_ITestService_5_Empty;
  pub use super::r#CompilerChecks::r#CompilerChecks as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks;
+ pub use super::r#CompilerChecks::r#Foo::r#IFoo as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_3_Foo;
 }
