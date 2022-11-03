@@ -695,7 +695,7 @@ func aidlApiFactory() android.Module {
 	return m
 }
 
-func addApiModule(mctx android.LoadHookContext, i *aidlInterface) string {
+func addApiModule(mctx android.DefaultableHookContext, i *aidlInterface) string {
 	apiModule := i.ModuleBase.Name() + aidlApiSuffix
 	srcs, aidlRoot := i.srcsForVersion(mctx, i.nextVersion())
 	mctx.CreateModule(aidlApiFactory, &nameProperties{

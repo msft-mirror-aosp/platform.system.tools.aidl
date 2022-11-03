@@ -182,6 +182,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		android.FixtureRegisterWithContext(func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 			ctx.RegisterModuleType("aidl_interface_headers", AidlInterfaceHeadersFactory)
+			ctx.RegisterModuleType("aidl_interface_defaults", AidlInterfaceDefaultsFactory)
 			ctx.RegisterSingletonModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
 			ctx.RegisterModuleType("rust_defaults", func() android.Module {
 				return rust.DefaultsFactory()
@@ -1170,8 +1171,8 @@ func TestImports(t *testing.T) {
 	`)
 
 	ctx, _ := testAidl(t, `
-		aidl_interface {
-			name: "foo",
+		aidl_interface_defaults {
+			name: "foo-defaults",
 			srcs: [
 				"IFoo.aidl",
 			],
@@ -1183,6 +1184,10 @@ func TestImports(t *testing.T) {
 			imports: [
 				"bar.1-V1",
 			]
+		}
+		aidl_interface {
+			name: "foo",
+			defaults: ["foo-defaults"],
 		}
 		aidl_interface {
 			name: "bar.1",
