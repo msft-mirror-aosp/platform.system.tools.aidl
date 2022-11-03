@@ -102,7 +102,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	var stl *string
 	var cpp_std *string
 	var hostSupported *bool
-	var addCflags []string
+	addCflags := commonProperties.Cflags
 	targetProp := ccTargetProperties{
 		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
 	}
@@ -247,7 +247,7 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 
 	importExportDependencies := []string{}
 	var hostSupported *bool
-	var addCflags []string
+	var addCflags []string // not using cpp backend cflags for now
 	targetProp := ccTargetProperties{
 		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
 	}
