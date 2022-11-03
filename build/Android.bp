@@ -163,6 +163,40 @@ aidl_interface {
 }
 
 aidl_interface {
+    name: "test-piece-ndk-sdk-32",
+    local_include_dir: "tests_1",
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
+    backend: {
+        ndk: {
+            sdk_version: "32",
+        },
+    },
+}
+
+aidl_interface {
+    name: "test-piece-ndk-sdk-33",
+    local_include_dir: "tests_1",
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
+    backend: {
+        ndk: {
+            sdk_version: "33",
+        },
+    },
+}
+
+aidl_interface {
     name: "tests-vintf",
     local_include_dir: "tests_vintf",
     srcs: ["tests_vintf/vintf/IFoo.aidl"],
