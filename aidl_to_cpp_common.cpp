@@ -815,6 +815,50 @@ std::string CppConstantValueDecorator(
   }
   return cpp_type_name + "::" + value.substr(value.find_last_of('.') + 1);
 }
+
+// Collect all forward declarations for the type's interface header.
+// Nested types are visited as well via VisitTopDown.
+void GenerateForwardDecls(CodeWriter& out, const AidlDefinedType& root_type, bool is_ndk) {
+  struct Visitor : AidlVisitor {
+    using PackagePath = std::vector<std::string>;
+    std::map<PackagePath, std::set<std::string>> classes;
+    // Collect class names for each interface type
+    void Visit(const AidlTypeSpecifier& type) override {
+      const auto defined_type = type.GetDefinedType();
+      if (defined_type && defined_type->AsInterface() &&
+          !defined_type->AsInterface()->GetParentType()) {
+        // Forward declarations are not supported for nested types
+        auto package = defined_type->GetSplitPackage();
+        classes[package].insert(ClassName(*defined_type, ClassNames::INTERFACE));
+      }
+    }
+  } v;
+  VisitTopDown(v, root_type);
+
+  if (v.classes.empty()) {
+    return;
+  }
+
+  for (const auto& it : v.classes) {
+    auto package = it.first;
+    auto& classes = it.second;
+
+    if (is_ndk) {
+      package.insert(package.begin(), "aidl");
+    }
+
+    std::string namespace_name = Join(package, "::");
+    if (!namespace_name.empty()) {
+      out << "namespace " << namespace_name << " {\n";
+    }
+    for (auto& clazz : classes) {
+      out << "class " << clazz << ";\n";
+    }
+    if (!namespace_name.empty()) {
+      out << "}  // namespace " << namespace_name << "\n";
+    }
+  }
+}
 }  // namespace cpp
 }  // namespace aidl
 }  // namespace android

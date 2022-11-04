@@ -18,6 +18,7 @@ package android.aidl.tests;
 
 import android.aidl.tests.BackendType;
 import android.aidl.tests.ByteEnum;
+import android.aidl.tests.ICircular;
 import android.aidl.tests.INamedCallback;
 import android.aidl.tests.INewName;
 import android.aidl.tests.IOldName;
@@ -297,4 +298,6 @@ interface ITestService {
         // interface without I-
         interface Foo {}
     }
+
+    ICircular GetCircular();
 }

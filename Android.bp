@@ -299,6 +299,7 @@ filegroup {
         "tests/android/aidl/tests/DeprecatedParcelable.aidl",
         "tests/android/aidl/tests/GenericStructuredParcelable.aidl",
         "tests/android/aidl/tests/FixedSize.aidl",
+        "tests/android/aidl/tests/ICircular.aidl",
         "tests/android/aidl/tests/IDeprecated.aidl",
         "tests/android/aidl/tests/INamedCallback.aidl",
         "tests/android/aidl/tests/INewName.aidl",
