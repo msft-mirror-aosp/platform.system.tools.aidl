@@ -41,6 +41,7 @@ bootstrap_go_package {
         "aidl_api.go",
         "aidl_gen_rule.go",
         "aidl_interface_backends.go",
+        "aidl_interface_defaults.go",
         "aidl_interface_headers.go",
         "aidl_interface_metadata_singleton.go",
         "aidl_mapping.go",
@@ -158,6 +159,40 @@ aidl_interface {
     backend: {
         ndk: {
             sdk_version: "31",
+        },
+    },
+}
+
+aidl_interface {
+    name: "test-piece-ndk-sdk-32",
+    local_include_dir: "tests_1",
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
+    backend: {
+        ndk: {
+            sdk_version: "32",
+        },
+    },
+}
+
+aidl_interface {
+    name: "test-piece-ndk-sdk-33",
+    local_include_dir: "tests_1",
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
+    backend: {
+        ndk: {
+            sdk_version: "33",
         },
     },
 }
