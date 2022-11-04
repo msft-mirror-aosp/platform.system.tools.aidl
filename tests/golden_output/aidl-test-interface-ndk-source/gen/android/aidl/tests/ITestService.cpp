@@ -4793,3 +4793,81 @@ binder_status_t ITestService::CompilerChecks::writeToParcel(AParcel* _aidl_parce
 }  // namespace aidl
 }  // namespace android
 }  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact(AIBinder* _aidl_binder, transaction_code_t _aidl_code, const AParcel* _aidl_in, AParcel* _aidl_out) {
+  (void)_aidl_in;
+  (void)_aidl_out;
+  binder_status_t _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;
+  (void)_aidl_binder;
+  (void)_aidl_code;
+  return _aidl_ret_status;
+}
+
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::IFoo::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact);
+
+ITestService::CompilerChecks::BpFoo::BpFoo(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
+ITestService::CompilerChecks::BpFoo::~BpFoo() {}
+
+// Source for BnFoo
+ITestService::CompilerChecks::BnFoo::BnFoo() {}
+ITestService::CompilerChecks::BnFoo::~BnFoo() {}
+::ndk::SpAIBinder ITestService::CompilerChecks::BnFoo::createBinder() {
+  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz, static_cast<void*>(this));
+  #ifdef BINDER_STABILITY_SUPPORT
+  AIBinder_markCompilationUnitStability(binder);
+  #endif  // BINDER_STABILITY_SUPPORT
+  return ::ndk::SpAIBinder(binder);
+}
+// Source for IFoo
+const char* ITestService::CompilerChecks::IFoo::descriptor = "android.aidl.tests.ITestService.CompilerChecks.Foo";
+ITestService::CompilerChecks::IFoo::IFoo() {}
+ITestService::CompilerChecks::IFoo::~IFoo() {}
+
+
+std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks::IFoo::fromBinder(const ::ndk::SpAIBinder& binder) {
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz)) { return nullptr; }
+  std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
+  if (interface) {
+    return std::static_pointer_cast<IFoo>(interface);
+  }
+  return ::ndk::SharedRefBase::make<ITestService::CompilerChecks::BpFoo>(binder);
+}
+
+binder_status_t ITestService::CompilerChecks::IFoo::writeToParcel(AParcel* parcel, const std::shared_ptr<IFoo>& instance) {
+  return AParcel_writeStrongBinder(parcel, instance ? instance->asBinder().get() : nullptr);
+}
+binder_status_t ITestService::CompilerChecks::IFoo::readFromParcel(const AParcel* parcel, std::shared_ptr<IFoo>* instance) {
+  ::ndk::SpAIBinder binder;
+  binder_status_t status = AParcel_readStrongBinder(parcel, binder.getR());
+  if (status != STATUS_OK) return status;
+  *instance = IFoo::fromBinder(binder);
+  return STATUS_OK;
+}
+bool ITestService::CompilerChecks::IFoo::setDefaultImpl(const std::shared_ptr<IFoo>& impl) {
+  // Only one user of this interface can use this function
+  // at a time. This is a heuristic to detect if two different
+  // users in the same process use this function.
+  assert(!IFoo::default_impl);
+  if (impl) {
+    IFoo::default_impl = impl;
+    return true;
+  }
+  return false;
+}
+const std::shared_ptr<ITestService::CompilerChecks::IFoo>& ITestService::CompilerChecks::IFoo::getDefaultImpl() {
+  return IFoo::default_impl;
+}
+std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks::IFoo::default_impl = nullptr;
+::ndk::SpAIBinder ITestService::CompilerChecks::IFooDefault::asBinder() {
+  return ::ndk::SpAIBinder();
+}
+bool ITestService::CompilerChecks::IFooDefault::isRemote() {
+  return false;
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl

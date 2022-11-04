@@ -27,7 +27,7 @@ import (
 	"github.com/google/blueprint/proptools"
 )
 
-func addLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
+func addLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
 	if lang == langJava {
 		return addJavaLibrary(mctx, i, version, notFrozen)
 	} else if lang == langRust {
@@ -41,7 +41,7 @@ func addLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, 
 	}
 }
 
-func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
+func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
 	cppSourceGen := i.versionedName(version) + "-" + lang + "-source"
 	cppModuleGen := i.versionedName(version) + "-" + lang
 
@@ -102,7 +102,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	var stl *string
 	var cpp_std *string
 	var hostSupported *bool
-	var addCflags []string
+	addCflags := commonProperties.Cflags
 	targetProp := ccTargetProperties{
 		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
 	}
@@ -220,7 +220,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	return cppModuleGen
 }
 
-func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	cppAnalyzerSourceGen := i.versionedName("") + "-cpp-analyzer-source"
 	cppAnalyzerModuleGen := i.versionedName("") + "-cpp-analyzer"
 
@@ -247,7 +247,7 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 
 	importExportDependencies := []string{}
 	var hostSupported *bool
-	var addCflags []string
+	var addCflags []string // not using cpp backend cflags for now
 	targetProp := ccTargetProperties{
 		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
 	}
@@ -306,7 +306,7 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 	return cppAnalyzerModuleGen
 }
 
-func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	javaSourceGen := i.versionedName(version) + "-java-source"
 	javaModuleGen := i.versionedName(version) + "-java"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -382,7 +382,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	return javaModuleGen
 }
 
-func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	rustSourceGen := i.versionedName(version) + "-rust-source"
 	rustModuleGen := i.versionedName(version) + "-rust"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
