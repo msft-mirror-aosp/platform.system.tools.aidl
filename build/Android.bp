@@ -110,6 +110,9 @@ aidl_interface {
         "3",
         "4",
     ],
+    backend: {
+        rust: { enabled: true, },
+    },
 }
 
 aidl_interface {
@@ -123,6 +126,7 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
+        rust: { enabled: true, },
         ndk: {
             sdk_version: "29",
         },
@@ -140,6 +144,7 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
+        rust: { enabled: true, },
         ndk: {
             sdk_version: "30",
         },
@@ -157,6 +162,7 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
+        rust: { enabled: true, },
         ndk: {
             sdk_version: "31",
         },
@@ -174,6 +180,7 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
+        rust: { enabled: true, },
         ndk: {
             sdk_version: "32",
         },
@@ -191,6 +198,7 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
+        rust: { enabled: true, },
         ndk: {
             sdk_version: "33",
         },
@@ -203,6 +211,7 @@ aidl_interface {
     srcs: ["tests_vintf/vintf/IFoo.aidl"],
     stability: "vintf",
     backend: {
+        rust: { enabled: true, },
         ndk: {
             sdk_version: "31",
         },
@@ -231,6 +240,7 @@ aidl_interface {
         "test-piece-1-V3",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
         },
@@ -256,6 +266,7 @@ aidl_interface {
         "test-piece-2-V1",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
             gen_trace: true,
@@ -276,6 +287,7 @@ aidl_interface {
         "test-piece-1-V3",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
         },
@@ -297,6 +309,7 @@ aidl_interface {
         "test-piece-2-V1",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
         },
