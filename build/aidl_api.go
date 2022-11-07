@@ -340,8 +340,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		if !m.isFrozen() {
 			// We are updating the current version. Don't copy .hash to the current dump
 			rb.Command().Text("mkdir -p " + targetDir)
-			rb.Command().Text("rm -rf " + targetDir + "/*")
-			rb.Command().Text("cp -rf " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
+			rb.Command().Text("rsync --recursive --update --delete-before " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
 		} else {
 			// This needs to be an error when running *-update-api
 			rb.Command().Text(fmt.Sprintf(`echo "Error: can't update an API with 'frozen: true'. Update %s with 'frozen: false'." && exit -1`, m.properties.BaseName))
