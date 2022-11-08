@@ -27,10 +27,21 @@ public interface IProtected extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.permission.IProtected
   {
-    /** Construct the stub at attach it to the interface. */
-    public Stub()
+    private final android.os.PermissionEnforcer mEnforcer;
+    /** Construct the stub using the Enforcer provided. */
+    public Stub(android.os.PermissionEnforcer enforcer)
     {
       this.attachInterface(this, DESCRIPTOR);
+      if (enforcer == null) {
+        throw new IllegalArgumentException("enforcer cannot be null");
+      }
+      mEnforcer = enforcer;
+    }
+    @Deprecated
+    /** Default constructor. */
+    public Stub() {
+      this(android.os.PermissionEnforcer.fromContext(
+         android.app.ActivityThread.currentActivityThread().getSystemContext()));
     }
     /**
      * Cast an IBinder object into an android.aidl.tests.permission.IProtected interface,
@@ -101,36 +112,32 @@ public interface IProtected extends android.os.IInterface
       {
         case TRANSACTION_PermissionProtected:
         {
-          if ((this.permissionCheckerWrapper(android.Manifest.permission.READ_PHONE_STATE, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
-            throw new SecurityException("Access denied, requires: android.Manifest.permission.READ_PHONE_STATE");
-          }
+          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+          mEnforcer.enforcePermission(android.Manifest.permission.READ_PHONE_STATE, source);
           this.PermissionProtected();
           reply.writeNoException();
           break;
         }
         case TRANSACTION_MultiplePermissionsAll:
         {
-          if (((this.permissionCheckerWrapper(android.Manifest.permission.INTERNET, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))&&this.permissionCheckerWrapper(android.Manifest.permission.VIBRATE, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null)))!=true)) {
-            throw new SecurityException("Access denied, requires: allOf = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}");
-          }
+          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+          mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
           this.MultiplePermissionsAll();
           reply.writeNoException();
           break;
         }
         case TRANSACTION_MultiplePermissionsAny:
         {
-          if (((this.permissionCheckerWrapper(android.Manifest.permission.INTERNET, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))||this.permissionCheckerWrapper(android.Manifest.permission.VIBRATE, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null)))!=true)) {
-            throw new SecurityException("Access denied, requires: anyOf = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}");
-          }
+          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+          mEnforcer.enforcePermissionAnyOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
           this.MultiplePermissionsAny();
           reply.writeNoException();
           break;
         }
         case TRANSACTION_NonManifestPermission:
         {
-          if ((this.permissionCheckerWrapper(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, this.getCallingPid(), new android.content.AttributionSource(getCallingUid(), null, null))!=true)) {
-            throw new SecurityException("Access denied, requires: android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK");
-          }
+          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+          mEnforcer.enforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, source);
           this.NonManifestPermission();
           reply.writeNoException();
           break;
@@ -213,14 +220,6 @@ public interface IProtected extends android.os.IInterface
           _data.recycle();
         }
       }
-    }
-    private boolean permissionCheckerWrapper(
-        String permission, int pid, android.content.AttributionSource attributionSource) {
-      android.content.Context ctx =
-          android.app.ActivityThread.currentActivityThread().getSystemContext();
-      return (android.content.PermissionChecker.checkPermissionForDataDelivery(
-              ctx, permission, pid, attributionSource, "" /*message*/) ==
-          android.content.PermissionChecker.PERMISSION_GRANTED);
     }
     static final int TRANSACTION_PermissionProtected = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     static final int TRANSACTION_MultiplePermissionsAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
