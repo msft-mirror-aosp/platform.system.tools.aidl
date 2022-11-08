@@ -242,6 +242,8 @@ python_test_host {
         "aidl_test_java_service_sdk1",
         "aidl_test_java_client_sdk29",
         "aidl_test_java_service_sdk29",
+        "aidl_test_java_client_permission",
+        "aidl_test_java_service_permission",
     ],
     test_suites: ["general-tests"],
     test_options: {
@@ -476,7 +478,7 @@ aidl_interface {
 }
 
 java_defaults {
-    name: "aidl_test_java_defaults",
+    name: "aidl_test_java_integration_defaults",
     platform_apis: true,
     // Turn off Java optimization tools to speed up our test iterations.
     optimize: {
@@ -488,6 +490,19 @@ java_defaults {
     static_libs: [
         "androidx.test.core",
         "androidx.test.runner",
+    ],
+    aidl: {
+        include_dirs: [
+            "frameworks/native/aidl/binder",
+        ],
+    },
+    test_suites: ["general-tests"],
+}
+
+java_defaults {
+    name: "aidl_test_java_defaults",
+    defaults: ["aidl_test_java_integration_defaults"],
+    static_libs: [
         "aidl_test_nonvintf_parcelable-V1-java",
         "aidl_test_unstable_parcelable-java",
         "aidl_test_vintf_parcelable-V1-java",
@@ -511,11 +526,9 @@ java_defaults {
     aidl: {
         include_dirs: [
             "system/tools/aidl/tests/",
-            "frameworks/native/aidl/binder",
         ],
         generate_traces: true,
     },
-    test_suites: ["general-tests"],
 }
 
 java_test {
@@ -565,27 +578,10 @@ filegroup {
 
 java_defaults {
     name: "aidl_test_java_sdkversion_defaults",
-    platform_apis: true,
-    // Turn off Java optimization tools to speed up our test iterations.
-    optimize: {
-        enabled: false,
-    },
-    dex_preopt: {
-        enabled: false,
-    },
-    static_libs: [
-        "androidx.test.core",
-        "androidx.test.runner",
-    ],
+    defaults: ["aidl_test_java_integration_defaults"],
     srcs: [
         ":aidl-for-sdkversion-tests",
     ],
-    aidl: {
-        include_dirs: [
-            "frameworks/native/aidl/binder",
-        ],
-    },
-    test_suites: ["general-tests"],
 }
 
 java_test {
@@ -621,6 +617,28 @@ java_test {
     min_sdk_version: "1",
     srcs: [
         "tests/java/src/android/aidl/sdkversion/service/*.java",
+    ],
+}
+
+java_test {
+    name: "aidl_test_java_client_permission",
+    defaults: ["aidl_test_java_integration_defaults"],
+    static_libs: [
+        "aidl-test-interface-permission-java",
+    ],
+    srcs: [
+        "tests/java/src/android/aidl/permission/tests/*.java",
+    ],
+}
+
+java_test {
+    name: "aidl_test_java_service_permission",
+    defaults: ["aidl_test_java_integration_defaults"],
+    static_libs: [
+        "aidl-test-interface-permission-java",
+    ],
+    srcs: [
+        "tests/java/src/android/aidl/permission/service/*.java",
     ],
 }
 

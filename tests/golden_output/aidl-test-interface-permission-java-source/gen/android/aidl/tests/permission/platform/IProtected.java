@@ -18,10 +18,21 @@ public interface IProtected extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.permission.platform.IProtected
   {
-    /** Construct the stub at attach it to the interface. */
-    public Stub()
+    private final android.os.PermissionEnforcer mEnforcer;
+    /** Construct the stub using the Enforcer provided. */
+    public Stub(android.os.PermissionEnforcer enforcer)
     {
       this.attachInterface(this, DESCRIPTOR);
+      if (enforcer == null) {
+        throw new IllegalArgumentException("enforcer cannot be null");
+      }
+      mEnforcer = enforcer;
+    }
+    @Deprecated
+    /** Default constructor. */
+    public Stub() {
+      this(android.os.PermissionEnforcer.fromContext(
+         android.app.ActivityThread.currentActivityThread().getSystemContext()));
     }
     /**
      * Cast an IBinder object into an android.aidl.tests.permission.platform.IProtected interface,
@@ -83,9 +94,8 @@ public interface IProtected extends android.os.IInterface
           android.content.AttributionSource _arg0;
           _arg0 = data.readTypedObject(android.content.AttributionSource.CREATOR);
           data.enforceNoDataAvail();
-          if (((this.permissionCheckerWrapper(android.Manifest.permission.INTERNET, this.getCallingPid(), _arg0)&&this.permissionCheckerWrapper(android.Manifest.permission.VIBRATE, this.getCallingPid(), _arg0))!=true)) {
-            throw new SecurityException("Access denied, requires: allOf = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}");
-          }
+          android.content.AttributionSource source = _arg0;
+          mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
           this.ProtectedWithSourceAttribution(_arg0);
           reply.writeNoException();
           break;
@@ -128,15 +138,9 @@ public interface IProtected extends android.os.IInterface
         }
       }
     }
-    private boolean permissionCheckerWrapper(
-        String permission, int pid, android.content.AttributionSource attributionSource) {
-      android.content.Context ctx =
-          android.app.ActivityThread.currentActivityThread().getSystemContext();
-      return (android.content.PermissionChecker.checkPermissionForDataDelivery(
-              ctx, permission, pid, attributionSource, "" /*message*/) ==
-          android.content.PermissionChecker.PERMISSION_GRANTED);
-    }
     static final int TRANSACTION_ProtectedWithSourceAttribution = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    /** Helper method to enforce permissions for ProtectedWithSourceAttribution */
+    protected void ProtectedWithSourceAttribution_enforcePermission(android.content.AttributionSource source) throws SecurityException { }
     /** @hide */
     public int getMaxTransactionId()
     {
