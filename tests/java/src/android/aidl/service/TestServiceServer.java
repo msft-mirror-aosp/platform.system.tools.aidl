@@ -101,11 +101,11 @@ public class TestServiceServer extends ITestService.Stub {
     }
     @Override
     public final int getInterfaceVersion() {
-      return IFooInterface.VERSION;
+      return super.VERSION;
     }
     @Override
     public final String getInterfaceHash() {
-      return IFooInterface.HASH;
+      return super.HASH;
     }
   }
 
