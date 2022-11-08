@@ -555,7 +555,8 @@ func (m *aidlApi) checkForDevelopment(ctx android.ModuleContext, latestVersionDu
 				Text(totDump.dir.String()).Implicits(totDump.files)
 			if m.isExplicitlyUnFrozen() {
 				// Throw an error if checkapi returns with no differences
-				msg := fmt.Sprintf("echo \"Interface %s can not be marked \\`frozen: false\\` if there are no changes\"", m.properties.BaseName)
+				msg := fmt.Sprintf("echo \"Interface %s can not be marked \\`frozen: false\\` if there are no changes "+
+					"between the current version and the last frozen version.\"", m.properties.BaseName)
 				hasDevCommand.
 					Text(fmt.Sprintf("2> /dev/null && %s && exit -1 || echo $? >", msg)).Output(hasDevPath)
 			} else {
