@@ -340,8 +340,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		if !m.isFrozen() {
 			// We are updating the current version. Don't copy .hash to the current dump
 			rb.Command().Text("mkdir -p " + targetDir)
-			rb.Command().Text("rm -rf " + targetDir + "/*")
-			rb.Command().Text("cp -rf " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
+			rb.Command().Text("rsync --recursive --update --delete-before " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
 		} else {
 			// This needs to be an error when running *-update-api
 			rb.Command().Text(fmt.Sprintf(`echo "Error: can't update an API with 'frozen: true'. Update %s with 'frozen: false'." && exit -1`, m.properties.BaseName))
@@ -623,7 +622,7 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 			if !dump.hashFile.Valid() {
 				// We should show the source path of hash_gen because aidl_hash_gen cannot be built due to build error.
 				cmd := fmt.Sprintf(`(croot && system/tools/aidl/build/hash_gen.sh %s %s %s)`, apiDir, versionForHashGen(ver), hashFilePath)
-				ctx.ModuleErrorf("A frozen aidl_interface must have '.hash' file, but %s-V%s doesn't have it. Use the command below to generate hash.\n%s\n",
+				ctx.ModuleErrorf("A frozen aidl_interface must have '.hash' file, but %s-V%s doesn't have it. Use the command below to generate a hash (DANGER: this should not normally happen. If an interface is changed downstream, it may cause undefined behavior, test failures, unexplained weather conditions, or otherwise broad malfunction of society. DO NOT RUN THIS COMMAND TO BREAK APIS. DO NOT!).\n%s\n",
 					m.properties.BaseName, ver, cmd)
 			}
 			dumps = append(dumps, dump)
