@@ -252,6 +252,7 @@ func (m *aidlApi) migrateAndAppendVersion(ctx android.ModuleContext, rb *android
 			wrapWithDiffCheckIf(m, rb, func(rbc *android.RuleBuilderCommand) {
 				rbc.BuiltTool("bpmodify").
 					Text("-w -m " + m.properties.BaseName).
+					Text("-parameter frozen -set-bool true").
 					Text("-parameter versions_with_info -add-literal '").
 					Text(fmt.Sprintf(`{version: "%s", imports: [`, v))
 
