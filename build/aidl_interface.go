@@ -244,9 +244,7 @@ func isRelativePath(path string) bool {
 
 type CommonBackendProperties struct {
 	// Whether to generate code in the corresponding backend.
-	// Default:
-	//   - for Java/NDK/CPP backends - True
-	//   - for Rust backend - False
+	// Default: true
 	Enabled        *bool
 	Apex_available []string
 

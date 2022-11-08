@@ -6,7 +6,6 @@
 #include <android/aidl/tests/BnNewName.h>
 #include <android/aidl/tests/BnOldName.h>
 #include <android/aidl/tests/BnTestService.h>
-#include <android/aidl/tests/ITestService.h>
 #include <binder/Delegate.h>
 
 

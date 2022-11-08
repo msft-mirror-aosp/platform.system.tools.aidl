@@ -48,52 +48,38 @@ static constexpr const char kArgumentPrefix[] = "_arg_";
 static constexpr const char kGetInterfaceVersion[] = "getInterfaceVersion";
 static constexpr const char kGetInterfaceHash[] = "getInterfaceHash";
 
-struct MangledAliasVisitor : AidlVisitor {
-  CodeWriter& out;
-  MangledAliasVisitor(CodeWriter& out) : out(out) {}
-  void Visit(const AidlStructuredParcelable& type) override { VisitType(type); }
-  void Visit(const AidlInterface& type) override { VisitType(type); }
-  void Visit(const AidlEnumDeclaration& type) override { VisitType(type); }
-  void Visit(const AidlUnionDecl& type) override { VisitType(type); }
-  template <typename T>
-  void VisitType(const T& type) {
-    out << " pub use " << Qname(type) << " as " << Mangled(type) << ";\n";
-  }
-  // Return a mangled name for a type (including AIDL package)
-  template <typename T>
-  string Mangled(const T& type) const {
-    ostringstream alias;
-    for (const auto& component : Split(type.GetCanonicalName(), ".")) {
-      alias << "_" << component.size() << "_" << component;
-    }
-    return alias.str();
-  }
-  template <typename T>
-  string Typename(const T& type) const {
-    if constexpr (std::is_same_v<T, AidlInterface>) {
-      return ClassName(type, cpp::ClassNames::INTERFACE);
-    } else {
-      return type.GetName();
-    }
-  }
-  // Return a fully qualified name for a type in the current file (excluding AIDL package)
-  template <typename T>
-  string Qname(const T& type) const {
-    return Module(type) + "::r#" + Typename(type);
-  }
-  // Return a module name for a type (relative to the file)
-  template <typename T>
-  string Module(const T& type) const {
-    if (type.GetParentType()) {
-      return Module(*type.GetParentType()) + "::r#" + type.GetName();
-    } else {
-      return "super";
-    }
-  }
-};
-
 void GenerateMangledAliases(CodeWriter& out, const AidlDefinedType& type) {
-  MangledAliasVisitor v(out);
+  struct Visitor : AidlVisitor {
+    CodeWriter& out;
+    Visitor(CodeWriter& out) : out(out) {}
+    void Visit(const AidlStructuredParcelable& type) override { VisitType(type); }
+    void Visit(const AidlInterface& type) override { VisitType(type); }
+    void Visit(const AidlEnumDeclaration& type) override { VisitType(type); }
+    void Visit(const AidlUnionDecl& type) override { VisitType(type); }
+    void VisitType(const AidlDefinedType& type) {
+      out << " pub use " << Qname(type) << " as " << Mangled(type) << ";\n";
+    }
+    // Return a mangled name for a type (including AIDL package)
+    string Mangled(const AidlDefinedType& type) const {
+      ostringstream alias;
+      for (const auto& component : Split(type.GetCanonicalName(), ".")) {
+        alias << "_" << component.size() << "_" << component;
+      }
+      return alias.str();
+    }
+    // Return a fully qualified name for a type in the current file (excluding AIDL package)
+    string Qname(const AidlDefinedType& type) const {
+      return Module(type) + "::r#" + type.GetName();
+    }
+    // Return a module name for a type (relative to the file)
+    string Module(const AidlDefinedType& type) const {
+      if (type.GetParentType()) {
+        return Module(*type.GetParentType()) + "::r#" + type.GetName();
+      } else {
+        return "super";
+      }
+    }
+  } v(out);
   out << "pub(crate) mod mangled {\n";
   VisitTopDown(v, type);
   out << "}\n";

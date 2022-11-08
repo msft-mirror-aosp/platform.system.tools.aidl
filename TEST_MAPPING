@@ -13,9 +13,6 @@
       "name": "CtsNdkBinderTestCases"
     },
     {
-      "name": "hal_implementation_test"
-    },
-    {
       "name": "FrameworksTelephonyTests",
       "options": [
         {

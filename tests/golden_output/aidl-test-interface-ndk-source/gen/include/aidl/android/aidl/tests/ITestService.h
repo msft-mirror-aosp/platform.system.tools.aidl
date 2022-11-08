@@ -5,7 +5,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <android/binder_ibinder.h>
 #include <android/binder_ibinder_platform.h>
 #include <android/binder_interface_utils.h>
 #include <android/binder_parcel_platform.h>
@@ -81,43 +80,6 @@ public:
     typedef std::false_type fixed_size;
     static const char* descriptor;
 
-    class IFooDelegator;
-
-    class IFoo : public ::ndk::ICInterface {
-    public:
-      typedef IFooDelegator DefaultDelegator;
-      static const char* descriptor;
-      IFoo();
-      virtual ~IFoo();
-
-
-      static std::shared_ptr<IFoo> fromBinder(const ::ndk::SpAIBinder& binder);
-      static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IFoo>& instance);
-      static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IFoo>* instance);
-      static bool setDefaultImpl(const std::shared_ptr<IFoo>& impl);
-      static const std::shared_ptr<IFoo>& getDefaultImpl();
-    private:
-      static std::shared_ptr<IFoo> default_impl;
-    };
-    class IFooDefault : public IFoo {
-    public:
-      ::ndk::SpAIBinder asBinder() override;
-      bool isRemote() override;
-    };
-    class BpFoo : public ::ndk::BpCInterface<IFoo> {
-    public:
-      explicit BpFoo(const ::ndk::SpAIBinder& binder);
-      virtual ~BpFoo();
-
-    };
-    class BnFoo : public ::ndk::BnCInterface<IFoo> {
-    public:
-      BnFoo();
-      virtual ~BnFoo();
-    protected:
-      ::ndk::SpAIBinder createBinder() override;
-    private:
-    };
     ::ndk::SpAIBinder binder;
     ::ndk::SpAIBinder nullable_binder;
     std::vector<::ndk::SpAIBinder> binder_array;

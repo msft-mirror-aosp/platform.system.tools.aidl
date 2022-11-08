@@ -31,7 +31,7 @@ import android.aidl.tests.extension.ExtendableParcelable;
 /**
  * interface comment
  */
-@SuppressWarnings(value={"inout-parameter", "mixed-oneway", "out-array", "interface-name"})
+@SuppressWarnings(value={"inout-parameter", "mixed-oneway", "out-array"})
 @SensitiveData
 @JavaDefault
 @JavaDelegator
@@ -293,8 +293,5 @@ interface ITestService {
         @nullable Empty[] nullable_parcel_array;
         List<Empty> parcel_list;
         @nullable List<Empty> nullable_parcel_list;
-
-        // interface without I-
-        interface Foo {}
     }
 }
