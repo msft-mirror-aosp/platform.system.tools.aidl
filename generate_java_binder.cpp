@@ -533,6 +533,23 @@ static void GeneratePermissionChecks(const AidlInterface& iface, const AidlMetho
   addTo->Add(std::make_shared<LiteralStatement>(code));
 }
 
+static void GeneratePermissionMethod(const AidlMethod& method, std::shared_ptr<Class> addTo) {
+  string code;
+  CodeWriterPtr writer = CodeWriter::ForString(&code);
+  *writer << "/** Helper method to enforce permissions for " << method.GetName() << " */\n";
+  std::string args;
+  for (const auto& arg : method.GetArguments()) {
+    if (arg->GetType().GetName() == "android.content.AttributionSource" && arg->IsIn()) {
+      args = "android.content.AttributionSource source";
+      break;
+    }
+  }
+  *writer << "protected void " << method.GetName() << "_enforcePermission(" << args
+          << ") throws SecurityException { }\n";
+  writer->Close();
+  addTo->elements.push_back(std::make_shared<LiteralClassElement>(code));
+}
+
 static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& method, bool oneway,
                              std::shared_ptr<Variable> transact_data,
                              std::shared_ptr<Variable> transact_reply,
@@ -913,6 +930,9 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
                               options);
     } else {
       GenerateStubCase(iface, method, transactCodeName, oneway, stubClass, typenames, options);
+    }
+    if (iface.IsPermissionAnnotated() || method.GetType().IsPermissionAnnotated()) {
+      GeneratePermissionMethod(method, stubClass);
     }
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {

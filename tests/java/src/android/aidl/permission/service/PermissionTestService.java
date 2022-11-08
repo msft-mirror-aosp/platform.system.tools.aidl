@@ -36,17 +36,25 @@ public class PermissionTestService extends IProtected.Stub {
 
   @Override
   @EnforcePermission("READ_PHONE_STATE")
-  public void PermissionProtected() {}
+  public void PermissionProtected() {
+    PermissionProtected_enforcePermission();
+  }
 
   @Override
   @EnforcePermission(allOf = {"INTERNET", "VIBRATE"})
-  public void MultiplePermissionsAll() {}
+  public void MultiplePermissionsAll() {
+    MultiplePermissionsAll_enforcePermission();
+  }
 
   @Override
   @EnforcePermission(anyOf = {"INTERNET", "VIBRATE"})
-  public void MultiplePermissionsAny() {}
+  public void MultiplePermissionsAny() {
+    MultiplePermissionsAny_enforcePermission();
+  }
 
   @Override
   @EnforcePermission("android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK")
-  public void NonManifestPermission() {}
+  public void NonManifestPermission() {
+    NonManifestPermission_enforcePermission();
+  }
 }
