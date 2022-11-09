@@ -326,19 +326,15 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		// otherwise we will be unnecessarily creating many versions.
 		// Copy the given dump to the target directory only when the equality check failed
 		// (i.e. `has_development` file contains "1").
-		if !m.isFrozen() {
-			wrapWithDiffCheckIf(m, rb, func(rbc *android.RuleBuilderCommand) {
-				rbc.Text("mkdir -p " + targetDir + " && ").
-					Text("cp -rf " + dump.dir.String() + "/. " + targetDir).Implicits(dump.files)
-			}, true /* needToWrap */)
-			wrapWithDiffCheckIfElse(m, rb, func(rbc *android.RuleBuilderCommand) {
-				rbc.Text(fmt.Sprintf(`echo "There is change between ToT version and the latest stable version. Freezing %s-V%s."`, m.properties.BaseName, version))
-			}, func(rbc *android.RuleBuilderCommand) {
-				rbc.Text(fmt.Sprintf(`echo "There is no change from the latest stable version of %s. Nothing happened."`, m.properties.BaseName))
-			})
-		} else {
-			rb.Command().Text(fmt.Sprintf(`echo "Error: can't freeze an API with 'frozen: true'. Update %s with 'frozen: false'." && exit -1`, m.properties.BaseName))
-		}
+		wrapWithDiffCheckIf(m, rb, func(rbc *android.RuleBuilderCommand) {
+			rbc.Text("mkdir -p " + targetDir + " && ").
+				Text("cp -rf " + dump.dir.String() + "/. " + targetDir).Implicits(dump.files)
+		}, true /* needToWrap */)
+		wrapWithDiffCheckIfElse(m, rb, func(rbc *android.RuleBuilderCommand) {
+			rbc.Text(fmt.Sprintf(`echo "There is change between ToT version and the latest stable version. Freezing %s-V%s."`, m.properties.BaseName, version))
+		}, func(rbc *android.RuleBuilderCommand) {
+			rbc.Text(fmt.Sprintf(`echo "There is no change from the latest stable version of %s. Nothing happened."`, m.properties.BaseName))
+		})
 		m.migrateAndAppendVersion(ctx, rb, &version, transitive)
 	} else {
 		actionWord = "Updating"
