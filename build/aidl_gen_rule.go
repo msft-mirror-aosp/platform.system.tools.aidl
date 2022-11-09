@@ -66,6 +66,7 @@ type aidlGenProperties struct {
 	Srcs            []string `android:"path"`
 	AidlRoot        string   // base directory for the input aidl file
 	Imports         []string
+	Headers         []string
 	Stability       *string
 	Min_sdk_version *string
 	Platform_apis   bool
@@ -114,11 +115,11 @@ func (g *aidlGenRule) getImports(ctx android.ModuleContext) map[string]string {
 func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	srcs, imports := getPaths(ctx, g.properties.Srcs, g.properties.AidlRoot)
 
+	g.deps = getDeps(ctx, g.getImports(ctx))
+
 	if ctx.Failed() {
 		return
 	}
-
-	g.deps = getDeps(ctx, g.getImports(ctx))
 
 	genDirTimestamp := android.PathForModuleGen(ctx, "timestamp") // $out/gen/timestamp
 	g.implicitInputs = append(g.implicitInputs, genDirTimestamp)
