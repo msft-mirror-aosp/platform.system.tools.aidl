@@ -2,6 +2,7 @@
 
 #include <android/aidl/tests/BackendType.h>
 #include <android/aidl/tests/ByteEnum.h>
+#include <android/aidl/tests/ICircular.h>
 #include <android/aidl/tests/INamedCallback.h>
 #include <android/aidl/tests/INewName.h>
 #include <android/aidl/tests/IOldName.h>
@@ -28,6 +29,12 @@
 #include <utils/StrongPointer.h>
 #include <vector>
 
+namespace android::aidl::tests {
+class ICircular;
+class INamedCallback;
+class INewName;
+class IOldName;
+}  // namespace android::aidl::tests
 namespace android {
 namespace aidl {
 namespace tests {
@@ -315,6 +322,7 @@ public:
   virtual ::android::binder::Status GetUnionTags(const ::std::vector<::android::aidl::tests::Union>& input, ::std::vector<::android::aidl::tests::Union::Tag>* _aidl_return) = 0;
   virtual ::android::binder::Status GetCppJavaTests(::android::sp<::android::IBinder>* _aidl_return) = 0;
   virtual ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* _aidl_return) = 0;
+  virtual ::android::binder::Status GetCircular(::android::sp<::android::aidl::tests::ICircular>* _aidl_return) = 0;
 };  // class ITestService
 
 class ITestServiceDefault : public ITestService {
@@ -521,6 +529,9 @@ public:
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
   ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* /*_aidl_return*/) override {
+    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  ::android::binder::Status GetCircular(::android::sp<::android::aidl::tests::ICircular>* /*_aidl_return*/) override {
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
 };  // class ITestServiceDefault

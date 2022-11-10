@@ -229,6 +229,9 @@ public:
   ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) override {
     return _impl->getBackendType(_aidl_return);
   }
+  ::ndk::ScopedAStatus GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) override {
+    return _impl->GetCircular(_aidl_return);
+  }
 protected:
 private:
   std::shared_ptr<ITestService> _impl;
