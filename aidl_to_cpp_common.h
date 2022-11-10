@@ -135,6 +135,8 @@ struct UnionWriter {
 std::string CppConstantValueDecorator(
     const AidlTypeSpecifier& type,
     const std::variant<std::string, std::vector<std::string>>& raw_value, bool is_ndk);
+
+void GenerateForwardDecls(CodeWriter& out, const AidlDefinedType& root_type, bool is_ndk);
 }  // namespace cpp
 }  // namespace aidl
 }  // namespace android
