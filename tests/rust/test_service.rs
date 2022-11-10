@@ -28,7 +28,7 @@ use aidl_test_interface::aidl::android::aidl::tests::ITestService::{
 use aidl_test_interface::aidl::android::aidl::tests::{
     extension::ExtendableParcelable::ExtendableParcelable, extension::MyExt::MyExt,
     BackendType::BackendType, ByteEnum::ByteEnum, ConstantExpressionEnum::ConstantExpressionEnum,
-    INamedCallback, INewName, IOldName, IntEnum::IntEnum, LongEnum::LongEnum,
+    ICircular, INamedCallback, INewName, IOldName, IntEnum::IntEnum, LongEnum::LongEnum,
     RecursiveList::RecursiveList, StructuredParcelable, Union,
 };
 use aidl_test_interface::binder::{
@@ -73,6 +73,19 @@ impl Interface for NewName {}
 impl INewName::INewName for NewName {
     fn RealName(&self) -> binder::Result<String> {
         Ok("NewName".into())
+    }
+}
+
+#[derive(Debug, Default)]
+struct Circular;
+
+impl Interface for Circular {}
+
+impl ICircular::ICircular for Circular {
+    fn GetTestService(
+        &self,
+    ) -> binder::Result<Option<binder::Strong<dyn ITestService::ITestService>>> {
+        Ok(None)
     }
 }
 
@@ -477,6 +490,10 @@ impl ITestService::ITestService for TestService {
 
     fn getBackendType(&self) -> binder::Result<BackendType> {
         Ok(BackendType::RUST)
+    }
+
+    fn GetCircular(&self) -> binder::Result<binder::Strong<dyn ICircular::ICircular>> {
+        Ok(ICircular::BnCircular::new_binder(Circular, BinderFeatures::default()))
     }
 }
 

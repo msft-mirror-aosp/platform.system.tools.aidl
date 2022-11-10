@@ -1973,6 +1973,24 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       std::cout << "  Return value: " << ::android::internal::ToString(_aidl_return) << std::endl;
     }
     break;
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 67:
+    {
+      std::cout << "Function Called: GetCircular" << std::endl;
+      _aidl_ret_status = ::android::OK;
+      if (!(_aidl_data.enforceInterface(android::String16("android.aidl.tests.ITestService")))) {
+        _aidl_ret_status = ::android::BAD_TYPE;
+        std::cout << "  Failure: Parcel interface does not match." << std::endl;  break;
+      }
+      ::android::binder::Status binderStatus;
+      binderStatus.readFromParcel(_aidl_reply);
+      ::android::sp<::android::aidl::tests::ICircular>* _aidl_return = new ::android::sp<::android::aidl::tests::ICircular>;
+      _aidl_ret_status = _aidl_reply.readStrongBinder(_aidl_return);
+      if (((_aidl_ret_status) != (android::NO_ERROR))) {
+        std::cout << "  Failure: error in reading return value from Parcel." << std::endl;  break;
+      }
+      std::cout << "  Return value: " << ::android::internal::ToString(_aidl_return) << std::endl;
+    }
+    break;
     default:
     {
       std::cout << "  Transaction code " << _aidl_code << " not known." << std::endl;

@@ -192,6 +192,7 @@ void GenerateHeader(CodeWriter& out, const AidlTypenames& types,
                     const AidlDefinedType& defined_type, const Options& options) {
   out << "#pragma once\n\n";
   GenerateHeaderIncludes(out, types, defined_type, options);
+  cpp::GenerateForwardDecls(out, defined_type, true);
   EnterNdkNamespace(out, defined_type);
   GenerateClassDecl(out, types, defined_type, options);
   LeaveNdkNamespace(out, defined_type);
