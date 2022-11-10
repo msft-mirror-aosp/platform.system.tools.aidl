@@ -129,6 +129,7 @@ aidl_interface {
         rust: { enabled: true, },
         ndk: {
             sdk_version: "29",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
         },
     },
 }
@@ -147,6 +148,7 @@ aidl_interface {
         rust: { enabled: true, },
         ndk: {
             sdk_version: "30",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
         },
     },
 }
@@ -165,6 +167,7 @@ aidl_interface {
         rust: { enabled: true, },
         ndk: {
             sdk_version: "31",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
         },
     },
 }
@@ -183,6 +186,7 @@ aidl_interface {
         rust: { enabled: true, },
         ndk: {
             sdk_version: "32",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
         },
     },
 }
@@ -201,6 +205,7 @@ aidl_interface {
         rust: { enabled: true, },
         ndk: {
             sdk_version: "33",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
         },
     },
 }
