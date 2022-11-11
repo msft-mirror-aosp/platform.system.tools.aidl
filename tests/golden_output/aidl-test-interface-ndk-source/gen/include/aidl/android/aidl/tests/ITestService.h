@@ -13,6 +13,7 @@
 #include <android/binder_to_string.h>
 #include <aidl/android/aidl/tests/BackendType.h>
 #include <aidl/android/aidl/tests/ByteEnum.h>
+#include <aidl/android/aidl/tests/ICircular.h>
 #include <aidl/android/aidl/tests/INamedCallback.h>
 #include <aidl/android/aidl/tests/INewName.h>
 #include <aidl/android/aidl/tests/IOldName.h>
@@ -27,6 +28,12 @@
 #include <android/binder_stability.h>
 #endif  // BINDER_STABILITY_SUPPORT
 
+namespace aidl::android::aidl::tests {
+class ICircular;
+class INamedCallback;
+class INewName;
+class IOldName;
+}  // namespace aidl::android::aidl::tests
 namespace aidl {
 namespace android {
 namespace aidl {
@@ -326,6 +333,7 @@ public:
   static constexpr uint32_t TRANSACTION_GetUnionTags = FIRST_CALL_TRANSACTION + 64;
   static constexpr uint32_t TRANSACTION_GetCppJavaTests = FIRST_CALL_TRANSACTION + 65;
   static constexpr uint32_t TRANSACTION_getBackendType = FIRST_CALL_TRANSACTION + 66;
+  static constexpr uint32_t TRANSACTION_GetCircular = FIRST_CALL_TRANSACTION + 67;
 
   static std::shared_ptr<ITestService> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<ITestService>& instance);
@@ -399,6 +407,7 @@ public:
   virtual ::ndk::ScopedAStatus GetUnionTags(const std::vector<::aidl::android::aidl::tests::Union>& in_input, std::vector<::aidl::android::aidl::tests::Union::Tag>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) = 0;
+  virtual ::ndk::ScopedAStatus GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) = 0;
 private:
   static std::shared_ptr<ITestService> default_impl;
 };
@@ -471,6 +480,7 @@ public:
   ::ndk::ScopedAStatus GetUnionTags(const std::vector<::aidl::android::aidl::tests::Union>& in_input, std::vector<::aidl::android::aidl::tests::Union::Tag>* _aidl_return) override;
   ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) override;
   ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) override;
+  ::ndk::ScopedAStatus GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) override;
   ::ndk::SpAIBinder asBinder() override;
   bool isRemote() override;
 };
