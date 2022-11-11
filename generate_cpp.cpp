@@ -1418,6 +1418,7 @@ void GenerateHeader(CodeWriter& out, const AidlDefinedType& defined_type,
   }
   out << "#pragma once\n\n";
   GenerateHeaderIncludes(out, defined_type, typenames, options);
+  GenerateForwardDecls(out, defined_type, false);
   EnterNamespace(out, defined_type);
   // Each class decl contains its own nested types' class decls
   GenerateClassDecl(out, defined_type, typenames, options);

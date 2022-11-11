@@ -294,6 +294,10 @@ public interface ITestService extends android.os.IInterface
     {
       return 0;
     }
+    @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+    {
+      return null;
+    }
     @Override
     public android.os.IBinder asBinder() {
       return null;
@@ -600,6 +604,10 @@ public interface ITestService extends android.os.IInterface
     {
       return mImpl.getBackendType();
     }
+    @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+    {
+      return mImpl.GetCircular();
+    }
     android.aidl.tests.ITestService mImpl;
   }
   /** Local-side IPC implementation stub class. */
@@ -901,6 +909,10 @@ public interface ITestService extends android.os.IInterface
         case TRANSACTION_getBackendType:
         {
           return "getBackendType";
+        }
+        case TRANSACTION_GetCircular:
+        {
+          return "GetCircular";
         }
         default:
         {
@@ -1717,6 +1729,13 @@ public interface ITestService extends android.os.IInterface
           byte _result = this.getBackendType();
           reply.writeNoException();
           reply.writeByte(_result);
+          break;
+        }
+        case TRANSACTION_GetCircular:
+        {
+          android.aidl.tests.ICircular _result = this.GetCircular();
+          reply.writeNoException();
+          reply.writeStrongInterface(_result);
           break;
         }
         default:
@@ -3395,6 +3414,29 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
+      @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        android.aidl.tests.ICircular _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_GetCircular, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              return getDefaultImpl().GetCircular();
+            }
+          }
+          _reply.readException();
+          _result = android.aidl.tests.ICircular.Stub.asInterface(_reply.readStrongBinder());
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
       public static android.aidl.tests.ITestService sDefaultImpl;
     }
     static final int TRANSACTION_UnimplementedMethod = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
@@ -3464,10 +3506,11 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
     static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
     static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 66);
+    static final int TRANSACTION_GetCircular = (android.os.IBinder.FIRST_CALL_TRANSACTION + 67);
     /** @hide */
     public int getMaxTransactionId()
     {
-      return 66;
+      return 67;
     }
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
@@ -3664,6 +3707,7 @@ public interface ITestService extends android.os.IInterface
   // Retrieve the ICppJavaTests if the server supports it
   public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException;
   public byte getBackendType() throws android.os.RemoteException;
+  public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException;
   // Small empty parcelable for nullability check
   public static class Empty implements android.os.Parcelable
   {

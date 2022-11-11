@@ -23,6 +23,7 @@ import android.aidl.tests.BadParcelable;
 import android.aidl.tests.ByteEnum;
 import android.aidl.tests.ConstantExpressionEnum;
 import android.aidl.tests.GenericStructuredParcelable;
+import android.aidl.tests.ICircular;
 import android.aidl.tests.ICppJavaTests;
 import android.aidl.tests.INamedCallback;
 import android.aidl.tests.INewName;
@@ -781,5 +782,21 @@ public class TestServiceServer extends ITestService.Stub {
   @Override
   public byte getBackendType() throws RemoteException {
     return BackendType.JAVA;
+  }
+
+  private static class MyCircular extends ICircular.Stub {
+    private ITestService mSrv;
+
+    MyCircular(ITestService srv) { mSrv = srv; }
+
+    @Override
+    public ITestService GetTestService() {
+      return mSrv;
+    }
+  }
+
+  @Override
+  public ICircular GetCircular() throws RemoteException {
+    return new MyCircular(this);
   }
 }
