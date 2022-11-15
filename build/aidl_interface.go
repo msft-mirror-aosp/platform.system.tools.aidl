@@ -144,8 +144,7 @@ func reportUsingNotFrozenError(ctx android.BaseModuleContext, notFrozen []string
 		return
 	}
 	for _, name := range notFrozen {
-		ctx.ModuleErrorf("%v is disallowed in release version because it is unstable, and its \"owner\" property is missing.",
-			name)
+		ctx.ModuleErrorf("%v is an unfrozen development version, and it can't be used because it is either explicitly disabled (with `frozen: false`) or this is a release branch and all interfaces without `owners: ...` specified must be frozen.", name)
 	}
 }
 
@@ -905,7 +904,7 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	//
 	// OEM branches may remove 'i.Owner()' here to apply the check to all interfaces, in
 	// addition to core platform interfaces. Otherwise, we rely on vts_treble_vintf_vendor_test.
-	requireFrozenVersion := !unstable && requireFrozenByOwner
+	requireFrozenVersion := proptools.BoolDefault(i.properties.Frozen, false) || (!unstable && requireFrozenByOwner)
 
 	// surface error early, main check is via checkUnstableModuleMutator
 	if requireFrozenVersion && !i.hasVersion() {
