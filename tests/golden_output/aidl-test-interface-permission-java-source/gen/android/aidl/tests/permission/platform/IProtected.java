@@ -94,8 +94,6 @@ public interface IProtected extends android.os.IInterface
           android.content.AttributionSource _arg0;
           _arg0 = data.readTypedObject(android.content.AttributionSource.CREATOR);
           data.enforceNoDataAvail();
-          android.content.AttributionSource source = _arg0;
-          mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
           this.ProtectedWithSourceAttribution(_arg0);
           reply.writeNoException();
           break;
@@ -140,7 +138,9 @@ public interface IProtected extends android.os.IInterface
     }
     static final int TRANSACTION_ProtectedWithSourceAttribution = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     /** Helper method to enforce permissions for ProtectedWithSourceAttribution */
-    protected void ProtectedWithSourceAttribution_enforcePermission(android.content.AttributionSource source) throws SecurityException { }
+    protected void ProtectedWithSourceAttribution_enforcePermission(android.content.AttributionSource source) throws SecurityException {
+      mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
+    }
     /** @hide */
     public int getMaxTransactionId()
     {
