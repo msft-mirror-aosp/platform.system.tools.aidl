@@ -472,10 +472,9 @@ static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlInterface& ifac
 // Visitor for the permission declared in the @EnforcePermission annotation.
 class PermissionVisitor {
  public:
-  PermissionVisitor(const AidlMethod& method, CodeWriter* code) : method_(method), code_(code) {}
+  PermissionVisitor(CodeWriter* code) : code_(code) {}
 
   void operator()(const perm::AllOf& quantifier) {
-    AddSourceStatement();
     std::vector<std::string> permissions;
     permissions.reserve(quantifier.operands.size());
     for (auto const& permission : quantifier.operands) {
@@ -486,7 +485,6 @@ class PermissionVisitor {
   }
 
   void operator()(const perm::AnyOf& quantifier) {
-    AddSourceStatement();
     std::vector<std::string> permissions;
     permissions.reserve(quantifier.operands.size());
     for (auto const& permission : quantifier.operands) {
@@ -497,60 +495,47 @@ class PermissionVisitor {
   }
 
   void operator()(const std::string& permission) {
-    AddSourceStatement();
     auto permissionName = android::aidl::perm::JavaFullName(permission);
     *code_ << "mEnforcer.enforcePermission(" << permissionName << ", source);\n";
   }
 
  private:
-  void AddSourceStatement() {
-    auto attributionSource =
-        std::string("new android.content.AttributionSource(getCallingUid(), null, null)");
-    for (size_t i = 0; i < method_.GetArguments().size(); i++) {
-      const auto& arg = method_.GetArguments()[i];
-      if (arg->GetType().GetName() == "android.content.AttributionSource") {
-        attributionSource = android::base::StringPrintf("_arg%zu", i);
-        break;
-      }
-    }
-    *code_ << "android.content.AttributionSource source = " << attributionSource << ";\n";
-  }
-
-  const AidlMethod& method_;
   CodeWriter* code_;
 };
 
-static void GeneratePermissionChecks(const AidlInterface& iface, const AidlMethod& method,
-                                     std::shared_ptr<StatementBlock> addTo) {
-  string code;
-  CodeWriterPtr writer = CodeWriter::ForString(&code);
-  if (auto ifacePermExpr = iface.EnforceExpression(); ifacePermExpr) {
-    std::visit(PermissionVisitor(method, writer.get()), *ifacePermExpr.get());
-  } else if (auto methodPermExpr = method.GetType().EnforceExpression(); methodPermExpr) {
-    std::visit(PermissionVisitor(method, writer.get()), *methodPermExpr.get());
-  }
-  writer->Close();
-  addTo->Add(std::make_shared<LiteralStatement>(code));
-}
-
-static void GeneratePermissionMethod(const AidlMethod& method, std::shared_ptr<Class> addTo) {
+static void GeneratePermissionMethod(const AidlInterface& iface, const AidlMethod& method,
+                                     const std::shared_ptr<Class>& addTo) {
   string code;
   CodeWriterPtr writer = CodeWriter::ForString(&code);
   *writer << "/** Helper method to enforce permissions for " << method.GetName() << " */\n";
-  std::string args;
-  for (const auto& arg : method.GetArguments()) {
-    if (arg->GetType().GetName() == "android.content.AttributionSource" && arg->IsIn()) {
-      args = "android.content.AttributionSource source";
-      break;
-    }
+
+  auto has_attribution_source =
+      std::any_of(method.GetArguments().begin(), method.GetArguments().end(), [](const auto& arg) {
+        return arg->GetType().GetName() == "android.content.AttributionSource";
+      });
+
+  *writer << "protected void " << method.GetName() << "_enforcePermission("
+          << (has_attribution_source ? "android.content.AttributionSource source" : "")
+          << ") throws SecurityException {\n";
+  writer->Indent();
+
+  if (!has_attribution_source) {
+    *writer << "android.content.AttributionSource source = "
+               "new android.content.AttributionSource(getCallingUid(), null, null);\n";
   }
-  *writer << "protected void " << method.GetName() << "_enforcePermission(" << args
-          << ") throws SecurityException { }\n";
+
+  if (auto ifacePermExpr = iface.EnforceExpression(); ifacePermExpr) {
+    std::visit(PermissionVisitor(writer.get()), *ifacePermExpr.get());
+  } else if (auto methodPermExpr = method.GetType().EnforceExpression(); methodPermExpr) {
+    std::visit(PermissionVisitor(writer.get()), *methodPermExpr.get());
+  }
+  writer->Dedent();
+  *writer << "}\n";
   writer->Close();
   addTo->elements.push_back(std::make_shared<LiteralClassElement>(code));
 }
 
-static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& method, bool oneway,
+static void GenerateStubCode(const AidlMethod& method, bool oneway,
                              std::shared_ptr<Variable> transact_data,
                              std::shared_ptr<Variable> transact_reply,
                              const AidlTypenames& typenames,
@@ -621,8 +606,6 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
     statements->Add(std::make_shared<MethodCall>(transact_data, "enforceNoDataAvail"));
   }
 
-  GeneratePermissionChecks(iface, method, statements);
-
   // the real call
   if (method.GetType().GetName() == "void") {
     statements->Add(realCall);
@@ -658,22 +641,20 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
   }
 }
 
-static void GenerateStubCase(const AidlInterface& iface, const AidlMethod& method,
-                             const std::string& transactCodeName, bool oneway,
-                             std::shared_ptr<StubClass> stubClass, const AidlTypenames& typenames,
-                             const Options& options) {
+static void GenerateStubCase(const AidlMethod& method, const std::string& transactCodeName,
+                             bool oneway, const std::shared_ptr<StubClass>& stubClass,
+                             const AidlTypenames& typenames, const Options& options) {
   auto c = std::make_shared<Case>(transactCodeName);
 
-  GenerateStubCode(iface, method, oneway, stubClass->transact_data, stubClass->transact_reply,
-                   typenames, c->statements, options);
+  GenerateStubCode(method, oneway, stubClass->transact_data, stubClass->transact_reply, typenames,
+                   c->statements, options);
   c->statements->Add(std::make_shared<BreakStatement>());
 
   stubClass->transact_switch_user->cases.push_back(c);
 }
 
-static void GenerateStubCaseOutline(const AidlInterface& iface, const AidlMethod& method,
-                                    const std::string& transactCodeName, bool oneway,
-                                    std::shared_ptr<StubClass> stubClass,
+static void GenerateStubCaseOutline(const AidlMethod& method, const std::string& transactCodeName,
+                                    bool oneway, const std::shared_ptr<StubClass>& stubClass,
                                     const AidlTypenames& typenames, const Options& options) {
   std::string outline_name = "onTransact$" + method.GetName() + "$";
   // Generate an "outlined" method with the actual code.
@@ -690,7 +671,7 @@ static void GenerateStubCaseOutline(const AidlInterface& iface, const AidlMethod
     onTransact_case->exceptions.push_back("android.os.RemoteException");
     stubClass->elements.push_back(onTransact_case);
 
-    GenerateStubCode(iface, method, oneway, transact_data, transact_reply, typenames,
+    GenerateStubCode(method, oneway, transact_data, transact_reply, typenames,
                      onTransact_case->statements, options);
     onTransact_case->statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
   }
@@ -926,13 +907,12 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
     bool outline_stub =
         stubClass->transact_outline && stubClass->outline_methods.count(&method) != 0;
     if (outline_stub) {
-      GenerateStubCaseOutline(iface, method, transactCodeName, oneway, stubClass, typenames,
-                              options);
+      GenerateStubCaseOutline(method, transactCodeName, oneway, stubClass, typenames, options);
     } else {
-      GenerateStubCase(iface, method, transactCodeName, oneway, stubClass, typenames, options);
+      GenerateStubCase(method, transactCodeName, oneway, stubClass, typenames, options);
     }
     if (iface.IsPermissionAnnotated() || method.GetType().IsPermissionAnnotated()) {
-      GeneratePermissionMethod(method, stubClass);
+      GeneratePermissionMethod(iface, method, stubClass);
     }
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
