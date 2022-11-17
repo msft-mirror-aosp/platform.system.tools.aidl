@@ -41,6 +41,12 @@ void DumpVisitor::DumpType(const AidlDefinedType& dt, const string& type) {
   if (auto generic_type = dt.AsParameterizable(); generic_type && generic_type->IsGeneric()) {
     out << "<" << Join(generic_type->GetTypeParameters(), ", ") << ">";
   }
+
+  if (dt.AsUnstructuredParcelable()) {
+    out << ";\n";
+    return;
+  }
+
   out << " {\n";
   out.Indent();
   DumpMembers(dt);
