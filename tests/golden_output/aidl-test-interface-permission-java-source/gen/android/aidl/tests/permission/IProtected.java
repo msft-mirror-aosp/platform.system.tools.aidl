@@ -112,32 +112,24 @@ public interface IProtected extends android.os.IInterface
       {
         case TRANSACTION_PermissionProtected:
         {
-          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-          mEnforcer.enforcePermission(android.Manifest.permission.READ_PHONE_STATE, source);
           this.PermissionProtected();
           reply.writeNoException();
           break;
         }
         case TRANSACTION_MultiplePermissionsAll:
         {
-          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-          mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
           this.MultiplePermissionsAll();
           reply.writeNoException();
           break;
         }
         case TRANSACTION_MultiplePermissionsAny:
         {
-          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-          mEnforcer.enforcePermissionAnyOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
           this.MultiplePermissionsAny();
           reply.writeNoException();
           break;
         }
         case TRANSACTION_NonManifestPermission:
         {
-          android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-          mEnforcer.enforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, source);
           this.NonManifestPermission();
           reply.writeNoException();
           break;
@@ -223,16 +215,28 @@ public interface IProtected extends android.os.IInterface
     }
     static final int TRANSACTION_PermissionProtected = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     /** Helper method to enforce permissions for PermissionProtected */
-    protected void PermissionProtected_enforcePermission() throws SecurityException { }
+    protected void PermissionProtected_enforcePermission() throws SecurityException {
+      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+      mEnforcer.enforcePermission(android.Manifest.permission.READ_PHONE_STATE, source);
+    }
     static final int TRANSACTION_MultiplePermissionsAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
     /** Helper method to enforce permissions for MultiplePermissionsAll */
-    protected void MultiplePermissionsAll_enforcePermission() throws SecurityException { }
+    protected void MultiplePermissionsAll_enforcePermission() throws SecurityException {
+      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+      mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
+    }
     static final int TRANSACTION_MultiplePermissionsAny = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
     /** Helper method to enforce permissions for MultiplePermissionsAny */
-    protected void MultiplePermissionsAny_enforcePermission() throws SecurityException { }
+    protected void MultiplePermissionsAny_enforcePermission() throws SecurityException {
+      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+      mEnforcer.enforcePermissionAnyOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
+    }
     static final int TRANSACTION_NonManifestPermission = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
     /** Helper method to enforce permissions for NonManifestPermission */
-    protected void NonManifestPermission_enforcePermission() throws SecurityException { }
+    protected void NonManifestPermission_enforcePermission() throws SecurityException {
+      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
+      mEnforcer.enforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, source);
+    }
     /** @hide */
     public int getMaxTransactionId()
     {
