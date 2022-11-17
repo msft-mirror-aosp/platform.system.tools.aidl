@@ -130,7 +130,7 @@ fn main() -> Result<()> {
     let groups: BTreeMap<(String, LibDir), Vec<&AidlInstance>> =
         instances.iter().fold(BTreeMap::new(), |mut acc, x| {
             let key = (x.name.clone(), x.lib_dir);
-            acc.entry(key).or_insert(Vec::new()).push(x);
+            acc.entry(key).or_default().push(x);
             acc
         });
     let mut total_wasted_bytes = 0;
@@ -140,7 +140,7 @@ fn main() -> Result<()> {
             // Prefer the highest version, break ties favoring ndk.
             let preferred_instance = instances
                 .iter()
-                .max_by_key(|x| (x.version, if x.variant == "ndk" { 1 } else { 0 }))
+                .max_by_key(|x| (x.version, i32::from(x.variant == "ndk")))
                 .unwrap();
             let wasted_bytes: u64 =
                 instances.iter().filter(|x| *x != preferred_instance).map(|x| x.size).sum();
