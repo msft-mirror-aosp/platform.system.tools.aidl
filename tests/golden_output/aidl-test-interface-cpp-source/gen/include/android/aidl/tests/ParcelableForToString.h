@@ -13,6 +13,12 @@
 #include <utils/String16.h>
 #include <vector>
 
+namespace android::aidl::tests {
+template <typename T, typename U, typename B>
+class GenericStructuredParcelable;
+class OtherParcelableForToString;
+class StructuredParcelable;
+}  // namespace android::aidl::tests
 namespace android {
 namespace aidl {
 namespace tests {

@@ -15,6 +15,9 @@
 #include <utils/StrongPointer.h>
 #include <vector>
 
+namespace android::aidl::loggable {
+class Data;
+}  // namespace android::aidl::loggable
 namespace android {
 namespace aidl {
 namespace loggable {
