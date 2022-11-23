@@ -20,18 +20,21 @@ import android.aidl.tests.permission.IProtected;
 import android.annotation.EnforcePermission;
 import android.os.Binder;
 import android.os.ServiceManager;
+import java.util.List;
 
 public class PermissionTestService extends IProtected.Stub {
+  private FakePermissionEnforcer mPermissionEnforcer;
+
   public static void main(String[] args) {
-    PermissionTestService myServer = new PermissionTestService();
+    PermissionTestService myServer = new PermissionTestService(new FakePermissionEnforcer());
     ServiceManager.addService(IProtected.class.getName(), myServer);
 
     Binder.joinThreadPool();
   }
 
-  public PermissionTestService() {
-    // Will grant access to anything protected by INTERNET.
-    super(new FakePermissionEnforcer("android.permission.INTERNET"));
+  public PermissionTestService(FakePermissionEnforcer permissionEnforcer) {
+    super(permissionEnforcer);
+    mPermissionEnforcer = permissionEnforcer;
   }
 
   @Override
@@ -56,5 +59,10 @@ public class PermissionTestService extends IProtected.Stub {
   @EnforcePermission("android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK")
   public void NonManifestPermission() {
     NonManifestPermission_enforcePermission();
+  }
+
+  @Override
+  public void SetGranted(List<String> permissions) {
+    mPermissionEnforcer.setGranted(permissions);
   }
 }
