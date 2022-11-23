@@ -29,6 +29,8 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace unions {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 class EnumUnion {
 public:
   typedef std::false_type fixed_size;
@@ -93,8 +95,6 @@ public:
   binder_status_t readFromParcel(const AParcel* _parcel);
   binder_status_t writeToParcel(AParcel* _parcel) const;
 
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   inline bool operator!=(const EnumUnion& rhs) const {
     return _value != rhs._value;
   }
@@ -114,10 +114,7 @@ public:
     return _value >= rhs._value;
   }
 
-  #pragma clang diagnostic pop
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   inline std::string toString() const {
     std::ostringstream os;
     os << "EnumUnion{";
@@ -129,10 +126,10 @@ public:
     os << "}";
     return os.str();
   }
-  #pragma clang diagnostic pop
 private:
   std::variant<::aidl::android::aidl::tests::IntEnum, ::aidl::android::aidl::tests::LongEnum, int32_t> _value;
 };
+#pragma clang diagnostic pop
 }  // namespace unions
 }  // namespace tests
 }  // namespace aidl
