@@ -50,6 +50,11 @@ char kTransactionLogStruct[] = R"(struct TransactionLog {
 };
 )";
 
+bool HasDeprecatedField(const AidlParcelable& parcelable) {
+  return std::any_of(parcelable.GetFields().begin(), parcelable.GetFields().end(),
+                     [](const auto& field) { return field->IsDeprecated(); });
+}
+
 string ClassName(const AidlDefinedType& defined_type, ClassNames type) {
   string base_name = defined_type.GetName();
   if (base_name.length() >= 2 && base_name[0] == 'I' && isupper(base_name[1])) {
@@ -341,6 +346,8 @@ std::string TemplateDecl(const AidlParcelable& defined_type) {
 void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable& parcelable) {
   std::set<string> operators{"<", ">", "==", ">=", "<=", "!="};
 
+  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcelable));
+
   if (parcelable.AsUnionDeclaration() && parcelable.IsFixedSize()) {
     auto name = parcelable.GetName();
     auto max_tag = parcelable.GetFields().back()->GetName();
@@ -412,6 +419,7 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
 //   return os.str();
 // }
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable) {
+  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcelable));
   out << "inline std::string toString() const {\n";
   out.Indent();
   out << "std::ostringstream os;\n";
@@ -444,22 +452,16 @@ void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelabl
 //   return os.str();
 // }
 void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable) {
+  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcelable));
   out << "inline std::string toString() const {\n";
   out.Indent();
   out << "std::ostringstream os;\n";
   out << "os << \"" + parcelable.GetName() + "{\";\n";
   out << "switch (getTag()) {\n";
   for (const auto& f : parcelable.GetFields()) {
-    if (f->IsDeprecated()) {
-      out << "#pragma clang diagnostic push\n";
-      out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
-    }
     const string tag = f->GetName();
     out << "case " << tag << ": os << \"" << tag << ": \" << "
         << "::android::internal::ToString(get<" + tag + ">()); break;\n";
-    if (f->IsDeprecated()) {
-      out << "#pragma clang diagnostic pop\n";
-    }
   }
   out << "}\n";
   out << "os << \"}\";\n";
@@ -683,10 +685,6 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
   read_var(tag, *tag_type);
   out << fmt::format("switch (static_cast<Tag>({})) {{\n", tag);
   for (const auto& variable : decl.GetFields()) {
-    if (variable->IsDeprecated()) {
-      out << "#pragma clang diagnostic push\n";
-      out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
-    }
     out << fmt::format("case {}: {{\n", variable->GetName());
     out.Indent();
     const auto& type = variable->GetType();
@@ -706,9 +704,6 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
     out << "}\n";
     out << fmt::format("return {}; }}\n", ctx.status_ok);
     out.Dedent();
-    if (variable->IsDeprecated()) {
-      out << "#pragma clang diagnostic pop\n";
-    }
   }
   out << "}\n";
   out << fmt::format("return {};\n", ctx.status_bad);
