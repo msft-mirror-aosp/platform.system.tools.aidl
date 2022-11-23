@@ -93,6 +93,8 @@ public:
   binder_status_t readFromParcel(const AParcel* _parcel);
   binder_status_t writeToParcel(AParcel* _parcel) const;
 
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   inline bool operator!=(const EnumUnion& rhs) const {
     return _value != rhs._value;
   }
@@ -112,21 +114,22 @@ public:
     return _value >= rhs._value;
   }
 
+  #pragma clang diagnostic pop
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   inline std::string toString() const {
     std::ostringstream os;
     os << "EnumUnion{";
     switch (getTag()) {
     case intEnum: os << "intEnum: " << ::android::internal::ToString(get<intEnum>()); break;
     case longEnum: os << "longEnum: " << ::android::internal::ToString(get<longEnum>()); break;
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     case deprecatedField: os << "deprecatedField: " << ::android::internal::ToString(get<deprecatedField>()); break;
-    #pragma clang diagnostic pop
     }
     os << "}";
     return os.str();
   }
+  #pragma clang diagnostic pop
 private:
   std::variant<::aidl::android::aidl::tests::IntEnum, ::aidl::android::aidl::tests::LongEnum, int32_t> _value;
 };

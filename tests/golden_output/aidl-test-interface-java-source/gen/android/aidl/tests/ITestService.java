@@ -3787,6 +3787,9 @@ public interface ITestService extends android.os.IInterface
     public android.aidl.tests.ITestService.Empty[] nullable_parcel_array;
     public java.util.List<android.aidl.tests.ITestService.Empty> parcel_list;
     public java.util.List<android.aidl.tests.ITestService.Empty> nullable_parcel_list;
+    /** @deprecated field */
+    @Deprecated
+    public int deprecated = 0;
     public static final android.os.Parcelable.Creator<CompilerChecks> CREATOR = new android.os.Parcelable.Creator<CompilerChecks>() {
       @Override
       public CompilerChecks createFromParcel(android.os.Parcel _aidl_source) {
@@ -3821,6 +3824,7 @@ public interface ITestService extends android.os.IInterface
       _aidl_parcel.writeTypedArray(nullable_parcel_array, _aidl_flag);
       _aidl_parcel.writeTypedList(parcel_list, _aidl_flag);
       _aidl_parcel.writeTypedList(nullable_parcel_list, _aidl_flag);
+      _aidl_parcel.writeInt(deprecated);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
       _aidl_parcel.setDataPosition(_aidl_start_pos);
       _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
@@ -3868,6 +3872,8 @@ public interface ITestService extends android.os.IInterface
         parcel_list = _aidl_parcel.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
         nullable_parcel_list = _aidl_parcel.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        deprecated = _aidl_parcel.readInt();
       } finally {
         if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
           throw new android.os.BadParcelableException("Overflow in the size of parcelable");

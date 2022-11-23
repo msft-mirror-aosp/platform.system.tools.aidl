@@ -297,6 +297,9 @@ interface ITestService {
 
         // interface without I-
         interface Foo {}
+
+        /** @deprecated field */
+        int deprecated;
     }
 
     ICircular GetCircular();

@@ -1255,21 +1255,24 @@ void GenerateParcelSource(CodeWriter& out, const T& parcel, const AidlTypenames&
   EnterNamespace(out, parcel);
   GenerateConstantDefinitions(out, parcel, typenames, TemplateDecl(parcel), q_name);
 
-  out << TemplateDecl(parcel);
-  out << "::android::status_t " << q_name << "::readFromParcel(const ::android::Parcel* "
-      << kParcelVarName << ") {\n";
-  out.Indent();
-  GenerateReadFromParcel(out, parcel, typenames);
-  out.Dedent();
-  out << "}\n";
+  {
+    ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcel));
+    out << TemplateDecl(parcel);
+    out << "::android::status_t " << q_name << "::readFromParcel(const ::android::Parcel* "
+        << kParcelVarName << ") {\n";
+    out.Indent();
+    GenerateReadFromParcel(out, parcel, typenames);
+    out.Dedent();
+    out << "}\n";
 
-  out << TemplateDecl(parcel);
-  out << "::android::status_t " << q_name << "::writeToParcel(::android::Parcel* " << kParcelVarName
-      << ") const {\n";
-  out.Indent();
-  GenerateWriteToParcel(out, parcel, typenames);
-  out.Dedent();
-  out << "}\n";
+    out << TemplateDecl(parcel);
+    out << "::android::status_t " << q_name << "::writeToParcel(::android::Parcel* "
+        << kParcelVarName << ") const {\n";
+    out.Indent();
+    GenerateWriteToParcel(out, parcel, typenames);
+    out.Dedent();
+    out << "}\n";
+  }
   LeaveNamespace(out, parcel);
 }
 
