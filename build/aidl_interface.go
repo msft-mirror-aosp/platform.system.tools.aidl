@@ -911,6 +911,14 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false, PLATFORM_VERSION_CODENAME is REL, and \"owner\" property is missing.")
 	}
 
+	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
+		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||
+		proptools.Bool(i.properties.Backend.Ndk.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled)
+
+	if vndkEnabled && !proptools.Bool(i.properties.Unstable) && i.properties.Frozen == nil {
+		mctx.PropertyErrorf("frozen", "true or false must be specified when the VNDK is enabled on a versioned interface (not `unstable: true`)")
+	}
+
 	versions := i.getVersions()
 	nextVersion := i.nextVersion()
 	shouldGenerateLangBackendMap := map[string]bool{
