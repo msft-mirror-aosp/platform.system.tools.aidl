@@ -1224,8 +1224,8 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
 
   const string canonical_name = parcel.GetCanonicalName();
   out << "static const ::android::String16& getParcelableDescriptor() {\n"
-      << "  static const ::android::StaticString16 DESCIPTOR (u\"" << canonical_name << "\");\n"
-      << "  return DESCIPTOR;\n"
+      << "  static const ::android::StaticString16 DESCRIPTOR (u\"" << canonical_name << "\");\n"
+      << "  return DESCRIPTOR;\n"
       << "}\n";
 
   GenerateToString(out, parcel);
