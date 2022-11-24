@@ -21,18 +21,20 @@ import static android.permission.PermissionManager.PERMISSION_HARD_DENIED;
 
 import android.annotation.NonNull;
 import android.content.AttributionSource;
+import java.util.List;
 
 /* Fake for android.os.PermissionEnforcer
- * The constructor accepts one permission which is considered granted to any
- * caller. All other permission requests are denied.
  */
 public class FakePermissionEnforcer extends android.os.PermissionEnforcer {
-  private final String mGranted;
+  private List<String> mGranted;
 
-  public FakePermissionEnforcer(String granted) { mGranted = granted; }
+  public void setGranted(List<String> granted) { mGranted = granted; }
 
   @Override
   protected int checkPermission(@NonNull String permission, @NonNull AttributionSource source) {
-    return permission.equals(mGranted) ? PERMISSION_GRANTED : PERMISSION_HARD_DENIED;
+    if (mGranted != null && mGranted.contains(permission)) {
+      return PERMISSION_GRANTED;
+    }
+    return PERMISSION_HARD_DENIED;
   }
 }
