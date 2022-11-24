@@ -299,8 +299,14 @@ interface ITestService {
         // interface without I-
         interface Foo {}
 
-        /** @deprecated field */
-        int deprecated;
+        parcelable HasDeprecated {
+            /** @deprecated field */
+            int deprecated;
+        }
+        union UsingHasDeprecated {
+            int n;
+            HasDeprecated m;
+        }
     }
 
     ICircular GetCircular(out CircularParcelable cp);
