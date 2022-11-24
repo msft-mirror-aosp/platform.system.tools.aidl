@@ -13,6 +13,9 @@
 #include <utils/String16.h>
 #include <utils/StrongPointer.h>
 
+namespace android::aidl::tests::nested {
+class ParcelableWithNested;
+}  // namespace android::aidl::tests::nested
 namespace android {
 namespace aidl {
 namespace tests {

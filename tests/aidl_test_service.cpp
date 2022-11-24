@@ -99,6 +99,7 @@ using android::aidl::tests::BnNewName;
 using android::aidl::tests::BnOldName;
 using android::aidl::tests::BnTestService;
 using android::aidl::tests::ByteEnum;
+using android::aidl::tests::CircularParcelable;
 using android::aidl::tests::ConstantExpressionEnum;
 using android::aidl::tests::GenericStructuredParcelable;
 using android::aidl::tests::ICircular;
@@ -799,8 +800,10 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
-  Status GetCircular(sp<ICircular>* _aidl_return) override {
-    *_aidl_return = new Circular(sp<ITestService>::fromExisting(this));
+  Status GetCircular(CircularParcelable* cp, sp<ICircular>* _aidl_return) override {
+    auto srv = sp<ITestService>::fromExisting(this);
+    cp->testService = srv;
+    *_aidl_return = new Circular(srv);
     return Status::ok();
   }
 

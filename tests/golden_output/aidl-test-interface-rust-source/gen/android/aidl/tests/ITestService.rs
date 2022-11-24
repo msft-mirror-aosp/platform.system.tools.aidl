@@ -82,7 +82,7 @@ pub trait ITestService: binder::Interface + Send {
   fn r#GetUnionTags(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>>;
   fn r#GetCppJavaTests(&self) -> binder::Result<Option<binder::SpIBinder>>;
   fn r#getBackendType(&self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType>;
-  fn r#GetCircular(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>;
+  fn r#GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>;
   fn getDefaultImpl() -> ITestServiceDefaultRef where Self: Sized {
     DEFAULT_IMPL.lock().unwrap().clone()
   }
@@ -160,7 +160,7 @@ pub trait ITestServiceAsync<P>: binder::Interface + Send {
   fn r#GetUnionTags<'a>(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::BoxFuture<'a, binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>>>;
   fn r#GetCppJavaTests<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::SpIBinder>>>;
   fn r#getBackendType<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType>>;
-  fn r#GetCircular<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>>;
+  fn r#GetCircular<'a>(&'a self, _arg_cp: &'a mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>>;
 }
 #[::async_trait::async_trait]
 pub trait ITestServiceAsyncServer: binder::Interface + Send {
@@ -233,7 +233,7 @@ pub trait ITestServiceAsyncServer: binder::Interface + Send {
   async fn r#GetUnionTags(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>>;
   async fn r#GetCppJavaTests(&self) -> binder::Result<Option<binder::SpIBinder>>;
   async fn r#getBackendType(&self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType>;
-  async fn r#GetCircular(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>;
+  async fn r#GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>;
 }
 impl BnTestService {
   /// Create a new async binder service.
@@ -456,8 +456,8 @@ impl BnTestService {
       fn r#getBackendType(&self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType> {
         self._rt.block_on(self._inner.r#getBackendType())
       }
-      fn r#GetCircular(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
-        self._rt.block_on(self._inner.r#GetCircular())
+      fn r#GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
+        self._rt.block_on(self._inner.r#GetCircular(_arg_cp))
       }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
@@ -666,7 +666,7 @@ pub trait ITestServiceDefault: Send + Sync {
   fn r#getBackendType(&self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#GetCircular(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
+  fn r#GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
 }
@@ -2050,21 +2050,22 @@ impl BpTestService {
     let _aidl_return: crate::mangled::_7_android_4_aidl_5_tests_11_BackendType = _aidl_reply.read()?;
     Ok(_aidl_return)
   }
-  fn build_parcel_GetCircular(&self) -> binder::Result<binder::binder_impl::Parcel> {
+  fn build_parcel_GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
     aidl_data.mark_sensitive();
     Ok(aidl_data)
   }
-  fn read_response_GetCircular(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
+  fn read_response_GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
     if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
       if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetCircular();
+        return _aidl_default_impl.r#GetCircular(_arg_cp);
       }
     }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
     let _aidl_return: binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular> = _aidl_reply.read()?;
+    _aidl_reply.read_onto(_arg_cp)?;
     Ok(_aidl_return)
   }
 }
@@ -2404,10 +2405,10 @@ impl ITestService for BpTestService {
     let _aidl_reply = self.binder.submit_transact(transactions::r#getBackendType, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_getBackendType(_aidl_reply)
   }
-  fn r#GetCircular(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
-    let _aidl_data = self.build_parcel_GetCircular()?;
+  fn r#GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
+    let _aidl_data = self.build_parcel_GetCircular(_arg_cp)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#GetCircular, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
-    self.read_response_GetCircular(_aidl_reply)
+    self.read_response_GetCircular(_arg_cp, _aidl_reply)
   }
 }
 impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
@@ -3277,8 +3278,8 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
       }
     )
   }
-  fn r#GetCircular<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>> {
-    let _aidl_data = match self.build_parcel_GetCircular() {
+  fn r#GetCircular<'a>(&'a self, _arg_cp: &'a mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>> {
+    let _aidl_data = match self.build_parcel_GetCircular(_arg_cp) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
@@ -3286,7 +3287,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     P::spawn(
       move || binder.submit_transact(transactions::r#GetCircular, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
-        self.read_response_GetCircular(_aidl_reply)
+        self.read_response_GetCircular(_arg_cp, _aidl_reply)
       }
     )
   }
@@ -3359,7 +3360,7 @@ impl ITestService for binder::binder_impl::Binder<BnTestService> {
   fn r#GetUnionTags(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>> { self.0.r#GetUnionTags(_arg_input) }
   fn r#GetCppJavaTests(&self) -> binder::Result<Option<binder::SpIBinder>> { self.0.r#GetCppJavaTests() }
   fn r#getBackendType(&self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType> { self.0.r#getBackendType() }
-  fn r#GetCircular(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> { self.0.r#GetCircular() }
+  fn r#GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> { self.0.r#GetCircular(_arg_cp) }
 }
 fn on_transact(_aidl_service: &dyn ITestService, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {
@@ -4208,11 +4209,13 @@ fn on_transact(_aidl_service: &dyn ITestService, _aidl_code: binder::binder_impl
       Ok(())
     }
     transactions::r#GetCircular => {
-      let _aidl_return = _aidl_service.r#GetCircular();
+      let mut _arg_cp: crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable = Default::default();
+      let _aidl_return = _aidl_service.r#GetCircular(&mut _arg_cp);
       match &_aidl_return {
         Ok(_aidl_return) => {
           _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
           _aidl_reply.write(_aidl_return)?;
+          _aidl_reply.write(&_arg_cp)?;
         }
         Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
       }

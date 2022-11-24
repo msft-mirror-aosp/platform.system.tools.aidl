@@ -1318,15 +1318,19 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
       break;
     }
     case (FIRST_CALL_TRANSACTION + 67 /*GetCircular*/): {
+      ::aidl::android::aidl::tests::CircularParcelable out_cp;
       std::shared_ptr<::aidl::android::aidl::tests::ICircular> _aidl_return;
 
-      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetCircular(&_aidl_return);
+      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetCircular(&out_cp, &_aidl_return);
       _aidl_ret_status = AParcel_writeStatusHeader(_aidl_out, _aidl_status.get());
       if (_aidl_ret_status != STATUS_OK) break;
 
       if (!AStatus_isOk(_aidl_status.get())) break;
 
       _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, _aidl_return);
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, out_cp);
       if (_aidl_ret_status != STATUS_OK) break;
 
       break;
@@ -4162,7 +4166,7 @@ BpTestService::~BpTestService() {}
   _aidl_status_return:
   return _aidl_status;
 }
-::ndk::ScopedAStatus BpTestService::GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) {
+::ndk::ScopedAStatus BpTestService::GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   ::ndk::ScopedAStatus _aidl_status;
   ::ndk::ScopedAParcel _aidl_in;
@@ -4183,7 +4187,7 @@ BpTestService::~BpTestService() {}
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetCircular(_aidl_return);
+    _aidl_status = ITestService::getDefaultImpl()->GetCircular(out_cp, _aidl_return);
     goto _aidl_status_return;
   }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
@@ -4193,6 +4197,9 @@ BpTestService::~BpTestService() {}
 
   if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
   _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), _aidl_return);
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), out_cp);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_error:
@@ -4588,7 +4595,7 @@ std::shared_ptr<ITestService> ITestService::default_impl = nullptr;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
 }
-::ndk::ScopedAStatus ITestServiceDefault::GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* /*_aidl_return*/) {
+::ndk::ScopedAStatus ITestServiceDefault::GetCircular(::aidl::android::aidl::tests::CircularParcelable* /*out_cp*/, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
