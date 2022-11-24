@@ -2025,6 +2025,41 @@ TEST_F(AidlTest, RejectsNestedTypesWithCyclicDeps) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("IFoo has nested types with cyclic references."));
 }
 
+TEST_F(AidlTest, RejectsCyclicNestedInterfaces) {
+  Options options = Options::From(
+      "aidl --lang cpp -I. -oout -hout "
+      "p/IFoo.aidl p/IBar.aidl p/IQux.aidl");
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p; import p.IBar; "
+                               "interface IFoo { IBar getBar(); }");
+  io_delegate_.SetFileContents("p/IBar.aidl",
+                               "package p; import p.IQux; "
+                               "interface IBar { IQux.Inner getQux(); }");
+  io_delegate_.SetFileContents("p/IQux.aidl",
+                               "package p; import p.IFoo; "
+                               "interface IQux { interface Inner { IFoo getFoo(); } }");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("ERROR: p/IQux.aidl:1.43-53: has cyclic references to nested types."));
+}
+
+TEST_F(AidlTest, RejectsCyclicNestedInterfacesAndParcelables) {
+  Options options = Options::From(
+      "aidl --lang cpp -I. -oout -hout "
+      "p/IFoo.aidl p/Bar.aidl");
+  io_delegate_.SetFileContents("p/IFoo.aidl",
+                               "package p; import p.Bar; "
+                               "interface IFoo { interface Inner { Bar getBar(); } }");
+  io_delegate_.SetFileContents("p/Bar.aidl",
+                               "package p; import p.IFoo; "
+                               "parcelable Bar { IFoo.Inner foo; }");
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("ERROR: p/IFoo.aidl:1.42-52: has cyclic references to nested types."));
+}
+
 TEST_F(AidlTest, CppNameOf_GenericType) {
   const string input_path = "p/Wrapper.aidl";
   const string input = "package p; parcelable Wrapper<T> {}";
