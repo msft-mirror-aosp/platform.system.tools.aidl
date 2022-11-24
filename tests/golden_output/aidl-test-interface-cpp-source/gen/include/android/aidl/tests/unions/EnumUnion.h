@@ -23,6 +23,8 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace unions {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 class EnumUnion : public ::android::Parcelable {
 public:
   enum class Tag : int32_t {
@@ -80,8 +82,6 @@ public:
     _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
   }
 
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   inline bool operator!=(const EnumUnion& rhs) const {
     return _value != rhs._value;
   }
@@ -101,15 +101,12 @@ public:
     return _value >= rhs._value;
   }
 
-  #pragma clang diagnostic pop
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
   ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
   static const ::android::String16& getParcelableDescriptor() {
     static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.unions.EnumUnion");
     return DESCIPTOR;
   }
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   inline std::string toString() const {
     std::ostringstream os;
     os << "EnumUnion{";
@@ -121,10 +118,10 @@ public:
     os << "}";
     return os.str();
   }
-  #pragma clang diagnostic pop
 private:
   std::variant<::android::aidl::tests::IntEnum, ::android::aidl::tests::LongEnum, int32_t> _value;
 };  // class EnumUnion
+#pragma clang diagnostic pop
 }  // namespace unions
 }  // namespace tests
 }  // namespace aidl
