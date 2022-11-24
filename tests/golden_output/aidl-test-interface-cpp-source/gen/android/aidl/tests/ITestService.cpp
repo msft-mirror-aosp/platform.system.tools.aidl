@@ -2742,7 +2742,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   return _aidl_status;
 }
 
-::android::binder::Status BpTestService::GetCircular(::android::sp<::android::aidl::tests::ICircular>* _aidl_return) {
+::android::binder::Status BpTestService::GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
   _aidl_data.markForBinder(remoteStrong());
@@ -2756,7 +2756,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetCircular, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
   if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
-     return ITestService::getDefaultImpl()->GetCircular(_aidl_return);
+     return ITestService::getDefaultImpl()->GetCircular(cp, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2769,6 +2769,10 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     return _aidl_status;
   }
   _aidl_ret_status = _aidl_reply.readStrongBinder(_aidl_return);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = _aidl_reply.readParcelable(cp);
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -4960,13 +4964,18 @@ BnTestService::BnTestService()
   break;
   case BnTestService::TRANSACTION_GetCircular:
   {
+    ::android::aidl::tests::CircularParcelable out_cp;
     ::android::sp<::android::aidl::tests::ICircular> _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
     ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCircular::cppServer");
-    ::android::binder::Status _aidl_status(GetCircular(&_aidl_return));
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
+    ::android::binder::Status _aidl_status(GetCircular(&out_cp, &_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4975,6 +4984,10 @@ BnTestService::BnTestService()
       break;
     }
     _aidl_ret_status = _aidl_reply->writeStrongBinder(_aidl_return);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    _aidl_ret_status = _aidl_reply->writeParcelable(out_cp);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }

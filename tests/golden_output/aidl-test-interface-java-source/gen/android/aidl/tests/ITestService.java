@@ -294,7 +294,7 @@ public interface ITestService extends android.os.IInterface
     {
       return 0;
     }
-    @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+    @Override public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException
     {
       return null;
     }
@@ -604,9 +604,9 @@ public interface ITestService extends android.os.IInterface
     {
       return mImpl.getBackendType();
     }
-    @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+    @Override public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException
     {
-      return mImpl.GetCircular();
+      return mImpl.GetCircular(cp);
     }
     android.aidl.tests.ITestService mImpl;
   }
@@ -1733,9 +1733,13 @@ public interface ITestService extends android.os.IInterface
         }
         case TRANSACTION_GetCircular:
         {
-          android.aidl.tests.ICircular _result = this.GetCircular();
+          android.aidl.tests.CircularParcelable _arg0;
+          _arg0 = new android.aidl.tests.CircularParcelable();
+          data.enforceNoDataAvail();
+          android.aidl.tests.ICircular _result = this.GetCircular(_arg0);
           reply.writeNoException();
           reply.writeStrongInterface(_result);
+          reply.writeTypedObject(_arg0, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
         }
         default:
@@ -3414,7 +3418,7 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
-      @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+      @Override public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
@@ -3425,11 +3429,14 @@ public interface ITestService extends android.os.IInterface
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetCircular, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
-              return getDefaultImpl().GetCircular();
+              return getDefaultImpl().GetCircular(cp);
             }
           }
           _reply.readException();
           _result = android.aidl.tests.ICircular.Stub.asInterface(_reply.readStrongBinder());
+          if ((0!=_reply.readInt())) {
+            cp.readFromParcel(_reply);
+          }
         }
         finally {
           _reply.recycle();
@@ -3707,7 +3714,7 @@ public interface ITestService extends android.os.IInterface
   // Retrieve the ICppJavaTests if the server supports it
   public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException;
   public byte getBackendType() throws android.os.RemoteException;
-  public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException;
+  public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException;
   // Small empty parcelable for nullability check
   public static class Empty implements android.os.Parcelable
   {
