@@ -23,6 +23,7 @@ import android.aidl.tests.permission.IProtected;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.internal.TextListener;
@@ -32,46 +33,55 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class PermissionTests {
-  private IProtected service;
-
-  @Before
-  public void setUp() throws RemoteException {
-    // This service considers the INTERNET permission always granted.
-    IBinder binder = ServiceManager.waitForService(IProtected.class.getName());
-    assertNotNull(binder);
-    service = IProtected.Stub.asInterface(binder);
-    assertNotNull(service);
-  }
+public abstract class PermissionTests {
+  protected IProtected service;
 
   @Test
   public void testProtected() throws Exception {
     // Requires READ_PHONE_STATE.
+    service.SetGranted(List.of());
     assertThrows(SecurityException.class, () -> service.PermissionProtected());
+    service.SetGranted(List.of("android.permission.READ_PHONE_STATE"));
+    service.PermissionProtected();
   }
 
   @Test
   public void testMultiplePermissionsAll() throws Exception {
     // Requires INTERNET and VIBRATE.
+    service.SetGranted(List.of());
     assertThrows(SecurityException.class, () -> service.MultiplePermissionsAll());
+    service.SetGranted(List.of("android.permission.INTERNET"));
+    assertThrows(SecurityException.class, () -> service.MultiplePermissionsAll());
+    service.SetGranted(List.of("android.permission.VIBRATE"));
+    assertThrows(SecurityException.class, () -> service.MultiplePermissionsAll());
+    service.SetGranted(List.of("android.permission.INTERNET", "android.permission.VIBRATE"));
+    service.MultiplePermissionsAll();
   }
 
   @Test
   public void testMultiplePermissionsAny() throws Exception {
     // Requires INTERNET or VIBRATE.
+    service.SetGranted(List.of());
+    assertThrows(SecurityException.class, () -> service.MultiplePermissionsAny());
+    service.SetGranted(List.of("android.permission.INTERNET"));
+    service.MultiplePermissionsAny();
+    service.SetGranted(List.of("android.permission.VIBRATE"));
     service.MultiplePermissionsAny();
   }
 
   @Test
   public void testNonManifestPermission() throws Exception {
     // Requires android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK
+    service.SetGranted(List.of());
     assertThrows(SecurityException.class, () -> service.NonManifestPermission());
+    service.SetGranted(List.of("android.permission.MAINLINE_NETWORK_STACK"));
+    service.NonManifestPermission();
   }
 
   public static void main(String[] args) {
     JUnitCore junit = new JUnitCore();
     junit.addListener(new TextListener(System.out));
-    Result result = junit.run(PermissionTests.class);
+    Result result = junit.run(PermissionTestsRemote.class, PermissionTestsLocal.class);
     System.out.println(result.wasSuccessful() ? "TEST SUCCESS" : "TEST FAILURE");
   }
 }
