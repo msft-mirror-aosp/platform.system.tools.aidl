@@ -2,6 +2,7 @@
 
 #include <android/aidl/tests/BackendType.h>
 #include <android/aidl/tests/ByteEnum.h>
+#include <android/aidl/tests/CircularParcelable.h>
 #include <android/aidl/tests/ICircular.h>
 #include <android/aidl/tests/INamedCallback.h>
 #include <android/aidl/tests/INewName.h>
@@ -30,11 +31,17 @@
 #include <vector>
 
 namespace android::aidl::tests {
+class CircularParcelable;
 class ICircular;
 class INamedCallback;
 class INewName;
 class IOldName;
+class RecursiveList;
+class StructuredParcelable;
 }  // namespace android::aidl::tests
+namespace android::aidl::tests::extension {
+class ExtendableParcelable;
+}  // namespace android::aidl::tests::extension
 namespace android {
 namespace aidl {
 namespace tests {
@@ -330,7 +337,7 @@ public:
   virtual ::android::binder::Status GetUnionTags(const ::std::vector<::android::aidl::tests::Union>& input, ::std::vector<::android::aidl::tests::Union::Tag>* _aidl_return) = 0;
   virtual ::android::binder::Status GetCppJavaTests(::android::sp<::android::IBinder>* _aidl_return) = 0;
   virtual ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* _aidl_return) = 0;
-  virtual ::android::binder::Status GetCircular(::android::sp<::android::aidl::tests::ICircular>* _aidl_return) = 0;
+  virtual ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) = 0;
 };  // class ITestService
 
 class ITestServiceDefault : public ITestService {
@@ -539,7 +546,7 @@ public:
   ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* /*_aidl_return*/) override {
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
-  ::android::binder::Status GetCircular(::android::sp<::android::aidl::tests::ICircular>* /*_aidl_return*/) override {
+  ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* /*cp*/, ::android::sp<::android::aidl::tests::ICircular>* /*_aidl_return*/) override {
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
 };  // class ITestServiceDefault

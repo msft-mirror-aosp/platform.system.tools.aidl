@@ -9,6 +9,9 @@
 #include <tuple>
 #include <utils/String16.h>
 
+namespace android::aidl::tests {
+class RecursiveList;
+}  // namespace android::aidl::tests
 namespace android {
 namespace aidl {
 namespace tests {

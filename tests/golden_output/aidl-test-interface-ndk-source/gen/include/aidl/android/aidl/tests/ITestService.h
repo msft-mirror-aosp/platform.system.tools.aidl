@@ -13,6 +13,7 @@
 #include <android/binder_to_string.h>
 #include <aidl/android/aidl/tests/BackendType.h>
 #include <aidl/android/aidl/tests/ByteEnum.h>
+#include <aidl/android/aidl/tests/CircularParcelable.h>
 #include <aidl/android/aidl/tests/ICircular.h>
 #include <aidl/android/aidl/tests/INamedCallback.h>
 #include <aidl/android/aidl/tests/INewName.h>
@@ -29,11 +30,17 @@
 #endif  // BINDER_STABILITY_SUPPORT
 
 namespace aidl::android::aidl::tests {
+class CircularParcelable;
 class ICircular;
 class INamedCallback;
 class INewName;
 class IOldName;
+class RecursiveList;
+class StructuredParcelable;
 }  // namespace aidl::android::aidl::tests
+namespace aidl::android::aidl::tests::extension {
+class ExtendableParcelable;
+}  // namespace aidl::android::aidl::tests::extension
 namespace aidl {
 namespace android {
 namespace aidl {
@@ -415,7 +422,7 @@ public:
   virtual ::ndk::ScopedAStatus GetUnionTags(const std::vector<::aidl::android::aidl::tests::Union>& in_input, std::vector<::aidl::android::aidl::tests::Union::Tag>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) = 0;
-  virtual ::ndk::ScopedAStatus GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) = 0;
+  virtual ::ndk::ScopedAStatus GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) = 0;
 private:
   static std::shared_ptr<ITestService> default_impl;
 };
@@ -488,7 +495,7 @@ public:
   ::ndk::ScopedAStatus GetUnionTags(const std::vector<::aidl::android::aidl::tests::Union>& in_input, std::vector<::aidl::android::aidl::tests::Union::Tag>* _aidl_return) override;
   ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) override;
   ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) override;
-  ::ndk::ScopedAStatus GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) override;
+  ::ndk::ScopedAStatus GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) override;
   ::ndk::SpAIBinder asBinder() override;
   bool isRemote() override;
 };

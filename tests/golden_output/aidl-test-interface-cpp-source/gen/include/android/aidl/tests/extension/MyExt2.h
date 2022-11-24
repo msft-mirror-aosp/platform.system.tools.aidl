@@ -9,6 +9,9 @@
 #include <tuple>
 #include <utils/String16.h>
 
+namespace android::aidl::tests::extension {
+class MyExt;
+}  // namespace android::aidl::tests::extension
 namespace android {
 namespace aidl {
 namespace tests {
