@@ -816,15 +816,25 @@ std::string CppConstantValueDecorator(
 void GenerateForwardDecls(CodeWriter& out, const AidlDefinedType& root_type, bool is_ndk) {
   struct Visitor : AidlVisitor {
     using PackagePath = std::vector<std::string>;
-    std::map<PackagePath, std::set<std::string>> classes;
-    // Collect class names for each interface type
+    struct ClassDeclInfo {
+      std::string template_decl;
+    };
+    std::map<PackagePath, std::map<std::string, ClassDeclInfo>> classes;
+    // Collect class names for each interface or parcelable type
     void Visit(const AidlTypeSpecifier& type) override {
       const auto defined_type = type.GetDefinedType();
-      if (defined_type && defined_type->AsInterface() &&
-          !defined_type->AsInterface()->GetParentType()) {
+      if (defined_type && !defined_type->GetParentType()) {
         // Forward declarations are not supported for nested types
         auto package = defined_type->GetSplitPackage();
-        classes[package].insert(ClassName(*defined_type, ClassNames::INTERFACE));
+        if (defined_type->AsInterface() != nullptr) {
+          auto name = ClassName(*defined_type, ClassNames::INTERFACE);
+          classes[package][std::move(name)] = ClassDeclInfo();
+        } else if (auto* p = defined_type->AsStructuredParcelable(); p != nullptr) {
+          auto name = defined_type->GetName();
+          ClassDeclInfo info;
+          info.template_decl = TemplateDecl(*p);
+          classes[package][std::move(name)] = std::move(info);
+        }
       }
     }
   } v;
@@ -846,8 +856,8 @@ void GenerateForwardDecls(CodeWriter& out, const AidlDefinedType& root_type, boo
     if (!namespace_name.empty()) {
       out << "namespace " << namespace_name << " {\n";
     }
-    for (auto& clazz : classes) {
-      out << "class " << clazz << ";\n";
+    for (const auto& [name, info] : classes) {
+      out << info.template_decl << "class " << name << ";\n";
     }
     if (!namespace_name.empty()) {
       out << "}  // namespace " << namespace_name << "\n";
