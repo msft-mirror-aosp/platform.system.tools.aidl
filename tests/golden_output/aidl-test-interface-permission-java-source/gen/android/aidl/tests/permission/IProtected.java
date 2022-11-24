@@ -271,10 +271,6 @@ public interface IProtected extends android.os.IInterface
       mEnforcer.enforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, source);
     }
     static final int TRANSACTION_SetGranted = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
-    /** Helper method to enforce permissions for SetGranted */
-    protected void SetGranted_enforcePermission() throws SecurityException {
-      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-    }
     /** @hide */
     public int getMaxTransactionId()
     {
