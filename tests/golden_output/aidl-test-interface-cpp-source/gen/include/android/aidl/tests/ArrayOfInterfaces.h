@@ -142,8 +142,8 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.ArrayOfInterfaces.MyParcelable");
-      return DESCIPTOR;
+      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.ArrayOfInterfaces.MyParcelable");
+      return DESCRIPTOR;
     }
     inline std::string toString() const {
       std::ostringstream os;
@@ -237,8 +237,8 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.ArrayOfInterfaces.MyUnion");
-      return DESCIPTOR;
+      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.ArrayOfInterfaces.MyUnion");
+      return DESCRIPTOR;
     }
     inline std::string toString() const {
       std::ostringstream os;
@@ -277,8 +277,8 @@ public:
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
   ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
   static const ::android::String16& getParcelableDescriptor() {
-    static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.ArrayOfInterfaces");
-    return DESCIPTOR;
+    static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.ArrayOfInterfaces");
+    return DESCRIPTOR;
   }
   inline std::string toString() const {
     std::ostringstream os;
