@@ -4270,6 +4270,8 @@ pub mod r#CompilerChecks {
     pub r#nullable_parcel_array: Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>,
     pub r#parcel_list: Vec<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>,
     pub r#nullable_parcel_list: Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>,
+    #[deprecated = "field"]
+    pub r#deprecated: i32,
   }
   impl Default for r#CompilerChecks {
     fn default() -> Self {
@@ -4292,6 +4294,7 @@ pub mod r#CompilerChecks {
         r#nullable_parcel_array: Default::default(),
         r#parcel_list: Default::default(),
         r#nullable_parcel_list: Default::default(),
+        r#deprecated: 0,
       }
     }
   }
@@ -4318,6 +4321,7 @@ pub mod r#CompilerChecks {
         subparcel.write(&self.r#nullable_parcel_array)?;
         subparcel.write(&self.r#parcel_list)?;
         subparcel.write(&self.r#nullable_parcel_list)?;
+        subparcel.write(&self.r#deprecated)?;
         Ok(())
       })
     }
@@ -4376,6 +4380,9 @@ pub mod r#CompilerChecks {
         }
         if subparcel.has_more_data() {
           self.r#nullable_parcel_list = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#deprecated = subparcel.read()?;
         }
         Ok(())
       })

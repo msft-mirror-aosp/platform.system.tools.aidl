@@ -5034,6 +5034,8 @@ namespace tests {
 namespace android {
 namespace aidl {
 namespace tests {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 ::android::status_t ITestService::CompilerChecks::readFromParcel(const ::android::Parcel* _aidl_parcel) {
   ::android::status_t _aidl_ret_status = ::android::OK;
   size_t _aidl_start_pos = _aidl_parcel->dataPosition();
@@ -5189,6 +5191,14 @@ namespace tests {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
+  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
+    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->readInt32(&deprecated);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
   _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
   return _aidl_ret_status;
 }
@@ -5268,12 +5278,17 @@ namespace tests {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
+  _aidl_ret_status = _aidl_parcel->writeInt32(deprecated);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
   auto _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
   _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
+#pragma clang diagnostic pop
 }  // namespace tests
 }  // namespace aidl
 }  // namespace android
