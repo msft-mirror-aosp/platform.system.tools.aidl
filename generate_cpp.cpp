@@ -1201,6 +1201,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
                              const AidlTypenames& typenames, const Options& options) {
   const string clazz = parcel.GetName();
 
+  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcel));
   out << TemplateDecl(parcel);
   out << "class";
   GenerateDeprecated(out, parcel);

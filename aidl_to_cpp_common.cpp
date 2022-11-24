@@ -346,8 +346,6 @@ std::string TemplateDecl(const AidlParcelable& defined_type) {
 void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable& parcelable) {
   std::set<string> operators{"<", ">", "==", ">=", "<=", "!="};
 
-  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcelable));
-
   if (parcelable.AsUnionDeclaration() && parcelable.IsFixedSize()) {
     auto name = parcelable.GetName();
     auto max_tag = parcelable.GetFields().back()->GetName();
@@ -419,7 +417,6 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
 //   return os.str();
 // }
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable) {
-  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcelable));
   out << "inline std::string toString() const {\n";
   out.Indent();
   out << "std::ostringstream os;\n";
@@ -452,7 +449,6 @@ void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelabl
 //   return os.str();
 // }
 void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable) {
-  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcelable));
   out << "inline std::string toString() const {\n";
   out.Indent();
   out << "std::ostringstream os;\n";

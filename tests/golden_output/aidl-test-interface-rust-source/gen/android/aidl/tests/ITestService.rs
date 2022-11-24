@@ -4273,8 +4273,6 @@ pub mod r#CompilerChecks {
     pub r#nullable_parcel_array: Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>,
     pub r#parcel_list: Vec<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>,
     pub r#nullable_parcel_list: Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>,
-    #[deprecated = "field"]
-    pub r#deprecated: i32,
   }
   impl Default for r#CompilerChecks {
     fn default() -> Self {
@@ -4297,7 +4295,6 @@ pub mod r#CompilerChecks {
         r#nullable_parcel_array: Default::default(),
         r#parcel_list: Default::default(),
         r#nullable_parcel_list: Default::default(),
-        r#deprecated: 0,
       }
     }
   }
@@ -4324,7 +4321,6 @@ pub mod r#CompilerChecks {
         subparcel.write(&self.r#nullable_parcel_array)?;
         subparcel.write(&self.r#parcel_list)?;
         subparcel.write(&self.r#nullable_parcel_list)?;
-        subparcel.write(&self.r#deprecated)?;
         Ok(())
       })
     }
@@ -4383,9 +4379,6 @@ pub mod r#CompilerChecks {
         }
         if subparcel.has_more_data() {
           self.r#nullable_parcel_list = subparcel.read()?;
-        }
-        if subparcel.has_more_data() {
-          self.r#deprecated = subparcel.read()?;
         }
         Ok(())
       })
@@ -4473,10 +4466,107 @@ pub mod r#CompilerChecks {
       }
     }
   }
+  pub mod r#HasDeprecated {
+    #[derive(Debug)]
+    pub struct r#HasDeprecated {
+      #[deprecated = "field"]
+      pub r#deprecated: i32,
+    }
+    impl Default for r#HasDeprecated {
+      fn default() -> Self {
+        Self {
+          r#deprecated: 0,
+        }
+      }
+    }
+    impl binder::Parcelable for r#HasDeprecated {
+      fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+        parcel.sized_write(|subparcel| {
+          subparcel.write(&self.r#deprecated)?;
+          Ok(())
+        })
+      }
+      fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+        parcel.sized_read(|subparcel| {
+          if subparcel.has_more_data() {
+            self.r#deprecated = subparcel.read()?;
+          }
+          Ok(())
+        })
+      }
+    }
+    binder::impl_serialize_for_parcelable!(r#HasDeprecated);
+    binder::impl_deserialize_for_parcelable!(r#HasDeprecated);
+    impl binder::binder_impl::ParcelableMetadata for r#HasDeprecated {
+      fn get_descriptor() -> &'static str { "android.aidl.tests.ITestService.CompilerChecks.HasDeprecated" }
+    }
+  }
+  pub mod r#UsingHasDeprecated {
+    #[derive(Debug)]
+    pub enum r#UsingHasDeprecated {
+      N(i32),
+      M(crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_13_HasDeprecated),
+    }
+    impl Default for r#UsingHasDeprecated {
+      fn default() -> Self {
+        Self::N(0)
+      }
+    }
+    impl binder::Parcelable for r#UsingHasDeprecated {
+      fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+        match self {
+          Self::N(v) => {
+            parcel.write(&0i32)?;
+            parcel.write(v)
+          }
+          Self::M(v) => {
+            parcel.write(&1i32)?;
+            parcel.write(v)
+          }
+        }
+      }
+      fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+        let tag: i32 = parcel.read()?;
+        match tag {
+          0 => {
+            let value: i32 = parcel.read()?;
+            *self = Self::N(value);
+            Ok(())
+          }
+          1 => {
+            let value: crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_13_HasDeprecated = parcel.read()?;
+            *self = Self::M(value);
+            Ok(())
+          }
+          _ => {
+            Err(binder::StatusCode::BAD_VALUE)
+          }
+        }
+      }
+    }
+    binder::impl_serialize_for_parcelable!(r#UsingHasDeprecated);
+    binder::impl_deserialize_for_parcelable!(r#UsingHasDeprecated);
+    impl binder::binder_impl::ParcelableMetadata for r#UsingHasDeprecated {
+      fn get_descriptor() -> &'static str { "android.aidl.tests.ITestService.CompilerChecks.UsingHasDeprecated" }
+    }
+    pub mod r#Tag {
+      #![allow(non_upper_case_globals)]
+      use binder::declare_binder_enum;
+      declare_binder_enum! {
+        r#Tag : [i32; 2] {
+          r#n = 0,
+          r#m = 1,
+        }
+      }
+    }
+  }
 }
 pub(crate) mod mangled {
  pub use super::r#ITestService as _7_android_4_aidl_5_tests_12_ITestService;
  pub use super::r#Empty::r#Empty as _7_android_4_aidl_5_tests_12_ITestService_5_Empty;
  pub use super::r#CompilerChecks::r#CompilerChecks as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks;
  pub use super::r#CompilerChecks::r#Foo::r#IFoo as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_3_Foo;
+ pub use super::r#CompilerChecks::r#HasDeprecated::r#HasDeprecated as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_13_HasDeprecated;
+ pub use super::r#CompilerChecks::r#UsingHasDeprecated::r#UsingHasDeprecated as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_18_UsingHasDeprecated;
+ pub use super::r#CompilerChecks::r#UsingHasDeprecated::r#Tag::r#Tag as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_18_UsingHasDeprecated_3_Tag;
 }
