@@ -630,6 +630,7 @@ java_test {
     ],
     srcs: [
         "tests/java/src/android/aidl/permission/tests/*.java",
+        "tests/java/src/android/aidl/permission/service/*.java",
     ],
 }
 
