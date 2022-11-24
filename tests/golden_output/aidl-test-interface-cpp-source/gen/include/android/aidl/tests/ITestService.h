@@ -15,20 +15,30 @@
 #include <android/aidl/tests/Union.h>
 #include <android/aidl/tests/extension/ExtendableParcelable.h>
 #include <android/binder_to_string.h>
+#include <array>
 #include <binder/Delegate.h>
+#include <binder/Enums.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/Parcel.h>
 #include <binder/ParcelFileDescriptor.h>
 #include <binder/Status.h>
 #include <binder/Trace.h>
+#include <cassert>
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 #include <utils/String16.h>
 #include <utils/StrongPointer.h>
+#include <variant>
 #include <vector>
+
+#ifndef __BIONIC__
+#define __assert2(a,b,c,d) ((void)0)
+#endif
 
 namespace android::aidl::tests {
 class CircularParcelable;
@@ -120,6 +130,138 @@ public:
     private:
       ::android::sp<IFoo> _aidl_delegate;
     };  // class IFooDelegator
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    class HasDeprecated : public ::android::Parcelable {
+    public:
+      int32_t __attribute__((deprecated("field"))) deprecated = 0;
+      inline bool operator!=(const HasDeprecated& rhs) const {
+        return std::tie(deprecated) != std::tie(rhs.deprecated);
+      }
+      inline bool operator<(const HasDeprecated& rhs) const {
+        return std::tie(deprecated) < std::tie(rhs.deprecated);
+      }
+      inline bool operator<=(const HasDeprecated& rhs) const {
+        return std::tie(deprecated) <= std::tie(rhs.deprecated);
+      }
+      inline bool operator==(const HasDeprecated& rhs) const {
+        return std::tie(deprecated) == std::tie(rhs.deprecated);
+      }
+      inline bool operator>(const HasDeprecated& rhs) const {
+        return std::tie(deprecated) > std::tie(rhs.deprecated);
+      }
+      inline bool operator>=(const HasDeprecated& rhs) const {
+        return std::tie(deprecated) >= std::tie(rhs.deprecated);
+      }
+
+      ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
+      ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
+      static const ::android::String16& getParcelableDescriptor() {
+        static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.ITestService.CompilerChecks.HasDeprecated");
+        return DESCIPTOR;
+      }
+      inline std::string toString() const {
+        std::ostringstream os;
+        os << "HasDeprecated{";
+        os << "deprecated: " << ::android::internal::ToString(deprecated);
+        os << "}";
+        return os.str();
+      }
+    };  // class HasDeprecated
+    #pragma clang diagnostic pop
+    class UsingHasDeprecated : public ::android::Parcelable {
+    public:
+      enum class Tag : int32_t {
+        n = 0,
+        m = 1,
+      };
+      // Expose tag symbols for legacy code
+      static const inline Tag n = Tag::n;
+      static const inline Tag m = Tag::m;
+
+      template<typename _Tp>
+      static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, UsingHasDeprecated>;
+
+      UsingHasDeprecated() : _value(std::in_place_index<static_cast<size_t>(n)>, int32_t(0)) { }
+
+      template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
+      // NOLINTNEXTLINE(google-explicit-constructor)
+      constexpr UsingHasDeprecated(_Tp&& _arg)
+          : _value(std::forward<_Tp>(_arg)) {}
+
+      template <size_t _Np, typename... _Tp>
+      constexpr explicit UsingHasDeprecated(std::in_place_index_t<_Np>, _Tp&&... _args)
+          : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {}
+
+      template <Tag _tag, typename... _Tp>
+      static UsingHasDeprecated make(_Tp&&... _args) {
+        return UsingHasDeprecated(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
+      }
+
+      template <Tag _tag, typename _Tp, typename... _Up>
+      static UsingHasDeprecated make(std::initializer_list<_Tp> _il, _Up&&... _args) {
+        return UsingHasDeprecated(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
+      }
+
+      Tag getTag() const {
+        return static_cast<Tag>(_value.index());
+      }
+
+      template <Tag _tag>
+      const auto& get() const {
+        if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+        return std::get<static_cast<size_t>(_tag)>(_value);
+      }
+
+      template <Tag _tag>
+      auto& get() {
+        if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+        return std::get<static_cast<size_t>(_tag)>(_value);
+      }
+
+      template <Tag _tag, typename... _Tp>
+      void set(_Tp&&... _args) {
+        _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
+      }
+
+      inline bool operator!=(const UsingHasDeprecated& rhs) const {
+        return _value != rhs._value;
+      }
+      inline bool operator<(const UsingHasDeprecated& rhs) const {
+        return _value < rhs._value;
+      }
+      inline bool operator<=(const UsingHasDeprecated& rhs) const {
+        return _value <= rhs._value;
+      }
+      inline bool operator==(const UsingHasDeprecated& rhs) const {
+        return _value == rhs._value;
+      }
+      inline bool operator>(const UsingHasDeprecated& rhs) const {
+        return _value > rhs._value;
+      }
+      inline bool operator>=(const UsingHasDeprecated& rhs) const {
+        return _value >= rhs._value;
+      }
+
+      ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
+      ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
+      static const ::android::String16& getParcelableDescriptor() {
+        static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.ITestService.CompilerChecks.UsingHasDeprecated");
+        return DESCIPTOR;
+      }
+      inline std::string toString() const {
+        std::ostringstream os;
+        os << "UsingHasDeprecated{";
+        switch (getTag()) {
+        case n: os << "n: " << ::android::internal::ToString(get<n>()); break;
+        case m: os << "m: " << ::android::internal::ToString(get<m>()); break;
+        }
+        os << "}";
+        return os.str();
+      }
+    private:
+      std::variant<int32_t, ::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated> _value;
+    };  // class UsingHasDeprecated
     ::android::sp<::android::IBinder> binder;
     ::android::sp<::android::IBinder> nullable_binder;
     ::std::vector<::android::sp<::android::IBinder>> binder_array;
@@ -138,37 +280,31 @@ public:
     ::std::optional<::std::vector<::std::optional<::android::aidl::tests::ITestService::Empty>>> nullable_parcel_array;
     ::std::vector<::android::aidl::tests::ITestService::Empty> parcel_list;
     ::std::optional<::std::vector<::std::optional<::android::aidl::tests::ITestService::Empty>>> nullable_parcel_list;
-    int32_t __attribute__((deprecated("field"))) deprecated = 0;
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     inline bool operator!=(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list, deprecated) != std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list, rhs.deprecated);
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) != std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
     }
     inline bool operator<(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list, deprecated) < std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list, rhs.deprecated);
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) < std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
     }
     inline bool operator<=(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list, deprecated) <= std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list, rhs.deprecated);
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) <= std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
     }
     inline bool operator==(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list, deprecated) == std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list, rhs.deprecated);
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) == std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
     }
     inline bool operator>(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list, deprecated) > std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list, rhs.deprecated);
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) > std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
     }
     inline bool operator>=(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list, deprecated) >= std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list, rhs.deprecated);
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) >= std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
     }
 
-    #pragma clang diagnostic pop
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
       static const ::android::StaticString16 DESCIPTOR (u"android.aidl.tests.ITestService.CompilerChecks");
       return DESCIPTOR;
     }
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     inline std::string toString() const {
       std::ostringstream os;
       os << "CompilerChecks{";
@@ -190,11 +326,9 @@ public:
       os << ", nullable_parcel_array: " << ::android::internal::ToString(nullable_parcel_array);
       os << ", parcel_list: " << ::android::internal::ToString(parcel_list);
       os << ", nullable_parcel_list: " << ::android::internal::ToString(nullable_parcel_list);
-      os << ", deprecated: " << ::android::internal::ToString(deprecated);
       os << "}";
       return os.str();
     }
-    #pragma clang diagnostic pop
   };  // class CompilerChecks
   enum : int32_t { TEST_CONSTANT = 42 };
   enum : int32_t { TEST_CONSTANT2 = -42 };
@@ -552,4 +686,32 @@ public:
 };  // class ITestServiceDefault
 }  // namespace tests
 }  // namespace aidl
+}  // namespace android
+namespace android {
+namespace aidl {
+namespace tests {
+[[nodiscard]] static inline std::string toString(ITestService::CompilerChecks::UsingHasDeprecated::Tag val) {
+  switch(val) {
+  case ITestService::CompilerChecks::UsingHasDeprecated::Tag::n:
+    return "n";
+  case ITestService::CompilerChecks::UsingHasDeprecated::Tag::m:
+    return "m";
+  default:
+    return std::to_string(static_cast<int32_t>(val));
+  }
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+namespace android {
+namespace internal {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++17-extensions"
+template <>
+constexpr inline std::array<::android::aidl::tests::ITestService::CompilerChecks::UsingHasDeprecated::Tag, 2> enum_values<::android::aidl::tests::ITestService::CompilerChecks::UsingHasDeprecated::Tag> = {
+  ::android::aidl::tests::ITestService::CompilerChecks::UsingHasDeprecated::Tag::n,
+  ::android::aidl::tests::ITestService::CompilerChecks::UsingHasDeprecated::Tag::m,
+};
+#pragma clang diagnostic pop
+}  // namespace internal
 }  // namespace android
