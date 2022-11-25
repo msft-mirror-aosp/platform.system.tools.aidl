@@ -19,6 +19,10 @@ public interface IProtected extends android.os.IInterface
     @Override public void NonManifestPermission() throws android.os.RemoteException
     {
     }
+    // Used by the integration tests to dynamically set permissions that are considered granted.
+    @Override public void SetGranted(java.util.List<java.lang.String> permissions) throws android.os.RemoteException
+    {
+    }
     @Override
     public android.os.IBinder asBinder() {
       return null;
@@ -83,6 +87,10 @@ public interface IProtected extends android.os.IInterface
         {
           return "NonManifestPermission";
         }
+        case TRANSACTION_SetGranted:
+        {
+          return "SetGranted";
+        }
         default:
         {
           return null;
@@ -131,6 +139,15 @@ public interface IProtected extends android.os.IInterface
         case TRANSACTION_NonManifestPermission:
         {
           this.NonManifestPermission();
+          reply.writeNoException();
+          break;
+        }
+        case TRANSACTION_SetGranted:
+        {
+          java.util.List<java.lang.String> _arg0;
+          _arg0 = data.createStringArrayList();
+          data.enforceNoDataAvail();
+          this.SetGranted(_arg0);
           reply.writeNoException();
           break;
         }
@@ -212,6 +229,22 @@ public interface IProtected extends android.os.IInterface
           _data.recycle();
         }
       }
+      // Used by the integration tests to dynamically set permissions that are considered granted.
+      @Override public void SetGranted(java.util.List<java.lang.String> permissions) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeStringList(permissions);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_SetGranted, _data, _reply, 0);
+          _reply.readException();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
     }
     static final int TRANSACTION_PermissionProtected = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     /** Helper method to enforce permissions for PermissionProtected */
@@ -237,10 +270,11 @@ public interface IProtected extends android.os.IInterface
       android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
       mEnforcer.enforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, source);
     }
+    static final int TRANSACTION_SetGranted = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
     /** @hide */
     public int getMaxTransactionId()
     {
-      return 3;
+      return 4;
     }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$IProtected".replace('$', '.');
@@ -252,4 +286,7 @@ public interface IProtected extends android.os.IInterface
   public void MultiplePermissionsAny() throws android.os.RemoteException;
   @android.annotation.EnforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK)
   public void NonManifestPermission() throws android.os.RemoteException;
+  // Used by the integration tests to dynamically set permissions that are considered granted.
+  @android.annotation.RequiresNoPermission
+  public void SetGranted(java.util.List<java.lang.String> permissions) throws android.os.RemoteException;
 }

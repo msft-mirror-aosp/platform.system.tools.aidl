@@ -18,6 +18,7 @@ package android.aidl.tests;
 
 import android.aidl.tests.BackendType;
 import android.aidl.tests.ByteEnum;
+import android.aidl.tests.CircularParcelable;
 import android.aidl.tests.ICircular;
 import android.aidl.tests.INamedCallback;
 import android.aidl.tests.INewName;
@@ -298,9 +299,15 @@ interface ITestService {
         // interface without I-
         interface Foo {}
 
-        /** @deprecated field */
-        int deprecated;
+        parcelable HasDeprecated {
+            /** @deprecated field */
+            int deprecated;
+        }
+        union UsingHasDeprecated {
+            int n;
+            HasDeprecated m;
+        }
     }
 
-    ICircular GetCircular();
+    ICircular GetCircular(out CircularParcelable cp);
 }

@@ -1318,15 +1318,19 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
       break;
     }
     case (FIRST_CALL_TRANSACTION + 67 /*GetCircular*/): {
+      ::aidl::android::aidl::tests::CircularParcelable out_cp;
       std::shared_ptr<::aidl::android::aidl::tests::ICircular> _aidl_return;
 
-      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetCircular(&_aidl_return);
+      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetCircular(&out_cp, &_aidl_return);
       _aidl_ret_status = AParcel_writeStatusHeader(_aidl_out, _aidl_status.get());
       if (_aidl_ret_status != STATUS_OK) break;
 
       if (!AStatus_isOk(_aidl_status.get())) break;
 
       _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, _aidl_return);
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, out_cp);
       if (_aidl_ret_status != STATUS_OK) break;
 
       break;
@@ -4162,7 +4166,7 @@ BpTestService::~BpTestService() {}
   _aidl_status_return:
   return _aidl_status;
 }
-::ndk::ScopedAStatus BpTestService::GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) {
+::ndk::ScopedAStatus BpTestService::GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   ::ndk::ScopedAStatus _aidl_status;
   ::ndk::ScopedAParcel _aidl_in;
@@ -4183,7 +4187,7 @@ BpTestService::~BpTestService() {}
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetCircular(_aidl_return);
+    _aidl_status = ITestService::getDefaultImpl()->GetCircular(out_cp, _aidl_return);
     goto _aidl_status_return;
   }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
@@ -4193,6 +4197,9 @@ BpTestService::~BpTestService() {}
 
   if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
   _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), _aidl_return);
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), out_cp);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_error:
@@ -4588,7 +4595,7 @@ std::shared_ptr<ITestService> ITestService::default_impl = nullptr;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
 }
-::ndk::ScopedAStatus ITestServiceDefault::GetCircular(std::shared_ptr<::aidl::android::aidl::tests::ICircular>* /*_aidl_return*/) {
+::ndk::ScopedAStatus ITestServiceDefault::GetCircular(::aidl::android::aidl::tests::CircularParcelable* /*out_cp*/, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
@@ -4644,8 +4651,6 @@ namespace aidl {
 namespace tests {
 const char* ITestService::CompilerChecks::descriptor = "android.aidl.tests.ITestService.CompilerChecks";
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 binder_status_t ITestService::CompilerChecks::readFromParcel(const AParcel* _aidl_parcel) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
@@ -4781,13 +4786,6 @@ binder_status_t ITestService::CompilerChecks::readFromParcel(const AParcel* _aid
   _aidl_ret_status = ::ndk::AParcel_readNullableData(_aidl_parcel, &nullable_parcel_list);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
-    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
-    return _aidl_ret_status;
-  }
-  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &deprecated);
-  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
-
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
   return _aidl_ret_status;
 }
@@ -4851,16 +4849,12 @@ binder_status_t ITestService::CompilerChecks::writeToParcel(AParcel* _aidl_parce
   _aidl_ret_status = ::ndk::AParcel_writeNullableData(_aidl_parcel, nullable_parcel_list);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, deprecated);
-  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
-
   size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
   return _aidl_ret_status;
 }
-#pragma clang diagnostic pop
 
 }  // namespace tests
 }  // namespace aidl
@@ -4940,6 +4934,102 @@ std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks
 bool ITestService::CompilerChecks::IFooDefault::isRemote() {
   return false;
 }
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+const char* ITestService::CompilerChecks::HasDeprecated::descriptor = "android.aidl.tests.ITestService.CompilerChecks.HasDeprecated";
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+binder_status_t ITestService::CompilerChecks::HasDeprecated::readFromParcel(const AParcel* _aidl_parcel) {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_parcelable_size = 0;
+  _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &deprecated);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+  return _aidl_ret_status;
+}
+binder_status_t ITestService::CompilerChecks::HasDeprecated::writeToParcel(AParcel* _aidl_parcel) const {
+  binder_status_t _aidl_ret_status;
+  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, deprecated);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
+  AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
+  AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
+  return _aidl_ret_status;
+}
+#pragma clang diagnostic pop
+
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+const char* ITestService::CompilerChecks::UsingHasDeprecated::descriptor = "android.aidl.tests.ITestService.CompilerChecks.UsingHasDeprecated";
+
+binder_status_t ITestService::CompilerChecks::UsingHasDeprecated::readFromParcel(const AParcel* _parcel) {
+  binder_status_t _aidl_ret_status;
+  int32_t _aidl_tag;
+  if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_tag)) != STATUS_OK) return _aidl_ret_status;
+  switch (static_cast<Tag>(_aidl_tag)) {
+  case n: {
+    int32_t _aidl_value;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<int32_t>) {
+      set<n>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<n>(std::move(_aidl_value));
+    }
+    return STATUS_OK; }
+  case m: {
+    ::aidl::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated _aidl_value;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<::aidl::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated>) {
+      set<m>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<m>(std::move(_aidl_value));
+    }
+    return STATUS_OK; }
+  }
+  return STATUS_BAD_VALUE;
+}
+binder_status_t ITestService::CompilerChecks::UsingHasDeprecated::writeToParcel(AParcel* _parcel) const {
+  binder_status_t _aidl_ret_status = ::ndk::AParcel_writeData(_parcel, static_cast<int32_t>(getTag()));
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+  switch (getTag()) {
+  case n: return ::ndk::AParcel_writeData(_parcel, get<n>());
+  case m: return ::ndk::AParcel_writeData(_parcel, get<m>());
+  }
+  __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
+}
+
 }  // namespace tests
 }  // namespace aidl
 }  // namespace android
