@@ -294,7 +294,7 @@ public interface ITestService extends android.os.IInterface
     {
       return 0;
     }
-    @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+    @Override public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException
     {
       return null;
     }
@@ -604,9 +604,9 @@ public interface ITestService extends android.os.IInterface
     {
       return mImpl.getBackendType();
     }
-    @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+    @Override public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException
     {
-      return mImpl.GetCircular();
+      return mImpl.GetCircular(cp);
     }
     android.aidl.tests.ITestService mImpl;
   }
@@ -1733,9 +1733,13 @@ public interface ITestService extends android.os.IInterface
         }
         case TRANSACTION_GetCircular:
         {
-          android.aidl.tests.ICircular _result = this.GetCircular();
+          android.aidl.tests.CircularParcelable _arg0;
+          _arg0 = new android.aidl.tests.CircularParcelable();
+          data.enforceNoDataAvail();
+          android.aidl.tests.ICircular _result = this.GetCircular(_arg0);
           reply.writeNoException();
           reply.writeStrongInterface(_result);
+          reply.writeTypedObject(_arg0, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
         }
         default:
@@ -3414,7 +3418,7 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
-      @Override public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException
+      @Override public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         _data.markSensitive();
@@ -3425,11 +3429,14 @@ public interface ITestService extends android.os.IInterface
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetCircular, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
             if (getDefaultImpl() != null) {
-              return getDefaultImpl().GetCircular();
+              return getDefaultImpl().GetCircular(cp);
             }
           }
           _reply.readException();
           _result = android.aidl.tests.ICircular.Stub.asInterface(_reply.readStrongBinder());
+          if ((0!=_reply.readInt())) {
+            cp.readFromParcel(_reply);
+          }
         }
         finally {
           _reply.recycle();
@@ -3707,7 +3714,7 @@ public interface ITestService extends android.os.IInterface
   // Retrieve the ICppJavaTests if the server supports it
   public android.os.IBinder GetCppJavaTests() throws android.os.RemoteException;
   public byte getBackendType() throws android.os.RemoteException;
-  public android.aidl.tests.ICircular GetCircular() throws android.os.RemoteException;
+  public android.aidl.tests.ICircular GetCircular(android.aidl.tests.CircularParcelable cp) throws android.os.RemoteException;
   // Small empty parcelable for nullability check
   public static class Empty implements android.os.Parcelable
   {
@@ -3787,9 +3794,6 @@ public interface ITestService extends android.os.IInterface
     public android.aidl.tests.ITestService.Empty[] nullable_parcel_array;
     public java.util.List<android.aidl.tests.ITestService.Empty> parcel_list;
     public java.util.List<android.aidl.tests.ITestService.Empty> nullable_parcel_list;
-    /** @deprecated field */
-    @Deprecated
-    public int deprecated = 0;
     public static final android.os.Parcelable.Creator<CompilerChecks> CREATOR = new android.os.Parcelable.Creator<CompilerChecks>() {
       @Override
       public CompilerChecks createFromParcel(android.os.Parcel _aidl_source) {
@@ -3824,7 +3828,6 @@ public interface ITestService extends android.os.IInterface
       _aidl_parcel.writeTypedArray(nullable_parcel_array, _aidl_flag);
       _aidl_parcel.writeTypedList(parcel_list, _aidl_flag);
       _aidl_parcel.writeTypedList(nullable_parcel_list, _aidl_flag);
-      _aidl_parcel.writeInt(deprecated);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
       _aidl_parcel.setDataPosition(_aidl_start_pos);
       _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
@@ -3872,8 +3875,6 @@ public interface ITestService extends android.os.IInterface
         parcel_list = _aidl_parcel.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
         nullable_parcel_list = _aidl_parcel.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
-        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
-        deprecated = _aidl_parcel.readInt();
       } finally {
         if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
           throw new android.os.BadParcelableException("Overflow in the size of parcelable");
@@ -4015,6 +4016,194 @@ public interface ITestService extends android.os.IInterface
         }
       }
       public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService$CompilerChecks$Foo".replace('$', '.');
+    }
+    public static class HasDeprecated implements android.os.Parcelable
+    {
+      /** @deprecated field */
+      @Deprecated
+      public int deprecated = 0;
+      public static final android.os.Parcelable.Creator<HasDeprecated> CREATOR = new android.os.Parcelable.Creator<HasDeprecated>() {
+        @Override
+        public HasDeprecated createFromParcel(android.os.Parcel _aidl_source) {
+          HasDeprecated _aidl_out = new HasDeprecated();
+          _aidl_out.readFromParcel(_aidl_source);
+          return _aidl_out;
+        }
+        @Override
+        public HasDeprecated[] newArray(int _aidl_size) {
+          return new HasDeprecated[_aidl_size];
+        }
+      };
+      @Override public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag)
+      {
+        int _aidl_start_pos = _aidl_parcel.dataPosition();
+        _aidl_parcel.writeInt(0);
+        _aidl_parcel.writeInt(deprecated);
+        int _aidl_end_pos = _aidl_parcel.dataPosition();
+        _aidl_parcel.setDataPosition(_aidl_start_pos);
+        _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
+        _aidl_parcel.setDataPosition(_aidl_end_pos);
+      }
+      public final void readFromParcel(android.os.Parcel _aidl_parcel)
+      {
+        int _aidl_start_pos = _aidl_parcel.dataPosition();
+        int _aidl_parcelable_size = _aidl_parcel.readInt();
+        try {
+          if (_aidl_parcelable_size < 4) throw new android.os.BadParcelableException("Parcelable too small");;
+          if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+          deprecated = _aidl_parcel.readInt();
+        } finally {
+          if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
+            throw new android.os.BadParcelableException("Overflow in the size of parcelable");
+          }
+          _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+        }
+      }
+      @Override
+      public int describeContents() {
+        int _mask = 0;
+        return _mask;
+      }
+    }
+    public static final class UsingHasDeprecated implements android.os.Parcelable {
+      // tags for union fields
+      public final static int n = 0;  // int n;
+      public final static int m = 1;  // android.aidl.tests.ITestService.CompilerChecks.HasDeprecated m;
+
+      private int _tag;
+      private Object _value;
+
+      public UsingHasDeprecated() {
+        int _value = 0;
+        this._tag = n;
+        this._value = _value;
+      }
+
+      private UsingHasDeprecated(android.os.Parcel _aidl_parcel) {
+        readFromParcel(_aidl_parcel);
+      }
+
+      private UsingHasDeprecated(int _tag, Object _value) {
+        this._tag = _tag;
+        this._value = _value;
+      }
+
+      public int getTag() {
+        return _tag;
+      }
+
+      // int n;
+
+      public static UsingHasDeprecated n(int _value) {
+        return new UsingHasDeprecated(n, _value);
+      }
+
+      public int getN() {
+        _assertTag(n);
+        return (int) _value;
+      }
+
+      public void setN(int _value) {
+        _set(n, _value);
+      }
+
+      // android.aidl.tests.ITestService.CompilerChecks.HasDeprecated m;
+
+      public static UsingHasDeprecated m(android.aidl.tests.ITestService.CompilerChecks.HasDeprecated _value) {
+        return new UsingHasDeprecated(m, _value);
+      }
+
+      public android.aidl.tests.ITestService.CompilerChecks.HasDeprecated getM() {
+        _assertTag(m);
+        return (android.aidl.tests.ITestService.CompilerChecks.HasDeprecated) _value;
+      }
+
+      public void setM(android.aidl.tests.ITestService.CompilerChecks.HasDeprecated _value) {
+        _set(m, _value);
+      }
+
+      public static final android.os.Parcelable.Creator<UsingHasDeprecated> CREATOR = new android.os.Parcelable.Creator<UsingHasDeprecated>() {
+        @Override
+        public UsingHasDeprecated createFromParcel(android.os.Parcel _aidl_source) {
+          return new UsingHasDeprecated(_aidl_source);
+        }
+        @Override
+        public UsingHasDeprecated[] newArray(int _aidl_size) {
+          return new UsingHasDeprecated[_aidl_size];
+        }
+      };
+
+      @Override
+      public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag) {
+        _aidl_parcel.writeInt(_tag);
+        switch (_tag) {
+        case n:
+          _aidl_parcel.writeInt(getN());
+          break;
+        case m:
+          _aidl_parcel.writeTypedObject(getM(), _aidl_flag);
+          break;
+        }
+      }
+
+      public void readFromParcel(android.os.Parcel _aidl_parcel) {
+        int _aidl_tag;
+        _aidl_tag = _aidl_parcel.readInt();
+        switch (_aidl_tag) {
+        case n: {
+          int _aidl_value;
+          _aidl_value = _aidl_parcel.readInt();
+          _set(_aidl_tag, _aidl_value);
+          return; }
+        case m: {
+          android.aidl.tests.ITestService.CompilerChecks.HasDeprecated _aidl_value;
+          _aidl_value = _aidl_parcel.readTypedObject(android.aidl.tests.ITestService.CompilerChecks.HasDeprecated.CREATOR);
+          _set(_aidl_tag, _aidl_value);
+          return; }
+        }
+        throw new IllegalArgumentException("union: unknown tag: " + _aidl_tag);
+      }
+
+      @Override
+      public int describeContents() {
+        int _mask = 0;
+        switch (getTag()) {
+        case m:
+          _mask |= describeContents(getM());
+          break;
+        }
+        return _mask;
+      }
+      private int describeContents(Object _v) {
+        if (_v == null) return 0;
+        if (_v instanceof android.os.Parcelable) {
+          return ((android.os.Parcelable) _v).describeContents();
+        }
+        return 0;
+      }
+
+      private void _assertTag(int tag) {
+        if (getTag() != tag) {
+          throw new IllegalStateException("bad access: " + _tagString(tag) + ", " + _tagString(getTag()) + " is available.");
+        }
+      }
+
+      private String _tagString(int _tag) {
+        switch (_tag) {
+        case n: return "n";
+        case m: return "m";
+        }
+        throw new IllegalStateException("unknown field: " + _tag);
+      }
+
+      private void _set(int _tag, Object _value) {
+        this._tag = _tag;
+        this._value = _value;
+      }
+      public static @interface Tag {
+        public static final int n = 0;
+        public static final int m = 1;
+      }
     }
   }
 }

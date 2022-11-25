@@ -911,7 +911,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
     } else {
       GenerateStubCase(method, transactCodeName, oneway, stubClass, typenames, options);
     }
-    if (iface.IsPermissionAnnotated() || method.GetType().IsPermissionAnnotated()) {
+    if (iface.EnforceExpression() || method.GetType().EnforceExpression()) {
       GeneratePermissionMethod(iface, method, stubClass);
     }
   } else {

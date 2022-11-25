@@ -16,6 +16,9 @@
 #include <android/binder_stability.h>
 #endif  // BINDER_STABILITY_SUPPORT
 
+namespace aidl::android::aidl::loggable {
+class Data;
+}  // namespace aidl::android::aidl::loggable
 namespace aidl {
 namespace android {
 namespace aidl {

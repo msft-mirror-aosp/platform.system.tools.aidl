@@ -294,6 +294,7 @@ filegroup {
         "tests/android/aidl/tests/ArrayOfInterfaces.aidl",
         "tests/android/aidl/tests/BackendType.aidl",
         "tests/android/aidl/tests/ByteEnum.aidl",
+        "tests/android/aidl/tests/CircularParcelable.aidl",
         "tests/android/aidl/tests/ConstantExpressionEnum.aidl",
         "tests/android/aidl/tests/DeprecatedEnum.aidl",
         "tests/android/aidl/tests/DeprecatedParcelable.aidl",
@@ -629,6 +630,7 @@ java_test {
     ],
     srcs: [
         "tests/java/src/android/aidl/permission/tests/*.java",
+        "tests/java/src/android/aidl/permission/service/*.java",
     ],
 }
 

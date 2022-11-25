@@ -2742,7 +2742,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   return _aidl_status;
 }
 
-::android::binder::Status BpTestService::GetCircular(::android::sp<::android::aidl::tests::ICircular>* _aidl_return) {
+::android::binder::Status BpTestService::GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
   _aidl_data.markForBinder(remoteStrong());
@@ -2756,7 +2756,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetCircular, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
   if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
-     return ITestService::getDefaultImpl()->GetCircular(_aidl_return);
+     return ITestService::getDefaultImpl()->GetCircular(cp, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2769,6 +2769,10 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     return _aidl_status;
   }
   _aidl_ret_status = _aidl_reply.readStrongBinder(_aidl_return);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = _aidl_reply.readParcelable(cp);
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -4960,13 +4964,18 @@ BnTestService::BnTestService()
   break;
   case BnTestService::TRANSACTION_GetCircular:
   {
+    ::android::aidl::tests::CircularParcelable out_cp;
     ::android::sp<::android::aidl::tests::ICircular> _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
     ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCircular::cppServer");
-    ::android::binder::Status _aidl_status(GetCircular(&_aidl_return));
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
+    ::android::binder::Status _aidl_status(GetCircular(&out_cp, &_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4975,6 +4984,10 @@ BnTestService::BnTestService()
       break;
     }
     _aidl_ret_status = _aidl_reply->writeStrongBinder(_aidl_return);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    _aidl_ret_status = _aidl_reply->writeParcelable(out_cp);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
@@ -5034,8 +5047,6 @@ namespace tests {
 namespace android {
 namespace aidl {
 namespace tests {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 ::android::status_t ITestService::CompilerChecks::readFromParcel(const ::android::Parcel* _aidl_parcel) {
   ::android::status_t _aidl_ret_status = ::android::OK;
   size_t _aidl_start_pos = _aidl_parcel->dataPosition();
@@ -5191,14 +5202,6 @@ namespace tests {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
-    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
-    return _aidl_ret_status;
-  }
-  _aidl_ret_status = _aidl_parcel->readInt32(&deprecated);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    return _aidl_ret_status;
-  }
   _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
   return _aidl_ret_status;
 }
@@ -5278,17 +5281,12 @@ namespace tests {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  _aidl_ret_status = _aidl_parcel->writeInt32(deprecated);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    return _aidl_ret_status;
-  }
   auto _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
   _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
-#pragma clang diagnostic pop
 }  // namespace tests
 }  // namespace aidl
 }  // namespace android
@@ -5345,6 +5343,98 @@ ITestService::CompilerChecks::BnFoo::BnFoo()
   return _aidl_ret_status;
 }
 
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+::android::status_t ITestService::CompilerChecks::HasDeprecated::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
+  int32_t _aidl_parcelable_raw_size = 0;
+  _aidl_ret_status = _aidl_parcel->readInt32(&_aidl_parcelable_raw_size);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcelable_raw_size < 4) return ::android::BAD_VALUE;
+  size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;
+  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
+    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->readInt32(&deprecated);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+  return _aidl_ret_status;
+}
+::android::status_t ITestService::CompilerChecks::HasDeprecated::writeToParcel(::android::Parcel* _aidl_parcel) const {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  _aidl_parcel->writeInt32(0);
+  _aidl_ret_status = _aidl_parcel->writeInt32(deprecated);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  _aidl_parcel->setDataPosition(_aidl_start_pos);
+  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->setDataPosition(_aidl_end_pos);
+  return _aidl_ret_status;
+}
+#pragma clang diagnostic pop
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+::android::status_t ITestService::CompilerChecks::UsingHasDeprecated::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+  ::android::status_t _aidl_ret_status;
+  int32_t _aidl_tag;
+  if ((_aidl_ret_status = _aidl_parcel->readInt32(&_aidl_tag)) != ::android::OK) return _aidl_ret_status;
+  switch (static_cast<Tag>(_aidl_tag)) {
+  case n: {
+    int32_t _aidl_value;
+    if ((_aidl_ret_status = _aidl_parcel->readInt32(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<int32_t>) {
+      set<n>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<n>(std::move(_aidl_value));
+    }
+    return ::android::OK; }
+  case m: {
+    ::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated _aidl_value;
+    if ((_aidl_ret_status = _aidl_parcel->readParcelable(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated>) {
+      set<m>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<m>(std::move(_aidl_value));
+    }
+    return ::android::OK; }
+  }
+  return ::android::BAD_VALUE;
+}
+::android::status_t ITestService::CompilerChecks::UsingHasDeprecated::writeToParcel(::android::Parcel* _aidl_parcel) const {
+  ::android::status_t _aidl_ret_status = _aidl_parcel->writeInt32(static_cast<int32_t>(getTag()));
+  if (_aidl_ret_status != ::android::OK) return _aidl_ret_status;
+  switch (getTag()) {
+  case n: return _aidl_parcel->writeInt32(get<n>());
+  case m: return _aidl_parcel->writeParcelable(get<m>());
+  }
+  __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
+}
 }  // namespace tests
 }  // namespace aidl
 }  // namespace android

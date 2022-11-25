@@ -1191,6 +1191,8 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
 void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
                              const AidlStructuredParcelable& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::RAW);
+
+  cpp::ClangDiagnosticIgnoreDeprecated guard(out, cpp::HasDeprecatedField(defined_type));
   out << cpp::TemplateDecl(defined_type);
   out << "class";
   cpp::GenerateDeprecated(out, defined_type);
@@ -1336,6 +1338,8 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
 void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
                              const AidlUnionDecl& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::RAW);
+
+  cpp::ClangDiagnosticIgnoreDeprecated guard(out, cpp::HasDeprecatedField(defined_type));
   cpp::UnionWriter uw{defined_type, types,
                       [&](const AidlTypeSpecifier& type, const AidlTypenames& types) {
                         return NdkNameOf(types, type, StorageMode::STACK);

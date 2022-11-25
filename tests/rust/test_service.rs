@@ -27,9 +27,10 @@ use aidl_test_interface::aidl::android::aidl::tests::ITestService::{
 };
 use aidl_test_interface::aidl::android::aidl::tests::{
     extension::ExtendableParcelable::ExtendableParcelable, extension::MyExt::MyExt,
-    BackendType::BackendType, ByteEnum::ByteEnum, ConstantExpressionEnum::ConstantExpressionEnum,
-    ICircular, INamedCallback, INewName, IOldName, IntEnum::IntEnum, LongEnum::LongEnum,
-    RecursiveList::RecursiveList, StructuredParcelable, Union,
+    BackendType::BackendType, ByteEnum::ByteEnum, CircularParcelable::CircularParcelable,
+    ConstantExpressionEnum::ConstantExpressionEnum, ICircular, INamedCallback, INewName, IOldName,
+    IntEnum::IntEnum, LongEnum::LongEnum, RecursiveList::RecursiveList, StructuredParcelable,
+    Union,
 };
 use aidl_test_interface::binder::{
     self, BinderFeatures, Interface, ParcelFileDescriptor, SpIBinder,
@@ -492,7 +493,10 @@ impl ITestService::ITestService for TestService {
         Ok(BackendType::RUST)
     }
 
-    fn GetCircular(&self) -> binder::Result<binder::Strong<dyn ICircular::ICircular>> {
+    fn GetCircular(
+        &self,
+        _: &mut CircularParcelable,
+    ) -> binder::Result<binder::Strong<dyn ICircular::ICircular>> {
         Ok(ICircular::BnCircular::new_binder(Circular, BinderFeatures::default()))
     }
 }

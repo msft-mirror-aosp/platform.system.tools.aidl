@@ -1981,6 +1981,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
         _aidl_ret_status = ::android::BAD_TYPE;
         std::cout << "  Failure: Parcel interface does not match." << std::endl;  break;
       }
+      ::android::aidl::tests::CircularParcelable out_cp;
       ::android::binder::Status binderStatus;
       binderStatus.readFromParcel(_aidl_reply);
       ::android::sp<::android::aidl::tests::ICircular>* _aidl_return = new ::android::sp<::android::aidl::tests::ICircular>;
@@ -1988,6 +1989,16 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       if (((_aidl_ret_status) != (android::NO_ERROR))) {
         std::cout << "  Failure: error in reading return value from Parcel." << std::endl;  break;
       }
+      _aidl_ret_status = _aidl_data.readParcelable(&out_cp);
+      if (((_aidl_ret_status) != (android::NO_ERROR))) {
+        std::cout << "  Failure: error in reading argument cp from Parcel." << std::endl;  break;
+      }
+      if (!_aidl_data.enforceNoDataAvail().isOk()) {
+        _aidl_ret_status = android::BAD_VALUE;
+        std::cout << "  Failure: Parcel has too much data." << std::endl;
+        break;
+      }
+      std::cout << "  Argument \"cp\" has value: " << ::android::internal::ToString(out_cp) << std::endl;
       std::cout << "  Return value: " << ::android::internal::ToString(_aidl_return) << std::endl;
     }
     break;

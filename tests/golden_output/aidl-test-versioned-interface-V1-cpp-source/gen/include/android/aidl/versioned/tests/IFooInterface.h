@@ -12,6 +12,9 @@
 #include <utils/StrongPointer.h>
 #include <vector>
 
+namespace android::aidl::versioned::tests {
+class Foo;
+}  // namespace android::aidl::versioned::tests
 namespace android {
 namespace aidl {
 namespace versioned {
