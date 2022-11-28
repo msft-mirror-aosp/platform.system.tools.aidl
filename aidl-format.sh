@@ -16,7 +16,7 @@
 
 set -e
 
-clang_format=${CLANG_FORMAT_PATH:-clang-format}
+clang_format=clang-format
 
 # future considerations:
 # - could we make this work with git-clang-format instead?
@@ -149,19 +149,21 @@ function _aidl-format() (
       echo "  -d: display diff instead of the formatted result"
       echo "  -w: rewrite the result back to the source file, instead of stdout"
       echo "  -h: show this help message"
+      echo "  --clang-format-path <PATH>: set the path to the clang-format to <PATH>"
       echo "  [path...]: source files. if none, input is read from stdin"
       exit 1
     }
 
     local mode=print
-    if [ $# -gt 0 ]; then
+    while [ $# -gt 0 ]; do
       case "$1" in
         -d) mode=diff; shift;;
         -w) mode=write; shift;;
         -h) show-help-and-exit;;
-        -*) echo "$1" is wrong option; show-help-and-exit;;
+	--clang-format-path) clang_format="$2"; shift 2;;
+	*) break;;
       esac
-    fi
+    done
 
     if [ $# -lt 1 ]; then
       if [ $mode = "write" ]; then
