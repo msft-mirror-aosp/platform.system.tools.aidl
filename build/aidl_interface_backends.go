@@ -488,8 +488,8 @@ func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
 
 func (i *aidlInterface) isModuleForVndk(version string) bool {
 	if i.properties.Vndk_use_version != nil {
-		if !i.hasVersion() {
-			panic("does not make sense, vndk_use_version specififed")
+		if !i.hasVersion() && version != *i.properties.Vndk_use_version {
+			panic("unrecognized vndk_use_version")
 		}
 		// Will be exactly one of the version numbers
 		return version == *i.properties.Vndk_use_version
