@@ -768,10 +768,6 @@ func (i *aidlInterface) checkVndkUseVersion(mctx android.DefaultableHookContext)
 	if i.properties.Vndk_use_version == nil {
 		return
 	}
-	if !i.hasVersion() {
-		mctx.PropertyErrorf("vndk_use_version", "This does not make sense when no 'versions' are specified.")
-
-	}
 	if *i.properties.Vndk_use_version == i.nextVersion() {
 		return
 	}
@@ -915,8 +911,13 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||
 		proptools.Bool(i.properties.Backend.Ndk.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled)
 
-	if vndkEnabled && !proptools.Bool(i.properties.Unstable) && i.properties.Frozen == nil {
-		mctx.PropertyErrorf("frozen", "true or false must be specified when the VNDK is enabled on a versioned interface (not `unstable: true`)")
+	if vndkEnabled && !proptools.Bool(i.properties.Unstable) {
+		if i.properties.Frozen == nil {
+			mctx.PropertyErrorf("frozen", "true or false must be specified when the VNDK is enabled on a versioned interface (not `unstable: true`)")
+		}
+		if !proptools.Bool(i.properties.Frozen) && i.properties.Vndk_use_version == nil {
+			mctx.PropertyErrorf("vndk_use_version", "must be specified if interface is unfrozen (or specify 'frozen: false')")
+		}
 	}
 
 	versions := i.getVersions()
