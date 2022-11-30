@@ -126,8 +126,8 @@ TEST_F(AidlTest, LoggableInterface) {
                   {"in_listValue", "[mno]"},
                   {"in_dataValue",
                    "Data{num: 42, str: abc, nestedUnion: Union{str: def}, nestedEnum: FOO}"},
-                  {"in_binderValue", "(null)"},
-                  {"in_pfdValue", "(null)"},
+                  {"in_binderValue", "binder:0x0"},
+                  {"in_pfdValue", "fd:-1"},
                   {"in_pfdArray", "[]"},
               }));
   EXPECT_THAT(log.output_args,
@@ -140,6 +140,6 @@ TEST_F(AidlTest, LoggableInterface) {
                                               {"in_doubleArray", "[53.000000, 54.000000]"},
                                               {"in_stringArray", "[ghi, jkl]"},
                                               {"in_listValue", "[mno]"},
-                                              {"in_pfdValue", "(null)"},
+                                              {"in_pfdValue", "fd:-1"},
                                               {"in_pfdArray", "[]"}}));
 }
