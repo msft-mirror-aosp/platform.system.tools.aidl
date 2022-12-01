@@ -322,7 +322,11 @@ if __name__ == '__main__':
         server = JavaVersionTestServer(host, s_bitness, s_version)
         add_test(client, server)
 
-    add_test(JavaPermissionClient(host, bitness), JavaPermissionServer(host, bitness))
+    # TODO(b/218914259): Interfaces with permission are only supported for the
+    # Java backend. Once C++ and/or Rust are supported, move the test back into
+    # JavaClient and JavaServer.
+    for bitness in bitnesses:
+        add_test(JavaPermissionClient(host, bitness), JavaPermissionServer(host, bitness))
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestAidl)
     sys.exit(not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful())

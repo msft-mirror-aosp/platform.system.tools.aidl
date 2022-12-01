@@ -106,7 +106,7 @@ string Options::GetUsage() const {
        << "          Generate dependency file next to the output file with the" << endl
        << "          name based on the input file." << endl
        << "  -b" << endl
-       << "          Trigger fail when trying to compile a parcelable." << endl
+       << "          Trigger fail when trying to compile a parcelable declaration." << endl
        << "  --ninja" << endl
        << "          Generate dependency file in a format ninja understands." << endl
        << "  --rpc" << endl

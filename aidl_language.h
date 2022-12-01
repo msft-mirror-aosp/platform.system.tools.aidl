@@ -688,7 +688,7 @@ class AidlConstantValue : public AidlNode {
   // Raw value of type (currently valid in C++ and Java). Empty string on error.
   string ValueString(const AidlTypeSpecifier& type, const ConstantValueDecorator& decorator) const;
 
-  void TraverseChildren(std::function<void(const AidlNode&)> traverse) const {
+  void TraverseChildren(std::function<void(const AidlNode&)> traverse) const override {
     if (type_ == Type::ARRAY) {
       for (const auto& v : values_) {
         traverse(*v);

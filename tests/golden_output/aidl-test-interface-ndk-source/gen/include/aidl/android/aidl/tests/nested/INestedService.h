@@ -15,6 +15,9 @@
 #include <android/binder_stability.h>
 #endif  // BINDER_STABILITY_SUPPORT
 
+namespace aidl::android::aidl::tests::nested {
+class ParcelableWithNested;
+}  // namespace aidl::android::aidl::tests::nested
 namespace aidl {
 namespace android {
 namespace aidl {

@@ -21,6 +21,7 @@ import android.aidl.fixedsizearray.FixedSizeArrayExample.IntParcelable;
 import android.aidl.tests.BackendType;
 import android.aidl.tests.BadParcelable;
 import android.aidl.tests.ByteEnum;
+import android.aidl.tests.CircularParcelable;
 import android.aidl.tests.ConstantExpressionEnum;
 import android.aidl.tests.GenericStructuredParcelable;
 import android.aidl.tests.ICircular;
@@ -796,7 +797,8 @@ public class TestServiceServer extends ITestService.Stub {
   }
 
   @Override
-  public ICircular GetCircular() throws RemoteException {
+  public ICircular GetCircular(CircularParcelable cp) throws RemoteException {
+    cp.testService = this;
     return new MyCircular(this);
   }
 }

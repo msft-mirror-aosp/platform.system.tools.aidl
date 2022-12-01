@@ -291,7 +291,7 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 		"aidl_api/foo/1/.hash":      nil,
 	})
 
-	expectedError := `foo-V2-java is disallowed in release version because it is unstable.`
+	expectedError := `foo-V2-java is an unfrozen development version`
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
 	testAidl(t, unstableVersionUsageInJavaBp, files)
@@ -341,7 +341,7 @@ func TestUsingUnstableVersionIndirectlyInRelease(t *testing.T) {
 		"aidl_api/xxx/1/.hash":      nil,
 	})
 
-	expectedError := `xxx-V2-java is disallowed in release version because it is unstable.`
+	expectedError := `xxx-V2-java is an unfrozen development version`
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
 	testAidl(t, unstableVersionUsageInJavaBp, files)
@@ -767,7 +767,7 @@ func TestUnstableVersionedModuleUsageInRelease(t *testing.T) {
 		libs: ["foo-V2-java"],
 	}`
 
-	expectedError := `Android.bp:10:2: module \"bar\" variant \"android_common\": foo-V2-java is disallowed in release version because it is unstable, and its \"owner\" property is missing.`
+	expectedError := `Android.bp:10:2: module \"bar\" variant \"android_common\": foo-V2-java is an unfrozen development version`
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setTestFreezeEnv())
 	testAidl(t, nonVersionedModuleUsageInJavaBp, withFiles(map[string][]byte{
@@ -796,10 +796,36 @@ func TestUnstableVersionedModuleOwnedByTestUsageInRelease(t *testing.T) {
 		"aidl_api/foo/1/.hash":      nil,
 	})
 
-	expectedError := `Android.bp:11:2: module \"bar\" variant \"android_common\": foo-V2-java is disallowed in release version because it is unstable, and its \"owner\" property is missing.`
+	expectedError := `Android.bp:11:2: module \"bar\" variant \"android_common\": foo-V2-java is an unfrozen development version`
 	testAidl(t, nonVersionedModuleUsageInJavaBp, setReleaseEnv(), files)
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setTestFreezeEnv(), files)
 	testAidl(t, nonVersionedModuleUsageInJavaBp, files)
+}
+
+func TestFrozenModuleUsageInAllEnvs(t *testing.T) {
+	bp := `
+	aidl_interface {
+		name: "foo",
+        frozen: true,
+		srcs: [
+			"IFoo.aidl",
+		],
+		versions: ["1"],
+	}
+
+	java_library {
+		name: "bar",
+		libs: ["foo-V2-java"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+	})
+
+	expectedError := `Android.bp:11:2: module \"bar\" variant \"android_common\": foo-V2-java is an unfrozen development version`
+	testAidlError(t, expectedError, bp, setReleaseEnv(), files)
+	testAidlError(t, expectedError, bp, setTestFreezeEnv(), files)
+	testAidlError(t, expectedError, bp, files)
 }
 
 func TestUnstableVersionedModuleOwnedByOtherUsageInRelease(t *testing.T) {
@@ -1351,25 +1377,26 @@ func TestDuplicatedVersions(t *testing.T) {
 	}))
 }
 
-func TestUnstableVndkModule(t *testing.T) {
-	testAidlError(t, `module "myiface_interface": stability: must be "vintf" if the module is for VNDK.`, `
+func TestVndkRequiresFrozen(t *testing.T) {
+	testAidlError(t, `frozen: true or false must be specified when the VNDK is enabled on a versioned interface`, `
 		aidl_interface {
 			name: "myiface",
-			srcs: ["IFoo.aidl"],
 			vendor_available: true,
 			product_available: true,
-			unstable: true,
+			srcs: ["IFoo.aidl"],
 			vndk: {
 				enabled: true,
 			},
 		}
 	`)
-	testAidlError(t, `module "myiface_interface": stability: must be "vintf" if the module is for VNDK.`, `
+	testAidlError(t, `vndk_use_version: must be specified if interface is unfrozen`, `
 		aidl_interface {
 			name: "myiface",
 			vendor_available: true,
 			product_available: true,
 			srcs: ["IFoo.aidl"],
+			stability: "vintf",
+			frozen: false,
 			vndk: {
 				enabled: true,
 			},
@@ -1382,6 +1409,8 @@ func TestUnstableVndkModule(t *testing.T) {
 			product_available: true,
 			srcs: ["IFoo.aidl"],
 			stability: "vintf",
+			frozen: false,
+			vndk_use_version: "1",
 			vndk: {
 				enabled: true,
 			},

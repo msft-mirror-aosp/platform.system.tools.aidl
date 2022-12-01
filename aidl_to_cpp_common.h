@@ -137,6 +137,27 @@ std::string CppConstantValueDecorator(
     const std::variant<std::string, std::vector<std::string>>& raw_value, bool is_ndk);
 
 void GenerateForwardDecls(CodeWriter& out, const AidlDefinedType& root_type, bool is_ndk);
+
+struct ClangDiagnosticIgnoreDeprecated {
+  CodeWriter& out;
+  bool deprecated;
+  ClangDiagnosticIgnoreDeprecated(CodeWriter& out, bool deprecated)
+      : out(out), deprecated(deprecated) {
+    // enter
+    if (deprecated) {
+      out << "#pragma clang diagnostic push\n";
+      out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
+    }
+  }
+  ~ClangDiagnosticIgnoreDeprecated() {
+    // exit
+    if (deprecated) {
+      out << "#pragma clang diagnostic pop\n";
+    }
+  }
+};
+
+bool HasDeprecatedField(const AidlParcelable& parcelable);
 }  // namespace cpp
 }  // namespace aidl
 }  // namespace android

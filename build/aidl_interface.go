@@ -144,8 +144,7 @@ func reportUsingNotFrozenError(ctx android.BaseModuleContext, notFrozen []string
 		return
 	}
 	for _, name := range notFrozen {
-		ctx.ModuleErrorf("%v is disallowed in release version because it is unstable, and its \"owner\" property is missing.",
-			name)
+		ctx.ModuleErrorf("%v is an unfrozen development version, and it can't be used because it is either explicitly disabled (with `frozen: false`) or this is a release branch and all interfaces without `owners: ...` specified must be frozen.", name)
 	}
 }
 
@@ -769,10 +768,6 @@ func (i *aidlInterface) checkVndkUseVersion(mctx android.DefaultableHookContext)
 	if i.properties.Vndk_use_version == nil {
 		return
 	}
-	if !i.hasVersion() {
-		mctx.PropertyErrorf("vndk_use_version", "This does not make sense when no 'versions' are specified.")
-
-	}
 	if *i.properties.Vndk_use_version == i.nextVersion() {
 		return
 	}
@@ -905,11 +900,24 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	//
 	// OEM branches may remove 'i.Owner()' here to apply the check to all interfaces, in
 	// addition to core platform interfaces. Otherwise, we rely on vts_treble_vintf_vendor_test.
-	requireFrozenVersion := !unstable && requireFrozenByOwner
+	requireFrozenVersion := proptools.BoolDefault(i.properties.Frozen, false) || (!unstable && requireFrozenByOwner)
 
 	// surface error early, main check is via checkUnstableModuleMutator
 	if requireFrozenVersion && !i.hasVersion() {
 		mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false, PLATFORM_VERSION_CODENAME is REL, and \"owner\" property is missing.")
+	}
+
+	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
+		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||
+		proptools.Bool(i.properties.Backend.Ndk.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled)
+
+	if vndkEnabled && !proptools.Bool(i.properties.Unstable) {
+		if i.properties.Frozen == nil {
+			mctx.PropertyErrorf("frozen", "true or false must be specified when the VNDK is enabled on a versioned interface (not `unstable: true`)")
+		}
+		if !proptools.Bool(i.properties.Frozen) && i.properties.Vndk_use_version == nil {
+			mctx.PropertyErrorf("vndk_use_version", "must be specified if interface is unfrozen (or specify 'frozen: false')")
+		}
 	}
 
 	versions := i.getVersions()
@@ -951,12 +959,6 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		}
 	} else {
 		addApiModule(mctx, i)
-	}
-
-	if proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) {
-		if "vintf" != proptools.String(i.properties.Stability) {
-			mctx.PropertyErrorf("stability", "must be \"vintf\" if the module is for VNDK.")
-		}
 	}
 
 	// Reserve this module name for future use

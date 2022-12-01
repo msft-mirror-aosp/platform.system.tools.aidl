@@ -318,8 +318,8 @@ public:
   ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* _aidl_return) override {
     return _aidl_delegate->getBackendType(_aidl_return);
   }
-  ::android::binder::Status GetCircular(::android::sp<::android::aidl::tests::ICircular>* _aidl_return) override {
-    auto _status = _aidl_delegate->GetCircular(_aidl_return);
+  ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) override {
+    auto _status = _aidl_delegate->GetCircular(cp, _aidl_return);
     if (*_aidl_return) {
       *_aidl_return = ::android::sp<::android::aidl::tests::ICircularDelegator>::cast(delegate(*_aidl_return));
     }
