@@ -16,6 +16,9 @@
       "name": "hal_implementation_test"
     },
     {
+      "name": "resolv_integration_test"
+    },
+    {
       "name": "FrameworksTelephonyTests",
       "options": [
         {
