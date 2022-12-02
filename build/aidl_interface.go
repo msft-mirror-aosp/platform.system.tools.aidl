@@ -1100,6 +1100,7 @@ type aidlInterfaceAttributes struct {
 	Cpp_config         *cppConfigAttributes
 	Ndk_config         *ndkConfigAttributes
 	// Backend_Configs    backendConfigAttributes
+	Unstable *bool
 }
 
 type javaConfigAttributes struct {
@@ -1246,6 +1247,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		Java_config:        javaConfig,
 		Cpp_config:         cppConfig,
 		Ndk_config:         ndkConfig,
+		Unstable:           i.properties.Unstable,
 	}
 
 	interfaceName := strings.TrimSuffix(i.Name(), "_interface")
