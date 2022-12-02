@@ -2,10 +2,12 @@
 
 #include <binder/IInterface.h>
 #include <android/aidl/tests/ITestService.h>
+#include <android/aidl/tests/BnCircular.h>
 #include <android/aidl/tests/BnNamedCallback.h>
 #include <android/aidl/tests/BnNewName.h>
 #include <android/aidl/tests/BnOldName.h>
 #include <android/aidl/tests/BnTestService.h>
+#include <android/aidl/tests/ITestService.h>
 #include <binder/Delegate.h>
 
 
@@ -81,6 +83,7 @@ public:
   static constexpr uint32_t TRANSACTION_GetUnionTags = ::android::IBinder::FIRST_CALL_TRANSACTION + 64;
   static constexpr uint32_t TRANSACTION_GetCppJavaTests = ::android::IBinder::FIRST_CALL_TRANSACTION + 65;
   static constexpr uint32_t TRANSACTION_getBackendType = ::android::IBinder::FIRST_CALL_TRANSACTION + 66;
+  static constexpr uint32_t TRANSACTION_GetCircular = ::android::IBinder::FIRST_CALL_TRANSACTION + 67;
   explicit BnTestService();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnTestService
@@ -314,6 +317,13 @@ public:
   }
   ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* _aidl_return) override {
     return _aidl_delegate->getBackendType(_aidl_return);
+  }
+  ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) override {
+    auto _status = _aidl_delegate->GetCircular(cp, _aidl_return);
+    if (*_aidl_return) {
+      *_aidl_return = ::android::sp<::android::aidl::tests::ICircularDelegator>::cast(delegate(*_aidl_return));
+    }
+    return _status;
   }
 private:
   ::android::sp<ITestService> _aidl_delegate;

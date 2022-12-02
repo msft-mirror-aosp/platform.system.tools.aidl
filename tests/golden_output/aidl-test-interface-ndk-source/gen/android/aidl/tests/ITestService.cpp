@@ -1,14 +1,17 @@
 #include "aidl/android/aidl/tests/ITestService.h"
 
 #include <android/binder_parcel_utils.h>
+#include <aidl/android/aidl/tests/BnCircular.h>
 #include <aidl/android/aidl/tests/BnNamedCallback.h>
 #include <aidl/android/aidl/tests/BnNewName.h>
 #include <aidl/android/aidl/tests/BnOldName.h>
 #include <aidl/android/aidl/tests/BnTestService.h>
+#include <aidl/android/aidl/tests/BpCircular.h>
 #include <aidl/android/aidl/tests/BpNamedCallback.h>
 #include <aidl/android/aidl/tests/BpNewName.h>
 #include <aidl/android/aidl/tests/BpOldName.h>
 #include <aidl/android/aidl/tests/BpTestService.h>
+#include <aidl/android/aidl/tests/ICircular.h>
 #include <aidl/android/aidl/tests/INamedCallback.h>
 #include <aidl/android/aidl/tests/INewName.h>
 #include <aidl/android/aidl/tests/IOldName.h>
@@ -1310,6 +1313,24 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
       if (!AStatus_isOk(_aidl_status.get())) break;
 
       _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, _aidl_return);
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      break;
+    }
+    case (FIRST_CALL_TRANSACTION + 67 /*GetCircular*/): {
+      ::aidl::android::aidl::tests::CircularParcelable out_cp;
+      std::shared_ptr<::aidl::android::aidl::tests::ICircular> _aidl_return;
+
+      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetCircular(&out_cp, &_aidl_return);
+      _aidl_ret_status = AParcel_writeStatusHeader(_aidl_out, _aidl_status.get());
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      if (!AStatus_isOk(_aidl_status.get())) break;
+
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, _aidl_return);
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, out_cp);
       if (_aidl_ret_status != STATUS_OK) break;
 
       break;
@@ -4145,6 +4166,47 @@ BpTestService::~BpTestService() {}
   _aidl_status_return:
   return _aidl_status;
 }
+::ndk::ScopedAStatus BpTestService::GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  ::ndk::ScopedAStatus _aidl_status;
+  ::ndk::ScopedAParcel _aidl_in;
+  ::ndk::ScopedAParcel _aidl_out;
+
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  AParcel_markSensitive(_aidl_in.get());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AIBinder_transact(
+    asBinder().get(),
+    (FIRST_CALL_TRANSACTION + 67 /*GetCircular*/),
+    _aidl_in.getR(),
+    _aidl_out.getR(),
+    FLAG_CLEAR_BUF
+    #ifdef BINDER_STABILITY_SUPPORT
+    | FLAG_PRIVATE_LOCAL
+    #endif  // BINDER_STABILITY_SUPPORT
+    );
+  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
+    _aidl_status = ITestService::getDefaultImpl()->GetCircular(out_cp, _aidl_return);
+    goto _aidl_status_return;
+  }
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), _aidl_return);
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), out_cp);
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_error:
+  _aidl_status.set(AStatus_fromStatus(_aidl_ret_status));
+  _aidl_status_return:
+  return _aidl_status;
+}
 // Source for BnTestService
 BnTestService::BnTestService() {}
 BnTestService::~BnTestService() {}
@@ -4533,6 +4595,11 @@ std::shared_ptr<ITestService> ITestService::default_impl = nullptr;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
 }
+::ndk::ScopedAStatus ITestServiceDefault::GetCircular(::aidl::android::aidl::tests::CircularParcelable* /*out_cp*/, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* /*_aidl_return*/) {
+  ::ndk::ScopedAStatus _aidl_status;
+  _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
+  return _aidl_status;
+}
 ::ndk::SpAIBinder ITestServiceDefault::asBinder() {
   return ::ndk::SpAIBinder();
 }
@@ -4787,6 +4854,180 @@ binder_status_t ITestService::CompilerChecks::writeToParcel(AParcel* _aidl_parce
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
   return _aidl_ret_status;
+}
+
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact(AIBinder* _aidl_binder, transaction_code_t _aidl_code, const AParcel* _aidl_in, AParcel* _aidl_out) {
+  (void)_aidl_in;
+  (void)_aidl_out;
+  binder_status_t _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;
+  (void)_aidl_binder;
+  (void)_aidl_code;
+  return _aidl_ret_status;
+}
+
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::IFoo::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact);
+
+ITestService::CompilerChecks::BpFoo::BpFoo(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
+ITestService::CompilerChecks::BpFoo::~BpFoo() {}
+
+// Source for BnFoo
+ITestService::CompilerChecks::BnFoo::BnFoo() {}
+ITestService::CompilerChecks::BnFoo::~BnFoo() {}
+::ndk::SpAIBinder ITestService::CompilerChecks::BnFoo::createBinder() {
+  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz, static_cast<void*>(this));
+  #ifdef BINDER_STABILITY_SUPPORT
+  AIBinder_markCompilationUnitStability(binder);
+  #endif  // BINDER_STABILITY_SUPPORT
+  return ::ndk::SpAIBinder(binder);
+}
+// Source for IFoo
+const char* ITestService::CompilerChecks::IFoo::descriptor = "android.aidl.tests.ITestService.CompilerChecks.Foo";
+ITestService::CompilerChecks::IFoo::IFoo() {}
+ITestService::CompilerChecks::IFoo::~IFoo() {}
+
+
+std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks::IFoo::fromBinder(const ::ndk::SpAIBinder& binder) {
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz)) { return nullptr; }
+  std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
+  if (interface) {
+    return std::static_pointer_cast<IFoo>(interface);
+  }
+  return ::ndk::SharedRefBase::make<ITestService::CompilerChecks::BpFoo>(binder);
+}
+
+binder_status_t ITestService::CompilerChecks::IFoo::writeToParcel(AParcel* parcel, const std::shared_ptr<IFoo>& instance) {
+  return AParcel_writeStrongBinder(parcel, instance ? instance->asBinder().get() : nullptr);
+}
+binder_status_t ITestService::CompilerChecks::IFoo::readFromParcel(const AParcel* parcel, std::shared_ptr<IFoo>* instance) {
+  ::ndk::SpAIBinder binder;
+  binder_status_t status = AParcel_readStrongBinder(parcel, binder.getR());
+  if (status != STATUS_OK) return status;
+  *instance = IFoo::fromBinder(binder);
+  return STATUS_OK;
+}
+bool ITestService::CompilerChecks::IFoo::setDefaultImpl(const std::shared_ptr<IFoo>& impl) {
+  // Only one user of this interface can use this function
+  // at a time. This is a heuristic to detect if two different
+  // users in the same process use this function.
+  assert(!IFoo::default_impl);
+  if (impl) {
+    IFoo::default_impl = impl;
+    return true;
+  }
+  return false;
+}
+const std::shared_ptr<ITestService::CompilerChecks::IFoo>& ITestService::CompilerChecks::IFoo::getDefaultImpl() {
+  return IFoo::default_impl;
+}
+std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks::IFoo::default_impl = nullptr;
+::ndk::SpAIBinder ITestService::CompilerChecks::IFooDefault::asBinder() {
+  return ::ndk::SpAIBinder();
+}
+bool ITestService::CompilerChecks::IFooDefault::isRemote() {
+  return false;
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+const char* ITestService::CompilerChecks::HasDeprecated::descriptor = "android.aidl.tests.ITestService.CompilerChecks.HasDeprecated";
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+binder_status_t ITestService::CompilerChecks::HasDeprecated::readFromParcel(const AParcel* _aidl_parcel) {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_parcelable_size = 0;
+  _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &deprecated);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+  return _aidl_ret_status;
+}
+binder_status_t ITestService::CompilerChecks::HasDeprecated::writeToParcel(AParcel* _aidl_parcel) const {
+  binder_status_t _aidl_ret_status;
+  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, deprecated);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
+  AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
+  AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
+  return _aidl_ret_status;
+}
+#pragma clang diagnostic pop
+
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+const char* ITestService::CompilerChecks::UsingHasDeprecated::descriptor = "android.aidl.tests.ITestService.CompilerChecks.UsingHasDeprecated";
+
+binder_status_t ITestService::CompilerChecks::UsingHasDeprecated::readFromParcel(const AParcel* _parcel) {
+  binder_status_t _aidl_ret_status;
+  int32_t _aidl_tag;
+  if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_tag)) != STATUS_OK) return _aidl_ret_status;
+  switch (static_cast<Tag>(_aidl_tag)) {
+  case n: {
+    int32_t _aidl_value;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<int32_t>) {
+      set<n>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<n>(std::move(_aidl_value));
+    }
+    return STATUS_OK; }
+  case m: {
+    ::aidl::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated _aidl_value;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<::aidl::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated>) {
+      set<m>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<m>(std::move(_aidl_value));
+    }
+    return STATUS_OK; }
+  }
+  return STATUS_BAD_VALUE;
+}
+binder_status_t ITestService::CompilerChecks::UsingHasDeprecated::writeToParcel(AParcel* _parcel) const {
+  binder_status_t _aidl_ret_status = ::ndk::AParcel_writeData(_parcel, static_cast<int32_t>(getTag()));
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+  switch (getTag()) {
+  case n: return ::ndk::AParcel_writeData(_parcel, get<n>());
+  case m: return ::ndk::AParcel_writeData(_parcel, get<m>());
+  }
+  __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
 }
 
 }  // namespace tests

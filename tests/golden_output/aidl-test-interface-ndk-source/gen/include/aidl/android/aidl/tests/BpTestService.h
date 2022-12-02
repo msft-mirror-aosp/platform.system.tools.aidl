@@ -80,6 +80,7 @@ public:
   ::ndk::ScopedAStatus GetUnionTags(const std::vector<::aidl::android::aidl::tests::Union>& in_input, std::vector<::aidl::android::aidl::tests::Union::Tag>* _aidl_return) override;
   ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) override;
   ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) override;
+  ::ndk::ScopedAStatus GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) override;
 };
 }  // namespace tests
 }  // namespace aidl

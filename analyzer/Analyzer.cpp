@@ -22,10 +22,22 @@ using std::vector;
 namespace android {
 namespace aidl {
 
-Analyzer::Analyzer(const std::string& name) : interfaceName(name) {}
+using analyzeFn = android::status_t (*)(uint32_t _aidl_code, const android::Parcel& _aidl_data,
+                                        const android::Parcel& _aidl_reply);
 
-std::string Analyzer::getName() const {
-  return interfaceName;
+Analyzer::Analyzer(const std::string& package, const std::string& interface, analyzeFn function)
+    : mPackageName(package), mInterfaceName(interface), mAnalyzeFunction(function) {}
+
+const std::string& Analyzer::getPackageName() const {
+  return mPackageName;
+}
+
+const std::string& Analyzer::getInterfaceName() const {
+  return mInterfaceName;
+}
+
+const analyzeFn& Analyzer::getAnalyzeFunction() const {
+  return mAnalyzeFunction;
 }
 
 vector<unique_ptr<Analyzer>>& Analyzer::getAnalyzers() {

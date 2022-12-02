@@ -57,6 +57,9 @@
 
 #include "android/aidl/tests/nested/BnNestedService.h"
 
+#include "android/aidl/tests/BnCircular.h"
+#include "android/aidl/tests/ICircular.h"
+
 #include "android/aidl/loggable/BnLoggableInterface.h"
 #include "android/aidl/loggable/Data.h"
 
@@ -89,19 +92,23 @@ using android::binder::Status;
 // Generated code:
 using android::aidl::tests::BackendType;
 using android::aidl::tests::BadParcelable;
+using android::aidl::tests::BnCircular;
 using android::aidl::tests::BnCppJavaTests;
 using android::aidl::tests::BnNamedCallback;
 using android::aidl::tests::BnNewName;
 using android::aidl::tests::BnOldName;
 using android::aidl::tests::BnTestService;
 using android::aidl::tests::ByteEnum;
+using android::aidl::tests::CircularParcelable;
 using android::aidl::tests::ConstantExpressionEnum;
 using android::aidl::tests::GenericStructuredParcelable;
+using android::aidl::tests::ICircular;
 using android::aidl::tests::ICppJavaTests;
 using android::aidl::tests::INamedCallback;
 using android::aidl::tests::INewName;
 using android::aidl::tests::IntEnum;
 using android::aidl::tests::IOldName;
+using android::aidl::tests::ITestService;
 using android::aidl::tests::LongEnum;
 using android::aidl::tests::RecursiveList;
 using android::aidl::tests::SimpleParcelable;
@@ -162,6 +169,20 @@ class NewName : public BnNewName {
     *output = String16("NewName");
     return Status::ok();
   }
+};
+
+class Circular : public BnCircular {
+ public:
+  Circular(sp<ITestService> srv) : mSrv(srv) {}
+  ~Circular() = default;
+
+  Status GetTestService(sp<ITestService>* _aidl_return) override {
+    *_aidl_return = mSrv;
+    return Status::ok();
+  }
+
+ private:
+  sp<ITestService> mSrv;
 };
 
 template <typename T>
@@ -776,6 +797,13 @@ class NativeService : public BnTestService {
 
   Status getBackendType(BackendType* _aidl_return) override {
     *_aidl_return = BackendType::CPP;
+    return Status::ok();
+  }
+
+  Status GetCircular(CircularParcelable* cp, sp<ICircular>* _aidl_return) override {
+    auto srv = sp<ITestService>::fromExisting(this);
+    cp->testService = srv;
+    *_aidl_return = new Circular(srv);
     return Status::ok();
   }
 

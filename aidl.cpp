@@ -628,16 +628,20 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
       err = AidlError::BAD_TYPE;
     }
 
-    if (options.IsStructured() && type.AsUnstructuredParcelable() != nullptr &&
-        !type.AsUnstructuredParcelable()->IsStableApiParcelable(options.TargetLanguage())) {
+    bool isStable = type.IsStableApiParcelable(options.TargetLanguage());
+
+    if (options.IsStructured() && type.AsUnstructuredParcelable() != nullptr && !isStable) {
       err = AidlError::NOT_STRUCTURED;
       AIDL_ERROR(type) << type.GetCanonicalName()
-                       << " is not structured, but this is a structured interface.";
+                       << " is not structured, but this is a structured interface in "
+                       << to_string(options.TargetLanguage());
     }
-    if (options.GetStability() == Options::Stability::VINTF && !type.IsVintfStability()) {
+    if (options.GetStability() == Options::Stability::VINTF && !type.IsVintfStability() &&
+        !isStable) {
       err = AidlError::NOT_STRUCTURED;
       AIDL_ERROR(type) << type.GetCanonicalName()
-                       << " does not have VINTF level stability, but this interface requires it.";
+                       << " does not have VINTF level stability, but this interface requires it in "
+                       << to_string(options.TargetLanguage());
     }
 
     // Ensure that untyped List/Map is not used in a parcelable, a union and a stable interface.

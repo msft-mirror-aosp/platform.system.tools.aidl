@@ -79,6 +79,7 @@ public:
   ::android::binder::Status GetUnionTags(const ::std::vector<::android::aidl::tests::Union>& input, ::std::vector<::android::aidl::tests::Union::Tag>* _aidl_return) override;
   ::android::binder::Status GetCppJavaTests(::android::sp<::android::IBinder>* _aidl_return) override;
   ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* _aidl_return) override;
+  ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) override;
 };  // class BpTestService
 }  // namespace tests
 }  // namespace aidl

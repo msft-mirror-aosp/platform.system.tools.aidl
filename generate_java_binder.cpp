@@ -103,6 +103,7 @@ class StubClass : public Class {
   std::shared_ptr<Expression> GetTransactDescriptor(const AidlMethod* method);
 
  private:
+  void MakeConstructors(const AidlInterface* interfaceType);
   void MakeAsInterface(const AidlInterface* interfaceType);
 
   std::shared_ptr<Variable> transact_descriptor;
@@ -122,26 +123,7 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
   this->extends = "android.os.Binder";
   this->interfaces.push_back(interfaceType->GetCanonicalName());
 
-  // ctor
-  auto ctor = std::make_shared<Method>();
-  ctor->modifiers = PUBLIC;
-  ctor->comment =
-      "/** Construct the stub at attach it to the "
-      "interface. */";
-  ctor->name = "Stub";
-  ctor->statements = std::make_shared<StatementBlock>();
-  if (interfaceType->IsVintfStability()) {
-    auto stability = std::make_shared<LiteralStatement>("this.markVintfStability();\n");
-    ctor->statements->Add(stability);
-  }
-  auto attach = std::make_shared<MethodCall>(
-      THIS_VALUE, "attachInterface",
-      std::vector<std::shared_ptr<Expression>>{THIS_VALUE,
-                                               std::make_shared<LiteralExpression>("DESCRIPTOR")});
-  ctor->statements->Add(attach);
-  this->elements.push_back(ctor);
-
-  // asInterface
+  MakeConstructors(interfaceType);
   MakeAsInterface(interfaceType);
 
   // asBinder
@@ -153,8 +135,8 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
   asBinder->statements->Add(std::make_shared<ReturnStatement>(THIS_VALUE));
   this->elements.push_back(asBinder);
 
-  // getDefaultTransactionName
   if (options_.GenTransactionNames() || options_.GenTraces()) {
+    // getDefaultTransactionName
     auto getDefaultTransactionName = std::make_shared<Method>();
     getDefaultTransactionName->comment = "/** @hide */";
     getDefaultTransactionName->modifiers = PUBLIC | STATIC;
@@ -166,10 +148,8 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
     this->code_to_method_name_switch = std::make_shared<SwitchStatement>(code);
     getDefaultTransactionName->statements->Add(this->code_to_method_name_switch);
     this->elements.push_back(getDefaultTransactionName);
-  }
 
-  // getTransactionName
-  if (options_.GenTransactionNames()) {
+    // getTransactionName
     auto getTransactionName = std::make_shared<Method>();
     getTransactionName->comment = "/** @hide */";
     getTransactionName->modifiers = PUBLIC;
@@ -212,74 +192,10 @@ void StubClass::Finish() {
       SUPER_VALUE, "onTransact",
       std::vector<std::shared_ptr<Expression>>{this->transact_code, this->transact_data,
                                                this->transact_reply, this->transact_flags});
-
-  auto statements = transact_statements;
-
   default_case->statements->Add(std::make_shared<ReturnStatement>(superCall));
 
   auto case_count = transact_switch_user->cases.size();
   transact_switch_user->cases.push_back(default_case);
-
-  if (options_.GenTraces()) {
-    auto isTagEnabledLvalue = std::make_shared<Variable>("boolean", "isTagEnabled");
-    auto isTagEnabledRvalue = std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "isTagEnabled",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")});
-    auto isTagEnabledDecl =
-        std::make_shared<VariableDeclaration>(isTagEnabledLvalue, isTagEnabledRvalue);
-
-    auto tagBuilderLvalue = std::make_shared<Variable>("StringBuilder", "tagBuilder");
-    auto tagBuilderRvalue = std::make_shared<NewExpression>("StringBuilder");
-    auto tagBuilderDecl = std::make_shared<VariableDeclaration>(tagBuilderLvalue, tagBuilderRvalue);
-
-    auto tryStatement = std::make_shared<TryStatement>();
-    auto finallyStatement = std::make_shared<FinallyStatement>();
-
-    auto ifStatementInTry = std::make_shared<IfStatement>();
-    ifStatementInTry->expression = std::make_shared<LiteralExpression>("isTagEnabled");
-    ifStatementInTry->statements = std::make_shared<StatementBlock>();
-
-    // Statements in try {if (isTagEnabled) {...}}
-    // Concat the trace name with StringBuilder
-    ifStatementInTry->statements->Add(tagBuilderDecl);
-
-    string trace_name_builder =
-        "tagBuilder.append(\"AIDL::java\")"
-        ".append(DESCRIPTOR)"
-        ".append(getDefaultTransactionName(code))"
-        ".append(\"server\")";
-
-    ifStatementInTry->statements->Add(std::make_shared<LiteralExpression>(trace_name_builder));
-
-    ifStatementInTry->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceBegin",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL"),
-            std::make_shared<MethodCall>(std::make_shared<LiteralExpression>("tagBuilder"),
-                                         "toString")}));
-
-    auto ifStatementInFinally = std::make_shared<IfStatement>();
-    ifStatementInFinally->expression = std::make_shared<LiteralExpression>("isTagEnabled");
-    ifStatementInFinally->statements = std::make_shared<StatementBlock>();
-
-    // Define statements in finally {if (isTagEnabled) {...}}
-    ifStatementInFinally->statements->Add(std::make_shared<MethodCall>(
-        std::make_shared<LiteralExpression>("android.os.Trace"), "traceEnd",
-        std::vector<std::shared_ptr<Expression>>{
-            std::make_shared<LiteralExpression>("android.os.Trace.TRACE_TAG_AIDL")}));
-
-    // Add defined 'if statements' to 'try' and 'finally'
-    tryStatement->statements->Add(ifStatementInTry);
-    finallyStatement->statements->Add(ifStatementInFinally);
-
-    // Expose the |tryStatement| for the rest of the code gen in onTransact()
-    statements = tryStatement->statements;
-
-    transact_statements->Add(isTagEnabledDecl);
-    transact_statements->Add(tryStatement);
-    transact_statements->Add(finallyStatement);
-  }
 
   // Interface token validation is done for user-defined transactions.
   if (case_count > 0) {
@@ -291,12 +207,12 @@ void StubClass::Finish() {
     ifStatement->statements->Add(std::make_shared<MethodCall>(
         this->transact_data, "enforceInterface",
         std::vector<std::shared_ptr<Expression>>{this->GetTransactDescriptor(nullptr)}));
-    statements->Add(ifStatement);
+    transact_statements->Add(ifStatement);
   }
 
   // Meta transactions are looked up prior to user-defined transactions.
-  statements->Add(this->transact_switch_meta);
-  statements->Add(this->transact_switch_user);
+  transact_statements->Add(this->transact_switch_meta);
+  transact_statements->Add(this->transact_switch_user);
 
   // getTransactionName
   if (options_.GenTransactionNames() || options_.GenTraces()) {
@@ -311,7 +227,7 @@ void StubClass::Finish() {
   // There will be at least one statement for the default, but if we emit a
   // return true after that default, it will be unreachable.
   if (case_count > 0) {
-    statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
+    transact_statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
   }
 }
 
@@ -342,6 +258,52 @@ std::shared_ptr<Expression> StubClass::GetTransactDescriptor(const AidlMethod* m
         transact_descriptor, std::make_shared<LiteralExpression>("DESCRIPTOR")));
   }
   return transact_descriptor;
+}
+
+void StubClass::MakeConstructors(const AidlInterface* interfaceType) {
+  string ctors_code;
+  CodeWriterPtr writer = CodeWriter::ForString(&ctors_code);
+  CodeWriter& code = *writer;
+
+  if (interfaceType->UsesPermissions()) {
+    code << "private final android.os.PermissionEnforcer mEnforcer;\n";
+    code << "/** Construct the stub using the Enforcer provided. */\n";
+    code << "public Stub(android.os.PermissionEnforcer enforcer)\n";
+  } else {
+    code << "/** Construct the stub at attach it to the interface. */\n";
+    code << "public Stub()\n";
+  }
+  code << "{\n";
+  code.Indent();
+  if (interfaceType->IsVintfStability()) {
+    code << "this.markVintfStability();\n";
+  }
+  code << "this.attachInterface(this, DESCRIPTOR);\n";
+  if (interfaceType->UsesPermissions()) {
+    code << "if (enforcer == null) {\n";
+    code.Indent();
+    code << "throw new IllegalArgumentException(\"enforcer cannot be null\");\n";
+    code.Dedent();
+    code << "}\n";
+    code << "mEnforcer = enforcer;\n";
+  }
+  code.Dedent();
+  code << "}\n";
+
+  // Setup a default constructor for permissions interfaces.
+  if (interfaceType->UsesPermissions()) {
+    code << "@Deprecated\n";
+    code << "/** Default constructor. */\n";
+    code << "public Stub() {\n";
+    code.Indent();
+    code << "this(android.os.PermissionEnforcer.fromContext(\n";
+    code << "   android.app.ActivityThread.currentActivityThread().getSystemContext()));\n";
+    code.Dedent();
+    code << "}\n";
+  }
+
+  code.Close();
+  this->elements.push_back(std::make_shared<LiteralClassElement>(ctors_code));
 }
 
 void StubClass::MakeAsInterface(const AidlInterface* interfaceType) {
@@ -508,97 +470,72 @@ static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlInterface& ifac
 }
 
 // Visitor for the permission declared in the @EnforcePermission annotation.
-struct PermissionVisitor {
-  shared_ptr<Expression> operator()(const perm::AllOf& quantifier) {
-    std::shared_ptr<Expression> result;
-    for (const auto& operand : quantifier.operands) {
-      auto expr = (*this)(operand);
-      if (result) {
-        result = std::make_shared<Comparison>(result, "&&", expr);
-      } else {
-        result = expr;
-      }
+class PermissionVisitor {
+ public:
+  PermissionVisitor(CodeWriter* code) : code_(code) {}
+
+  void operator()(const perm::AllOf& quantifier) {
+    std::vector<std::string> permissions;
+    permissions.reserve(quantifier.operands.size());
+    for (auto const& permission : quantifier.operands) {
+      permissions.push_back(android::aidl::perm::JavaFullName(permission));
     }
-    return result;
+    *code_ << "mEnforcer.enforcePermissionAllOf(new String[]{" << Join(permissions, ", ")
+           << "}, source);\n";
   }
 
-  shared_ptr<Expression> operator()(const perm::AnyOf& quantifier) {
-    std::shared_ptr<Expression> result;
-    for (const auto& operand : quantifier.operands) {
-      auto expr = (*this)(operand);
-      if (result) {
-        result = std::make_shared<Comparison>(result, "||", expr);
-      } else {
-        result = expr;
-      }
+  void operator()(const perm::AnyOf& quantifier) {
+    std::vector<std::string> permissions;
+    permissions.reserve(quantifier.operands.size());
+    for (auto const& permission : quantifier.operands) {
+      permissions.push_back(android::aidl::perm::JavaFullName(permission));
     }
-    return result;
+    *code_ << "mEnforcer.enforcePermissionAnyOf(new String[]{" << Join(permissions, ", ")
+           << "}, source);\n";
   }
 
-  shared_ptr<Expression> operator()(const std::string& permission) {
-    auto attributionSource =
-        std::string("new android.content.AttributionSource(getCallingUid(), null, null)");
-    for (size_t i = 0; i < method_.GetArguments().size(); i++) {
-      const auto& arg = method_.GetArguments()[i];
-      if (arg->GetType().GetName() == "android.content.AttributionSource") {
-        attributionSource = android::base::StringPrintf("_arg%zu", i);
-        break;
-      }
-    }
+  void operator()(const std::string& permission) {
     auto permissionName = android::aidl::perm::JavaFullName(permission);
-    auto checkPermission =
-        std::make_shared<MethodCall>(THIS_VALUE, "permissionCheckerWrapper",
-                                     std::vector<std::shared_ptr<Expression>>{
-                                         std::make_shared<LiteralExpression>(permissionName),
-                                         std::make_shared<MethodCall>(THIS_VALUE, "getCallingPid"),
-                                         std::make_shared<LiteralExpression>(attributionSource)});
-    return checkPermission;
+    *code_ << "mEnforcer.enforcePermission(" << permissionName << ", source);\n";
   }
 
-  const AidlMethod& method_;
+ private:
+  CodeWriter* code_;
 };
 
-static void GeneratePermissionWrapper(Class* stubClass) {
-  // TODO(b/208707422) avoid generating platform-specific API calls.
-  std::string permissionCheckerWrapperCode =
-      "private boolean permissionCheckerWrapper(\n"
-      "    String permission, int pid, android.content.AttributionSource attributionSource) {\n"
-      "  android.content.Context ctx =\n"
-      "      android.app.ActivityThread.currentActivityThread().getSystemContext();\n"
-      "  return (android.content.PermissionChecker.checkPermissionForDataDelivery(\n"
-      "          ctx, permission, pid, attributionSource, \"\" /*message*/) ==\n"
-      "      android.content.PermissionChecker.PERMISSION_GRANTED);\n"
-      "}\n";
-  auto permissionCheckerWrapper =
-      std::make_shared<LiteralClassElement>(permissionCheckerWrapperCode);
-  stubClass->elements.push_back(permissionCheckerWrapper);
-}
+static void GeneratePermissionMethod(const AidlInterface& iface, const AidlMethod& method,
+                                     const std::shared_ptr<Class>& addTo) {
+  string code;
+  CodeWriterPtr writer = CodeWriter::ForString(&code);
+  *writer << "/** Helper method to enforce permissions for " << method.GetName() << " */\n";
 
-static void GeneratePermissionCheck(const AidlMethod& method, const perm::Expression& expr,
-                                    std::shared_ptr<StatementBlock> addTo) {
-  auto ifstatement = std::make_shared<IfStatement>();
-  auto combinedExpr = std::visit(PermissionVisitor{method}, expr);
-  ifstatement->expression = std::make_shared<Comparison>(combinedExpr, "!=", TRUE_VALUE);
-  ifstatement->statements = std::make_shared<StatementBlock>();
-  ifstatement->statements->Add(std::make_shared<LiteralStatement>(
-      android::base::StringPrintf("throw new SecurityException(\"Access denied, requires: %s\");\n",
-                                  perm::AsJavaAnnotation(expr).c_str())));
-  addTo->Add(ifstatement);
-}
+  auto has_attribution_source =
+      std::any_of(method.GetArguments().begin(), method.GetArguments().end(), [](const auto& arg) {
+        return arg->GetType().GetName() == "android.content.AttributionSource";
+      });
 
-static void GeneratePermissionChecks(const AidlInterface& iface, const AidlMethod& method,
-                                     std::shared_ptr<StatementBlock> addTo) {
-  auto ifacePermExpr = iface.EnforceExpression();
-  if (ifacePermExpr) {
-    GeneratePermissionCheck(method, *ifacePermExpr.get(), addTo);
+  *writer << "protected void " << method.GetName() << "_enforcePermission("
+          << (has_attribution_source ? "android.content.AttributionSource source" : "")
+          << ") throws SecurityException {\n";
+  writer->Indent();
+
+  if (!has_attribution_source) {
+    *writer << "android.content.AttributionSource source = "
+               "new android.content.AttributionSource(getCallingUid(), null, null);\n";
   }
-  auto methodPermExpr = method.GetType().EnforceExpression();
-  if (methodPermExpr) {
-    GeneratePermissionCheck(method, *methodPermExpr.get(), addTo);
+
+  if (auto ifacePermExpr = iface.EnforceExpression(); ifacePermExpr) {
+    std::visit(PermissionVisitor(writer.get()), *ifacePermExpr.get());
+  } else if (auto methodPermExpr = method.GetType().EnforceExpression(); methodPermExpr) {
+    std::visit(PermissionVisitor(writer.get()), *methodPermExpr.get());
   }
+  writer->Dedent();
+  *writer << "}\n";
+  writer->Close();
+  addTo->elements.push_back(std::make_shared<LiteralClassElement>(code));
 }
 
-static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& method, bool oneway,
+static void GenerateStubCode(const AidlMethod& method, bool oneway,
                              std::shared_ptr<Variable> transact_data,
                              std::shared_ptr<Variable> transact_reply,
                              const AidlTypenames& typenames,
@@ -606,6 +543,7 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
                              const Options& options) {
   // try and finally
   auto& statements = statement_block;
+
   auto realCall = std::make_shared<MethodCall>(THIS_VALUE, method.GetName());
 
   // args
@@ -668,8 +606,6 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
     statements->Add(std::make_shared<MethodCall>(transact_data, "enforceNoDataAvail"));
   }
 
-  GeneratePermissionChecks(iface, method, statements);
-
   // the real call
   if (method.GetType().GetName() == "void") {
     statements->Add(realCall);
@@ -705,22 +641,20 @@ static void GenerateStubCode(const AidlInterface& iface, const AidlMethod& metho
   }
 }
 
-static void GenerateStubCase(const AidlInterface& iface, const AidlMethod& method,
-                             const std::string& transactCodeName, bool oneway,
-                             std::shared_ptr<StubClass> stubClass, const AidlTypenames& typenames,
-                             const Options& options) {
+static void GenerateStubCase(const AidlMethod& method, const std::string& transactCodeName,
+                             bool oneway, const std::shared_ptr<StubClass>& stubClass,
+                             const AidlTypenames& typenames, const Options& options) {
   auto c = std::make_shared<Case>(transactCodeName);
 
-  GenerateStubCode(iface, method, oneway, stubClass->transact_data, stubClass->transact_reply,
-                   typenames, c->statements, options);
+  GenerateStubCode(method, oneway, stubClass->transact_data, stubClass->transact_reply, typenames,
+                   c->statements, options);
   c->statements->Add(std::make_shared<BreakStatement>());
 
   stubClass->transact_switch_user->cases.push_back(c);
 }
 
-static void GenerateStubCaseOutline(const AidlInterface& iface, const AidlMethod& method,
-                                    const std::string& transactCodeName, bool oneway,
-                                    std::shared_ptr<StubClass> stubClass,
+static void GenerateStubCaseOutline(const AidlMethod& method, const std::string& transactCodeName,
+                                    bool oneway, const std::shared_ptr<StubClass>& stubClass,
                                     const AidlTypenames& typenames, const Options& options) {
   std::string outline_name = "onTransact$" + method.GetName() + "$";
   // Generate an "outlined" method with the actual code.
@@ -737,7 +671,7 @@ static void GenerateStubCaseOutline(const AidlInterface& iface, const AidlMethod
     onTransact_case->exceptions.push_back("android.os.RemoteException");
     stubClass->elements.push_back(onTransact_case);
 
-    GenerateStubCode(iface, method, oneway, transact_data, transact_reply, typenames,
+    GenerateStubCode(method, oneway, transact_data, transact_reply, typenames,
                      onTransact_case->statements, options);
     onTransact_case->statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
   }
@@ -973,10 +907,12 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
     bool outline_stub =
         stubClass->transact_outline && stubClass->outline_methods.count(&method) != 0;
     if (outline_stub) {
-      GenerateStubCaseOutline(iface, method, transactCodeName, oneway, stubClass, typenames,
-                              options);
+      GenerateStubCaseOutline(method, transactCodeName, oneway, stubClass, typenames, options);
     } else {
-      GenerateStubCase(iface, method, transactCodeName, oneway, stubClass, typenames, options);
+      GenerateStubCase(method, transactCodeName, oneway, stubClass, typenames, options);
+    }
+    if (iface.EnforceExpression() || method.GetType().EnforceExpression()) {
+      GeneratePermissionMethod(iface, method, stubClass);
     }
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
@@ -1377,20 +1313,14 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   interface->elements.push_back(std::make_shared<LiteralClassElement>(constants));
 
   // all the declared methods of the interface
-  bool permissionWrapperGenerated = false;
   int max_transaction_id = 0;
   for (const auto& item : iface->GetMethods()) {
-    if ((iface->EnforceExpression() || item->GetType().EnforceExpression()) &&
-        !permissionWrapperGenerated) {
-      GeneratePermissionWrapper(stub.get());
-      permissionWrapperGenerated = true;
-    }
     GenerateMethods(*iface, *item, interface.get(), stub, proxy, item->GetId(), typenames, options);
     max_transaction_id = std::max(max_transaction_id, item->GetId());
   }
 
   // getMaxTransactionId
-  if (options.GenTransactionNames()) {
+  if (options.GenTransactionNames() || options.GenTraces()) {
     stub->elements.push_back(GenerateMaxTransactionId(max_transaction_id));
   }
 

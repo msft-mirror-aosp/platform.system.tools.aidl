@@ -144,8 +144,7 @@ func reportUsingNotFrozenError(ctx android.BaseModuleContext, notFrozen []string
 		return
 	}
 	for _, name := range notFrozen {
-		ctx.ModuleErrorf("%v is disallowed in release version because it is unstable, and its \"owner\" property is missing.",
-			name)
+		ctx.ModuleErrorf("%v is an unfrozen development version, and it can't be used because it is either explicitly disabled (with `frozen: false`) or this is a release branch and all interfaces without `owners: ...` specified must be frozen.", name)
 	}
 }
 
@@ -244,7 +243,9 @@ func isRelativePath(path string) bool {
 
 type CommonBackendProperties struct {
 	// Whether to generate code in the corresponding backend.
-	// Default: true
+	// Default:
+	//   - for Java/NDK/CPP backends - True
+	//   - for Rust backend - False
 	Enabled        *bool
 	Apex_available []string
 
@@ -262,6 +263,11 @@ type CommonNativeBackendProperties struct {
 
 	// Must be NDK libraries, for stable types.
 	Additional_shared_libraries []string
+
+	// cflags to forward to native compilation. This is expected to be
+	// used more for AIDL compiler developers than being actually
+	// practical.
+	Cflags []string
 
 	// Whether to generate additional code for gathering information
 	// about the transactions.
@@ -333,6 +339,12 @@ type aidlInterfaceProperties struct {
 	// If this is set to "vintf", this corresponds to a stability promise: the
 	// interface must be kept stable as long as it is used.
 	Stability *string
+
+	// If true, this interface is frozen and does not have any changes since the last
+	// frozen version.
+	// If false, there are changes to this interface between the last frozen version (N) and
+	// the current version (N + 1).
+	Frozen *bool
 
 	// Deprecated: Use `versions_with_info` instead. Don't use `versions` property directly.
 	Versions []string
@@ -422,6 +434,7 @@ type aidlInterfaceProperties struct {
 type aidlInterface struct {
 	android.ModuleBase
 	android.BazelModuleBase
+	android.DefaultableModuleBase
 
 	properties aidlInterfaceProperties
 
@@ -498,6 +511,12 @@ func (i *aidlInterface) genTrace(lang string) bool {
 		}
 	case langJava:
 		ver = i.properties.Backend.Java.Gen_trace
+		if ver == nil && proptools.Bool(i.properties.Backend.Java.Platform_apis) {
+			// Enable tracing for all Java backends using platform APIs
+			// TODO(161393989) Once we generate ATRACE_TAG_APP instead of ATRACE_TAG_AIDL,
+			// this can be removed and we can start generating traces in all apps.
+			ver = proptools.BoolPtr(true)
+		}
 	case langNdk, langNdkPlatform:
 		ver = i.properties.Backend.Ndk.Gen_trace
 	case langRust: // unsupported b/236880829
@@ -665,11 +684,17 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 				mctx.PropertyErrorf("backend.rust.enabled",
 					"Rust backend not enabled in the imported AIDL interface %q", anImport)
 			}
+
+			if i.isFrozen() && other.isExplicitlyUnFrozen() && version == "" {
+				mctx.PropertyErrorf("frozen",
+					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q",
+					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V"+other.properties.Versions[len(other.properties.Versions)-1])
+			}
 		})
 	}
 }
 
-func (i *aidlInterface) checkGenTrace(mctx android.LoadHookContext) {
+func (i *aidlInterface) checkGenTrace(mctx android.DefaultableHookContext) {
 	if !proptools.Bool(i.properties.Gen_trace) {
 		return
 	}
@@ -678,7 +703,7 @@ func (i *aidlInterface) checkGenTrace(mctx android.LoadHookContext) {
 	}
 }
 
-func (i *aidlInterface) checkStability(mctx android.LoadHookContext) {
+func (i *aidlInterface) checkStability(mctx android.DefaultableHookContext) {
 	if i.properties.Stability == nil {
 		return
 	}
@@ -694,7 +719,7 @@ func (i *aidlInterface) checkStability(mctx android.LoadHookContext) {
 		mctx.PropertyErrorf("stability", "must be empty or \"vintf\"")
 	}
 }
-func (i *aidlInterface) checkVersions(mctx android.LoadHookContext) {
+func (i *aidlInterface) checkVersions(mctx android.DefaultableHookContext) {
 	if len(i.properties.Versions) > 0 && len(i.properties.Versions_with_info) > 0 {
 		mctx.ModuleErrorf("versions:%q and versions_with_info:%q cannot be used at the same time. Use versions_with_info instead of versions.", i.properties.Versions, i.properties.Versions_with_info)
 	}
@@ -739,13 +764,9 @@ func (i *aidlInterface) checkVersions(mctx android.LoadHookContext) {
 		mctx.PropertyErrorf("versions", "should be sorted, but is %v", i.getVersions())
 	}
 }
-func (i *aidlInterface) checkVndkUseVersion(mctx android.LoadHookContext) {
+func (i *aidlInterface) checkVndkUseVersion(mctx android.DefaultableHookContext) {
 	if i.properties.Vndk_use_version == nil {
 		return
-	}
-	if !i.hasVersion() {
-		mctx.PropertyErrorf("vndk_use_version", "This does not make sense when no 'versions' are specified.")
-
 	}
 	if *i.properties.Vndk_use_version == i.nextVersion() {
 		return
@@ -792,6 +813,16 @@ func (i *aidlInterface) getVersions() []string {
 	return i.properties.VersionsInternal
 }
 
+func (i *aidlInterface) isFrozen() bool {
+	return proptools.Bool(i.properties.Frozen)
+}
+
+// in order to keep original behavior for certain operations, we may want to
+// check if frozen is set.
+func (i *aidlInterface) isExplicitlyUnFrozen() bool {
+	return i.properties.Frozen != nil && !proptools.Bool(i.properties.Frozen)
+}
+
 func hasVersionSuffix(moduleName string) bool {
 	hasVersionSuffix, _ := regexp.MatchString("-V\\d+$", moduleName)
 	return hasVersionSuffix
@@ -815,7 +846,7 @@ func trimVersionSuffixInList(moduleNames []string) []string {
 	})
 }
 
-func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
+func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	if hasVersionSuffix(i.ModuleBase.Name()) {
 		mctx.PropertyErrorf("name", "aidl_interface should not have '-V<number> suffix")
 	}
@@ -847,6 +878,13 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		}
 	}
 
+	if i.isFrozen() {
+		if !i.hasVersion() {
+			mctx.PropertyErrorf("frozen", "cannot be frozen without versions")
+			return
+		}
+	}
+
 	if !unstable && mctx.Namespace().Path != "." && i.Owner() == "" {
 		mctx.PropertyErrorf("owner", "aidl_interface in a soong_namespace must have the 'owner' property set.")
 	}
@@ -862,11 +900,24 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 	//
 	// OEM branches may remove 'i.Owner()' here to apply the check to all interfaces, in
 	// addition to core platform interfaces. Otherwise, we rely on vts_treble_vintf_vendor_test.
-	requireFrozenVersion := !unstable && requireFrozenByOwner
+	requireFrozenVersion := proptools.BoolDefault(i.properties.Frozen, false) || (!unstable && requireFrozenByOwner)
 
 	// surface error early, main check is via checkUnstableModuleMutator
 	if requireFrozenVersion && !i.hasVersion() {
 		mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false, PLATFORM_VERSION_CODENAME is REL, and \"owner\" property is missing.")
+	}
+
+	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
+		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||
+		proptools.Bool(i.properties.Backend.Ndk.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled)
+
+	if vndkEnabled && !proptools.Bool(i.properties.Unstable) {
+		if i.properties.Frozen == nil {
+			mctx.PropertyErrorf("frozen", "true or false must be specified when the VNDK is enabled on a versioned interface (not `unstable: true`)")
+		}
+		if !proptools.Bool(i.properties.Frozen) && i.properties.Vndk_use_version == nil {
+			mctx.PropertyErrorf("vndk_use_version", "must be specified if interface is unfrozen (or specify 'frozen: false')")
+		}
 	}
 
 	versions := i.getVersions()
@@ -895,7 +946,7 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 
 	// In the future, we may want to force the -cpp backend to be on host,
 	// and limit its visibility, even if it's not created normally
-	if i.shouldGenerateCppBackend() {
+	if i.shouldGenerateCppBackend() && len(i.properties.Imports) == 0 {
 		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false))
 	}
 
@@ -908,12 +959,6 @@ func aidlInterfaceHook(mctx android.LoadHookContext, i *aidlInterface) {
 		}
 	} else {
 		addApiModule(mctx, i)
-	}
-
-	if proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) {
-		if "vintf" != proptools.String(i.properties.Stability) {
-			mctx.PropertyErrorf("stability", "must be \"vintf\" if the module is for VNDK.")
-		}
 	}
 
 	// Reserve this module name for future use
@@ -1041,16 +1086,39 @@ func AidlInterfaceFactory() android.Module {
 	i.AddProperties(&i.properties)
 	android.InitAndroidModule(i)
 	android.InitBazelModule(i)
-	android.AddLoadHook(i, func(ctx android.LoadHookContext) { aidlInterfaceHook(ctx, i) })
+	android.InitDefaultableModule(i)
+	i.SetDefaultableHook(func(ctx android.DefaultableHookContext) { aidlInterfaceHook(ctx, i) })
 	return i
 }
 
 type aidlInterfaceAttributes struct {
 	aidlLibraryAttributes
 	Versions           bazel.StringListAttribute
-	Backends           bazel.StringListAttribute
 	Stability          *string
 	Versions_with_info []versionWithInfoAttribute
+	Java_config        *javaConfigAttributes
+	Cpp_config         *cppConfigAttributes
+	Ndk_config         *ndkConfigAttributes
+	// Backend_Configs    backendConfigAttributes
+}
+
+type javaConfigAttributes struct {
+	commonBackendAttributes
+}
+type cppConfigAttributes struct {
+	commonNativeBackendAttributes
+}
+type ndkConfigAttributes struct {
+	commonNativeBackendAttributes
+}
+
+type commonBackendAttributes struct {
+	Enabled         bool
+	Min_sdk_version *string
+}
+
+type commonNativeBackendAttributes struct {
+	commonBackendAttributes
 }
 
 type versionWithInfoAttribute struct {
@@ -1121,21 +1189,23 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		versions = bazel.MakeStringListAttribute(append([]string{}, i.properties.Versions...))
 	}
 
-	var backends bazel.StringListAttribute
-	backendList := []string{}
-	shouldGenerateLangBackendMap := map[string]bool{
-		langCpp:  i.shouldGenerateCppBackend(),
-		langNdk:  i.shouldGenerateNdkBackend(),
-		langJava: i.shouldGenerateJavaBackend(),
-		langRust: i.shouldGenerateRustBackend()}
-	for backend, shouldGen := range shouldGenerateLangBackendMap {
-		if shouldGen {
-			backendList = append(backendList, backend)
-		}
+	var javaConfig *javaConfigAttributes
+	var cppConfig *cppConfigAttributes
+	var ndkConfig *ndkConfigAttributes
+	if i.shouldGenerateJavaBackend() {
+		javaConfig = &javaConfigAttributes{}
+		javaConfig.Enabled = true
+		javaConfig.Min_sdk_version = i.minSdkVersion(langJava)
 	}
-	sort.Strings(backendList)
-	if len(backendList) > 0 {
-		backends = bazel.MakeStringListAttribute(backendList)
+	if i.shouldGenerateCppBackend() {
+		cppConfig = &cppConfigAttributes{}
+		cppConfig.Enabled = true
+		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
+	}
+	if i.shouldGenerateNdkBackend() {
+		ndkConfig = &ndkConfigAttributes{}
+		ndkConfig.Enabled = true
+		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
 	}
 
 	var versionsWithInfos []versionWithInfoAttribute
@@ -1157,17 +1227,25 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		}
 	}
 
+	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
+	var stripImportPrefixAttr *string = nil
+	if i.properties.Local_include_dir != "" && !srcsAttr.IsEmpty() {
+		stripImportPrefixAttr = &i.properties.Local_include_dir
+	}
+
 	attrs := &aidlInterfaceAttributes{
 		aidlLibraryAttributes: aidlLibraryAttributes{
-			//TODO(b/229251008) support "current" interface srcs
-			Flags: i.properties.Flags,
-			Deps:  deps,
+			Srcs:                srcsAttr,
+			Flags:               i.properties.Flags,
+			Deps:                deps,
+			Strip_import_prefix: stripImportPrefixAttr,
 		},
 		Versions:           versions,
-		Backends:           backends,
 		Stability:          i.properties.Stability,
 		Versions_with_info: versionsWithInfos,
-		//TODO(b/229251008) support local_include_dir for "current" interface srcs
+		Java_config:        javaConfig,
+		Cpp_config:         cppConfig,
+		Ndk_config:         ndkConfig,
 	}
 
 	interfaceName := strings.TrimSuffix(i.Name(), "_interface")

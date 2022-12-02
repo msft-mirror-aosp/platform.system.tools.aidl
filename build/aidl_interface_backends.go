@@ -27,7 +27,7 @@ import (
 	"github.com/google/blueprint/proptools"
 )
 
-func addLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
+func addLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
 	if lang == langJava {
 		return addJavaLibrary(mctx, i, version, notFrozen)
 	} else if lang == langRust {
@@ -41,7 +41,7 @@ func addLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, 
 	}
 }
 
-func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
+func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
 	cppSourceGen := i.versionedName(version) + "-" + lang + "-source"
 	cppModuleGen := i.versionedName(version) + "-" + lang
 
@@ -102,7 +102,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	var stl *string
 	var cpp_std *string
 	var hostSupported *bool
-	var addCflags []string
+	addCflags := commonProperties.Cflags
 	targetProp := ccTargetProperties{
 		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
 	}
@@ -193,8 +193,14 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 				Target:                    targetProp,
 				Tidy:                      proptools.BoolPtr(true),
 				// Do the tidy check only for the generated headers
-				Tidy_flags:            []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-				Tidy_checks_as_errors: []string{"*"},
+				Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
+				Tidy_checks_as_errors: []string{
+					"*",
+					"-clang-analyzer-deadcode.DeadStores", // b/253079031
+					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
+					"-clang-analyzer-optin.performance.Padding", // b/253079031
+				},
+				Include_build_directory: proptools.BoolPtr(false), // b/254682497
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
@@ -214,7 +220,7 @@ func addCppLibrary(mctx android.LoadHookContext, i *aidlInterface, version strin
 	return cppModuleGen
 }
 
-func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	cppAnalyzerSourceGen := i.versionedName("") + "-cpp-analyzer-source"
 	cppAnalyzerModuleGen := i.versionedName("") + "-cpp-analyzer"
 
@@ -241,7 +247,7 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 
 	importExportDependencies := []string{}
 	var hostSupported *bool
-	var addCflags []string
+	var addCflags []string // not using cpp backend cflags for now
 	targetProp := ccTargetProperties{
 		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
 	}
@@ -270,16 +276,28 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 				Generated_sources:         []string{cppAnalyzerSourceGen},
 				Generated_headers:         []string{cppAnalyzerSourceGen},
 				Export_generated_headers:  []string{cppAnalyzerSourceGen},
-				Shared_libs:               importExportDependencies,
-				Static_libs:               []string{"aidl-analyzer-main", i.versionedName(version) + "-" + langCpp},
+				Shared_libs:               append(importExportDependencies, i.versionedName(version)+"-"+langCpp),
+				Static_libs:               []string{"aidl-analyzer-main"},
 				Export_shared_lib_headers: importExportDependencies,
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
 				Min_sdk_version:           i.minSdkVersion(langCpp),
 				Target:                    targetProp,
 				Tidy:                      proptools.BoolPtr(true),
 				// Do the tidy check only for the generated headers
-				Tidy_flags:            []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-				Tidy_checks_as_errors: []string{"*"},
+				Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
+				Tidy_checks_as_errors: []string{
+					"*",
+					"-clang-diagnostic-deprecated-declarations", // b/253081572
+					"-clang-analyzer-deadcode.DeadStores",       // b/253079031
+					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
+					"-clang-analyzer-optin.performance.Padding", // b/253079031
+				},
+			},
+			// TODO(b/237810289) disable converting -cpp-analyzer module in bp2build
+			&bazelProperties{
+				&Bazel_module{
+					Bp2build_available: proptools.BoolPtr(false),
+				},
 			},
 		},
 	}
@@ -288,7 +306,7 @@ func addCppAnalyzerLibrary(mctx android.LoadHookContext, i *aidlInterface, versi
 	return cppAnalyzerModuleGen
 }
 
-func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	javaSourceGen := i.versionedName(version) + "-java-source"
 	javaModuleGen := i.versionedName(version) + "-java"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -364,7 +382,7 @@ func addJavaLibrary(mctx android.LoadHookContext, i *aidlInterface, version stri
 	return javaModuleGen
 }
 
-func addRustLibrary(mctx android.LoadHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
 	rustSourceGen := i.versionedName(version) + "-rust-source"
 	rustModuleGen := i.versionedName(version) + "-rust"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -470,8 +488,8 @@ func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
 
 func (i *aidlInterface) isModuleForVndk(version string) bool {
 	if i.properties.Vndk_use_version != nil {
-		if !i.hasVersion() {
-			panic("does not make sense, vndk_use_version specififed")
+		if !i.hasVersion() && version != *i.properties.Vndk_use_version {
+			panic("unrecognized vndk_use_version")
 		}
 		// Will be exactly one of the version numbers
 		return version == *i.properties.Vndk_use_version

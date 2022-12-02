@@ -242,6 +242,8 @@ python_test_host {
         "aidl_test_java_service_sdk1",
         "aidl_test_java_client_sdk29",
         "aidl_test_java_service_sdk29",
+        "aidl_test_java_client_permission",
+        "aidl_test_java_service_permission",
     ],
     test_suites: ["general-tests"],
     test_options: {
@@ -292,11 +294,13 @@ filegroup {
         "tests/android/aidl/tests/ArrayOfInterfaces.aidl",
         "tests/android/aidl/tests/BackendType.aidl",
         "tests/android/aidl/tests/ByteEnum.aidl",
+        "tests/android/aidl/tests/CircularParcelable.aidl",
         "tests/android/aidl/tests/ConstantExpressionEnum.aidl",
         "tests/android/aidl/tests/DeprecatedEnum.aidl",
         "tests/android/aidl/tests/DeprecatedParcelable.aidl",
         "tests/android/aidl/tests/GenericStructuredParcelable.aidl",
         "tests/android/aidl/tests/FixedSize.aidl",
+        "tests/android/aidl/tests/ICircular.aidl",
         "tests/android/aidl/tests/IDeprecated.aidl",
         "tests/android/aidl/tests/INamedCallback.aidl",
         "tests/android/aidl/tests/INewName.aidl",
@@ -476,7 +480,7 @@ aidl_interface {
 }
 
 java_defaults {
-    name: "aidl_test_java_defaults",
+    name: "aidl_test_java_integration_defaults",
     platform_apis: true,
     // Turn off Java optimization tools to speed up our test iterations.
     optimize: {
@@ -488,6 +492,19 @@ java_defaults {
     static_libs: [
         "androidx.test.core",
         "androidx.test.runner",
+    ],
+    aidl: {
+        include_dirs: [
+            "frameworks/native/aidl/binder",
+        ],
+    },
+    test_suites: ["general-tests"],
+}
+
+java_defaults {
+    name: "aidl_test_java_defaults",
+    defaults: ["aidl_test_java_integration_defaults"],
+    static_libs: [
         "aidl_test_nonvintf_parcelable-V1-java",
         "aidl_test_unstable_parcelable-java",
         "aidl_test_vintf_parcelable-V1-java",
@@ -511,11 +528,9 @@ java_defaults {
     aidl: {
         include_dirs: [
             "system/tools/aidl/tests/",
-            "frameworks/native/aidl/binder",
         ],
         generate_traces: true,
     },
-    test_suites: ["general-tests"],
 }
 
 java_test {
@@ -565,27 +580,10 @@ filegroup {
 
 java_defaults {
     name: "aidl_test_java_sdkversion_defaults",
-    platform_apis: true,
-    // Turn off Java optimization tools to speed up our test iterations.
-    optimize: {
-        enabled: false,
-    },
-    dex_preopt: {
-        enabled: false,
-    },
-    static_libs: [
-        "androidx.test.core",
-        "androidx.test.runner",
-    ],
+    defaults: ["aidl_test_java_integration_defaults"],
     srcs: [
         ":aidl-for-sdkversion-tests",
     ],
-    aidl: {
-        include_dirs: [
-            "frameworks/native/aidl/binder",
-        ],
-    },
-    test_suites: ["general-tests"],
 }
 
 java_test {
@@ -621,6 +619,29 @@ java_test {
     min_sdk_version: "1",
     srcs: [
         "tests/java/src/android/aidl/sdkversion/service/*.java",
+    ],
+}
+
+java_test {
+    name: "aidl_test_java_client_permission",
+    defaults: ["aidl_test_java_integration_defaults"],
+    static_libs: [
+        "aidl-test-interface-permission-java",
+    ],
+    srcs: [
+        "tests/java/src/android/aidl/permission/tests/*.java",
+        "tests/java/src/android/aidl/permission/service/*.java",
+    ],
+}
+
+java_test {
+    name: "aidl_test_java_service_permission",
+    defaults: ["aidl_test_java_integration_defaults"],
+    static_libs: [
+        "aidl-test-interface-permission-java",
+    ],
+    srcs: [
+        "tests/java/src/android/aidl/permission/service/*.java",
     ],
 }
 
@@ -708,7 +729,6 @@ aidl_interface {
         },
         java: {
             platform_apis: true,
-            gen_rpc: true,
         },
         rust: {
             enabled: true,
@@ -835,6 +855,10 @@ cc_library_static {
     name: "aidl-analyzer-main",
     host_supported: true,
     vendor_available: true,
+    shared_libs: [
+        "libbase",
+        "libbinder",
+    ],
     srcs: [
         "analyzer/analyzerMain.cpp",
         "analyzer/Analyzer.cpp",

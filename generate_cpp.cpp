@@ -1201,6 +1201,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
                              const AidlTypenames& typenames, const Options& options) {
   const string clazz = parcel.GetName();
 
+  ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcel));
   out << TemplateDecl(parcel);
   out << "class";
   GenerateDeprecated(out, parcel);
@@ -1223,8 +1224,8 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
 
   const string canonical_name = parcel.GetCanonicalName();
   out << "static const ::android::String16& getParcelableDescriptor() {\n"
-      << "  static const ::android::StaticString16 DESCIPTOR (u\"" << canonical_name << "\");\n"
-      << "  return DESCIPTOR;\n"
+      << "  static const ::android::StaticString16 DESCRIPTOR (u\"" << canonical_name << "\");\n"
+      << "  return DESCRIPTOR;\n"
       << "}\n";
 
   GenerateToString(out, parcel);
@@ -1255,21 +1256,24 @@ void GenerateParcelSource(CodeWriter& out, const T& parcel, const AidlTypenames&
   EnterNamespace(out, parcel);
   GenerateConstantDefinitions(out, parcel, typenames, TemplateDecl(parcel), q_name);
 
-  out << TemplateDecl(parcel);
-  out << "::android::status_t " << q_name << "::readFromParcel(const ::android::Parcel* "
-      << kParcelVarName << ") {\n";
-  out.Indent();
-  GenerateReadFromParcel(out, parcel, typenames);
-  out.Dedent();
-  out << "}\n";
+  {
+    ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcel));
+    out << TemplateDecl(parcel);
+    out << "::android::status_t " << q_name << "::readFromParcel(const ::android::Parcel* "
+        << kParcelVarName << ") {\n";
+    out.Indent();
+    GenerateReadFromParcel(out, parcel, typenames);
+    out.Dedent();
+    out << "}\n";
 
-  out << TemplateDecl(parcel);
-  out << "::android::status_t " << q_name << "::writeToParcel(::android::Parcel* " << kParcelVarName
-      << ") const {\n";
-  out.Indent();
-  GenerateWriteToParcel(out, parcel, typenames);
-  out.Dedent();
-  out << "}\n";
+    out << TemplateDecl(parcel);
+    out << "::android::status_t " << q_name << "::writeToParcel(::android::Parcel* "
+        << kParcelVarName << ") const {\n";
+    out.Indent();
+    GenerateWriteToParcel(out, parcel, typenames);
+    out.Dedent();
+    out << "}\n";
+  }
   LeaveNamespace(out, parcel);
 }
 
@@ -1418,6 +1422,7 @@ void GenerateHeader(CodeWriter& out, const AidlDefinedType& defined_type,
   }
   out << "#pragma once\n\n";
   GenerateHeaderIncludes(out, defined_type, typenames, options);
+  GenerateForwardDecls(out, defined_type, false);
   EnterNamespace(out, defined_type);
   // Each class decl contains its own nested types' class decls
   GenerateClassDecl(out, defined_type, typenames, options);

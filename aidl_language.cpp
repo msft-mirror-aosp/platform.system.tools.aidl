@@ -355,9 +355,9 @@ bool AidlAnnotation::CheckContext(TargetContext context) const {
   const static map<TargetContext, string> context_name_map{
       {CONTEXT_TYPE_INTERFACE, "interface"},
       {CONTEXT_TYPE_ENUM, "enum"},
-      {CONTEXT_TYPE_STRUCTURED_PARCELABLE, "structured parcelable"},
+      {CONTEXT_TYPE_STRUCTURED_PARCELABLE, "parcelable definition"},
       {CONTEXT_TYPE_UNION, "union"},
-      {CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE, "parcelable"},
+      {CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE, "parcelable declaration"},
       {CONTEXT_CONST, "constant"},
       {CONTEXT_FIELD, "field"},
       {CONTEXT_METHOD, "method"},
@@ -369,8 +369,8 @@ bool AidlAnnotation::CheckContext(TargetContext context) const {
       available.push_back(name);
     }
   }
-  AIDL_ERROR(this) << "@" << GetName() << " is not available. It can annotate {"
-                   << Join(available, ", ") << "}.";
+  AIDL_ERROR(this) << "@" << GetName()
+                   << " is not available. It can only annotate: " << Join(available, ", ") << ".";
   return false;
 }
 
@@ -1758,6 +1758,18 @@ bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {
     return false;
   }
   return true;
+}
+
+bool AidlInterface::UsesPermissions() const {
+  if (IsPermissionAnnotated()) {
+    return true;
+  }
+  for (auto& m : GetMethods()) {
+    if (m->GetType().IsPermissionAnnotated()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 std::string AidlInterface::GetDescriptor() const {

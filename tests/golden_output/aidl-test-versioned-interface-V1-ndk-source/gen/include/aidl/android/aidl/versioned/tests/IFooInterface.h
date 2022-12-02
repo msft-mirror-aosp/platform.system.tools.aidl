@@ -12,6 +12,9 @@
 #include <android/binder_stability.h>
 #endif  // BINDER_STABILITY_SUPPORT
 
+namespace aidl::android::aidl::versioned::tests {
+class Foo;
+}  // namespace aidl::android::aidl::versioned::tests
 namespace aidl {
 namespace android {
 namespace aidl {

@@ -106,7 +106,7 @@ string Options::GetUsage() const {
        << "          Generate dependency file next to the output file with the" << endl
        << "          name based on the input file." << endl
        << "  -b" << endl
-       << "          Trigger fail when trying to compile a parcelable." << endl
+       << "          Trigger fail when trying to compile a parcelable declaration." << endl
        << "  --ninja" << endl
        << "          Generate dependency file in a format ninja understands." << endl
        << "  --rpc" << endl
@@ -618,6 +618,8 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
     error_message_ << "RPC code requires minimum SDK version of at least " << rpc_version << endl;
     return;
   }
+
+  if (min_sdk_version_ >= rpc_version) gen_rpc_ = true;
 
   AIDL_FATAL_IF(!output_dir_.empty() && output_dir_.back() != OS_PATH_SEPARATOR, output_dir_);
   AIDL_FATAL_IF(!output_header_dir_.empty() && output_header_dir_.back() != OS_PATH_SEPARATOR,

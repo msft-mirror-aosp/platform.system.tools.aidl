@@ -41,6 +41,7 @@ bootstrap_go_package {
         "aidl_api.go",
         "aidl_gen_rule.go",
         "aidl_interface_backends.go",
+        "aidl_interface_defaults.go",
         "aidl_interface_headers.go",
         "aidl_interface_metadata_singleton.go",
         "aidl_mapping.go",
@@ -49,7 +50,7 @@ bootstrap_go_package {
     ],
     testSrcs: [
         "aidl_test.go",
-        "aidl_interface_bp2build_test.go"
+        "aidl_interface_bp2build_test.go",
     ],
     pluginFor: ["soong_build"],
 }
@@ -109,6 +110,9 @@ aidl_interface {
         "3",
         "4",
     ],
+    backend: {
+        rust: { enabled: true, },
+    },
 }
 
 aidl_interface {
@@ -121,8 +125,15 @@ aidl_interface {
         "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
     ],
     unstable: true,
-    backend: { ndk: { sdk_version: "29", }, },
+    backend: {
+        rust: { enabled: true, },
+        ndk: {
+            sdk_version: "29",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
+        },
+    },
 }
+
 aidl_interface {
     name: "test-piece-ndk-sdk-30",
     local_include_dir: "tests_1",
@@ -133,8 +144,15 @@ aidl_interface {
         "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
     ],
     unstable: true,
-    backend: { ndk: { sdk_version: "30", }, },
+    backend: {
+        rust: { enabled: true, },
+        ndk: {
+            sdk_version: "30",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
+        },
+    },
 }
+
 aidl_interface {
     name: "test-piece-ndk-sdk-31",
     local_include_dir: "tests_1",
@@ -145,7 +163,74 @@ aidl_interface {
         "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
     ],
     unstable: true,
-    backend: { ndk: { sdk_version: "31", }, },
+    backend: {
+        rust: { enabled: true, },
+        ndk: {
+            sdk_version: "31",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
+        },
+    },
+}
+
+aidl_interface {
+    name: "test-piece-ndk-sdk-32",
+    local_include_dir: "tests_1",
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
+    backend: {
+        rust: { enabled: true, },
+        ndk: {
+            sdk_version: "32",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
+        },
+    },
+}
+
+aidl_interface {
+    name: "test-piece-ndk-sdk-33",
+    local_include_dir: "tests_1",
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
+    backend: {
+        rust: { enabled: true, },
+        ndk: {
+            sdk_version: "33",
+            cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
+        },
+    },
+}
+
+aidl_interface {
+    name: "tests-vintf",
+    local_include_dir: "tests_vintf",
+    srcs: ["tests_vintf/vintf/IFoo.aidl"],
+    stability: "vintf",
+    backend: {
+        rust: { enabled: true, },
+        ndk: {
+            sdk_version: "31",
+        },
+        java: {
+            sdk_version: "system_current",
+        },
+    },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+
 }
 
 aidl_interface {
@@ -160,6 +245,7 @@ aidl_interface {
         "test-piece-1-V3",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
         },
@@ -185,6 +271,7 @@ aidl_interface {
         "test-piece-2-V1",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
             gen_trace: true,
@@ -205,6 +292,7 @@ aidl_interface {
         "test-piece-1-V3",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
         },
@@ -226,6 +314,7 @@ aidl_interface {
         "test-piece-2-V1",
     ],
     backend: {
+        rust: { enabled: true, },
         java: {
             platform_apis: true,
         },
