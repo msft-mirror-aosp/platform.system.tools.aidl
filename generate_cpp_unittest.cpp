@@ -74,8 +74,7 @@ const char kOutputPath[] = "output.cpp";
 const char kHeaderDir[] = "headers";
 const char kInterfaceHeaderRelPath[] = "a/IFoo.h";
 
-const string kCmdline =
-    string("aidl-cpp -I . ") + kInputPath + " " + kHeaderDir + " " + kOutputPath;
+const string kCmdline = string("aidl-cpp ") + kInputPath + " " + kHeaderDir + " " + kOutputPath;
 
 }  // namespace test_io_handling
 

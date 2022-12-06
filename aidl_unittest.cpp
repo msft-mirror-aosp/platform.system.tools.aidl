@@ -104,7 +104,6 @@ class AidlTest : public ::testing::TestWithParam<Options::Language> {
     for (const string& f : preprocessed_files_) {
       args.emplace_back("--preprocessed=" + f);
     }
-    args.emplace_back("--include=.");
     for (const string& i : import_paths_) {
       args.emplace_back("--include=" + i);
     }
@@ -480,11 +479,11 @@ TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
 }
 
 TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
-  Options java_options = Options::From("aidl -I . -o out --structured a/Foo.aidl");
-  Options cpp_options = Options::From("aidl -I . --lang=cpp -o out -h out/include a/Foo.aidl");
+  Options java_options = Options::From("aidl -o out --structured a/Foo.aidl");
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out/include a/Foo.aidl");
   Options cpp_structured_options =
-      Options::From("aidl --lang=cpp -I . --structured -o out -h out/include a/Foo.aidl");
-  Options rust_options = Options::From("aidl -I . --lang=rust -o out --structured a/Foo.aidl");
+      Options::From("aidl --lang=cpp --structured -o out -h out/include a/Foo.aidl");
+  Options rust_options = Options::From("aidl --lang=rust -o out --structured a/Foo.aidl");
   io_delegate_.SetFileContents(
       "a/Foo.aidl",
       StringPrintf("package a; @JavaOnlyStableParcelable parcelable Foo cpp_header \"Foo.h\" ;"));
@@ -502,11 +501,11 @@ TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
 }
 
 TEST_F(AidlTest, ParsesNdkOnlyStableParcelable) {
-  Options java_options = Options::From("aidl -I . -o out --structured a/Foo.aidl");
+  Options java_options = Options::From("aidl -o out --structured a/Foo.aidl");
   Options ndk_structured_options =
-      Options::From("aidl --lang=ndk --structured -I . -o out -h out/include a/Foo.aidl");
-  Options rust_options = Options::From("aidl --lang=rust -I . -o out --structured a/Foo.aidl");
-  Options cpp_options = Options::From("aidl --lang=cpp -I . -o out -h out/include a/Foo.aidl");
+      Options::From("aidl --lang=ndk --structured -o out -h out/include a/Foo.aidl");
+  Options rust_options = Options::From("aidl --lang=rust -o out --structured a/Foo.aidl");
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out/include a/Foo.aidl");
   io_delegate_.SetFileContents(
       "a/Foo.aidl",
       StringPrintf("package a; @NdkOnlyStableParcelable parcelable Foo cpp_header \"Foo.h\" ;"));
@@ -555,7 +554,7 @@ TEST_P(AidlTest, NdkAndJavaStabilityIsVintfStable) {
 TEST_F(AidlTest, ParcelableSupportJavaDeriveToString) {
   io_delegate_.SetFileContents("a/Foo.aidl", R"(package a;
     @JavaDerive(toString=true) parcelable Foo { int a; float b; })");
-  Options java_options = Options::From("aidl --lang=java -I . -o out a/Foo.aidl");
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
 
   string java_out;
@@ -563,10 +562,10 @@ TEST_F(AidlTest, ParcelableSupportJavaDeriveToString) {
   EXPECT_THAT(java_out, testing::HasSubstr("public String toString() {"));
 
   // Other backends shouldn't be bothered
-  Options cpp_options = Options::From("aidl --lang=cpp -I . -o out -h out a/Foo.aidl");
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(cpp_options, io_delegate_));
 
-  Options ndk_options = Options::From("aidl --lang=ndk -I . -o out -h out a/Foo.aidl");
+  Options ndk_options = Options::From("aidl --lang=ndk -o out -h out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(ndk_options, io_delegate_));
 }
 
@@ -574,7 +573,7 @@ TEST_F(AidlTest, UnionSupportJavaDeriveToString) {
   io_delegate_.SetFileContents("a/Foo.aidl", R"(package a;
     @JavaDerive(toString=true) union Foo { int a; int[] b; })");
   CaptureStderr();
-  Options java_options = Options::From("aidl --lang=java -I . -o out a/Foo.aidl");
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
 
@@ -598,7 +597,7 @@ TEST_F(AidlTest, ParcelableSupportJavaDeriveEquals) {
   io_delegate_.SetFileContents("a/Foo.aidl", R"(package a;
     @JavaDerive(equals=true) parcelable Foo { int a; float b; })");
   CaptureStderr();
-  Options java_options = Options::From("aidl --lang=java -I . -o out a/Foo.aidl");
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
 
@@ -629,7 +628,7 @@ TEST_F(AidlTest, UnionSupportJavaDeriveEquals) {
   io_delegate_.SetFileContents("a/Foo.aidl", R"(package a;
     @JavaDerive(equals=true) union Foo { int a; int[] b; })");
   CaptureStderr();
-  Options java_options = Options::From("aidl --lang=java -I . -o out a/Foo.aidl");
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
 
@@ -660,7 +659,7 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
   {
     io_delegate_.SetFileContents("a/Foo.aidl",
                                  "package a; @JavaDerive(blah=true) parcelable Foo{}");
-    Options java_options = Options::From("aidl --lang=java -I . -o out a/Foo.aidl");
+    Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
     CaptureStderr();
     EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
     const std::string expected_stderr =
@@ -671,7 +670,7 @@ TEST_F(AidlTest, RejectsJavaDeriveAnnotation) {
 
   {
     io_delegate_.SetFileContents("a/IFoo.aidl", "package a; @JavaDerive interface IFoo{}");
-    Options java_options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+    Options java_options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
     CaptureStderr();
     EXPECT_FALSE(compile_aidl(java_options, io_delegate_));
     EXPECT_THAT(GetCapturedStderr(), HasSubstr("@JavaDerive is not available."));
@@ -806,7 +805,7 @@ TEST_P(AidlTest, CppHeaderCanBeIdentifierAsWell) {
 
 TEST_F(AidlTest, RejectsIfCppHeaderIsMissing) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo;");
-  Options options = Options::From("aidl -I . --lang cpp -h h -o o Foo.aidl");
+  Options options = Options::From("aidl --lang cpp -h h -o o Foo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("must have cpp_header defined"));
@@ -960,7 +959,7 @@ TEST_F(AidlTest, PreprocessVariousThings) {
                                "package a; parcelable Foo { const int y = foo.bar.Bar.BAR; }");
   io_delegate_.SetFileContents("preprocessed", preprocessed);
   CaptureStderr();
-  auto options = Options::From("aidl --lang java -I . -o out a/Foo.aidl -ppreprocessed");
+  auto options = Options::From("aidl --lang java -o out a/Foo.aidl -ppreprocessed");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
   string code;
@@ -979,7 +978,7 @@ TEST_F(AidlTest, AllowMultipleUnstructuredNestedParcelablesInASingleDocument) {
                                "package x;\n"
                                "parcelable Outer.Inner1;\n"
                                "parcelable Outer.Inner2;\n");
-  auto opt = Options::From("aidl -I . -Iimported --lang=java p/IFoo.aidl");
+  auto opt = Options::From("aidl -Iimported --lang=java p/IFoo.aidl");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(opt, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -1058,7 +1057,7 @@ TEST_P(AidlTest, SupportDeprecated) {
                              std::vector<std::pair<Options::Language, TestCase>> expectations) {
     io_delegate_.SetFileContents(filename, contents);
 
-    auto options = Options::From("aidl -I . --lang=" + to_string(GetLanguage()) + " " + filename +
+    auto options = Options::From("aidl --lang=" + to_string(GetLanguage()) + " " + filename +
                                  " --out=out --header_out=out");
     EXPECT_TRUE(compile_aidl(options, io_delegate_));
     for (const auto& [lang, test_case] : expectations) {
@@ -1235,7 +1234,7 @@ TEST_P(AidlTest, ParseCompoundParcelableFromPreprocess) {
 TEST_F(AidlTest, ApiMappingAcceptsUnstructuredParcelables) {
   io_delegate_.SetFileContents("p/Foo.aidl", "package p; parcelable Foo;");
 
-  Options options1 = Options::From("aidl -I . --apimapping mapping.txt p/Foo.aidl");
+  Options options1 = Options::From("aidl --apimapping mapping.txt p/Foo.aidl");
   CaptureStderr();
   EXPECT_EQ(0, aidl_entry(options1, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -1249,13 +1248,13 @@ TEST_F(AidlTest, FailOnParcelable) {
   io_delegate_.SetFileContents("p/IFoo.aidl", "package p; parcelable IFoo;");
 
   // By default, we shouldn't fail on parcelable.
-  Options options1 = Options::From("aidl -I . p/IFoo.aidl");
+  Options options1 = Options::From("aidl p/IFoo.aidl");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options1, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
 
   // -b considers this an error
-  Options options2 = Options::From("aidl -I . -b p/IFoo.aidl");
+  Options options2 = Options::From("aidl -b p/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options2, io_delegate_));
   EXPECT_EQ(expected_foo_stderr, GetCapturedStderr());
@@ -1267,11 +1266,11 @@ TEST_F(AidlTest, FailOnParcelable) {
   io_delegate_.SetFileContents("p/IBar.aidl", "package p; parcelable Foo; interface IBar{}");
 
   // With '-b' option, a parcelable and an interface should fail.
-  Options options3 = Options::From("aidl -I . p/IBar.aidl");
+  Options options3 = Options::From("aidl p/IBar.aidl");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options3, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
-  Options options4 = Options::From("aidl -I . -b p/IBar.aidl");
+  Options options4 = Options::From("aidl -b p/IBar.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options4, io_delegate_));
   EXPECT_EQ(expected_bar_stderr, GetCapturedStderr());
@@ -1390,7 +1389,7 @@ TEST_P(AidlTest, FailOnTooBigConstant) {
 TEST_F(AidlTest, BoolConstantsEvaluatesToIntegers) {
   io_delegate_.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { const int y = true; }");
   CaptureStderr();
-  auto options = Options::From("aidl -I . --lang java -o out a/Foo.aidl");
+  auto options = Options::From("aidl --lang java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
   string code;
@@ -2138,7 +2137,11 @@ TEST_F(AidlTest, WritesCorrectDependencyFile) {
   // While the in tree build system always gives us an output file name,
   // other android tools take advantage of our ability to infer the intended
   // file name.  This test makes sure we handle this correctly.
-  vector<string> args = {"aidl", "-I .", "-d dep/file/path", "-o place/for/output", "p/IFoo.aidl"};
+  vector<string> args = {
+    "aidl",
+    "-d dep/file/path",
+    "-o place/for/output",
+    "p/IFoo.aidl"};
   Options options = Options::From(args);
   io_delegate_.SetFileContents(options.InputFiles().front(), "package p; interface IFoo {}");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -2151,8 +2154,12 @@ TEST_F(AidlTest, WritesCorrectDependencyFileNinja) {
   // While the in tree build system always gives us an output file name,
   // other android tools take advantage of our ability to infer the intended
   // file name.  This test makes sure we handle this correctly.
-  vector<string> args = {"aidl",       "-I .", "-d dep/file/path", "--ninja", "-o place/for/output",
-                         "p/IFoo.aidl"};
+  vector<string> args = {
+    "aidl",
+    "-d dep/file/path",
+    "--ninja",
+    "-o place/for/output",
+    "p/IFoo.aidl"};
   Options options = Options::From(args);
   io_delegate_.SetFileContents(options.InputFiles().front(), "package p; interface IFoo {}");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -2167,7 +2174,11 @@ TEST_F(AidlTest, WritesTrivialDependencyFileForParcelableDeclaration) {
   // generated dependency files.  Those that reference .java output files are
   // for interfaces and those that do not are parcelables.  However, for both
   // parcelables and interfaces, we *must* generate a non-empty dependency file.
-  vector<string> args = {"aidl", "-I .", "-o place/for/output", "-d dep/file/path", "p/Foo.aidl"};
+  vector<string> args = {
+    "aidl",
+    "-o place/for/output",
+    "-d dep/file/path",
+    "p/Foo.aidl"};
   Options options = Options::From(args);
   io_delegate_.SetFileContents(options.InputFiles().front(), "package p; parcelable Foo;");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -2178,7 +2189,11 @@ TEST_F(AidlTest, WritesTrivialDependencyFileForParcelableDeclaration) {
 
 TEST_F(AidlTest, WritesDependencyFileForStructuredParcelable) {
   vector<string> args = {
-      "aidl", "-I .", "--structured", "-o place/for/output", "-d dep/file/path", "p/Foo.aidl"};
+    "aidl",
+    "--structured",
+    "-o place/for/output",
+    "-d dep/file/path",
+    "p/Foo.aidl"};
   Options options = Options::From(args);
   io_delegate_.SetFileContents(options.InputFiles().front(), "package p; parcelable Foo {int a;}");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -2188,7 +2203,11 @@ TEST_F(AidlTest, WritesDependencyFileForStructuredParcelable) {
 }
 
 TEST_F(AidlTest, NoJavaOutputForParcelableDeclaration) {
-  vector<string> args = {"aidl", "-I .", "--lang=java", "-o place/for/output", "p/Foo.aidl"};
+ vector<string> args = {
+    "aidl",
+    "--lang=java",
+    "-o place/for/output",
+    "p/Foo.aidl"};
   Options options = Options::From(args);
   io_delegate_.SetFileContents(options.InputFiles().front(), "package p; parcelable Foo;");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -2274,7 +2293,7 @@ TEST_P(AidlTest, ParcelableHolderAsArgumentType) {
 
 TEST_P(AidlTest, RejectNullableParcelableHolderField) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo { @nullable ParcelableHolder ext; }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr = "ERROR: Foo.aidl:1.27-44: ParcelableHolder cannot be nullable.\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
@@ -2283,7 +2302,7 @@ TEST_P(AidlTest, RejectNullableParcelableHolderField) {
 
 TEST_P(AidlTest, ParcelablesWithConstants) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo { const int BIT = 0x1 << 3; }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -2291,7 +2310,7 @@ TEST_P(AidlTest, ParcelablesWithConstants) {
 
 TEST_P(AidlTest, UnionWithConstants) {
   io_delegate_.SetFileContents("Foo.aidl", "union Foo { const int BIT = 0x1 << 3; int n; }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -2303,7 +2322,7 @@ TEST_F(AidlTest, ConstantsWithAnnotations) {
                                " @JavaPassthrough(annotation=\"@Foo\")\n"
                                " const @JavaPassthrough(annotation=\"@Bar\") int FOO = 0;\n"
                                "}");
-  Options options = Options::From("aidl IFoo.aidl -I . --lang=java -o out");
+  Options options = Options::From("aidl IFoo.aidl --lang=java -o out");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -2402,7 +2421,7 @@ TEST_F(AidlTest, ApiDumpWithManualIds) {
       "    int baz() = 10;\n"
       "}\n");
 
-  vector<string> args = {"aidl", "-I . ", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
+  vector<string> args = {"aidl", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
   Options options = Options::From(args);
   bool result = dump_api(options, io_delegate_);
   ASSERT_TRUE(result);
@@ -2430,7 +2449,7 @@ TEST_F(AidlTest, ApiDumpWithManualIdsOnlyOnSomeMethods) {
       "    int baz() = 10;\n"
       "}\n");
 
-  vector<string> args = {"aidl", "-I . ", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
+  vector<string> args = {"aidl", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
   Options options = Options::From(args);
   CaptureStderr();
   EXPECT_FALSE(dump_api(options, io_delegate_));
@@ -2445,7 +2464,7 @@ TEST_F(AidlTest, ApiDumpConstWithAnnotation) {
                                "    const @utf8InCpp String bar = \"bar\";\n"
                                "}\n");
 
-  vector<string> args = {"aidl", "-I . ", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
+  vector<string> args = {"aidl", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
   Options options = Options::From(args);
   CaptureStderr();
   EXPECT_TRUE(dump_api(options, io_delegate_));
@@ -2547,7 +2566,7 @@ TEST_F(AidlTest, CheckNumGenericTypeSecifier) {
       "'List<String,String>'\n";
   const string expected_map_stderr =
       "ERROR: p/IFoo.aidl:1.37-40: Map must have 0 or 2 type parameters, but got 'Map<String>'\n";
-  Options options = Options::From("aidl -I . p/IFoo.aidl IFoo.java");
+  Options options = Options::From("aidl p/IFoo.aidl IFoo.java");
   io_delegate_.SetFileContents(options.InputFiles().front(),
                                "package p; interface IFoo {"
                                "void foo(List<String, String> a);}");
@@ -2594,7 +2613,7 @@ TEST_F(AidlTest, CheckTypeParameterInMapType) {
 
 TEST_F(AidlTest, WrongGenericType) {
   const string expected_stderr = "ERROR: p/IFoo.aidl:1.28-34: String is not a generic type.\n";
-  Options options = Options::From("aidl -I . p/IFoo.aidl IFoo.java");
+  Options options = Options::From("aidl p/IFoo.aidl IFoo.java");
   io_delegate_.SetFileContents(options.InputFiles().front(),
                                "package p; interface IFoo {"
                                "String<String> foo(); }");
@@ -2642,9 +2661,9 @@ TEST_F(AidlTest, UserDefinedUnstructuredGenericParcelableType) {
 }
 
 TEST_F(AidlTest, FailOnMultipleTypesInSingleFile) {
-  std::vector<std::string> rawOptions{"aidl --lang=java -I . -o out foo/bar/Foo.aidl",
-                                      "aidl --lang=cpp -I . -o out -h out/include foo/bar/Foo.aidl",
-                                      "aidl --lang=rust -I . -o out foo/bar/Foo.aidl"};
+  std::vector<std::string> rawOptions{"aidl --lang=java -o out foo/bar/Foo.aidl",
+                                      "aidl --lang=cpp -o out -h out/include foo/bar/Foo.aidl",
+                                      "aidl --lang=rust -o out foo/bar/Foo.aidl"};
   for (const auto& rawOption : rawOptions) {
     string expected_stderr =
         "ERROR: foo/bar/Foo.aidl:3.1-10: You must declare only one type per file.\n";
@@ -2715,8 +2734,7 @@ TEST_F(AidlTest, MultipleInputFiles) {
 }
 
 TEST_F(AidlTest, MultipleInputFilesCpp) {
-  Options options = Options::From(
-      "aidl --lang=cpp -I . -o out -h out/include "
+  Options options = Options::From("aidl --lang=cpp -o out -h out/include "
       "-I . foo/bar/IFoo.aidl foo/bar/Data.aidl");
 
   io_delegate_.SetFileContents(options.InputFiles().at(0),
@@ -2770,7 +2788,7 @@ TEST_F(AidlTest, MultipleInputFilesRust) {
 TEST_F(AidlTest, ConflictWithMetaTransactionGetVersion) {
   const string expected_stderr =
       "ERROR: p/IFoo.aidl:1.31-51:  method getInterfaceVersion() is reserved for internal use.\n";
-  Options options = Options::From("aidl --lang=java -I . -o place/for/output p/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o place/for/output p/IFoo.aidl");
   // int getInterfaceVersion() is one of the meta transactions
   io_delegate_.SetFileContents(options.InputFiles().front(),
                                "package p; interface IFoo {"
@@ -2785,7 +2803,7 @@ TEST_F(AidlTest, ConflictWithSimilarMetaTransaction) {
   // prevented because return type is not part of a method signature
   const string expected_stderr =
       "ERROR: p/IFoo.aidl:1.35-55:  method getInterfaceVersion() is reserved for internal use.\n";
-  Options options = Options::From("aidl --lang=java -I . -o place/for/output p/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o place/for/output p/IFoo.aidl");
   io_delegate_.SetFileContents(options.InputFiles().front(),
                                "package p; interface IFoo {"
                                "boolean getInterfaceVersion(); }");
@@ -2798,7 +2816,7 @@ TEST_F(AidlTest, ConflictWithMetaTransactionGetName) {
   // this is another reserved name
   const string expected_stderr =
       "ERROR: p/IFoo.aidl:1.34-53:  method getTransactionName(int) is reserved for internal use.\n";
-  Options options = Options::From("aidl --lang=java -I . -o place/for/output p/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o place/for/output p/IFoo.aidl");
   io_delegate_.SetFileContents(options.InputFiles().front(),
                                "package p; interface IFoo {"
                                "String getTransactionName(int code); }");
@@ -3814,7 +3832,7 @@ TEST_F(AidlTest, RejectAmbiguousImports) {
       "dir1/q/IBar.aidl\n"
       "dir2/q/IBar.aidl\n"
       "ERROR: p/IFoo.aidl: Couldn't find import for class q.IBar\n";
-  Options options = Options::From("aidl --lang=java -o out -I . -I dir1 -I dir2 p/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out -I dir1 -I dir2 p/IFoo.aidl");
   io_delegate_.SetFileContents("p/IFoo.aidl", "package p; import q.IBar; interface IFoo{}");
   io_delegate_.SetFileContents("dir1/q/IBar.aidl", "package q; interface IBar{}");
   io_delegate_.SetFileContents("dir2/q/IBar.aidl", "package q; interface IBar{}");
@@ -3842,7 +3860,7 @@ TEST_F(AidlTest, HandleManualIdAssignments) {
 
 TEST_P(AidlTest, ParcelFileDescriptorIsBuiltinType) {
   Options options =
-      Options::From("aidl -I . --lang=" + to_string(GetLanguage()) + " -h out -o out p/IFoo.aidl");
+      Options::From("aidl --lang=" + to_string(GetLanguage()) + " -h out -o out p/IFoo.aidl");
 
   // use without import
   io_delegate_.SetFileContents("p/IFoo.aidl",
@@ -3898,7 +3916,7 @@ TEST_P(AidlTest, RejectsArgumentDirectionNotSpecified) {
 }
 
 TEST_F(AidlTest, ManualIds) {
-  Options options = Options::From("aidl --lang=java -I . -o out IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out IFoo.aidl");
   io_delegate_.SetFileContents("IFoo.aidl",
                                "interface IFoo {\n"
                                "  void foo() = 0;\n"
@@ -3908,7 +3926,7 @@ TEST_F(AidlTest, ManualIds) {
 }
 
 TEST_F(AidlTest, ManualIdsWithMetaTransactions) {
-  Options options = Options::From("aidl --lang=java -I . --version 10 -o out IFoo.aidl");
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
   io_delegate_.SetFileContents("IFoo.aidl",
                                "interface IFoo {\n"
                                "  void foo() = 0;\n"
@@ -3920,7 +3938,7 @@ TEST_F(AidlTest, ManualIdsWithMetaTransactions) {
 TEST_F(AidlTest, FailOnDuplicatedIds) {
   const string expected_stderr =
       "ERROR: IFoo.aidl:3.7-11: Found duplicate method id (3) for method bar\n";
-  Options options = Options::From("aidl --lang=java -I . --version 10 -o out IFoo.aidl");
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
   io_delegate_.SetFileContents("IFoo.aidl",
                                "interface IFoo {\n"
                                "  void foo() = 3;\n"
@@ -3936,7 +3954,7 @@ TEST_F(AidlTest, FailOnOutOfRangeIds) {
   const string expected_stderr =
       "ERROR: IFoo.aidl:3.7-11: Found out of bounds id (16777115) for method bar. "
       "Value for id must be between 0 and 16777114 inclusive.\n";
-  Options options = Options::From("aidl --lang=java -I . --version 10 -o out IFoo.aidl");
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
   io_delegate_.SetFileContents("IFoo.aidl",
                                "interface IFoo {\n"
                                "  void foo() = 3;\n"
@@ -3950,7 +3968,7 @@ TEST_F(AidlTest, FailOnOutOfRangeIds) {
 TEST_F(AidlTest, FailOnPartiallyAssignedIds) {
   const string expected_stderr =
       "ERROR: IFoo.aidl:3.7-11: You must either assign id's to all methods or to none of them.\n";
-  Options options = Options::From("aidl --lang=java -I . --version 10 -o out IFoo.aidl");
+  Options options = Options::From("aidl --lang=java --version 10 -o out IFoo.aidl");
   io_delegate_.SetFileContents("IFoo.aidl",
                                "interface IFoo {\n"
                                "  void foo() = 3;\n"
@@ -3985,7 +4003,7 @@ TEST_F(AidlTest, AssignedIds) {
 }
 
 TEST_F(AidlTest, AllowDuplicatedImportPaths) {
-  Options options = Options::From("aidl --lang=java -I . -I dir -I dir IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -I dir -I dir IFoo.aidl");
   io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
   io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -3998,7 +4016,7 @@ TEST_F(AidlTest, FailOnAmbiguousImports) {
       "dir2/IBar.aidl\n"
       "ERROR: IFoo.aidl: Couldn't find import for class IBar\n";
 
-  Options options = Options::From("aidl --lang=java -I . -I dir -I dir2 IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -I dir -I dir2 IFoo.aidl");
   io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
   io_delegate_.SetFileContents("dir2/IBar.aidl", "interface IBar{}");
   io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
@@ -4085,7 +4103,7 @@ TEST_F(AidlTest, ParseRustDerive) {
         int a;
     })");
 
-  Options rust_options = Options::From("aidl -I . --lang=rust -o out a/Foo.aidl");
+  Options rust_options = Options::From("aidl --lang=rust -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(rust_options, io_delegate_));
 
   string rust_out;
@@ -4093,13 +4111,13 @@ TEST_F(AidlTest, ParseRustDerive) {
   EXPECT_THAT(rust_out, testing::HasSubstr("#[derive(Debug, Clone)]"));
 
   // Other backends shouldn't be bothered
-  Options cpp_options = Options::From("aidl --lang=cpp -I . -o out -h out a/Foo.aidl");
+  Options cpp_options = Options::From("aidl --lang=cpp -o out -h out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(cpp_options, io_delegate_));
 
-  Options ndk_options = Options::From("aidl --lang=ndk -I . -o out -h out a/Foo.aidl");
+  Options ndk_options = Options::From("aidl --lang=ndk -o out -h out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(ndk_options, io_delegate_));
 
-  Options java_options = Options::From("aidl --lang=java -I . -o out a/Foo.aidl");
+  Options java_options = Options::From("aidl --lang=java -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
 }
 
@@ -4124,7 +4142,7 @@ TEST_F(AidlTest, EmptyEnforceAnnotation) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Unable to parse @EnforcePermission annotation"));
@@ -4137,7 +4155,7 @@ TEST_F(AidlTest, InterfaceEnforceCondition) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
 }
 
@@ -4148,7 +4166,7 @@ TEST_F(AidlTest, EnforceConditionAny) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
 }
 
@@ -4159,7 +4177,7 @@ TEST_F(AidlTest, EnforceConditionAll) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
 }
 
@@ -4171,7 +4189,7 @@ TEST_F(AidlTest, InterfaceAndMethodEnforceCondition) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
@@ -4186,7 +4204,7 @@ TEST_F(AidlTest, NoPermissionInterfaceEnforceMethod) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
@@ -4201,7 +4219,7 @@ TEST_F(AidlTest, ManualPermissionInterfaceEnforceMethod) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
@@ -4216,7 +4234,7 @@ TEST_F(AidlTest, EnforceInterfaceNoPermissionsMethod) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
@@ -4231,7 +4249,7 @@ TEST_F(AidlTest, EnforceInterfaceManualPermissionMethod) {
         void Protected();
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("The interface IFoo uses a permission annotation but "
@@ -4244,7 +4262,7 @@ TEST_F(AidlTest, JavaSuppressLint) {
     interface IFoo {
     })");
 
-  Options options = Options::From("aidl --lang=java -I . -o out a/IFoo.aidl");
+  Options options = Options::From("aidl --lang=java -o out a/IFoo.aidl");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ(GetCapturedStderr(), "");
@@ -4269,24 +4287,22 @@ class AidlOutputPathTest : public AidlTest {
 
 TEST_F(AidlOutputPathTest, OutDirWithNoOutputFile) {
   // <out_dir> / <package_name> / <type_name>.java
-  Test(Options::From("aidl -I sub/dir -o out sub/dir/foo/bar/IFoo.aidl"), "out/foo/bar/IFoo.java");
+  Test(Options::From("aidl -o out sub/dir/foo/bar/IFoo.aidl"), "out/foo/bar/IFoo.java");
 }
 
 TEST_F(AidlOutputPathTest, OutDirWithOutputFile) {
   // when output file is explicitly set, it is always respected. -o option is
   // ignored.
-  Test(Options::From("aidl -I sub/dir -o out sub/dir/foo/bar/IFoo.aidl output/IFoo.java"),
-       "output/IFoo.java");
+  Test(Options::From("aidl -o out sub/dir/foo/bar/IFoo.aidl output/IFoo.java"), "output/IFoo.java");
 }
 
 TEST_F(AidlOutputPathTest, NoOutDirWithOutputFile) {
-  Test(Options::From("aidl -I sub/dir -o out sub/dir/foo/bar/IFoo.aidl output/IFoo.java"),
-       "output/IFoo.java");
+  Test(Options::From("aidl -o out sub/dir/foo/bar/IFoo.aidl output/IFoo.java"), "output/IFoo.java");
 }
 
 TEST_F(AidlOutputPathTest, NoOutDirWithNoOutputFile) {
   // output is the same as the input file except for the suffix
-  Test(Options::From("aidl -I sub/dir sub/dir/foo/bar/IFoo.aidl"), "sub/dir/foo/bar/IFoo.java");
+  Test(Options::From("aidl sub/dir/foo/bar/IFoo.aidl"), "sub/dir/foo/bar/IFoo.java");
 }
 
 TEST_P(AidlTest, FailOnOutOfBoundsInt32MaxConstInt) {
@@ -4488,7 +4504,7 @@ TEST_F(AidlTest, ImmutableParcelableCannotBeOut) {
 
 TEST_F(AidlTest, ImmutableParcelableFieldNameRestriction) {
   io_delegate_.SetFileContents("Foo.aidl", "@JavaOnlyImmutable parcelable Foo { int a; int A; }");
-  Options options = Options::From("aidl -I . --lang=java Foo.aidl");
+  Options options = Options::From("aidl --lang=java Foo.aidl");
   const string expected_stderr =
       "ERROR: Foo.aidl:1.47-49: 'Foo' has duplicate field name 'A' after capitalizing the first "
       "letter\n";
@@ -4534,7 +4550,7 @@ TEST_P(AidlTest, UnionRejectsFirstEnumWithNoDefaults) {
 
 TEST_P(AidlTest, GenericStructuredParcelable) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T, U> { int a; int A; }");
-  Options options = Options::From("aidl -I . Foo.aidl --lang=" + to_string(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr = "";
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -4544,8 +4560,8 @@ TEST_P(AidlTest, GenericStructuredParcelable) {
 TEST_F(AidlTest, GenericStructuredParcelableWithStringConstants_Cpp) {
   io_delegate_.SetFileContents("Foo.aidl",
                                "parcelable Foo<T, U> { int a; const String s = \"\"; }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(Options::Language::CPP) +
-                                  " -o out -h out");
+  Options options =
+      Options::From("aidl Foo.aidl --lang=" + to_string(Options::Language::CPP) + " -o out -h out");
   const string expected_stderr = "";
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -4563,8 +4579,8 @@ const ::android::String16& Foo<T,U>::s() {
 TEST_F(AidlTest, GenericStructuredParcelableWithStringConstants_Ndk) {
   io_delegate_.SetFileContents("Foo.aidl",
                                "parcelable Foo<T, U> { int a; const String s = \"\"; }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(Options::Language::NDK) +
-                                  " -o out -h out");
+  Options options =
+      Options::From("aidl Foo.aidl --lang=" + to_string(Options::Language::NDK) + " -o out -h out");
   const string expected_stderr = "";
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
@@ -4802,7 +4818,7 @@ TEST_F(GenericAidlTest, ImportGenericParameterTypesNDK) {
 
 TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { int a; int A; }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr =
       "ERROR: Foo.aidl:1.11-15: Every type parameter should be unique.\n";
   CaptureStderr();
@@ -4812,7 +4828,7 @@ TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
 
 TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { T a; int A; }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   const string expected_stderr = "ERROR: Foo.aidl:1.22-24: Failed to resolve 'T'\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
@@ -4821,7 +4837,7 @@ TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
 
 TEST_P(AidlTest, LongCommentWithinConstExpression) {
   io_delegate_.SetFileContents("Foo.aidl", "enum Foo { FOO = (1 << 1) /* comment */ | 0x0 }");
-  Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
+  Options options = Options::From("aidl Foo.aidl --lang=" + to_string(GetLanguage()));
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
@@ -4829,7 +4845,7 @@ TEST_P(AidlTest, LongCommentWithinConstExpression) {
 
 TEST_F(AidlTest, RejectUntypdeListAndMapInUnion) {
   io_delegate_.SetFileContents("a/Foo.aidl", "package a; union Foo { List l; Map m; }");
-  Options options = Options::From("aidl a/Foo.aidl -I . --lang=java -o out");
+  Options options = Options::From("aidl a/Foo.aidl --lang=java -o out");
   std::string expectedErr =
       "ERROR: a/Foo.aidl:1.28-30: "
       "Encountered an untyped List or Map. The use of untyped List/Map is "
@@ -4846,7 +4862,7 @@ TEST_F(AidlTest, RejectUntypdeListAndMapInUnion) {
 
 TEST_F(AidlTest, RejectUntypdeListAndMapInUnstructuredParcelable) {
   io_delegate_.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { List l; Map m; }");
-  Options options = Options::From("aidl a/Foo.aidl -I . --lang=java -o out");
+  Options options = Options::From("aidl a/Foo.aidl --lang=java -o out");
   std::string expectedErr =
       "ERROR: a/Foo.aidl:1.33-35: "
       "Encountered an untyped List or Map. The use of untyped List/Map is "
@@ -4984,7 +5000,6 @@ parcelable Foo {
 TEST_P(AidlTest, EnumeratorIsConstantValue_CanDefineOtherEnumerator) {
   CaptureStderr();
   const AidlDefinedType* type = Parse("a/p/Foo.aidl", R"(
-package a.p;
 @Backing(type="int")
 enum Foo {
       STANDARD_SHIFT = 16,
@@ -4995,7 +5010,7 @@ enum Foo {
                                       typenames_, GetLanguage());
   auto err = GetCapturedStderr();
   EXPECT_EQ("", err);
-  ASSERT_NE(type, nullptr);
+  EXPECT_TRUE(type);
   const auto& enum_type = type->AsEnumDeclaration();
   string code;
   auto writer = CodeWriter::ForString(&code);
@@ -5060,8 +5075,8 @@ TEST_P(AidlTest, RejectRefsInAnnotation) {
                                "  @JavaPassthrough(annotation=ANNOTATION) void foo();\n"
                                "}");
   CaptureStderr();
-  auto options = Options::From("aidl -I a --lang " + to_string(GetLanguage()) +
-                               " -o out -h out a/p/IFoo.aidl");
+  auto options =
+      Options::From("aidl --lang " + to_string(GetLanguage()) + " -o out -h out a/p/IFoo.aidl");
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   auto err = GetCapturedStderr();
   EXPECT_EQ(
@@ -5142,7 +5157,7 @@ TEST_P(AidlTest, ConstRefsCanPointToTheSameValue) {
 TEST_P(AidlTest, UnknownConstReference) {
   io_delegate_.SetFileContents("Foo.aidl", " parcelable Foo { int field = UNKNOWN_REF; }");
   auto options =
-      Options::From("aidl -I . --lang " + to_string(GetLanguage()) + " -o out -h out Foo.aidl");
+      Options::From("aidl --lang " + to_string(GetLanguage()) + " -o out -h out Foo.aidl");
   const string err =
       "ERROR: Foo.aidl:1.30-42: Can't find UNKNOWN_REF in Foo\n"
       "ERROR: Foo.aidl:1.30-42: Unknown reference 'UNKNOWN_REF'\n";
@@ -5161,23 +5176,22 @@ interface IFoo {}
 }
 
 TEST_P(AidlTest, WarningInterfaceName) {
-  io_delegate_.SetFileContents("p/Foo.aidl", "package p; interface Foo {}");
-  auto options = Options::From("aidl -I . --lang " + to_string(GetLanguage()) +
+  io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
+  auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
                                " -Winterface-name -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
-  EXPECT_EQ(
-      "WARNING: p/Foo.aidl:1.11-21: Interface names should start with I. [-Winterface-name]\n",
-      GetCapturedStderr());
+  EXPECT_EQ("WARNING: p/Foo.aidl:1.1-10: Interface names should start with I. [-Winterface-name]\n",
+            GetCapturedStderr());
 }
 
 TEST_P(AidlTest, ErrorInterfaceName) {
-  io_delegate_.SetFileContents("p/Foo.aidl", "package p; interface Foo {}");
-  auto options = Options::From("aidl -I . --lang " + to_string(GetLanguage()) +
+  io_delegate_.SetFileContents("p/Foo.aidl", "interface Foo {}");
+  auto options = Options::From("aidl --lang " + to_string(GetLanguage()) +
                                " -Winterface-name -Werror -o out -h out p/Foo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_EQ("ERROR: p/Foo.aidl:1.11-21: Interface names should start with I. [-Winterface-name]\n",
+  EXPECT_EQ("ERROR: p/Foo.aidl:1.1-10: Interface names should start with I. [-Winterface-name]\n",
             GetCapturedStderr());
 }
 
@@ -5185,9 +5199,10 @@ TEST_F(AidlTest, RejectsIncorrectOutputFilePathOnLegacyCppInput) {
   const std::string input_file = "base/p/q/IFoo.aidl";
   const std::string header_dir = "out/";
   const std::string output_file = "out/base/p/q/IFoo.cpp";
-  io_delegate_.SetFileContents(input_file, "package p.q; interface IFoo {}");
+  const std::string package = "p.q";  // not base.p.q
+  io_delegate_.SetFileContents(input_file, "package " + package + "; interface IFoo {}");
 
-  auto options = Options::From({"aidl-cpp", "-I base", input_file, header_dir, output_file});
+  auto options = Options::From({"aidl-cpp", input_file, header_dir, output_file});
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(
@@ -5236,15 +5251,15 @@ TEST_F(AidlTest, SuppressWarningsIsNotForArgs) {
       "interface IFoo {\n"
       "  void foo(in @SuppressWarnings(value={\"inout-parameter\"}) int x);\n"
       "}");
-  auto options = Options::From("aidl -I . --lang=java IFoo.aidl");
+  auto options = Options::From("aidl --lang=java IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("@SuppressWarnings is not available"));
 }
 
 TEST_F(AidlTest, VoidCantBeUsedInMethodParameterType) {
-  io_delegate_.SetFileContents("p/IFoo.aidl", "package p; interface IFoo{ void j(void n);}");
-  auto options = Options::From("aidl -I . --lang=java -o out p/IFoo.aidl");
+  io_delegate_.SetFileContents("p/IFoo.aidl", "interface IFoo{ void j(void n);}");
+  auto options = Options::From("aidl --lang=java -o out p/IFoo.aidl");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("'void' is an invalid type for the parameter 'n'"));
@@ -5252,23 +5267,21 @@ TEST_F(AidlTest, VoidCantBeUsedInMethodParameterType) {
 
 TEST_F(AidlTest, InterfaceVectorIsAvailableAfterTiramisu) {
   io_delegate_.SetFileContents("p/IFoo.aidl",
-                               "package p;\n"
                                "interface IFoo{\n"
                                "  void foo(in IFoo[] n);\n"
                                "  void bar(in List<IFoo> n);\n"
                                "}");
   CaptureStderr();
-  EXPECT_FALSE(
-      compile_aidl(Options::From("aidl -I . --lang=java --min_sdk_version 30 -o out p/IFoo.aidl"),
-                   io_delegate_));
+  EXPECT_FALSE(compile_aidl(
+      Options::From("aidl --lang=java --min_sdk_version 30 -o out p/IFoo.aidl"), io_delegate_));
   auto captured_stderr = GetCapturedStderr();
   EXPECT_THAT(captured_stderr, HasSubstr("Array of interfaces is available since"));
   EXPECT_THAT(captured_stderr, HasSubstr("List of interfaces is available since"));
 
   CaptureStderr();
-  EXPECT_TRUE(compile_aidl(
-      Options::From("aidl -I . --lang=java --min_sdk_version Tiramisu -o out p/IFoo.aidl"),
-      io_delegate_));
+  EXPECT_TRUE(
+      compile_aidl(Options::From("aidl --lang=java --min_sdk_version Tiramisu -o out p/IFoo.aidl"),
+                   io_delegate_));
   EXPECT_EQ(GetCapturedStderr(), "");
 }
 
