@@ -651,11 +651,11 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 			anImportWithVersion := tag.anImport
 			_, version := parseModuleWithVersion(tag.anImport)
 
-			// note: 'nextVersion' will be incorrect in a REL branch, and following this advice
-			// would lead a user to lose another cycle.
-			// TODO(b/231903487): correct this logic when we cover all versions of nextVersion
-			// with another flag
-			candidateVersions := concat(other.getVersions(), []string{other.nextVersion()})
+			candidateVersions := other.getVersions()
+			if !proptools.Bool(other.properties.Frozen) {
+				candidateVersions = concat(candidateVersions, []string{other.nextVersion()})
+			}
+
 			if version == "" {
 				if proptools.Bool(i.properties.Unstable) && !proptools.Bool(other.properties.Unstable) {
 					mctx.PropertyErrorf("imports", "unstable %q depends on %q but does not specify a version (must be one of %q)", i.ModuleBase.Name(), anImport, candidateVersions)
@@ -1100,6 +1100,7 @@ type aidlInterfaceAttributes struct {
 	Cpp_config         *cppConfigAttributes
 	Ndk_config         *ndkConfigAttributes
 	// Backend_Configs    backendConfigAttributes
+	Unstable *bool
 }
 
 type javaConfigAttributes struct {
@@ -1246,6 +1247,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		Java_config:        javaConfig,
 		Cpp_config:         cppConfig,
 		Ndk_config:         ndkConfig,
+		Unstable:           i.properties.Unstable,
 	}
 
 	interfaceName := strings.TrimSuffix(i.Name(), "_interface")
