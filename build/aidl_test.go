@@ -410,7 +410,7 @@ func TestFrozenImportingFrozen(t *testing.T) {
 	testAidl(t, frozenTest, files)
 }
 
-func TestFrozenImportingVersionUnFrozen(t *testing.T) {
+func TestFrozenImportingVersionUnfrozen(t *testing.T) {
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -437,7 +437,7 @@ func TestFrozenImportingVersionUnFrozen(t *testing.T) {
 	testAidl(t, frozenTest, files)
 }
 
-func TestFrozenImportingUnFrozen(t *testing.T) {
+func TestFrozenImportingUnfrozenWithFrozen(t *testing.T) {
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -459,9 +459,38 @@ func TestFrozenImportingUnFrozen(t *testing.T) {
 		"aidl_api/xxx/1/.hash":      nil,
 	})
 
-	expectedError := `"foo" imports "xxx" which is not frozen. Either "foo" must set 'frozen: false' or must explicitly import "xxx-V1"`
+	expectedError := `"foo" imports "xxx" which is not frozen. Either "foo" must`
 	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
 	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
+	testAidlError(t, expectedError, frozenTest, files)
+}
+
+func TestFrozenImportingUnfrozen(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		frozen: false,
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx"],
+		versions: ["1"],
+		frozen: true,
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+		"aidl_api/xxx/1/foo.1.aidl": nil,
+		"aidl_api/xxx/1/.hash":      nil,
+	})
+
+	expectedError := `versions: must be set \(need to be frozen\) when`
+	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
+	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
+
+	expectedError = `"foo" imports "xxx" which is not frozen. Either "foo" must`
 	testAidlError(t, expectedError, frozenTest, files)
 }
 
@@ -576,7 +605,7 @@ func TestFrozenImportingNewImplicit(t *testing.T) {
 		"aidl_api/xxx/1/.hash":      nil,
 	})
 
-	expectedError := `"foo" imports "xxx" which is not frozen. Either "foo" must set 'frozen: false' or must explicitly import "xxx-V1"`
+	expectedError := `"foo" imports "xxx" which is not frozen. Either "foo" must`
 	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
 	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
 	testAidlError(t, expectedError, frozenTest, files)
