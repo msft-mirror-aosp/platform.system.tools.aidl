@@ -105,8 +105,9 @@ func isAidlGeneratedModule(module android.Module) bool {
 // AidlVersionInfo keeps the *-source module for each (aidl_interface & lang) and the list of
 // not-frozen versions (which shouldn't be used by other modules)
 type AidlVersionInfo struct {
-	notFrozen []string
-	sourceMap map[string]string
+	notFrozen            []string
+	requireFrozenReasons []string
+	sourceMap            map[string]string
 }
 
 var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AidlVersionInfo{}, "checkAidlGeneratedModules")
@@ -118,6 +119,7 @@ var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AidlVersionInfo{}, "c
 // {foo-V1-ndk-source, foo-V2-ndk-source}.
 func (info *AidlVersionInfo) merge(other AidlVersionInfo) []string {
 	info.notFrozen = append(info.notFrozen, other.notFrozen...)
+	info.requireFrozenReasons = append(info.requireFrozenReasons, other.requireFrozenReasons...)
 
 	if other.sourceMap == nil {
 		return nil
@@ -137,14 +139,15 @@ func (info *AidlVersionInfo) merge(other AidlVersionInfo) []string {
 	return nil
 }
 
-func reportUsingNotFrozenError(ctx android.BaseModuleContext, notFrozen []string) {
+func reportUsingNotFrozenError(ctx android.BaseModuleContext, notFrozen []string, requireFrozenReason []string) {
 	// TODO(b/154066686): Replace it with a common method instead of listing up module types.
 	// Test libraries are exempted.
 	if android.InList(ctx.ModuleType(), []string{"cc_test_library", "android_test", "cc_benchmark", "cc_test"}) {
 		return
 	}
-	for _, name := range notFrozen {
-		ctx.ModuleErrorf("%v is an unfrozen development version, and it can't be used because it is either explicitly disabled (with `frozen: false`) or this is a release branch and all interfaces without `owners: ...` specified must be frozen.", name)
+	for i, name := range notFrozen {
+		reason := requireFrozenReason[i]
+		ctx.ModuleErrorf("%v is an unfrozen development version, and it can't be used because %q", name, reason)
 	}
 }
 
@@ -171,11 +174,14 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 	}
 	if gen, ok := mctx.Module().(*aidlGenRule); ok {
 		var notFrozen []string
+		var requireFrozenReasons []string
 		if gen.properties.NotFrozen {
 			notFrozen = []string{strings.TrimSuffix(mctx.ModuleName(), "-source")}
+			requireFrozenReasons = []string{gen.properties.RequireFrozenReason}
 		}
 		mctx.SetProvider(AidlVersionInfoProvider, AidlVersionInfo{
-			notFrozen: notFrozen,
+			notFrozen:            notFrozen,
+			requireFrozenReasons: requireFrozenReasons,
 			sourceMap: map[string]string{
 				gen.properties.BaseName + "-" + gen.properties.Lang: gen.Name(),
 			},
@@ -193,7 +199,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 		}
 	})
 	if !isAidlGeneratedModule(mctx.Module()) && len(info.notFrozen) > 0 {
-		reportUsingNotFrozenError(mctx, info.notFrozen)
+		reportUsingNotFrozenError(mctx, info.notFrozen, info.requireFrozenReasons)
 	}
 	if mctx.Failed() {
 		return
@@ -846,6 +852,34 @@ func trimVersionSuffixInList(moduleNames []string) []string {
 	})
 }
 
+func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleContext) (bool, string) {
+	if proptools.Bool(i.properties.Unstable) {
+		return false, "it's an unstable interface"
+	}
+
+	if proptools.Bool(i.properties.Frozen) {
+		return true, "it's explicitly marked as `frozen: true`"
+	}
+
+	if i.Owner() == "" {
+		if !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview() {
+			return true, "this is a release branch - freeze it or set 'owners:'"
+		} else if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
+			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owners:'"
+		}
+	} else {
+		// has an OWNER
+		// REL branches don't enforce downstream interfaces or owned interfaces
+		// to be frozen. Instead, these interfaces are verified by other tests
+		// like vts_treble_vintf_vendor_test
+		if android.InList(i.Owner(), strings.Fields(mctx.Config().Getenv("AIDL_FROZEN_OWNERS"))) {
+			return true, "the owner field is in environment variable AIDL_FROZEN_OWNERS"
+		}
+	}
+
+	return false, "by default, we don't require the interface to be frozen"
+}
+
 func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	if hasVersionSuffix(i.ModuleBase.Name()) {
 		mctx.PropertyErrorf("name", "aidl_interface should not have '-V<number> suffix")
@@ -889,22 +923,11 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		mctx.PropertyErrorf("owner", "aidl_interface in a soong_namespace must have the 'owner' property set.")
 	}
 
-	sdkIsFinal := !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview()
-	requireFrozenNoOwner := i.Owner() == "" && (sdkIsFinal || mctx.Config().IsEnvTrue("AIDL_FROZEN_REL"))
-	requireFrozenWithOwner := i.Owner() != "" && android.InList(i.Owner(), strings.Fields(mctx.Config().Getenv("AIDL_FROZEN_OWNERS")))
-	requireFrozenByOwner := requireFrozenNoOwner || requireFrozenWithOwner
-
-	// Two different types of 'unstable' here
-	// - 'unstable: true' meaning the module is never stable
-	// - current unfrozen ToT version
-	//
-	// OEM branches may remove 'i.Owner()' here to apply the check to all interfaces, in
-	// addition to core platform interfaces. Otherwise, we rely on vts_treble_vintf_vendor_test.
-	requireFrozenVersion := proptools.BoolDefault(i.properties.Frozen, false) || (!unstable && requireFrozenByOwner)
+	requireFrozenVersion, requireFrozenReason := i.checkRequireFrozenAndReason(mctx)
 
 	// surface error early, main check is via checkUnstableModuleMutator
 	if requireFrozenVersion && !i.hasVersion() {
-		mctx.PropertyErrorf("versions", "must be set (need to be frozen) when \"unstable\" is false, PLATFORM_VERSION_CODENAME is REL, and \"owner\" property is missing.")
+		mctx.PropertyErrorf("versions", "must be set (need to be frozen) because: %q", requireFrozenReason)
 	}
 
 	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
@@ -938,16 +961,16 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		if !shouldGenerate {
 			continue
 		}
-		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion, requireFrozenReason))
 		for _, version := range versions {
-			libs = append(libs, addLibrary(mctx, i, version, lang, false))
+			libs = append(libs, addLibrary(mctx, i, version, lang, false, "this is a known frozen version"))
 		}
 	}
 
 	// In the future, we may want to force the -cpp backend to be on host,
 	// and limit its visibility, even if it's not created normally
 	if i.shouldGenerateCppBackend() && len(i.properties.Imports) == 0 {
-		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false, "analysis always uses latest version even if frozen"))
 	}
 
 	if unstable {

@@ -262,7 +262,7 @@ func TestVintfWithoutVersionInRelease(t *testing.T) {
 			},
 		},
 	}`
-	expectedError := `module "foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false, PLATFORM_VERSION_CODENAME is REL, and "owner" property is missing.`
+	expectedError := `module "foo_interface": versions: must be set \(need to be frozen\) because`
 	testAidlError(t, expectedError, vintfWithoutVersionBp, setReleaseEnv())
 	testAidlError(t, expectedError, vintfWithoutVersionBp, setTestFreezeEnv())
 
@@ -291,9 +291,10 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 		"aidl_api/foo/1/.hash":      nil,
 	})
 
-	expectedError := `foo-V2-java is an unfrozen development version`
-	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
-	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
+	expectedError1 := `foo-V2-java is an unfrozen development version, and it can't be used because "this is a release branch - freeze it or set 'owners:'"`
+	testAidlError(t, expectedError1, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
+	expectedError2 := `foo-V2-java is an unfrozen development version, and it can't be used because "this is a release branch \(simulated by setting AIDL_FROZEN_REL\) - freeze it or set 'owners:'"`
+	testAidlError(t, expectedError2, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
 	testAidl(t, unstableVersionUsageInJavaBp, files)
 
 	// A stable version can be used in release version
@@ -486,7 +487,7 @@ func TestFrozenImportingUnfrozen(t *testing.T) {
 		"aidl_api/xxx/1/.hash":      nil,
 	})
 
-	expectedError := `versions: must be set \(need to be frozen\) when`
+	expectedError := `versions: must be set \(need to be frozen\) because`
 	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
 	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
 
@@ -685,7 +686,7 @@ func TestNonVersionedModuleUsageInRelease(t *testing.T) {
 		libs: ["foo-V1-java"],
 	}`
 
-	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false, PLATFORM_VERSION_CODENAME is REL, and "owner" property is missing.`
+	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) because`
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setTestFreezeEnv())
 	testAidl(t, nonVersionedModuleUsageInJavaBp)
@@ -724,7 +725,7 @@ func TestNonVersionedModuleOwnedByTestUsageInRelease(t *testing.T) {
 		libs: ["foo-V1-java"],
 	}`
 
-	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) when "unstable" is false, PLATFORM_VERSION_CODENAME is REL, and "owner" property is missing.`
+	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) because`
 	testAidl(t, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setTestFreezeEnv())
 	testAidl(t, nonVersionedModuleUsageInJavaBp)
