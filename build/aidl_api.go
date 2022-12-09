@@ -386,6 +386,7 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date
 			deps.implicits = append(deps.implicits, api.checkApiTimestamps.Paths()...)
 			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
+			deps.implicits = append(deps.implicits, api.hasDevelopment)
 		case interfaceHeadersDepTag:
 			headerInfo, ok := ctx.OtherModuleProvider(dep, AidlInterfaceHeadersProvider).(AidlInterfaceHeadersInfo)
 			if !ok {
