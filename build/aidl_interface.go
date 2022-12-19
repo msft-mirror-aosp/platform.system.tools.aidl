@@ -687,8 +687,8 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 
 			if i.isFrozen() && other.isExplicitlyUnFrozen() && version == "" {
 				mctx.PropertyErrorf("frozen",
-					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q",
-					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V"+other.properties.Versions[len(other.properties.Versions)-1])
+					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q where * is one of %q",
+					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V*", candidateVersions)
 			}
 		})
 	}
