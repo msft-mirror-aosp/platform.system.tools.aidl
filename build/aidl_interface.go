@@ -102,21 +102,21 @@ func isAidlGeneratedModule(module android.Module) bool {
 	return false
 }
 
-// AildVersionInfo keeps the *-source module for each (aidl_interface & lang) and the list of
+// AidlVersionInfo keeps the *-source module for each (aidl_interface & lang) and the list of
 // not-frozen versions (which shouldn't be used by other modules)
-type AildVersionInfo struct {
+type AidlVersionInfo struct {
 	notFrozen []string
 	sourceMap map[string]string
 }
 
-var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AildVersionInfo{}, "checkAidlGeneratedModules")
+var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AidlVersionInfo{}, "checkAidlGeneratedModules")
 
 // Merges `other` version info into this one.
 // Returns the pair of mismatching versions when there's conflict. Otherwise returns nil.
 // For example, when a module depends on 'foo-V2-ndk', the map contains an entry of (foo, foo-V2-ndk-source).
 // Merging (foo, foo-V1-ndk-source) and (foo, foo-V2-ndk-source) will fail and returns
 // {foo-V1-ndk-source, foo-V2-ndk-source}.
-func (info *AildVersionInfo) merge(other AildVersionInfo) []string {
+func (info *AidlVersionInfo) merge(other AidlVersionInfo) []string {
 	info.notFrozen = append(info.notFrozen, other.notFrozen...)
 
 	if other.sourceMap == nil {
@@ -174,7 +174,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 		if gen.properties.NotFrozen {
 			notFrozen = []string{strings.TrimSuffix(mctx.ModuleName(), "-source")}
 		}
-		mctx.SetProvider(AidlVersionInfoProvider, AildVersionInfo{
+		mctx.SetProvider(AidlVersionInfoProvider, AidlVersionInfo{
 			notFrozen: notFrozen,
 			sourceMap: map[string]string{
 				gen.properties.BaseName + "-" + gen.properties.Lang: gen.Name(),
@@ -182,11 +182,11 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 		})
 		return
 	}
-	// Collect/merge AildVersionInfos from direct dependencies
-	var info AildVersionInfo
+	// Collect/merge AidlVersionInfos from direct dependencies
+	var info AidlVersionInfo
 	mctx.VisitDirectDeps(func(dep android.Module) {
 		if mctx.OtherModuleHasProvider(dep, AidlVersionInfoProvider) {
-			otherInfo := mctx.OtherModuleProvider(dep, AidlVersionInfoProvider).(AildVersionInfo)
+			otherInfo := mctx.OtherModuleProvider(dep, AidlVersionInfoProvider).(AidlVersionInfo)
 			if violators := info.merge(otherInfo); violators != nil {
 				reportMultipleVersionError(mctx, violators)
 			}
