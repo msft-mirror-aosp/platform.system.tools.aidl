@@ -2478,8 +2478,8 @@ TEST_F(AidlTest, ApiDumpWithEnums) {
   EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Enum.aidl", &actual));
   EXPECT_EQ(string(kPreamble).append("package foo.bar;\n"
                                      "enum Enum {\n"
-                                     "  FOO = 0,\n"
-                                     "  BAR = 1,\n"
+                                     "  FOO,\n"
+                                     "  BAR = (FOO + 1),\n"
                                      "}\n"),
             actual);
 }
@@ -2495,6 +2495,7 @@ TEST_F(AidlTest, ApiDumpWithEnumDefaultValues) {
                                "import foo.bar.Enum;\n"
                                "parcelable Foo {\n"
                                "    Enum e = Enum.FOO;\n"
+                               "    int n = Enum.FOO;\n"
                                "}\n");
 
   vector<string> args = {"aidl", "--dumpapi", "-I . ", "-o dump", "foo/bar/Foo.aidl"};
@@ -2507,6 +2508,7 @@ TEST_F(AidlTest, ApiDumpWithEnumDefaultValues) {
   EXPECT_EQ(string(kPreamble).append("package foo.bar;\n"
                                      "parcelable Foo {\n"
                                      "  foo.bar.Enum e = foo.bar.Enum.FOO;\n"
+                                     "  int n = foo.bar.Enum.FOO;\n"
                                      "}\n"),
             actual);
 }
@@ -4981,7 +4983,7 @@ parcelable Foo {
   EXPECT_EQ("int e = 3", fields[0]->ToString());
 }
 
-TEST_P(AidlTest, EnumeratorIsConstantValue_CanDefineOtherEnumerator) {
+TEST_F(AidlTest, EnumeratorIsConstantValue_CanDefineOtherEnumerator) {
   CaptureStderr();
   const AidlDefinedType* type = Parse("a/p/Foo.aidl", R"(
 package a.p;
@@ -4992,14 +4994,14 @@ enum Foo {
       STANDARD_BT601_625 = 2 << STANDARD_SHIFT,
 }
 )",
-                                      typenames_, GetLanguage());
+                                      typenames_, Options::Language::JAVA);
   auto err = GetCapturedStderr();
   EXPECT_EQ("", err);
   ASSERT_NE(type, nullptr);
   const auto& enum_type = type->AsEnumDeclaration();
   string code;
   auto writer = CodeWriter::ForString(&code);
-  DumpVisitor visitor(*writer);
+  DumpVisitor visitor(*writer, /*inline_constants=*/true);
   visitor.Visit(*enum_type);
   writer->Close();
   EXPECT_EQ(R"--(@Backing(type="int")
