@@ -27,21 +27,21 @@ import (
 	"github.com/google/blueprint/proptools"
 )
 
-func addLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
+func addLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool, requireFrozenReason string) string {
 	if lang == langJava {
-		return addJavaLibrary(mctx, i, version, notFrozen)
+		return addJavaLibrary(mctx, i, version, notFrozen, requireFrozenReason)
 	} else if lang == langRust {
-		return addRustLibrary(mctx, i, version, notFrozen)
+		return addRustLibrary(mctx, i, version, notFrozen, requireFrozenReason)
 	} else if lang == langCppAnalyzer {
-		return addCppAnalyzerLibrary(mctx, i, version, notFrozen)
+		return addCppAnalyzerLibrary(mctx, i, version, notFrozen, requireFrozenReason)
 	} else if lang == langCpp || lang == langNdk || lang == langNdkPlatform {
-		return addCppLibrary(mctx, i, version, lang, notFrozen)
+		return addCppLibrary(mctx, i, version, lang, notFrozen, requireFrozenReason)
 	} else {
 		panic(fmt.Errorf("unsupported language backend %q\n", lang))
 	}
 }
 
-func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool) string {
+func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool, requireFrozenReason string) string {
 	cppSourceGen := i.versionedName(version) + "-" + lang + "-source"
 	cppModuleGen := i.versionedName(version) + "-" + lang
 
@@ -79,20 +79,21 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
 	}, &aidlGenProperties{
-		Srcs:            srcs,
-		AidlRoot:        aidlRoot,
-		Imports:         i.getImportsForVersion(version),
-		Headers:         i.properties.Headers,
-		Stability:       i.properties.Stability,
-		Min_sdk_version: i.minSdkVersion(lang),
-		Lang:            lang,
-		BaseName:        i.ModuleBase.Name(),
-		GenLog:          genLog,
-		Version:         i.versionForInitVersionCompat(version),
-		GenTrace:        genTrace,
-		Unstable:        i.properties.Unstable,
-		NotFrozen:       notFrozen,
-		Flags:           i.flagsForAidlGenRule(version),
+		Srcs:                srcs,
+		AidlRoot:            aidlRoot,
+		Imports:             i.getImportsForVersion(version),
+		Headers:             i.properties.Headers,
+		Stability:           i.properties.Stability,
+		Min_sdk_version:     i.minSdkVersion(lang),
+		Lang:                lang,
+		BaseName:            i.ModuleBase.Name(),
+		GenLog:              genLog,
+		Version:             i.versionForInitVersionCompat(version),
+		GenTrace:            genTrace,
+		Unstable:            i.properties.Unstable,
+		NotFrozen:           notFrozen,
+		RequireFrozenReason: requireFrozenReason,
+		Flags:               i.flagsForAidlGenRule(version),
 	})
 
 	importExportDependencies := []string{}
@@ -220,7 +221,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	return cppModuleGen
 }
 
-func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool, requireFrozenReason string) string {
 	cppAnalyzerSourceGen := i.versionedName("") + "-cpp-analyzer-source"
 	cppAnalyzerModuleGen := i.versionedName("") + "-cpp-analyzer"
 
@@ -232,17 +233,18 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppAnalyzerSourceGen),
 	}, &aidlGenProperties{
-		Srcs:            srcs,
-		AidlRoot:        aidlRoot,
-		Imports:         i.getImportsForVersion(version),
-		Stability:       i.properties.Stability,
-		Min_sdk_version: i.minSdkVersion(langCpp),
-		Lang:            langCppAnalyzer,
-		BaseName:        i.ModuleBase.Name(),
-		Version:         i.versionForInitVersionCompat(version),
-		Unstable:        i.properties.Unstable,
-		NotFrozen:       notFrozen,
-		Flags:           i.flagsForAidlGenRule(version),
+		Srcs:                srcs,
+		AidlRoot:            aidlRoot,
+		Imports:             i.getImportsForVersion(version),
+		Stability:           i.properties.Stability,
+		Min_sdk_version:     i.minSdkVersion(langCpp),
+		Lang:                langCppAnalyzer,
+		BaseName:            i.ModuleBase.Name(),
+		Version:             i.versionForInitVersionCompat(version),
+		Unstable:            i.properties.Unstable,
+		NotFrozen:           notFrozen,
+		RequireFrozenReason: requireFrozenReason,
+		Flags:               i.flagsForAidlGenRule(version),
 	})
 
 	importExportDependencies := []string{}
@@ -306,7 +308,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	return cppAnalyzerModuleGen
 }
 
-func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool, requireFrozenReason string) string {
 	javaSourceGen := i.versionedName(version) + "-java-source"
 	javaModuleGen := i.versionedName(version) + "-java"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -330,21 +332,22 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(javaSourceGen),
 	}, &aidlGenProperties{
-		Srcs:            srcs,
-		AidlRoot:        aidlRoot,
-		Imports:         i.getImportsForVersion(version),
-		Headers:         i.properties.Headers,
-		Stability:       i.properties.Stability,
-		Min_sdk_version: minSdkVersion,
-		Platform_apis:   proptools.Bool(i.properties.Backend.Java.Platform_apis),
-		Lang:            langJava,
-		BaseName:        i.ModuleBase.Name(),
-		Version:         version,
-		GenRpc:          proptools.Bool(i.properties.Backend.Java.Gen_rpc),
-		GenTrace:        i.genTrace(langJava),
-		Unstable:        i.properties.Unstable,
-		NotFrozen:       notFrozen,
-		Flags:           i.flagsForAidlGenRule(version),
+		Srcs:                srcs,
+		AidlRoot:            aidlRoot,
+		Imports:             i.getImportsForVersion(version),
+		Headers:             i.properties.Headers,
+		Stability:           i.properties.Stability,
+		Min_sdk_version:     minSdkVersion,
+		Platform_apis:       proptools.Bool(i.properties.Backend.Java.Platform_apis),
+		Lang:                langJava,
+		BaseName:            i.ModuleBase.Name(),
+		Version:             version,
+		GenRpc:              proptools.Bool(i.properties.Backend.Java.Gen_rpc),
+		GenTrace:            i.genTrace(langJava),
+		Unstable:            i.properties.Unstable,
+		NotFrozen:           notFrozen,
+		RequireFrozenReason: requireFrozenReason,
+		Flags:               i.flagsForAidlGenRule(version),
 	})
 
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
@@ -382,7 +385,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	return javaModuleGen
 }
 
-func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool) string {
+func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool, requireFrozenReason string) string {
 	rustSourceGen := i.versionedName(version) + "-rust-source"
 	rustModuleGen := i.versionedName(version) + "-rust"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -396,18 +399,19 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(rustSourceGen),
 	}, &aidlGenProperties{
-		Srcs:            srcs,
-		AidlRoot:        aidlRoot,
-		Imports:         i.getImportsForVersion(version),
-		Headers:         i.properties.Headers,
-		Stability:       i.properties.Stability,
-		Min_sdk_version: i.minSdkVersion(langRust),
-		Lang:            langRust,
-		BaseName:        i.ModuleBase.Name(),
-		Version:         i.versionForInitVersionCompat(version),
-		Unstable:        i.properties.Unstable,
-		NotFrozen:       notFrozen,
-		Flags:           i.flagsForAidlGenRule(version),
+		Srcs:                srcs,
+		AidlRoot:            aidlRoot,
+		Imports:             i.getImportsForVersion(version),
+		Headers:             i.properties.Headers,
+		Stability:           i.properties.Stability,
+		Min_sdk_version:     i.minSdkVersion(langRust),
+		Lang:                langRust,
+		BaseName:            i.ModuleBase.Name(),
+		Version:             i.versionForInitVersionCompat(version),
+		Unstable:            i.properties.Unstable,
+		NotFrozen:           notFrozen,
+		RequireFrozenReason: requireFrozenReason,
+		Flags:               i.flagsForAidlGenRule(version),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))
