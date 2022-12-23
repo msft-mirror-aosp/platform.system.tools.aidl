@@ -63,24 +63,23 @@ var (
 )
 
 type aidlGenProperties struct {
-	Srcs                []string `android:"path"`
-	AidlRoot            string   // base directory for the input aidl file
-	Imports             []string
-	Headers             []string
-	Stability           *string
-	Min_sdk_version     *string
-	Platform_apis       bool
-	Lang                string // target language [java|cpp|ndk|rust]
-	BaseName            string
-	GenLog              bool
-	Version             string
-	GenRpc              bool
-	GenTrace            bool
-	Unstable            *bool
-	NotFrozen           bool
-	RequireFrozenReason string
-	Visibility          []string
-	Flags               []string
+	Srcs            []string `android:"path"`
+	AidlRoot        string   // base directory for the input aidl file
+	Imports         []string
+	Headers         []string
+	Stability       *string
+	Min_sdk_version *string
+	Platform_apis   bool
+	Lang            string // target language [java|cpp|ndk|rust]
+	BaseName        string
+	GenLog          bool
+	Version         string
+	GenRpc          bool
+	GenTrace        bool
+	Unstable        *bool
+	NotFrozen       bool
+	Visibility      []string
+	Flags           []string
 }
 
 type aidlGenRule struct {
