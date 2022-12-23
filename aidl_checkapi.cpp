@@ -44,7 +44,7 @@ using std::vector;
 static std::string Dump(const AidlDefinedType& type) {
   string code;
   CodeWriterPtr out = CodeWriter::ForString(&code);
-  DumpVisitor visitor(*out);
+  DumpVisitor visitor(*out, /*inline_constants=*/true);
   type.DispatchVisit(visitor);
   out->Close();
   return code;

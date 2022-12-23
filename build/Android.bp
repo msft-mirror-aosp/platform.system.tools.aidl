@@ -111,7 +111,9 @@ aidl_interface {
         "4",
     ],
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
     },
 }
 
@@ -126,7 +128,9 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         ndk: {
             sdk_version: "29",
             cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
@@ -145,7 +149,9 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         ndk: {
             sdk_version: "30",
             cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
@@ -164,7 +170,9 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         ndk: {
             sdk_version: "31",
             cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
@@ -183,7 +191,9 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         ndk: {
             sdk_version: "32",
             cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
@@ -202,7 +212,9 @@ aidl_interface {
     ],
     unstable: true,
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         ndk: {
             sdk_version: "33",
             cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
@@ -216,7 +228,9 @@ aidl_interface {
     srcs: ["tests_vintf/vintf/IFoo.aidl"],
     stability: "vintf",
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         ndk: {
             sdk_version: "31",
         },
@@ -245,7 +259,9 @@ aidl_interface {
         "test-piece-1-V3",
     ],
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         java: {
             platform_apis: true,
         },
@@ -265,20 +281,34 @@ aidl_interface {
     local_include_dir: "tests_1",
     flags: ["-Werror"],
     srcs: [
+        "tests_1/other_package/Enum.aidl",
         "tests_1/other_package/IBaz.aidl",
     ],
     imports: [
         "test-piece-2-V1",
     ],
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         java: {
             platform_apis: true,
             gen_trace: true,
         },
     },
     gen_trace: true,
-    versions: ["1"],
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["test-piece-2-V1"],
+        },
+    ],
+}
+
+cc_test_library {
+    name: "client-using-test-piece-3",
+    srcs: ["client-using-test-piece-3.cpp"],
+    shared_libs: ["test-piece-3-V2-cpp"],
 }
 
 aidl_interface {
@@ -292,7 +322,9 @@ aidl_interface {
         "test-piece-1-V3",
     ],
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         java: {
             platform_apis: true,
         },
@@ -314,7 +346,9 @@ aidl_interface {
         "test-piece-2-V1",
     ],
     backend: {
-        rust: { enabled: true, },
+        rust: {
+            enabled: true,
+        },
         java: {
             platform_apis: true,
         },
