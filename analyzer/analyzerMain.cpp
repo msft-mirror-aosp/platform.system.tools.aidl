@@ -21,6 +21,7 @@
 #include <binder/IServiceManager.h>
 #include <binder/Parcel.h>
 #include <signal.h>
+#include <fstream>
 #include <sstream>
 #include "include/Analyzer.h"
 
@@ -55,7 +56,29 @@ status_t startRecording(const sp<IBinder>& binder, const string& filePath) {
 
   // TODO (b/245804633): this still requires setenforce 0, but nothing above does
   if (status_t err = binder->remoteBinder()->startRecordingBinder(fd); err != android::NO_ERROR) {
-    std::cout << "Failed to start recording with error: " << err << '\n';
+    auto checkSE = std::ifstream("/sys/fs/selinux/enforce");
+    bool recommendSetenforce = false;
+    if ((checkSE.rdstate() & std::ifstream::failbit) != 0) {
+      std::cout << "Failed to determine selinux state.";
+      recommendSetenforce = true;
+    } else {
+      char seState = checkSE.get();
+      if (checkSE.good()) {
+        if (seState == '1') {
+          std::cout << "SELinux must be permissive.";
+          recommendSetenforce = true;
+        } else if (seState == '0') {
+          std::cout << "SELinux is permissive. Failing for some other reason.\n";
+        }
+      } else {
+        std::cout << "Failed to determine SELinux state.";
+        recommendSetenforce = true;
+      }
+    }
+    if (recommendSetenforce) {
+      std::cout << " Try running:\n\n  setenforce 0\n\n";
+    }
+    std::cout << "Failed to start recording with error: " << android::statusToString(err) << '\n';
     return err;
   } else {
     std::cout << "Recording started successfully.\n";
