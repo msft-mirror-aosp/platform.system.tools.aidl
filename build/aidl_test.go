@@ -394,7 +394,7 @@ func TestFrozenImportingFrozen(t *testing.T) {
 	}
 	aidl_interface {
 		name: "foo",
-		imports: ["xxx"],
+		imports: ["xxx-V1"],
 		versions: ["1"],
 		frozen: true,
 		srcs: ["IFoo.aidl"],
@@ -563,7 +563,7 @@ func TestFrozenImportingNewLegacy(t *testing.T) {
 	}
 	aidl_interface {
 		name: "foo",
-		imports: ["xxx"],
+		imports: ["xxx-V1"],
 		frozen: true,
 		versions_with_info: [
 			{version: "1", imports: ["xxx-V1"]},
@@ -652,7 +652,7 @@ func TestNonFrozenImportingNewImplicit(t *testing.T) {
 	}
 	aidl_interface {
 		name: "foo",
-		imports: ["xxx"],
+		imports: ["xxx-V1"],
 		frozen: false,
 		versions_with_info: [
 			{version: "1", imports: ["xxx-V1"]},
@@ -1207,7 +1207,7 @@ func TestImports(t *testing.T) {
 		}
 	`)
 
-	testAidlError(t, `imports: unstable "foo" depends on "bar" but does not specify a version`, `
+	testAidlError(t, `imports: "foo" depends on "bar" but does not specify a version`, `
 		aidl_interface {
 			name: "foo",
             unstable: true,
@@ -2097,7 +2097,7 @@ func TestVersionsWithInfo(t *testing.T) {
 			aidl_interface {
 				name: "foo",
 				srcs: ["IFoo.aidl"],
-				imports: ["common"],
+				imports: ["common-V3"],
 				versions_with_info: [
 					{version: "1", imports: ["common-V1"]},
 					{version: "2", imports: ["common-V2"]},
@@ -2156,7 +2156,7 @@ func TestFreezeApiDeps(t *testing.T) {
 		for _, testcase := range []struct {
 			string
 			bool
-		}{{"common", true}, {"common-V3", true}, {"common-V2", false}} {
+		}{{"common-V3", true}, {"common-V2", false}} {
 			im := testcase.string
 			customizers := []android.FixturePreparer{
 				withFiles(map[string][]byte{
