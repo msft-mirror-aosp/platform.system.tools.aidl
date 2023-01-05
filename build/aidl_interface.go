@@ -663,8 +663,8 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 			}
 
 			if version == "" {
-				if proptools.Bool(i.properties.Unstable) && !proptools.Bool(other.properties.Unstable) {
-					mctx.PropertyErrorf("imports", "unstable %q depends on %q but does not specify a version (must be one of %q)", i.ModuleBase.Name(), anImport, candidateVersions)
+				if !proptools.Bool(other.properties.Unstable) {
+					mctx.PropertyErrorf("imports", "%q depends on %q but does not specify a version (must be one of %q)", i.ModuleBase.Name(), anImport, candidateVersions)
 				}
 			} else {
 				if !android.InList(version, candidateVersions) {
