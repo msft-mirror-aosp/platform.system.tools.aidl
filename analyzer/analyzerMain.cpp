@@ -196,7 +196,7 @@ status_t replayFile(const sp<IBinder>& binder, const string& interface, const st
                                       transaction->getReplyParcel());
 
     android::Parcel send, reply;
-    send.setData(transaction->getDataParcel().data(), transaction->getDataSize());
+    send.setData(transaction->getDataParcel().data(), transaction->getDataParcel().dataSize());
     android::status_t status = binder->remoteBinder()->transact(transaction->getCode(), send,
                                                                 &reply, transaction->getFlags());
     if (status != transaction->getReturnedStatus()) {
