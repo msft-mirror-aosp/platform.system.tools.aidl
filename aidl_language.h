@@ -727,7 +727,7 @@ class AidlConstantValue : public AidlNode {
 };
 
 // Represents "<type>.<field>" which resolves to a constant which is one of
-// - constant declartion
+// - constant declaration
 // - enumerator
 // When a <type> is missing, <field> is of the enclosing type.
 class AidlConstantReference : public AidlConstantValue {
@@ -765,6 +765,8 @@ class AidlUnaryConstExpression : public AidlConstantValue {
     traverse(*unary_);
   }
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
+  const std::unique_ptr<AidlConstantValue>& Val() const { return unary_; }
+  const std::string& Op() const { return op_; }
 
  private:
   bool evaluate() const override;
@@ -790,6 +792,9 @@ class AidlBinaryConstExpression : public AidlConstantValue {
     traverse(*right_val_);
   }
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
+  const std::unique_ptr<AidlConstantValue>& Left() const { return left_val_; }
+  const std::unique_ptr<AidlConstantValue>& Right() const { return right_val_; }
+  const std::string& Op() const { return op_; }
 
  private:
   bool evaluate() const override;
