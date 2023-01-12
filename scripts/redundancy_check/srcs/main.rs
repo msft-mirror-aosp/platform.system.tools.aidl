@@ -97,7 +97,7 @@ fn extract_aidl_instance(installed_file: &InstalledFile) -> Option<AidlInstance>
 }
 
 fn main() -> Result<()> {
-    let args = Opt::from_args();
+    let args = Opt::parse();
 
     // Read the metadata file if available.
     let metadata_list: Option<Vec<AidlInterfaceMetadata>> = match &args.aidl_metadata_json {
