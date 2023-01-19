@@ -44,7 +44,7 @@ void GenerateAnalyzerTransaction(CodeWriter& out, const AidlInterface& interface
   out.Write("if (!(%s.enforceInterface(android::String16(\"%s\")))) {\n", kDataVarName,
             interface.GetDescriptor().c_str());
   out.Write("  %s = ::android::BAD_TYPE;\n", kAndroidStatusVarName);
-  out << "  std::cout << \"  Failure: Parcel interface does not match.\" << std::endl;"
+  out << "  std::cout << \"  Failure: Parcel interface does not match.\" << std::endl;\n"
       << "  break;\n"
       << "}\n";
 
@@ -52,37 +52,45 @@ void GenerateAnalyzerTransaction(CodeWriter& out, const AidlInterface& interface
   for (const unique_ptr<AidlArgument>& a : method.GetArguments()) {
     out.Write("%s %s;\n", CppNameOf(a->GetType(), typenames).c_str(), BuildVarName(*a).c_str());
   }
-
-  // Read past the binder status.
   out << "::android::binder::Status binderStatus;\n";
-  out.Write("binderStatus.readFromParcel(%s);\n", kReplyVarName);
   // Declare and read the return value.
+  // Read past the binder status.
+  out.Write("binderStatus.readFromParcel(%s);\n", kReplyVarName);
   if (method.GetType().GetName() != "void") {
-    out.Write("%s* %s = new %s;\n", CppNameOf(method.GetType(), typenames).c_str(), kReturnVarName,
-              CppNameOf(method.GetType(), typenames).c_str());
+    out.Write("%s %s;\n", CppNameOf(method.GetType(), typenames).c_str(), kReturnVarName);
+    out.Write("bool returnError = false;\n");
   }
 
+  // Read Reply
   if (method.GetType().GetName() != "void") {
     out.Write("%s = %s.%s(%s);\n", kAndroidStatusVarName, kReplyVarName,
               ParcelReadMethodOf(method.GetType(), typenames).c_str(),
-              ParcelReadCastOf(method.GetType(), typenames, kReturnVarName).c_str());
+              ParcelReadCastOf(method.GetType(), typenames, string("&") + kReturnVarName).c_str());
     out.Write("if (((%s) != (android::NO_ERROR))) {\n", kAndroidStatusVarName);
+    out.Indent();
     out.Write(
-        "  std::cout << \"  Failure: error in reading return value from Parcel.\" << std::endl;");
-    out.Write("  break;\n}\n");
+        "std::cerr << \"Failure: error in reading return value from Parcel.\" << std::endl;\n");
+    out.Write("returnError = true;\n");
+    out.Dedent();
+    out.Write("}\n");
   }
 
   // Reading arguments
+  out << "do { // Single-pass loop to break if argument reading fails\n";
+  out.Indent();
   for (const auto& a : method.GetArguments()) {
     out.Write("%s = %s.%s(%s);\n", kAndroidStatusVarName, kDataVarName,
               ParcelReadMethodOf(a->GetType(), typenames).c_str(),
               ParcelReadCastOf(a->GetType(), typenames, "&" + BuildVarName(*a)).c_str());
     out.Write("if (((%s) != (android::NO_ERROR))) {\n", kAndroidStatusVarName);
-    out.Write(
-        "  std::cout << \"  Failure: error in reading argument %s from Parcel.\" << std::endl;",
-        a->GetName().c_str());
+    out.Indent();
+    out.Write("std::cerr << \"Failure: error in reading argument %s from Parcel.\" << std::endl;\n",
+              a->GetName().c_str());
+    out.Dedent();
     out.Write("  break;\n}\n");
   }
+  out.Dedent();
+  out << "} while(false);\n";
 
   if (!method.GetArguments().empty() && options.GetMinSdkVersion() >= SDK_VERSION_Tiramisu) {
     out.Write(
@@ -91,17 +99,29 @@ void GenerateAnalyzerTransaction(CodeWriter& out, const AidlInterface& interface
         kDataVarName, kAndroidStatusVarName);
   }
 
-  // Printing arguments and return
+  // Arguments
+  out.Write("std::cout << \"  arguments: \" << std::endl;\n");
   for (const auto& a : method.GetArguments()) {
     out.Write(
-        "std::cout << \"  Argument \\\"%s\\\" has value: \" << ::android::internal::ToString(%s) "
+        "std::cout << \"    %s: \" << ::android::internal::ToString(%s) "
         "<< std::endl;\n",
         a->GetName().c_str(), BuildVarName(*a).c_str());
   }
+
+  // Return Value
   if (method.GetType().GetName() != "void") {
-    out.Write(
-        "std::cout << \"  Return value: \" << ::android::internal::ToString(%s) << std::endl;\n",
-        kReturnVarName);
+    out.Write("if (returnError) {\n");
+    out.Indent();
+    out.Write("std::cout << \"  return: <error>\" << std::endl;\n");
+    out.Dedent();
+    out.Write("} else {");
+    out.Indent();
+    out.Write("std::cout << \"  return: \" << ::android::internal::ToString(%s) << std::endl;\n",
+              kReturnVarName);
+    out.Dedent();
+    out.Write("}\n");
+  } else {
+    out.Write("std::cout << \"  return: void\" << std::endl;\n");
   }
 }
 
@@ -110,11 +130,8 @@ void GenerateAnalyzerSource(CodeWriter& out, const AidlDefinedType& defined_type
   auto interface = AidlCast<AidlInterface>(defined_type);
   string q_name = GetQualifiedName(*interface, ClassNames::INTERFACE);
 
-  string package;
-  auto splitPackage = defined_type.GetSplitPackage();
-  if (splitPackage.size() == 0) {
-    splitPackage = {""};
-  }
+  string canonicalName = defined_type.GetCanonicalName();
+  string interfaceName = defined_type.GetName();
 
   // Includes
   vector<string> include_list{
@@ -140,7 +157,8 @@ void GenerateAnalyzerSource(CodeWriter& out, const AidlDefinedType& defined_type
   for (const auto& method : interface->GetMethods()) {
     out.Write("case ::android::IBinder::FIRST_CALL_TRANSACTION + %d:\n{\n", (method->GetId()));
     out.Indent();
-    out.Write("std::cout << \"Function Called: %s\" << std::endl;\n", method->GetName().c_str());
+    out.Write("std::cout << \"%s.%s()\" << std::endl;\n", interfaceName.c_str(),
+              method->GetName().c_str());
     GenerateAnalyzerTransaction(out, *interface, *method, typenames, options);
     out.Dedent();
     out << "}\n";
@@ -160,7 +178,7 @@ void GenerateAnalyzerSource(CodeWriter& out, const AidlDefinedType& defined_type
   out.Write(
       "__attribute__((constructor)) static void addAnalyzer() {\n"
       "  Analyzer::installAnalyzer(std::make_unique<Analyzer>(\"%s\", \"%s\", &analyze%s));\n}\n",
-      splitPackage.back().c_str(), q_name.c_str(), q_name.c_str());
+      canonicalName.c_str(), interfaceName.c_str(), q_name.c_str());
 }
 
 void GenerateAnalyzerPlaceholder(CodeWriter& out, const AidlDefinedType& /*defined_type*/,
