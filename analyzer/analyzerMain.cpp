@@ -16,10 +16,10 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
-#include <binder/BinderRecordReplay.h>
 #include <binder/BpBinder.h>
 #include <binder/IServiceManager.h>
 #include <binder/Parcel.h>
+#include <binder/RecordedTransaction.h>
 #include <signal.h>
 #include <fstream>
 #include <sstream>
