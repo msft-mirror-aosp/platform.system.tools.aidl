@@ -22,5 +22,5 @@ android::status_t analyzeIDeprecated(uint32_t _aidl_code, const android::Parcel&
 #include <Analyzer.h>
 using android::aidl::Analyzer;
 __attribute__((constructor)) static void addAnalyzer() {
-  Analyzer::installAnalyzer(std::make_unique<Analyzer>("tests", "IDeprecated", &analyzeIDeprecated));
+  Analyzer::installAnalyzer(std::make_unique<Analyzer>("android.aidl.tests.IDeprecated", "IDeprecated", &analyzeIDeprecated));
 }
