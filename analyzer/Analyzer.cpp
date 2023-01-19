@@ -17,7 +17,7 @@
 #include "include/Analyzer.h"
 
 using std::unique_ptr;
-using std::vector;
+using std::unordered_map;
 
 namespace android {
 namespace aidl {
@@ -40,13 +40,13 @@ const analyzeFn& Analyzer::getAnalyzeFunction() const {
   return mAnalyzeFunction;
 }
 
-vector<unique_ptr<Analyzer>>& Analyzer::getAnalyzers() {
-  static vector<unique_ptr<Analyzer>> gAnalyzers;
+unordered_map<std::string, unique_ptr<Analyzer>>& Analyzer::getAnalyzers() {
+  static unordered_map<std::string, unique_ptr<Analyzer>> gAnalyzers;
   return gAnalyzers;
 }
 
 void Analyzer::installAnalyzer(std::unique_ptr<Analyzer> install) {
-  getAnalyzers().push_back(std::move(install));
+  getAnalyzers().insert_or_assign(install->getPackageName(), std::move(install));
 }
 
 }  // namespace aidl
