@@ -16,10 +16,10 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
-#include <binder/BinderRecordReplay.h>
 #include <binder/BpBinder.h>
 #include <binder/IServiceManager.h>
 #include <binder/Parcel.h>
+#include <binder/RecordedTransaction.h>
 #include <signal.h>
 #include <fstream>
 #include <sstream>
@@ -96,16 +96,26 @@ status_t stopRecording(const sp<IBinder>& binder) {
   }
 }
 
-status_t inspectRecording(const string& interface, const string& path) {
+void printTransaction(const RecordedTransaction& transaction) {
   auto& analyzers = Analyzer::getAnalyzers();
-  auto analyzer = std::find_if(
-      begin(analyzers), end(analyzers),
-      [&](const std::unique_ptr<Analyzer>& a) { return a->getInterfaceName() == interface; });
-  if (analyzer == end(analyzers)) {
-    std::cout << "Failed to find analyzer for interface: " << interface << '\n';
-    return android::UNKNOWN_ERROR;
+
+  auto analyzer = analyzers.find(std::string(transaction.getInterfaceName()));
+  if (analyzer != analyzers.end()) {
+    (analyzer->second)
+        ->getAnalyzeFunction()(transaction.getCode(), transaction.getDataParcel(),
+                               transaction.getReplyParcel());
+  } else {
+    std::cout << "No analyzer:";
+    std::cout << "  interface: " << transaction.getInterfaceName() << "\n";
+    std::cout << "  code: " << transaction.getCode() << "\n";
+    std::cout << "  data: " << transaction.getDataParcel().dataSize() << " bytes\n";
+    std::cout << "  reply: " << transaction.getReplyParcel().dataSize() << " bytes\n";
   }
-  std::cout << "Found matching analyzer for interface: " << interface << '\n';
+  std::cout << "  status: " << transaction.getReturnedStatus() << "\n\n";
+}
+
+status_t inspectRecording(const string& path) {
+  auto& analyzers = Analyzer::getAnalyzers();
 
   android::base::unique_fd fd(open(path.c_str(), O_RDONLY));
   if (fd.get() == -1) {
@@ -116,15 +126,7 @@ status_t inspectRecording(const string& interface, const string& path) {
   int i = 1;
   while (auto transaction = RecordedTransaction::fromFile(fd)) {
     std::cout << "Transaction " << i << ":\n";
-    (*analyzer)->getAnalyzeFunction()(transaction->getCode(), transaction->getDataParcel(),
-                                      transaction->getReplyParcel());
-
-    std::cout << "Status returned from this transaction: ";
-    if (transaction->getReturnedStatus() == 0) {
-      std::cout << "NO_ERROR\n\n";
-    } else {
-      std::cout << transaction->getReturnedStatus() << "\n\n";
-    }
+    printTransaction(transaction.value());
     i++;
   }
   return NO_ERROR;
@@ -140,13 +142,14 @@ void incrementCtrlCCount(int signum) {
   }
 }
 
-status_t listenToFile(const string& filePath,
-                      const std::unique_ptr<android::aidl::Analyzer>& analyzer) {
+status_t listenToFile(const string& filePath) {
   android::base::unique_fd listenFd(open(filePath.c_str(), O_RDONLY));
   if (listenFd == -1) {
     std::cout << "Failed to open listening file with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
+
+  auto& analyzers = Analyzer::getAnalyzers();
 
   signal(SIGINT, incrementCtrlCCount);
   std::cout << "Starting to listen:\n";
@@ -158,29 +161,14 @@ status_t listenToFile(const string& filePath,
       continue;
     }
     std::cout << "Transaction " << i << ":\n";
-    analyzer->getAnalyzeFunction()(transaction->getCode(), transaction->getDataParcel(),
-                                   transaction->getReplyParcel());
-    std::cout << "Status returned from this transaction: ";
-    if (transaction->getReturnedStatus() == 0) {
-      std::cout << "NO_ERROR\n\n";
-    } else {
-      std::cout << transaction->getReturnedStatus() << '\n\n';
-    }
+    printTransaction(transaction.value());
     i++;
   }
   return NO_ERROR;
 }
 
-status_t replayFile(const sp<IBinder>& binder, const string& interface, const string& path) {
+status_t replayFile(const sp<IBinder>& binder, const string& path) {
   auto& analyzers = Analyzer::getAnalyzers();
-  auto analyzer = std::find_if(
-      begin(analyzers), end(analyzers),
-      [&](const std::unique_ptr<Analyzer>& a) { return a->getInterfaceName() == interface; });
-  if (analyzer == end(analyzers)) {
-    std::cout << "Failed to find analyzer for interface: " << interface << '\n';
-    return android::UNKNOWN_ERROR;
-  }
-  std::cout << "Found matching analyzer for interface: " << interface << '\n';
 
   android::base::unique_fd fd(open(path.c_str(), O_RDONLY));
   if (fd.get() == -1) {
@@ -188,12 +176,11 @@ status_t replayFile(const sp<IBinder>& binder, const string& interface, const st
     return android::BAD_VALUE;
   }
 
-  bool failure = false;
+  int failureCount = 0;
   int i = 1;
   while (auto transaction = RecordedTransaction::fromFile(fd)) {
     std::cout << "Replaying Transaction " << i << ":\n";
-    (*analyzer)->getAnalyzeFunction()(transaction->getCode(), transaction->getDataParcel(),
-                                      transaction->getReplyParcel());
+    printTransaction(transaction.value());
 
     android::Parcel send, reply;
     send.setData(transaction->getDataParcel().data(), transaction->getDataParcel().dataSize());
@@ -202,19 +189,18 @@ status_t replayFile(const sp<IBinder>& binder, const string& interface, const st
     if (status != transaction->getReturnedStatus()) {
       std::cout << "Failure: Expected status " << transaction->getReturnedStatus()
                 << " but received status " << status << "\n\n";
-      failure = true;
+      failureCount++;
     } else {
       std::cout << "Transaction replayed correctly."
                 << "\n\n";
     }
     i++;
   }
-
-  if (failure) {
-    std::cout << "Some or all transactions failed to replay correctly. See logs for details.\n";
+  std::cout << i << " transactions replayed.\n";
+  if (failureCount > 0) {
+    std::cout << failureCount << " transactions had unexpected status. See logs for details.\n";
     return android::UNKNOWN_ERROR;
   } else {
-    std::cout << "All transactions replayed correctly.\n";
     return NO_ERROR;
   }
 }
@@ -222,8 +208,8 @@ status_t replayFile(const sp<IBinder>& binder, const string& interface, const st
 status_t listAvailableInterfaces(int, char**) {
   auto& analyzers = Analyzer::getAnalyzers();
   std::cout << "Available Interfaces (" << analyzers.size() << "):\n";
-  for (unsigned i = 0; i < analyzers.size(); i++) {
-    std::cout << "  " << analyzers[i]->getInterfaceName() << '\n';
+  for (auto a = analyzers.begin(); a != analyzers.end(); a++) {
+    std::cout << "  " << a->second->getInterfaceName() << '\n';
   }
   return NO_ERROR;
 }
@@ -278,52 +264,38 @@ const AnalyzerCommand stopCommand = {
     "  <service>\tService to stop recording; <service> argument to previous 'start' command."};
 
 status_t inspectCommandEntryPoint(int argc, char* argv[]) {
-  if (argc != 4) {
+  if (argc != 3) {
     helpCommandEntryPoint(argc, argv);
     return android::BAD_VALUE;
   }
+  std::string path = kStandardRecordingPath + string(argv[2]);
 
-  std::string interface = argv[2];
-  std::string path = kStandardRecordingPath + string(argv[3]);
-
-  return inspectRecording(interface, path);
+  return inspectRecording(path);
 }
 
 const AnalyzerCommand inspectCommand = {
     inspectCommandEntryPoint,
     "Writes the binder transactions in <file-name> to stdout in a human-friendly format.",
-    "<interface> <file-name>",
-    "  <interface>\tA binder interface supported by this tool. (See 'list' command)\n"
+    "<file-name>",
     "  <file-name>\tA recording in /data/local/recordings/, and the name of the service"};
 
 status_t listenCommandEntryPoint(int argc, char* argv[]) {
-  if (argc != 4) {
+  if (argc != 3) {
     helpCommandEntryPoint(argc, argv);
     return android::BAD_VALUE;
   }
 
-  sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[3]));
+  sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
 
-  string filename = argv[3];
+  string filename = argv[2];
   std::replace(filename.begin(), filename.end(), '/', '.');
   auto filePath = kStandardRecordingPath + filename;
-
-  std::string interface = argv[2];
-
-  auto& analyzers = Analyzer::getAnalyzers();
-  auto analyzer = std::find_if(
-      begin(analyzers), end(analyzers),
-      [&](const std::unique_ptr<Analyzer>& a) { return a->getInterfaceName() == interface; });
-  if (analyzer == end(analyzers)) {
-    std::cout << "Failed to find analyzer for interface: " << interface << '\n';
-    return android::UNKNOWN_ERROR;
-  }
 
   if (status_t startErr = startRecording(binder, filePath); startErr != NO_ERROR) {
     return startErr;
   }
 
-  status_t listenStatus = listenToFile(filePath, *analyzer);
+  status_t listenStatus = listenToFile(filePath);
 
   if (status_t stopErr = stopRecording(binder); stopErr != NO_ERROR) {
     return stopErr;
@@ -334,11 +306,9 @@ status_t listenCommandEntryPoint(int argc, char* argv[]) {
 
 const AnalyzerCommand listenCommand = {
     listenCommandEntryPoint,
-    "Starts recording binder transactions in <service> and writes <interface> transactions to "
+    "Starts recording binder transactions in <service> and writes transactions to "
     "stdout.",
-    "<interface> <service>",
-    "  <interface>\tA binder interface supported by this tool. (See 'list' command)"
-    "  <service>\t?\n"};
+    "<service>", "  <service>\t?\n"};
 
 int replayFunction(int argc, char* argv[]) {
   if (argc != 4) {
@@ -346,16 +316,14 @@ int replayFunction(int argc, char* argv[]) {
   }
 
   sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
-  std::string interface = argv[3];
-  std::string path = kStandardRecordingPath + string(argv[4]);
+  std::string path = kStandardRecordingPath + string(argv[3]);
 
-  return replayFile(binder, interface, path);
+  return replayFile(binder, path);
 }
 
 const AnalyzerCommand replayCommand = {
-    replayFunction, "No overview", "<service> <interface> <file-name>",
+    replayFunction, "No overview", "<service> <file-name>",
     "  <service>\t?\n"
-    "  <interface>\tA binder interface supported by this tool. (See 'list' command)\n"
     "  <file-name>\tThe name of a file in /data/local/recordings/"};
 
 const auto& commands = *new std::map<std::string, AnalyzerCommand>{
