@@ -17,10 +17,10 @@
 #pragma once
 
 #include <binder/Parcel.h>
-#include <vector>
+#include <unordered_map>
 
 using std::unique_ptr;
-using std::vector;
+using std::unordered_map;
 
 using analyzeFn = android::status_t (*)(uint32_t _aidl_code, const android::Parcel& _aidl_data,
                                         const android::Parcel& _aidl_reply);
@@ -36,7 +36,7 @@ class Analyzer {
   const std::string& getInterfaceName() const;
   const analyzeFn& getAnalyzeFunction() const;
 
-  static vector<unique_ptr<Analyzer>>& getAnalyzers();
+  static unordered_map<std::string, unique_ptr<Analyzer>>& getAnalyzers();
   static void installAnalyzer(std::unique_ptr<Analyzer> install);
 
  private:
