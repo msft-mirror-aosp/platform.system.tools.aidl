@@ -326,7 +326,7 @@ const AnalyzerCommand replayCommand = {
     "  <service>\t?\n"
     "  <file-name>\tThe name of a file in /data/local/recordings/"};
 
-const auto& commands = *new std::map<std::string, AnalyzerCommand>{
+auto& commands = *new std::map<std::string, AnalyzerCommand>{
     {"start", startCommand},   {"stop", stopCommand},     {"inspect", inspectCommand},
     {"listen", listenCommand}, {"replay", replayCommand}, {"list", listCommand},
     {"help", helpCommand},
@@ -388,6 +388,11 @@ status_t helpCommandEntryPoint(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   std::string toolName = argv[0];
+
+  auto& analyzers = Analyzer::getAnalyzers();
+  if (analyzers.size() == 0) {
+    commands.erase("list");
+  }
 
   if (argc < 2 ||
       (argc >= 2 && ((strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)))) {
