@@ -162,3 +162,14 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::CommandFactory;
+
+    #[test]
+    fn verify_opt() {
+        Opt::command().debug_assert();
+    }
+}
