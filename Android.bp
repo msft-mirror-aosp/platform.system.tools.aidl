@@ -865,3 +865,13 @@ cc_library_static {
     ],
     export_include_dirs: ["analyzer/include"],
 }
+
+cc_binary {
+    name: "record_binder",
+    whole_static_libs: ["aidl-analyzer-main"],
+    shared_libs: [
+        "libbase",
+        "libbinder",
+        "libutils"
+    ],
+}
