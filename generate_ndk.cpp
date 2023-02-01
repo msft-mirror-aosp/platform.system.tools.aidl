@@ -192,6 +192,7 @@ void GenerateHeader(CodeWriter& out, const AidlTypenames& types,
                     const AidlDefinedType& defined_type, const Options& options) {
   out << "#pragma once\n\n";
   GenerateHeaderIncludes(out, types, defined_type, options);
+  cpp::GenerateForwardDecls(out, defined_type, true);
   EnterNdkNamespace(out, defined_type);
   GenerateClassDecl(out, types, defined_type, options);
   LeaveNdkNamespace(out, defined_type);
@@ -1190,6 +1191,8 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
 void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
                              const AidlStructuredParcelable& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::RAW);
+
+  cpp::ClangDiagnosticIgnoreDeprecated guard(out, cpp::HasDeprecatedField(defined_type));
   out << cpp::TemplateDecl(defined_type);
   out << "class";
   cpp::GenerateDeprecated(out, defined_type);
@@ -1253,6 +1256,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "};\n";
 }
+
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
                           const AidlStructuredParcelable& defined_type, const Options& options) {
   std::string clazz = GetQualifiedName(defined_type);
@@ -1273,55 +1277,60 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
 
   GenerateConstantDefinitions(out, defined_type, clazz, cpp::TemplateDecl(defined_type));
 
-  out << cpp::TemplateDecl(defined_type);
-  out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _aidl_parcel) {\n";
-  out.Indent();
-  out << "binder_status_t _aidl_ret_status = STATUS_OK;\n";
-  out << "int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
-  out << "int32_t _aidl_parcelable_size = 0;\n";
-  out << "_aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);\n";
-  StatusCheckReturn(out);
-  out << "if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;\n";
-  out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
-  for (const auto& variable : defined_type.GetFields()) {
-    out << "if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) "
-           "{\n"
-        << "  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
-        << "  return _aidl_ret_status;\n"
-        << "}\n";
-    out << "_aidl_ret_status = ";
-    ReadFromParcelFor({out, types, variable->GetType(), "_aidl_parcel", "&" + variable->GetName()});
-    out << ";\n";
+  {
+    cpp::ClangDiagnosticIgnoreDeprecated guard(out, cpp::HasDeprecatedField(defined_type));
+    out << cpp::TemplateDecl(defined_type);
+    out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _aidl_parcel) {\n";
+    out.Indent();
+    out << "binder_status_t _aidl_ret_status = STATUS_OK;\n";
+    out << "int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+    out << "int32_t _aidl_parcelable_size = 0;\n";
+    out << "_aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);\n";
     StatusCheckReturn(out);
-  }
-  out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
-      << "return _aidl_ret_status;\n";
-  out.Dedent();
-  out << "}\n";
+    out << "if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;\n";
+    out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
+    for (const auto& variable : defined_type.GetFields()) {
+      out << "if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= "
+             "_aidl_parcelable_size) "
+             "{\n"
+          << "  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
+          << "  return _aidl_ret_status;\n"
+          << "}\n";
+      out << "_aidl_ret_status = ";
+      ReadFromParcelFor(
+          {out, types, variable->GetType(), "_aidl_parcel", "&" + variable->GetName()});
+      out << ";\n";
+      StatusCheckReturn(out);
+    }
+    out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
+        << "return _aidl_ret_status;\n";
+    out.Dedent();
+    out << "}\n";
 
-  out << cpp::TemplateDecl(defined_type);
-  out << "binder_status_t " << clazz << "::writeToParcel(AParcel* _aidl_parcel) const {\n";
-  out.Indent();
-  out << "binder_status_t _aidl_ret_status;\n";
+    out << cpp::TemplateDecl(defined_type);
+    out << "binder_status_t " << clazz << "::writeToParcel(AParcel* _aidl_parcel) const {\n";
+    out.Indent();
+    out << "binder_status_t _aidl_ret_status;\n";
 
-  out << "size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
-  out << "_aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);\n";
-  StatusCheckReturn(out);
-
-  for (const auto& variable : defined_type.GetFields()) {
-    out << "_aidl_ret_status = ";
-    WriteToParcelFor({out, types, variable->GetType(), "_aidl_parcel", variable->GetName()});
-    out << ";\n";
+    out << "size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+    out << "_aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);\n";
     StatusCheckReturn(out);
-  }
-  out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
-  out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";
-  out << "AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);\n";
-  out << "AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);\n";
 
-  out << "return _aidl_ret_status;\n";
-  out.Dedent();
-  out << "}\n";
+    for (const auto& variable : defined_type.GetFields()) {
+      out << "_aidl_ret_status = ";
+      WriteToParcelFor({out, types, variable->GetType(), "_aidl_parcel", variable->GetName()});
+      out << ";\n";
+      StatusCheckReturn(out);
+    }
+    out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+    out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";
+    out << "AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);\n";
+    out << "AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);\n";
+
+    out << "return _aidl_ret_status;\n";
+    out.Dedent();
+    out << "}\n";
+  }
   out << "\n";
   LeaveNdkNamespace(out, defined_type);
 }
@@ -1329,6 +1338,8 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
 void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
                              const AidlUnionDecl& defined_type, const Options& options) {
   const std::string clazz = ClassName(defined_type, ClassNames::RAW);
+
+  cpp::ClangDiagnosticIgnoreDeprecated guard(out, cpp::HasDeprecatedField(defined_type));
   cpp::UnionWriter uw{defined_type, types,
                       [&](const AidlTypeSpecifier& type, const AidlTypenames& types) {
                         return NdkNameOf(types, type, StorageMode::STACK);
@@ -1368,6 +1379,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "};\n";
 }
+
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
                           const AidlUnionDecl& defined_type, const Options& options) {
   std::string clazz = GetQualifiedName(defined_type);
@@ -1407,19 +1419,23 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
 
   GenerateConstantDefinitions(out, defined_type, clazz, cpp::TemplateDecl(defined_type));
 
-  out << cpp::TemplateDecl(defined_type);
-  out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _parcel) {\n";
-  out.Indent();
-  uw.ReadFromParcel(out, ctx);
-  out.Dedent();
-  out << "}\n";
+  {
+    cpp::ClangDiagnosticIgnoreDeprecated guard(out, cpp::HasDeprecatedField(defined_type));
+    out << cpp::TemplateDecl(defined_type);
+    out << "binder_status_t " << clazz << "::readFromParcel(const AParcel* _parcel) {\n";
+    out.Indent();
+    uw.ReadFromParcel(out, ctx);
+    out.Dedent();
+    out << "}\n";
 
-  out << cpp::TemplateDecl(defined_type);
-  out << "binder_status_t " << clazz << "::writeToParcel(AParcel* _parcel) const {\n";
-  out.Indent();
-  uw.WriteToParcel(out, ctx);
-  out.Dedent();
-  out << "}\n";
+    out << cpp::TemplateDecl(defined_type);
+    out << "binder_status_t " << clazz << "::writeToParcel(AParcel* _parcel) const {\n";
+    out.Indent();
+    uw.WriteToParcel(out, ctx);
+    out.Dedent();
+    out << "}\n";
+  }
+
   out << "\n";
   LeaveNdkNamespace(out, defined_type);
 }

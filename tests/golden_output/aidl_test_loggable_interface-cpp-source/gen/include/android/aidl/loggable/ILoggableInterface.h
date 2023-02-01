@@ -2,18 +2,22 @@
 
 #include <android/aidl/loggable/Data.h>
 #include <android/binder_to_string.h>
+#include <binder/Delegate.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/ParcelFileDescriptor.h>
 #include <binder/Status.h>
+#include <binder/Trace.h>
 #include <cstdint>
 #include <functional>
 #include <optional>
 #include <utils/String16.h>
 #include <utils/StrongPointer.h>
-#include <utils/Trace.h>
 #include <vector>
 
+namespace android::aidl::loggable {
+class Data;
+}  // namespace android::aidl::loggable
 namespace android {
 namespace aidl {
 namespace loggable {
@@ -88,6 +92,7 @@ public:
   public:
     explicit ISubDelegator(const ::android::sp<ISub> &impl) : _aidl_delegate(impl) {}
 
+    ::android::sp<ISub> getImpl() { return _aidl_delegate; }
     ::android::binder::Status Log(int32_t value) override {
       return _aidl_delegate->Log(value);
     }

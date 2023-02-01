@@ -5,12 +5,16 @@
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <binder/Status.h>
+#include <binder/Trace.h>
 #include <cstdint>
 #include <string>
 #include <utils/String16.h>
 #include <utils/StrongPointer.h>
 #include <vector>
 
+namespace android::aidl::versioned::tests {
+class Foo;
+}  // namespace android::aidl::versioned::tests
 namespace android {
 namespace aidl {
 namespace versioned {

@@ -17,6 +17,19 @@ rust_binary_host {
         "libregex",
         "libserde",
         "libserde_json",
-        "libstructopt",
+        "libclap",
     ],
+}
+
+rust_test_host {
+    name: "aidl_redundancy_check.test",
+    srcs: ["srcs/main.rs"],
+    rustlibs: [
+        "libanyhow",
+        "libregex",
+        "libserde",
+        "libserde_json",
+        "libclap",
+    ],
+    test_suites: ["general-tests"],
 }

@@ -39,7 +39,7 @@ constexpr uint32_t DEFAULT_SDK_VERSION_NDK = 29;
 constexpr uint32_t DEFAULT_SDK_VERSION_RUST = 31;
 
 constexpr uint32_t SDK_VERSION_current = 10000;
-constexpr uint32_t SDK_VERSION_Tiramisu = SDK_VERSION_current;
+constexpr uint32_t SDK_VERSION_Tiramisu = 33;
 
 constexpr uint32_t JAVA_PROPAGATE_VERSION = SDK_VERSION_Tiramisu;
 
@@ -90,7 +90,7 @@ class WarningOptions {
 
 class Options final {
  public:
-  enum class Language { UNSPECIFIED, JAVA, CPP, NDK, RUST };
+  enum class Language { UNSPECIFIED, JAVA, CPP, NDK, RUST, CPP_ANALYZER };
 
   enum class Task { HELP, COMPILE, PREPROCESS, DUMP_API, CHECK_API, DUMP_MAPPINGS };
 
@@ -121,7 +121,10 @@ class Options final {
   uint32_t GetMinSdkVersion() const { return min_sdk_version_; }
 
   Language TargetLanguage() const { return language_; }
-  bool IsCppOutput() const { return language_ == Language::CPP || language_ == Language::NDK; }
+  bool IsCppOutput() const {
+    return language_ == Language::CPP || language_ == Language::NDK ||
+           language_ == Language::CPP_ANALYZER;
+  }
 
   Task GetTask() const { return task_; }
 

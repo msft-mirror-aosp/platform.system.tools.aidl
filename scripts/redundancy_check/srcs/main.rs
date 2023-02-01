@@ -17,22 +17,22 @@
 //! Reports redundant AIDL libraries included in a partition.
 
 use anyhow::{Context, Result};
+use clap::Parser;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt()]
 struct Opt {
     /// JSON file with list of files installed in a partition, e.g. "$OUT/installed-files.json".
-    #[structopt(long)]
+    #[clap(long)]
     installed_files_json: PathBuf,
 
     /// JSON file with metadata for AIDL interfaces. Optional, but fewer checks are performed when
     /// unset.
-    #[structopt(long)]
+    #[clap(long)]
     aidl_metadata_json: Option<PathBuf>,
 }
 
@@ -97,7 +97,7 @@ fn extract_aidl_instance(installed_file: &InstalledFile) -> Option<AidlInstance>
 }
 
 fn main() -> Result<()> {
-    let args = Opt::from_args();
+    let args = Opt::parse();
 
     // Read the metadata file if available.
     let metadata_list: Option<Vec<AidlInterfaceMetadata>> = match &args.aidl_metadata_json {
@@ -130,7 +130,7 @@ fn main() -> Result<()> {
     let groups: BTreeMap<(String, LibDir), Vec<&AidlInstance>> =
         instances.iter().fold(BTreeMap::new(), |mut acc, x| {
             let key = (x.name.clone(), x.lib_dir);
-            acc.entry(key).or_insert(Vec::new()).push(x);
+            acc.entry(key).or_default().push(x);
             acc
         });
     let mut total_wasted_bytes = 0;
@@ -140,7 +140,7 @@ fn main() -> Result<()> {
             // Prefer the highest version, break ties favoring ndk.
             let preferred_instance = instances
                 .iter()
-                .max_by_key(|x| (x.version, if x.variant == "ndk" { 1 } else { 0 }))
+                .max_by_key(|x| (x.version, i32::from(x.variant == "ndk")))
                 .unwrap();
             let wasted_bytes: u64 =
                 instances.iter().filter(|x| *x != preferred_instance).map(|x| x.size).sum();
@@ -161,4 +161,15 @@ fn main() -> Result<()> {
     println!("total potential savings: {:.2} KiB", total_wasted_bytes as f64 / 1024.0);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::CommandFactory;
+
+    #[test]
+    fn verify_opt() {
+        Opt::command().debug_assert();
+    }
 }
