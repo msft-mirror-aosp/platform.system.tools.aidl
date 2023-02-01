@@ -696,6 +696,8 @@ class AidlConstantValue : public AidlNode {
     }
   }
   void DispatchVisit(AidlVisitor& visitor) const override { visitor.Visit(*this); }
+  size_t Size() const { return values_.size(); }
+  const AidlConstantValue& ValueAt(size_t index) const { return *values_.at(index); }
 
  private:
   AidlConstantValue(const AidlLocation& location, Type parsed_type, int64_t parsed_value,

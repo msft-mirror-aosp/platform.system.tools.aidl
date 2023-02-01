@@ -99,6 +99,19 @@ void DumpVisitor::DumpAnnotations(const AidlAnnotatable& a) {
 void DumpVisitor::DumpConstantValue(const AidlTypeSpecifier& type, const AidlConstantValue& c) {
   if (inline_constants) {
     out << c.ValueString(type, AidlConstantValueDecorator);
+    return;
+  }
+  if (c.GetType() == AidlConstantValue::Type::ARRAY) {
+    type.ViewAsArrayBase([&](const auto& base_type) {
+      out << "{";
+      for (size_t i = 0; i < c.Size(); i++) {
+        if (i > 0) {
+          out << ", ";
+        }
+        DumpConstantValue(base_type, c.ValueAt(i));
+      }
+      out << "}";
+    });
   } else {
     c.DispatchVisit(*this);
   }
