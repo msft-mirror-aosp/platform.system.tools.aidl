@@ -5014,6 +5014,70 @@ enum Foo {
             code);
 }
 
+TEST_F(AidlTest, DumpApiWithConstantReferences) {
+  io_delegate_.SetFileContents("foo/bar/Foo.aidl", R"(
+package foo.bar;
+import foo.bar.Bar;
+import foo.bar.Enum;
+parcelable Foo {
+  int n = Bar.A + 1;
+  int[] ns = {1, Bar.A, Bar.B + 1};
+  Enum e = Enum.A;
+  Enum[] es = {Enum.A, Enum.B};
+}
+)");
+  io_delegate_.SetFileContents("foo/bar/Bar.aidl", R"(
+package foo.bar;
+parcelable Bar {
+  const int A = 1;
+  const int B = A + 1;
+}
+)");
+  io_delegate_.SetFileContents("foo/bar/Enum.aidl", R"(
+package foo.bar;
+enum Enum {
+  A,
+  B = A + 2,
+}
+)");
+  vector<string> args = {"aidl",
+                         "--dumpapi",
+                         "--out=dump",
+                         "--include=.",
+                         "foo/bar/Foo.aidl",
+                         "foo/bar/Bar.aidl",
+                         "foo/bar/Enum.aidl"};
+  ASSERT_TRUE(dump_api(Options::From(args), io_delegate_));
+
+  string actual;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Foo.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+parcelable Foo {
+  int n = (foo.bar.Bar.A + 1);
+  int[] ns = {1, foo.bar.Bar.A, (foo.bar.Bar.B + 1)};
+  foo.bar.Enum e = foo.bar.Enum.A;
+  foo.bar.Enum[] es = {foo.bar.Enum.A, foo.bar.Enum.B};
+}
+)"),
+            actual);
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Bar.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+parcelable Bar {
+  const int A = 1;
+  const int B = (A + 1);
+}
+)"),
+            actual);
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Enum.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+enum Enum {
+  A,
+  B = (A + 2),
+}
+)"),
+            actual);
+}
+
 TEST_F(AidlTest, EnumDefaultShouldBeEnumerators) {
   io_delegate_.SetFileContents("a/p/Enum.aidl", "package p; enum Enum { FOO = 1, BAR = 2}");
   io_delegate_.SetFileContents("a/p/Foo.aidl", R"(
