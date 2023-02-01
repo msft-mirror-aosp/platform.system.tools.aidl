@@ -106,7 +106,7 @@ string Options::GetUsage() const {
        << "          Generate dependency file next to the output file with the" << endl
        << "          name based on the input file." << endl
        << "  -b" << endl
-       << "          Trigger fail when trying to compile a parcelable." << endl
+       << "          Trigger fail when trying to compile a parcelable declaration." << endl
        << "  --ninja" << endl
        << "          Generate dependency file in a format ninja understands." << endl
        << "  --rpc" << endl
@@ -177,6 +177,8 @@ string to_string(Options::Language language) {
       return "ndk";
     case Options::Language::RUST:
       return "rust";
+    case Options::Language::CPP_ANALYZER:
+      return "cpp-analyzer";
     case Options::Language::UNSPECIFIED:
       return "unspecified";
     default:
@@ -223,6 +225,8 @@ static uint32_t DefaultMinSdkVersionForLang(const Options::Language lang) {
       return DEFAULT_SDK_VERSION_NDK;
     case Options::Language::RUST:
       return DEFAULT_SDK_VERSION_RUST;
+    case Options::Language::CPP_ANALYZER:
+      return DEFAULT_SDK_VERSION_CPP;
     case Options::Language::UNSPECIFIED:
       return DEFAULT_SDK_VERSION_JAVA;  // The safest option
     default:
@@ -314,6 +318,9 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
             task_ = Options::Task::COMPILE;
           } else if (lang == "rust") {
             language_ = Options::Language::RUST;
+            task_ = Options::Task::COMPILE;
+          } else if (lang == "cpp-analyzer") {
+            language_ = Options::Language::CPP_ANALYZER;
             task_ = Options::Task::COMPILE;
           } else {
             error_message_ << "Unsupported language: '" << lang << "'" << endl;
@@ -611,6 +618,8 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
     error_message_ << "RPC code requires minimum SDK version of at least " << rpc_version << endl;
     return;
   }
+
+  if (min_sdk_version_ >= rpc_version) gen_rpc_ = true;
 
   AIDL_FATAL_IF(!output_dir_.empty() && output_dir_.back() != OS_PATH_SEPARATOR, output_dir_);
   AIDL_FATAL_IF(!output_header_dir_.empty() && output_header_dir_.back() != OS_PATH_SEPARATOR,

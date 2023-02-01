@@ -41,6 +41,12 @@ void DumpVisitor::DumpType(const AidlDefinedType& dt, const string& type) {
   if (auto generic_type = dt.AsParameterizable(); generic_type && generic_type->IsGeneric()) {
     out << "<" << Join(generic_type->GetTypeParameters(), ", ") << ">";
   }
+
+  if (dt.AsUnstructuredParcelable()) {
+    out << ";\n";
+    return;
+  }
+
   out << " {\n";
   out.Indent();
   DumpMembers(dt);
@@ -91,7 +97,11 @@ void DumpVisitor::DumpAnnotations(const AidlAnnotatable& a) {
 }
 
 void DumpVisitor::DumpConstantValue(const AidlTypeSpecifier& type, const AidlConstantValue& c) {
-  out << c.ValueString(type, AidlConstantValueDecorator);
+  if (inline_constants) {
+    out << c.ValueString(type, AidlConstantValueDecorator);
+  } else {
+    c.DispatchVisit(*this);
+  }
 }
 
 void DumpVisitor::Visit(const AidlInterface& t) {
@@ -120,8 +130,11 @@ void DumpVisitor::Visit(const AidlEnumDeclaration& t) {
   out.Indent();
   for (const auto& e : t.GetEnumerators()) {
     DumpComments(*e);
-    out << e->GetName() << " = ";
-    DumpConstantValue(t.GetBackingType(), *e->GetValue());
+    out << e->GetName();
+    if (e->IsValueUserSpecified() || inline_constants) {
+      out << " = ";
+      DumpConstantValue(t.GetBackingType(), *e->GetValue());
+    }
     out << ",\n";
   }
   out.Dedent();
@@ -167,6 +180,40 @@ void DumpVisitor::Visit(const AidlTypeSpecifier& t) {
   out << t.ToString();
 }
 
+// These Visit() methods are not invoked when inline_constants = true
+void DumpVisitor::Visit(const AidlConstantValue& c) {
+  AIDL_FATAL_IF(inline_constants, AIDL_LOCATION_HERE);
+  out << c.Literal();
+}
+
+void DumpVisitor::Visit(const AidlConstantReference& r) {
+  AIDL_FATAL_IF(inline_constants, AIDL_LOCATION_HERE);
+  if (auto& ref = r.GetRefType(); ref) {
+    ref->DispatchVisit(*this);
+    out << ".";
+  }
+  out << r.GetFieldName();
+}
+
+void DumpVisitor::Visit(const AidlBinaryConstExpression& b) {
+  AIDL_FATAL_IF(inline_constants, AIDL_LOCATION_HERE);
+  // TODO(b/262594867) put parentheses only when necessary
+  out << "(";
+  b.Left()->DispatchVisit(*this);
+  out << " " << b.Op() << " ";
+  b.Right()->DispatchVisit(*this);
+  out << ")";
+}
+
+void DumpVisitor::Visit(const AidlUnaryConstExpression& u) {
+  AIDL_FATAL_IF(inline_constants, AIDL_LOCATION_HERE);
+  // TODO(b/262594867) put parentheses only when necessary
+  out << "(";
+  out << u.Op();
+  u.Val()->DispatchVisit(*this);
+  out << ")";
+}
+
 static string GetApiDumpPathFor(const AidlDefinedType& defined_type, const Options& options) {
   string package_as_path = Join(Split(defined_type.GetPackage(), "."), OS_PATH_SEPARATOR);
   AIDL_FATAL_IF(options.OutputDir().empty() || options.OutputDir().back() != '/', defined_type);
@@ -203,7 +250,7 @@ bool dump_api(const Options& options, const IoDelegate& io_delegate) {
         if (!type->GetPackage().empty()) {
           (*writer) << "package " << type->GetPackage() << ";\n";
         }
-        DumpVisitor visitor(*writer);
+        DumpVisitor visitor(*writer, /*inline_constants=*/false);
         type->DispatchVisit(visitor);
       }
     } else {
