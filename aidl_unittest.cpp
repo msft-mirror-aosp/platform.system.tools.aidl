@@ -2479,7 +2479,7 @@ TEST_F(AidlTest, ApiDumpWithEnums) {
   EXPECT_EQ(string(kPreamble).append("package foo.bar;\n"
                                      "enum Enum {\n"
                                      "  FOO,\n"
-                                     "  BAR = (FOO + 1),\n"
+                                     "  BAR = (FOO + 1) /* 1 */,\n"
                                      "}\n"),
             actual);
 }
@@ -2508,7 +2508,7 @@ TEST_F(AidlTest, ApiDumpWithEnumDefaultValues) {
   EXPECT_EQ(string(kPreamble).append("package foo.bar;\n"
                                      "parcelable Foo {\n"
                                      "  foo.bar.Enum e = foo.bar.Enum.FOO;\n"
-                                     "  int n = foo.bar.Enum.FOO;\n"
+                                     "  int n = foo.bar.Enum.FOO /* 0 */;\n"
                                      "}\n"),
             actual);
 }
@@ -5053,8 +5053,8 @@ enum Enum {
   EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Foo.aidl", &actual));
   EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
 parcelable Foo {
-  int n = (foo.bar.Bar.A + 1);
-  int[] ns = {1, foo.bar.Bar.A, (foo.bar.Bar.B + 1)};
+  int n = (foo.bar.Bar.A + 1) /* 2 */;
+  int[] ns = {1, foo.bar.Bar.A /* 1 */, (foo.bar.Bar.B + 1) /* 3 */};
   foo.bar.Enum e = foo.bar.Enum.A;
   foo.bar.Enum[] es = {foo.bar.Enum.A, foo.bar.Enum.B};
 }
@@ -5064,7 +5064,7 @@ parcelable Foo {
   EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
 parcelable Bar {
   const int A = 1;
-  const int B = (A + 1);
+  const int B = (A + 1) /* 2 */;
 }
 )"),
             actual);
@@ -5072,7 +5072,7 @@ parcelable Bar {
   EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
 enum Enum {
   A,
-  B = (A + 2),
+  B = (A + 2) /* 2 */,
 }
 )"),
             actual);
