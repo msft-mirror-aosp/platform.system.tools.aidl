@@ -74,6 +74,12 @@ static vector<string> get_strict_annotations(const AidlAnnotatable& node) {
   // - a new implementation might change so that it no longer returns null
   // values (remove @nullable)
   // - a new implementation might start accepting null values (add @nullable)
+  //
+  // AidlAnnotation::Type::SENSITIVE_DATA could be ignored for backwards
+  // compatibility, but is not. It should retroactively be applied to the
+  // older versions of the interface. When doing that, we need
+  // to add the new hash to the older versions after the change using
+  // tools/aidl/build/hash_gen.sh.
   static const set<AidlAnnotation::Type> kIgnoreAnnotations{
       AidlAnnotation::Type::NULLABLE,
       // @JavaDerive doesn't affect read/write
