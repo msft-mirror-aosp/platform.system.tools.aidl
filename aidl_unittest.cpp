@@ -1210,7 +1210,9 @@ TEST_P(AidlTest, SupportDeprecated) {
 }
 
 TEST_P(AidlTest, RequireOuterClass) {
-  const string expected_stderr = "ERROR: p/IFoo.aidl:1.54-60: Failed to resolve 'Inner'\n";
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl: Couldn't find import for class Inner. Searched here:\n - ./\nERROR: "
+      "p/IFoo.aidl:1.54-60: Failed to resolve 'Inner'\n";
   io_delegate_.SetFileContents("p/Outer.aidl",
                                "package p; parcelable Outer.Inner;");
   import_paths_.emplace("");
@@ -3814,8 +3816,7 @@ TEST_F(AidlTest, RejectAmbiguousImports) {
   const string expected_stderr =
       "ERROR: p/IFoo.aidl: Duplicate files found for q.IBar from:\n"
       "dir1/q/IBar.aidl\n"
-      "dir2/q/IBar.aidl\n"
-      "ERROR: p/IFoo.aidl: Couldn't find import for class q.IBar\n";
+      "dir2/q/IBar.aidl\n";
   Options options = Options::From("aidl --lang=java -o out -I . -I dir1 -I dir2 p/IFoo.aidl");
   io_delegate_.SetFileContents("p/IFoo.aidl", "package p; import q.IBar; interface IFoo{}");
   io_delegate_.SetFileContents("dir1/q/IBar.aidl", "package q; interface IBar{}");
@@ -3991,22 +3992,6 @@ TEST_F(AidlTest, AllowDuplicatedImportPaths) {
   io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
   io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
-}
-
-TEST_F(AidlTest, FailOnAmbiguousImports) {
-  const string expected_stderr =
-      "ERROR: IFoo.aidl: Duplicate files found for IBar from:\n"
-      "dir/IBar.aidl\n"
-      "dir2/IBar.aidl\n"
-      "ERROR: IFoo.aidl: Couldn't find import for class IBar\n";
-
-  Options options = Options::From("aidl --lang=java -I . -I dir -I dir2 IFoo.aidl");
-  io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
-  io_delegate_.SetFileContents("dir2/IBar.aidl", "interface IBar{}");
-  io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
-  CaptureStderr();
-  EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 TEST_F(AidlTest, UnusedImportDoesNotContributeInclude) {
@@ -4815,7 +4800,9 @@ TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
 TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { T a; int A; }");
   Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
-  const string expected_stderr = "ERROR: Foo.aidl:1.22-24: Failed to resolve 'T'\n";
+  const string expected_stderr =
+      "ERROR: Foo.aidl: Couldn't find import for class T. Searched here:\n - ./\nERROR: "
+      "Foo.aidl:1.22-24: Failed to resolve 'T'\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());

@@ -81,9 +81,6 @@ type aidlApi struct {
 
 	// for checking for active development on unfrozen version
 	hasDevelopment android.WritablePath
-
-	// for checking hash value of the unfrozen version
-	totHashFile android.WritablePath
 }
 
 func (m *aidlApi) apiDir() string {
@@ -149,7 +146,7 @@ func (m *aidlApi) createApiDumpFromSource(ctx android.ModuleContext) apiDump {
 		apiFiles = append(apiFiles, outFile)
 	}
 	hashFile = android.PathForModuleOut(ctx, "dump", ".hash")
-	m.totHashFile = hashFile
+
 	var optionalFlags []string
 	if m.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *m.properties.Stability)
