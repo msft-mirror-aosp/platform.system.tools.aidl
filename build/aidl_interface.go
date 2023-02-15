@@ -1140,6 +1140,7 @@ type ndkConfigAttributes struct {
 type commonBackendAttributes struct {
 	Enabled         bool
 	Min_sdk_version *string
+	Tags            []string
 }
 
 type commonNativeBackendAttributes struct {
@@ -1221,16 +1222,19 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		javaConfig = &javaConfigAttributes{}
 		javaConfig.Enabled = true
 		javaConfig.Min_sdk_version = i.minSdkVersion(langJava)
+		javaConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Java.Apex_available)
 	}
 	if i.shouldGenerateCppBackend() {
 		cppConfig = &cppConfigAttributes{}
 		cppConfig.Enabled = true
 		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
+		cppConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Cpp.Apex_available)
 	}
 	if i.shouldGenerateNdkBackend() {
 		ndkConfig = &ndkConfigAttributes{}
 		ndkConfig.Enabled = true
 		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
+		ndkConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Ndk.Apex_available)
 	}
 
 	var versionsWithInfos []versionWithInfoAttribute
