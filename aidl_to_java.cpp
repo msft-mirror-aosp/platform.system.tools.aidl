@@ -245,7 +245,7 @@ static private <T extends android.os.Parcelable> void writeTypedObject(
 )";
 }
 
-static void GenerateTypedListHelper(CodeWriter& out, const Options&) {
+static void GenerateTypedListHelper(CodeWriter& out, const Options& options) {
   out << R"(static private <T extends android.os.Parcelable> void writeTypedList(
     android.os.Parcel parcel, java.util.List<T> value, int parcelableFlags) {
   if (value == null) {
@@ -255,7 +255,15 @@ static void GenerateTypedListHelper(CodeWriter& out, const Options&) {
     int i = 0;
     parcel.writeInt(N);
     while (i < N) {
-      parcel.writeTypedObject(value.get(i), parcelableFlags);
+)";
+
+  if (options.GetMinSdkVersion() < 23u) {
+    out << "writeTypedObject(parcel, value.get(i), parcelableFlags);";
+  } else {
+    out << "parcel.writeTypedObject(value.get(i), parcelableFlags);";
+  }
+
+  out << R"(
       i++;
     }
   }
