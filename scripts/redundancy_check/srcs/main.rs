@@ -97,7 +97,7 @@ fn extract_aidl_instance(installed_file: &InstalledFile) -> Option<AidlInstance>
 }
 
 fn main() -> Result<()> {
-    let args = Opt::from_args();
+    let args = Opt::parse();
 
     // Read the metadata file if available.
     let metadata_list: Option<Vec<AidlInterfaceMetadata>> = match &args.aidl_metadata_json {
@@ -161,4 +161,15 @@ fn main() -> Result<()> {
     println!("total potential savings: {:.2} KiB", total_wasted_bytes as f64 / 1024.0);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::CommandFactory;
+
+    #[test]
+    fn verify_opt() {
+        Opt::command().debug_assert();
+    }
 }

@@ -81,9 +81,6 @@ type aidlApi struct {
 
 	// for checking for active development on unfrozen version
 	hasDevelopment android.WritablePath
-
-	// for checking hash value of the unfrozen version
-	totHashFile android.WritablePath
 }
 
 func (m *aidlApi) apiDir() string {
@@ -149,7 +146,7 @@ func (m *aidlApi) createApiDumpFromSource(ctx android.ModuleContext) apiDump {
 		apiFiles = append(apiFiles, outFile)
 	}
 	hashFile = android.PathForModuleOut(ctx, "dump", ".hash")
-	m.totHashFile = hashFile
+
 	var optionalFlags []string
 	if m.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *m.properties.Stability)
@@ -338,14 +335,16 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		m.migrateAndAppendVersion(ctx, rb, &version, transitive)
 	} else {
 		actionWord = "Updating"
-		if !m.isFrozen() {
-			// We are updating the current version. Don't copy .hash to the current dump
-			rb.Command().Text("mkdir -p " + targetDir)
-			rb.Command().Text("rsync --recursive --update --delete-before " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
-		} else {
-			// This needs to be an error when running *-update-api
-			rb.Command().Text(fmt.Sprintf(`echo "Error: can't update an API with 'frozen: true'. Update %s with 'frozen: false'." && exit -1`, m.properties.BaseName))
+		if m.isFrozen() {
+			rb.Command().BuiltTool("bpmodify").
+				Text("-w -m " + m.properties.BaseName).
+				Text("-parameter frozen -set-bool false").
+				Text(android.PathForModuleSrc(ctx, "Android.bp").String())
+
 		}
+		// We are updating the current version. Don't copy .hash to the current dump
+		rb.Command().Text("mkdir -p " + targetDir)
+		rb.Command().Text("rsync --recursive --update --delete-before " + dump.dir.String() + "/* " + targetDir).Implicits(dump.files)
 		m.migrateAndAppendVersion(ctx, rb, nil, false)
 	}
 
@@ -386,6 +385,7 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date
 			deps.implicits = append(deps.implicits, api.checkApiTimestamps.Paths()...)
 			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
+			deps.implicits = append(deps.implicits, api.hasDevelopment)
 		case interfaceHeadersDepTag:
 			headerInfo, ok := ctx.OtherModuleProvider(dep, AidlInterfaceHeadersProvider).(AidlInterfaceHeadersInfo)
 			if !ok {
