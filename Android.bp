@@ -41,7 +41,6 @@ cc_defaults {
     header_libs: ["libgtest_prod_headers"],
     static_libs: [
         "libbase",
-        "libcutils",
         "libgtest",
     ],
     // TODO(b/174366536): basic_stringbuf::overflow causes "ubsan: implicit-conversion"
