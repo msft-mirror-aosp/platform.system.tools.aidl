@@ -1761,11 +1761,11 @@ bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {
 }
 
 bool AidlInterface::UsesPermissions() const {
-  if (IsPermissionAnnotated()) {
+  if (EnforceExpression()) {
     return true;
   }
   for (auto& m : GetMethods()) {
-    if (m->GetType().IsPermissionAnnotated()) {
+    if (m->GetType().EnforceExpression()) {
       return true;
     }
   }
