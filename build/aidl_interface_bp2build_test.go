@@ -334,3 +334,32 @@ func TestAidlInterfaceWithUnstablePropSet(t *testing.T) {
 		},
 	})
 }
+
+func TestAidlInterfaceWithFrozenPropSet(t *testing.T) {
+	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
+		Description: `aidl_interface with frozen prop set`,
+		Blueprint: `
+			aidl_interface {
+				name: "foo",
+				frozen: true,
+				versions: ["1"],
+                backend: {
+                    java: {
+                        enabled: false,
+                    },
+                    cpp: {
+                        enabled: false,
+                    },
+                }
+			}`,
+		ExpectedBazelTargets: []string{
+			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "foo", bp2build.AttrNameToString{
+				"frozen":   "True",
+				"versions": `["1"]`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
+			}),
+		},
+	})
+}
