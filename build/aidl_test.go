@@ -226,7 +226,7 @@ func assertModulesExists(t *testing.T, ctx *android.TestContext, names ...string
 		ctx.VisitAllModules(func(m blueprint.Module) {
 			allModuleNames[ctx.ModuleName(m)] = true
 		})
-		t.Errorf("expected modules(%v) not found. all modules: %v", missing, android.SortedStringKeys(allModuleNames))
+		t.Errorf("expected modules(%v) not found. all modules: %v", missing, android.SortedKeys(allModuleNames))
 	}
 }
 
