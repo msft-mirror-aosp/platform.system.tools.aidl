@@ -447,7 +447,6 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
     string import_path = import_resolver.FindImportFile(import);
     if (import_path.empty()) {
-      AIDL_ERROR(input_file_name) << "Couldn't find import for class " << import;
       err = AidlError::BAD_IMPORT;
       continue;
     }

@@ -41,7 +41,6 @@ cc_defaults {
     header_libs: ["libgtest_prod_headers"],
     static_libs: [
         "libbase",
-        "libcutils",
         "libgtest",
     ],
     // TODO(b/174366536): basic_stringbuf::overflow causes "ubsan: implicit-conversion"
@@ -335,9 +334,7 @@ filegroup {
 filegroup {
     name: "libaidl-integration-permission-test-files",
     srcs: [
-        "tests/android/aidl/tests/permission/IProtected.aidl",
-        "tests/android/aidl/tests/permission/IProtectedInterface.aidl",
-        "tests/android/aidl/tests/permission/platform/*.aidl",
+        "tests/android/aidl/tests/permission/**/*.aidl",
     ],
     path: "tests",
 }
