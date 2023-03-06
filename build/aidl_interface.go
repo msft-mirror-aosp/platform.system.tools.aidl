@@ -696,6 +696,11 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q where * is one of %q",
 					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V*", candidateVersions)
 			}
+			if i.Owner() == "" && other.Owner() != "" {
+				mctx.PropertyErrorf("imports",
+					"%q imports %q which is an interface owned by %q. This is not allowed because the owned interface will not be frozen at the same time.",
+					i.ModuleBase.Name(), anImport, other.Owner())
+			}
 		})
 	}
 }
