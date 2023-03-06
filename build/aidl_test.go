@@ -612,6 +612,62 @@ func TestFrozenImportingNewImplicit(t *testing.T) {
 	testAidlError(t, expectedError, frozenTest, files)
 }
 
+func TestImportingOwned(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		owner: "unknown-owner",
+		frozen: false,
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx-V1"],
+		frozen: false,
+		versions_with_info: [
+			{version: "1", imports: []},
+		],
+		srcs: ["IFoo.aidl"],
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+	})
+
+	expectedError := "Android.bp:10:10: module \"foo_interface\": imports: \"foo\" imports \"xxx\" which is an interface owned by \"unknown-owner\". This is not allowed because the owned interface will not be frozen at the same time."
+	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
+	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
+	testAidlError(t, expectedError, frozenTest, files)
+}
+
+func TestImportingOwnedBothOwned(t *testing.T) {
+	frozenTest := `
+	aidl_interface {
+		name: "xxx",
+		srcs: ["IFoo.aidl"],
+		owner: "unknown-owner",
+		frozen: false,
+	}
+	aidl_interface {
+		name: "foo",
+		imports: ["xxx-V1"],
+		frozen: false,
+		versions_with_info: [
+			{version: "1", imports: []},
+		],
+		srcs: ["IFoo.aidl"],
+		owner: "unknown-owner-any",
+	}`
+	files := withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+	})
+
+	testAidl(t, frozenTest, files, setReleaseEnv())
+	testAidl(t, frozenTest, files, setTestFreezeEnv())
+	testAidl(t, frozenTest, files)
+}
+
 func TestFrozenImportingNewExplicit(t *testing.T) {
 	frozenTest := `
 	aidl_interface {
