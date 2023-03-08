@@ -1210,7 +1210,9 @@ TEST_P(AidlTest, SupportDeprecated) {
 }
 
 TEST_P(AidlTest, RequireOuterClass) {
-  const string expected_stderr = "ERROR: p/IFoo.aidl:1.54-60: Failed to resolve 'Inner'\n";
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl: Couldn't find import for class Inner. Searched here:\n - ./\nERROR: "
+      "p/IFoo.aidl:1.54-60: Failed to resolve 'Inner'\n";
   io_delegate_.SetFileContents("p/Outer.aidl",
                                "package p; parcelable Outer.Inner;");
   import_paths_.emplace("");
@@ -2479,7 +2481,7 @@ TEST_F(AidlTest, ApiDumpWithEnums) {
   EXPECT_EQ(string(kPreamble).append("package foo.bar;\n"
                                      "enum Enum {\n"
                                      "  FOO,\n"
-                                     "  BAR = (FOO + 1),\n"
+                                     "  BAR = (FOO + 1) /* 1 */,\n"
                                      "}\n"),
             actual);
 }
@@ -2508,7 +2510,7 @@ TEST_F(AidlTest, ApiDumpWithEnumDefaultValues) {
   EXPECT_EQ(string(kPreamble).append("package foo.bar;\n"
                                      "parcelable Foo {\n"
                                      "  foo.bar.Enum e = foo.bar.Enum.FOO;\n"
-                                     "  int n = foo.bar.Enum.FOO;\n"
+                                     "  int n = foo.bar.Enum.FOO /* 0 */;\n"
                                      "}\n"),
             actual);
 }
@@ -3814,8 +3816,7 @@ TEST_F(AidlTest, RejectAmbiguousImports) {
   const string expected_stderr =
       "ERROR: p/IFoo.aidl: Duplicate files found for q.IBar from:\n"
       "dir1/q/IBar.aidl\n"
-      "dir2/q/IBar.aidl\n"
-      "ERROR: p/IFoo.aidl: Couldn't find import for class q.IBar\n";
+      "dir2/q/IBar.aidl\n";
   Options options = Options::From("aidl --lang=java -o out -I . -I dir1 -I dir2 p/IFoo.aidl");
   io_delegate_.SetFileContents("p/IFoo.aidl", "package p; import q.IBar; interface IFoo{}");
   io_delegate_.SetFileContents("dir1/q/IBar.aidl", "package q; interface IBar{}");
@@ -3991,22 +3992,6 @@ TEST_F(AidlTest, AllowDuplicatedImportPaths) {
   io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
   io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
-}
-
-TEST_F(AidlTest, FailOnAmbiguousImports) {
-  const string expected_stderr =
-      "ERROR: IFoo.aidl: Duplicate files found for IBar from:\n"
-      "dir/IBar.aidl\n"
-      "dir2/IBar.aidl\n"
-      "ERROR: IFoo.aidl: Couldn't find import for class IBar\n";
-
-  Options options = Options::From("aidl --lang=java -I . -I dir -I dir2 IFoo.aidl");
-  io_delegate_.SetFileContents("dir/IBar.aidl", "interface IBar{}");
-  io_delegate_.SetFileContents("dir2/IBar.aidl", "interface IBar{}");
-  io_delegate_.SetFileContents("IFoo.aidl", "import IBar; interface IFoo{}");
-  CaptureStderr();
-  EXPECT_FALSE(compile_aidl(options, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 TEST_F(AidlTest, UnusedImportDoesNotContributeInclude) {
@@ -4815,7 +4800,9 @@ TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
 TEST_P(AidlTest, RejectGenericStructuredParcelableField) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { T a; int A; }");
   Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
-  const string expected_stderr = "ERROR: Foo.aidl:1.22-24: Failed to resolve 'T'\n";
+  const string expected_stderr =
+      "ERROR: Foo.aidl: Couldn't find import for class T. Searched here:\n - ./\nERROR: "
+      "Foo.aidl:1.22-24: Failed to resolve 'T'\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -5012,6 +4999,70 @@ enum Foo {
 }
 )--",
             code);
+}
+
+TEST_F(AidlTest, DumpApiWithConstantReferences) {
+  io_delegate_.SetFileContents("foo/bar/Foo.aidl", R"(
+package foo.bar;
+import foo.bar.Bar;
+import foo.bar.Enum;
+parcelable Foo {
+  int n = Bar.A + 1;
+  int[] ns = {1, Bar.A, Bar.B + 1};
+  Enum e = Enum.A;
+  Enum[] es = {Enum.A, Enum.B};
+}
+)");
+  io_delegate_.SetFileContents("foo/bar/Bar.aidl", R"(
+package foo.bar;
+parcelable Bar {
+  const int A = 1;
+  const int B = A + 1;
+}
+)");
+  io_delegate_.SetFileContents("foo/bar/Enum.aidl", R"(
+package foo.bar;
+enum Enum {
+  A,
+  B = A + 2,
+}
+)");
+  vector<string> args = {"aidl",
+                         "--dumpapi",
+                         "--out=dump",
+                         "--include=.",
+                         "foo/bar/Foo.aidl",
+                         "foo/bar/Bar.aidl",
+                         "foo/bar/Enum.aidl"};
+  ASSERT_TRUE(dump_api(Options::From(args), io_delegate_));
+
+  string actual;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Foo.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+parcelable Foo {
+  int n = (foo.bar.Bar.A + 1) /* 2 */;
+  int[] ns = {1, foo.bar.Bar.A /* 1 */, (foo.bar.Bar.B + 1) /* 3 */};
+  foo.bar.Enum e = foo.bar.Enum.A;
+  foo.bar.Enum[] es = {foo.bar.Enum.A, foo.bar.Enum.B};
+}
+)"),
+            actual);
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Bar.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+parcelable Bar {
+  const int A = 1;
+  const int B = (A + 1) /* 2 */;
+}
+)"),
+            actual);
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Enum.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append(R"(package foo.bar;
+enum Enum {
+  A,
+  B = (A + 2) /* 2 */,
+}
+)"),
+            actual);
 }
 
 TEST_F(AidlTest, EnumDefaultShouldBeEnumerators) {

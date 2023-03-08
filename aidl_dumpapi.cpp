@@ -31,6 +31,23 @@ using std::unique_ptr;
 namespace android {
 namespace aidl {
 
+static bool NeedsFinalValue(const AidlTypeSpecifier& type, const AidlConstantValue& c) {
+  // For enum types, use enumerator
+  if (auto defined_type = type.GetDefinedType();
+      defined_type && defined_type->AsEnumDeclaration()) {
+    return false;
+  }
+  // We need final value for constant expression which is not a single constant expression.
+  struct Visitor : AidlVisitor {
+    bool trivial = true;
+    void Visit(const AidlConstantReference&) override { trivial = false; }
+    void Visit(const AidlUnaryConstExpression&) override { trivial = false; }
+    void Visit(const AidlBinaryConstExpression&) override { trivial = false; }
+  } v;
+  c.DispatchVisit(v);
+  return !v.trivial;
+}
+
 void DumpVisitor::DumpType(const AidlDefinedType& dt, const string& type) {
   if (!dt.IsUserDefined()) {
     return;
@@ -99,8 +116,25 @@ void DumpVisitor::DumpAnnotations(const AidlAnnotatable& a) {
 void DumpVisitor::DumpConstantValue(const AidlTypeSpecifier& type, const AidlConstantValue& c) {
   if (inline_constants) {
     out << c.ValueString(type, AidlConstantValueDecorator);
+    return;
+  }
+  if (c.GetType() == AidlConstantValue::Type::ARRAY) {
+    type.ViewAsArrayBase([&](const auto& base_type) {
+      out << "{";
+      for (size_t i = 0; i < c.Size(); i++) {
+        if (i > 0) {
+          out << ", ";
+        }
+        DumpConstantValue(base_type, c.ValueAt(i));
+      }
+      out << "}";
+    });
   } else {
     c.DispatchVisit(*this);
+    // print final value as comment
+    if (NeedsFinalValue(type, c)) {
+      out << " /* " << c.ValueString(type, AidlConstantValueDecorator) << " */";
+    }
   }
 }
 

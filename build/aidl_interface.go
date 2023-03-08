@@ -696,6 +696,11 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q where * is one of %q",
 					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V*", candidateVersions)
 			}
+			if i.Owner() == "" && other.Owner() != "" {
+				mctx.PropertyErrorf("imports",
+					"%q imports %q which is an interface owned by %q. This is not allowed because the owned interface will not be frozen at the same time.",
+					i.ModuleBase.Name(), anImport, other.Owner())
+			}
 		})
 	}
 }
@@ -1124,6 +1129,7 @@ type aidlInterfaceAttributes struct {
 	Ndk_config         *ndkConfigAttributes
 	// Backend_Configs    backendConfigAttributes
 	Unstable *bool
+	Frozen   *bool
 }
 
 type javaConfigAttributes struct {
@@ -1139,6 +1145,7 @@ type ndkConfigAttributes struct {
 type commonBackendAttributes struct {
 	Enabled         bool
 	Min_sdk_version *string
+	Tags            []string
 }
 
 type commonNativeBackendAttributes struct {
@@ -1220,16 +1227,19 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		javaConfig = &javaConfigAttributes{}
 		javaConfig.Enabled = true
 		javaConfig.Min_sdk_version = i.minSdkVersion(langJava)
+		javaConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Java.Apex_available)
 	}
 	if i.shouldGenerateCppBackend() {
 		cppConfig = &cppConfigAttributes{}
 		cppConfig.Enabled = true
 		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
+		cppConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Cpp.Apex_available)
 	}
 	if i.shouldGenerateNdkBackend() {
 		ndkConfig = &ndkConfigAttributes{}
 		ndkConfig.Enabled = true
 		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
+		ndkConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Ndk.Apex_available)
 	}
 
 	var versionsWithInfos []versionWithInfoAttribute
@@ -1271,6 +1281,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		Cpp_config:         cppConfig,
 		Ndk_config:         ndkConfig,
 		Unstable:           i.properties.Unstable,
+		Frozen:             i.properties.Frozen,
 	}
 
 	interfaceName := strings.TrimSuffix(i.Name(), "_interface")
