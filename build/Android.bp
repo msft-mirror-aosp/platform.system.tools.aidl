@@ -95,6 +95,7 @@ aidl_interface {
     name: "test-piece-1",
     local_include_dir: "tests_1",
     vendor_available: true,
+    product_available: true,
     double_loadable: true,
     host_supported: true,
     flags: ["-Werror"],
