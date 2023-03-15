@@ -23,7 +23,7 @@ pub struct r#ParcelableForToString {
   pub r#enumArray: Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>,
   pub r#nullArray: Vec<String>,
   pub r#nullList: Vec<String>,
-  pub r#parcelableGeneric: i32,
+  pub r#parcelableGeneric: crate::mangled::_7_android_4_aidl_5_tests_27_GenericStructuredParcelable<i32,crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable,crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum,>,
   pub r#unionValue: crate::mangled::_7_android_4_aidl_5_tests_5_Union,
 }
 impl Default for r#ParcelableForToString {
