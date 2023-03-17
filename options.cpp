@@ -198,6 +198,7 @@ bool Options::StabilityFromString(const std::string& stability, Stability* out_s
 static const std::map<std::string, uint32_t> codeNameToVersion = {
     {"S", 31},
     {"Tiramisu", SDK_VERSION_Tiramisu},
+    {"UpsideDownCake", SDK_VERSION_UpsideDownCake},
     // this is an alias for the latest in-development platform version
     {"current", SDK_VERSION_current},
     // this is an alias for use of all APIs, including those not in any API surface
