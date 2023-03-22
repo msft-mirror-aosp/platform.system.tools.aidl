@@ -796,6 +796,8 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
       out << "}\n";
     }
 
+    // TODO(b/274144762): we shouldn't have different behavior for versioned interfaces
+    // also this set to false for all exceptions, not just unimplemented methods.
     if (options.Version() > 0) {
       out << "throw new android.os.RemoteException(\"Method " << method.GetName()
           << " is unimplemented.\");\n";
@@ -1049,6 +1051,10 @@ static void GenerateInterfaceDescriptors(const Options& options, const AidlInter
   auto descriptor = std::make_shared<Field>(
       STATIC | FINAL | PUBLIC, std::make_shared<Variable>("java.lang.String", "DESCRIPTOR"));
   std::string name = iface->GetDescriptor();
+
+  // TODO(b/242862858): avoid differentiating behahavior. This is currently blocked
+  // to fix because of a metalava lint which disallows running code to generate
+  // static fields.
   if (options.IsStructured()) {
     // mangle the interface name at build time and demangle it at runtime, to avoid
     // being renamed by jarjar. See b/153843174
