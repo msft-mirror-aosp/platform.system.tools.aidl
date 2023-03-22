@@ -89,6 +89,12 @@ class WarningOptions {
   std::set<std::string> no_errors_;  // -Wno-error=foo
 };
 
+// Options for AIDL
+//
+// These are passed all throughout the compiler, but they should not affect the
+// code which is generated. In order to avoid ODR issues, and also in order to
+// make sure the language is orthogonal and portable, we should only generate
+// different things based on the file contents themselves.
 class Options final {
  public:
   enum class Language { UNSPECIFIED, JAVA, CPP, NDK, RUST, CPP_ANALYZER };
