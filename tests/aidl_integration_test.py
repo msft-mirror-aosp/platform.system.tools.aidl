@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 from itertools import product
+from time import sleep
+
 import pipes
 import re
 import subprocess
@@ -273,8 +275,14 @@ class TestAidl(unittest.TestCase):
 def make_test(client, server):
     def test(self):
         try:
-            client.cleanup()
+            # Server is unregistered first so that we give more time
+            # for servicemanager to clear the old notification.
+            # Otherwise, it may race that the client gets ahold
+            # of the service.
             server.cleanup()
+            client.cleanup()
+            sleep(0.2)
+
             server.run()
             client.run()
         finally:
