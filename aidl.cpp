@@ -402,6 +402,8 @@ bool ValidateHeaders(Options::Language language, const AidlDocument& doc) {
 
 namespace internals {
 
+// WARNING: options are passed here and below, but only the file contents should determine
+// what is generated for portability.
 AidlError load_and_validate_aidl(const std::string& input_file_name, const Options& options,
                                  const IoDelegate& io_delegate, AidlTypenames* typenames,
                                  vector<string>* imported_files) {
