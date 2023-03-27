@@ -250,7 +250,8 @@ void DumpVisitor::Visit(const AidlUnaryConstExpression& u) {
 
 static string GetApiDumpPathFor(const AidlDefinedType& defined_type, const Options& options) {
   string package_as_path = Join(Split(defined_type.GetPackage(), "."), OS_PATH_SEPARATOR);
-  AIDL_FATAL_IF(options.OutputDir().empty() || options.OutputDir().back() != '/', defined_type);
+  AIDL_FATAL_IF(options.OutputDir().empty() || options.OutputDir().back() != OS_PATH_SEPARATOR,
+                defined_type);
   return options.OutputDir() + package_as_path + OS_PATH_SEPARATOR + defined_type.GetName() +
          ".aidl";
 }
