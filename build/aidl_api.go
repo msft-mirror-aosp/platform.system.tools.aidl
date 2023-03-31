@@ -598,8 +598,7 @@ func (m *aidlApi) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		rb := android.NewRuleBuilder(pctx, ctx)
 		ifaceName := m.properties.BaseName
 		rb.Command().Text(fmt.Sprintf(`echo "API dump for the current version of AIDL interface %s does not exist."`, ifaceName))
-		rb.Command().Text(fmt.Sprintf(`echo Run "m %s-update-api", or add "unstable: true" to the build rule `+
-			`for the interface if it does not need to be versioned`, ifaceName))
+		rb.Command().Text(fmt.Sprintf(`echo "Run the command \"m %s-update-api\" or add \"unstable: true\" to the build rule for the interface if it does not need to be versioned"`, ifaceName))
 		// This file will never be created. Otherwise, the build will pass simply by running 'm; m'.
 		alwaysChecked := android.PathForModuleOut(ctx, "checkapi_current.timestamp")
 		rb.Command().Text("false").ImplicitOutput(alwaysChecked)
