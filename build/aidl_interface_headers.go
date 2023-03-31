@@ -75,7 +75,7 @@ func (i *aidlInterfaceHeaders) ConvertWithBp2build(ctx android.TopDownMutatorCon
 	ctx.CreateBazelTargetModule(
 		bazel.BazelTargetModuleProperties{
 			Rule_class:        "aidl_library",
-			Bzl_load_location: "//build/bazel/rules/aidl:library.bzl",
+			Bzl_load_location: "//build/bazel/rules/aidl:aidl_library.bzl",
 		},
 		android.CommonAttributes{Name: i.Name()},
 		attrs,
