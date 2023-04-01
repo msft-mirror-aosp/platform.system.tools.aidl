@@ -476,7 +476,8 @@ TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage(), nullptr,
                            {"--structured", "--stability", "vintf"}));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Foo does not have VINTF level stability"));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Foo does not have VINTF level stability (marked @VintfStability)"));
 }
 
 TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
@@ -547,8 +548,9 @@ TEST_P(AidlTest, NdkAndJavaStabilityIsVintfStable) {
     EXPECT_EQ(GetCapturedStderr(), "");
   } else {
     EXPECT_EQ(result, nullptr);
-    EXPECT_THAT(GetCapturedStderr(),
-                HasSubstr("NonPortableThing does not have VINTF level stability"));
+    EXPECT_THAT(
+        GetCapturedStderr(),
+        HasSubstr("NonPortableThing does not have VINTF level stability (marked @VintfStability)"));
   }
 }
 
