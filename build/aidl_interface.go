@@ -1289,7 +1289,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 	ctx.CreateBazelTargetModule(
 		bazel.BazelTargetModuleProperties{
 			Rule_class:        "aidl_interface",
-			Bzl_load_location: "//build/bazel/rules/aidl:interface.bzl",
+			Bzl_load_location: "//build/bazel/rules/aidl:aidl_interface.bzl",
 		},
 		android.CommonAttributes{Name: interfaceName},
 		attrs,

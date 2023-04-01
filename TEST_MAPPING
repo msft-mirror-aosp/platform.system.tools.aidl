@@ -25,6 +25,9 @@
           "include-filter": "com.android.internal.telephony.ServiceStateTrackerTest"
         }
       ]
+    },
+    {
+      "name": "EnforcePermissionTests"
     }
   ],
   "imports": [
