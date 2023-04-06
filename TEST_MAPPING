@@ -34,5 +34,10 @@
     {
       "path": "frameworks/native/libs/binder"
     }
+  ],
+  "auto-presubmit": [
+    {
+      "name": "hal_implementation_test"
+    }
   ]
 }
