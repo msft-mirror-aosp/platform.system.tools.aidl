@@ -99,7 +99,7 @@ status_t stopRecording(const sp<IBinder>& binder) {
 void printTransaction(const RecordedTransaction& transaction) {
   auto& analyzers = Analyzer::getAnalyzers();
 
-  auto analyzer = analyzers.find(std::string(transaction.getInterfaceName()));
+  auto analyzer = analyzers.find(transaction.getInterfaceName());
   if (analyzer != analyzers.end()) {
     (analyzer->second)
         ->getAnalyzeFunction()(transaction.getCode(), transaction.getDataParcel(),
@@ -326,11 +326,9 @@ const AnalyzerCommand replayCommand = {
     "  <service>\t?\n"
     "  <file-name>\tThe name of a file in /data/local/recordings/"};
 
-const auto& commands = *new std::map<std::string, AnalyzerCommand>{
+auto& commands = *new std::map<std::string, AnalyzerCommand>{
     {"start", startCommand},   {"stop", stopCommand},     {"inspect", inspectCommand},
-    {"listen", listenCommand}, {"replay", replayCommand}, {"list", listCommand},
-    {"help", helpCommand},
-};
+    {"listen", listenCommand}, {"replay", replayCommand}, {"help", helpCommand}};
 
 void printGeneralHelp(std::string& toolName) {
   std::cout << "USAGE: " << toolName << " <command> [<args>]\n\n";
@@ -371,7 +369,7 @@ status_t helpCommandEntryPoint(int argc, char* argv[]) {
 
   auto command = commands.find(commandName);
   if (command == commands.end()) {
-    std::cout << "Unrecognized command: " << commandName;
+    std::cout << "Unrecognized command: " << commandName << "\n";
     printGeneralHelp(toolName);
     return -1;
   }
@@ -388,6 +386,11 @@ status_t helpCommandEntryPoint(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   std::string toolName = argv[0];
+
+  auto& analyzers = Analyzer::getAnalyzers();
+  if (analyzers.size() >= 1) {
+    commands["list"] = listCommand;
+  }
 
   if (argc < 2 ||
       (argc >= 2 && ((strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)))) {

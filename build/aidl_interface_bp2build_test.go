@@ -334,3 +334,68 @@ func TestAidlInterfaceWithUnstablePropSet(t *testing.T) {
 		},
 	})
 }
+
+func TestAidlInterfaceWithFrozenPropSet(t *testing.T) {
+	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
+		Description: `aidl_interface with frozen prop set`,
+		Blueprint: `
+			aidl_interface {
+				name: "foo",
+				frozen: true,
+				versions: ["1"],
+                backend: {
+                    java: {
+                        enabled: false,
+                    },
+                    cpp: {
+                        enabled: false,
+                    },
+                }
+			}`,
+		ExpectedBazelTargets: []string{
+			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "foo", bp2build.AttrNameToString{
+				"frozen":   "True",
+				"versions": `["1"]`,
+				"ndk_config": `{
+        "enabled": True,
+    }`,
+			}),
+		},
+	})
+}
+
+func TestAidlInterfaceWithApexAvailable(t *testing.T) {
+	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
+		Description: `aidl_interface apex_available`,
+		Blueprint: `
+			aidl_interface {
+				name: "aidl-interface1",
+                backend: {
+                    java: {
+                        enabled: false,
+                    },
+                    cpp: {
+                        enabled: false,
+                    },
+                    ndk: {
+                        enabled: true,
+                        apex_available: [
+                            "com.android.abd",
+                            "//apex_available:platform",
+                        ],
+                    },
+                }
+			}`,
+		ExpectedBazelTargets: []string{
+			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
+				"ndk_config": `{
+        "enabled": True,
+        "tags": [
+            "apex_available=com.android.abd",
+            "apex_available=//apex_available:platform",
+        ],
+    }`,
+			}),
+		},
+	})
+}
