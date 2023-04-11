@@ -56,14 +56,12 @@ string Options::GetUsage() const {
        << myname_ << " --preprocess OUTPUT INPUT..." << endl
        << "   Create an AIDL file having declarations of AIDL file(s)." << endl
        << endl
-#ifndef _WIN32
        << myname_ << " --dumpapi --out=DIR INPUT..." << endl
        << "   Dump API signature of AIDL file(s) to DIR." << endl
        << endl
        << myname_ << " --checkapi[={compatible|equal}] OLD_DIR NEW_DIR" << endl
        << "   Check whether NEW_DIR API dump is {compatible|equal} extension " << endl
        << "   of the API dump OLD_DIR. Default: compatible" << endl
-#endif
        << endl
        << myname_ << " --apimapping OUTPUT INPUT..." << endl
        << "   Generate a mapping of declared aidl method signatures to" << endl
@@ -268,11 +266,9 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
     static struct option long_options[] = {
         {"lang", required_argument, 0, 'l'},
         {"preprocess", no_argument, 0, 's'},
-#ifndef _WIN32
         {"dumpapi", no_argument, 0, 'u'},
         {"no_license", no_argument, 0, 'x'},
         {"checkapi", optional_argument, 0, 'A'},
-#endif
         {"apimapping", required_argument, 0, 'i'},
         {"include", required_argument, 0, 'I'},
         {"preprocessed", required_argument, 0, 'p'},
@@ -332,7 +328,6 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
       case 's':
         task_ = Options::Task::PREPROCESS;
         break;
-#ifndef _WIN32
       case 'u':
         task_ = Options::Task::DUMP_API;
         break;
@@ -354,7 +349,6 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
           }
         }
         break;
-#endif
       case 'I': {
         import_dirs_.emplace(Trim(optarg));
         break;
