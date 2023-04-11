@@ -11,5 +11,7 @@ interface IProtected {
     void NonManifestPermission();
 
     // Used by the integration tests to dynamically set permissions that are considered granted.
-    @RequiresNoPermission void SetGranted(in List<String> permissions);
+    @RequiresNoPermission void Grant(in String permission);
+    @RequiresNoPermission void Revoke(in String permission);
+    @RequiresNoPermission void RevokeAll();
 }
