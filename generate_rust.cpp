@@ -548,7 +548,8 @@ void GenerateConstantDeclarations(CodeWriter& out, const TypeWithConstants& type
     if (type.Signature() == "String") {
       const_type = "&str";
     } else if (type.Signature() == "byte" || type.Signature() == "int" ||
-               type.Signature() == "long") {
+               type.Signature() == "long" || type.Signature() == "float" ||
+               type.Signature() == "double") {
       const_type = RustNameOf(type, typenames, StorageMode::VALUE, Lifetime::NONE);
     } else {
       AIDL_FATAL(value) << "Unrecognized constant type: " << type.Signature();
