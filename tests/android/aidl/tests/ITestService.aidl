@@ -69,6 +69,24 @@ interface ITestService {
     const String STRING_TEST_CONSTANT = "foo";
     const String STRING_TEST_CONSTANT2 = "bar";
 
+    const float FLOAT_TEST_CONSTANT = 1.0f;
+    const float FLOAT_TEST_CONSTANT2 = -1.0f;
+    const float FLOAT_TEST_CONSTANT3 = +1.0f;
+    const float FLOAT_TEST_CONSTANT4 = +2.2f;
+    const float FLOAT_TEST_CONSTANT5 = -2.2f;
+    const float FLOAT_TEST_CONSTANT6 = -0.0f;
+    const float FLOAT_TEST_CONSTANT7 = +0.0f;
+
+    const double DOUBLE_TEST_CONSTANT = 1.0;
+    const double DOUBLE_TEST_CONSTANT2 = -1.0;
+    const double DOUBLE_TEST_CONSTANT3 = +1.0;
+    const double DOUBLE_TEST_CONSTANT4 = +2.2;
+    const double DOUBLE_TEST_CONSTANT5 = -2.2;
+    const double DOUBLE_TEST_CONSTANT6 = -0.0;
+    const double DOUBLE_TEST_CONSTANT7 = +0.0;
+    const double DOUBLE_TEST_CONSTANT8 = 1.1f;
+    const double DOUBLE_TEST_CONSTANT9 = -1.1f;
+
     const @utf8InCpp String STRING_TEST_CONSTANT_UTF8 = "baz";
 
     // This is to emulate a method that is added after the service is implemented.
