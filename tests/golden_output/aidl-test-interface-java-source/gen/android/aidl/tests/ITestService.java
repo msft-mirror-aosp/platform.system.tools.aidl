@@ -3558,6 +3558,22 @@ public interface ITestService extends android.os.IInterface
   public static final long LONG_TEST_CONSTANT = 1099511627776L;
   public static final String STRING_TEST_CONSTANT = "foo";
   public static final String STRING_TEST_CONSTANT2 = "bar";
+  public static final float FLOAT_TEST_CONSTANT = 1.000000f;
+  public static final float FLOAT_TEST_CONSTANT2 = -1.000000f;
+  public static final float FLOAT_TEST_CONSTANT3 = 1.000000f;
+  public static final float FLOAT_TEST_CONSTANT4 = 2.200000f;
+  public static final float FLOAT_TEST_CONSTANT5 = -2.200000f;
+  public static final float FLOAT_TEST_CONSTANT6 = -0.000000f;
+  public static final float FLOAT_TEST_CONSTANT7 = 0.000000f;
+  public static final double DOUBLE_TEST_CONSTANT = 1.000000;
+  public static final double DOUBLE_TEST_CONSTANT2 = -1.000000;
+  public static final double DOUBLE_TEST_CONSTANT3 = 1.000000;
+  public static final double DOUBLE_TEST_CONSTANT4 = 2.200000;
+  public static final double DOUBLE_TEST_CONSTANT5 = -2.200000;
+  public static final double DOUBLE_TEST_CONSTANT6 = -0.000000;
+  public static final double DOUBLE_TEST_CONSTANT7 = 0.000000;
+  public static final double DOUBLE_TEST_CONSTANT8 = 1.100000;
+  public static final double DOUBLE_TEST_CONSTANT9 = -1.100000;
   public static final String STRING_TEST_CONSTANT_UTF8 = "baz";
   // All these constant expressions should be equal to 1
   public static final int A1 = 1;
