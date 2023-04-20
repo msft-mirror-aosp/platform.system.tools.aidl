@@ -88,6 +88,10 @@ p/Foo.aidl :
 
 }  // namespace
 
+const string INVALID_INT8_VALUE = "Invalid type specifier for an int8 literal";
+const string INVALID_FLOAT_VALUE = "Invalid type specifier for a literal float";
+const string INVALID_OPERATION = "Cannot perform operation";
+
 class AidlTest : public ::testing::TestWithParam<Options::Language> {
  protected:
   AidlDefinedType* Parse(const string& path, const string& contents, AidlTypenames& typenames_,
@@ -128,6 +132,22 @@ class AidlTest : public ::testing::TestWithParam<Options::Language> {
 
     return defined_types.front().get();
   }
+
+  void EvaluateInvalidAssignment(string content, string expected_stderr, AidlTypenames& typenames_,
+                                 Options::Language lang) {
+    AidlError error;
+    CaptureStderr();
+    EXPECT_EQ(nullptr, Parse("a/IFoo.aidl", content, typenames_, lang, &error));
+    EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
+  };
+
+  void EvaluateValidAssignment(string content, string expected_stderr, AidlTypenames& typenames_,
+                               Options::Language lang) {
+    AidlError error;
+    CaptureStderr();
+    EXPECT_NE(nullptr, Parse("a/IFoo.aidl", content, typenames_, lang, &error));
+    EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
+  };
 
   Options::Language GetLanguage() { return GetParam(); }
 
@@ -476,7 +496,8 @@ TEST_P(AidlTest, VintfStabilityAppliesToNestedTypesAsWell) {
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("Foo.aidl", "parcelable Foo {}", typenames_, GetLanguage(), nullptr,
                            {"--structured", "--stability", "vintf"}));
-  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Foo does not have VINTF level stability"));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Foo does not have VINTF level stability (marked @VintfStability)"));
 }
 
 TEST_F(AidlTest, ParsesJavaOnlyStableParcelable) {
@@ -547,8 +568,9 @@ TEST_P(AidlTest, NdkAndJavaStabilityIsVintfStable) {
     EXPECT_EQ(GetCapturedStderr(), "");
   } else {
     EXPECT_EQ(result, nullptr);
-    EXPECT_THAT(GetCapturedStderr(),
-                HasSubstr("NonPortableThing does not have VINTF level stability"));
+    EXPECT_THAT(
+        GetCapturedStderr(),
+        HasSubstr("NonPortableThing does not have VINTF level stability (marked @VintfStability)"));
   }
 }
 
@@ -1498,6 +1520,76 @@ TEST_P(AidlTest, FailOnMalformedQualifiedNameAsIdentifier) {
                            GetLanguage(), &error));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnAssigningDoubleInFloatConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const float DOUBLE_VALUE = 1.1; })",
+                            INVALID_FLOAT_VALUE, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningFloatInDoubleConst) {
+  EvaluateValidAssignment(R"(package a; interface IFoo { const double FLOAT_VALUE = 1.1f; })", "",
+                          typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningIntInFloatConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const float INT_VALUE = 1; })",
+                            INVALID_INT8_VALUE, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningFloatInIntConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const int FLOAT_VALUE = 1.1f; })",
+                            INVALID_FLOAT_VALUE, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningIntInDoubleConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const double INT_VALUE = 1; })",
+                            INVALID_INT8_VALUE, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningDoubleInIntConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const int DOUBLE_VALUE = 1.1; })",
+                            INVALID_FLOAT_VALUE, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningFloatPlusIntConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const float FLOAT_VALUE = 1.1f + 1; })",
+                            INVALID_OPERATION, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningIntPlusFloatConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const float FLOAT_VALUE = 1 + 1.1f; })",
+                            INVALID_OPERATION, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningDoublePlusIntConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const double DOUBLE_VALUE = 1.1 + 1; })",
+                            INVALID_OPERATION, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningIntPlusDoubleConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const double DOUBLE_VALUE = 1 + 1.1; })",
+                            INVALID_OPERATION, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningTooLargeFloatConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const float DOUBLE_VALUE = 1e50f; })",
+                            INVALID_FLOAT_VALUE, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnAssigningTooLargeDoubleConst) {
+  EvaluateInvalidAssignment(R"(package a; interface IFoo { const double DOUBLE_VALUE = 1e310; })",
+                            INVALID_FLOAT_VALUE, typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, PassOnAssigningLargeFloatConst) {
+  EvaluateValidAssignment(R"(package a; interface IFoo { const float DOUBLE_VALUE = 1e20f; })", "",
+                          typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, PassOnAssigningLargeDoubleConst) {
+  EvaluateValidAssignment(R"(package a; interface IFoo { const double DOUBLE_VALUE = 1e150; })", "",
+                          typenames_, GetLanguage());
 }
 
 TEST_P(AidlTest, FailOnMalformedQualifiedNameAsPackage) {

@@ -641,7 +641,8 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         !isStable) {
       err = AidlError::NOT_STRUCTURED;
       AIDL_ERROR(type) << type.GetCanonicalName()
-                       << " does not have VINTF level stability, but this interface requires it in "
+                       << " does not have VINTF level stability (marked @VintfStability), but this "
+                          "interface requires it in "
                        << to_string(options.TargetLanguage());
     }
 
