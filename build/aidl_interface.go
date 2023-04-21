@@ -696,6 +696,11 @@ func checkImports(mctx android.BottomUpMutatorContext) {
 					"%q imports %q which is not frozen. Either %q must set 'frozen: false' or must explicitly import %q where * is one of %q",
 					i.ModuleBase.Name(), anImport, i.ModuleBase.Name(), anImport+"-V*", candidateVersions)
 			}
+			if i.Owner() == "" && other.Owner() != "" {
+				mctx.PropertyErrorf("imports",
+					"%q imports %q which is an interface owned by %q. This is not allowed because the owned interface will not be frozen at the same time.",
+					i.ModuleBase.Name(), anImport, other.Owner())
+			}
 		})
 	}
 }
@@ -1116,7 +1121,6 @@ func AidlInterfaceFactory() android.Module {
 
 type aidlInterfaceAttributes struct {
 	aidlLibraryAttributes
-	Versions           bazel.StringListAttribute
 	Stability          *string
 	Versions_with_info []versionWithInfoAttribute
 	Java_config        *javaConfigAttributes
@@ -1201,20 +1205,6 @@ func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports
 }
 
 func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
-	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
-	headers := android.BazelLabelForModuleDeps(ctx, i.properties.Headers)
-	imports.Append(headers)
-
-	var deps bazel.LabelListAttribute
-	if !imports.IsEmpty() {
-		deps = bazel.MakeLabelListAttribute(imports)
-	}
-
-	var versions bazel.StringListAttribute
-	if len(i.properties.Versions) > 0 {
-		versions = bazel.MakeStringListAttribute(append([]string{}, i.properties.Versions...))
-	}
-
 	var javaConfig *javaConfigAttributes
 	var cppConfig *cppConfigAttributes
 	var ndkConfig *ndkConfigAttributes
@@ -1237,24 +1227,67 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		ndkConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Ndk.Apex_available)
 	}
 
+	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
+
 	var versionsWithInfos []versionWithInfoAttribute
+
 	if len(i.properties.Versions_with_info) > 0 {
 		for _, versionWithInfo := range i.properties.Versions_with_info {
-			imports := getBazelLabelListForImports(ctx, versionWithInfo.Imports)
-			var attributes versionWithInfoAttribute
-			if !imports.IsEmpty() {
-				attributes = versionWithInfoAttribute{
-					Version: versionWithInfo.Version,
-					Deps:    bazel.MakeLabelListAttribute(imports),
-				}
+			versionedImports := getBazelLabelListForImports(ctx, versionWithInfo.Imports)
+			if !versionedImports.IsEmpty() {
+				versionsWithInfos = append(
+					versionsWithInfos,
+					versionWithInfoAttribute{
+						Version: versionWithInfo.Version,
+						Deps:    bazel.MakeLabelListAttribute(versionedImports),
+					},
+				)
 			} else {
-				attributes = versionWithInfoAttribute{
-					Version: versionWithInfo.Version,
-				}
+				versionsWithInfos = append(
+					versionsWithInfos,
+					versionWithInfoAttribute{
+						Version: versionWithInfo.Version,
+					},
+				)
 			}
-			versionsWithInfos = append(versionsWithInfos, attributes)
+		}
+	} else if len(i.properties.Versions) > 0 {
+		for _, version := range i.properties.Versions {
+			if !imports.IsEmpty() {
+				versionsWithInfos = append(
+					versionsWithInfos,
+					versionWithInfoAttribute{
+						Version: version,
+						Deps:    bazel.MakeLabelListAttribute(imports),
+					},
+				)
+			} else {
+				versionsWithInfos = append(
+					versionsWithInfos,
+					versionWithInfoAttribute{
+						Version: version,
+					},
+				)
+			}
 		}
 	}
+
+	var deps bazel.LabelListAttribute
+
+	if len(i.properties.Srcs) > 0 && !imports.IsEmpty() {
+		// imports is only needed for (non-frozen) srcs
+		// frozen verions use imports in versions_with_info
+		deps = bazel.MakeLabelListAttribute(imports)
+	}
+
+	deps.Append(
+		bazel.MakeLabelListAttribute(
+			android.BazelLabelForModuleDeps(
+				ctx,
+				i.properties.Headers,
+			),
+		),
+	)
 
 	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
 	var stripImportPrefixAttr *string = nil
@@ -1269,7 +1302,6 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 			Deps:                deps,
 			Strip_import_prefix: stripImportPrefixAttr,
 		},
-		Versions:           versions,
 		Stability:          i.properties.Stability,
 		Versions_with_info: versionsWithInfos,
 		Java_config:        javaConfig,
@@ -1284,7 +1316,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 	ctx.CreateBazelTargetModule(
 		bazel.BazelTargetModuleProperties{
 			Rule_class:        "aidl_interface",
-			Bzl_load_location: "//build/bazel/rules/aidl:interface.bzl",
+			Bzl_load_location: "//build/bazel/rules/aidl:aidl_interface.bzl",
 		},
 		android.CommonAttributes{Name: interfaceName},
 		attrs,

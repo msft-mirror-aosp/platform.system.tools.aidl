@@ -436,6 +436,10 @@ void GenerateConstantDeclarations(CodeWriter& out, const AidlDefinedType& type,
       out << "static const " << cpp_type << "& " << constant->GetName() << "()";
       GenerateDeprecated(out, *constant);
       out << ";\n";
+    } else if (type.Signature() == "float" || type.Signature() == "double") {
+      out << "static constexpr " << cpp_type << " " << constant->GetName();
+      GenerateDeprecated(out, *constant);
+      out << " = " << constant->ValueString(ConstantValueDecorator) << ";\n";
     } else {
       out << "enum : " << cpp_type << " { " << constant->GetName();
       GenerateDeprecated(out, *constant);

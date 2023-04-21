@@ -64,6 +64,7 @@ cc_defaults {
             cflags: ["-DPLATFORM_SDK_VERSION=%d"],
         },
     },
+    defaults_visibility: [":__subpackages__"],
 }
 
 // Logic shared between aidl and its unittests
@@ -111,6 +112,7 @@ cc_library_static {
         gen_location_hh: true,
         gen_position_hh: true,
     },
+    visibility: [":__subpackages__"],
 }
 
 // aidl executable
@@ -334,9 +336,7 @@ filegroup {
 filegroup {
     name: "libaidl-integration-permission-test-files",
     srcs: [
-        "tests/android/aidl/tests/permission/IProtected.aidl",
-        "tests/android/aidl/tests/permission/IProtectedInterface.aidl",
-        "tests/android/aidl/tests/permission/platform/*.aidl",
+        "tests/android/aidl/tests/permission/**/*.aidl",
     ],
     path: "tests",
 }
@@ -348,10 +348,7 @@ aidl_interface {
     srcs: [
         "tests/versioned/**/*.aidl",
     ],
-    versions: [
-        "1",
-        "2",
-    ],
+
     backend: {
         java: {
             gen_rpc: true,
@@ -360,6 +357,23 @@ aidl_interface {
             enabled: true,
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+        {
+            version: "2",
+            imports: [],
+        },
+        {
+            version: "3",
+            imports: [],
+        },
+
+    ],
+    frozen: true,
+
 }
 
 cc_library_static {
@@ -555,6 +569,9 @@ java_test {
         "tests/java/src/android/aidl/tests/NullableTests.java",
         "tests/java/src/android/aidl/tests/VintfTests.java",
     ],
+    data: [
+        ":cts-dalvik-device-test-runner",
+    ],
 }
 
 java_test {
@@ -566,6 +583,9 @@ java_test {
     ],
     srcs: [
         "tests/java/src/android/aidl/service/**/*.java",
+    ],
+    data: [
+        ":cts-dalvik-device-test-runner",
     ],
 }
 
@@ -589,6 +609,9 @@ java_test {
     name: "aidl_test_java_client_sdk29",
     defaults: ["aidl_test_java_sdkversion_defaults"],
     min_sdk_version: "29",
+    data: [
+        ":cts-dalvik-device-test-runner",
+    ],
     srcs: [
         "tests/java/src/android/aidl/sdkversion/tests/*.java",
     ],
@@ -601,6 +624,9 @@ java_test {
     srcs: [
         "tests/java/src/android/aidl/sdkversion/service/*.java",
     ],
+    data: [
+        ":cts-dalvik-device-test-runner",
+    ],
 }
 
 java_test {
@@ -610,12 +636,18 @@ java_test {
     srcs: [
         "tests/java/src/android/aidl/sdkversion/tests/*.java",
     ],
+    data: [
+        ":cts-dalvik-device-test-runner",
+    ],
 }
 
 java_test {
     name: "aidl_test_java_service_sdk1",
     defaults: ["aidl_test_java_sdkversion_defaults"],
     min_sdk_version: "1",
+    data: [
+        ":cts-dalvik-device-test-runner",
+    ],
     srcs: [
         "tests/java/src/android/aidl/sdkversion/service/*.java",
     ],
@@ -631,6 +663,9 @@ java_test {
         "tests/java/src/android/aidl/permission/tests/*.java",
         "tests/java/src/android/aidl/permission/service/*.java",
     ],
+    data: [
+        ":cts-dalvik-device-test-runner",
+    ],
 }
 
 java_test {
@@ -638,6 +673,9 @@ java_test {
     defaults: ["aidl_test_java_integration_defaults"],
     static_libs: [
         "aidl-test-interface-permission-java",
+    ],
+    data: [
+        ":cts-dalvik-device-test-runner",
     ],
     srcs: [
         "tests/java/src/android/aidl/permission/service/*.java",
@@ -871,6 +909,6 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder",
-        "libutils"
+        "libutils",
     ],
 }

@@ -548,7 +548,8 @@ void GenerateConstantDeclarations(CodeWriter& out, const TypeWithConstants& type
     if (type.Signature() == "String") {
       const_type = "&str";
     } else if (type.Signature() == "byte" || type.Signature() == "int" ||
-               type.Signature() == "long") {
+               type.Signature() == "long" || type.Signature() == "float" ||
+               type.Signature() == "double") {
       const_type = RustNameOf(type, typenames, StorageMode::VALUE, Lifetime::NONE);
     } else {
       AIDL_FATAL(value) << "Unrecognized constant type: " << type.Signature();
@@ -853,10 +854,50 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   GenerateServerItems(*code_writer, iface, typenames);
 }
 
+void RemoveUsed(std::set<std::string>* params, const AidlTypeSpecifier& type) {
+  if (!type.IsResolved()) {
+    params->erase(type.GetName());
+  }
+  if (type.IsGeneric()) {
+    for (const auto& param : type.GetTypeParameters()) {
+      RemoveUsed(params, *param);
+    }
+  }
+}
+
+std::set<std::string> FreeParams(const AidlStructuredParcelable* parcel) {
+  if (!parcel->IsGeneric()) {
+    return std::set<std::string>();
+  }
+  auto typeParams = parcel->GetTypeParameters();
+  std::set<std::string> unusedParams(typeParams.begin(), typeParams.end());
+  for (const auto& variable : parcel->GetFields()) {
+    RemoveUsed(&unusedParams, variable->GetType());
+  }
+  return unusedParams;
+}
+
+void WriteParams(CodeWriter& out, const AidlParameterizable<std::string>* parcel,
+                 std::string extra) {
+  if (parcel->IsGeneric()) {
+    out << "<";
+    for (const auto& param : parcel->GetTypeParameters()) {
+      out << param << extra << ",";
+    }
+    out << ">";
+  }
+}
+
+void WriteParams(CodeWriter& out, const AidlParameterizable<std::string>* parcel) {
+  WriteParams(out, parcel, "");
+}
+
 void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
                         const AidlTypenames& typenames) {
   GenerateDeprecated(out, *parcel);
-  out << "pub struct r#" << parcel->GetName() << " {\n";
+  out << "pub struct r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << " {\n";
   out.Indent();
   for (const auto& variable : parcel->GetFields()) {
     GenerateDeprecated(out, *variable);
@@ -864,12 +905,19 @@ void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
         RustNameOf(variable->GetType(), typenames, StorageMode::PARCELABLE_FIELD, Lifetime::NONE);
     out << "pub r#" << variable->GetName() << ": " << field_type << ",\n";
   }
+  for (const auto& unused_param : FreeParams(parcel)) {
+    out << "_phantom_" << unused_param << ": std::marker::PhantomData<" << unused_param << ">,\n";
+  }
   out.Dedent();
   out << "}\n";
 }
 
 void GenerateParcelDefault(CodeWriter& out, const AidlStructuredParcelable* parcel) {
-  out << "impl Default for r#" << parcel->GetName() << " {\n";
+  out << "impl";
+  WriteParams(out, parcel, ": Default");
+  out << " Default for r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << " {\n";
   out.Indent();
   out << "fn default() -> Self {\n";
   out.Indent();
@@ -898,6 +946,9 @@ void GenerateParcelDefault(CodeWriter& out, const AidlStructuredParcelable* parc
       }
     }
     out << ",\n";
+  }
+  for (const auto& unused_param : FreeParams(parcel)) {
+    out << "r#_phantom_" << unused_param << ": Default::default(),\n";
   }
   out.Dedent();
   out << "}\n";
@@ -962,7 +1013,11 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
 }
 
 void GenerateParcelDefault(CodeWriter& out, const AidlUnionDecl* parcel) {
-  out << "impl Default for r#" << parcel->GetName() << " {\n";
+  out << "impl";
+  WriteParams(out, parcel, ": Default");
+  out << " Default for r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << " {\n";
   out.Indent();
   out << "fn default() -> Self {\n";
   out.Indent();
@@ -1040,7 +1095,11 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
 template <typename ParcelableType>
 void GenerateParcelableTrait(CodeWriter& out, const ParcelableType* parcel,
                              const AidlTypenames& typenames) {
-  out << "impl binder::Parcelable for r#" << parcel->GetName() << " {\n";
+  out << "impl";
+  WriteParams(out, parcel);
+  out << " binder::Parcelable for r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << " {\n";
   out.Indent();
 
   out << "fn write_to_parcel(&self, "
@@ -1064,13 +1123,21 @@ void GenerateParcelableTrait(CodeWriter& out, const ParcelableType* parcel,
   out << "}\n";
 
   // Emit the outer (de)serialization traits
-  out << "binder::impl_serialize_for_parcelable!(r#" << parcel->GetName() << ");\n";
-  out << "binder::impl_deserialize_for_parcelable!(r#" << parcel->GetName() << ");\n";
+  out << "binder::impl_serialize_for_parcelable!(r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << ");\n";
+  out << "binder::impl_deserialize_for_parcelable!(r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << ");\n";
 }
 
 template <typename ParcelableType>
 void GenerateMetadataTrait(CodeWriter& out, const ParcelableType* parcel) {
-  out << "impl binder::binder_impl::ParcelableMetadata for r#" << parcel->GetName() << " {\n";
+  out << "impl";
+  WriteParams(out, parcel);
+  out << " binder::binder_impl::ParcelableMetadata for r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << " {\n";
   out.Indent();
 
   out << "fn get_descriptor() -> &'static str { \"" << parcel->GetCanonicalName() << "\" }\n";
