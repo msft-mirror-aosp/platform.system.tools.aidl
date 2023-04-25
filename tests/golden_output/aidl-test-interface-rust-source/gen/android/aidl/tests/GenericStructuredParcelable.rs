@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![rustfmt::skip]
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct r#GenericStructuredParcelable<T,U,B,> {
   pub r#a: i32,
