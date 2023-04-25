@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![rustfmt::skip]
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum r#UnionInUnion {
   First(crate::mangled::_7_android_4_aidl_5_tests_6_unions_9_EnumUnion),
