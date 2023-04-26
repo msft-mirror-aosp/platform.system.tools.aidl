@@ -33,9 +33,11 @@
 #include <utils/String8.h>
 
 using ::ILazyTestService;
+using ::android::DEAD_OBJECT;
 using ::android::IBinder;
 using ::android::IPCThreadState;
 using ::android::IServiceManager;
+using ::android::OK;
 using ::android::sp;
 using ::android::String16;
 using ::android::base::unique_fd;
@@ -59,6 +61,26 @@ bool isServiceRunning(const String16& name) {
   EXPECT_NE(manager, nullptr);
 
   return manager->checkService(name) != nullptr;
+}
+
+TEST(AidlLazyQuitTest, Quits) {
+  const String16 quitter = String16("aidl_lazy_test_quit");
+  usleep(SHUTDOWN_WAIT_MS * 1000);
+  ASSERT_FALSE(isServiceRunning(quitter));
+
+  auto binder = waitForService(quitter);
+
+  // binder dies. Could also linkToDeath to switch to cond var.
+  for (size_t i = 0; i < 1000; i++) {
+    if (binder->pingBinder() != OK) break;
+    usleep(10000);
+  }
+  EXPECT_EQ(DEAD_OBJECT, binder->pingBinder());
+
+  // service quit, so it should stay quit
+  ASSERT_FALSE(isServiceRunning(quitter));
+  usleep(SHUTDOWN_WAIT_MS * 1000);
+  ASSERT_FALSE(isServiceRunning(quitter));
 }
 
 class AidlLazyTest : public ::testing::Test {
