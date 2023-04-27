@@ -28,20 +28,28 @@ import (
 
 var (
 	aidlDirPrepareRule = pctx.StaticRule("aidlDirPrepareRule", blueprint.RuleParams{
-		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
-			`touch ${out} # ${in}`,
+		Command:     `mkdir -p "${outDir}" && touch ${out} # ${in}`,
 		Description: "create ${out}",
 	}, "outDir")
 
 	aidlCppRule = pctx.StaticRule("aidlCppRule", blueprint.RuleParams{
 		Command: `mkdir -p "${headerDir}" && ` +
-			`${aidlCmd} --lang=${lang} ${optionalFlags} --structured --ninja -d ${out}.d ` +
-			`-h ${headerDir} -o ${outDir} ${imports} ${in}`,
+			`mkdir -p "${outDir}/staging" && ` +
+			`mkdir -p "${headerDir}/staging" && ` +
+			`${aidlCmd} --lang=${lang} ${optionalFlags} --structured --ninja -d ${outStagingFile}.d ` +
+			`-h ${headerDir}/staging -o ${outDir}/staging ${imports} ${in} && ` +
+			`rsync --checksum ${outStagingFile}.d ${out}.d && ` +
+			`rsync --checksum ${outStagingFile} ${out} && ` +
+			`( [ -z "${stagingHeaders}" ] || rsync --checksum ${stagingHeaders} ${fullHeaderDir} ) && ` +
+			`sed -i 's/\/gen\/staging\//\/gen\//g' ${out}.d && ` +
+			`rm ${outStagingFile} ${outStagingFile}.d ${stagingHeaders}`,
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
 		CommandDeps: []string{"${aidlCmd}"},
+		Restat:      true,
 		Description: "AIDL ${lang} ${in}",
-	}, "imports", "lang", "headerDir", "outDir", "optionalFlags")
+	}, "imports", "lang", "headerDir", "outDir", "optionalFlags", "stagingHeaders", "outStagingFile",
+		"fullHeaderDir")
 
 	aidlJavaRule = pctx.StaticRule("aidlJavaRule", blueprint.RuleParams{
 		Command: `${aidlCmd} --lang=java ${optionalFlags} --structured --ninja -d ${out}.d ` +
@@ -49,6 +57,7 @@ var (
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
 		CommandDeps: []string{"${aidlCmd}"},
+		Restat:      true,
 		Description: "AIDL Java ${in}",
 	}, "imports", "outDir", "optionalFlags")
 
@@ -58,6 +67,7 @@ var (
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
 		CommandDeps: []string{"${aidlCmd}"},
+		Restat:      true,
 		Description: "AIDL Rust ${in}",
 	}, "imports", "outDir", "optionalFlags")
 )
@@ -169,6 +179,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 		ext = "cpp"
 	}
 	outFile := android.PathForModuleGen(ctx, pathtools.ReplaceExtension(relPath, ext))
+	outStagingFile := android.PathForModuleGen(ctx, pathtools.ReplaceExtension("staging/"+relPath, ext))
 	implicits := g.implicitInputs
 
 	optionalFlags := append([]string{}, g.properties.Flags...)
@@ -251,10 +262,15 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 			prefix = "aidl"
 		}
 
+		var stagingHeaders []string
+		var fullHeaderDir = g.genHeaderDir.Join(ctx, prefix, packagePath)
 		if g.properties.Lang != langCppAnalyzer {
 			headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath, typeName+".h"))
+			stagingHeaders = append(stagingHeaders, g.genHeaderDir.Join(ctx, "staging/"+prefix, packagePath, typeName+".h").String())
 			headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath, "Bp"+baseName+".h"))
+			stagingHeaders = append(stagingHeaders, g.genHeaderDir.Join(ctx, "staging/"+prefix, packagePath, "Bp"+baseName+".h").String())
 			headers = append(headers, g.genHeaderDir.Join(ctx, prefix, packagePath, "Bn"+baseName+".h"))
+			stagingHeaders = append(stagingHeaders, g.genHeaderDir.Join(ctx, "staging/"+prefix, packagePath, "Bn"+baseName+".h").String())
 		}
 
 		if g.properties.GenLog {
@@ -273,11 +289,14 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 			Output:          outFile,
 			ImplicitOutputs: headers,
 			Args: map[string]string{
-				"imports":       g.importFlags,
-				"lang":          aidlLang,
-				"headerDir":     g.genHeaderDir.String(),
-				"outDir":        g.genOutDir.String(),
-				"optionalFlags": strings.Join(optionalFlags, " "),
+				"imports":        g.importFlags,
+				"lang":           aidlLang,
+				"headerDir":      g.genHeaderDir.String(),
+				"fullHeaderDir":  fullHeaderDir.String(),
+				"outDir":         g.genOutDir.String(),
+				"outStagingFile": outStagingFile.String(),
+				"optionalFlags":  strings.Join(optionalFlags, " "),
+				"stagingHeaders": strings.Join(stagingHeaders, " "),
 			},
 		})
 	}
