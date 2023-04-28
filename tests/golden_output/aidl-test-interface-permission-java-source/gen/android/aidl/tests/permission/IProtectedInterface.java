@@ -162,14 +162,12 @@ public interface IProtectedInterface extends android.os.IInterface
     static final int TRANSACTION_Method1 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     /** Helper method to enforce permissions for Method1 */
     protected void Method1_enforcePermission() throws SecurityException {
-      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-      mEnforcer.enforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION, source);
+      mEnforcer.enforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION, getCallingPid(), getCallingUid());
     }
     static final int TRANSACTION_Method2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
     /** Helper method to enforce permissions for Method2 */
     protected void Method2_enforcePermission() throws SecurityException {
-      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-      mEnforcer.enforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION, source);
+      mEnforcer.enforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION, getCallingPid(), getCallingUid());
     }
     /** @hide */
     public int getMaxTransactionId()
