@@ -77,9 +77,9 @@ TEST(AidlLazyQuitTest, Quits) {
   }
   EXPECT_EQ(DEAD_OBJECT, binder->pingBinder());
 
-  // service quit, so it should stay quit
-  ASSERT_FALSE(isServiceRunning(quitter));
-  usleep(SHUTDOWN_WAIT_MS * 1000);
+  // service should quit immediately, but wait a bit before checking
+  // so that servicemanager has time to process the death notification
+  usleep(SHUTDOWN_WAIT_MS * 1000 / 2);
   ASSERT_FALSE(isServiceRunning(quitter));
 }
 
