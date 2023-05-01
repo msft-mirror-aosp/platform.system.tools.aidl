@@ -472,30 +472,19 @@ static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlInterface& ifac
 // Visitor for the permission declared in the @EnforcePermission annotation.
 class PermissionVisitor {
  public:
-  PermissionVisitor(CodeWriter* code, const AidlMethod& method) : code_(code), method_(method) {
-    use_attribution_source_ = std::any_of(
-        method_.GetArguments().begin(), method_.GetArguments().end(), [](const auto& arg) {
-          return arg->GetType().GetName() == "android.content.AttributionSource";
-        });
-  }
+  PermissionVisitor(CodeWriter* code, const AidlMethod& method) : code_(code), method_(method) {}
 
   ~PermissionVisitor() {
     code_->Dedent();
     *code_ << "}\n";
   }
 
-  string Credentials() const {
-    if (use_attribution_source_) {
-      return "source";
-    }
-    return "getCallingPid(), getCallingUid()";
-  }
+  string Credentials() const { return "getCallingPid(), getCallingUid()"; }
 
   void Prologue() {
     *code_ << "/** Helper method to enforce permissions for " << method_.GetName() << " */\n";
-    *code_ << "protected void " << method_.GetName() << "_enforcePermission("
-           << (use_attribution_source_ ? "android.content.AttributionSource source" : "")
-           << ") throws SecurityException {\n";
+    *code_ << "protected void " << method_.GetName() << "_enforcePermission() "
+           << "throws SecurityException {\n";
     code_->Indent();
   }
 
@@ -537,7 +526,6 @@ class PermissionVisitor {
  private:
   CodeWriter* code_;
   const AidlMethod& method_;
-  bool use_attribution_source_;
 };
 
 static void GeneratePermissionMethod(const AidlInterface& iface, const AidlMethod& method,
