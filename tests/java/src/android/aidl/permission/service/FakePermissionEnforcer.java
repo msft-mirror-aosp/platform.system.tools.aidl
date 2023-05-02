@@ -31,6 +31,14 @@ public class FakePermissionEnforcer extends android.os.PermissionEnforcer {
   public void setGranted(List<String> granted) { mGranted = granted; }
 
   @Override
+  protected int checkPermission(@NonNull String permission, int pid, int uid) {
+    if (mGranted != null && mGranted.contains(permission)) {
+      return PERMISSION_GRANTED;
+    }
+    return PERMISSION_HARD_DENIED;
+  }
+
+  @Override
   protected int checkPermission(@NonNull String permission, @NonNull AttributionSource source) {
     if (mGranted != null && mGranted.contains(permission)) {
       return PERMISSION_GRANTED;
