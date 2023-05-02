@@ -426,7 +426,7 @@ type aidlInterfaceProperties struct {
 	// doesn't create the API dump and require it to be updated. Default is false.
 	Unstable *bool
 
-	// Optional flags to be passed to the AIDL compiler. e.g. "-Weverything"
+	// Optional flags to be passed to the AIDL compiler for diagnostics. e.g. "-Weverything"
 	Flags []string
 
 	// --dumpapi options
@@ -790,6 +790,14 @@ func (i *aidlInterface) checkVndkUseVersion(mctx android.DefaultableHookContext)
 	mctx.PropertyErrorf("vndk_use_version", "Specified version %q does not exist", *i.properties.Vndk_use_version)
 }
 
+func (i *aidlInterface) checkFlags(mctx android.DefaultableHookContext) {
+	for _, flag := range i.properties.Flags {
+		if !strings.HasPrefix(flag, "-W") {
+			mctx.PropertyErrorf("flags", "Unexpected flag type '%s'. Only flags starting with '-W' for diagnostics are supported.", flag)
+		}
+	}
+}
+
 func (i *aidlInterface) nextVersion() string {
 	if proptools.Bool(i.properties.Unstable) {
 		return ""
@@ -897,6 +905,7 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	i.checkVersions(mctx)
 	i.checkVndkUseVersion(mctx)
 	i.checkGenTrace(mctx)
+	i.checkFlags(mctx)
 
 	if mctx.Failed() {
 		return
