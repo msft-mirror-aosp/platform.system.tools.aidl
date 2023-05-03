@@ -203,6 +203,7 @@ cc_fuzz {
         cc: [
             "aidl-bugs@google.com",
         ],
+        triage_assignee: "smoreland@google.com",
     },
 
     srcs: [
