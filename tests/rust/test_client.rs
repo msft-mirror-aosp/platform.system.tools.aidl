@@ -121,10 +121,10 @@ fn test_constants() {
     assert_eq!(ITestService::A55, 1);
     assert_eq!(ITestService::A56, 1);
     assert_eq!(ITestService::A57, 1);
-    assert_eq!(ITestService::FLOAT_TEST_CONSTANT4, 2.2_f32);
-    assert_eq!(ITestService::FLOAT_TEST_CONSTANT5, -2.2_f32);
-    assert_eq!(ITestService::DOUBLE_TEST_CONSTANT4, 2.2_f64);
-    assert_eq!(ITestService::DOUBLE_TEST_CONSTANT5, -2.2_f64);
+    assert_eq!(ITestService::FLOAT_CONSTANT4, 2.2_f32);
+    assert_eq!(ITestService::FLOAT_CONSTANT5, -2.2_f32);
+    assert_eq!(ITestService::DOUBLE_CONSTANT4, 2.2_f64);
+    assert_eq!(ITestService::DOUBLE_CONSTANT5, -2.2_f64);
 }
 
 #[test]
@@ -152,37 +152,37 @@ test_primitive! {test_primitive_int, RepeatInt, 1i32 << 30}
 test_primitive! {test_primitive_long, RepeatLong, 1i64 << 60}
 test_primitive! {test_primitive_float, RepeatFloat, 1.0f32 / 3.0f32}
 test_primitive! {test_primitive_double, RepeatDouble, 1.0f64 / 3.0f64}
-test_primitive! {test_primitive_byte_constant, RepeatByte, ITestService::BYTE_TEST_CONSTANT}
-test_primitive! {test_primitive_constant1, RepeatInt, ITestService::TEST_CONSTANT}
-test_primitive! {test_primitive_constant2, RepeatInt, ITestService::TEST_CONSTANT2}
-test_primitive! {test_primitive_constant3, RepeatInt, ITestService::TEST_CONSTANT3}
-test_primitive! {test_primitive_constant4, RepeatInt, ITestService::TEST_CONSTANT4}
-test_primitive! {test_primitive_constant5, RepeatInt, ITestService::TEST_CONSTANT5}
-test_primitive! {test_primitive_constant6, RepeatInt, ITestService::TEST_CONSTANT6}
-test_primitive! {test_primitive_constant7, RepeatInt, ITestService::TEST_CONSTANT7}
-test_primitive! {test_primitive_constant8, RepeatInt, ITestService::TEST_CONSTANT8}
-test_primitive! {test_primitive_constant9, RepeatInt, ITestService::TEST_CONSTANT9}
-test_primitive! {test_primitive_constant10, RepeatInt, ITestService::TEST_CONSTANT10}
-test_primitive! {test_primitive_constant11, RepeatInt, ITestService::TEST_CONSTANT11}
-test_primitive! {test_primitive_constant12, RepeatInt, ITestService::TEST_CONSTANT12}
-test_primitive! {test_primitive_long_constant, RepeatLong, ITestService::LONG_TEST_CONSTANT}
+test_primitive! {test_primitive_byte_constant, RepeatByte, ITestService::BYTE_CONSTANT}
+test_primitive! {test_primitive_constant1, RepeatInt, ITestService::CONSTANT}
+test_primitive! {test_primitive_constant2, RepeatInt, ITestService::CONSTANT2}
+test_primitive! {test_primitive_constant3, RepeatInt, ITestService::CONSTANT3}
+test_primitive! {test_primitive_constant4, RepeatInt, ITestService::CONSTANT4}
+test_primitive! {test_primitive_constant5, RepeatInt, ITestService::CONSTANT5}
+test_primitive! {test_primitive_constant6, RepeatInt, ITestService::CONSTANT6}
+test_primitive! {test_primitive_constant7, RepeatInt, ITestService::CONSTANT7}
+test_primitive! {test_primitive_constant8, RepeatInt, ITestService::CONSTANT8}
+test_primitive! {test_primitive_constant9, RepeatInt, ITestService::CONSTANT9}
+test_primitive! {test_primitive_constant10, RepeatInt, ITestService::CONSTANT10}
+test_primitive! {test_primitive_constant11, RepeatInt, ITestService::CONSTANT11}
+test_primitive! {test_primitive_constant12, RepeatInt, ITestService::CONSTANT12}
+test_primitive! {test_primitive_long_constant, RepeatLong, ITestService::LONG_CONSTANT}
 test_primitive! {test_primitive_byte_enum, RepeatByteEnum, ByteEnum::FOO}
 test_primitive! {test_primitive_int_enum, RepeatIntEnum, IntEnum::BAR}
 test_primitive! {test_primitive_long_enum, RepeatLongEnum, LongEnum::FOO}
-test_primitive! {test_primitive_float_constant, RepeatFloat, ITestService::FLOAT_TEST_CONSTANT}
-test_primitive! {test_primitive_float_constant2, RepeatFloat, ITestService::FLOAT_TEST_CONSTANT2}
-test_primitive! {test_primitive_float_constant3, RepeatFloat, ITestService::FLOAT_TEST_CONSTANT3}
-test_primitive! {test_primitive_float_constant4, RepeatFloat, ITestService::FLOAT_TEST_CONSTANT4}
-test_primitive! {test_primitive_float_constant5, RepeatFloat, ITestService::FLOAT_TEST_CONSTANT5}
-test_primitive! {test_primitive_float_constant6, RepeatFloat, ITestService::FLOAT_TEST_CONSTANT6}
-test_primitive! {test_primitive_float_constant7, RepeatFloat, ITestService::FLOAT_TEST_CONSTANT7}
-test_primitive! {test_primitive_double_constant, RepeatDouble, ITestService::DOUBLE_TEST_CONSTANT}
-test_primitive! {test_primitive_double_constant2, RepeatDouble, ITestService::DOUBLE_TEST_CONSTANT2}
-test_primitive! {test_primitive_double_constant3, RepeatDouble, ITestService::DOUBLE_TEST_CONSTANT3}
-test_primitive! {test_primitive_double_constant4, RepeatDouble, ITestService::DOUBLE_TEST_CONSTANT4}
-test_primitive! {test_primitive_double_constant5, RepeatDouble, ITestService::DOUBLE_TEST_CONSTANT5}
-test_primitive! {test_primitive_double_constant6, RepeatDouble, ITestService::DOUBLE_TEST_CONSTANT6}
-test_primitive! {test_primitive_double_constant7, RepeatDouble, ITestService::DOUBLE_TEST_CONSTANT7}
+test_primitive! {test_primitive_float_constant, RepeatFloat, ITestService::FLOAT_CONSTANT}
+test_primitive! {test_primitive_float_constant2, RepeatFloat, ITestService::FLOAT_CONSTANT2}
+test_primitive! {test_primitive_float_constant3, RepeatFloat, ITestService::FLOAT_CONSTANT3}
+test_primitive! {test_primitive_float_constant4, RepeatFloat, ITestService::FLOAT_CONSTANT4}
+test_primitive! {test_primitive_float_constant5, RepeatFloat, ITestService::FLOAT_CONSTANT5}
+test_primitive! {test_primitive_float_constant6, RepeatFloat, ITestService::FLOAT_CONSTANT6}
+test_primitive! {test_primitive_float_constant7, RepeatFloat, ITestService::FLOAT_CONSTANT7}
+test_primitive! {test_primitive_double_constant, RepeatDouble, ITestService::DOUBLE_CONSTANT}
+test_primitive! {test_primitive_double_constant2, RepeatDouble, ITestService::DOUBLE_CONSTANT2}
+test_primitive! {test_primitive_double_constant3, RepeatDouble, ITestService::DOUBLE_CONSTANT3}
+test_primitive! {test_primitive_double_constant4, RepeatDouble, ITestService::DOUBLE_CONSTANT4}
+test_primitive! {test_primitive_double_constant5, RepeatDouble, ITestService::DOUBLE_CONSTANT5}
+test_primitive! {test_primitive_double_constant6, RepeatDouble, ITestService::DOUBLE_CONSTANT6}
+test_primitive! {test_primitive_double_constant7, RepeatDouble, ITestService::DOUBLE_CONSTANT7}
 
 #[test]
 fn test_repeat_string() {
@@ -195,8 +195,8 @@ fn test_repeat_string() {
         //   U+10437: The 'small letter yee' character in the deseret alphabet
         //   U+20AC: A euro sign
         String::from_utf16(&[0xD801, 0xDC37, 0x20AC]).expect("error converting string"),
-        ITestService::STRING_TEST_CONSTANT.into(),
-        ITestService::STRING_TEST_CONSTANT2.into(),
+        ITestService::STRING_CONSTANT.into(),
+        ITestService::STRING_CONSTANT2.into(),
     ];
     for input in &inputs {
         let result = service.RepeatString(input);
@@ -547,7 +547,7 @@ fn test_utf8_string() {
         "\0\0",
         std::str::from_utf8(&[0xF0, 0x90, 0x90, 0xB7, 0xE2, 0x82, 0xAC])
             .expect("error converting string"),
-        ITestService::STRING_TEST_CONSTANT_UTF8,
+        ITestService::STRING_CONSTANT_UTF8,
     ];
     for input in &inputs {
         let result = service.RepeatUtf8CppString(input);
@@ -569,7 +569,7 @@ fn test_utf8_string() {
                 .expect("error converting string")
                 .into(),
         ),
-        Some(ITestService::STRING_TEST_CONSTANT_UTF8.into()),
+        Some(ITestService::STRING_CONSTANT_UTF8.into()),
     ];
 
     // Java can't return a null list as a parameter
