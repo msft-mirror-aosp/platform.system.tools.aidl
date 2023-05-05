@@ -50,6 +50,12 @@ std::string to_string(DiagnosticID id) {
   return kDiagnosticsNames.at(id);
 }
 
+static std::string ToUpper(const std::string& name) {
+  std::string nameCopy(name);
+  for (auto& c : nameCopy) c = std::toupper(c);
+  return nameCopy;
+}
+
 class DiagnosticsContext {
  public:
   DiagnosticsContext(DiagnosticMapping mapping) : mapping_({std::move(mapping)}) {}
@@ -159,10 +165,6 @@ struct DiagnoseConstName : DiagnosticsVisitor {
       diag.Report(c.GetLocation(), DiagnosticID::const_name)
           << "Constants should be named in upper case: " << c.GetName();
     }
-  }
-  static std::string ToUpper(std::string name) {
-    for (auto& c : name) c = std::toupper(c);
-    return name;
   }
 };
 
@@ -336,6 +338,88 @@ struct DiagnosePermissionAnnotations : DiagnosticsVisitor {
   }
 };
 
+struct DiagnoseRedundantNames : DiagnosticsVisitor {
+  DiagnoseRedundantNames(DiagnosticsContext& diag) : DiagnosticsVisitor(diag) {}
+
+  // tokenize the name with either capital letters or '_' being the delimiters
+  static std::vector<std::string> TokenizeName(const std::string& name) {
+    // if a name is all capitals with no '_', then we don't want to tokenize it.
+    if (std::all_of(name.begin(), name.end(), [](unsigned char c) { return isupper(c); })) {
+      return {name};
+    }
+    // if a name has an `_` in it, it will be tokenized based on '_',
+    // otherwise based on capital letters
+    if (name.find('_') != std::string::npos) {
+      return base::Tokenize(name, "_");
+    }
+
+    std::vector<std::string> tokens;
+    size_t size = name.size();
+    std::string tmp{name.front()};
+    // Skip the first character to avoid an empty substring for common cases
+    for (size_t i = 1; i < size; i++) {
+      if (std::isupper(name[i])) {
+        tokens.push_back(tmp);
+        tmp.clear();
+        // This uppercase letter belongs to the next token
+        tmp += name[i];
+      } else {
+        tmp += name[i];
+      }
+    }
+
+    if (!tmp.empty()) tokens.push_back(tmp);
+
+    return tokens;
+  }
+
+  void Visit(const AidlEnumDeclaration& e) override {
+    const std::vector<std::string> parent = TokenizeName(e.GetName());
+    for (const auto& enumerator : e.GetEnumerators()) {
+      const std::vector<std::string> child = TokenizeName(enumerator->GetName());
+      for (const auto& parentSubStr : parent) {
+        for (const auto& childSubStr : child) {
+          if (ToUpper(parentSubStr) == ToUpper(childSubStr)) {
+            diag.Report(e.GetLocation(), DiagnosticID::redundant_name)
+                << "The enumerator '" << enumerator->GetName() << "' has a redundant substring '"
+                << childSubStr << "' being defined in '" << e.GetName() << "'";
+          }
+        }
+      }
+    }
+  }
+
+  void CheckConstantDeclarations(
+      const std::string& name,
+      const std::vector<std::unique_ptr<AidlConstantDeclaration>>& consts) {
+    const std::vector<std::string> parent = TokenizeName(name);
+    for (const auto& member : consts) {
+      const std::vector<std::string> child = TokenizeName(member->GetName());
+      for (const auto& parentSubStr : parent) {
+        for (const auto& childSubStr : child) {
+          if (ToUpper(parentSubStr) == ToUpper(childSubStr)) {
+            diag.Report(member->GetLocation(), DiagnosticID::redundant_name)
+                << "The constant '" << member->GetName() << "' has a redundant substring '"
+                << childSubStr << "' being defined in '" << name << "'";
+          }
+        }
+      }
+    }
+  }
+
+  void Visit(const AidlInterface& t) override {
+    CheckConstantDeclarations(t.GetName(), t.GetConstantDeclarations());
+  }
+
+  void Visit(const AidlUnionDecl& t) override {
+    CheckConstantDeclarations(t.GetName(), t.GetConstantDeclarations());
+  }
+
+  void Visit(const AidlStructuredParcelable& t) override {
+    CheckConstantDeclarations(t.GetName(), t.GetConstantDeclarations());
+  }
+};
+
 bool Diagnose(const AidlDocument& doc, const DiagnosticMapping& mapping) {
   DiagnosticsContext diag(mapping);
 
@@ -350,6 +434,7 @@ bool Diagnose(const AidlDocument& doc, const DiagnosticMapping& mapping) {
   DiagnoseImports{diag}.Check(doc);
   DiagnoseUntypedCollection{diag}.Check(doc);
   DiagnosePermissionAnnotations{diag}.Check(doc);
+  DiagnoseRedundantNames{diag}.Check(doc);
 
   return diag.ErrorCount() == 0;
 }
