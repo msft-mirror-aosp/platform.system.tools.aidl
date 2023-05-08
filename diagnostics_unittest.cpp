@@ -281,3 +281,55 @@ TEST_F(DiagnosticsTest, PermissionInterface) {
   expect_diagnostic = {};
   ParseFiles({{"IFoo.aidl", "@EnforcePermission(\"INTERNET\") interface IFoo { void food(); }"}});
 }
+
+TEST_F(DiagnosticsTest, RedundantPrefixConstantInterface) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles({{"SomethingStatus.aidl", "interface SomethingStatus { const int STATUS_ONE = 1; }"}});
+}
+
+TEST_F(DiagnosticsTest, RedundantPrefixConstantParcelable) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles(
+      {{"SomethingStatus.aidl", "parcelable SomethingStatus { const int STATUS_ONE = 1; }"}});
+}
+
+TEST_F(DiagnosticsTest, RedundantSuffixConstantParcelable) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles(
+      {{"SomethingStatus.aidl", "parcelable SomethingStatus { const int ONE_STATUS = 1; }"}});
+}
+
+TEST_F(DiagnosticsTest, RedundantSuffixConstantParcelable2) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles(
+      {{"SomethingStatus.aidl", "parcelable SomethingStatus { const int ONE_SOMETHING = 1; }"}});
+}
+
+TEST_F(DiagnosticsTest, RedundantConstantUnion) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles({{"SomethingStatus.aidl",
+               "union SomethingStatus { const int ONE_SOMETHING = 1; int a; int b;}"}});
+}
+
+TEST_F(DiagnosticsTest, RedundantPrefixEnum) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles({{"SomethingStatus.aidl", "enum SomethingStatus { STATUS_ONE = 1, }"}});
+}
+
+TEST_F(DiagnosticsTest, RedundantSuffixEnum) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles({{"SomethingStatus.aidl", "enum SomethingStatus { ONE_STATUS = 1, }"}});
+}
+
+TEST_F(DiagnosticsTest, RedundantSuffixEnum2) {
+  enable_diagnostic = DiagnosticID::redundant_name;
+  expect_diagnostic = DiagnosticID::redundant_name;
+  ParseFiles({{"SomethingStatus.aidl", "enum SomethingStatus { ONE_SOMETHING = 1, }"}});
+}

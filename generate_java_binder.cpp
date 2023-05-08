@@ -472,7 +472,26 @@ static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlInterface& ifac
 // Visitor for the permission declared in the @EnforcePermission annotation.
 class PermissionVisitor {
  public:
-  PermissionVisitor(CodeWriter* code) : code_(code) {}
+  PermissionVisitor(CodeWriter* code, const AidlMethod& method) : code_(code), method_(method) {}
+
+  ~PermissionVisitor() {
+    code_->Dedent();
+    *code_ << "}\n";
+  }
+
+  string Credentials() const { return "getCallingPid(), getCallingUid()"; }
+
+  void Prologue() {
+    *code_ << "/** Helper method to enforce permissions for " << method_.GetName() << " */\n";
+    *code_ << "protected void " << method_.GetName() << "_enforcePermission() "
+           << "throws SecurityException {\n";
+    code_->Indent();
+  }
+
+  void AddStaticArrayPermissions(const std::vector<std::string>& permissions) {
+    *code_ << "static final String[] PERMISSIONS_" << method_.GetName() << " = {"
+           << Join(permissions, ", ") << "};\n";
+  }
 
   void operator()(const perm::AllOf& quantifier) {
     std::vector<std::string> permissions;
@@ -480,8 +499,10 @@ class PermissionVisitor {
     for (auto const& permission : quantifier.operands) {
       permissions.push_back(android::aidl::perm::JavaFullName(permission));
     }
-    *code_ << "mEnforcer.enforcePermissionAllOf(new String[]{" << Join(permissions, ", ")
-           << "}, source);\n";
+    AddStaticArrayPermissions(permissions);
+    Prologue();
+    *code_ << "mEnforcer.enforcePermissionAllOf(PERMISSIONS_" << method_.GetName() << ", "
+           << Credentials() << ");\n";
   }
 
   void operator()(const perm::AnyOf& quantifier) {
@@ -490,47 +511,33 @@ class PermissionVisitor {
     for (auto const& permission : quantifier.operands) {
       permissions.push_back(android::aidl::perm::JavaFullName(permission));
     }
-    *code_ << "mEnforcer.enforcePermissionAnyOf(new String[]{" << Join(permissions, ", ")
-           << "}, source);\n";
+    AddStaticArrayPermissions(permissions);
+    Prologue();
+    *code_ << "mEnforcer.enforcePermissionAnyOf(PERMISSIONS_" << method_.GetName() << ", "
+           << Credentials() << ");\n";
   }
 
   void operator()(const std::string& permission) {
     auto permissionName = android::aidl::perm::JavaFullName(permission);
-    *code_ << "mEnforcer.enforcePermission(" << permissionName << ", source);\n";
+    Prologue();
+    *code_ << "mEnforcer.enforcePermission(" << permissionName << ", " << Credentials() << ");\n";
   }
 
  private:
   CodeWriter* code_;
+  const AidlMethod& method_;
 };
 
 static void GeneratePermissionMethod(const AidlInterface& iface, const AidlMethod& method,
                                      const std::shared_ptr<Class>& addTo) {
   string code;
   CodeWriterPtr writer = CodeWriter::ForString(&code);
-  *writer << "/** Helper method to enforce permissions for " << method.GetName() << " */\n";
-
-  auto has_attribution_source =
-      std::any_of(method.GetArguments().begin(), method.GetArguments().end(), [](const auto& arg) {
-        return arg->GetType().GetName() == "android.content.AttributionSource";
-      });
-
-  *writer << "protected void " << method.GetName() << "_enforcePermission("
-          << (has_attribution_source ? "android.content.AttributionSource source" : "")
-          << ") throws SecurityException {\n";
-  writer->Indent();
-
-  if (!has_attribution_source) {
-    *writer << "android.content.AttributionSource source = "
-               "new android.content.AttributionSource(getCallingUid(), null, null);\n";
-  }
 
   if (auto ifacePermExpr = iface.EnforceExpression(); ifacePermExpr) {
-    std::visit(PermissionVisitor(writer.get()), *ifacePermExpr.get());
+    std::visit(PermissionVisitor(writer.get(), method), *ifacePermExpr.get());
   } else if (auto methodPermExpr = method.GetType().EnforceExpression(); methodPermExpr) {
-    std::visit(PermissionVisitor(writer.get()), *methodPermExpr.get());
+    std::visit(PermissionVisitor(writer.get(), method), *methodPermExpr.get());
   }
-  writer->Dedent();
-  *writer << "}\n";
   writer->Close();
   addTo->elements.push_back(std::make_shared<LiteralClassElement>(code));
 }

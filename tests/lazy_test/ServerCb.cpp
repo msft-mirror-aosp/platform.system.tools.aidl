@@ -29,6 +29,7 @@ using android::sp;
 using android::binder::LazyServiceRegistrar;
 using android::binder::LazyTestServiceCb;
 
+// TODO: shouldn't be expanded or copied - instead, merge with server.cpp
 int main() {
   sp<LazyTestServiceCb> service = new LazyTestServiceCb();
 

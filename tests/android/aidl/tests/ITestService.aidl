@@ -50,44 +50,44 @@ interface ITestService {
     /**
      * const comment
      */
-    const int TEST_CONSTANT = 42;
-    const int TEST_CONSTANT2 = -42;
-    const int TEST_CONSTANT3 = +42;
-    const int TEST_CONSTANT4 = +4;
-    const int TEST_CONSTANT5 = -4;
-    const int TEST_CONSTANT6 = -0;
-    const int TEST_CONSTANT7 = +0;
-    const int TEST_CONSTANT8 = 0;
-    const int TEST_CONSTANT9 = 0x56;
-    const int TEST_CONSTANT10 = 0xa5;
-    const int TEST_CONSTANT11 = 0xFA;
-    const int TEST_CONSTANT12 = 0xffffffff;
+    const int CONSTANT = 42;
+    const int CONSTANT2 = -42;
+    const int CONSTANT3 = +42;
+    const int CONSTANT4 = +4;
+    const int CONSTANT5 = -4;
+    const int CONSTANT6 = -0;
+    const int CONSTANT7 = +0;
+    const int CONSTANT8 = 0;
+    const int CONSTANT9 = 0x56;
+    const int CONSTANT10 = 0xa5;
+    const int CONSTANT11 = 0xFA;
+    const int CONSTANT12 = 0xffffffff;
 
-    const byte BYTE_TEST_CONSTANT = 17;
-    const long LONG_TEST_CONSTANT = 1L << 40;
+    const byte BYTE_CONSTANT = 17;
+    const long LONG_CONSTANT = 1L << 40;
 
-    const String STRING_TEST_CONSTANT = "foo";
-    const String STRING_TEST_CONSTANT2 = "bar";
+    const String STRING_CONSTANT = "foo";
+    const String STRING_CONSTANT2 = "bar";
 
-    const float FLOAT_TEST_CONSTANT = 1.0f;
-    const float FLOAT_TEST_CONSTANT2 = -1.0f;
-    const float FLOAT_TEST_CONSTANT3 = +1.0f;
-    const float FLOAT_TEST_CONSTANT4 = +2.2f;
-    const float FLOAT_TEST_CONSTANT5 = -2.2f;
-    const float FLOAT_TEST_CONSTANT6 = -0.0f;
-    const float FLOAT_TEST_CONSTANT7 = +0.0f;
+    const float FLOAT_CONSTANT = 1.0f;
+    const float FLOAT_CONSTANT2 = -1.0f;
+    const float FLOAT_CONSTANT3 = +1.0f;
+    const float FLOAT_CONSTANT4 = +2.2f;
+    const float FLOAT_CONSTANT5 = -2.2f;
+    const float FLOAT_CONSTANT6 = -0.0f;
+    const float FLOAT_CONSTANT7 = +0.0f;
 
-    const double DOUBLE_TEST_CONSTANT = 1.0;
-    const double DOUBLE_TEST_CONSTANT2 = -1.0;
-    const double DOUBLE_TEST_CONSTANT3 = +1.0;
-    const double DOUBLE_TEST_CONSTANT4 = +2.2;
-    const double DOUBLE_TEST_CONSTANT5 = -2.2;
-    const double DOUBLE_TEST_CONSTANT6 = -0.0;
-    const double DOUBLE_TEST_CONSTANT7 = +0.0;
-    const double DOUBLE_TEST_CONSTANT8 = 1.1f;
-    const double DOUBLE_TEST_CONSTANT9 = -1.1f;
+    const double DOUBLE_CONSTANT = 1.0;
+    const double DOUBLE_CONSTANT2 = -1.0;
+    const double DOUBLE_CONSTANT3 = +1.0;
+    const double DOUBLE_CONSTANT4 = +2.2;
+    const double DOUBLE_CONSTANT5 = -2.2;
+    const double DOUBLE_CONSTANT6 = -0.0;
+    const double DOUBLE_CONSTANT7 = +0.0;
+    const double DOUBLE_CONSTANT8 = 1.1f;
+    const double DOUBLE_CONSTANT9 = -1.1f;
 
-    const @utf8InCpp String STRING_TEST_CONSTANT_UTF8 = "baz";
+    const @utf8InCpp String STRING_CONSTANT_UTF8 = "baz";
 
     // This is to emulate a method that is added after the service is implemented.
     // So the client cannot assume that a call to this method will be successful

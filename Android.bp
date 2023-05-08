@@ -64,6 +64,7 @@ cc_defaults {
             cflags: ["-DPLATFORM_SDK_VERSION=%d"],
         },
     },
+    defaults_visibility: [":__subpackages__"],
 }
 
 // Logic shared between aidl and its unittests
@@ -111,6 +112,7 @@ cc_library_static {
         gen_location_hh: true,
         gen_position_hh: true,
     },
+    visibility: [":__subpackages__"],
 }
 
 // aidl executable
@@ -201,6 +203,7 @@ cc_fuzz {
         cc: [
             "aidl-bugs@google.com",
         ],
+        triage_assignee: "smoreland@google.com",
     },
 
     srcs: [
