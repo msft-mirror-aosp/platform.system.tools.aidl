@@ -425,6 +425,11 @@ static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& t
       out << "static const char*";
       cpp::GenerateDeprecated(out, *constant);
       out << " " << constant->GetName() << ";\n";
+    } else if (type.Signature() == "float" || type.Signature() == "double") {
+      out << "static constexpr " << NdkNameOf(types, type, StorageMode::STACK) << " ";
+      out << constant->GetName();
+      cpp::GenerateDeprecated(out, *constant);
+      out << " = " << constant->ValueString(ConstantValueDecorator) << ";\n";
     } else {
       out << "enum : " << NdkNameOf(types, type, StorageMode::STACK) << " { ";
       out << constant->GetName();

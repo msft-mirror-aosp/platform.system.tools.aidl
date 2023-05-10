@@ -91,18 +91,19 @@ type javaProperties struct {
 }
 
 type rustProperties struct {
-	Name             *string
-	Crate_name       string
-	Owner            *string
-	Defaults         []string
-	Host_supported   *bool
-	Vendor_available *bool
-	Srcs             []string
-	Rustlibs         []string
-	Stem             *string
-	Target           rustTargetProperties
-	Apex_available   []string
-	Min_sdk_version  *string
+	Name              *string
+	Crate_name        string
+	Owner             *string
+	Defaults          []string
+	Host_supported    *bool
+	Vendor_available  *bool
+	Product_available *bool
+	Srcs              []string
+	Rustlibs          []string
+	Stem              *string
+	Target            rustTargetProperties
+	Apex_available    []string
+	Min_sdk_version   *string
 }
 
 type Bazel_module struct {
