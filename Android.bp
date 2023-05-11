@@ -64,6 +64,7 @@ cc_defaults {
             cflags: ["-DPLATFORM_SDK_VERSION=%d"],
         },
     },
+    defaults_visibility: [":__subpackages__"],
 }
 
 // Logic shared between aidl and its unittests
@@ -111,6 +112,7 @@ cc_library_static {
         gen_location_hh: true,
         gen_position_hh: true,
     },
+    visibility: [":__subpackages__"],
 }
 
 // aidl executable
@@ -346,10 +348,7 @@ aidl_interface {
     srcs: [
         "tests/versioned/**/*.aidl",
     ],
-    versions: [
-        "1",
-        "2",
-    ],
+
     backend: {
         java: {
             gen_rpc: true,
@@ -358,6 +357,23 @@ aidl_interface {
             enabled: true,
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+        {
+            version: "2",
+            imports: [],
+        },
+        {
+            version: "3",
+            imports: [],
+        },
+
+    ],
+    frozen: true,
+
 }
 
 cc_library_static {
@@ -893,6 +909,6 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder",
-        "libutils"
+        "libutils",
     ],
 }
