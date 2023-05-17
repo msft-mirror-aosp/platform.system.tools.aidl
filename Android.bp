@@ -659,6 +659,7 @@ java_test {
     defaults: ["aidl_test_java_integration_defaults"],
     static_libs: [
         "aidl-test-interface-permission-java",
+        "frameworks-base-testutils",
     ],
     srcs: [
         "tests/java/src/android/aidl/permission/tests/*.java",
@@ -674,6 +675,7 @@ java_test {
     defaults: ["aidl_test_java_integration_defaults"],
     static_libs: [
         "aidl-test-interface-permission-java",
+        "frameworks-base-testutils",
     ],
     data: [
         ":cts-dalvik-device-test-runner",
