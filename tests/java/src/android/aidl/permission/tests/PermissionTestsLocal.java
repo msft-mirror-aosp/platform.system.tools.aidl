@@ -20,10 +20,10 @@ package android.aidl.permission.tests;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 
-import android.aidl.permission.service.FakePermissionEnforcer;
 import android.aidl.permission.service.PermissionTestService;
 import android.aidl.tests.permission.IProtected;
 import android.os.RemoteException;
+import android.os.test.FakePermissionEnforcer;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -34,5 +34,6 @@ public class PermissionTestsLocal extends PermissionTests {
   public void setUp() throws RemoteException {
     service = new PermissionTestService(new FakePermissionEnforcer());
     assertNotNull(service);
+    service.RevokeAll();
   }
 }
