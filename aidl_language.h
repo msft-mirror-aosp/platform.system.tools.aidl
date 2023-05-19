@@ -878,6 +878,7 @@ class AidlMethod : public AidlMember {
   // set if this method is part of an interface that is marked oneway
   void ApplyInterfaceOneway(bool oneway) { oneway_ = oneway_ || oneway; }
   bool IsOneway() const { return oneway_; }
+  bool HasOnewayAnnotation() const { return oneway_annotation_; }
 
   const std::string& GetName() const { return name_; }
   bool HasId() const { return has_id_; }
@@ -917,7 +918,11 @@ class AidlMethod : public AidlMember {
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 
  private:
+  // oneway_ may be set by the method or the parent interface. If the interface is oneway,
+  // is also oneway. oneway_annotation_ may only be set on creation, and may not be overridden
+  // by the parent interface. It is used to detect redundant oneway annotations.
   bool oneway_;
+  bool oneway_annotation_;
   std::unique_ptr<AidlTypeSpecifier> type_;
   std::string name_;
   const std::vector<std::unique_ptr<AidlArgument>> arguments_;
@@ -1215,6 +1220,10 @@ class AidlInterface final : public AidlDefinedType {
   bool UsesPermissions() const;
   std::string GetDescriptor() const;
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
+  bool HasOnewayAnnotation() const { return oneway_annotation_; }
+
+ private:
+  bool oneway_annotation_;
 };
 
 inline std::string SimpleName(const std::string& qualified_name) {
