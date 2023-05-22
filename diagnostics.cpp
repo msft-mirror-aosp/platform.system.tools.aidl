@@ -224,6 +224,31 @@ struct DiagnoseMixedOneway : DiagnosticsVisitor {
   }
 };
 
+struct DiagnoseRedundantOneway : DiagnosticsVisitor {
+  DiagnoseRedundantOneway(DiagnosticsContext& diag) : DiagnosticsVisitor(diag) {}
+  void Visit(const AidlInterface& i) override {
+    if (i.HasOnewayAnnotation()) {
+      for (const auto& m : i.GetMethods()) {
+        if (!m->IsUserDefined()) continue;
+        if (Suppressed(*m)) continue;
+        if (m->HasOnewayAnnotation()) {
+          diag.Report(i.GetLocation(), DiagnosticID::redundant_oneway)
+              << "The interface '" << i.GetName()
+              << "' is oneway. Redundant oneway annotation for method '" << m->GetName() << "'.";
+        }
+      }
+    }
+  }
+  bool Suppressed(const AidlMethod& m) const {
+    for (const auto& w : m.GetType().SuppressWarnings()) {
+      if (w == to_string(DiagnosticID::redundant_oneway)) {
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
 struct DiagnoseOutArray : DiagnosticsVisitor {
   DiagnoseOutArray(DiagnosticsContext& diag) : DiagnosticsVisitor(diag) {}
   void Visit(const AidlMethod& m) override {
@@ -435,6 +460,7 @@ bool Diagnose(const AidlDocument& doc, const DiagnosticMapping& mapping) {
   DiagnoseUntypedCollection{diag}.Check(doc);
   DiagnosePermissionAnnotations{diag}.Check(doc);
   DiagnoseRedundantNames{diag}.Check(doc);
+  DiagnoseRedundantOneway{diag}.Check(doc);
 
   return diag.ErrorCount() == 0;
 }
