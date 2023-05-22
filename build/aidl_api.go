@@ -724,7 +724,7 @@ func versionForHashGen(ver string) string {
 }
 
 func init() {
-	android.RegisterSingletonType("aidl-freeze-api", freezeApiSingletonFactory)
+	android.RegisterParallelSingletonType("aidl-freeze-api", freezeApiSingletonFactory)
 }
 
 func freezeApiSingletonFactory() android.Singleton {
