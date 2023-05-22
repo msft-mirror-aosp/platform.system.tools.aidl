@@ -157,6 +157,24 @@ TEST_F(DiagnosticsTest, OnewayInterfaceIsOkayWithSyntheticMethods) {
   });
 }
 
+TEST_F(DiagnosticsTest, RedundantOnewayMethodAnnotationInOnewayInterface) {
+  expect_diagnostic = DiagnosticID::redundant_oneway;
+  ParseFiles({
+      {"IFoo.aidl", "oneway interface IFoo { oneway void foo(int a); }"},
+  });
+}
+
+TEST_F(DiagnosticsTest, RedundantOnewayMethodSuppressedAtMethod) {
+  enable_diagnostic = DiagnosticID::redundant_oneway;
+  expect_diagnostic = {};
+  ParseFiles({
+      {"IFoo.aidl",
+       "oneway interface IFoo {\n"
+       "  @SuppressWarnings(value={\"redundant-oneway\"}) oneway void bar();\n"
+       "}"},
+  });
+}
+
 TEST_F(DiagnosticsTest, ArraysAsOutputParametersConsideredHarmful) {
   expect_diagnostic = DiagnosticID::out_array;
   ParseFiles({
