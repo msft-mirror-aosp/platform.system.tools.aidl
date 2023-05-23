@@ -99,13 +99,9 @@ public class ArrayOfInterfaces implements android.os.Parcelable
       @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
       {
         java.lang.String descriptor = DESCRIPTOR;
-        switch (code)
-        {
-          case INTERFACE_TRANSACTION:
-          {
-            reply.writeString(descriptor);
-            return true;
-          }
+        if (code == INTERFACE_TRANSACTION) {
+          reply.writeString(descriptor);
+          return true;
         }
         switch (code)
         {
@@ -206,13 +202,9 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
           data.enforceInterface(descriptor);
         }
-        switch (code)
-        {
-          case INTERFACE_TRANSACTION:
-          {
-            reply.writeString(descriptor);
-            return true;
-          }
+        if (code == INTERFACE_TRANSACTION) {
+          reply.writeString(descriptor);
+          return true;
         }
         switch (code)
         {

@@ -86,7 +86,8 @@ def main(output, root, inputs, imports):
     lib_rs_file.write("}\n")
 
 def execute():
-  parser = argparse.ArgumentParser(description='Generate the top-level lib.rs.')
+  parser = argparse.ArgumentParser(description='Generate the top-level lib.rs.',
+                                   fromfile_prefix_chars='@')
   parser.add_argument('output', help='Path to output .rs file')
   parser.add_argument('root', help='Common ancestor of all input files')
   parser.add_argument('inputs', nargs='+', help='Input .rs files')

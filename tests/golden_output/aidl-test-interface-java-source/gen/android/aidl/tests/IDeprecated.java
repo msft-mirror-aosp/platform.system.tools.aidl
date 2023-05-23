@@ -60,13 +60,9 @@ public interface IDeprecated extends android.os.IInterface
     @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
     {
       java.lang.String descriptor = DESCRIPTOR;
-      switch (code)
-      {
-        case INTERFACE_TRANSACTION:
-        {
-          reply.writeString(descriptor);
-          return true;
-        }
+      if (code == INTERFACE_TRANSACTION) {
+        reply.writeString(descriptor);
+        return true;
       }
       switch (code)
       {
