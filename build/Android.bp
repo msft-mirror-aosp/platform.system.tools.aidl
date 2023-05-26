@@ -245,6 +245,7 @@ aidl_interface {
     local_include_dir: "tests_vintf",
     srcs: ["tests_vintf/vintf/IFoo.aidl"],
     stability: "vintf",
+    vendor_available: true,
     backend: {
         rust: {
             enabled: true,
