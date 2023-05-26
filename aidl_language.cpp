@@ -1066,7 +1066,8 @@ bool AidlConstantDeclaration::CheckValid(const AidlTypenames& typenames) const {
   valid = valid && !ValueString(AidlConstantValueDecorator).empty();
   if (!valid) return false;
 
-  const static set<string> kSupportedConstTypes = {"String", "byte", "int", "long"};
+  const static set<string> kSupportedConstTypes = {"String", "byte",  "int",
+                                                   "long",   "float", "double"};
   if (kSupportedConstTypes.find(type_->Signature()) == kSupportedConstTypes.end()) {
     AIDL_ERROR(this) << "Constant of type " << type_->Signature() << " is not supported.";
     return false;
@@ -1761,11 +1762,11 @@ bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {
 }
 
 bool AidlInterface::UsesPermissions() const {
-  if (IsPermissionAnnotated()) {
+  if (EnforceExpression()) {
     return true;
   }
   for (auto& m : GetMethods()) {
-    if (m->GetType().IsPermissionAnnotated()) {
+    if (m->GetType().EnforceExpression()) {
       return true;
     }
   }
