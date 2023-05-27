@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![rustfmt::skip]
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
@@ -745,39 +745,39 @@ use lazy_static::lazy_static;
 lazy_static! {
   static ref DEFAULT_IMPL: std::sync::Mutex<ITestServiceDefaultRef> = std::sync::Mutex::new(None);
 }
-pub const r#TEST_CONSTANT: i32 = 42;
-pub const r#TEST_CONSTANT2: i32 = -42;
-pub const r#TEST_CONSTANT3: i32 = 42;
-pub const r#TEST_CONSTANT4: i32 = 4;
-pub const r#TEST_CONSTANT5: i32 = -4;
-pub const r#TEST_CONSTANT6: i32 = 0;
-pub const r#TEST_CONSTANT7: i32 = 0;
-pub const r#TEST_CONSTANT8: i32 = 0;
-pub const r#TEST_CONSTANT9: i32 = 86;
-pub const r#TEST_CONSTANT10: i32 = 165;
-pub const r#TEST_CONSTANT11: i32 = 250;
-pub const r#TEST_CONSTANT12: i32 = -1;
-pub const r#BYTE_TEST_CONSTANT: i8 = 17;
-pub const r#LONG_TEST_CONSTANT: i64 = 1099511627776;
-pub const r#STRING_TEST_CONSTANT: &str = "foo";
-pub const r#STRING_TEST_CONSTANT2: &str = "bar";
-pub const r#FLOAT_TEST_CONSTANT: f32 = 1.000000f32;
-pub const r#FLOAT_TEST_CONSTANT2: f32 = -1.000000f32;
-pub const r#FLOAT_TEST_CONSTANT3: f32 = 1.000000f32;
-pub const r#FLOAT_TEST_CONSTANT4: f32 = 2.200000f32;
-pub const r#FLOAT_TEST_CONSTANT5: f32 = -2.200000f32;
-pub const r#FLOAT_TEST_CONSTANT6: f32 = -0.000000f32;
-pub const r#FLOAT_TEST_CONSTANT7: f32 = 0.000000f32;
-pub const r#DOUBLE_TEST_CONSTANT: f64 = 1.000000f64;
-pub const r#DOUBLE_TEST_CONSTANT2: f64 = -1.000000f64;
-pub const r#DOUBLE_TEST_CONSTANT3: f64 = 1.000000f64;
-pub const r#DOUBLE_TEST_CONSTANT4: f64 = 2.200000f64;
-pub const r#DOUBLE_TEST_CONSTANT5: f64 = -2.200000f64;
-pub const r#DOUBLE_TEST_CONSTANT6: f64 = -0.000000f64;
-pub const r#DOUBLE_TEST_CONSTANT7: f64 = 0.000000f64;
-pub const r#DOUBLE_TEST_CONSTANT8: f64 = 1.100000f64;
-pub const r#DOUBLE_TEST_CONSTANT9: f64 = -1.100000f64;
-pub const r#STRING_TEST_CONSTANT_UTF8: &str = "baz";
+pub const r#CONSTANT: i32 = 42;
+pub const r#CONSTANT2: i32 = -42;
+pub const r#CONSTANT3: i32 = 42;
+pub const r#CONSTANT4: i32 = 4;
+pub const r#CONSTANT5: i32 = -4;
+pub const r#CONSTANT6: i32 = 0;
+pub const r#CONSTANT7: i32 = 0;
+pub const r#CONSTANT8: i32 = 0;
+pub const r#CONSTANT9: i32 = 86;
+pub const r#CONSTANT10: i32 = 165;
+pub const r#CONSTANT11: i32 = 250;
+pub const r#CONSTANT12: i32 = -1;
+pub const r#BYTE_CONSTANT: i8 = 17;
+pub const r#LONG_CONSTANT: i64 = 1099511627776;
+pub const r#STRING_CONSTANT: &str = "foo";
+pub const r#STRING_CONSTANT2: &str = "bar";
+pub const r#FLOAT_CONSTANT: f32 = 1.000000f32;
+pub const r#FLOAT_CONSTANT2: f32 = -1.000000f32;
+pub const r#FLOAT_CONSTANT3: f32 = 1.000000f32;
+pub const r#FLOAT_CONSTANT4: f32 = 2.200000f32;
+pub const r#FLOAT_CONSTANT5: f32 = -2.200000f32;
+pub const r#FLOAT_CONSTANT6: f32 = -0.000000f32;
+pub const r#FLOAT_CONSTANT7: f32 = 0.000000f32;
+pub const r#DOUBLE_CONSTANT: f64 = 1.000000f64;
+pub const r#DOUBLE_CONSTANT2: f64 = -1.000000f64;
+pub const r#DOUBLE_CONSTANT3: f64 = 1.000000f64;
+pub const r#DOUBLE_CONSTANT4: f64 = 2.200000f64;
+pub const r#DOUBLE_CONSTANT5: f64 = -2.200000f64;
+pub const r#DOUBLE_CONSTANT6: f64 = -0.000000f64;
+pub const r#DOUBLE_CONSTANT7: f64 = 0.000000f64;
+pub const r#DOUBLE_CONSTANT8: f64 = 1.100000f64;
+pub const r#DOUBLE_CONSTANT9: f64 = -1.100000f64;
+pub const r#STRING_CONSTANT_UTF8: &str = "baz";
 pub const r#A1: i32 = 1;
 pub const r#A2: i32 = 1;
 pub const r#A3: i32 = 1;

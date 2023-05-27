@@ -96,7 +96,7 @@ TEST_F(AidlPrimitiveTest, aDouble) {
 }
 
 TEST_F(AidlPrimitiveTest, byteConstants) {
-  constexpr int8_t consts[] = {ITestService::BYTE_TEST_CONSTANT};
+  constexpr int8_t consts[] = {ITestService::BYTE_CONSTANT};
   for (auto sent : consts) {
     DoTest(&ITestService::RepeatByte, sent);
   }
@@ -104,17 +104,17 @@ TEST_F(AidlPrimitiveTest, byteConstants) {
 
 TEST_F(AidlPrimitiveTest, intConstants) {
   constexpr int32_t consts[] = {
-      ITestService::TEST_CONSTANT,   ITestService::TEST_CONSTANT2,  ITestService::TEST_CONSTANT3,
-      ITestService::TEST_CONSTANT4,  ITestService::TEST_CONSTANT5,  ITestService::TEST_CONSTANT6,
-      ITestService::TEST_CONSTANT7,  ITestService::TEST_CONSTANT8,  ITestService::TEST_CONSTANT9,
-      ITestService::TEST_CONSTANT10, ITestService::TEST_CONSTANT11, ITestService::TEST_CONSTANT12};
+      ITestService::CONSTANT,   ITestService::CONSTANT2,  ITestService::CONSTANT3,
+      ITestService::CONSTANT4,  ITestService::CONSTANT5,  ITestService::CONSTANT6,
+      ITestService::CONSTANT7,  ITestService::CONSTANT8,  ITestService::CONSTANT9,
+      ITestService::CONSTANT10, ITestService::CONSTANT11, ITestService::CONSTANT12};
   for (auto sent : consts) {
     DoTest(&ITestService::RepeatInt, sent);
   }
 }
 
 TEST_F(AidlPrimitiveTest, longConstants) {
-  constexpr int64_t consts[] = {ITestService::LONG_TEST_CONSTANT};
+  constexpr int64_t consts[] = {ITestService::LONG_CONSTANT};
   for (auto sent : consts) {
     DoTest(&ITestService::RepeatLong, sent);
   }
@@ -122,10 +122,9 @@ TEST_F(AidlPrimitiveTest, longConstants) {
 
 TEST_F(AidlPrimitiveTest, floatConstants) {
   constexpr float consts[] = {
-      ITestService::FLOAT_TEST_CONSTANT,  ITestService::FLOAT_TEST_CONSTANT2,
-      ITestService::FLOAT_TEST_CONSTANT3, ITestService::FLOAT_TEST_CONSTANT4,
-      ITestService::FLOAT_TEST_CONSTANT5, ITestService::FLOAT_TEST_CONSTANT6,
-      ITestService::FLOAT_TEST_CONSTANT7,
+      ITestService::FLOAT_CONSTANT,  ITestService::FLOAT_CONSTANT2, ITestService::FLOAT_CONSTANT3,
+      ITestService::FLOAT_CONSTANT4, ITestService::FLOAT_CONSTANT5, ITestService::FLOAT_CONSTANT6,
+      ITestService::FLOAT_CONSTANT7,
   };
   for (auto sent : consts) {
     DoTest(&ITestService::RepeatFloat, sent);
@@ -134,11 +133,11 @@ TEST_F(AidlPrimitiveTest, floatConstants) {
 
 TEST_F(AidlPrimitiveTest, doubleConstants) {
   constexpr double consts[] = {
-      ITestService::DOUBLE_TEST_CONSTANT,  ITestService::DOUBLE_TEST_CONSTANT2,
-      ITestService::DOUBLE_TEST_CONSTANT3, ITestService::DOUBLE_TEST_CONSTANT4,
-      ITestService::DOUBLE_TEST_CONSTANT5, ITestService::DOUBLE_TEST_CONSTANT6,
-      ITestService::DOUBLE_TEST_CONSTANT7, ITestService::DOUBLE_TEST_CONSTANT8,
-      ITestService::DOUBLE_TEST_CONSTANT9,
+      ITestService::DOUBLE_CONSTANT,  ITestService::DOUBLE_CONSTANT2,
+      ITestService::DOUBLE_CONSTANT3, ITestService::DOUBLE_CONSTANT4,
+      ITestService::DOUBLE_CONSTANT5, ITestService::DOUBLE_CONSTANT6,
+      ITestService::DOUBLE_CONSTANT7, ITestService::DOUBLE_CONSTANT8,
+      ITestService::DOUBLE_CONSTANT9,
   };
   for (auto sent : consts) {
     DoTest(&ITestService::RepeatDouble, sent);
@@ -151,8 +150,8 @@ TEST_F(AidlPrimitiveTest, strings) {
       // This is actually two unicode code points:
       //   U+10437: The 'small letter yee' character in the deseret alphabet
       //   U+20AC: A euro sign
-      String16("\xD8\x01\xDC\x37\x20\xAC"), ITestService::STRING_TEST_CONSTANT(),
-      ITestService::STRING_TEST_CONSTANT2()};
+      String16("\xD8\x01\xDC\x37\x20\xAC"), ITestService::STRING_CONSTANT(),
+      ITestService::STRING_CONSTANT2()};
   for (auto sent : strings) {
     DoTest(&ITestService::RepeatString, sent);
   }
@@ -361,8 +360,8 @@ TEST_F(AidlPrimitiveTest, constantExpressions) {
   EXPECT_THAT(ITestService::A55, Eq(1));
   EXPECT_THAT(ITestService::A56, Eq(1));
   EXPECT_THAT(ITestService::A57, Eq(1));
-  EXPECT_THAT(ITestService::FLOAT_TEST_CONSTANT4, Eq(2.2f));
-  EXPECT_THAT(ITestService::FLOAT_TEST_CONSTANT5, Eq(-2.2f));
-  EXPECT_THAT(ITestService::DOUBLE_TEST_CONSTANT4, Eq(2.2));
-  EXPECT_THAT(ITestService::DOUBLE_TEST_CONSTANT5, Eq(-2.2));
+  EXPECT_THAT(ITestService::FLOAT_CONSTANT4, Eq(2.2f));
+  EXPECT_THAT(ITestService::FLOAT_CONSTANT5, Eq(-2.2f));
+  EXPECT_THAT(ITestService::DOUBLE_CONSTANT4, Eq(2.2));
+  EXPECT_THAT(ITestService::DOUBLE_CONSTANT5, Eq(-2.2));
 }

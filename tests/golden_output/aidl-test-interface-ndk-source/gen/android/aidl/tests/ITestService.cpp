@@ -4222,9 +4222,9 @@ const char* ITestService::descriptor = "android.aidl.tests.ITestService";
 ITestService::ITestService() {}
 ITestService::~ITestService() {}
 
-const char* ITestService::STRING_TEST_CONSTANT = "foo";
-const char* ITestService::STRING_TEST_CONSTANT2 = "bar";
-const char* ITestService::STRING_TEST_CONSTANT_UTF8 = "baz";
+const char* ITestService::STRING_CONSTANT = "foo";
+const char* ITestService::STRING_CONSTANT2 = "bar";
+const char* ITestService::STRING_CONSTANT_UTF8 = "baz";
 
 std::shared_ptr<ITestService> ITestService::fromBinder(const ::ndk::SpAIBinder& binder) {
   if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_clazz)) { return nullptr; }

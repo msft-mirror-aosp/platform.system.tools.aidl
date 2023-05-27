@@ -36,6 +36,7 @@ cc_binary {
     system_ext_specific: true,
 
     shared_libs: [
+        "libbase",
         "libbinder",
         "liblog",
         "libutils",

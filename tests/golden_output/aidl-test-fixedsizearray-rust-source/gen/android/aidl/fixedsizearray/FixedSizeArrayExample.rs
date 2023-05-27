@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![rustfmt::skip]
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #[derive(Debug, PartialEq)]
 pub struct r#FixedSizeArrayExample {
   pub r#int2x3: [[i32; 3]; 2],

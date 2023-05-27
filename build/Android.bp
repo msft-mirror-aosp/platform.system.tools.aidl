@@ -118,6 +118,24 @@ aidl_interface {
 }
 
 aidl_interface {
+    name: "test-piece-vendor-only",
+    local_include_dir: "tests_1",
+    vendor: true,
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
+    backend: {
+        rust: {
+            enabled: true,
+        },
+    },
+}
+
+aidl_interface {
     name: "test-piece-ndk-sdk-29",
     local_include_dir: "tests_1",
     flags: ["-Werror"],
@@ -227,6 +245,7 @@ aidl_interface {
     local_include_dir: "tests_vintf",
     srcs: ["tests_vintf/vintf/IFoo.aidl"],
     stability: "vintf",
+    vendor_available: true,
     backend: {
         rust: {
             enabled: true,

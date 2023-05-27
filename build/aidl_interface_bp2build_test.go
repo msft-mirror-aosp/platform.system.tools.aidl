@@ -54,7 +54,7 @@ func TestAidlInterface(t *testing.T) {
 			}
 			aidl_interface {
 				name: "aidl-interface1",
-				flags: ["--flag1"],
+				flags: ["-Wsomething"],
 				imports: [
 				"aidl-interface-import-V1",
 				],
@@ -99,7 +99,7 @@ func TestAidlInterface(t *testing.T) {
         "enabled": True,
     }`,
 				"deps":  `[":aidl-interface-headers"]`,
-				"flags": `["--flag1"]`,
+				"flags": `["-Wsomething"]`,
 				"versions_with_info": `[
         {
         "deps": [":aidl-interface-import-V1"],

@@ -1097,6 +1097,7 @@ AidlMethod::AidlMethod(const AidlLocation& location, bool oneway, AidlTypeSpecif
                        const Comments& comments, int id)
     : AidlMember(location, comments),
       oneway_(oneway),
+      oneway_annotation_(oneway),
       type_(type),
       name_(name),
       arguments_(std::move(*args)),
@@ -1707,7 +1708,7 @@ bool AidlUnionDecl::CheckValid(const AidlTypenames& typenames) const {
 AidlInterface::AidlInterface(const AidlLocation& location, const std::string& name,
                              const Comments& comments, bool oneway, const std::string& package,
                              std::vector<std::unique_ptr<AidlMember>>* members)
-    : AidlDefinedType(location, name, comments, package, members) {
+    : AidlDefinedType(location, name, comments, package, members), oneway_annotation_(oneway) {
   for (auto& m : GetMethods()) {
     m.get()->ApplyInterfaceOneway(oneway);
   }

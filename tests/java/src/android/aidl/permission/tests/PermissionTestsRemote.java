@@ -35,5 +35,6 @@ public class PermissionTestsRemote extends PermissionTests {
     assertNotNull(binder);
     service = IProtected.Stub.asInterface(binder);
     assertNotNull(service);
+    service.RevokeAll();
   }
 }
