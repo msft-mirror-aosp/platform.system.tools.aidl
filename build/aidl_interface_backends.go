@@ -417,7 +417,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	versionedRustName := fixRustName(i.versionedName(version))
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
-	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
+	mctx.CreateModule(wrapLibraryFactory(func() android.Module { return aidlRustLibraryFactory(i.ModuleBase.SocSpecific()) }), &rustProperties{
 		Name:              proptools.StringPtr(rustModuleGen),
 		Crate_name:        rustCrateName,
 		Stem:              proptools.StringPtr("lib" + versionedRustName),
