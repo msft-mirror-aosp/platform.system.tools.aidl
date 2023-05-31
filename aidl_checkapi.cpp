@@ -87,9 +87,8 @@ static vector<string> get_strict_annotations(const AidlAnnotatable& node) {
       AidlAnnotation::Type::JAVA_DEFAULT,
       AidlAnnotation::Type::JAVA_DELEGATOR,
       AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
+      AidlAnnotation::Type::JAVA_PASSTHROUGH,
       AidlAnnotation::Type::JAVA_SUPPRESS_LINT,
-      // @Backing for a enum type is checked by the enum checker
-      AidlAnnotation::Type::BACKING,
       // @RustDerive doesn't affect read/write
       AidlAnnotation::Type::RUST_DERIVE,
       AidlAnnotation::Type::SUPPRESS_WARNINGS,
@@ -365,11 +364,6 @@ static bool are_compatible_parcelables(const AidlDefinedType& older, const AidlT
 
 static bool are_compatible_enums(const AidlEnumDeclaration& older,
                                  const AidlEnumDeclaration& newer) {
-  if (!are_compatible_types(older.GetBackingType(), newer.GetBackingType())) {
-    AIDL_ERROR(newer) << "Changed backing types.";
-    return false;
-  }
-
   std::map<std::string, const AidlConstantValue*> old_enum_map;
   for (const auto& enumerator : older.GetEnumerators()) {
     old_enum_map[enumerator->GetName()] = enumerator->GetValue();
