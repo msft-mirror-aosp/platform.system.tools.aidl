@@ -26,6 +26,7 @@
 #include <memory>
 #include <sstream>
 
+#include "aidl_to_common.h"
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_rust.h"
 #include "code_writer.h"
@@ -1224,6 +1225,8 @@ void GenerateClass(CodeWriter* code_writer, const AidlDefinedType& defined_type,
 void GenerateRust(const string& filename, const Options& options, const AidlTypenames& types,
                   const AidlDefinedType& defined_type, const IoDelegate& io_delegate) {
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
+
+  GenerateAutoGenHeader(*code_writer, options);
 
   // Forbid the use of unsafe in auto-generated code.
   // Unsafe code should only be allowed in libbinder_rs.
