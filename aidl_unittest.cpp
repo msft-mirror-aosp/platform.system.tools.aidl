@@ -599,6 +599,21 @@ TEST_F(AidlTest, UnionSupportJavaDeriveToString) {
   Options java_options = Options::From("aidl --lang=java -I . -o out a/Foo.aidl");
   EXPECT_TRUE(compile_aidl(java_options, io_delegate_));
   EXPECT_EQ("", GetCapturedStderr());
+
+  const string expected_to_string_method = R"--(
+  @Override
+  public String toString() {
+    switch (_tag) {
+    case a: return "a.Foo.a(" + (getA()) + ")";
+    case b: return "a.Foo.b(" + (java.util.Arrays.toString(getB())) + ")";
+    }
+    throw new IllegalStateException("unknown field: " + _tag);
+  }
+)--";
+
+  string java_out;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("out/a/Foo.java", &java_out));
+  EXPECT_THAT(java_out, testing::HasSubstr(expected_to_string_method));
 }
 
 TEST_F(AidlTest, ParcelableSupportJavaDeriveEquals) {
