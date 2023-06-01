@@ -122,8 +122,8 @@ public final class UnionInUnion implements android.os.Parcelable {
   @Override
   public String toString() {
     switch (_tag) {
-    case first: return "android.aidl.tests.unions.UnionInUnion.first(" + (java.util.Objects.toString(getFirst())) + ")";
-    case second: return "android.aidl.tests.unions.UnionInUnion.second(" + (getSecond()) + ")";
+    case first: return "UnionInUnion.first(" + (java.util.Objects.toString(getFirst())) + ")";
+    case second: return "UnionInUnion.second(" + (getSecond()) + ")";
     }
     throw new IllegalStateException("unknown field: " + _tag);
   }
