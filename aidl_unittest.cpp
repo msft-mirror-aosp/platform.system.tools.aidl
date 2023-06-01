@@ -2932,6 +2932,15 @@ TEST_F(AidlTest, DifferentOrderAnnotationsInCheckAPI) {
   EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
 }
 
+TEST_F(AidlTest, JavaPassthroughAnnotationAddedInCheckApi) {
+  Options options = Options::From("aidl --checkapi old new");
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p; @JavaPassthrough(annotation=\"@foo\") interface IFoo{}");
+
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+}
+
 TEST_F(AidlTest, SuccessOnIdenticalApiDumps) {
   Options options = Options::From("aidl --checkapi old new");
   io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{ void foo();}");
@@ -3615,27 +3624,6 @@ TEST_F(AidlTestIncompatibleChanges, RemovedAnnotation) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_F(AidlTestIncompatibleChanges, ChangedBackingTypeOfEnum) {
-  const string expected_stderr =
-      "ERROR: new/p/Foo.aidl:1.11-32: Type changed: byte to long.\n"
-      "ERROR: new/p/Foo.aidl:1.36-40: Changed backing types.\n";
-  io_delegate_.SetFileContents("old/p/Foo.aidl",
-                               "package p;"
-                               "@Backing(type=\"byte\")"
-                               "enum Foo {"
-                               " FOO, BAR,"
-                               "}");
-  io_delegate_.SetFileContents("new/p/Foo.aidl",
-                               "package p;"
-                               "@Backing(type=\"long\")"
-                               "enum Foo {"
-                               " FOO, BAR,"
-                               "}");
-  CaptureStderr();
-  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
-}
-
 TEST_F(AidlTestIncompatibleChanges, ChangedFixedSizeArraySize) {
   const string expected_stderr =
       "ERROR: new/p/Data.aidl:1.28-33: Type changed: int[8] to int[9].\n";
@@ -3655,17 +3643,18 @@ TEST_F(AidlTestIncompatibleChanges, ChangedFixedSizeArraySize) {
 }
 
 TEST_F(AidlTestIncompatibleChanges, ChangedAnnatationParams) {
+  // this is also the test for backing type remaining the same
   const string expected_stderr =
-      "ERROR: new/p/Foo.aidl:1.55-59: Changed annotations: @JavaPassthrough(annotation=\"Alice\") "
-      "to @JavaPassthrough(annotation=\"Bob\")\n";
+      "ERROR: new/p/Foo.aidl:1.36-40: Changed annotations: @Backing(type=\"int\") "
+      "to @Backing(type=\"long\")\n";
   io_delegate_.SetFileContents("old/p/Foo.aidl",
                                "package p;"
-                               "@JavaPassthrough(annotation=\"Alice\")"
-                               "parcelable Foo {}");
+                               "@Backing(type=\"int\")"
+                               "enum Foo {A}");
   io_delegate_.SetFileContents("new/p/Foo.aidl",
                                "package p;"
-                               "@JavaPassthrough(annotation=\"Bob\")"
-                               "parcelable Foo {}");
+                               "@Backing(type=\"long\")"
+                               "enum Foo {A}");
 
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
