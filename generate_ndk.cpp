@@ -18,6 +18,7 @@
 
 #include "aidl.h"
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_ndk.h"
 #include "logging.h"
@@ -104,6 +105,9 @@ void GenerateNdk(const string& output_file, const Options& options, const AidlTy
   // Wrap Generate* function to handle CodeWriter for a file.
   auto gen = [&](auto file, GenFn fn) {
     unique_ptr<CodeWriter> writer(io_delegate.GetCodeWriter(file));
+
+    GenerateAutoGenHeader(*writer, options);
+
     fn(*writer, types, defined_type, options);
     AIDL_FATAL_IF(!writer->Close(), defined_type) << "I/O Error!";
   };
