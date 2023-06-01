@@ -156,7 +156,7 @@ public class ParcelableForToString implements android.os.Parcelable
     _aidl_sj.add("nullList: " + (java.util.Objects.toString(nullList)));
     _aidl_sj.add("parcelableGeneric: " + (java.util.Objects.toString(parcelableGeneric)));
     _aidl_sj.add("unionValue: " + (java.util.Objects.toString(unionValue)));
-    return "android.aidl.tests.ParcelableForToString" + _aidl_sj.toString()  ;
+    return "ParcelableForToString" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {
