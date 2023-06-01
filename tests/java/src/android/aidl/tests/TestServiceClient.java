@@ -775,7 +775,7 @@ public class TestServiceClient {
         assertThat(p.u.getNs(), is(new int[] {1, 2, 3}));
         assertThat(p.shouldBeConstS1.getS(), is(Union.S1));
 
-        final String expected = "StructuredParcelable{"
+        final String expected = "android.aidl.tests.StructuredParcelable{"
             + "shouldContainThreeFs: [17, 17, 17], "
             + "f: 17, "
             + "shouldBeJerry: Jerry, "
@@ -809,7 +809,7 @@ public class TestServiceClient {
             + "int64_max: 9223372036854775807, "
             + "hexInt32_neg_1: -1, "
             + "ibinder: null, "
-            + "empty: Empty{}, "
+            + "empty: android.aidl.tests.StructuredParcelable.Empty{}, "
             + "int8_1: [1, 1, 1, 1, 1], "
             + "int32_1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
             + "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
@@ -830,8 +830,8 @@ public class TestServiceClient {
             + "addString1: hello world!, "
             + "addString2: The quick brown fox jumps over the lazy dog., "
             + "shouldSetBit0AndBit2: 5, "
-            + "u: Union.ns([1, 2, 3]), "
-            + "shouldBeConstS1: Union.s(a string constant in union), "
+            + "u: android.aidl.tests.Union.ns([1, 2, 3]), "
+            + "shouldBeConstS1: android.aidl.tests.Union.s(a string constant in union), "
             + "defaultWithFoo: FOO"
             + "}";
         assertThat(p.toString(), is(expected));
@@ -891,7 +891,7 @@ public class TestServiceClient {
         p.parcelableGeneric = gen;
         p.unionValue = null; // for testing even though it is not @nullable in .aidl
 
-        final String expected = "ParcelableForToString{"
+        final String expected = "android.aidl.tests.ParcelableForToString{"
             + "intValue: 10, "
             + "intArray: [20, 30], "
             + "longValue: 100, "
@@ -907,15 +907,15 @@ public class TestServiceClient {
             + "stringValue: this is a string, "
             + "stringArray: [hello, world], "
             + "stringList: [alice, bob], "
-            + "parcelableValue: OtherParcelableForToString{field: other}, "
+            + "parcelableValue: android.aidl.tests.OtherParcelableForToString{field: other}, "
             + "parcelableArray: ["
-            + "OtherParcelableForToString{field: other}, "
-            + "OtherParcelableForToString{field: other}], "
+            + "android.aidl.tests.OtherParcelableForToString{field: other}, "
+            + "android.aidl.tests.OtherParcelableForToString{field: other}], "
             + "enumValue: FOO, "
             + "enumArray: [FOO, BAR], "
             + "nullArray: null, "
             + "nullList: null, "
-            + "parcelableGeneric: GenericStructuredParcelable{a: 1, b: 2}, "
+            + "parcelableGeneric: android.aidl.tests.GenericStructuredParcelable{a: 1, b: 2}, "
             + "unionValue: null"
             + "}";
 
