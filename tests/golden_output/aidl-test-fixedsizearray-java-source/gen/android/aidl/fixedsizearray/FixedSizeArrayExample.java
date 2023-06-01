@@ -326,7 +326,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
     _aidl_sj.add("pfdNullableMatrix: " + (java.util.Arrays.deepToString(pfdNullableMatrix)));
     _aidl_sj.add("parcelableNullableMatrix: " + (java.util.Arrays.deepToString(parcelableNullableMatrix)));
     _aidl_sj.add("interfaceNullableMatrix: " + (java.util.Arrays.deepToString(interfaceNullableMatrix)));
-    return "FixedSizeArrayExample" + _aidl_sj.toString()  ;
+    return "android.aidl.fixedsizearray.FixedSizeArrayExample" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {

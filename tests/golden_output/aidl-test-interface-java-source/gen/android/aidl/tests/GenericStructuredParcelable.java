@@ -52,7 +52,7 @@ public class GenericStructuredParcelable<T,U,B> implements android.os.Parcelable
     java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(", ", "{", "}");
     _aidl_sj.add("a: " + (a));
     _aidl_sj.add("b: " + (b));
-    return "GenericStructuredParcelable" + _aidl_sj.toString()  ;
+    return "android.aidl.tests.GenericStructuredParcelable" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {
