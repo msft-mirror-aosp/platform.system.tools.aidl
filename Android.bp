@@ -80,6 +80,7 @@ cc_library_static {
         "aidl_language_l.ll",
         "aidl_language_y.yy",
         "aidl_language.cpp",
+        "aidl_to_common.cpp",
         "aidl_to_cpp_common.cpp",
         "aidl_to_cpp.cpp",
         "aidl_to_java.cpp",
