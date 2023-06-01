@@ -20,7 +20,13 @@ public interface IProtected extends android.os.IInterface
     {
     }
     // Used by the integration tests to dynamically set permissions that are considered granted.
-    @Override public void SetGranted(java.util.List<java.lang.String> permissions) throws android.os.RemoteException
+    @Override public void Grant(java.lang.String permission) throws android.os.RemoteException
+    {
+    }
+    @Override public void Revoke(java.lang.String permission) throws android.os.RemoteException
+    {
+    }
+    @Override public void RevokeAll() throws android.os.RemoteException
     {
     }
     @Override
@@ -87,9 +93,17 @@ public interface IProtected extends android.os.IInterface
         {
           return "NonManifestPermission";
         }
-        case TRANSACTION_SetGranted:
+        case TRANSACTION_Grant:
         {
-          return "SetGranted";
+          return "Grant";
+        }
+        case TRANSACTION_Revoke:
+        {
+          return "Revoke";
+        }
+        case TRANSACTION_RevokeAll:
+        {
+          return "RevokeAll";
         }
         default:
         {
@@ -108,13 +122,9 @@ public interface IProtected extends android.os.IInterface
       if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
         data.enforceInterface(descriptor);
       }
-      switch (code)
-      {
-        case INTERFACE_TRANSACTION:
-        {
-          reply.writeString(descriptor);
-          return true;
-        }
+      if (code == INTERFACE_TRANSACTION) {
+        reply.writeString(descriptor);
+        return true;
       }
       switch (code)
       {
@@ -142,12 +152,27 @@ public interface IProtected extends android.os.IInterface
           reply.writeNoException();
           break;
         }
-        case TRANSACTION_SetGranted:
+        case TRANSACTION_Grant:
         {
-          java.util.List<java.lang.String> _arg0;
-          _arg0 = data.createStringArrayList();
+          java.lang.String _arg0;
+          _arg0 = data.readString();
           data.enforceNoDataAvail();
-          this.SetGranted(_arg0);
+          this.Grant(_arg0);
+          reply.writeNoException();
+          break;
+        }
+        case TRANSACTION_Revoke:
+        {
+          java.lang.String _arg0;
+          _arg0 = data.readString();
+          data.enforceNoDataAvail();
+          this.Revoke(_arg0);
+          reply.writeNoException();
+          break;
+        }
+        case TRANSACTION_RevokeAll:
+        {
+          this.RevokeAll();
           reply.writeNoException();
           break;
         }
@@ -230,14 +255,43 @@ public interface IProtected extends android.os.IInterface
         }
       }
       // Used by the integration tests to dynamically set permissions that are considered granted.
-      @Override public void SetGranted(java.util.List<java.lang.String> permissions) throws android.os.RemoteException
+      @Override public void Grant(java.lang.String permission) throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         try {
           _data.writeInterfaceToken(DESCRIPTOR);
-          _data.writeStringList(permissions);
-          boolean _status = mRemote.transact(Stub.TRANSACTION_SetGranted, _data, _reply, 0);
+          _data.writeString(permission);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_Grant, _data, _reply, 0);
+          _reply.readException();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
+      @Override public void Revoke(java.lang.String permission) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeString(permission);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_Revoke, _data, _reply, 0);
+          _reply.readException();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
+      @Override public void RevokeAll() throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_RevokeAll, _data, _reply, 0);
           _reply.readException();
         }
         finally {
@@ -249,32 +303,32 @@ public interface IProtected extends android.os.IInterface
     static final int TRANSACTION_PermissionProtected = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     /** Helper method to enforce permissions for PermissionProtected */
     protected void PermissionProtected_enforcePermission() throws SecurityException {
-      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-      mEnforcer.enforcePermission(android.Manifest.permission.READ_PHONE_STATE, source);
+      mEnforcer.enforcePermission(android.Manifest.permission.READ_PHONE_STATE, getCallingPid(), getCallingUid());
     }
     static final int TRANSACTION_MultiplePermissionsAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    static final String[] PERMISSIONS_MultiplePermissionsAll = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE};
     /** Helper method to enforce permissions for MultiplePermissionsAll */
     protected void MultiplePermissionsAll_enforcePermission() throws SecurityException {
-      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-      mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
+      mEnforcer.enforcePermissionAllOf(PERMISSIONS_MultiplePermissionsAll, getCallingPid(), getCallingUid());
     }
     static final int TRANSACTION_MultiplePermissionsAny = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
+    static final String[] PERMISSIONS_MultiplePermissionsAny = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE};
     /** Helper method to enforce permissions for MultiplePermissionsAny */
     protected void MultiplePermissionsAny_enforcePermission() throws SecurityException {
-      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-      mEnforcer.enforcePermissionAnyOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
+      mEnforcer.enforcePermissionAnyOf(PERMISSIONS_MultiplePermissionsAny, getCallingPid(), getCallingUid());
     }
     static final int TRANSACTION_NonManifestPermission = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
     /** Helper method to enforce permissions for NonManifestPermission */
     protected void NonManifestPermission_enforcePermission() throws SecurityException {
-      android.content.AttributionSource source = new android.content.AttributionSource(getCallingUid(), null, null);
-      mEnforcer.enforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, source);
+      mEnforcer.enforcePermission(android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK, getCallingPid(), getCallingUid());
     }
-    static final int TRANSACTION_SetGranted = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+    static final int TRANSACTION_Grant = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+    static final int TRANSACTION_Revoke = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
+    static final int TRANSACTION_RevokeAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
     /** @hide */
     public int getMaxTransactionId()
     {
-      return 4;
+      return 6;
     }
   }
   public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$IProtected".replace('$', '.');
@@ -288,5 +342,9 @@ public interface IProtected extends android.os.IInterface
   public void NonManifestPermission() throws android.os.RemoteException;
   // Used by the integration tests to dynamically set permissions that are considered granted.
   @android.annotation.RequiresNoPermission
-  public void SetGranted(java.util.List<java.lang.String> permissions) throws android.os.RemoteException;
+  public void Grant(java.lang.String permission) throws android.os.RemoteException;
+  @android.annotation.RequiresNoPermission
+  public void Revoke(java.lang.String permission) throws android.os.RemoteException;
+  @android.annotation.RequiresNoPermission
+  public void RevokeAll() throws android.os.RemoteException;
 }

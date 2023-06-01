@@ -42,7 +42,7 @@ TEST_F(AidlTest, repeatUtf8String) {
       std::string("\0\0", 2),
       // Similarly, the utf8 encodings of the small letter yee and euro sign.
       std::string("\xF0\x90\x90\xB7\xE2\x82\xAC"),
-      ITestService::STRING_TEST_CONSTANT_UTF8(),
+      ITestService::STRING_CONSTANT_UTF8(),
   };
 
   for (const auto& input : utf8_inputs) {

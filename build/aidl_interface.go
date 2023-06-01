@@ -426,7 +426,7 @@ type aidlInterfaceProperties struct {
 	// doesn't create the API dump and require it to be updated. Default is false.
 	Unstable *bool
 
-	// Optional flags to be passed to the AIDL compiler. e.g. "-Weverything"
+	// Optional flags to be passed to the AIDL compiler for diagnostics. e.g. "-Weverything"
 	Flags []string
 
 	// --dumpapi options
@@ -790,6 +790,14 @@ func (i *aidlInterface) checkVndkUseVersion(mctx android.DefaultableHookContext)
 	mctx.PropertyErrorf("vndk_use_version", "Specified version %q does not exist", *i.properties.Vndk_use_version)
 }
 
+func (i *aidlInterface) checkFlags(mctx android.DefaultableHookContext) {
+	for _, flag := range i.properties.Flags {
+		if !strings.HasPrefix(flag, "-W") {
+			mctx.PropertyErrorf("flags", "Unexpected flag type '%s'. Only flags starting with '-W' for diagnostics are supported.", flag)
+		}
+	}
+}
+
 func (i *aidlInterface) nextVersion() string {
 	if proptools.Bool(i.properties.Unstable) {
 		return ""
@@ -897,6 +905,7 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	i.checkVersions(mctx)
 	i.checkVndkUseVersion(mctx)
 	i.checkGenTrace(mctx)
+	i.checkFlags(mctx)
 
 	if mctx.Failed() {
 		return
@@ -1212,19 +1221,19 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		javaConfig = &javaConfigAttributes{}
 		javaConfig.Enabled = true
 		javaConfig.Min_sdk_version = i.minSdkVersion(langJava)
-		javaConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Java.Apex_available)
+		javaConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Java.Apex_available)
 	}
 	if i.shouldGenerateCppBackend() {
 		cppConfig = &cppConfigAttributes{}
 		cppConfig.Enabled = true
 		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
-		cppConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Cpp.Apex_available)
+		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Cpp.Apex_available)
 	}
 	if i.shouldGenerateNdkBackend() {
 		ndkConfig = &ndkConfigAttributes{}
 		ndkConfig.Enabled = true
 		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
-		ndkConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Ndk.Apex_available)
+		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Ndk.Apex_available)
 	}
 
 	imports := getBazelLabelListForImports(ctx, i.properties.Imports)

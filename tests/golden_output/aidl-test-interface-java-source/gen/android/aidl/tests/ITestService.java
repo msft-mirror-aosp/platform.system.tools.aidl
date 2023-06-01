@@ -931,13 +931,9 @@ public interface ITestService extends android.os.IInterface
       if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
         data.enforceInterface(descriptor);
       }
-      switch (code)
-      {
-        case INTERFACE_TRANSACTION:
-        {
-          reply.writeString(descriptor);
-          return true;
-        }
+      if (code == INTERFACE_TRANSACTION) {
+        reply.writeString(descriptor);
+        return true;
       }
       switch (code)
       {
@@ -3542,39 +3538,39 @@ public interface ITestService extends android.os.IInterface
   // extra line comment
   /* extra regular comment */
   /** const comment */
-  public static final int TEST_CONSTANT = 42;
-  public static final int TEST_CONSTANT2 = -42;
-  public static final int TEST_CONSTANT3 = 42;
-  public static final int TEST_CONSTANT4 = 4;
-  public static final int TEST_CONSTANT5 = -4;
-  public static final int TEST_CONSTANT6 = 0;
-  public static final int TEST_CONSTANT7 = 0;
-  public static final int TEST_CONSTANT8 = 0;
-  public static final int TEST_CONSTANT9 = 86;
-  public static final int TEST_CONSTANT10 = 165;
-  public static final int TEST_CONSTANT11 = 250;
-  public static final int TEST_CONSTANT12 = -1;
-  public static final byte BYTE_TEST_CONSTANT = 17;
-  public static final long LONG_TEST_CONSTANT = 1099511627776L;
-  public static final String STRING_TEST_CONSTANT = "foo";
-  public static final String STRING_TEST_CONSTANT2 = "bar";
-  public static final float FLOAT_TEST_CONSTANT = 1.000000f;
-  public static final float FLOAT_TEST_CONSTANT2 = -1.000000f;
-  public static final float FLOAT_TEST_CONSTANT3 = 1.000000f;
-  public static final float FLOAT_TEST_CONSTANT4 = 2.200000f;
-  public static final float FLOAT_TEST_CONSTANT5 = -2.200000f;
-  public static final float FLOAT_TEST_CONSTANT6 = -0.000000f;
-  public static final float FLOAT_TEST_CONSTANT7 = 0.000000f;
-  public static final double DOUBLE_TEST_CONSTANT = 1.000000;
-  public static final double DOUBLE_TEST_CONSTANT2 = -1.000000;
-  public static final double DOUBLE_TEST_CONSTANT3 = 1.000000;
-  public static final double DOUBLE_TEST_CONSTANT4 = 2.200000;
-  public static final double DOUBLE_TEST_CONSTANT5 = -2.200000;
-  public static final double DOUBLE_TEST_CONSTANT6 = -0.000000;
-  public static final double DOUBLE_TEST_CONSTANT7 = 0.000000;
-  public static final double DOUBLE_TEST_CONSTANT8 = 1.100000;
-  public static final double DOUBLE_TEST_CONSTANT9 = -1.100000;
-  public static final String STRING_TEST_CONSTANT_UTF8 = "baz";
+  public static final int CONSTANT = 42;
+  public static final int CONSTANT2 = -42;
+  public static final int CONSTANT3 = 42;
+  public static final int CONSTANT4 = 4;
+  public static final int CONSTANT5 = -4;
+  public static final int CONSTANT6 = 0;
+  public static final int CONSTANT7 = 0;
+  public static final int CONSTANT8 = 0;
+  public static final int CONSTANT9 = 86;
+  public static final int CONSTANT10 = 165;
+  public static final int CONSTANT11 = 250;
+  public static final int CONSTANT12 = -1;
+  public static final byte BYTE_CONSTANT = 17;
+  public static final long LONG_CONSTANT = 1099511627776L;
+  public static final String STRING_CONSTANT = "foo";
+  public static final String STRING_CONSTANT2 = "bar";
+  public static final float FLOAT_CONSTANT = 1.000000f;
+  public static final float FLOAT_CONSTANT2 = -1.000000f;
+  public static final float FLOAT_CONSTANT3 = 1.000000f;
+  public static final float FLOAT_CONSTANT4 = 2.200000f;
+  public static final float FLOAT_CONSTANT5 = -2.200000f;
+  public static final float FLOAT_CONSTANT6 = -0.000000f;
+  public static final float FLOAT_CONSTANT7 = 0.000000f;
+  public static final double DOUBLE_CONSTANT = 1.000000;
+  public static final double DOUBLE_CONSTANT2 = -1.000000;
+  public static final double DOUBLE_CONSTANT3 = 1.000000;
+  public static final double DOUBLE_CONSTANT4 = 2.200000;
+  public static final double DOUBLE_CONSTANT5 = -2.200000;
+  public static final double DOUBLE_CONSTANT6 = -0.000000;
+  public static final double DOUBLE_CONSTANT7 = 0.000000;
+  public static final double DOUBLE_CONSTANT8 = 1.100000;
+  public static final double DOUBLE_CONSTANT9 = -1.100000;
+  public static final String STRING_CONSTANT_UTF8 = "baz";
   // All these constant expressions should be equal to 1
   public static final int A1 = 1;
   public static final int A2 = 1;
@@ -3993,13 +3989,9 @@ public interface ITestService extends android.os.IInterface
         @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
         {
           java.lang.String descriptor = DESCRIPTOR;
-          switch (code)
-          {
-            case INTERFACE_TRANSACTION:
-            {
-              reply.writeString(descriptor);
-              return true;
-            }
+          if (code == INTERFACE_TRANSACTION) {
+            reply.writeString(descriptor);
+            return true;
           }
           switch (code)
           {

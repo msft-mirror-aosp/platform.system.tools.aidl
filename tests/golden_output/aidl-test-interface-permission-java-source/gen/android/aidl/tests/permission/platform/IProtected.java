@@ -79,13 +79,9 @@ public interface IProtected extends android.os.IInterface
       if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
         data.enforceInterface(descriptor);
       }
-      switch (code)
-      {
-        case INTERFACE_TRANSACTION:
-        {
-          reply.writeString(descriptor);
-          return true;
-        }
+      if (code == INTERFACE_TRANSACTION) {
+        reply.writeString(descriptor);
+        return true;
       }
       switch (code)
       {
@@ -137,9 +133,10 @@ public interface IProtected extends android.os.IInterface
       }
     }
     static final int TRANSACTION_ProtectedWithSourceAttribution = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    static final String[] PERMISSIONS_ProtectedWithSourceAttribution = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE};
     /** Helper method to enforce permissions for ProtectedWithSourceAttribution */
-    protected void ProtectedWithSourceAttribution_enforcePermission(android.content.AttributionSource source) throws SecurityException {
-      mEnforcer.enforcePermissionAllOf(new String[]{android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE}, source);
+    protected void ProtectedWithSourceAttribution_enforcePermission() throws SecurityException {
+      mEnforcer.enforcePermissionAllOf(PERMISSIONS_ProtectedWithSourceAttribution, getCallingPid(), getCallingUid());
     }
     /** @hide */
     public int getMaxTransactionId()

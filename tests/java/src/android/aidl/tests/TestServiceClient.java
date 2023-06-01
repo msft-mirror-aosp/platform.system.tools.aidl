@@ -120,14 +120,9 @@ public class TestServiceClient {
 
     @Test
     public void testConstRepeat() throws RemoteException {
-        int query[] = {ITestService.TEST_CONSTANT,
-                       ITestService.TEST_CONSTANT2,
-                       ITestService.TEST_CONSTANT3,
-                       ITestService.TEST_CONSTANT4,
-                       ITestService.TEST_CONSTANT5,
-                       ITestService.TEST_CONSTANT6,
-                       ITestService.TEST_CONSTANT7,
-                       ITestService.TEST_CONSTANT8};
+        int query[] = {ITestService.CONSTANT, ITestService.CONSTANT2, ITestService.CONSTANT3,
+            ITestService.CONSTANT4, ITestService.CONSTANT5, ITestService.CONSTANT6,
+            ITestService.CONSTANT7, ITestService.CONSTANT8};
         for (int i = 0; i < query.length; i++) {
             assertThat(service.RepeatInt(query[i]), is(query[i]));
         }
@@ -135,10 +130,10 @@ public class TestServiceClient {
 
     @Test
     public void testConstFloatRepeat() throws RemoteException {
-        float query[] = {ITestService.FLOAT_TEST_CONSTANT, ITestService.FLOAT_TEST_CONSTANT2,
-            ITestService.FLOAT_TEST_CONSTANT3, ITestService.FLOAT_TEST_CONSTANT4,
-            ITestService.FLOAT_TEST_CONSTANT5, ITestService.FLOAT_TEST_CONSTANT6,
-            ITestService.FLOAT_TEST_CONSTANT7};
+        float query[] = {ITestService.FLOAT_CONSTANT, ITestService.FLOAT_CONSTANT2,
+            ITestService.FLOAT_CONSTANT3, ITestService.FLOAT_CONSTANT4,
+            ITestService.FLOAT_CONSTANT5, ITestService.FLOAT_CONSTANT6,
+            ITestService.FLOAT_CONSTANT7};
         for (int i = 0; i < query.length; i++) {
             assertThat(service.RepeatFloat(query[i]), is(query[i]));
         }
@@ -146,10 +141,10 @@ public class TestServiceClient {
 
     @Test
     public void testConstDoubleRepeat() throws RemoteException {
-        double query[] = {ITestService.DOUBLE_TEST_CONSTANT, ITestService.DOUBLE_TEST_CONSTANT2,
-            ITestService.DOUBLE_TEST_CONSTANT3, ITestService.DOUBLE_TEST_CONSTANT4,
-            ITestService.DOUBLE_TEST_CONSTANT5, ITestService.DOUBLE_TEST_CONSTANT6,
-            ITestService.DOUBLE_TEST_CONSTANT7};
+        double query[] = {ITestService.DOUBLE_CONSTANT, ITestService.DOUBLE_CONSTANT2,
+            ITestService.DOUBLE_CONSTANT3, ITestService.DOUBLE_CONSTANT4,
+            ITestService.DOUBLE_CONSTANT5, ITestService.DOUBLE_CONSTANT6,
+            ITestService.DOUBLE_CONSTANT7};
         for (int i = 0; i < query.length; i++) {
             assertThat(service.RepeatDouble(query[i]), is(query[i]));
         }
@@ -194,9 +189,7 @@ public class TestServiceClient {
     @Test
     public void testStringListRepeat() throws RemoteException {
         List<String> queries = Arrays.asList(
-                "not empty", "", "\0",
-                ITestService.STRING_TEST_CONSTANT,
-                ITestService.STRING_TEST_CONSTANT2);
+            "not empty", "", "\0", ITestService.STRING_CONSTANT, ITestService.STRING_CONSTANT2);
         for (String query : queries) {
             assertThat(service.RepeatString(query), is(query));
         }

@@ -85,7 +85,7 @@ class StubClass : public Class {
   std::shared_ptr<Variable> transact_data;
   std::shared_ptr<Variable> transact_reply;
   std::shared_ptr<Variable> transact_flags;
-  std::shared_ptr<SwitchStatement> transact_switch_meta;
+  std::vector<std::shared_ptr<IfStatement>> transact_if_statements_meta;
   std::shared_ptr<SwitchStatement> transact_switch_user;
   std::shared_ptr<StatementBlock> transact_statements;
   std::shared_ptr<SwitchStatement> code_to_method_name_switch;
@@ -181,7 +181,6 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
   transact_statements = onTransact->statements;
   onTransact->exceptions.push_back("android.os.RemoteException");
   this->elements.push_back(onTransact);
-  this->transact_switch_meta = std::make_shared<SwitchStatement>(this->transact_code);
   this->transact_switch_user = std::make_shared<SwitchStatement>(this->transact_code);
 }
 
@@ -210,8 +209,22 @@ void StubClass::Finish() {
     transact_statements->Add(ifStatement);
   }
 
+  // Build the if/else chain for the meta methods. There at most 3 different
+  // statements so if/else is more efficient than a switch statement.
   // Meta transactions are looked up prior to user-defined transactions.
-  transact_statements->Add(this->transact_switch_meta);
+  AIDL_FATAL_IF(this->transact_if_statements_meta.size() == 0, AIDL_LOCATION_HERE)
+      << "Expecting to have meta methods and found none.";
+  AIDL_FATAL_IF(this->transact_if_statements_meta.size() > 3, AIDL_LOCATION_HERE)
+      << "Expecting to have at most 3 meta methods and found "
+      << this->transact_if_statements_meta.size();
+  auto ifStatement = this->transact_if_statements_meta[0];
+  std::shared_ptr<IfStatement> currentIfStatement = ifStatement;
+  for (size_t i = 1; i < transact_if_statements_meta.size(); i++) {
+    currentIfStatement->elseif = this->transact_if_statements_meta[i];
+    currentIfStatement = currentIfStatement->elseif;
+  }
+
+  transact_statements->Add(ifStatement);
   transact_statements->Add(this->transact_switch_user);
 
   // getTransactionName
@@ -472,7 +485,26 @@ static std::shared_ptr<Method> GenerateInterfaceMethod(const AidlInterface& ifac
 // Visitor for the permission declared in the @EnforcePermission annotation.
 class PermissionVisitor {
  public:
-  PermissionVisitor(CodeWriter* code) : code_(code) {}
+  PermissionVisitor(CodeWriter* code, const AidlMethod& method) : code_(code), method_(method) {}
+
+  ~PermissionVisitor() {
+    code_->Dedent();
+    *code_ << "}\n";
+  }
+
+  string Credentials() const { return "getCallingPid(), getCallingUid()"; }
+
+  void Prologue() {
+    *code_ << "/** Helper method to enforce permissions for " << method_.GetName() << " */\n";
+    *code_ << "protected void " << method_.GetName() << "_enforcePermission() "
+           << "throws SecurityException {\n";
+    code_->Indent();
+  }
+
+  void AddStaticArrayPermissions(const std::vector<std::string>& permissions) {
+    *code_ << "static final String[] PERMISSIONS_" << method_.GetName() << " = {"
+           << Join(permissions, ", ") << "};\n";
+  }
 
   void operator()(const perm::AllOf& quantifier) {
     std::vector<std::string> permissions;
@@ -480,8 +512,10 @@ class PermissionVisitor {
     for (auto const& permission : quantifier.operands) {
       permissions.push_back(android::aidl::perm::JavaFullName(permission));
     }
-    *code_ << "mEnforcer.enforcePermissionAllOf(new String[]{" << Join(permissions, ", ")
-           << "}, source);\n";
+    AddStaticArrayPermissions(permissions);
+    Prologue();
+    *code_ << "mEnforcer.enforcePermissionAllOf(PERMISSIONS_" << method_.GetName() << ", "
+           << Credentials() << ");\n";
   }
 
   void operator()(const perm::AnyOf& quantifier) {
@@ -490,47 +524,33 @@ class PermissionVisitor {
     for (auto const& permission : quantifier.operands) {
       permissions.push_back(android::aidl::perm::JavaFullName(permission));
     }
-    *code_ << "mEnforcer.enforcePermissionAnyOf(new String[]{" << Join(permissions, ", ")
-           << "}, source);\n";
+    AddStaticArrayPermissions(permissions);
+    Prologue();
+    *code_ << "mEnforcer.enforcePermissionAnyOf(PERMISSIONS_" << method_.GetName() << ", "
+           << Credentials() << ");\n";
   }
 
   void operator()(const std::string& permission) {
     auto permissionName = android::aidl::perm::JavaFullName(permission);
-    *code_ << "mEnforcer.enforcePermission(" << permissionName << ", source);\n";
+    Prologue();
+    *code_ << "mEnforcer.enforcePermission(" << permissionName << ", " << Credentials() << ");\n";
   }
 
  private:
   CodeWriter* code_;
+  const AidlMethod& method_;
 };
 
 static void GeneratePermissionMethod(const AidlInterface& iface, const AidlMethod& method,
                                      const std::shared_ptr<Class>& addTo) {
   string code;
   CodeWriterPtr writer = CodeWriter::ForString(&code);
-  *writer << "/** Helper method to enforce permissions for " << method.GetName() << " */\n";
-
-  auto has_attribution_source =
-      std::any_of(method.GetArguments().begin(), method.GetArguments().end(), [](const auto& arg) {
-        return arg->GetType().GetName() == "android.content.AttributionSource";
-      });
-
-  *writer << "protected void " << method.GetName() << "_enforcePermission("
-          << (has_attribution_source ? "android.content.AttributionSource source" : "")
-          << ") throws SecurityException {\n";
-  writer->Indent();
-
-  if (!has_attribution_source) {
-    *writer << "android.content.AttributionSource source = "
-               "new android.content.AttributionSource(getCallingUid(), null, null);\n";
-  }
 
   if (auto ifacePermExpr = iface.EnforceExpression(); ifacePermExpr) {
-    std::visit(PermissionVisitor(writer.get()), *ifacePermExpr.get());
+    std::visit(PermissionVisitor(writer.get(), method), *ifacePermExpr.get());
   } else if (auto methodPermExpr = method.GetType().EnforceExpression(); methodPermExpr) {
-    std::visit(PermissionVisitor(writer.get()), *methodPermExpr.get());
+    std::visit(PermissionVisitor(writer.get(), method), *methodPermExpr.get());
   }
-  writer->Dedent();
-  *writer << "}\n";
   writer->Close();
   addTo->elements.push_back(std::make_shared<LiteralClassElement>(code));
 }
@@ -918,22 +938,24 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
     }
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
-      auto c = std::make_shared<Case>(transactCodeName);
+      auto ifStatement = std::make_shared<IfStatement>();
+      ifStatement->expression = std::make_shared<LiteralExpression>("code == " + transactCodeName);
       std::ostringstream code;
       code << "reply.writeNoException();\n"
            << "reply.writeInt(" << kGetInterfaceVersion << "());\n"
            << "return true;\n";
-      c->statements->Add(std::make_shared<LiteralStatement>(code.str()));
-      stubClass->transact_switch_meta->cases.push_back(c);
+      ifStatement->statements->Add(std::make_shared<LiteralStatement>(code.str()));
+      stubClass->transact_if_statements_meta.push_back(ifStatement);
     }
     if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
-      auto c = std::make_shared<Case>(transactCodeName);
+      auto ifStatement = std::make_shared<IfStatement>();
+      ifStatement->expression = std::make_shared<LiteralExpression>("code == " + transactCodeName);
       std::ostringstream code;
       code << "reply.writeNoException();\n"
            << "reply.writeString(" << kGetInterfaceHash << "());\n"
            << "return true;\n";
-      c->statements->Add(std::make_shared<LiteralStatement>(code.str()));
-      stubClass->transact_switch_meta->cases.push_back(c);
+      ifStatement->statements->Add(std::make_shared<LiteralStatement>(code.str()));
+      stubClass->transact_if_statements_meta.push_back(ifStatement);
     }
   }
 
@@ -1021,12 +1043,13 @@ static void GenerateInterfaceDescriptors(const Options& options, const AidlInter
                                          Class* interface, std::shared_ptr<StubClass> stub,
                                          std::shared_ptr<ProxyClass> proxy) {
   // the interface descriptor transaction handler
-  auto c = std::make_shared<Case>("INTERFACE_TRANSACTION");
-  c->statements->Add(std::make_shared<MethodCall>(
+  auto ifStatement = std::make_shared<IfStatement>();
+  ifStatement->expression = std::make_shared<LiteralExpression>("code == INTERFACE_TRANSACTION");
+  ifStatement->statements->Add(std::make_shared<MethodCall>(
       stub->transact_reply, "writeString",
       std::vector<std::shared_ptr<Expression>>{stub->GetTransactDescriptor(nullptr)}));
-  c->statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
-  stub->transact_switch_meta->cases.push_back(c);
+  ifStatement->statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
+  stub->transact_if_statements_meta.push_back(ifStatement);
 
   // and the proxy-side method returning the descriptor directly
   auto getDesc = std::make_shared<Method>();

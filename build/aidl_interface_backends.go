@@ -417,7 +417,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	versionedRustName := fixRustName(i.versionedName(version))
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
-	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
+	mctx.CreateModule(wrapLibraryFactory(func() android.Module { return aidlRustLibraryFactory(i.ModuleBase.SocSpecific()) }), &rustProperties{
 		Name:              proptools.StringPtr(rustModuleGen),
 		Crate_name:        rustCrateName,
 		Stem:              proptools.StringPtr("lib" + versionedRustName),
@@ -483,10 +483,11 @@ func (i *aidlInterface) versionForInitVersionCompat(version string) string {
 }
 
 func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
-	flags = append(flags, i.properties.Flags...)
-	// For ToT, turn on "-Weverything" (enable all warnings)
-	if version == i.nextVersion() {
+	// For the latest unfrozen version of an interface we turn on all warnings and use
+	// all flags supplied by the 'flags' field in the aidl_interface module
+	if version == i.nextVersion() && !i.isFrozen() {
 		flags = append(flags, "-Weverything -Wno-missing-permission-annotation")
+		flags = append(flags, i.properties.Flags...)
 	}
 	return
 }

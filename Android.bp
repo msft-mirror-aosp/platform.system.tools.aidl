@@ -203,6 +203,7 @@ cc_fuzz {
         cc: [
             "aidl-bugs@google.com",
         ],
+        triage_assignee: "smoreland@google.com",
     },
 
     srcs: [
@@ -231,20 +232,24 @@ python_test_host {
     srcs: ["tests/aidl_integration_test.py"],
     test_config: "tests/aidl_integration_test.xml",
     target_required: [
+        "aidl_test_rust_service_async",
+    ],
+    data: [
+        ":aidl_test_java_client",
+        ":aidl_test_java_service",
+        ":aidl_test_java_client_sdk1",
+        ":aidl_test_java_service_sdk1",
+        ":aidl_test_java_client_sdk29",
+        ":aidl_test_java_service_sdk29",
+        ":aidl_test_java_client_permission",
+        ":aidl_test_java_service_permission",
+    ],
+    data_device_bins_both: [
         "aidl_test_client",
         "aidl_test_client_ndk",
         "aidl_test_service",
-        "aidl_test_java_client",
-        "aidl_test_java_service",
         "aidl_test_rust_client",
         "aidl_test_rust_service",
-        "aidl_test_rust_service_async",
-        "aidl_test_java_client_sdk1",
-        "aidl_test_java_service_sdk1",
-        "aidl_test_java_client_sdk29",
-        "aidl_test_java_service_sdk29",
-        "aidl_test_java_client_permission",
-        "aidl_test_java_service_permission",
     ],
     test_suites: ["general-tests"],
     test_options: {
@@ -644,6 +649,7 @@ java_test {
     defaults: ["aidl_test_java_integration_defaults"],
     static_libs: [
         "aidl-test-interface-permission-java",
+        "frameworks-base-testutils",
     ],
     srcs: [
         "tests/java/src/android/aidl/permission/tests/*.java",
@@ -659,6 +665,7 @@ java_test {
     defaults: ["aidl_test_java_integration_defaults"],
     static_libs: [
         "aidl-test-interface-permission-java",
+        "frameworks-base-testutils",
     ],
     data: [
         ":cts-dalvik-device-test-runner",
