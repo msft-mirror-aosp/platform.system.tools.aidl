@@ -205,7 +205,7 @@ void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcel,
     ToStringFor(ctx);
     out << "));\n";
   }
-  out << "return \"" << parcel.GetCanonicalName() << "\" + _aidl_sj.toString()  ;\n";
+  out << "return \"" << parcel.GetName() << "\" + _aidl_sj.toString()  ;\n";
   out.Dedent();
   out << "}\n";
 }
@@ -224,7 +224,7 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel, const AidlTy
         .var = GetterName(*field) + "()",
         .min_sdk_version = options.GetMinSdkVersion(),
     };
-    out << "case " << field->GetName() << ": return \"" << parcel.GetCanonicalName() << "."
+    out << "case " << field->GetName() << ": return \"" << parcel.GetName() << "."
         << field->GetName() << "(\" + (";
     ToStringFor(ctx);
     out << ") + \")\";\n";
