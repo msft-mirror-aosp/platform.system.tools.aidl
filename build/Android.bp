@@ -28,6 +28,7 @@ bootstrap_go_package {
         "blueprint",
         "soong",
         "soong-android",
+        "soong-aidl-library",
         "soong-bp2build",
         "soong-cc",
         "soong-genrule",
@@ -41,8 +42,8 @@ bootstrap_go_package {
         "aidl_api.go",
         "aidl_gen_rule.go",
         "aidl_interface_backends.go",
+
         "aidl_interface_defaults.go",
-        "aidl_interface_headers.go",
         "aidl_interface_metadata_singleton.go",
         "aidl_rust_source_provider.go",
         "aidl_utils.go",

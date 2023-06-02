@@ -432,8 +432,7 @@ type aidlInterfaceProperties struct {
 	// --dumpapi options
 	Dumpapi DumpApiProperties
 
-	// List of aidl_interface_headers modules that provide include dependencies
-	// for the AIDL tool.
+	// List of aidl_library modules that provide aidl headers for the AIDL tool.
 	Headers []string
 }
 
