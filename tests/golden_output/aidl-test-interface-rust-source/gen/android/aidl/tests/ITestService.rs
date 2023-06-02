@@ -4580,6 +4580,296 @@ pub mod r#CompilerChecks {
       }
     }
   }
+  pub mod r#NoPrefixInterface {
+    #![allow(non_upper_case_globals)]
+    #![allow(non_snake_case)]
+    #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+    use binder::declare_binder_interface;
+    declare_binder_interface! {
+      INoPrefixInterface["android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface"] {
+        native: BnNoPrefixInterface(on_transact),
+        proxy: BpNoPrefixInterface {
+        },
+        async: INoPrefixInterfaceAsync,
+      }
+    }
+    pub trait INoPrefixInterface: binder::Interface + Send {
+      fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface" }
+      fn r#foo(&self) -> binder::Result<()>;
+      fn getDefaultImpl() -> INoPrefixInterfaceDefaultRef where Self: Sized {
+        DEFAULT_IMPL.lock().unwrap().clone()
+      }
+      fn setDefaultImpl(d: INoPrefixInterfaceDefaultRef) -> INoPrefixInterfaceDefaultRef where Self: Sized {
+        std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+      }
+    }
+    pub trait INoPrefixInterfaceAsync<P>: binder::Interface + Send {
+      fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface" }
+      fn r#foo<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>>;
+    }
+    #[::async_trait::async_trait]
+    pub trait INoPrefixInterfaceAsyncServer: binder::Interface + Send {
+      fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface" }
+      async fn r#foo(&self) -> binder::Result<()>;
+    }
+    impl BnNoPrefixInterface {
+      /// Create a new async binder service.
+      pub fn new_async_binder<T, R>(inner: T, rt: R, features: binder::BinderFeatures) -> binder::Strong<dyn INoPrefixInterface>
+      where
+        T: INoPrefixInterfaceAsyncServer + binder::Interface + Send + Sync + 'static,
+        R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
+      {
+        struct Wrapper<T, R> {
+          _inner: T,
+          _rt: R,
+        }
+        impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync {
+          fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+          fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }
+        }
+        impl<T, R> INoPrefixInterface for Wrapper<T, R>
+        where
+          T: INoPrefixInterfaceAsyncServer + Send + Sync + 'static,
+          R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
+        {
+          fn r#foo(&self) -> binder::Result<()> {
+            self._rt.block_on(self._inner.r#foo())
+          }
+        }
+        let wrapped = Wrapper { _inner: inner, _rt: rt };
+        Self::new_binder(wrapped, features)
+      }
+    }
+    pub trait INoPrefixInterfaceDefault: Send + Sync {
+      fn r#foo(&self) -> binder::Result<()> {
+        Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
+      }
+    }
+    pub mod transactions {
+      pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
+    }
+    pub type INoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INoPrefixInterfaceDefault>>;
+    use lazy_static::lazy_static;
+    lazy_static! {
+      static ref DEFAULT_IMPL: std::sync::Mutex<INoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
+    }
+    impl BpNoPrefixInterface {
+      fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
+        let mut aidl_data = self.binder.prepare_transact()?;
+        Ok(aidl_data)
+      }
+      fn read_response_foo(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
+        if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
+          if let Some(_aidl_default_impl) = <Self as INoPrefixInterface>::getDefaultImpl() {
+            return _aidl_default_impl.r#foo();
+          }
+        }
+        let _aidl_reply = _aidl_reply?;
+        let _aidl_status: binder::Status = _aidl_reply.read()?;
+        if !_aidl_status.is_ok() { return Err(_aidl_status); }
+        Ok(())
+      }
+    }
+    impl INoPrefixInterface for BpNoPrefixInterface {
+      fn r#foo(&self) -> binder::Result<()> {
+        let _aidl_data = self.build_parcel_foo()?;
+        let _aidl_reply = self.binder.submit_transact(transactions::r#foo, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+        self.read_response_foo(_aidl_reply)
+      }
+    }
+    impl<P: binder::BinderAsyncPool> INoPrefixInterfaceAsync<P> for BpNoPrefixInterface {
+      fn r#foo<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+        let _aidl_data = match self.build_parcel_foo() {
+          Ok(_aidl_data) => _aidl_data,
+          Err(err) => return Box::pin(std::future::ready(Err(err))),
+        };
+        let binder = self.binder.clone();
+        P::spawn(
+          move || binder.submit_transact(transactions::r#foo, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+          move |_aidl_reply| async move {
+            self.read_response_foo(_aidl_reply)
+          }
+        )
+      }
+    }
+    impl INoPrefixInterface for binder::binder_impl::Binder<BnNoPrefixInterface> {
+      fn r#foo(&self) -> binder::Result<()> { self.0.r#foo() }
+    }
+    fn on_transact(_aidl_service: &dyn INoPrefixInterface, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
+      match _aidl_code {
+        transactions::r#foo => {
+          let _aidl_return = _aidl_service.r#foo();
+          match &_aidl_return {
+            Ok(_aidl_return) => {
+              _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
+            }
+            Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
+          }
+          Ok(())
+        }
+        _ => Err(binder::StatusCode::UNKNOWN_TRANSACTION)
+      }
+    }
+    pub mod r#Nested {
+      #[derive(Debug)]
+      pub struct r#Nested {
+      }
+      impl Default for r#Nested {
+        fn default() -> Self {
+          Self {
+          }
+        }
+      }
+      impl binder::Parcelable for r#Nested {
+        fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+          parcel.sized_write(|subparcel| {
+            Ok(())
+          })
+        }
+        fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+          parcel.sized_read(|subparcel| {
+            Ok(())
+          })
+        }
+      }
+      binder::impl_serialize_for_parcelable!(r#Nested);
+      binder::impl_deserialize_for_parcelable!(r#Nested);
+      impl binder::binder_impl::ParcelableMetadata for r#Nested {
+        fn get_descriptor() -> &'static str { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.Nested" }
+      }
+    }
+    pub mod r#NestedNoPrefixInterface {
+      #![allow(non_upper_case_globals)]
+      #![allow(non_snake_case)]
+      #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+      use binder::declare_binder_interface;
+      declare_binder_interface! {
+        INestedNoPrefixInterface["android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface"] {
+          native: BnNestedNoPrefixInterface(on_transact),
+          proxy: BpNestedNoPrefixInterface {
+          },
+          async: INestedNoPrefixInterfaceAsync,
+        }
+      }
+      pub trait INestedNoPrefixInterface: binder::Interface + Send {
+        fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface" }
+        fn r#foo(&self) -> binder::Result<()>;
+        fn getDefaultImpl() -> INestedNoPrefixInterfaceDefaultRef where Self: Sized {
+          DEFAULT_IMPL.lock().unwrap().clone()
+        }
+        fn setDefaultImpl(d: INestedNoPrefixInterfaceDefaultRef) -> INestedNoPrefixInterfaceDefaultRef where Self: Sized {
+          std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+        }
+      }
+      pub trait INestedNoPrefixInterfaceAsync<P>: binder::Interface + Send {
+        fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface" }
+        fn r#foo<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>>;
+      }
+      #[::async_trait::async_trait]
+      pub trait INestedNoPrefixInterfaceAsyncServer: binder::Interface + Send {
+        fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface" }
+        async fn r#foo(&self) -> binder::Result<()>;
+      }
+      impl BnNestedNoPrefixInterface {
+        /// Create a new async binder service.
+        pub fn new_async_binder<T, R>(inner: T, rt: R, features: binder::BinderFeatures) -> binder::Strong<dyn INestedNoPrefixInterface>
+        where
+          T: INestedNoPrefixInterfaceAsyncServer + binder::Interface + Send + Sync + 'static,
+          R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
+        {
+          struct Wrapper<T, R> {
+            _inner: T,
+            _rt: R,
+          }
+          impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync {
+            fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+            fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }
+          }
+          impl<T, R> INestedNoPrefixInterface for Wrapper<T, R>
+          where
+            T: INestedNoPrefixInterfaceAsyncServer + Send + Sync + 'static,
+            R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
+          {
+            fn r#foo(&self) -> binder::Result<()> {
+              self._rt.block_on(self._inner.r#foo())
+            }
+          }
+          let wrapped = Wrapper { _inner: inner, _rt: rt };
+          Self::new_binder(wrapped, features)
+        }
+      }
+      pub trait INestedNoPrefixInterfaceDefault: Send + Sync {
+        fn r#foo(&self) -> binder::Result<()> {
+          Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
+        }
+      }
+      pub mod transactions {
+        pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
+      }
+      pub type INestedNoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INestedNoPrefixInterfaceDefault>>;
+      use lazy_static::lazy_static;
+      lazy_static! {
+        static ref DEFAULT_IMPL: std::sync::Mutex<INestedNoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
+      }
+      impl BpNestedNoPrefixInterface {
+        fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
+          let mut aidl_data = self.binder.prepare_transact()?;
+          Ok(aidl_data)
+        }
+        fn read_response_foo(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
+          if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
+            if let Some(_aidl_default_impl) = <Self as INestedNoPrefixInterface>::getDefaultImpl() {
+              return _aidl_default_impl.r#foo();
+            }
+          }
+          let _aidl_reply = _aidl_reply?;
+          let _aidl_status: binder::Status = _aidl_reply.read()?;
+          if !_aidl_status.is_ok() { return Err(_aidl_status); }
+          Ok(())
+        }
+      }
+      impl INestedNoPrefixInterface for BpNestedNoPrefixInterface {
+        fn r#foo(&self) -> binder::Result<()> {
+          let _aidl_data = self.build_parcel_foo()?;
+          let _aidl_reply = self.binder.submit_transact(transactions::r#foo, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+          self.read_response_foo(_aidl_reply)
+        }
+      }
+      impl<P: binder::BinderAsyncPool> INestedNoPrefixInterfaceAsync<P> for BpNestedNoPrefixInterface {
+        fn r#foo<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+          let _aidl_data = match self.build_parcel_foo() {
+            Ok(_aidl_data) => _aidl_data,
+            Err(err) => return Box::pin(std::future::ready(Err(err))),
+          };
+          let binder = self.binder.clone();
+          P::spawn(
+            move || binder.submit_transact(transactions::r#foo, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+            move |_aidl_reply| async move {
+              self.read_response_foo(_aidl_reply)
+            }
+          )
+        }
+      }
+      impl INestedNoPrefixInterface for binder::binder_impl::Binder<BnNestedNoPrefixInterface> {
+        fn r#foo(&self) -> binder::Result<()> { self.0.r#foo() }
+      }
+      fn on_transact(_aidl_service: &dyn INestedNoPrefixInterface, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
+        match _aidl_code {
+          transactions::r#foo => {
+            let _aidl_return = _aidl_service.r#foo();
+            match &_aidl_return {
+              Ok(_aidl_return) => {
+                _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
+              }
+              Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
+            }
+            Ok(())
+          }
+          _ => Err(binder::StatusCode::UNKNOWN_TRANSACTION)
+        }
+      }
+    }
+  }
 }
 pub(crate) mod mangled {
  pub use super::r#ITestService as _7_android_4_aidl_5_tests_12_ITestService;
@@ -4589,4 +4879,7 @@ pub(crate) mod mangled {
  pub use super::r#CompilerChecks::r#HasDeprecated::r#HasDeprecated as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_13_HasDeprecated;
  pub use super::r#CompilerChecks::r#UsingHasDeprecated::r#UsingHasDeprecated as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_18_UsingHasDeprecated;
  pub use super::r#CompilerChecks::r#UsingHasDeprecated::r#Tag::r#Tag as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_18_UsingHasDeprecated_3_Tag;
+ pub use super::r#CompilerChecks::r#NoPrefixInterface::r#INoPrefixInterface as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_17_NoPrefixInterface;
+ pub use super::r#CompilerChecks::r#NoPrefixInterface::r#Nested::r#Nested as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_17_NoPrefixInterface_6_Nested;
+ pub use super::r#CompilerChecks::r#NoPrefixInterface::r#NestedNoPrefixInterface::r#INestedNoPrefixInterface as _7_android_4_aidl_5_tests_12_ITestService_14_CompilerChecks_17_NoPrefixInterface_23_NestedNoPrefixInterface;
 }
