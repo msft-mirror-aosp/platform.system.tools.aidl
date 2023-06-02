@@ -703,8 +703,8 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlInterface& interface,
 
   if (auto parent = interface.GetParentType(); parent) {
     out << fmt::format("DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE({}, {}, \"{}\")\n",
-                       GetQualifiedName(*parent), ClassName(interface, ClassNames::BASE),
-                       interface.GetDescriptor());
+                       GetQualifiedName(*parent, ClassNames::MAYBE_INTERFACE),
+                       ClassName(interface, ClassNames::BASE), interface.GetDescriptor());
   } else {
     out << fmt::format("DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE({}, \"{}\")\n",
                        ClassName(interface, ClassNames::BASE), interface.GetDescriptor());
