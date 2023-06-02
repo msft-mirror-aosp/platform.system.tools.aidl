@@ -235,13 +235,13 @@ public final class Union implements android.os.Parcelable {
   @Override
   public String toString() {
     switch (_tag) {
-    case ns: return "Union.ns(" + (java.util.Arrays.toString(getNs())) + ")";
-    case n: return "Union.n(" + (getN()) + ")";
-    case m: return "Union.m(" + (getM()) + ")";
-    case s: return "Union.s(" + (java.util.Objects.toString(getS())) + ")";
-    case ibinder: return "Union.ibinder(" + (java.util.Objects.toString(getIbinder())) + ")";
-    case ss: return "Union.ss(" + (java.util.Objects.toString(getSs())) + ")";
-    case be: return "Union.be(" + (getBe()) + ")";
+    case ns: return "android.aidl.tests.Union.ns(" + (java.util.Arrays.toString(getNs())) + ")";
+    case n: return "android.aidl.tests.Union.n(" + (getN()) + ")";
+    case m: return "android.aidl.tests.Union.m(" + (getM()) + ")";
+    case s: return "android.aidl.tests.Union.s(" + (java.util.Objects.toString(getS())) + ")";
+    case ibinder: return "android.aidl.tests.Union.ibinder(" + (java.util.Objects.toString(getIbinder())) + ")";
+    case ss: return "android.aidl.tests.Union.ss(" + (java.util.Objects.toString(getSs())) + ")";
+    case be: return "android.aidl.tests.Union.be(" + (getBe()) + ")";
     }
     throw new IllegalStateException("unknown field: " + _tag);
   }
