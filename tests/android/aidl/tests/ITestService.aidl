@@ -325,6 +325,13 @@ interface ITestService {
             int n;
             HasDeprecated m;
         }
+        interface NoPrefixInterface {
+            parcelable Nested {}
+            interface NestedNoPrefixInterface {
+                void foo();
+            }
+            void foo();
+        }
     }
 
     ICircular GetCircular(out CircularParcelable cp);
