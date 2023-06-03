@@ -528,8 +528,9 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
       compatible &=
           are_compatible_enums(*(old_type->AsEnumDeclaration()), *(new_type->AsEnumDeclaration()));
     } else {
-      AIDL_ERROR(old_type) << "Unsupported type " << old_type->GetPreprocessDeclarationName()
-                           << " for " << old_type->GetCanonicalName();
+      AIDL_ERROR(old_type) << "Unsupported declaration type "
+                           << old_type->GetPreprocessDeclarationName() << " for "
+                           << old_type->GetCanonicalName() << " API dump comparison";
       compatible = false;
     }
   }
