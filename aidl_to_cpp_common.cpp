@@ -56,6 +56,9 @@ bool HasDeprecatedField(const AidlParcelable& parcelable) {
 }
 
 string ClassName(const AidlDefinedType& defined_type, ClassNames type) {
+  if (type == ClassNames::MAYBE_INTERFACE && defined_type.AsInterface()) {
+    type = ClassNames::INTERFACE;
+  }
   string base_name = defined_type.GetName();
   if (base_name.length() >= 2 && base_name[0] == 'I' && isupper(base_name[1])) {
     base_name = base_name.substr(1);
@@ -235,7 +238,7 @@ const string GenLogAfterExecute(const string className, const AidlInterface& int
 string GetQualifiedName(const AidlDefinedType& type, ClassNames class_names) {
   string q_name = ClassName(type, class_names);
   for (auto parent = type.GetParentType(); parent; parent = parent->GetParentType()) {
-    q_name = parent->GetName() + "::" + q_name;
+    q_name = ClassName(*parent, ClassNames::MAYBE_INTERFACE) + "::" + q_name;
   }
   return q_name;
 }

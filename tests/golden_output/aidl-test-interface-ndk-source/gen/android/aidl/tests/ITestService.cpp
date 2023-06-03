@@ -5038,3 +5038,294 @@ binder_status_t ITestService::CompilerChecks::UsingHasDeprecated::writeToParcel(
 }  // namespace aidl
 }  // namespace android
 }  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_onTransact(AIBinder* _aidl_binder, transaction_code_t _aidl_code, const AParcel* _aidl_in, AParcel* _aidl_out) {
+  (void)_aidl_in;
+  (void)_aidl_out;
+  binder_status_t _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;
+  std::shared_ptr<ITestService::CompilerChecks::BnNoPrefixInterface> _aidl_impl = std::static_pointer_cast<ITestService::CompilerChecks::BnNoPrefixInterface>(::ndk::ICInterface::asInterface(_aidl_binder));
+  switch (_aidl_code) {
+    case (FIRST_CALL_TRANSACTION + 0 /*foo*/): {
+
+      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->foo();
+      _aidl_ret_status = AParcel_writeStatusHeader(_aidl_out, _aidl_status.get());
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      if (!AStatus_isOk(_aidl_status.get())) break;
+
+      break;
+    }
+  }
+  return _aidl_ret_status;
+}
+
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_onTransact);
+
+ITestService::CompilerChecks::BpNoPrefixInterface::BpNoPrefixInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
+ITestService::CompilerChecks::BpNoPrefixInterface::~BpNoPrefixInterface() {}
+
+::ndk::ScopedAStatus ITestService::CompilerChecks::BpNoPrefixInterface::foo() {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  ::ndk::ScopedAStatus _aidl_status;
+  ::ndk::ScopedAParcel _aidl_in;
+  ::ndk::ScopedAParcel _aidl_out;
+
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AIBinder_transact(
+    asBinder().get(),
+    (FIRST_CALL_TRANSACTION + 0 /*foo*/),
+    _aidl_in.getR(),
+    _aidl_out.getR(),
+    0
+    #ifdef BINDER_STABILITY_SUPPORT
+    | FLAG_PRIVATE_LOCAL
+    #endif  // BINDER_STABILITY_SUPPORT
+    );
+  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INoPrefixInterface::getDefaultImpl()) {
+    _aidl_status = INoPrefixInterface::getDefaultImpl()->foo();
+    goto _aidl_status_return;
+  }
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
+  _aidl_error:
+  _aidl_status.set(AStatus_fromStatus(_aidl_ret_status));
+  _aidl_status_return:
+  return _aidl_status;
+}
+// Source for BnNoPrefixInterface
+ITestService::CompilerChecks::BnNoPrefixInterface::BnNoPrefixInterface() {}
+ITestService::CompilerChecks::BnNoPrefixInterface::~BnNoPrefixInterface() {}
+::ndk::SpAIBinder ITestService::CompilerChecks::BnNoPrefixInterface::createBinder() {
+  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz, static_cast<void*>(this));
+  #ifdef BINDER_STABILITY_SUPPORT
+  AIBinder_markCompilationUnitStability(binder);
+  #endif  // BINDER_STABILITY_SUPPORT
+  return ::ndk::SpAIBinder(binder);
+}
+// Source for INoPrefixInterface
+const char* ITestService::CompilerChecks::INoPrefixInterface::descriptor = "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface";
+ITestService::CompilerChecks::INoPrefixInterface::INoPrefixInterface() {}
+ITestService::CompilerChecks::INoPrefixInterface::~INoPrefixInterface() {}
+
+
+std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz)) { return nullptr; }
+  std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
+  if (interface) {
+    return std::static_pointer_cast<INoPrefixInterface>(interface);
+  }
+  return ::ndk::SharedRefBase::make<ITestService::CompilerChecks::BpNoPrefixInterface>(binder);
+}
+
+binder_status_t ITestService::CompilerChecks::INoPrefixInterface::writeToParcel(AParcel* parcel, const std::shared_ptr<INoPrefixInterface>& instance) {
+  return AParcel_writeStrongBinder(parcel, instance ? instance->asBinder().get() : nullptr);
+}
+binder_status_t ITestService::CompilerChecks::INoPrefixInterface::readFromParcel(const AParcel* parcel, std::shared_ptr<INoPrefixInterface>* instance) {
+  ::ndk::SpAIBinder binder;
+  binder_status_t status = AParcel_readStrongBinder(parcel, binder.getR());
+  if (status != STATUS_OK) return status;
+  *instance = INoPrefixInterface::fromBinder(binder);
+  return STATUS_OK;
+}
+bool ITestService::CompilerChecks::INoPrefixInterface::setDefaultImpl(const std::shared_ptr<INoPrefixInterface>& impl) {
+  // Only one user of this interface can use this function
+  // at a time. This is a heuristic to detect if two different
+  // users in the same process use this function.
+  assert(!INoPrefixInterface::default_impl);
+  if (impl) {
+    INoPrefixInterface::default_impl = impl;
+    return true;
+  }
+  return false;
+}
+const std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface>& ITestService::CompilerChecks::INoPrefixInterface::getDefaultImpl() {
+  return INoPrefixInterface::default_impl;
+}
+std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::default_impl = nullptr;
+::ndk::ScopedAStatus ITestService::CompilerChecks::INoPrefixInterfaceDefault::foo() {
+  ::ndk::ScopedAStatus _aidl_status;
+  _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
+  return _aidl_status;
+}
+::ndk::SpAIBinder ITestService::CompilerChecks::INoPrefixInterfaceDefault::asBinder() {
+  return ::ndk::SpAIBinder();
+}
+bool ITestService::CompilerChecks::INoPrefixInterfaceDefault::isRemote() {
+  return false;
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+const char* ITestService::CompilerChecks::INoPrefixInterface::Nested::descriptor = "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.Nested";
+
+binder_status_t ITestService::CompilerChecks::INoPrefixInterface::Nested::readFromParcel(const AParcel* _aidl_parcel) {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_parcelable_size = 0;
+  _aidl_ret_status = AParcel_readInt32(_aidl_parcel, &_aidl_parcelable_size);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;
+  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+  return _aidl_ret_status;
+}
+binder_status_t ITestService::CompilerChecks::INoPrefixInterface::Nested::writeToParcel(AParcel* _aidl_parcel) const {
+  binder_status_t _aidl_ret_status;
+  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
+  AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
+  AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
+  return _aidl_ret_status;
+}
+
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl
+namespace aidl {
+namespace android {
+namespace aidl {
+namespace tests {
+static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_onTransact(AIBinder* _aidl_binder, transaction_code_t _aidl_code, const AParcel* _aidl_in, AParcel* _aidl_out) {
+  (void)_aidl_in;
+  (void)_aidl_out;
+  binder_status_t _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;
+  std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface> _aidl_impl = std::static_pointer_cast<ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface>(::ndk::ICInterface::asInterface(_aidl_binder));
+  switch (_aidl_code) {
+    case (FIRST_CALL_TRANSACTION + 0 /*foo*/): {
+
+      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->foo();
+      _aidl_ret_status = AParcel_writeStatusHeader(_aidl_out, _aidl_status.get());
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      if (!AStatus_isOk(_aidl_status.get())) break;
+
+      break;
+    }
+  }
+  return _aidl_ret_status;
+}
+
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_onTransact);
+
+ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::BpNestedNoPrefixInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
+ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::~BpNestedNoPrefixInterface() {}
+
+::ndk::ScopedAStatus ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::foo() {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  ::ndk::ScopedAStatus _aidl_status;
+  ::ndk::ScopedAParcel _aidl_in;
+  ::ndk::ScopedAParcel _aidl_out;
+
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AIBinder_transact(
+    asBinder().get(),
+    (FIRST_CALL_TRANSACTION + 0 /*foo*/),
+    _aidl_in.getR(),
+    _aidl_out.getR(),
+    0
+    #ifdef BINDER_STABILITY_SUPPORT
+    | FLAG_PRIVATE_LOCAL
+    #endif  // BINDER_STABILITY_SUPPORT
+    );
+  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INestedNoPrefixInterface::getDefaultImpl()) {
+    _aidl_status = INestedNoPrefixInterface::getDefaultImpl()->foo();
+    goto _aidl_status_return;
+  }
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
+  _aidl_error:
+  _aidl_status.set(AStatus_fromStatus(_aidl_ret_status));
+  _aidl_status_return:
+  return _aidl_status;
+}
+// Source for BnNestedNoPrefixInterface
+ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::BnNestedNoPrefixInterface() {}
+ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::~BnNestedNoPrefixInterface() {}
+::ndk::SpAIBinder ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::createBinder() {
+  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz, static_cast<void*>(this));
+  #ifdef BINDER_STABILITY_SUPPORT
+  AIBinder_markCompilationUnitStability(binder);
+  #endif  // BINDER_STABILITY_SUPPORT
+  return ::ndk::SpAIBinder(binder);
+}
+// Source for INestedNoPrefixInterface
+const char* ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::descriptor = "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface";
+ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::INestedNoPrefixInterface() {}
+ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::~INestedNoPrefixInterface() {}
+
+
+std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz)) { return nullptr; }
+  std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
+  if (interface) {
+    return std::static_pointer_cast<INestedNoPrefixInterface>(interface);
+  }
+  return ::ndk::SharedRefBase::make<ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface>(binder);
+}
+
+binder_status_t ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::writeToParcel(AParcel* parcel, const std::shared_ptr<INestedNoPrefixInterface>& instance) {
+  return AParcel_writeStrongBinder(parcel, instance ? instance->asBinder().get() : nullptr);
+}
+binder_status_t ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::readFromParcel(const AParcel* parcel, std::shared_ptr<INestedNoPrefixInterface>* instance) {
+  ::ndk::SpAIBinder binder;
+  binder_status_t status = AParcel_readStrongBinder(parcel, binder.getR());
+  if (status != STATUS_OK) return status;
+  *instance = INestedNoPrefixInterface::fromBinder(binder);
+  return STATUS_OK;
+}
+bool ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::setDefaultImpl(const std::shared_ptr<INestedNoPrefixInterface>& impl) {
+  // Only one user of this interface can use this function
+  // at a time. This is a heuristic to detect if two different
+  // users in the same process use this function.
+  assert(!INestedNoPrefixInterface::default_impl);
+  if (impl) {
+    INestedNoPrefixInterface::default_impl = impl;
+    return true;
+  }
+  return false;
+}
+const std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface>& ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::getDefaultImpl() {
+  return INestedNoPrefixInterface::default_impl;
+}
+std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::default_impl = nullptr;
+::ndk::ScopedAStatus ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterfaceDefault::foo() {
+  ::ndk::ScopedAStatus _aidl_status;
+  _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
+  return _aidl_status;
+}
+::ndk::SpAIBinder ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterfaceDefault::asBinder() {
+  return ::ndk::SpAIBinder();
+}
+bool ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterfaceDefault::isRemote() {
+  return false;
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+}  // namespace aidl

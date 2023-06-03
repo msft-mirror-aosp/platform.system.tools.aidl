@@ -282,6 +282,124 @@ public:
     private:
       std::variant<int32_t, ::aidl::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated> _value;
     };
+    class INoPrefixInterfaceDelegator;
+
+    class INoPrefixInterface : public ::ndk::ICInterface {
+    public:
+      typedef INoPrefixInterfaceDelegator DefaultDelegator;
+      static const char* descriptor;
+      INoPrefixInterface();
+      virtual ~INoPrefixInterface();
+
+      class Nested {
+      public:
+        typedef std::false_type fixed_size;
+        static const char* descriptor;
+
+
+        binder_status_t readFromParcel(const AParcel* parcel);
+        binder_status_t writeToParcel(AParcel* parcel) const;
+
+        inline bool operator!=(const Nested&) const {
+          return std::tie() != std::tie();
+        }
+        inline bool operator<(const Nested&) const {
+          return std::tie() < std::tie();
+        }
+        inline bool operator<=(const Nested&) const {
+          return std::tie() <= std::tie();
+        }
+        inline bool operator==(const Nested&) const {
+          return std::tie() == std::tie();
+        }
+        inline bool operator>(const Nested&) const {
+          return std::tie() > std::tie();
+        }
+        inline bool operator>=(const Nested&) const {
+          return std::tie() >= std::tie();
+        }
+
+        static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
+        inline std::string toString() const {
+          std::ostringstream os;
+          os << "Nested{";
+          os << "}";
+          return os.str();
+        }
+      };
+      class INestedNoPrefixInterfaceDelegator;
+
+      class INestedNoPrefixInterface : public ::ndk::ICInterface {
+      public:
+        typedef INestedNoPrefixInterfaceDelegator DefaultDelegator;
+        static const char* descriptor;
+        INestedNoPrefixInterface();
+        virtual ~INestedNoPrefixInterface();
+
+        static constexpr uint32_t TRANSACTION_foo = FIRST_CALL_TRANSACTION + 0;
+
+        static std::shared_ptr<INestedNoPrefixInterface> fromBinder(const ::ndk::SpAIBinder& binder);
+        static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<INestedNoPrefixInterface>& instance);
+        static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<INestedNoPrefixInterface>* instance);
+        static bool setDefaultImpl(const std::shared_ptr<INestedNoPrefixInterface>& impl);
+        static const std::shared_ptr<INestedNoPrefixInterface>& getDefaultImpl();
+        virtual ::ndk::ScopedAStatus foo() = 0;
+      private:
+        static std::shared_ptr<INestedNoPrefixInterface> default_impl;
+      };
+      class INestedNoPrefixInterfaceDefault : public INestedNoPrefixInterface {
+      public:
+        ::ndk::ScopedAStatus foo() override;
+        ::ndk::SpAIBinder asBinder() override;
+        bool isRemote() override;
+      };
+      class BpNestedNoPrefixInterface : public ::ndk::BpCInterface<INestedNoPrefixInterface> {
+      public:
+        explicit BpNestedNoPrefixInterface(const ::ndk::SpAIBinder& binder);
+        virtual ~BpNestedNoPrefixInterface();
+
+        ::ndk::ScopedAStatus foo() override;
+      };
+      class BnNestedNoPrefixInterface : public ::ndk::BnCInterface<INestedNoPrefixInterface> {
+      public:
+        BnNestedNoPrefixInterface();
+        virtual ~BnNestedNoPrefixInterface();
+      protected:
+        ::ndk::SpAIBinder createBinder() override;
+      private:
+      };
+      static constexpr uint32_t TRANSACTION_foo = FIRST_CALL_TRANSACTION + 0;
+
+      static std::shared_ptr<INoPrefixInterface> fromBinder(const ::ndk::SpAIBinder& binder);
+      static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<INoPrefixInterface>& instance);
+      static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<INoPrefixInterface>* instance);
+      static bool setDefaultImpl(const std::shared_ptr<INoPrefixInterface>& impl);
+      static const std::shared_ptr<INoPrefixInterface>& getDefaultImpl();
+      virtual ::ndk::ScopedAStatus foo() = 0;
+    private:
+      static std::shared_ptr<INoPrefixInterface> default_impl;
+    };
+    class INoPrefixInterfaceDefault : public INoPrefixInterface {
+    public:
+      ::ndk::ScopedAStatus foo() override;
+      ::ndk::SpAIBinder asBinder() override;
+      bool isRemote() override;
+    };
+    class BpNoPrefixInterface : public ::ndk::BpCInterface<INoPrefixInterface> {
+    public:
+      explicit BpNoPrefixInterface(const ::ndk::SpAIBinder& binder);
+      virtual ~BpNoPrefixInterface();
+
+      ::ndk::ScopedAStatus foo() override;
+    };
+    class BnNoPrefixInterface : public ::ndk::BnCInterface<INoPrefixInterface> {
+    public:
+      BnNoPrefixInterface();
+      virtual ~BnNoPrefixInterface();
+    protected:
+      ::ndk::SpAIBinder createBinder() override;
+    private:
+    };
     ::ndk::SpAIBinder binder;
     ::ndk::SpAIBinder nullable_binder;
     std::vector<::ndk::SpAIBinder> binder_array;
