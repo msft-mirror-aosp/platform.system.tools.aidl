@@ -472,6 +472,16 @@ TEST(OptionsTests, AcceptUCodeNameAsMinSdkVersion) {
   EXPECT_EQ(34u, options->GetMinSdkVersion());
 }
 
+TEST(OptionsTests, AcceptVCodeNameAsMinSdkVersion) {
+  const char* args[] = {
+      "aidl",      "--lang=java", "--min_sdk_version=VanillaIceCream",
+      "--out=out", "input.aidl",  nullptr,
+  };
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  EXPECT_EQ(10000u, options->GetMinSdkVersion());  // TODO: finalize to version
+}
+
 TEST(OptionsTest, DefaultMinSdkVersion) {
   const char* args[] = {
       "aidl", "--lang=java", "--out=out", "input.aidl", nullptr,
