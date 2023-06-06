@@ -15,6 +15,7 @@
 package aidl
 
 import (
+	"android/soong/aidl_library"
 	"android/soong/android"
 	"reflect"
 
@@ -387,13 +388,13 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
 			deps.implicits = append(deps.implicits, api.hasDevelopment)
 		case interfaceHeadersDepTag:
-			headerInfo, ok := ctx.OtherModuleProvider(dep, AidlInterfaceHeadersProvider).(AidlInterfaceHeadersInfo)
+			aidlLibraryInfo, ok := ctx.OtherModuleProvider(dep, aidl_library.AidlLibraryProvider).(aidl_library.AidlLibraryInfo)
 			if !ok {
-				ctx.PropertyErrorf("headers", "module %v does not provide AidlInterfaceHeadersInfo", dep.Name())
+				ctx.PropertyErrorf("headers", "module %v does not provide AidlLibraryInfo", dep.Name())
 				return
 			}
-			deps.implicits = append(deps.implicits, headerInfo.Srcs...)
-			deps.imports = append(deps.imports, headerInfo.IncludeDir)
+			deps.implicits = append(deps.implicits, aidlLibraryInfo.Hdrs.ToList()...)
+			deps.imports = append(deps.imports, aidlLibraryInfo.IncludeDirs.ToList().Strings()...)
 		}
 	})
 	return deps
