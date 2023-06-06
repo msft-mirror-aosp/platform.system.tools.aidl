@@ -24,6 +24,7 @@ import (
 	"github.com/google/blueprint"
 	"github.com/google/blueprint/proptools"
 
+	"android/soong/aidl_library"
 	"android/soong/android"
 	"android/soong/cc"
 	"android/soong/genrule"
@@ -181,12 +182,13 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		rust.PrepareForTestWithRustBuildComponents,
 		android.FixtureRegisterWithContext(func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
-			ctx.RegisterModuleType("aidl_interface_headers", AidlInterfaceHeadersFactory)
 			ctx.RegisterModuleType("aidl_interface_defaults", AidlInterfaceDefaultsFactory)
 			ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
 			ctx.RegisterModuleType("rust_defaults", func() android.Module {
 				return rust.DefaultsFactory()
 			})
+			ctx.RegisterModuleType("aidl_library", aidl_library.AidlLibraryFactory)
+
 			ctx.PreArchMutators(registerPreArchMutators)
 			ctx.PostDepsMutators(registerPostDepsMutators)
 		}),
@@ -1573,7 +1575,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 		"baz/aidl_api/baz-iface/1/.hash":            nil,
 
 		"boq/Android.bp": []byte(`
-			aidl_interface_headers {
+			aidl_library {
 				name: "boq-iface-headers",
 				srcs: ["b/Boq.aidl"],
 			}
