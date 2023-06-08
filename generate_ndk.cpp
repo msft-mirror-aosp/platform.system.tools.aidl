@@ -833,7 +833,27 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
       << "::fromBinder(const ::ndk::SpAIBinder& binder) {\n";
   out.Indent();
   out << "if (!AIBinder_associateClass(binder.get(), " << GlobalClassVarName(defined_type)
-      << ")) { return nullptr; }\n";
+      << ")) {\n";
+  out.Indent();
+  // since NDK users don't use weak symbol support, we don't check builtin available. We could
+  // optionally check it if __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__ is defined, but this would
+  // also mean that app developers relying on this behavior would be missing test parity, and if
+  // local transactions aren't supported, due to missing the descriptor API, they will need to
+  // work around it a different way, so it's best to check based on __ANDROID_API__
+  out << "#if __ANDROID_API__ >= 31\n";
+  out << "const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());\n";
+  out << "if (originalClass == nullptr) return nullptr;\n";
+  out << "if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {\n";
+  out.Indent();
+  // parcel transactions in process, e.g. NDK<->Rust (okay..)
+  out << "return ::ndk::SharedRefBase::make<" << GetQualifiedName(defined_type, ClassNames::CLIENT)
+      << ">(binder);\n";
+  out.Dedent();
+  out << "}\n";
+  out << "#endif\n";
+  out << "return nullptr;\n";
+  out.Dedent();
+  out << "}\n";
   out << "std::shared_ptr<::ndk::ICInterface> interface = "
          "::ndk::ICInterface::asInterface(binder.get());\n";
   out << "if (interface) {\n";
