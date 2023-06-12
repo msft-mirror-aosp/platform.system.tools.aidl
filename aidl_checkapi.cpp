@@ -507,6 +507,13 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
       }
       compatible &= are_compatible_parcelables(*(old_type->AsStructuredParcelable()), *old_tns,
                                                *(new_type->AsStructuredParcelable()), *new_tns);
+    } else if (old_type->AsUnstructuredParcelable() != nullptr) {
+      // We could compare annotations or cpp_header/ndk_header here, but all these changes
+      // can be safe, and it's really up to the person making these changes to make sure
+      // they are safe. This is originally added for Android Studio. In the platform build
+      // system, this can never be reached because we build with '-b'
+
+      // ignore, do nothing
     } else if (old_type->AsUnionDeclaration() != nullptr) {
       if (new_type->AsUnionDeclaration() == nullptr) {
         AIDL_ERROR(new_type) << "Type mismatch: " << old_type->GetCanonicalName()
@@ -528,8 +535,9 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
       compatible &=
           are_compatible_enums(*(old_type->AsEnumDeclaration()), *(new_type->AsEnumDeclaration()));
     } else {
-      AIDL_ERROR(old_type) << "Unsupported type " << old_type->GetPreprocessDeclarationName()
-                           << " for " << old_type->GetCanonicalName();
+      AIDL_ERROR(old_type) << "Unsupported declaration type "
+                           << old_type->GetPreprocessDeclarationName() << " for "
+                           << old_type->GetCanonicalName() << " API dump comparison";
       compatible = false;
     }
   }

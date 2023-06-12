@@ -1,5 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ITestService.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
  */
 package android.aidl.tests;
 /** interface comment */
@@ -4211,6 +4212,298 @@ public interface ITestService extends android.os.IInterface
       public static @interface Tag {
         public static final int n = 0;
         public static final int m = 1;
+      }
+    }
+    public interface NoPrefixInterface extends android.os.IInterface
+    {
+      /** Default implementation for NoPrefixInterface. */
+      public static class Default implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface
+      {
+        @Override public void foo() throws android.os.RemoteException
+        {
+        }
+        @Override
+        public android.os.IBinder asBinder() {
+          return null;
+        }
+      }
+      /** Local-side IPC implementation stub class. */
+      public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface
+      {
+        /** Construct the stub at attach it to the interface. */
+        public Stub()
+        {
+          this.attachInterface(this, DESCRIPTOR);
+        }
+        /**
+         * Cast an IBinder object into an android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface interface,
+         * generating a proxy if needed.
+         */
+        public static android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface asInterface(android.os.IBinder obj)
+        {
+          if ((obj==null)) {
+            return null;
+          }
+          android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+          if (((iin!=null)&&(iin instanceof android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface))) {
+            return ((android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface)iin);
+          }
+          return new android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.Stub.Proxy(obj);
+        }
+        @Override public android.os.IBinder asBinder()
+        {
+          return this;
+        }
+        /** @hide */
+        public static java.lang.String getDefaultTransactionName(int transactionCode)
+        {
+          switch (transactionCode)
+          {
+            case TRANSACTION_foo:
+            {
+              return "foo";
+            }
+            default:
+            {
+              return null;
+            }
+          }
+        }
+        /** @hide */
+        public java.lang.String getTransactionName(int transactionCode)
+        {
+          return this.getDefaultTransactionName(transactionCode);
+        }
+        @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
+        {
+          java.lang.String descriptor = DESCRIPTOR;
+          if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
+            data.enforceInterface(descriptor);
+          }
+          if (code == INTERFACE_TRANSACTION) {
+            reply.writeString(descriptor);
+            return true;
+          }
+          switch (code)
+          {
+            case TRANSACTION_foo:
+            {
+              this.foo();
+              reply.writeNoException();
+              break;
+            }
+            default:
+            {
+              return super.onTransact(code, data, reply, flags);
+            }
+          }
+          return true;
+        }
+        private static class Proxy implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface
+        {
+          private android.os.IBinder mRemote;
+          Proxy(android.os.IBinder remote)
+          {
+            mRemote = remote;
+          }
+          @Override public android.os.IBinder asBinder()
+          {
+            return mRemote;
+          }
+          public java.lang.String getInterfaceDescriptor()
+          {
+            return DESCRIPTOR;
+          }
+          @Override public void foo() throws android.os.RemoteException
+          {
+            android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+            android.os.Parcel _reply = android.os.Parcel.obtain();
+            try {
+              _data.writeInterfaceToken(DESCRIPTOR);
+              boolean _status = mRemote.transact(Stub.TRANSACTION_foo, _data, _reply, 0);
+              _reply.readException();
+            }
+            finally {
+              _reply.recycle();
+              _data.recycle();
+            }
+          }
+        }
+        static final int TRANSACTION_foo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+        /** @hide */
+        public int getMaxTransactionId()
+        {
+          return 0;
+        }
+      }
+      public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService$CompilerChecks$NoPrefixInterface".replace('$', '.');
+      public void foo() throws android.os.RemoteException;
+      public static class Nested implements android.os.Parcelable
+      {
+        public static final android.os.Parcelable.Creator<Nested> CREATOR = new android.os.Parcelable.Creator<Nested>() {
+          @Override
+          public Nested createFromParcel(android.os.Parcel _aidl_source) {
+            Nested _aidl_out = new Nested();
+            _aidl_out.readFromParcel(_aidl_source);
+            return _aidl_out;
+          }
+          @Override
+          public Nested[] newArray(int _aidl_size) {
+            return new Nested[_aidl_size];
+          }
+        };
+        @Override public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag)
+        {
+          int _aidl_start_pos = _aidl_parcel.dataPosition();
+          _aidl_parcel.writeInt(0);
+          int _aidl_end_pos = _aidl_parcel.dataPosition();
+          _aidl_parcel.setDataPosition(_aidl_start_pos);
+          _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
+          _aidl_parcel.setDataPosition(_aidl_end_pos);
+        }
+        public final void readFromParcel(android.os.Parcel _aidl_parcel)
+        {
+          int _aidl_start_pos = _aidl_parcel.dataPosition();
+          int _aidl_parcelable_size = _aidl_parcel.readInt();
+          try {
+            if (_aidl_parcelable_size < 4) throw new android.os.BadParcelableException("Parcelable too small");;
+          } finally {
+            if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
+              throw new android.os.BadParcelableException("Overflow in the size of parcelable");
+            }
+            _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+          }
+        }
+        @Override
+        public int describeContents() {
+          int _mask = 0;
+          return _mask;
+        }
+      }
+      public interface NestedNoPrefixInterface extends android.os.IInterface
+      {
+        /** Default implementation for NestedNoPrefixInterface. */
+        public static class Default implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface
+        {
+          @Override public void foo() throws android.os.RemoteException
+          {
+          }
+          @Override
+          public android.os.IBinder asBinder() {
+            return null;
+          }
+        }
+        /** Local-side IPC implementation stub class. */
+        public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface
+        {
+          /** Construct the stub at attach it to the interface. */
+          public Stub()
+          {
+            this.attachInterface(this, DESCRIPTOR);
+          }
+          /**
+           * Cast an IBinder object into an android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface interface,
+           * generating a proxy if needed.
+           */
+          public static android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface asInterface(android.os.IBinder obj)
+          {
+            if ((obj==null)) {
+              return null;
+            }
+            android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+            if (((iin!=null)&&(iin instanceof android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface))) {
+              return ((android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface)iin);
+            }
+            return new android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface.Stub.Proxy(obj);
+          }
+          @Override public android.os.IBinder asBinder()
+          {
+            return this;
+          }
+          /** @hide */
+          public static java.lang.String getDefaultTransactionName(int transactionCode)
+          {
+            switch (transactionCode)
+            {
+              case TRANSACTION_foo:
+              {
+                return "foo";
+              }
+              default:
+              {
+                return null;
+              }
+            }
+          }
+          /** @hide */
+          public java.lang.String getTransactionName(int transactionCode)
+          {
+            return this.getDefaultTransactionName(transactionCode);
+          }
+          @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
+          {
+            java.lang.String descriptor = DESCRIPTOR;
+            if (code >= android.os.IBinder.FIRST_CALL_TRANSACTION && code <= android.os.IBinder.LAST_CALL_TRANSACTION) {
+              data.enforceInterface(descriptor);
+            }
+            if (code == INTERFACE_TRANSACTION) {
+              reply.writeString(descriptor);
+              return true;
+            }
+            switch (code)
+            {
+              case TRANSACTION_foo:
+              {
+                this.foo();
+                reply.writeNoException();
+                break;
+              }
+              default:
+              {
+                return super.onTransact(code, data, reply, flags);
+              }
+            }
+            return true;
+          }
+          private static class Proxy implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface
+          {
+            private android.os.IBinder mRemote;
+            Proxy(android.os.IBinder remote)
+            {
+              mRemote = remote;
+            }
+            @Override public android.os.IBinder asBinder()
+            {
+              return mRemote;
+            }
+            public java.lang.String getInterfaceDescriptor()
+            {
+              return DESCRIPTOR;
+            }
+            @Override public void foo() throws android.os.RemoteException
+            {
+              android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+              android.os.Parcel _reply = android.os.Parcel.obtain();
+              try {
+                _data.writeInterfaceToken(DESCRIPTOR);
+                boolean _status = mRemote.transact(Stub.TRANSACTION_foo, _data, _reply, 0);
+                _reply.readException();
+              }
+              finally {
+                _reply.recycle();
+                _data.recycle();
+              }
+            }
+          }
+          static final int TRANSACTION_foo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+          /** @hide */
+          public int getMaxTransactionId()
+          {
+            return 0;
+          }
+        }
+        public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService$CompilerChecks$NoPrefixInterface$NestedNoPrefixInterface".replace('$', '.');
+        public void foo() throws android.os.RemoteException;
       }
     }
   }

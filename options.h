@@ -118,6 +118,9 @@ class Options final {
 
   static Options From(const vector<string>& args);
 
+  // to print in output files
+  std::string RawArgs() const { return raw_args_; }
+
   // Contain no references to unstructured data types (such as a parcelable that is
   // implemented in Java). These interfaces aren't inherently stable but they have the
   // capacity to be stabilized.
@@ -200,6 +203,7 @@ class Options final {
   Options() = default;
 
   const string myname_;
+  std::string raw_args_;
   Language language_ = Language::UNSPECIFIED;
   Task task_ = Task::COMPILE;
   CheckApiLevel check_api_level_ = CheckApiLevel::COMPATIBLE;
