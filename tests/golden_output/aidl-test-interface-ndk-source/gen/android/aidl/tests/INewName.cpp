@@ -95,7 +95,16 @@ INewName::~INewName() {}
 
 
 std::shared_ptr<INewName> INewName::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_INewName_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_INewName_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<BpNewName>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<INewName>(interface);
