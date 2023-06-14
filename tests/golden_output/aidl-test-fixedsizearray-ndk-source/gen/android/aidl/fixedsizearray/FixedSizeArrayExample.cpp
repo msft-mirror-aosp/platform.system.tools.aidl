@@ -1147,7 +1147,16 @@ FixedSizeArrayExample::IRepeatFixedSizeArray::~IRepeatFixedSizeArray() {}
 
 
 std::shared_ptr<FixedSizeArrayExample::IRepeatFixedSizeArray> FixedSizeArrayExample::IRepeatFixedSizeArray::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<FixedSizeArrayExample::BpRepeatFixedSizeArray>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<IRepeatFixedSizeArray>(interface);
@@ -1310,7 +1319,16 @@ FixedSizeArrayExample::IEmptyInterface::~IEmptyInterface() {}
 
 
 std::shared_ptr<FixedSizeArrayExample::IEmptyInterface> FixedSizeArrayExample::IEmptyInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<FixedSizeArrayExample::BpEmptyInterface>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<IEmptyInterface>(interface);
