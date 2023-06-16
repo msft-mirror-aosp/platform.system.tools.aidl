@@ -324,7 +324,7 @@ public class StructuredParcelable implements android.os.Parcelable
     _aidl_sj.add("u: " + (java.util.Objects.toString(u)));
     _aidl_sj.add("shouldBeConstS1: " + (java.util.Objects.toString(shouldBeConstS1)));
     _aidl_sj.add("defaultWithFoo: " + (android.aidl.tests.IntEnum.$.toString(defaultWithFoo)));
-    return "android.aidl.tests.StructuredParcelable" + _aidl_sj.toString()  ;
+    return "StructuredParcelable" + _aidl_sj.toString()  ;
   }
   @Override
   public boolean equals(Object other) {
@@ -449,7 +449,7 @@ public class StructuredParcelable implements android.os.Parcelable
     @Override
     public String toString() {
       java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(", ", "{", "}");
-      return "android.aidl.tests.StructuredParcelable.Empty" + _aidl_sj.toString()  ;
+      return "Empty" + _aidl_sj.toString()  ;
     }
     @Override
     public boolean equals(Object other) {

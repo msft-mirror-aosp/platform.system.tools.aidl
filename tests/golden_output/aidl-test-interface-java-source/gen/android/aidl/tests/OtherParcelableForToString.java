@@ -47,7 +47,7 @@ public class OtherParcelableForToString implements android.os.Parcelable
   public String toString() {
     java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(", ", "{", "}");
     _aidl_sj.add("field: " + (java.util.Objects.toString(field)));
-    return "android.aidl.tests.OtherParcelableForToString" + _aidl_sj.toString()  ;
+    return "OtherParcelableForToString" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {

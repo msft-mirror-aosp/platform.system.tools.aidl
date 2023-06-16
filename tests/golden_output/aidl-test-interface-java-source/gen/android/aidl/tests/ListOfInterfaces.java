@@ -356,7 +356,7 @@ public class ListOfInterfaces implements android.os.Parcelable
       _aidl_sj.add("nullable_iface: " + (java.util.Objects.toString(nullable_iface)));
       _aidl_sj.add("iface_list: " + (java.util.Objects.toString(iface_list)));
       _aidl_sj.add("nullable_iface_list: " + (java.util.Objects.toString(nullable_iface_list)));
-      return "android.aidl.tests.ListOfInterfaces.MyParcelable" + _aidl_sj.toString()  ;
+      return "MyParcelable" + _aidl_sj.toString()  ;
     }
     @Override
     public boolean equals(Object other) {
@@ -541,10 +541,10 @@ public class ListOfInterfaces implements android.os.Parcelable
     @Override
     public String toString() {
       switch (_tag) {
-      case iface: return "android.aidl.tests.ListOfInterfaces.MyUnion.iface(" + (java.util.Objects.toString(getIface())) + ")";
-      case nullable_iface: return "android.aidl.tests.ListOfInterfaces.MyUnion.nullable_iface(" + (java.util.Objects.toString(getNullable_iface())) + ")";
-      case iface_list: return "android.aidl.tests.ListOfInterfaces.MyUnion.iface_list(" + (java.util.Objects.toString(getIface_list())) + ")";
-      case nullable_iface_list: return "android.aidl.tests.ListOfInterfaces.MyUnion.nullable_iface_list(" + (java.util.Objects.toString(getNullable_iface_list())) + ")";
+      case iface: return "MyUnion.iface(" + (java.util.Objects.toString(getIface())) + ")";
+      case nullable_iface: return "MyUnion.nullable_iface(" + (java.util.Objects.toString(getNullable_iface())) + ")";
+      case iface_list: return "MyUnion.iface_list(" + (java.util.Objects.toString(getIface_list())) + ")";
+      case nullable_iface_list: return "MyUnion.nullable_iface_list(" + (java.util.Objects.toString(getNullable_iface_list())) + ")";
       }
       throw new IllegalStateException("unknown field: " + _tag);
     }
