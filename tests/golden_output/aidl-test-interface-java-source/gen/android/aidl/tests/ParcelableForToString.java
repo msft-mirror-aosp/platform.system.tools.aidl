@@ -1,5 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ParcelableForToString.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ParcelableForToString.aidl
  */
 package android.aidl.tests;
 public class ParcelableForToString implements android.os.Parcelable
@@ -156,7 +157,7 @@ public class ParcelableForToString implements android.os.Parcelable
     _aidl_sj.add("nullList: " + (java.util.Objects.toString(nullList)));
     _aidl_sj.add("parcelableGeneric: " + (java.util.Objects.toString(parcelableGeneric)));
     _aidl_sj.add("unionValue: " + (java.util.Objects.toString(unionValue)));
-    return "android.aidl.tests.ParcelableForToString" + _aidl_sj.toString()  ;
+    return "ParcelableForToString" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {

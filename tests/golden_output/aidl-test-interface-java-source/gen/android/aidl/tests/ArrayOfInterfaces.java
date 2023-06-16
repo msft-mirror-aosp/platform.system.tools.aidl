@@ -1,5 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ArrayOfInterfaces.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ArrayOfInterfaces.aidl
  */
 package android.aidl.tests;
 public class ArrayOfInterfaces implements android.os.Parcelable
@@ -367,7 +368,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
       _aidl_sj.add("nullable_iface: " + (java.util.Objects.toString(nullable_iface)));
       _aidl_sj.add("iface_array: " + (java.util.Arrays.toString(iface_array)));
       _aidl_sj.add("nullable_iface_array: " + (java.util.Arrays.toString(nullable_iface_array)));
-      return "android.aidl.tests.ArrayOfInterfaces.MyParcelable" + _aidl_sj.toString()  ;
+      return "MyParcelable" + _aidl_sj.toString()  ;
     }
     @Override
     public boolean equals(Object other) {
@@ -550,10 +551,10 @@ public class ArrayOfInterfaces implements android.os.Parcelable
     @Override
     public String toString() {
       switch (_tag) {
-      case iface: return "android.aidl.tests.ArrayOfInterfaces.MyUnion.iface(" + (java.util.Objects.toString(getIface())) + ")";
-      case nullable_iface: return "android.aidl.tests.ArrayOfInterfaces.MyUnion.nullable_iface(" + (java.util.Objects.toString(getNullable_iface())) + ")";
-      case iface_array: return "android.aidl.tests.ArrayOfInterfaces.MyUnion.iface_array(" + (java.util.Arrays.toString(getIface_array())) + ")";
-      case nullable_iface_array: return "android.aidl.tests.ArrayOfInterfaces.MyUnion.nullable_iface_array(" + (java.util.Arrays.toString(getNullable_iface_array())) + ")";
+      case iface: return "MyUnion.iface(" + (java.util.Objects.toString(getIface())) + ")";
+      case nullable_iface: return "MyUnion.nullable_iface(" + (java.util.Objects.toString(getNullable_iface())) + ")";
+      case iface_array: return "MyUnion.iface_array(" + (java.util.Arrays.toString(getIface_array())) + ")";
+      case nullable_iface_array: return "MyUnion.nullable_iface_array(" + (java.util.Arrays.toString(getNullable_iface_array())) + ")";
       }
       throw new IllegalStateException("unknown field: " + _tag);
     }

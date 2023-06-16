@@ -30,6 +30,7 @@
 #include <android-base/strings.h>
 
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_cpp.h"
 
 #include "logging.h"
@@ -702,8 +703,8 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlInterface& interface,
 
   if (auto parent = interface.GetParentType(); parent) {
     out << fmt::format("DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE({}, {}, \"{}\")\n",
-                       GetQualifiedName(*parent), ClassName(interface, ClassNames::BASE),
-                       interface.GetDescriptor());
+                       GetQualifiedName(*parent, ClassNames::MAYBE_INTERFACE),
+                       ClassName(interface, ClassNames::BASE), interface.GetDescriptor());
   } else {
     out << fmt::format("DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE({}, \"{}\")\n",
                        ClassName(interface, ClassNames::BASE), interface.GetDescriptor());
@@ -1525,6 +1526,9 @@ bool GenerateCpp(const string& output_file, const Options& options, const AidlTy
   // Wrap Generate* function to handle CodeWriter for a file.
   auto gen = [&](auto file, GenFn fn) {
     unique_ptr<CodeWriter> writer(io_delegate.GetCodeWriter(file));
+
+    GenerateAutoGenHeader(*writer, options);
+
     fn(*writer, defined_type, typenames, options);
     AIDL_FATAL_IF(!writer->Close(), defined_type) << "I/O Error!";
     return true;

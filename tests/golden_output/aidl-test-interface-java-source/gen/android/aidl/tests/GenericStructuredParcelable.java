@@ -1,5 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/GenericStructuredParcelable.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/GenericStructuredParcelable.aidl
  */
 package android.aidl.tests;
 public class GenericStructuredParcelable<T,U,B> implements android.os.Parcelable
@@ -51,7 +52,7 @@ public class GenericStructuredParcelable<T,U,B> implements android.os.Parcelable
     java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(", ", "{", "}");
     _aidl_sj.add("a: " + (a));
     _aidl_sj.add("b: " + (b));
-    return "android.aidl.tests.GenericStructuredParcelable" + _aidl_sj.toString()  ;
+    return "GenericStructuredParcelable" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {

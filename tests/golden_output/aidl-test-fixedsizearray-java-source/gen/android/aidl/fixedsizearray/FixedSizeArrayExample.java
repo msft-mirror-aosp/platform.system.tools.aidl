@@ -1,5 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen/android/aidl/fixedsizearray/FixedSizeArrayExample.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
  */
 package android.aidl.fixedsizearray;
 public class FixedSizeArrayExample implements android.os.Parcelable
@@ -325,7 +326,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
     _aidl_sj.add("pfdNullableMatrix: " + (java.util.Arrays.deepToString(pfdNullableMatrix)));
     _aidl_sj.add("parcelableNullableMatrix: " + (java.util.Arrays.deepToString(parcelableNullableMatrix)));
     _aidl_sj.add("interfaceNullableMatrix: " + (java.util.Arrays.deepToString(interfaceNullableMatrix)));
-    return "android.aidl.fixedsizearray.FixedSizeArrayExample" + _aidl_sj.toString()  ;
+    return "FixedSizeArrayExample" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {

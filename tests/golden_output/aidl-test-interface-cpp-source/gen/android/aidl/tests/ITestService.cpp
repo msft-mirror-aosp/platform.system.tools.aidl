@@ -1,3 +1,7 @@
+/*
+ * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ */
 #include <android/aidl/tests/ITestService.h>
 #include <android/aidl/tests/BpTestService.h>
 namespace android {
@@ -5435,6 +5439,244 @@ namespace tests {
   }
   __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
 }
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+#include <android/aidl/tests/ITestService.h>
+namespace android {
+namespace aidl {
+namespace tests {
+DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ITestService::CompilerChecks, NoPrefixInterface, "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface")
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+#include <android/aidl/tests/ITestService.h>
+#include <binder/Parcel.h>
+#include <android-base/macros.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+
+ITestService::CompilerChecks::BpNoPrefixInterface::BpNoPrefixInterface(const ::android::sp<::android::IBinder>& _aidl_impl)
+    : BpInterface<INoPrefixInterface>(_aidl_impl){
+}
+
+::android::binder::Status ITestService::CompilerChecks::BpNoPrefixInterface::foo() {
+  ::android::Parcel _aidl_data;
+  _aidl_data.markForBinder(remoteStrong());
+  ::android::Parcel _aidl_reply;
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  ::android::binder::Status _aidl_status;
+  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NoPrefixInterface::foo::cppClient");
+  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = remote()->transact(ITestService::CompilerChecks::BnNoPrefixInterface::TRANSACTION_foo, _aidl_data, &_aidl_reply, 0);
+  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INoPrefixInterface::getDefaultImpl())) {
+     return INoPrefixInterface::getDefaultImpl()->foo();
+  }
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = _aidl_status.readFromParcel(_aidl_reply);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  if (!_aidl_status.isOk()) {
+    return _aidl_status;
+  }
+  _aidl_error:
+  _aidl_status.setFromStatusT(_aidl_ret_status);
+  return _aidl_status;
+}
+
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+#include <binder/Parcel.h>
+#include <binder/Stability.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+
+ITestService::CompilerChecks::BnNoPrefixInterface::BnNoPrefixInterface()
+{
+  ::android::internal::Stability::markCompilationUnit(this);
+}
+
+::android::status_t ITestService::CompilerChecks::BnNoPrefixInterface::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  switch (_aidl_code) {
+  case BnNoPrefixInterface::TRANSACTION_foo:
+  {
+    if (!(_aidl_data.checkInterface(this))) {
+      _aidl_ret_status = ::android::BAD_TYPE;
+      break;
+    }
+    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NoPrefixInterface::foo::cppServer");
+    ::android::binder::Status _aidl_status(foo());
+    _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (!_aidl_status.isOk()) {
+      break;
+    }
+  }
+  break;
+  default:
+  {
+    _aidl_ret_status = ::android::BBinder::onTransact(_aidl_code, _aidl_data, _aidl_reply, _aidl_flags);
+  }
+  break;
+  }
+  if (_aidl_ret_status == ::android::UNEXPECTED_NULL) {
+    _aidl_ret_status = ::android::binder::Status::fromExceptionCode(::android::binder::Status::EX_NULL_POINTER).writeOverParcel(_aidl_reply);
+  }
+  return _aidl_ret_status;
+}
+
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+::android::status_t ITestService::CompilerChecks::INoPrefixInterface::Nested::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
+  int32_t _aidl_parcelable_raw_size = 0;
+  _aidl_ret_status = _aidl_parcel->readInt32(&_aidl_parcelable_raw_size);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcelable_raw_size < 4) return ::android::BAD_VALUE;
+  size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;
+  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+  return _aidl_ret_status;
+}
+::android::status_t ITestService::CompilerChecks::INoPrefixInterface::Nested::writeToParcel(::android::Parcel* _aidl_parcel) const {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  _aidl_parcel->writeInt32(0);
+  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  _aidl_parcel->setDataPosition(_aidl_start_pos);
+  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->setDataPosition(_aidl_end_pos);
+  return _aidl_ret_status;
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+#include <android/aidl/tests/ITestService.h>
+namespace android {
+namespace aidl {
+namespace tests {
+DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ITestService::CompilerChecks::INoPrefixInterface, NestedNoPrefixInterface, "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface")
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+#include <android/aidl/tests/ITestService.h>
+#include <binder/Parcel.h>
+#include <android-base/macros.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+
+ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::BpNestedNoPrefixInterface(const ::android::sp<::android::IBinder>& _aidl_impl)
+    : BpInterface<INestedNoPrefixInterface>(_aidl_impl){
+}
+
+::android::binder::Status ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::foo() {
+  ::android::Parcel _aidl_data;
+  _aidl_data.markForBinder(remoteStrong());
+  ::android::Parcel _aidl_reply;
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  ::android::binder::Status _aidl_status;
+  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NestedNoPrefixInterface::foo::cppClient");
+  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = remote()->transact(ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::TRANSACTION_foo, _aidl_data, &_aidl_reply, 0);
+  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedNoPrefixInterface::getDefaultImpl())) {
+     return INestedNoPrefixInterface::getDefaultImpl()->foo();
+  }
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = _aidl_status.readFromParcel(_aidl_reply);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  if (!_aidl_status.isOk()) {
+    return _aidl_status;
+  }
+  _aidl_error:
+  _aidl_status.setFromStatusT(_aidl_ret_status);
+  return _aidl_status;
+}
+
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/ITestService.h>
+#include <binder/Parcel.h>
+#include <binder/Stability.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+
+ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::BnNestedNoPrefixInterface()
+{
+  ::android::internal::Stability::markCompilationUnit(this);
+}
+
+::android::status_t ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  switch (_aidl_code) {
+  case BnNestedNoPrefixInterface::TRANSACTION_foo:
+  {
+    if (!(_aidl_data.checkInterface(this))) {
+      _aidl_ret_status = ::android::BAD_TYPE;
+      break;
+    }
+    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NestedNoPrefixInterface::foo::cppServer");
+    ::android::binder::Status _aidl_status(foo());
+    _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (!_aidl_status.isOk()) {
+      break;
+    }
+  }
+  break;
+  default:
+  {
+    _aidl_ret_status = ::android::BBinder::onTransact(_aidl_code, _aidl_data, _aidl_reply, _aidl_flags);
+  }
+  break;
+  }
+  if (_aidl_ret_status == ::android::UNEXPECTED_NULL) {
+    _aidl_ret_status = ::android::binder::Status::fromExceptionCode(::android::binder::Status::EX_NULL_POINTER).writeOverParcel(_aidl_reply);
+  }
+  return _aidl_ret_status;
+}
+
 }  // namespace tests
 }  // namespace aidl
 }  // namespace android

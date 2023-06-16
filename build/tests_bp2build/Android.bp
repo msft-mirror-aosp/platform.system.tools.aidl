@@ -29,6 +29,8 @@ aidl_interface {
     ],
     backend: {
         java: {
+            // TODO(b/285574832) reenable aidl tests
+            enabled: false,
             min_sdk_version: "29",
         },
         ndk: {
@@ -53,6 +55,8 @@ aidl_interface {
     ],
     backend: {
         java: {
+            // TODO(b/285574832) reenable aidl tests
+            enabled: false,
             min_sdk_version: "29",
         },
         ndk: {
@@ -69,19 +73,20 @@ aidl_interface {
     ],
 }
 
-java_library {
-    name: "example-aidl-latest",
-    sdk_version: "system_current",
-    min_sdk_version: "29",
-    static_libs: [
-        "example-aidl-interfaces-V2-java",
-    ],
-}
-
-java_library {
-    name: "example-aidl-test",
-    sdk_version: "system_current",
-    min_sdk_version: "29",
-    srcs: ["src/android/Test.java"],
-    static_libs: ["example-aidl-latest"],
-}
+// TODO(b/285574832) reenable aidl tests
+//java_library {
+//    name: "example-aidl-latest",
+//    sdk_version: "system_current",
+//    min_sdk_version: "29",
+//    static_libs: [
+//        "example-aidl-interfaces-V2-java",
+//    ],
+//}
+//
+//java_library {
+//    name: "example-aidl-test",
+//    sdk_version: "system_current",
+//    min_sdk_version: "29",
+//    srcs: ["src/android/Test.java"],
+//    static_libs: ["example-aidl-latest"],
+//}

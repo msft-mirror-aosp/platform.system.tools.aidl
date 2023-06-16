@@ -29,6 +29,7 @@
 #include <android-base/format.h>
 #include <android-base/stringprintf.h>
 
+#include "aidl_to_common.h"
 #include "aidl_to_java.h"
 #include "code_writer.h"
 #include "logging.h"
@@ -205,7 +206,7 @@ void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcel,
     ToStringFor(ctx);
     out << "));\n";
   }
-  out << "return \"" << parcel.GetCanonicalName() << "\" + _aidl_sj.toString()  ;\n";
+  out << "return \"" << parcel.GetName() << "\" + _aidl_sj.toString()  ;\n";
   out.Dedent();
   out << "}\n";
 }
@@ -224,7 +225,7 @@ void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcel, const AidlTy
         .var = GetterName(*field) + "()",
         .min_sdk_version = options.GetMinSdkVersion(),
     };
-    out << "case " << field->GetName() << ": return \"" << parcel.GetCanonicalName() << "."
+    out << "case " << field->GetName() << ": return \"" << parcel.GetName() << "."
         << field->GetName() << "(\" + (";
     ToStringFor(ctx);
     out << ") + \")\";\n";
@@ -1020,16 +1021,6 @@ std::vector<std::string> JavaAnnotationsFor(const AidlNode& a) {
 
 void GenerateClass(CodeWriter& out, const AidlDefinedType& defined_type, const AidlTypenames& types,
                    const Options& options) {
-  // Generate file header (comments and package) only if it's a root type.
-  if (defined_type.GetParentType() == nullptr) {
-    out << "/*\n";
-    out << " * This file is auto-generated.  DO NOT MODIFY.\n";
-    out << " */\n";
-    if (const auto pkg = defined_type.GetPackage(); !pkg.empty()) {
-      out << "package " << pkg << ";\n";
-    }
-  }
-
   if (const AidlStructuredParcelable* parcelable = defined_type.AsStructuredParcelable();
       parcelable != nullptr) {
     GenerateParcelableClass(parcelable, types, options)->Write(&out);
@@ -1051,6 +1042,17 @@ void GenerateClass(CodeWriter& out, const AidlDefinedType& defined_type, const A
 void GenerateJava(const std::string& filename, const Options& options, const AidlTypenames& types,
                   const AidlDefinedType& defined_type, const IoDelegate& io_delegate) {
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
+
+  /* write header */ {
+    auto& out = *code_writer;
+
+    GenerateAutoGenHeader(out, options);
+
+    if (const auto pkg = defined_type.GetPackage(); !pkg.empty()) {
+      out << "package " << pkg << ";\n";
+    }
+  }
+
   GenerateClass(*code_writer, defined_type, types, options);
   AIDL_FATAL_IF(!code_writer->Close(), defined_type) << "I/O Error!";
 }

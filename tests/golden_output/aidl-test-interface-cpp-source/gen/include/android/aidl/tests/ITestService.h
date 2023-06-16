@@ -1,3 +1,7 @@
+/*
+ * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ */
 #pragma once
 
 #include <android/aidl/tests/BackendType.h>
@@ -262,6 +266,124 @@ public:
     private:
       std::variant<int32_t, ::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated> _value;
     };  // class UsingHasDeprecated
+    class INoPrefixInterfaceDelegator;
+
+    class INoPrefixInterface : public ::android::IInterface {
+    public:
+      typedef INoPrefixInterfaceDelegator DefaultDelegator;
+      DECLARE_META_INTERFACE(NoPrefixInterface)
+      class Nested : public ::android::Parcelable {
+      public:
+        inline bool operator!=(const Nested&) const {
+          return std::tie() != std::tie();
+        }
+        inline bool operator<(const Nested&) const {
+          return std::tie() < std::tie();
+        }
+        inline bool operator<=(const Nested&) const {
+          return std::tie() <= std::tie();
+        }
+        inline bool operator==(const Nested&) const {
+          return std::tie() == std::tie();
+        }
+        inline bool operator>(const Nested&) const {
+          return std::tie() > std::tie();
+        }
+        inline bool operator>=(const Nested&) const {
+          return std::tie() >= std::tie();
+        }
+
+        ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
+        ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
+        static const ::android::String16& getParcelableDescriptor() {
+          static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.Nested");
+          return DESCRIPTOR;
+        }
+        inline std::string toString() const {
+          std::ostringstream os;
+          os << "Nested{";
+          os << "}";
+          return os.str();
+        }
+      };  // class Nested
+      class INestedNoPrefixInterfaceDelegator;
+
+      class INestedNoPrefixInterface : public ::android::IInterface {
+      public:
+        typedef INestedNoPrefixInterfaceDelegator DefaultDelegator;
+        DECLARE_META_INTERFACE(NestedNoPrefixInterface)
+        virtual ::android::binder::Status foo() = 0;
+      };  // class INestedNoPrefixInterface
+
+      class INestedNoPrefixInterfaceDefault : public INestedNoPrefixInterface {
+      public:
+        ::android::IBinder* onAsBinder() override {
+          return nullptr;
+        }
+        ::android::binder::Status foo() override {
+          return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+        }
+      };  // class INestedNoPrefixInterfaceDefault
+      class BpNestedNoPrefixInterface : public ::android::BpInterface<INestedNoPrefixInterface> {
+      public:
+        explicit BpNestedNoPrefixInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
+        virtual ~BpNestedNoPrefixInterface() = default;
+        ::android::binder::Status foo() override;
+      };  // class BpNestedNoPrefixInterface
+      class BnNestedNoPrefixInterface : public ::android::BnInterface<INestedNoPrefixInterface> {
+      public:
+        static constexpr uint32_t TRANSACTION_foo = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
+        explicit BnNestedNoPrefixInterface();
+        ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
+      };  // class BnNestedNoPrefixInterface
+
+      class INestedNoPrefixInterfaceDelegator : public BnNestedNoPrefixInterface {
+      public:
+        explicit INestedNoPrefixInterfaceDelegator(const ::android::sp<INestedNoPrefixInterface> &impl) : _aidl_delegate(impl) {}
+
+        ::android::sp<INestedNoPrefixInterface> getImpl() { return _aidl_delegate; }
+        ::android::binder::Status foo() override {
+          return _aidl_delegate->foo();
+        }
+      private:
+        ::android::sp<INestedNoPrefixInterface> _aidl_delegate;
+      };  // class INestedNoPrefixInterfaceDelegator
+      virtual ::android::binder::Status foo() = 0;
+    };  // class INoPrefixInterface
+
+    class INoPrefixInterfaceDefault : public INoPrefixInterface {
+    public:
+      ::android::IBinder* onAsBinder() override {
+        return nullptr;
+      }
+      ::android::binder::Status foo() override {
+        return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+      }
+    };  // class INoPrefixInterfaceDefault
+    class BpNoPrefixInterface : public ::android::BpInterface<INoPrefixInterface> {
+    public:
+      explicit BpNoPrefixInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
+      virtual ~BpNoPrefixInterface() = default;
+      ::android::binder::Status foo() override;
+    };  // class BpNoPrefixInterface
+    class BnNoPrefixInterface : public ::android::BnInterface<INoPrefixInterface> {
+    public:
+      static constexpr uint32_t TRANSACTION_foo = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
+      explicit BnNoPrefixInterface();
+      ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
+    };  // class BnNoPrefixInterface
+
+    class INoPrefixInterfaceDelegator : public BnNoPrefixInterface {
+    public:
+      explicit INoPrefixInterfaceDelegator(const ::android::sp<INoPrefixInterface> &impl) : _aidl_delegate(impl) {}
+
+      ::android::sp<INoPrefixInterface> getImpl() { return _aidl_delegate; }
+      ::android::binder::Status foo() override {
+        return _aidl_delegate->foo();
+      }
+    private:
+      ::android::sp<INoPrefixInterface> _aidl_delegate;
+    };  // class INoPrefixInterfaceDelegator
     ::android::sp<::android::IBinder> binder;
     ::android::sp<::android::IBinder> nullable_binder;
     ::std::vector<::android::sp<::android::IBinder>> binder_array;

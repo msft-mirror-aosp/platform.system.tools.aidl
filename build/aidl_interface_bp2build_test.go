@@ -1,6 +1,7 @@
 package aidl
 
 import (
+	"android/soong/aidl_library"
 	"android/soong/android"
 	"android/soong/bp2build"
 	"testing"
@@ -12,37 +13,17 @@ func runAidlInterfaceTestCase(t *testing.T, tc bp2build.Bp2buildTestCase) {
 		t,
 		func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
-			ctx.RegisterModuleType("aidl_interface_headers", AidlInterfaceHeadersFactory)
+			ctx.RegisterModuleType("aidl_library", aidl_library.AidlLibraryFactory)
 		},
 		tc,
 	)
-}
-
-func TestAidlInterfaceHeaders(t *testing.T) {
-	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
-		Description: `aidl_interface_headers`,
-		Blueprint: `
-			aidl_interface_headers {
-				name: "aidl-interface-headers",
-				include_dir: "src",
-				srcs: [
-					"src/A.aidl",
-				],
-			}`,
-		ExpectedBazelTargets: []string{
-			bp2build.MakeBazelTargetNoRestrictions("aidl_library", "aidl-interface-headers", bp2build.AttrNameToString{
-				"strip_import_prefix": `"src"`,
-				"hdrs":                `["src/A.aidl"]`,
-			}),
-		},
-	})
 }
 
 func TestAidlInterface(t *testing.T) {
 	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
 		Description: `aidl_interface with single "latest" aidl_interface import`,
 		Blueprint: `
-			aidl_interface_headers {
+			aidl_library {
 				name: "aidl-interface-headers",
 			}
 			aidl_interface {
@@ -68,7 +49,9 @@ func TestAidlInterface(t *testing.T) {
 				],
 			}`,
 		ExpectedBazelTargets: []string{
-			bp2build.MakeBazelTargetNoRestrictions("aidl_library", "aidl-interface-headers", bp2build.AttrNameToString{}),
+			bp2build.MakeBazelTargetNoRestrictions("aidl_library", "aidl-interface-headers", bp2build.AttrNameToString{
+				"tags": `["apex_available=//apex_available:anyapex"]`,
+			}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface-import", bp2build.AttrNameToString{
 				"java_config": `{
         "enabled": True,

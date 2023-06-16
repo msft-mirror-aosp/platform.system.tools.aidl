@@ -1,5 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/StructuredParcelable.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/StructuredParcelable.aidl
  */
 package android.aidl.tests;
 public class StructuredParcelable implements android.os.Parcelable
@@ -323,7 +324,7 @@ public class StructuredParcelable implements android.os.Parcelable
     _aidl_sj.add("u: " + (java.util.Objects.toString(u)));
     _aidl_sj.add("shouldBeConstS1: " + (java.util.Objects.toString(shouldBeConstS1)));
     _aidl_sj.add("defaultWithFoo: " + (android.aidl.tests.IntEnum.$.toString(defaultWithFoo)));
-    return "android.aidl.tests.StructuredParcelable" + _aidl_sj.toString()  ;
+    return "StructuredParcelable" + _aidl_sj.toString()  ;
   }
   @Override
   public boolean equals(Object other) {
@@ -448,7 +449,7 @@ public class StructuredParcelable implements android.os.Parcelable
     @Override
     public String toString() {
       java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(", ", "{", "}");
-      return "android.aidl.tests.StructuredParcelable.Empty" + _aidl_sj.toString()  ;
+      return "Empty" + _aidl_sj.toString()  ;
     }
     @Override
     public boolean equals(Object other) {

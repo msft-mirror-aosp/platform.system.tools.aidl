@@ -28,6 +28,7 @@ bootstrap_go_package {
         "blueprint",
         "soong",
         "soong-android",
+        "soong-aidl-library",
         "soong-bp2build",
         "soong-cc",
         "soong-genrule",
@@ -41,8 +42,8 @@ bootstrap_go_package {
         "aidl_api.go",
         "aidl_gen_rule.go",
         "aidl_interface_backends.go",
+
         "aidl_interface_defaults.go",
-        "aidl_interface_headers.go",
         "aidl_interface_metadata_singleton.go",
         "aidl_rust_source_provider.go",
         "aidl_utils.go",
@@ -110,6 +111,24 @@ aidl_interface {
         "3",
         "4",
     ],
+    backend: {
+        rust: {
+            enabled: true,
+        },
+    },
+}
+
+aidl_interface {
+    name: "test-piece-vendor-only",
+    local_include_dir: "tests_1",
+    vendor: true,
+    flags: ["-Werror"],
+    srcs: [
+        "tests_1/some_package/IFoo.aidl",
+        "tests_1/some_package/Thing.aidl",
+        "tests_1/some_package/sub_package/*.aidl", // testing glob w/o filegroup
+    ],
+    unstable: true,
     backend: {
         rust: {
             enabled: true,
@@ -227,6 +246,7 @@ aidl_interface {
     local_include_dir: "tests_vintf",
     srcs: ["tests_vintf/vintf/IFoo.aidl"],
     stability: "vintf",
+    vendor_available: true,
     backend: {
         rust: {
             enabled: true,

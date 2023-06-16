@@ -1,5 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/OtherParcelableForToString.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/OtherParcelableForToString.aidl
  */
 package android.aidl.tests;
 public class OtherParcelableForToString implements android.os.Parcelable
@@ -46,7 +47,7 @@ public class OtherParcelableForToString implements android.os.Parcelable
   public String toString() {
     java.util.StringJoiner _aidl_sj = new java.util.StringJoiner(", ", "{", "}");
     _aidl_sj.add("field: " + (java.util.Objects.toString(field)));
-    return "android.aidl.tests.OtherParcelableForToString" + _aidl_sj.toString()  ;
+    return "OtherParcelableForToString" + _aidl_sj.toString()  ;
   }
   @Override
   public int describeContents() {
