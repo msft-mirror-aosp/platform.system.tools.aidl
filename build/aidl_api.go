@@ -394,7 +394,7 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 				return
 			}
 			deps.implicits = append(deps.implicits, aidlLibraryInfo.Hdrs.ToList()...)
-			deps.imports = append(deps.imports, aidlLibraryInfo.IncludeDirs.ToList().Strings()...)
+			deps.imports = append(deps.imports, android.Paths(aidlLibraryInfo.IncludeDirs.ToList()).Strings()...)
 		}
 	})
 	return deps
