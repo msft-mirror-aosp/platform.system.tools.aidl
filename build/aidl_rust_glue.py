@@ -73,6 +73,7 @@ def main(output, root, inputs, imports):
   with open(output, "w") as lib_rs_file:
     lib_rs_file.write("#![allow(non_snake_case)]\n")
     lib_rs_file.write("#![allow(missing_docs)]\n")
+    lib_rs_file.write("#[deprecated(note = \"Please access via libbinder_rs binder::\")]\n")
     lib_rs_file.write("pub use binder;\n")
 
     lib_rs_file.write("pub mod aidl {\n")
