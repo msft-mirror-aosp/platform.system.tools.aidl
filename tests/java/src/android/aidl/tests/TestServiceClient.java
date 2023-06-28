@@ -19,6 +19,7 @@ package android.aidl.tests;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -87,6 +88,13 @@ public class TestServiceClient {
         if (binder2 != null) {
             cpp_java_tests = ICppJavaTests.Stub.asInterface(binder2);
         }
+    }
+
+    @Test
+    public void testBinderIdentity() throws RemoteException {
+        IBinder binder = ServiceManager.waitForService(ITestService.class.getName());
+
+        assertEquals(binder, service.asBinder());
     }
 
     @Test
