@@ -76,7 +76,16 @@ ArrayOfInterfaces::IEmptyInterface::~IEmptyInterface() {}
 
 
 std::shared_ptr<ArrayOfInterfaces::IEmptyInterface> ArrayOfInterfaces::IEmptyInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<ArrayOfInterfaces::BpEmptyInterface>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<IEmptyInterface>(interface);
@@ -286,7 +295,16 @@ ArrayOfInterfaces::IMyInterface::~IMyInterface() {}
 
 
 std::shared_ptr<ArrayOfInterfaces::IMyInterface> ArrayOfInterfaces::IMyInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ArrayOfInterfaces_IMyInterface_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ArrayOfInterfaces_IMyInterface_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<ArrayOfInterfaces::BpMyInterface>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<IMyInterface>(interface);
