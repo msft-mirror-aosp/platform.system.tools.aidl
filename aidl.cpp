@@ -95,7 +95,7 @@ const int kLastMetaMethodId = kFirstMetaMethodId - 99;
 const int kMinUserSetMethodId = 0;
 const int kMaxUserSetMethodId = kLastMetaMethodId - 1;
 
-bool check_filename(const std::string& filename, const AidlDefinedType& defined_type) {
+bool check_filename(const std::string& filename, const Options& options, const AidlDefinedType& defined_type) {
     const char* p;
     string expected;
     string fn;
@@ -151,9 +151,36 @@ bool check_filename(const std::string& filename, const AidlDefinedType& defined_
 
     if (!valid) {
       AIDL_ERROR(defined_type) << name << " should be declared in a file called " << expected;
+      return false;
     }
 
-    return valid;
+    // Make sure that base directory of this AIDL file is one of the import directories. Base
+    // directory of an AIDL file `some/dir/package/name/Iface.aidl` is defined as `some/dir` if the
+    // package name is `package.name` and the type name is `Iface`. This check is needed because the
+    // build system that invokes this aidl compiler doesn't have knowledge about what the package
+    // name is for a given aidl file; because the build system doesn't parse the file. The only hint
+    // that user can give to the build system is the import path. In the above case, by specifying
+    // the import path to be `some/dir/`, the build system can know that the package name is what
+    // follows the import path: `package.name`.
+    // This is not used when the user has specified the exact output file path though.
+    if (options.OutputFile().empty()) {
+      std::string_view basedir(filename);
+      basedir.remove_suffix(expected.length());
+      if (basedir.empty()) {
+        basedir = "./";
+      }
+      const std::set<std::string>& i = options.ImportDirs();
+      if (std::find_if(i.begin(), i.end(), [&basedir](const std::string& i) {
+            return basedir == i;
+      }) == i.end()) {
+        AIDL_ERROR(defined_type) << "directory " << basedir << " is not found in any of the import paths:\n - " <<
+          base::Join(options.ImportDirs(), "\n - ");
+        return false;
+      }
+    }
+
+    // All checks passed
+    return true;
 }
 
 bool write_dep_file(const Options& options, const AidlDefinedType& defined_type,
@@ -519,7 +546,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         defined_type);
 
     // Ensure that foo.bar.IFoo is defined in <some_path>/foo/bar/IFoo.aidl
-    if (num_defined_types == 1 && !check_filename(input_file_name, *defined_type)) {
+    if (num_defined_types == 1 && !check_filename(input_file_name, options, *defined_type)) {
       return AidlError::BAD_PACKAGE;
     }
 
