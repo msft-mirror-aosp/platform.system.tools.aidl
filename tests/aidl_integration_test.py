@@ -7,6 +7,7 @@ import pipes
 import re
 import subprocess
 import sys
+import textwrap
 import unittest
 
 BITNESS_32 = ("", "32")
@@ -22,9 +23,13 @@ RUST_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service/aidl
 # From AidlTestsJava.java
 INSTRUMENTATION_SUCCESS_PATTERN = r'TEST SUCCESS\n$'
 
-class TestFail(Exception):
+class ShellResultFail(Exception):
     """Raised on test failures."""
-    pass
+    def __init__(self, err):
+        stderr = textwrap.indent(err.stderr, "    ")
+        stdout = textwrap.indent(err.stdout, "    ")
+
+        super().__init__(f"STDOUT:\n{stdout}\nSTDERR:\n{stderr}\nRESULT:{err.exit_status}")
 
 def pretty_bitness(bitness):
     """Returns a human readable version of bitness, corresponding to BITNESS_* variable"""
@@ -118,7 +123,7 @@ class NativeClient:
         result = self.host.run(self.binary + ' --gtest_color=yes', ignore_status=True)
         print(result.printable_string())
         if result.exit_status:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class CppClient(NativeClient):
     def __init__(self, host, bitness):
@@ -160,7 +165,7 @@ class JavaClient:
                                ' /data/framework android.aidl.tests.AidlJavaTests')
         print(result.printable_string())
         if re.search(INSTRUMENTATION_SUCCESS_PATTERN, result.stdout) is None:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class JavaVersionTestClient:
     def __init__(self, host, bitness, ver):
@@ -177,7 +182,7 @@ class JavaVersionTestClient:
                                ' /data/framework android.aidl.sdkversion.tests.AidlJavaVersionTests')
         print(result.printable_string())
         if re.search(INSTRUMENTATION_SUCCESS_PATTERN, result.stdout) is None:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class JavaVersionTestServer:
     def __init__(self, host, bitness, ver):
@@ -208,7 +213,7 @@ class JavaPermissionClient:
                                ' /data/framework android.aidl.permission.tests.PermissionTests')
         print(result.printable_string())
         if re.search(INSTRUMENTATION_SUCCESS_PATTERN, result.stdout) is None:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class JavaPermissionServer:
     def __init__(self, host, bitness):
@@ -238,7 +243,7 @@ class RustClient:
         result = self.host.run(self.binary, ignore_status=True)
         print(result.printable_string())
         if result.exit_status:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class RustServer:
     def __init__(self, host, bitness):
