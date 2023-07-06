@@ -439,7 +439,15 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .min_sdk_version = options.GetMinSdkVersion(),
         .write_to_parcel_flag = "_aidl_flag",
     };
+    if (field->IsNew()) {
+      context.writer.Write("if (false) {;\n");
+      context.writer.Indent();
+    }
     WriteToParcelFor(context);
+    if (field->IsNew()) {
+      context.writer.Dedent();
+      context.writer.Write("};\n");
+    }
     writer->Close();
     write_method->statements->Add(std::make_shared<LiteralStatement>(code));
   }
@@ -540,6 +548,10 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .is_classloader_created = &is_classloader_created,
     };
     context.writer.Indent();
+    if (field->IsNew()) {
+      context.writer.Write("if (false) {;\n");
+      context.writer.Indent();
+    }
     if (parcel->IsJavaOnlyImmutable()) {
       context.writer.Write("%s %s;\n", JavaSignatureOf(field->GetType()).c_str(),
                            field_variable_name.c_str());
@@ -548,6 +560,10 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
     if (parcel->IsJavaOnlyImmutable()) {
       context.writer.Write("%s.%s(%s);\n", builder_variable.c_str(), SetterName(*field).c_str(),
                            field_variable_name.c_str());
+    }
+    if (field->IsNew()) {
+      context.writer.Dedent();
+      context.writer.Write("};\n");
     }
     writer->Close();
     read_or_create_method->statements->Add(std::make_shared<LiteralStatement>(code));
@@ -813,6 +829,10 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
   for (const auto& variable : decl->GetFields()) {
     out << "case " + variable->GetName() + ":\n";
     out.Indent();
+    if (variable->IsNew()) {
+      out << "if (true) throw new IllegalArgumentException(\"union: unknown tag: \" + _tag);\n";
+    }
+
     out << write_to_parcel(variable->GetType(), GetterName(*variable) + "()", "_aidl_parcel");
     out << "break;\n";
     out.Dedent();
@@ -858,6 +878,9 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
     auto var_type = JavaSignatureOf(variable->GetType());
     out << "case " + var_name + ": {\n";
     out.Indent();
+    if (variable->IsNew()) {
+      out << "if (true) throw new IllegalArgumentException(\"union: unknown tag: \" + _tag);\n";
+    }
     out << var_type + " _aidl_value;\n";
     out << read_from_parcel(variable->GetType(), "_aidl_value", "_aidl_parcel");
     if (decl->IsJavaOnlyImmutable()) {
