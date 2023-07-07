@@ -4080,6 +4080,18 @@ TEST_F(AidlTest, UnusedImportDoesNotContributeInclude) {
   EXPECT_THAT(output, (testing::HasSubstr("#include <aidl/a/b/IQux.h>")));
 }
 
+TEST_F(AidlTest, BasePathAsImportPath) {
+  Options options = Options::From("aidl --lang=java -I some -I other some/dir/pkg/name/IFoo.aidl");
+  io_delegate_.SetFileContents("some/dir/pkg/name/IFoo.aidl",
+      "package pkg.name; interface IFoo { void foo(); }");
+  const string expected_stderr =
+      "ERROR: some/dir/pkg/name/IFoo.aidl:1.18-28: directory some/dir/ is not found in any of "
+      "the import paths:\n - other/\n - some/\n";
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTest, ParseJavaPassthroughAnnotation) {
   io_delegate_.SetFileContents("a/IFoo.aidl", R"--(package a;
     import a.MyEnum;

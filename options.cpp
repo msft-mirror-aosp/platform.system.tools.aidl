@@ -272,6 +272,20 @@ static std::string ComputeRawArgs(int argc, const char* const raw_argv[]) {
   return Join(args, " ");
 }
 
+static std::string ToCanonicalDirectory(const std::string& optarg) {
+  std::string dir = Trim(optarg);
+  if (!dir.empty() && dir.back() != OS_PATH_SEPARATOR) {
+    dir.push_back(OS_PATH_SEPARATOR);
+  }
+  return dir;
+}
+
+Options Options::PlusImportDir(const std::string& import_dir) const {
+  Options copy(*this);
+  copy.import_dirs_.insert(ToCanonicalDirectory(import_dir));
+  return copy;
+}
+
 Options::Options(int argc, const char* const raw_argv[], Options::Language default_lang)
     : myname_(argc >= 1 ? raw_argv[0] : "aidl"),
       raw_args_(ComputeRawArgs(argc, raw_argv)),
@@ -371,7 +385,7 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         }
         break;
       case 'I': {
-        import_dirs_.emplace(Trim(optarg));
+        import_dirs_.emplace(ToCanonicalDirectory(optarg));
         break;
       }
       case 'p':
@@ -381,19 +395,13 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         dependency_file_ = Trim(optarg);
         break;
       case 'o':
-        output_dir_ = Trim(optarg);
-        if (output_dir_.back() != OS_PATH_SEPARATOR) {
-          output_dir_.push_back(OS_PATH_SEPARATOR);
-        }
+        output_dir_ = ToCanonicalDirectory(optarg);
         break;
       case 'O':
         raw_args_ = "cmd not shown due to `--omit_invocation`";
         break;
       case 'h':
-        output_header_dir_ = Trim(optarg);
-        if (output_header_dir_.back() != OS_PATH_SEPARATOR) {
-          output_header_dir_.push_back(OS_PATH_SEPARATOR);
-        }
+        output_header_dir_ = ToCanonicalDirectory(optarg);
         break;
       case 'n':
         dependency_file_ninja_ = true;
@@ -496,10 +504,7 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         error_message_ << "No HEADER_DIR or OUTPUT." << endl;
         return;
       }
-      output_header_dir_ = argv[optind++];
-      if (output_header_dir_.back() != OS_PATH_SEPARATOR) {
-        output_header_dir_.push_back(OS_PATH_SEPARATOR);
-      }
+      output_header_dir_ = ToCanonicalDirectory(argv[optind++]);
       output_file_ = argv[optind++];
     }
     if (argc - optind > 0) {
