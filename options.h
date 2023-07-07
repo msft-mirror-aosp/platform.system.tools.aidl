@@ -108,11 +108,7 @@ class Options final {
 
   Options(int argc, const char* const argv[], Language default_lang = Language::UNSPECIFIED);
 
-  Options PlusImportDir(const std::string& import_dir) const {
-    Options copy(*this);
-    copy.import_dirs_.insert(import_dir);
-    return copy;
-  }
+  Options PlusImportDir(const std::string& import_dir) const;
 
   static Options From(const string& cmdline);
 
