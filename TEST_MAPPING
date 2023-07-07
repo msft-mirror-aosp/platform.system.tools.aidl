@@ -25,11 +25,19 @@
           "include-filter": "com.android.internal.telephony.ServiceStateTrackerTest"
         }
       ]
+    },
+    {
+      "name": "EnforcePermissionTests"
     }
   ],
   "imports": [
     {
       "path": "frameworks/native/libs/binder"
+    }
+  ],
+  "auto-presubmit": [
+    {
+      "name": "hal_implementation_test"
     }
   ]
 }

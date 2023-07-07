@@ -79,9 +79,13 @@ func TestAidlInterface(t *testing.T) {
 				"ndk_config": `{
         "enabled": True,
     }`,
-				"versions": `[
-        "1",
-        "2",
+				"versions_with_info": `[
+        {
+        "version": "1",
+    },
+        {
+        "version": "2",
+    },
     ]`,
 			}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
@@ -94,15 +98,21 @@ func TestAidlInterface(t *testing.T) {
 				"ndk_config": `{
         "enabled": True,
     }`,
-				"deps": `[
-        ":aidl-interface-import-V1",
-        ":aidl-interface-headers",
-    ]`,
+				"deps":  `[":aidl-interface-headers"]`,
 				"flags": `["--flag1"]`,
-				"versions": `[
-        "1",
-        "2",
-        "3",
+				"versions_with_info": `[
+        {
+        "deps": [":aidl-interface-import-V1"],
+        "version": "1",
+    },
+        {
+        "deps": [":aidl-interface-import-V1"],
+        "version": "2",
+    },
+        {
+        "deps": [":aidl-interface-import-V1"],
+        "version": "3",
+    },
     ]`,
 			}),
 		},
@@ -190,9 +200,13 @@ func TestAidlInterfaceWithLatestImport(t *testing.T) {
 				"ndk_config": `{
         "enabled": True,
     }`,
-				"versions": `[
-        "1",
-        "2",
+				"versions_with_info": `[
+        {
+        "version": "1",
+    },
+        {
+        "version": "2",
+    },
     ]`,
 			}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
@@ -205,11 +219,19 @@ func TestAidlInterfaceWithLatestImport(t *testing.T) {
 				"ndk_config": `{
         "enabled": True,
     }`,
-				"deps": `[":aidl-interface-import-latest"]`,
-				"versions": `[
-        "1",
-        "2",
-        "3",
+				"versions_with_info": `[
+        {
+        "deps": [":aidl-interface-import-latest"],
+        "version": "1",
+    },
+        {
+        "deps": [":aidl-interface-import-latest"],
+        "version": "2",
+    },
+        {
+        "deps": [":aidl-interface-import-latest"],
+        "version": "3",
+    },
     ]`,
 			}),
 		},
@@ -249,9 +271,13 @@ func TestAidlInterfaceWithVersionedImport(t *testing.T) {
 				"ndk_config": `{
         "enabled": True,
     }`,
-				"versions": `[
-        "1",
-        "2",
+				"versions_with_info": `[
+        {
+        "version": "1",
+    },
+        {
+        "version": "2",
+    },
     ]`,
 			}),
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
@@ -264,11 +290,19 @@ func TestAidlInterfaceWithVersionedImport(t *testing.T) {
 				"ndk_config": `{
         "enabled": True,
     }`,
-				"deps": `[":aidl-interface-import-V2"]`,
-				"versions": `[
-        "1",
-        "2",
-        "3",
+				"versions_with_info": `[
+        {
+        "deps": [":aidl-interface-import-V2"],
+        "version": "1",
+    },
+        {
+        "deps": [":aidl-interface-import-V2"],
+        "version": "2",
+    },
+        {
+        "deps": [":aidl-interface-import-V2"],
+        "version": "3",
+    },
     ]`,
 			}),
 		},
@@ -354,10 +388,48 @@ func TestAidlInterfaceWithFrozenPropSet(t *testing.T) {
 			}`,
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "foo", bp2build.AttrNameToString{
-				"frozen":   "True",
-				"versions": `["1"]`,
+				"frozen": "True",
+				"versions_with_info": `[{
+        "version": "1",
+    }]`,
 				"ndk_config": `{
         "enabled": True,
+    }`,
+			}),
+		},
+	})
+}
+
+func TestAidlInterfaceWithApexAvailable(t *testing.T) {
+	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
+		Description: `aidl_interface apex_available`,
+		Blueprint: `
+			aidl_interface {
+				name: "aidl-interface1",
+                backend: {
+                    java: {
+                        enabled: false,
+                    },
+                    cpp: {
+                        enabled: false,
+                    },
+                    ndk: {
+                        enabled: true,
+                        apex_available: [
+                            "com.android.abd",
+                            "//apex_available:platform",
+                        ],
+                    },
+                }
+			}`,
+		ExpectedBazelTargets: []string{
+			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
+				"ndk_config": `{
+        "enabled": True,
+        "tags": [
+            "apex_available=com.android.abd",
+            "apex_available=//apex_available:platform",
+        ],
     }`,
 			}),
 		},
