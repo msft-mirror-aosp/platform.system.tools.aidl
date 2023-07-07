@@ -1212,19 +1212,19 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		javaConfig = &javaConfigAttributes{}
 		javaConfig.Enabled = true
 		javaConfig.Min_sdk_version = i.minSdkVersion(langJava)
-		javaConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Java.Apex_available)
+		javaConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Java.Apex_available)
 	}
 	if i.shouldGenerateCppBackend() {
 		cppConfig = &cppConfigAttributes{}
 		cppConfig.Enabled = true
 		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
-		cppConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Cpp.Apex_available)
+		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Cpp.Apex_available)
 	}
 	if i.shouldGenerateNdkBackend() {
 		ndkConfig = &ndkConfigAttributes{}
 		ndkConfig.Enabled = true
 		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
-		ndkConfig.Tags = android.ConvertApexAvailableToTags(i.properties.Backend.Ndk.Apex_available)
+		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Ndk.Apex_available)
 	}
 
 	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
