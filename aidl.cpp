@@ -600,13 +600,18 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
   }
 
-  // Add meta methods and assign method IDs to each interface
-  typenames->IterateTypes([&](const AidlDefinedType& type) {
-    auto interface = const_cast<AidlInterface*>(type.AsInterface());
-    if (interface != nullptr) {
-      // add the meta-method 'int getInterfaceVersion()' if version is specified.
-      if (options.Version() > 0) {
-        auto ret = typenames->MakeResolvedType(AIDL_LOCATION_HERE, "int", false);
+  // We only want to mutate the types defined in this AIDL file or subtypes. We can't
+  // use IterateTypes, as this will re-mutate types that have already been loaded
+  // when AidlTypenames is re-used (such as in dump API).
+  class MetaMethodVisitor : public AidlVisitor {
+   public:
+    MetaMethodVisitor(const Options* options, const AidlTypenames* typenames)
+        : mOptions(options), mTypenames(typenames) {}
+    virtual void Visit(const AidlInterface& const_interface) {
+      // TODO: we do not have mutable visitor infrastructure.
+      AidlInterface* interface = const_cast<AidlInterface*>(&const_interface);
+      if (mOptions->Version() > 0) {
+        auto ret = mTypenames->MakeResolvedType(AIDL_LOCATION_HERE, "int", false);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method = std::make_unique<AidlMethod>(AIDL_LOCATION_HERE, false, ret.release(),
                                                    "getInterfaceVersion", args, Comments{},
@@ -614,17 +619,30 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         interface->AddMethod(std::move(method));
       }
       // add the meta-method 'string getInterfaceHash()' if hash is specified.
-      if (!options.Hash().empty()) {
-        auto ret = typenames->MakeResolvedType(AIDL_LOCATION_HERE, "String", false);
+      if (!mOptions->Hash().empty()) {
+        auto ret = mTypenames->MakeResolvedType(AIDL_LOCATION_HERE, "String", false);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method =
             std::make_unique<AidlMethod>(AIDL_LOCATION_HERE, false, ret.release(),
                                          kGetInterfaceHash, args, Comments{}, kGetInterfaceHashId);
         interface->AddMethod(std::move(method));
       }
-      if (!CheckAndAssignMethodIDs(interface->GetMethods())) {
-        err = AidlError::BAD_METHOD_ID;
-      }
+    }
+
+   private:
+    const Options* mOptions;
+    const AidlTypenames* mTypenames;
+  };
+  MetaMethodVisitor meta_method_visitor(&options, typenames);
+  for (const auto& defined_type : types) {
+    VisitTopDown(meta_method_visitor, *defined_type);
+  }
+
+  typenames->IterateTypes([&](const AidlDefinedType& type) {
+    const AidlInterface* interface = type.AsInterface();
+    if (interface == nullptr) return;
+    if (!CheckAndAssignMethodIDs(interface->GetMethods())) {
+      err = AidlError::BAD_METHOD_ID;
     }
   });
   if (err != AidlError::OK) {
