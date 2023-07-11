@@ -322,7 +322,13 @@ aidl_interface {
             version: "1",
             imports: ["test-piece-2-V1"],
         },
+        {
+            version: "2",
+            imports: ["test-piece-2-V1"],
+        },
+
     ],
+    frozen: true,
 }
 
 cc_test_library {
