@@ -354,10 +354,7 @@ aidl_interface {
     srcs: [
         "tests/versioned/**/*.aidl",
     ],
-    versions: [
-        "1",
-        "2",
-    ],
+
     backend: {
         java: {
             gen_rpc: true,
@@ -366,6 +363,23 @@ aidl_interface {
             enabled: true,
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+        {
+            version: "2",
+            imports: [],
+        },
+        {
+            version: "3",
+            imports: [],
+        },
+
+    ],
+    frozen: true,
+
 }
 
 cc_library_static {
@@ -903,6 +917,6 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder",
-        "libutils"
+        "libutils",
     ],
 }
