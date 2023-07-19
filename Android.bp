@@ -247,8 +247,9 @@ python_test_host {
     ],
     data_device_bins_both: [
         "aidl_test_client",
-        "aidl_test_client_ndk",
         "aidl_test_service",
+        "aidl_test_client_ndk",
+        "aidl_test_service_ndk",
         "aidl_test_rust_client",
         "aidl_test_rust_service",
     ],
@@ -295,6 +296,7 @@ cc_library_headers {
     ],
 }
 
+// TODO: switch to aidl-test-interface
 filegroup {
     name: "libaidl-integration-test-files",
     srcs: [
@@ -329,6 +331,7 @@ filegroup {
     path: "tests",
 }
 
+// TODO: switch to aidl-test-interface now that we can add library deps to aidl_interface
 filegroup {
     name: "libaidl-integration-cpp-java-test-files",
     srcs: [
@@ -339,6 +342,7 @@ filegroup {
     path: "tests",
 }
 
+// TODO: switch to aidl-test-interface
 filegroup {
     name: "libaidl-integration-permission-test-files",
     srcs: [
@@ -414,6 +418,24 @@ cc_test {
         "aidl-test-fixedsizearray-cpp",
     ],
     srcs: ["tests/aidl_test_service.cpp"],
+}
+
+cc_test {
+    name: "aidl_test_service_ndk",
+    gtest: false,
+    defaults: ["aidl_test_defaults"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libcutils",
+    ],
+    static_libs: [
+        // service uses the old version
+        "aidl-test-versioned-interface-V1-ndk",
+        "aidl-test-interface-ndk",
+        "aidl_test_loggable_interface-ndk",
+        "aidl-test-fixedsizearray-ndk",
+    ],
+    srcs: ["tests/aidl_test_service_ndk.cpp"],
 }
 
 cc_test {
