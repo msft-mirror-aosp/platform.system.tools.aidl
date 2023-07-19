@@ -16,6 +16,7 @@
 
 #include "aidl.h"
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_java.h"
 #include "aidl_typenames.h"
 #include "ast_java.h"
@@ -573,7 +574,7 @@ static void GenerateStubCode(const AidlMethod& method, bool oneway,
     // at most once.
     bool is_classloader_created = false;
 
-    if (method.IsNew()) {
+    if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
       auto if_statement = std::make_shared<IfStatement>();
       if_statement->expression = std::make_shared<LiteralExpression>("true");
       if_statement->statements = std::make_shared<StatementBlock>();
@@ -744,7 +745,7 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
       << ArgList(method, FormatArgForDecl) << ") throws android.os.RemoteException\n{\n";
   out.Indent();
 
-  if (method.IsNew()) {
+  if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
     out << "if (true) {\n";
     out << "  throw new android.os.RemoteException(\"Method " + method.GetName() +
                " is unimplemented.\");\n";

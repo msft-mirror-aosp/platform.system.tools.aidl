@@ -439,12 +439,12 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .min_sdk_version = options.GetMinSdkVersion(),
         .write_to_parcel_flag = "_aidl_flag",
     };
-    if (field->IsNew()) {
+    if (field->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
       context.writer.Write("if (false) {;\n");
       context.writer.Indent();
     }
     WriteToParcelFor(context);
-    if (field->IsNew()) {
+    if (field->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
       context.writer.Dedent();
       context.writer.Write("};\n");
     }
@@ -548,7 +548,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
         .is_classloader_created = &is_classloader_created,
     };
     context.writer.Indent();
-    if (field->IsNew()) {
+    if (field->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
       context.writer.Write("if (false) {;\n");
       context.writer.Indent();
     }
@@ -561,7 +561,7 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
       context.writer.Write("%s.%s(%s);\n", builder_variable.c_str(), SetterName(*field).c_str(),
                            field_variable_name.c_str());
     }
-    if (field->IsNew()) {
+    if (field->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
       context.writer.Dedent();
       context.writer.Write("};\n");
     }
@@ -829,7 +829,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
   for (const auto& variable : decl->GetFields()) {
     out << "case " + variable->GetName() + ":\n";
     out.Indent();
-    if (variable->IsNew()) {
+    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
       out << "if (true) throw new IllegalArgumentException(\"union: unknown tag: \" + _tag);\n";
     }
 
@@ -878,7 +878,7 @@ void GenerateUnionClass(CodeWriter& out, const AidlUnionDecl* decl, const AidlTy
     auto var_type = JavaSignatureOf(variable->GetType());
     out << "case " + var_name + ": {\n";
     out.Indent();
-    if (variable->IsNew()) {
+    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
       out << "if (true) throw new IllegalArgumentException(\"union: unknown tag: \" + _tag);\n";
     }
     out << var_type + " _aidl_value;\n";
