@@ -48,7 +48,7 @@ class AidlTest : public testing::Test {
     status = service->getBackendType(&backend);
     ASSERT_TRUE(status.isOk()) << status;
 
-    if (backend != BackendType::RUST) {
+    if (backend != BackendType::RUST && backend != BackendType::NDK) {
       ASSERT_NE(cpp_java_tests, nullptr);
     }
   }
