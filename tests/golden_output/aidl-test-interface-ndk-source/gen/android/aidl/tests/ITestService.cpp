@@ -4231,7 +4231,16 @@ const char* ITestService::STRING_CONSTANT2 = "bar";
 const char* ITestService::STRING_CONSTANT_UTF8 = "baz";
 
 std::shared_ptr<ITestService> ITestService::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<BpTestService>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<ITestService>(interface);
@@ -4899,7 +4908,16 @@ ITestService::CompilerChecks::IFoo::~IFoo() {}
 
 
 std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks::IFoo::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<ITestService::CompilerChecks::BpFoo>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<IFoo>(interface);
@@ -5118,7 +5136,16 @@ ITestService::CompilerChecks::INoPrefixInterface::~INoPrefixInterface() {}
 
 
 std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<ITestService::CompilerChecks::BpNoPrefixInterface>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<INoPrefixInterface>(interface);
@@ -5281,7 +5308,16 @@ ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::~INe
 
 
 std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz)) { return nullptr; }
+  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz)) {
+    #if __ANDROID_API__ >= 31
+    const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
+    if (originalClass == nullptr) return nullptr;
+    if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {
+      return ::ndk::SharedRefBase::make<ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface>(binder);
+    }
+    #endif
+    return nullptr;
+  }
   std::shared_ptr<::ndk::ICInterface> interface = ::ndk::ICInterface::asInterface(binder.get());
   if (interface) {
     return std::static_pointer_cast<INestedNoPrefixInterface>(interface);

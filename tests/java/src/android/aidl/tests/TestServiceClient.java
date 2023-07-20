@@ -19,6 +19,7 @@ package android.aidl.tests;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -87,6 +88,13 @@ public class TestServiceClient {
         if (binder2 != null) {
             cpp_java_tests = ICppJavaTests.Stub.asInterface(binder2);
         }
+    }
+
+    @Test
+    public void testBinderIdentity() throws RemoteException {
+        IBinder binder = ServiceManager.waitForService(ITestService.class.getName());
+
+        assertEquals(binder, service.asBinder());
     }
 
     @Test
@@ -775,7 +783,7 @@ public class TestServiceClient {
         assertThat(p.u.getNs(), is(new int[] {1, 2, 3}));
         assertThat(p.shouldBeConstS1.getS(), is(Union.S1));
 
-        final String expected = "android.aidl.tests.StructuredParcelable{"
+        final String expected = "StructuredParcelable{"
             + "shouldContainThreeFs: [17, 17, 17], "
             + "f: 17, "
             + "shouldBeJerry: Jerry, "
@@ -809,7 +817,7 @@ public class TestServiceClient {
             + "int64_max: 9223372036854775807, "
             + "hexInt32_neg_1: -1, "
             + "ibinder: null, "
-            + "empty: android.aidl.tests.StructuredParcelable.Empty{}, "
+            + "empty: Empty{}, "
             + "int8_1: [1, 1, 1, 1, 1], "
             + "int32_1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
             + "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
@@ -830,8 +838,8 @@ public class TestServiceClient {
             + "addString1: hello world!, "
             + "addString2: The quick brown fox jumps over the lazy dog., "
             + "shouldSetBit0AndBit2: 5, "
-            + "u: android.aidl.tests.Union.ns([1, 2, 3]), "
-            + "shouldBeConstS1: android.aidl.tests.Union.s(a string constant in union), "
+            + "u: Union.ns([1, 2, 3]), "
+            + "shouldBeConstS1: Union.s(a string constant in union), "
             + "defaultWithFoo: FOO"
             + "}";
         assertThat(p.toString(), is(expected));
@@ -891,7 +899,7 @@ public class TestServiceClient {
         p.parcelableGeneric = gen;
         p.unionValue = null; // for testing even though it is not @nullable in .aidl
 
-        final String expected = "android.aidl.tests.ParcelableForToString{"
+        final String expected = "ParcelableForToString{"
             + "intValue: 10, "
             + "intArray: [20, 30], "
             + "longValue: 100, "
@@ -907,15 +915,15 @@ public class TestServiceClient {
             + "stringValue: this is a string, "
             + "stringArray: [hello, world], "
             + "stringList: [alice, bob], "
-            + "parcelableValue: android.aidl.tests.OtherParcelableForToString{field: other}, "
+            + "parcelableValue: OtherParcelableForToString{field: other}, "
             + "parcelableArray: ["
-            + "android.aidl.tests.OtherParcelableForToString{field: other}, "
-            + "android.aidl.tests.OtherParcelableForToString{field: other}], "
+            + "OtherParcelableForToString{field: other}, "
+            + "OtherParcelableForToString{field: other}], "
             + "enumValue: FOO, "
             + "enumArray: [FOO, BAR], "
             + "nullArray: null, "
             + "nullList: null, "
-            + "parcelableGeneric: android.aidl.tests.GenericStructuredParcelable{a: 1, b: 2}, "
+            + "parcelableGeneric: GenericStructuredParcelable{a: 1, b: 2}, "
             + "unionValue: null"
             + "}";
 
