@@ -114,12 +114,12 @@ func (sp *aidlRustSourceProvider) AndroidMk(ctx rust.AndroidMkContext, ret *andr
 		})
 }
 
-func aidlRustLibraryFactory(rlibOnly bool) android.Module {
+func aidlRustLibraryFactory() android.Module {
 	sourceProvider := &aidlRustSourceProvider{
 		BaseSourceProvider: rust.NewSourceProvider(),
 		properties:         aidlRustSourceProviderProperties{},
 	}
 
-	module := rust.NewSourceProviderModule(android.HostAndDeviceSupported, sourceProvider, false, rlibOnly)
+	module := rust.NewSourceProviderModule(android.HostAndDeviceSupported, sourceProvider, false, false)
 	return module.Init()
 }
