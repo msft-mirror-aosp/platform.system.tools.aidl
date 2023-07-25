@@ -20,6 +20,7 @@ NDK_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service_ndk/aidl_t
 NDK_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client_ndk/aidl_test_client_ndk%s'
 RUST_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_client/aidl_test_rust_client%s'
 RUST_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service/aidl_test_rust_service%s'
+RUST_TEST_SERVICE_ASYNC_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service_async/aidl_test_rust_service_async%s'
 
 # From AidlTestsJava.java
 INSTRUMENTATION_SUCCESS_PATTERN = r'TEST SUCCESS\n$'
@@ -268,7 +269,7 @@ class RustAsyncServer:
     def __init__(self, host, bitness):
         self.name = "%s_bit_rust_server_async" % pretty_bitness(bitness)
         self.host = host
-        self.binary = RUST_TEST_SERVICE_FOR_BITNESS % bitness
+        self.binary = RUST_TEST_SERVICE_ASYNC_FOR_BITNESS % bitness
     def cleanup(self):
         self.host.run('killall %s' % self.binary, ignore_status=True)
     def run(self):
