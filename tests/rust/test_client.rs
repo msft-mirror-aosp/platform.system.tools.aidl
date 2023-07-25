@@ -770,17 +770,23 @@ fn test_read_write_extension() {
     let mut parcel = Parcel::new();
     ep.write_to_parcel(&mut parcel.borrowed()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
     let mut ep1 = ExtendableParcelable::default();
     ep1.read_from_parcel(parcel.borrowed_ref()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
     ep1.write_to_parcel(&mut parcel.borrowed()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1153,6 +1159,8 @@ fn test_read_write_fixed_size_array() {
         Some([[Some("hello".into()), Some("world".into())], Default::default()]);
 
     assert_eq!(parcel.write(&p), Ok(()));
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1164,6 +1172,8 @@ fn test_fixed_size_array_uses_array_optimization() {
     let mut parcel = Parcel::new();
     let byte_array = [[1u8, 2u8, 3u8], [4u8, 5u8, 6u8]];
     assert_eq!(parcel.write(&byte_array), Ok(()));
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
