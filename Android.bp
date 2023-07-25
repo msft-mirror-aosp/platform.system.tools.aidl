@@ -232,9 +232,6 @@ python_test_host {
     main: "tests/aidl_integration_test.py",
     srcs: ["tests/aidl_integration_test.py"],
     test_config: "tests/aidl_integration_test.xml",
-    target_required: [
-        "aidl_test_rust_service_async",
-    ],
     data: [
         ":aidl_test_java_client",
         ":aidl_test_java_service",
@@ -252,6 +249,7 @@ python_test_host {
         "aidl_test_service_ndk",
         "aidl_test_rust_client",
         "aidl_test_rust_service",
+        "aidl_test_rust_service_async",
     ],
     test_suites: ["general-tests"],
     test_options: {
@@ -908,6 +906,7 @@ rust_test {
     rustlibs: [
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
+        "aidl-test-fixedsizearray-rust",
         "liblibc",
         "libbinder_tokio_rs",
         "libtokio",
