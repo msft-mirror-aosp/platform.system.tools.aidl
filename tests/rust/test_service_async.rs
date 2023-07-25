@@ -16,6 +16,9 @@
 
 //! Test Rust service for the AIDL compiler.
 
+use aidl_test_fixedsizearray::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::{
+    IRepeatFixedSizeArray, IntParcelable::IntParcelable,
+};
 use aidl_test_interface::aidl::android::aidl::tests::nested::{
     INestedService, ParcelableWithNested,
 };
@@ -36,6 +39,7 @@ use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
     BazUnion::BazUnion, Foo::Foo, IFooInterface, IFooInterface::BnFooInterface,
     IFooInterface::BpFooInterface,
 };
+use binder_tokio::Tokio;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -237,7 +241,7 @@ impl ITestService::ITestServiceAsyncServer for TestService {
         service: &binder::Strong<dyn INamedCallback::INamedCallback>,
         name: &str,
     ) -> binder::Result<bool> {
-        service.GetName().map(|found_name| found_name == name)
+        service.clone().into_async::<Tokio>().GetName().await.map(|found_name| found_name == name)
     }
 
     async fn GetInterfaceArray(
@@ -603,35 +607,122 @@ impl INestedService::INestedServiceAsyncServer for NestedService {
     }
 }
 
-fn rt() -> binder_tokio::TokioRuntime<tokio::runtime::Runtime> {
-    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
-    binder_tokio::TokioRuntime(rt)
+struct FixedSizeArrayService;
+
+impl Interface for FixedSizeArrayService {}
+
+#[async_trait]
+impl IRepeatFixedSizeArray::IRepeatFixedSizeArrayAsyncServer for FixedSizeArrayService {
+    async fn RepeatBytes(
+        &self,
+        input: &[u8; 3],
+        repeated: &mut [u8; 3],
+    ) -> binder::Result<[u8; 3]> {
+        *repeated = *input;
+        Ok(*input)
+    }
+    async fn RepeatInts(
+        &self,
+        input: &[i32; 3],
+        repeated: &mut [i32; 3],
+    ) -> binder::Result<[i32; 3]> {
+        *repeated = *input;
+        Ok(*input)
+    }
+    async fn RepeatBinders(
+        &self,
+        input: &[SpIBinder; 3],
+        repeated: &mut [Option<SpIBinder>; 3],
+    ) -> binder::Result<[SpIBinder; 3]> {
+        *repeated = input.clone().map(Some);
+        Ok(input.clone())
+    }
+    async fn RepeatParcelables(
+        &self,
+        input: &[IntParcelable; 3],
+        repeated: &mut [IntParcelable; 3],
+    ) -> binder::Result<[IntParcelable; 3]> {
+        *repeated = *input;
+        Ok(*input)
+    }
+    async fn Repeat2dBytes(
+        &self,
+        input: &[[u8; 3]; 2],
+        repeated: &mut [[u8; 3]; 2],
+    ) -> binder::Result<[[u8; 3]; 2]> {
+        *repeated = *input;
+        Ok(*input)
+    }
+    async fn Repeat2dInts(
+        &self,
+        input: &[[i32; 3]; 2],
+        repeated: &mut [[i32; 3]; 2],
+    ) -> binder::Result<[[i32; 3]; 2]> {
+        *repeated = *input;
+        Ok(*input)
+    }
+    async fn Repeat2dBinders(
+        &self,
+        input: &[[SpIBinder; 3]; 2],
+        repeated: &mut [[Option<SpIBinder>; 3]; 2],
+    ) -> binder::Result<[[SpIBinder; 3]; 2]> {
+        *repeated = input.clone().map(|nested| nested.map(Some));
+        Ok(input.clone())
+    }
+    async fn Repeat2dParcelables(
+        &self,
+        input: &[[IntParcelable; 3]; 2],
+        repeated: &mut [[IntParcelable; 3]; 2],
+    ) -> binder::Result<[[IntParcelable; 3]; 2]> {
+        *repeated = *input;
+        Ok(*input)
+    }
+}
+
+fn rt() -> binder_tokio::TokioRuntime<tokio::runtime::Handle> {
+    binder_tokio::TokioRuntime(tokio::runtime::Handle::current())
 }
 
 fn main() {
     binder::ProcessState::set_thread_pool_max_thread_count(0);
     binder::ProcessState::start_thread_pool();
 
-    let service_name = <BpTestService as ITestService::ITestService>::get_descriptor();
-    let service =
-        BnTestService::new_async_binder(TestService::default(), rt(), BinderFeatures::default());
-    binder::add_service(service_name, service.as_binder()).expect("Could not register service");
+    let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+    runtime.block_on(async {
+        let service_name = <BpTestService as ITestService::ITestService>::get_descriptor();
+        let service =
+            BnTestService::new_async_binder(TestService::default(), rt(), BinderFeatures::default());
+        binder::add_service(service_name, service.as_binder()).expect("Could not register service");
 
-    let versioned_service_name = <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor();
-    let versioned_service =
-        BnFooInterface::new_async_binder(FooInterface, rt(), BinderFeatures::default());
-    binder::add_service(versioned_service_name, versioned_service.as_binder())
-        .expect("Could not register service");
+        let versioned_service_name = <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor();
+        let versioned_service =
+            BnFooInterface::new_async_binder(FooInterface, rt(), BinderFeatures::default());
+        binder::add_service(versioned_service_name, versioned_service.as_binder())
+            .expect("Could not register service");
 
-    let nested_service_name =
-        <INestedService::BpNestedService as INestedService::INestedService>::get_descriptor();
-    let nested_service = INestedService::BnNestedService::new_async_binder(
-        NestedService,
-        rt(),
-        BinderFeatures::default(),
-    );
-    binder::add_service(nested_service_name, nested_service.as_binder())
-        .expect("Could not register service");
+        let nested_service_name =
+            <INestedService::BpNestedService as INestedService::INestedService>::get_descriptor();
+        let nested_service = INestedService::BnNestedService::new_async_binder(
+            NestedService,
+            rt(),
+            BinderFeatures::default(),
+        );
+        binder::add_service(nested_service_name, nested_service.as_binder())
+            .expect("Could not register service");
 
-    binder::ProcessState::join_thread_pool();
+        let fixed_size_array_service_name =
+            <IRepeatFixedSizeArray::BpRepeatFixedSizeArray as IRepeatFixedSizeArray::IRepeatFixedSizeArray>::get_descriptor();
+        let fixed_size_array_service = IRepeatFixedSizeArray::BnRepeatFixedSizeArray::new_async_binder(
+            FixedSizeArrayService,
+            rt(),
+            BinderFeatures::default(),
+        );
+        binder::add_service(fixed_size_array_service_name, fixed_size_array_service.as_binder())
+            .expect("Could not register service");
+
+        // By awaiting `pending`, we yield to the runtime. This results in the current-thread
+        // runtime being driven by the current thread (the main thread in this case). E.g., this
+        // means that anything spawned with `tokio::spawn` will run on this thread.
+        std::future::pending().await
+    })
 }
