@@ -14,6 +14,7 @@
  */
 #pragma once
 
+#include "android-base/result.h"
 #include "io_delegate.h"
 #include "options.h"
 
@@ -23,6 +24,10 @@ namespace aidl {
 // Compare the two API dumps, which are given as input files, and test whether
 // the second API dump is backwards compatible with the first API dump.
 bool check_api(const Options& options, const IoDelegate& io_delegate);
+
+// load and validate an entire versioned aidl_api dump
+Result<AidlTypenames> LoadApiDump(const Options& options, const IoDelegate& io_delegate,
+                                  const std::string& dir);
 
 }  // namespace aidl
 }  // namespace android

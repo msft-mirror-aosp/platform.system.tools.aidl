@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=rust -Weverything -Wno-missing-permission-annotation --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-rust-source/gen/android/aidl/fixedsizearray/FixedSizeArrayExample.rs.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-rust-source/gen -Isystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=rust -Weverything -Wno-missing-permission-annotation --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-rust-source/gen/android/aidl/fixedsizearray/FixedSizeArrayExample.rs.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-rust-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]

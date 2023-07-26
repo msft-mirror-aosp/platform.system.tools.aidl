@@ -393,8 +393,8 @@ static bool are_compatible_enums(const AidlEnumDeclaration& older,
   return compatible;
 }
 
-static Result<AidlTypenames> LoadApiDump(const Options& options, const IoDelegate& io_delegate,
-                                         const std::string& dir) {
+Result<AidlTypenames> LoadApiDump(const Options& options, const IoDelegate& io_delegate,
+                                  const std::string& dir) {
   Result<std::vector<std::string>> dir_files = io_delegate.ListFiles(dir);
   if (!dir_files.ok()) {
     AIDL_ERROR(dir) << dir_files.error();
