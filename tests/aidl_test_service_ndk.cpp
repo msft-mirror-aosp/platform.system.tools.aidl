@@ -18,6 +18,8 @@
 #include <aidl/android/aidl/fixedsizearray/FixedSizeArrayExample.h>
 #include <aidl/android/aidl/loggable/BnLoggableInterface.h>
 #include <aidl/android/aidl/loggable/Data.h>
+#include <aidl/android/aidl/test/trunk/BnTrunkStableTest.h>
+#include <aidl/android/aidl/test/trunk/ITrunkStableTest.h>
 #include <aidl/android/aidl/tests/BackendType.h>
 #include <aidl/android/aidl/tests/BnCircular.h>
 #include <aidl/android/aidl/tests/BnNamedCallback.h>
@@ -801,6 +803,62 @@ class FixedSizeArrayService : public FixedSizeArrayExample::BnRepeatFixedSizeArr
   }
 };
 
+class TrunkStableService : public aidl::android::aidl::test::trunk::BnTrunkStableTest {
+ public:
+  TrunkStableService() {}
+  virtual ~TrunkStableService() = default;
+
+  ScopedAStatus repeatParcelable(
+      const aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& input,
+      aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) override {
+    *_aidl_return = input;
+    return ScopedAStatus::ok();
+  }
+  ScopedAStatus repeatEnum(
+      aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum input,
+      aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum* _aidl_return) override {
+    *_aidl_return = input;
+    return ScopedAStatus::ok();
+  }
+  ScopedAStatus repeatUnion(
+      const aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion& input,
+      aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion* _aidl_return) override {
+    *_aidl_return = input;
+    return ScopedAStatus::ok();
+  }
+  ScopedAStatus callMyCallback(
+      const std::shared_ptr<aidl::android::aidl::test::trunk::ITrunkStableTest::IMyCallback>& cb)
+      override {
+    if (!cb) return ScopedAStatus::fromStatus(android::UNEXPECTED_NULL);
+    MyParcelable a, b;
+    MyEnum c = MyEnum::ZERO, d = MyEnum::ZERO;
+    MyUnion e, f;
+    auto status = cb->repeatParcelable(a, &b);
+    if (!status.isOk()) {
+      return status;
+    }
+    status = cb->repeatEnum(c, &d);
+    if (!status.isOk()) {
+      return status;
+    }
+    status = cb->repeatUnion(e, &f);
+    if (!status.isOk()) {
+      return status;
+    }
+    MyOtherParcelable g, h;
+    status = cb->repeatOtherParcelable(g, &h);
+    return ScopedAStatus::ok();
+  }
+
+  ScopedAStatus repeatOtherParcelable(
+      const aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable& input,
+      aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable* _aidl_return)
+      override {
+    *_aidl_return = input;
+    return ScopedAStatus::ok();
+  }
+};
+
 }  // namespace
 
 int main(int /* argc */, char* /* argv */[]) {
@@ -810,6 +868,7 @@ int main(int /* argc */, char* /* argv */[]) {
       SharedRefBase::make<LoggableInterfaceService>()->asBinder(),
       SharedRefBase::make<NestedService>()->asBinder(),
       SharedRefBase::make<FixedSizeArrayService>()->asBinder(),
+      SharedRefBase::make<TrunkStableService>()->asBinder(),
   };
 
   for (const SpAIBinder& binder : binders) {
