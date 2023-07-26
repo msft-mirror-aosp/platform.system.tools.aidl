@@ -17,6 +17,7 @@ package aidl
 import (
 	"android/soong/android"
 	"android/soong/genrule"
+	"strconv"
 
 	"path/filepath"
 	"strings"
@@ -37,7 +38,7 @@ var (
 			`mkdir -p "${outDir}/staging" && ` +
 			`mkdir -p "${headerDir}/staging" && ` +
 			`${aidlCmd} --lang=${lang} ${optionalFlags} --structured --ninja -d ${outStagingFile}.d ` +
-			`-h ${headerDir}/staging -o ${outDir}/staging ${imports} ${in} && ` +
+			`-h ${headerDir}/staging -o ${outDir}/staging ${imports} ${nextImports} ${in} && ` +
 			`rsync --checksum ${outStagingFile}.d ${out}.d && ` +
 			`rsync --checksum ${outStagingFile} ${out} && ` +
 			`( [ -z "${stagingHeaders}" ] || rsync --checksum ${stagingHeaders} ${fullHeaderDir} ) && ` +
@@ -48,28 +49,28 @@ var (
 		CommandDeps: []string{"${aidlCmd}"},
 		Restat:      true,
 		Description: "AIDL ${lang} ${in}",
-	}, "imports", "lang", "headerDir", "outDir", "optionalFlags", "stagingHeaders", "outStagingFile",
+	}, "imports", "nextImports", "lang", "headerDir", "outDir", "optionalFlags", "stagingHeaders", "outStagingFile",
 		"fullHeaderDir")
 
 	aidlJavaRule = pctx.StaticRule("aidlJavaRule", blueprint.RuleParams{
 		Command: `${aidlCmd} --lang=java ${optionalFlags} --structured --ninja -d ${out}.d ` +
-			`-o ${outDir} ${imports} ${in}`,
+			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
 		CommandDeps: []string{"${aidlCmd}"},
 		Restat:      true,
 		Description: "AIDL Java ${in}",
-	}, "imports", "outDir", "optionalFlags")
+	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlRustRule = pctx.StaticRule("aidlRustRule", blueprint.RuleParams{
 		Command: `${aidlCmd} --lang=rust ${optionalFlags} --structured --ninja -d ${out}.d ` +
-			`-o ${outDir} ${imports} ${in}`,
+			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
 		CommandDeps: []string{"${aidlCmd}"},
 		Restat:      true,
 		Description: "AIDL Rust ${in}",
-	}, "imports", "outDir", "optionalFlags")
+	}, "imports", "nextImports", "outDir", "optionalFlags")
 )
 
 type aidlGenProperties struct {
@@ -98,9 +99,10 @@ type aidlGenRule struct {
 
 	properties aidlGenProperties
 
-	deps           deps
-	implicitInputs android.Paths
-	importFlags    string
+	deps            deps
+	implicitInputs  android.Paths
+	importFlags     string
+	nextImportFlags string
 
 	// A frozen aidl_interface always have a hash file
 	hashFile android.Path
@@ -124,7 +126,7 @@ func (g *aidlGenRule) getImports(ctx android.ModuleContext) map[string]string {
 }
 
 func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
-	srcs, imports := getPaths(ctx, g.properties.Srcs, g.properties.AidlRoot)
+	srcs, nextImports := getPaths(ctx, g.properties.Srcs, g.properties.AidlRoot)
 
 	g.deps = getDeps(ctx, g.getImports(ctx))
 
@@ -137,8 +139,8 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	g.implicitInputs = append(g.implicitInputs, g.deps.implicits...)
 	g.implicitInputs = append(g.implicitInputs, g.deps.preprocessed...)
 
-	imports = append(imports, g.deps.imports...)
-	g.importFlags = strings.Join(wrap("-I", imports, ""), " ")
+	g.nextImportFlags = strings.Join(wrap("-N", nextImports, ""), " ")
+	g.importFlags = strings.Join(wrap("-I", g.deps.imports, ""), " ")
 
 	g.genOutDir = android.PathForModuleGen(ctx)
 	g.genHeaderDir = android.PathForModuleGen(ctx, "include")
@@ -182,15 +184,24 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	outStagingFile := android.PathForModuleGen(ctx, pathtools.ReplaceExtension("staging/"+relPath, ext))
 	implicits := g.implicitInputs
 
+	// default version is 1 for any stable interface
+	version := "1"
+	previousVersion := ""
+	previousApiDir := ""
+	if g.properties.Version != "" {
+		version = g.properties.Version
+	}
+	versionInt, err := strconv.Atoi(version)
+	if err != nil && g.properties.Version != "" {
+		ctx.PropertyErrorf(g.properties.Version, "Invalid Version string: %s", g.properties.Version)
+	} else if err == nil && versionInt > 1 {
+		previousVersion = strconv.Itoa(versionInt - 1)
+		previousApiDir = filepath.Join(ctx.ModuleDir(), aidlApiDir, g.properties.BaseName, previousVersion)
+	}
+
 	optionalFlags := append([]string{}, g.properties.Flags...)
 	if proptools.Bool(g.properties.Unstable) != true {
-		// default version is 1 for any stable interface
-		version := "1"
-		if g.properties.Version != "" {
-			version = g.properties.Version
-		}
 		optionalFlags = append(optionalFlags, "--version "+version)
-
 		hash := "notfrozen"
 		if !strings.HasPrefix(baseDir, ctx.Config().SoongOutDir()) {
 			hashFile := android.ExistentPathForSource(ctx, baseDir, ".hash")
@@ -220,6 +231,29 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	}
 	optionalFlags = append(optionalFlags, wrap("-p", g.deps.preprocessed.Strings(), "")...)
 
+	useUnfrozen := ctx.DeviceConfig().Release_aidl_use_unfrozen()
+
+	if useUnfrozen == false && previousVersion != "" &&
+		proptools.Bool(g.properties.Unstable) != true &&
+		g.hashFile == nil {
+		apiDirPath := android.ExistentPathForSource(ctx, previousApiDir)
+		if apiDirPath.Valid() {
+			optionalFlags = append(optionalFlags, "--previous_api_dir="+apiDirPath.Path().String())
+		} else {
+			ctx.PropertyErrorf("--previous_api_dir is invalid: %s", apiDirPath.Path().String())
+		}
+		hashFile := android.ExistentPathForSource(ctx, previousApiDir, ".hash")
+		if hashFile.Valid() {
+			previousHash := "$$(tail -1 '" + hashFile.Path().String() + "')"
+			implicits = append(implicits, hashFile.Path())
+
+			//	g.previousHashFile = hashFile.Path()
+			optionalFlags = append(optionalFlags, "--previous_hash "+previousHash)
+		} else {
+			ctx.ModuleErrorf("Failed to find previous version's hash file in %s", previousApiDir)
+		}
+	}
+
 	var headers android.WritablePaths
 	if g.properties.Lang == langJava {
 		ctx.Build(pctx, android.BuildParams{
@@ -229,6 +263,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 			Output:    outFile,
 			Args: map[string]string{
 				"imports":       g.importFlags,
+				"nextImports":   g.nextImportFlags,
 				"outDir":        g.genOutDir.String(),
 				"optionalFlags": strings.Join(optionalFlags, " "),
 			},
@@ -241,6 +276,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 			Output:    outFile,
 			Args: map[string]string{
 				"imports":       g.importFlags,
+				"nextImports":   g.nextImportFlags,
 				"outDir":        g.genOutDir.String(),
 				"optionalFlags": strings.Join(optionalFlags, " "),
 			},
@@ -290,6 +326,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 			ImplicitOutputs: headers,
 			Args: map[string]string{
 				"imports":        g.importFlags,
+				"nextImports":    g.nextImportFlags,
 				"lang":           aidlLang,
 				"headerDir":      g.genHeaderDir.String(),
 				"fullHeaderDir":  fullHeaderDir.String(),

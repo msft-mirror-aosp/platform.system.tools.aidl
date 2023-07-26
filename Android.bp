@@ -414,6 +414,7 @@ cc_test {
         "aidl-test-versioned-interface-V1-cpp",
         "aidl_test_loggable_interface-cpp",
         "aidl-test-fixedsizearray-cpp",
+        "android.aidl.test.trunk-V2-cpp",
     ],
     srcs: ["tests/aidl_test_service.cpp"],
 }
@@ -432,6 +433,7 @@ cc_test {
         "aidl-test-interface-ndk",
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
+        "android.aidl.test.trunk-V2-ndk",
     ],
     srcs: ["tests/aidl_test_service_ndk.cpp"],
 }
@@ -447,7 +449,13 @@ cc_test {
         "aidl-test-versioned-interface-V2-cpp",
         "aidl_test_loggable_interface-cpp",
         "aidl-test-fixedsizearray-cpp",
+        "android.aidl.test.trunk-V2-cpp",
     ],
+    product_variables: {
+        release_aidl_use_unfrozen: {
+            cflags: ["-DAIDL_USE_UNFROZEN"],
+        },
+    },
     tidy_timeout_srcs: [
         "tests/aidl_test_client_parcelables.cpp",
         "tests/aidl_test_client_primitives.cpp",
@@ -467,6 +475,7 @@ cc_test {
         "tests/aidl_test_client_renamed_interface.cpp",
         "tests/aidl_test_client_loggable_interface.cpp",
         "tests/aidl_test_client_nested.cpp",
+        "tests/aidl_test_client_trunk_stable.cpp",
     ],
 }
 
@@ -481,10 +490,16 @@ cc_test {
         "aidl-test-interface-ndk",
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
+        "android.aidl.test.trunk-V2-ndk",
     ],
     shared_libs: [
         "libbinder_ndk",
     ],
+    product_variables: {
+        release_aidl_use_unfrozen: {
+            cflags: ["-DAIDL_USE_UNFROZEN"],
+        },
+    },
     srcs: [
         "tests/aidl_test_client_ndk_delegate.cpp",
         "tests/aidl_test_client_ndk_loggable_interface.cpp",
@@ -494,6 +509,7 @@ cc_test {
         "tests/aidl_test_client_ndk_primitives_test.cpp",
         "tests/aidl_test_client_ndk_strings_test.cpp",
         "tests/aidl_test_client_ndk_versioned_interface.cpp",
+        "tests/aidl_test_client_ndk_trunk_stable.cpp",
     ],
 }
 
@@ -578,6 +594,7 @@ java_test {
     static_libs: [
         // client uses the new version
         "aidl-test-versioned-interface-V3-java",
+        "android.aidl.test.trunk-V2-java"
     ],
     // tests are included in defaults
     srcs: [
@@ -590,6 +607,7 @@ java_test {
         "tests/java/src/android/aidl/tests/GenericTests.java",
         "tests/java/src/android/aidl/tests/NestedTypesTests.java",
         "tests/java/src/android/aidl/tests/TestVersionedInterface.java",
+        "tests/java/src/android/aidl/tests/TrunkStableTests.java",
         "tests/java/src/android/aidl/tests/UnionTests.java",
         "tests/java/src/android/aidl/tests/ExtensionTests.java",
         "tests/java/src/android/aidl/tests/NullableTests.java",
@@ -606,6 +624,7 @@ java_test {
     static_libs: [
         // service uses the old version
         "aidl-test-versioned-interface-V1-java",
+        "android.aidl.test.trunk-V2-java"
     ],
     srcs: [
         "tests/java/src/android/aidl/service/**/*.java",
@@ -853,6 +872,7 @@ rust_test {
         "aidl_test_unstable_parcelable-rust",
         "aidl_test_vintf_parcelable-V1-rust",
         "aidl-test-fixedsizearray-rust",
+        "android.aidl.test.trunk-V2-rust",
         "liblibc",
         // We need to import binder_rs directly
         // for a few internal types like Parcel
@@ -882,6 +902,7 @@ rust_test {
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
         "aidl-test-fixedsizearray-rust",
+        "android.aidl.test.trunk-V2-rust",
         "liblibc",
     ],
     prefer_rlib: true,
@@ -907,6 +928,7 @@ rust_test {
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
         "aidl-test-fixedsizearray-rust",
+        "android.aidl.test.trunk-V2-rust",
         "liblibc",
         "libbinder_tokio_rs",
         "libtokio",
