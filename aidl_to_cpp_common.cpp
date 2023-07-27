@@ -686,6 +686,9 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
   for (const auto& variable : decl.GetFields()) {
     out << fmt::format("case {}: {{\n", variable->GetName());
     out.Indent();
+    if (variable->IsNew()) {
+      out << fmt::format("if (true) return {};\n", ctx.status_bad);
+    }
     const auto& type = variable->GetType();
     read_var(value, type);
     out << fmt::format("if constexpr (std::is_trivially_copyable_v<{}>) {{\n",
@@ -727,7 +730,11 @@ void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx)
       out << "#pragma clang diagnostic push\n";
       out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
     }
-    out << fmt::format("case {}: return ", variable->GetName());
+    if (variable->IsNew()) {
+      out << fmt::format("case {}: return true ? {} : ", variable->GetName(), ctx.status_bad);
+    } else {
+      out << fmt::format("case {}: return ", variable->GetName());
+    }
     ctx.write_func(out, "get<" + variable->GetName() + ">()", variable->GetType());
     out << ";\n";
     if (variable->IsDeprecated()) {
