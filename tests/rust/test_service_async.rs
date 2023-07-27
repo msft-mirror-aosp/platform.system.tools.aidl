@@ -39,6 +39,12 @@ use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
     BazUnion::BazUnion, Foo::Foo, IFooInterface, IFooInterface::BnFooInterface,
     IFooInterface::BpFooInterface,
 };
+use android_aidl_test_trunk::aidl::android::aidl::test::trunk::{
+    ITrunkStableTest, ITrunkStableTest::BnTrunkStableTest, ITrunkStableTest::BpTrunkStableTest,
+    ITrunkStableTest::IMyCallback, ITrunkStableTest::MyEnum::MyEnum,
+    ITrunkStableTest::MyOtherParcelable::MyOtherParcelable,
+    ITrunkStableTest::MyParcelable::MyParcelable, ITrunkStableTest::MyUnion::MyUnion,
+};
 use binder_tokio::Tokio;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -576,6 +582,54 @@ impl IFooInterface::IFooInterfaceAsyncServer for FooInterface {
     }
 }
 
+struct TrunkStableTest;
+
+impl Interface for TrunkStableTest {}
+
+#[async_trait]
+impl ITrunkStableTest::ITrunkStableTestAsyncServer for TrunkStableTest {
+    async fn repeatParcelable(&self, in_parcel: &MyParcelable) -> binder::Result<MyParcelable> {
+        let tmp: MyParcelable = MyParcelable { a: in_parcel.a, b: in_parcel.b, c: in_parcel.c };
+        Ok(tmp)
+    }
+    async fn repeatEnum(&self, in_enum: MyEnum) -> binder::Result<MyEnum> {
+        Ok(in_enum)
+    }
+    async fn repeatUnion(&self, in_union: &MyUnion) -> binder::Result<MyUnion> {
+        match in_union {
+            MyUnion::A(n) => Ok(MyUnion::A(*n)),
+            MyUnion::B(n) => Ok(MyUnion::B(*n)),
+            MyUnion::C(n) => Ok(MyUnion::C(*n)),
+        }
+    }
+    async fn repeatOtherParcelable(
+        &self,
+        in_parcel: &MyOtherParcelable,
+    ) -> binder::Result<MyOtherParcelable> {
+        let tmp: MyOtherParcelable = MyOtherParcelable { a: in_parcel.a, b: in_parcel.b };
+        Ok(tmp)
+    }
+    async fn callMyCallback(
+        &self,
+        _in_cb: &binder::Strong<dyn IMyCallback::IMyCallback>,
+    ) -> binder::Result<()> {
+        let p1 = MyParcelable::default();
+        let _ = _in_cb.repeatParcelable(&p1);
+
+        let e1 = MyEnum::THREE;
+        let _ = _in_cb.repeatEnum(e1);
+
+        let u1 = MyUnion::A(12);
+        let _ = _in_cb.repeatUnion(&u1);
+
+        let o1 = MyOtherParcelable::default();
+        // expected to fail when not using the frozen version
+        let _ = _in_cb.repeatOtherParcelable(&o1);
+
+        Ok(())
+    }
+}
+
 struct NestedService;
 
 impl Interface for NestedService {}
@@ -718,6 +772,16 @@ fn main() {
             BinderFeatures::default(),
         );
         binder::add_service(fixed_size_array_service_name, fixed_size_array_service.as_binder())
+            .expect("Could not register service");
+
+        let trunk_stable_service_name =
+            <BpTrunkStableTest as ITrunkStableTest::ITrunkStableTest>::get_descriptor();
+        let trunk_stable_service = BnTrunkStableTest::new_async_binder(
+            TrunkStableTest,
+            rt(),
+            BinderFeatures::default()
+        );
+        binder::add_service(trunk_stable_service_name, trunk_stable_service.as_binder())
             .expect("Could not register service");
 
         // By awaiting `pending`, we yield to the runtime. This results in the current-thread

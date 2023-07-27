@@ -58,7 +58,9 @@
 #  define O_BINARY  0
 #endif
 
+using android::base::Error;
 using android::base::Join;
+using android::base::Result;
 using android::base::Split;
 using std::set;
 using std::string;
@@ -735,10 +737,71 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   return AidlError::OK;
 }
 
+void markNewAdditions(AidlTypenames& typenames, const AidlTypenames& previous_typenames) {
+  for (const AidlDefinedType* type : typenames.AllDefinedTypes()) {
+    const AidlDefinedType* previous_type = nullptr;
+    for (const AidlDefinedType* previous : previous_typenames.AllDefinedTypes()) {
+      if (type->GetCanonicalName() == previous->GetCanonicalName()) {
+        previous_type = previous;
+      }
+    }
+    if (previous_type == nullptr) {
+      // This is a new type for this version.
+      continue;
+    }
+    if (type->AsInterface()) {
+      for (const std::unique_ptr<AidlMethod>& member : type->AsInterface()->GetMethods()) {
+        if (!member->IsUserDefined()) continue;
+        bool found = false;
+        for (const std::unique_ptr<AidlMethod>& previous_member : previous_type->GetMethods()) {
+          if (previous_member->GetName() == member->GetName()) {
+            found = true;
+          }
+        }
+        if (!found) member->MarkNew();
+      }
+    } else if (type->AsStructuredParcelable() || type->AsUnionDeclaration()) {
+      for (const std::unique_ptr<AidlVariableDeclaration>& member : type->GetFields()) {
+        if (!member->IsUserDefined()) continue;
+        bool found = false;
+        for (const std::unique_ptr<AidlVariableDeclaration>& previous_member :
+             previous_type->GetFields()) {
+          if (previous_member->GetName() == member->GetName()) {
+            found = true;
+          }
+        }
+        if (!found) member->MarkNew();
+      }
+    } else if (type->AsEnumDeclaration() || type->AsUnstructuredParcelable()) {
+      // We have nothing to do for these types
+    } else {
+      AIDL_FATAL(type) << "Unexpected type when looking for new members";
+    }
+  }
+}
+
 } // namespace internals
 
 bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
   const Options::Language lang = options.TargetLanguage();
+
+  // load the previously frozen version if it exists
+  Result<AidlTypenames> previous_typenames_result;
+  if (options.IsLatestUnfrozenVersion()) {
+    // TODO(b/292005937) Once LoadApiDump can handle the OS_PATH_SEPARATOR at
+    // the end of PreviousApiDir, we can stop passing in a substr without it.
+    AIDL_FATAL_IF(options.PreviousApiDir().back() != OS_PATH_SEPARATOR, "Expecting a separator");
+    previous_typenames_result =
+        LoadApiDump(options.WithNoWarnings().WithoutVersion().AsPreviousVersion(), io_delegate,
+                    options.PreviousApiDir().substr(0, options.PreviousApiDir().size() - 1));
+    if (!previous_typenames_result.ok()) {
+      AIDL_ERROR(options.PreviousApiDir())
+          << "Failed to load api dump for '" << options.PreviousApiDir()
+          << "'. Error: " << previous_typenames_result.error().message();
+      return false;
+    }
+  }
+
   for (const string& input_file : options.InputFiles()) {
     AidlTypenames typenames;
 
@@ -748,6 +811,10 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
                                                            &typenames, &imported_files);
     if (aidl_err != AidlError::OK) {
       return false;
+    }
+
+    if (options.IsLatestUnfrozenVersion()) {
+      internals::markNewAdditions(typenames, previous_typenames_result.value());
     }
 
     for (const auto& defined_type : typenames.MainDocument().DefinedTypes()) {

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java --version 2 --hash da8c4bc94ca7feff0e0a65563a466787698b5891 --rpc --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen/android/aidl/versioned/tests/Foo.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen -Isystem/tools/aidl/aidl_api/aidl-test-versioned-interface/2 system/tools/aidl/aidl_api/aidl-test-versioned-interface/2/android/aidl/versioned/tests/Foo.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java --version 2 --hash da8c4bc94ca7feff0e0a65563a466787698b5891 --rpc --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen/android/aidl/versioned/tests/Foo.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen -Nsystem/tools/aidl/aidl_api/aidl-test-versioned-interface/2 system/tools/aidl/aidl_api/aidl-test-versioned-interface/2/android/aidl/versioned/tests/Foo.aidl
  */
 package android.aidl.versioned.tests;
 public class Foo implements android.os.Parcelable

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java --version 2 --hash da8c4bc94ca7feff0e0a65563a466787698b5891 --rpc --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen/android/aidl/versioned/tests/BazUnion.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen -Isystem/tools/aidl/aidl_api/aidl-test-versioned-interface/2 system/tools/aidl/aidl_api/aidl-test-versioned-interface/2/android/aidl/versioned/tests/BazUnion.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java --version 2 --hash da8c4bc94ca7feff0e0a65563a466787698b5891 --rpc --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen/android/aidl/versioned/tests/BazUnion.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V2-java-source/gen -Nsystem/tools/aidl/aidl_api/aidl-test-versioned-interface/2 system/tools/aidl/aidl_api/aidl-test-versioned-interface/2/android/aidl/versioned/tests/BazUnion.aidl
  */
 package android.aidl.versioned.tests;
 public final class BazUnion implements android.os.Parcelable {

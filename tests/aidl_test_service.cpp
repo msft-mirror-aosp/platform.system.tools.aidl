@@ -45,6 +45,9 @@
 #include "android/aidl/versioned/tests/BnFooInterface.h"
 #include "android/aidl/versioned/tests/IFooInterface.h"
 
+#include <android/aidl/test/trunk/BnTrunkStableTest.h>
+#include <android/aidl/test/trunk/ITrunkStableTest.h>
+
 #include "android/aidl/tests/BnNewName.h"
 #include "android/aidl/tests/BnOldName.h"
 
@@ -855,6 +858,60 @@ class VersionedService : public android::aidl::versioned::tests::BnFooInterface 
   }
 };
 
+class TrunkStableService : public android::aidl::test::trunk::BnTrunkStableTest {
+ public:
+  TrunkStableService() {}
+  virtual ~TrunkStableService() = default;
+
+  Status repeatParcelable(
+      const ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& input,
+      ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) override {
+    *_aidl_return = input;
+    return Status::ok();
+  }
+  Status repeatEnum(::android::aidl::test::trunk::ITrunkStableTest::MyEnum input,
+                    ::android::aidl::test::trunk::ITrunkStableTest::MyEnum* _aidl_return) override {
+    *_aidl_return = input;
+    return Status::ok();
+  }
+  Status repeatUnion(
+      const ::android::aidl::test::trunk::ITrunkStableTest::MyUnion& input,
+      ::android::aidl::test::trunk::ITrunkStableTest::MyUnion* _aidl_return) override {
+    *_aidl_return = input;
+    return Status::ok();
+  }
+  Status callMyCallback(
+      const ::android::sp<::android::aidl::test::trunk::ITrunkStableTest::IMyCallback>& cb)
+      override {
+    if (!cb) return Status::fromExceptionCode(Status::Exception::EX_NULL_POINTER);
+    MyParcelable a, b;
+    MyEnum c = MyEnum::ZERO, d = MyEnum::ZERO;
+    MyUnion e, f;
+    auto status = cb->repeatParcelable(a, &b);
+    if (!status.isOk()) {
+      return status;
+    }
+    status = cb->repeatEnum(c, &d);
+    if (!status.isOk()) {
+      return status;
+    }
+    status = cb->repeatUnion(e, &f);
+    if (!status.isOk()) {
+      return status;
+    }
+    MyOtherParcelable g, h;
+    status = cb->repeatOtherParcelable(g, &h);
+    return Status::ok();
+  }
+
+  Status repeatOtherParcelable(
+      const ::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable& input,
+      ::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable* _aidl_return) override {
+    *_aidl_return = input;
+    return Status::ok();
+  }
+};
+
 class LoggableInterfaceService : public android::aidl::loggable::BnLoggableInterface {
  public:
   LoggableInterfaceService() {}
@@ -988,6 +1045,15 @@ int Run() {
                                                versionedService);
   if (status != OK) {
     ALOGE("Failed to add service %s", String8(versionedService->getInterfaceDescriptor()).c_str());
+    return -1;
+  }
+
+  android::sp<TrunkStableService> trunkStableService = new TrunkStableService;
+  status = defaultServiceManager()->addService(trunkStableService->getInterfaceDescriptor(),
+                                               trunkStableService);
+  if (status != OK) {
+    ALOGE("Failed to add service %s",
+          String8(trunkStableService->getInterfaceDescriptor()).c_str());
     return -1;
   }
 
