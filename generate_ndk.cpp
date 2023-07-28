@@ -507,7 +507,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << "::ndk::ScopedAParcel _aidl_out;\n";
   out << "\n";
 
-  if (method.IsNew() && method.IsUserDefined()) {
+  if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      method.IsUserDefined()) {
     out << "if (true) {\n";
     out << "  _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;\n";
     out << "  goto _aidl_error;\n";
@@ -626,7 +627,8 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     out.Write("#error Permission checks not implemented for the ndk backend\n");
   }
 
-  if (method.IsNew() && method.IsUserDefined()) {
+  if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::READ) &&
+      method.IsUserDefined()) {
     out << "if (true) break;\n";
   }
   for (const auto& arg : method.GetArguments()) {
@@ -1350,7 +1352,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     out << "if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;\n";
     out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
     for (const auto& variable : defined_type.GetFields()) {
-      if (variable->IsNew()) {
+      if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
         out << "if (false) {\n";
         out.Indent();
       }
@@ -1366,7 +1368,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
           {out, types, variable->GetType(), "_aidl_parcel", "&" + variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
-      if (variable->IsNew()) {
+      if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
         out.Dedent();
         out << "}\n";
       }
@@ -1386,7 +1388,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     StatusCheckReturn(out);
 
     for (const auto& variable : defined_type.GetFields()) {
-      if (variable->IsNew()) {
+      if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
         out << "if (false) {\n";
         out.Indent();
       }
@@ -1394,7 +1396,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
       WriteToParcelFor({out, types, variable->GetType(), "_aidl_parcel", variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
-      if (variable->IsNew()) {
+      if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
         out.Dedent();
         out << "}\n";
       }
