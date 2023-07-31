@@ -349,7 +349,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
   switch (kind) {
     case MethodKind::NORMAL:
     case MethodKind::ASYNC:
-      if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
           method.IsUserDefined()) {
         out << "if (true) {\n";
         out << " return Err(binder::Status::from(binder::StatusCode::UNKNOWN_TRANSACTION));\n";
@@ -366,7 +366,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
       out << "self.read_response_" + method.GetName() + "(" + read_response_args + ")\n";
       break;
     case MethodKind::READY_FUTURE:
-      if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
           method.IsUserDefined()) {
         out << "if (true) {\n";
         out << " return "
@@ -391,7 +391,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
                  read_response_args + "))\n";
       break;
     case MethodKind::BOXED_FUTURE:
-      if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
           method.IsUserDefined()) {
         out << "if (true) {\n";
         out << " return "
@@ -425,7 +425,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
       break;
   }
 
-  if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE) &&
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
       method.IsUserDefined()) {
     out.Dedent();
     out << "}\n";
@@ -439,7 +439,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
   out << "transactions::r#" << method.GetName() << " => {\n";
   out.Indent();
   if (method.IsUserDefined() && method.IsNew() &&
-      shouldForceDowngradeFor(CommunicationSide::READ)) {
+      ShouldForceDowngradeFor(CommunicationSide::READ)) {
     out << "if (true) {\n";
     out << "  Err(binder::StatusCode::UNKNOWN_TRANSACTION)\n";
     out << "} else {\n";
@@ -517,7 +517,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
   }
   out << "Ok(())\n";
   if (method.IsUserDefined() && method.IsNew() &&
-      shouldForceDowngradeFor(CommunicationSide::READ)) {
+      ShouldForceDowngradeFor(CommunicationSide::READ)) {
     out.Dedent();
     out << "}\n";
   }
@@ -1015,7 +1015,7 @@ void GenerateParcelSerializeBody(CodeWriter& out, const AidlStructuredParcelable
   out << "parcel.sized_write(|subparcel| {\n";
   out.Indent();
   for (const auto& variable : parcel->GetFields()) {
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
       out << "if (false) {\n";
       out.Indent();
     }
@@ -1026,7 +1026,7 @@ void GenerateParcelSerializeBody(CodeWriter& out, const AidlStructuredParcelable
     } else {
       out << "subparcel.write(&self.r#" << variable->GetName() << ")?;\n";
     }
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
       out.Dedent();
       out << "}\n";
     }
@@ -1042,7 +1042,7 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlStructuredParcelab
   out.Indent();
 
   for (const auto& variable : parcel->GetFields()) {
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out << "if (false) {\n";
       out.Indent();
     }
@@ -1054,7 +1054,7 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlStructuredParcelab
       out << "self.r#" << variable->GetName() << " = subparcel.read()?;\n";
     }
     out.Dedent();
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out.Dedent();
       out << "}\n";
     }
@@ -1116,7 +1116,7 @@ void GenerateParcelSerializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
   for (const auto& variable : parcel->GetFields()) {
     out << "Self::" << variable->GetCapitalizedName() << "(v) => {\n";
     out.Indent();
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
       out << "if (true) {\n";
       out << "  Err(binder::StatusCode::BAD_VALUE)\n";
       out << "} else {\n";
@@ -1129,7 +1129,7 @@ void GenerateParcelSerializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
     } else {
       out << "parcel.write(v)\n";
     }
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
       out.Dedent();
       out << "}\n";
     }
@@ -1152,7 +1152,7 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
 
     out << std::to_string(tag++) << " => {\n";
     out.Indent();
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out << "if (true) {\n";
       out << "  Err(binder::StatusCode::BAD_VALUE)\n";
       out << "} else {\n";
@@ -1166,7 +1166,7 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
     }
     out << "*self = Self::" << variable->GetCapitalizedName() << "(value);\n";
     out << "Ok(())\n";
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out.Dedent();
       out << "}\n";
     }

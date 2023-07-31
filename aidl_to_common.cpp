@@ -19,7 +19,7 @@
 namespace android {
 namespace aidl {
 
-bool shouldForceDowngradeFor(CommunicationSide e) {
+bool ShouldForceDowngradeFor(CommunicationSide e) {
   return kDowngradeCommunicationBitmap & static_cast<int>(e);
 }
 
