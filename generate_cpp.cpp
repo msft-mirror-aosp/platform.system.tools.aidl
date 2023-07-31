@@ -202,7 +202,7 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
     out << GenLogBeforeExecute(bp_name, method, false /* isServer */, false /* isNdk */);
   }
 
-  if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
     out << "if (true) {\n";
     out.Write("  %s = ::android::UNKNOWN_TRANSACTION;\n", kAndroidStatusVarName);
     out << "} else {\n";
@@ -257,7 +257,7 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
   if (method.GetType().GetName() != "void") {
     arg_names.emplace_back(kReturnVarName);
   }
-  if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
     out.Dedent();
     out << "}\n";
   }
@@ -465,7 +465,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
                                const AidlMethod& method, const AidlTypenames& typenames,
                                const Options& options) {
   const string bn_name = GetQualifiedName(interface, ClassNames::SERVER);
-  if (method.IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
     out << "if (true) {\n";
     out << "  _aidl_ret_status = ::android::UNKNOWN_TRANSACTION;\n";
     out << "  break;\n";
@@ -1145,7 +1145,7 @@ void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& par
     out << "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out << "if (false) {\n";
       out.Indent();
     }
@@ -1153,7 +1153,7 @@ void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& par
     out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::READ)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out.Dedent();
       out << "}\n";
     }
@@ -1170,7 +1170,7 @@ void GenerateWriteToParcel(CodeWriter& out, const AidlStructuredParcelable& parc
   for (const auto& variable : parcel.GetFields()) {
     string method = ParcelWriteMethodOf(variable->GetType(), typenames);
     string arg = ParcelWriteCastOf(variable->GetType(), typenames, variable->GetName());
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
       out << "if (false) {\n";
       out.Indent();
     }
@@ -1178,7 +1178,7 @@ void GenerateWriteToParcel(CodeWriter& out, const AidlStructuredParcelable& parc
     out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
-    if (variable->IsNew() && shouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
       out.Dedent();
       out << "}\n";
     }
