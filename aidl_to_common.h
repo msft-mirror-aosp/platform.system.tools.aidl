@@ -36,11 +36,11 @@ enum class CommunicationSide {
 constexpr int kDowngradeCommunicationBitmap = static_cast<int>(CommunicationSide::BOTH);
 
 // This is used when adding the trunk stable downgrade to unfrozen interfaces.
-// The kTrunkStableSplitTesting constant can be used to only modify one side of
+// The kDowngradeCommunicationBitmap constant can be used to only modify one side of
 // the generated interface libraries so we can make sure both sides are forced
 // to behave like the previous unfrozen version.
 // BOTH is standard operating config, but can be switched for testing.
-bool shouldForceDowngradeFor(CommunicationSide e);
+bool ShouldForceDowngradeFor(CommunicationSide e);
 
 // currently relies on all backends having the same comment style, but we
 // could take a comment type argument in the future
