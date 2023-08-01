@@ -79,7 +79,20 @@ function _golden_test() {
   local e=0
   for module in "${modules[@]}"; do
     local built="$root/out/soong/.intermediates/system/tools/aidl/$module/"
-    local golden="$root/system/tools/aidl/tests/golden_output/$module/"
+    local module_path
+    if [ "$AIDL_USE_UNFROZEN" == "true" ]; then
+      module_path=$module
+    elif [ "$AIDL_USE_UNFROZEN" == "false" ]; then
+      module_path="frozen/$module"
+    else
+      echo "ERROR: AIDL_USE_UNFROZEN must be set to true or false."
+      echo "ERROR: This should be the same value of the flag RELEASE_AIDL_USE_UNFROZEN"
+      echo "ERROR: when the interfaces were last built."
+      echo "ERROR:     AIDL_USE_UNFROZEN=true golden_test.sh update."
+      exit 1
+    fi
+
+    local golden="$root/system/tools/aidl/tests/golden_output/$module_path/"
 
     if [ "$update" = 1 ]; then
       rm -rf "$golden"
@@ -93,7 +106,9 @@ function _golden_test() {
   if [ "$e" = 1 ]; then
     echo "ERROR: The AIDL compiler is outputting files in an unknown way."
     echo "ERROR: to accept these changes, please run:"
-    echo "ERROR:     \$ANDROID_BUILD_TOP/system/tools/aidl/tests/golden_test.sh update"
+    echo "ERROR:     AIDL_USE_UNFROZEN=$AIDL_USE_UNFROZEN \$ANDROID_BUILD_TOP/system/tools/aidl/tests/golden_test.sh update"
+    echo "ERROR: Then, flip the RELEASE_AIDL_USE_UNFROZEN build flag and rebuild/regenerate the"
+    echo "ERROR: other set of golden output files."
     exit 1
   else
     if [ "$update" = 1 ]; then
