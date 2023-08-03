@@ -33,6 +33,7 @@
 #include "aidl_to_common.h"
 #include "aidl_to_cpp.h"
 
+#include "aidl_typenames.h"
 #include "logging.h"
 #include "os.h"
 
@@ -201,6 +202,13 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
     out << GenLogBeforeExecute(bp_name, method, false /* isServer */, false /* isNdk */);
   }
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    out << "if (true) {\n";
+    out.Write("  %s = ::android::UNKNOWN_TRANSACTION;\n", kAndroidStatusVarName);
+    out << "} else {\n";
+    out.Indent();
+  }
+
   // Add the name of the interface we're hoping to call.
   out.Write("%s = %s.writeInterfaceToken(getInterfaceDescriptor());\n", kAndroidStatusVarName,
             kDataVarName);
@@ -248,6 +256,10 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
   }
   if (method.GetType().GetName() != "void") {
     arg_names.emplace_back(kReturnVarName);
+  }
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    out.Dedent();
+    out << "}\n";
   }
   out.Write("if (UNLIKELY(%s == ::android::UNKNOWN_TRANSACTION && %s::getDefaultImpl())) {\n",
             kAndroidStatusVarName, i_name.c_str());
@@ -453,6 +465,12 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
                                const AidlMethod& method, const AidlTypenames& typenames,
                                const Options& options) {
   const string bn_name = GetQualifiedName(interface, ClassNames::SERVER);
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+    out << "if (true) {\n";
+    out << "  _aidl_ret_status = ::android::UNKNOWN_TRANSACTION;\n";
+    out << "  break;\n";
+    out << "}\n";
+  }
 
   // Declare all the parameters now.  In the common case, we expect no errors
   // in serialization.
@@ -558,13 +576,35 @@ void GenerateServerMetaTransaction(CodeWriter& out, const AidlInterface& interfa
   string iface = ClassName(interface, ClassNames::INTERFACE);
   if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
     out << "_aidl_data.checkInterface(this);\n"
-        << "_aidl_reply->writeNoException();\n"
-        << "_aidl_reply->writeInt32(" << iface << "::VERSION);\n";
+        << "_aidl_reply->writeNoException();\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "if (true) {\n";
+      out << "  _aidl_reply->writeInt32(" << std::to_string(options.PreviousVersion()) << ");\n";
+      out << "} else {\n";
+      out.Indent();
+    }
+    out << "_aidl_reply->writeInt32(" << iface << "::VERSION);\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out.Dedent();
+      out << "}\n";
+    }
   }
-  if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+  if (method.GetName() == kGetInterfaceHash &&
+      (!options.Hash().empty() || options.IsLatestUnfrozenVersion())) {
     out << "_aidl_data.checkInterface(this);\n"
-        << "_aidl_reply->writeNoException();\n"
-        << "_aidl_reply->writeUtf8AsUtf16(" << iface << "::HASH);\n";
+        << "_aidl_reply->writeNoException();\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "if (true) {\n";
+      out << "  _aidl_reply->writeUtf8AsUtf16(std::string(\"" << options.PreviousHash()
+          << "\"));\n";
+      out << "} else {\n";
+      out.Indent();
+    }
+    out << "_aidl_reply->writeUtf8AsUtf16(" << iface << "::HASH);\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out.Dedent();
+      out << "}\n";
+    }
   }
 }
 
@@ -1105,10 +1145,18 @@ void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& par
     out << "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out << "if (false) {\n";
+      out.Indent();
+    }
     out << "_aidl_ret_status = _aidl_parcel->" << method << "(" << arg << ");\n";
     out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out.Dedent();
+      out << "}\n";
+    }
   }
   out << "_aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
   out << "return _aidl_ret_status;\n";
@@ -1122,10 +1170,18 @@ void GenerateWriteToParcel(CodeWriter& out, const AidlStructuredParcelable& parc
   for (const auto& variable : parcel.GetFields()) {
     string method = ParcelWriteMethodOf(variable->GetType(), typenames);
     string arg = ParcelWriteCastOf(variable->GetType(), typenames, variable->GetName());
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out << "if (false) {\n";
+      out.Indent();
+    }
     out << "_aidl_ret_status = " << kParcelVarName << "->" << method << "(" << arg << ");\n";
     out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out.Dedent();
+      out << "}\n";
+    }
   }
   out << "auto _aidl_end_pos = " << kParcelVarName << "->dataPosition();\n";
   out << kParcelVarName << "->setDataPosition(_aidl_start_pos);\n";
@@ -1521,7 +1577,7 @@ bool GenerateCpp(const string& output_file, const Options& options, const AidlTy
     return false;
   }
 
-  using GenFn = void (*)(CodeWriter & out, const AidlDefinedType& defined_type,
+  using GenFn = void (*)(CodeWriter& out, const AidlDefinedType& defined_type,
                          const AidlTypenames& typenames, const Options& options);
   // Wrap Generate* function to handle CodeWriter for a file.
   auto gen = [&](auto file, GenFn fn) {

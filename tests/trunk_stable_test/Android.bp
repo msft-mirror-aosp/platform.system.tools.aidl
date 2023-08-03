@@ -37,6 +37,9 @@ aidl_interface {
         },
     ],
     frozen: false,
+    // Some tests rely on the last version not being frozen.
+    // Owner is set so the interface isn't frozen with the rest.
+    owner: "aosp",
 
 }
 

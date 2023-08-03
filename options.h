@@ -20,8 +20,10 @@
 #include <vector>
 
 #include <android-base/result.h>
+#include <android-base/strings.h>
 
 #include "diagnostics.h"
+#include "logging.h"
 
 namespace android {
 namespace aidl {
@@ -108,9 +110,24 @@ class Options final {
 
   Options(int argc, const char* const argv[], Language default_lang = Language::UNSPECIFIED);
 
-  Options PlusImportDir(const std::string& import_dir) const {
+  Options PlusImportDir(const std::string& import_dir) const;
+
+  Options AsPreviousVersion() const {
     Options copy(*this);
-    copy.import_dirs_.insert(import_dir);
+    copy.as_previous_version_ = true;
+    return copy;
+  }
+
+  Options WithoutVersion() const {
+    Options copy(*this);
+    copy.version_ = 0;
+    copy.hash_ = "";
+    return copy;
+  }
+
+  Options WithNoWarnings() const {
+    Options copy(*this);
+    copy.warning_options_ = WarningOptions();
     return copy;
   }
 
@@ -140,7 +157,13 @@ class Options final {
 
   CheckApiLevel GetCheckApiLevel() const { return check_api_level_; }
 
-  const set<string>& ImportDirs() const { return import_dirs_; }
+  const set<string>& ImportDirs() const {
+    if (as_previous_version_) {
+      return previous_import_dirs_;
+    } else {
+      return import_dirs_;
+    }
+  }
 
   const vector<string>& PreprocessedFiles() const { return preprocessed_files_; }
 
@@ -157,6 +180,8 @@ class Options final {
   bool GenTransactionNames() const { return gen_transaction_names_; }
 
   bool DependencyFileNinja() const { return dependency_file_ninja_; }
+
+  const string& PreviousApiDir() const { return previous_api_dir_; }
 
   const vector<string>& InputFiles() const { return input_files_; }
 
@@ -177,7 +202,16 @@ class Options final {
 
   int Version() const { return version_; }
 
+  int PreviousVersion() const {
+    AIDL_FATAL_IF(version_ <= 1, "This should only be called on versions greater than 1");
+    return version_ - 1;
+  }
+
+  bool IsLatestUnfrozenVersion() const { return !PreviousApiDir().empty(); }
+
   string Hash() const { return hash_; }
+
+  string PreviousHash() const { return previous_hash_; }
 
   bool GenLog() const { return gen_log_; }
 
@@ -208,12 +242,15 @@ class Options final {
   Task task_ = Task::COMPILE;
   CheckApiLevel check_api_level_ = CheckApiLevel::COMPATIBLE;
   set<string> import_dirs_;
+  set<string> previous_import_dirs_;
+  bool as_previous_version_ = false;
   vector<string> preprocessed_files_;
   string dependency_file_;
   bool gen_rpc_ = false;
   bool gen_traces_ = false;
   bool gen_transaction_names_ = false;
   bool dependency_file_ninja_ = false;
+  string previous_api_dir_;
   bool structured_ = false;
   Stability stability_ = Stability::UNSPECIFIED;
   uint32_t min_sdk_version_ = 0;  // invalid version
@@ -225,6 +262,7 @@ class Options final {
   string output_file_;
   int version_ = 0;
   string hash_ = "";
+  string previous_hash_ = "";
   bool gen_log_ = false;
   bool dump_no_license_ = false;
   ErrorMessage error_message_;

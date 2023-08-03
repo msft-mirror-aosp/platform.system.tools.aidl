@@ -16,6 +16,7 @@
 
 #include "aidl.h"
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_java.h"
 #include "aidl_typenames.h"
 #include "ast_java.h"
@@ -572,6 +573,16 @@ static void GenerateStubCode(const AidlMethod& method, bool oneway,
     // keep this across different args in order to create the classloader
     // at most once.
     bool is_classloader_created = false;
+
+    if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      auto if_statement = std::make_shared<IfStatement>();
+      if_statement->expression = std::make_shared<LiteralExpression>("true");
+      if_statement->statements = std::make_shared<StatementBlock>();
+      if_statement->statements->Add(
+          std::make_shared<LiteralExpression>("throw new android.os.RemoteException(\"Method " +
+                                              method.GetName() + " is unimplemented.\")"));
+      statements->Add(if_statement);
+    }
     for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
       std::shared_ptr<Variable> v = stubArgs.Get(arg->GetType());
 
@@ -733,6 +744,13 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
   out << "@Override public " << JavaSignatureOf(method.GetType()) << " " << method.GetName() << "("
       << ArgList(method, FormatArgForDecl) << ") throws android.os.RemoteException\n{\n";
   out.Indent();
+
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    out << "if (true) {\n";
+    out << "  throw new android.os.RemoteException(\"Method " + method.GetName() +
+               " is unimplemented.\");\n";
+    out << "}\n";
+  }
 
   // the parcels
   if (options.GenRpc()) {
@@ -1303,12 +1321,23 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
          << " * getInterfaceVersion} returns as that is the version of the interface\n"
          << " * that the remote object is implementing.\n"
          << " */\n"
-         << "public static final int VERSION = " << options.Version() << ";\n";
+         << "public static final int VERSION = ";
+    if (options.IsLatestUnfrozenVersion()) {
+      code << options.PreviousVersion() << ";\n";
+    } else {
+      code << options.Version() << ";\n";
+    }
+
     interface->elements.emplace_back(std::make_shared<LiteralClassElement>(code.str()));
   }
-  if (!options.Hash().empty()) {
+  if (!options.Hash().empty() || options.IsLatestUnfrozenVersion()) {
     std::ostringstream code;
-    code << "public static final String HASH = \"" << options.Hash() << "\";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      code << "public static final String HASH = \"" << options.PreviousHash() << "\";\n";
+    } else {
+      code << "public static final String HASH = \"" << options.Hash() << "\";\n";
+    }
+
     interface->elements.emplace_back(std::make_shared<LiteralClassElement>(code.str()));
   }
 

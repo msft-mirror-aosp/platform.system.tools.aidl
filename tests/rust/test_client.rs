@@ -52,6 +52,13 @@ use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
 use aidl_test_vintf_parcelable::aidl::android::aidl::tests::vintf::{
     VintfExtendableParcelable::VintfExtendableParcelable, VintfParcelable::VintfParcelable,
 };
+use android_aidl_test_trunk::aidl::android::aidl::test::trunk::{
+    ITrunkStableTest::BpTrunkStableTest, ITrunkStableTest::IMyCallback,
+    ITrunkStableTest::ITrunkStableTest, ITrunkStableTest::MyEnum::MyEnum,
+    ITrunkStableTest::MyOtherParcelable::MyOtherParcelable,
+    ITrunkStableTest::MyParcelable::MyParcelable, ITrunkStableTest::MyUnion::MyUnion,
+};
+
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::io::FromRawFd;
@@ -59,6 +66,11 @@ use std::sync::{Arc, Mutex};
 
 fn get_test_service() -> binder::Strong<dyn ITestService::ITestService> {
     binder::get_interface(<BpTestService as ITestService::ITestService>::get_descriptor())
+        .expect("did not get binder service")
+}
+
+fn get_test_trunk_stable_service() -> binder::Strong<dyn ITrunkStableTest> {
+    binder::get_interface(<BpTrunkStableTest as ITrunkStableTest>::get_descriptor())
         .expect("did not get binder service")
 }
 
@@ -770,17 +782,23 @@ fn test_read_write_extension() {
     let mut parcel = Parcel::new();
     ep.write_to_parcel(&mut parcel.borrowed()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
     let mut ep1 = ExtendableParcelable::default();
     ep1.read_from_parcel(parcel.borrowed_ref()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
     ep1.write_to_parcel(&mut parcel.borrowed()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1153,6 +1171,8 @@ fn test_read_write_fixed_size_array() {
         Some([[Some("hello".into()), Some("world".into())], Default::default()]);
 
     assert_eq!(parcel.write(&p), Ok(()));
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1164,6 +1184,8 @@ fn test_fixed_size_array_uses_array_optimization() {
     let mut parcel = Parcel::new();
     let byte_array = [[1u8, 2u8, 3u8], [4u8, 5u8, 6u8]];
     assert_eq!(parcel.write(&byte_array), Ok(()));
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1246,4 +1268,152 @@ fn test_fixed_size_array_over_binder() {
 fn test_ping() {
     let test_service = get_test_service();
     assert_eq!(test_service.as_binder().ping_binder(), Ok(()));
+}
+
+#[test]
+fn test_trunk_stable_parcelable() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let p1 = MyParcelable { a: 12, b: 13, c: 14 };
+    let result = service.repeatParcelable(&p1);
+    assert!(result.is_ok());
+    let p2 = result.unwrap();
+    assert_eq!(p1.a, p2.a);
+    assert_eq!(p1.b, p2.b);
+    if version == 1 {
+        assert_ne!(p1.c, p2.c);
+        assert_eq!(0, p2.c);
+    } else {
+        assert_eq!(p1.c, p2.c);
+    }
+}
+
+#[test]
+fn test_trunk_stable_enum() {
+    let service = get_test_trunk_stable_service();
+    let e1 = MyEnum::THREE;
+    let result = service.repeatEnum(e1);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), e1);
+}
+#[test]
+fn test_trunk_stable_union() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let u1 = MyUnion::C(14);
+    let result = service.repeatUnion(&u1);
+    if version == 1 {
+        assert!(result.is_err());
+    } else {
+        assert!(result.is_ok());
+    }
+}
+#[test]
+fn test_trunk_stable_unimplemented() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let p1 = MyOtherParcelable { a: 12, b: 13 };
+    let result = service.repeatOtherParcelable(&p1);
+    if version == 1 {
+        assert!(result.is_err());
+    } else {
+        assert!(result.is_ok());
+    }
+}
+
+#[test]
+fn test_trunk_stable_hash() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let hash = service.getInterfaceHash();
+    if version == 1 {
+        assert_eq!(
+            hash.as_ref().map(String::as_str),
+            Ok("88311b9118fb6fe9eff4a2ca19121de0587f6d5f")
+        );
+    } else {
+        assert_eq!(hash.as_ref().map(String::as_str), Ok("notfrozen"));
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct MyCallback {
+    pub repeat_parcelable_called: Arc<Mutex<bool>>,
+    pub repeat_enum_called: Arc<Mutex<bool>>,
+    pub repeat_union_called: Arc<Mutex<bool>>,
+    pub repeat_other_parcelable_called: Arc<Mutex<bool>>,
+}
+
+impl Interface for MyCallback {}
+
+impl IMyCallback::IMyCallback for MyCallback {
+    fn repeatParcelable(&self, in_parcel: &MyParcelable) -> binder::Result<MyParcelable> {
+        *self.repeat_parcelable_called.lock().unwrap() = true;
+        let tmp: MyParcelable = MyParcelable { a: in_parcel.a, b: in_parcel.b, c: in_parcel.c };
+        Ok(tmp)
+    }
+    fn repeatEnum(&self, in_enum: MyEnum) -> binder::Result<MyEnum> {
+        *self.repeat_enum_called.lock().unwrap() = true;
+        Ok(in_enum)
+    }
+    fn repeatUnion(&self, in_union: &MyUnion) -> binder::Result<MyUnion> {
+        *self.repeat_union_called.lock().unwrap() = true;
+        match in_union {
+            MyUnion::A(n) => Ok(MyUnion::A(*n)),
+            MyUnion::B(n) => Ok(MyUnion::B(*n)),
+            MyUnion::C(n) => Ok(MyUnion::C(*n)),
+        }
+    }
+    fn repeatOtherParcelable(
+        &self,
+        in_parcel: &MyOtherParcelable,
+    ) -> binder::Result<MyOtherParcelable> {
+        *self.repeat_other_parcelable_called.lock().unwrap() = true;
+        let tmp: MyOtherParcelable = MyOtherParcelable { a: in_parcel.a, b: in_parcel.b };
+        Ok(tmp)
+    }
+}
+
+#[test]
+fn test_trunk_stable_callback() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let repeat_parcelable_called = Arc::new(Mutex::new(false));
+    let repeat_enum_called = Arc::new(Mutex::new(false));
+    let repeat_union_called = Arc::new(Mutex::new(false));
+    let repeat_other_parcelable_called = Arc::new(Mutex::new(false));
+    let cb = IMyCallback::BnMyCallback::new_binder(
+        MyCallback {
+            repeat_parcelable_called: Arc::clone(&repeat_parcelable_called),
+            repeat_enum_called: Arc::clone(&repeat_enum_called),
+            repeat_union_called: Arc::clone(&repeat_union_called),
+            repeat_other_parcelable_called: Arc::clone(&repeat_other_parcelable_called),
+        },
+        BinderFeatures::default(),
+    );
+    let result = service.callMyCallback(&cb);
+    assert!(result.is_ok());
+    assert!(*repeat_parcelable_called.lock().unwrap());
+    assert!(*repeat_enum_called.lock().unwrap());
+    assert!(*repeat_union_called.lock().unwrap());
+    if version == 1 {
+        assert!(!*repeat_other_parcelable_called.lock().unwrap());
+    } else {
+        assert!(*repeat_other_parcelable_called.lock().unwrap());
+    }
 }

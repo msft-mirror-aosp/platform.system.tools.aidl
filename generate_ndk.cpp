@@ -507,6 +507,14 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << "::ndk::ScopedAParcel _aidl_out;\n";
   out << "\n";
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      method.IsUserDefined()) {
+    out << "if (true) {\n";
+    out << "  _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;\n";
+    out << "  goto _aidl_error;\n";
+    out << "}\n";
+  }
+
   if (options.GenLog()) {
     out << cpp::GenLogBeforeExecute(q_name, method, false /* isServer */, true /* isNdk */);
   }
@@ -619,6 +627,10 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     out.Write("#error Permission checks not implemented for the ndk backend\n");
   }
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ) &&
+      method.IsUserDefined()) {
+    out << "if (true) break;\n";
+  }
   for (const auto& arg : method.GetArguments()) {
     out << NdkNameOf(types, arg->GetType(), StorageMode::STACK) << " " << cpp::BuildVarName(*arg)
         << ";\n";
@@ -799,15 +811,36 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
     if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
       out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
+      if (options.IsLatestUnfrozenVersion()) {
+        out << "if (true) {\n";
+        out << "  *_aidl_return = " << std::to_string(options.PreviousVersion()) << ";\n";
+        out << "} else {\n";
+        out.Indent();
+      }
       out << "*_aidl_return = " << iface << "::" << kVersion << ";\n";
+      if (options.IsLatestUnfrozenVersion()) {
+        out.Dedent();
+        out << "}\n";
+      }
       out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
       out.Dedent();
       out << "}\n";
     }
-    if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+    if (method->GetName() == kGetInterfaceHash &&
+        (!options.Hash().empty() || options.IsLatestUnfrozenVersion())) {
       out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
+      if (options.IsLatestUnfrozenVersion()) {
+        out << "if (true) {\n";
+        out << "  *_aidl_return = \"" << options.PreviousHash() << "\";\n";
+        out << "} else {\n";
+        out.Indent();
+      }
       out << "*_aidl_return = " << iface << "::" << kHash << ";\n";
+      if (options.IsLatestUnfrozenVersion()) {
+        out.Dedent();
+        out << "}\n";
+      }
       out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
       out.Dedent();
       out << "}\n";
@@ -1319,6 +1352,11 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     out << "if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;\n";
     out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
     for (const auto& variable : defined_type.GetFields()) {
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+        out << "if (false) {\n";
+        out.Indent();
+      }
+
       out << "if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= "
              "_aidl_parcelable_size) "
              "{\n"
@@ -1330,6 +1368,10 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
           {out, types, variable->GetType(), "_aidl_parcel", "&" + variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+        out.Dedent();
+        out << "}\n";
+      }
     }
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
         << "return _aidl_ret_status;\n";
@@ -1346,10 +1388,18 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     StatusCheckReturn(out);
 
     for (const auto& variable : defined_type.GetFields()) {
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+        out << "if (false) {\n";
+        out.Indent();
+      }
       out << "_aidl_ret_status = ";
       WriteToParcelFor({out, types, variable->GetType(), "_aidl_parcel", variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+        out.Dedent();
+        out << "}\n";
+      }
     }
     out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";

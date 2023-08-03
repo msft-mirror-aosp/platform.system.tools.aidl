@@ -51,6 +51,7 @@ func setReleaseEnv() android.FixturePreparer {
 		variables.Platform_sdk_codename = proptools.StringPtr("REL")
 		variables.Platform_sdk_final = proptools.BoolPtr(true)
 		variables.Platform_version_active_codenames = []string{}
+		variables.Release_aidl_use_unfrozen = proptools.BoolPtr(false)
 	})
 }
 
@@ -174,6 +175,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		variables.Platform_sdk_codename = proptools.StringPtr("Q")
 		variables.Platform_version_active_codenames = []string{"Q"}
 		variables.Platform_sdk_final = proptools.BoolPtr(false)
+		variables.Release_aidl_use_unfrozen = proptools.BoolPtr(true)
 	}))
 
 	preparers = append(preparers, customizers...)
@@ -1606,8 +1608,8 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 	{
 		rule := ctx.ModuleForTests("foo-iface-V1-cpp-source", "").Output("a/Foo.cpp")
 		android.AssertStringEquals(t, "compile(old=1) should import aidl_api/1",
-			"-Ifoo/aidl_api/foo-iface/1 -Iboq",
-			rule.Args["imports"])
+			"-Iboq -Nfoo/aidl_api/foo-iface/1",
+			rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(old=1) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/bar/bar-iface_interface/2/preprocessed.aidl")
@@ -1615,7 +1617,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 	// compile ToT(v2)
 	{
 		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
-		android.AssertStringEquals(t, "compile(tot=2) should import base dirs of srcs", "-Ifoo -Iboq", rule.Args["imports"])
+		android.AssertStringEquals(t, "compile(tot=2) should import base dirs of srcs", "-Iboq -Nfoo", rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(tot=2) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/bar/bar-iface_interface/2/preprocessed.aidl")
@@ -1697,8 +1699,8 @@ func TestAidlImportFlagsForUnstable(t *testing.T) {
 
 	rule := ctx.ModuleForTests("foo-iface-cpp-source", "").Output("foo/Foo.cpp")
 	android.AssertStringEquals(t, "compile(unstable) should import foo/base_dirs(target) and bar/base_dirs(imported)",
-		"-Ifoo/src -Ipath1 -Ipath2/sub",
-		rule.Args["imports"])
+		"-Ipath1 -Ipath2/sub -Nfoo/src",
+		rule.Args["imports"]+" "+rule.Args["nextImports"])
 	android.AssertStringDoesContain(t, "compile(unstable) should import bar.preprocessed",
 		rule.Args["optionalFlags"],
 		"-pout/soong/.intermediates/foo/bar-iface_interface/preprocessed.aidl")
@@ -1765,8 +1767,8 @@ func TestSupportsGenruleAndFilegroup(t *testing.T) {
 	{
 		rule := ctx.ModuleForTests("foo-iface-V1-cpp-source", "").Output("foo/Foo.cpp")
 		android.AssertStringEquals(t, "compile(1) should import foo/aidl_api/1",
-			"-Ifoo/aidl_api/foo-iface/1 -Ipath1 -Ipath2/sub",
-			rule.Args["imports"])
+			"-Ipath1 -Ipath2/sub -Nfoo/aidl_api/foo-iface/1",
+			rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(1) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/foo/bar-iface_interface/1/preprocessed.aidl")
@@ -1775,8 +1777,8 @@ func TestSupportsGenruleAndFilegroup(t *testing.T) {
 	{
 		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("foo/Foo.cpp")
 		android.AssertStringEquals(t, "compile(tot=2) should import foo.base_dirs",
-			"-Ifoo/src -Ifoo/filegroup/sub -Iout/soong/.intermediates/foo/gen1/gen -Ipath1 -Ipath2/sub",
-			rule.Args["imports"])
+			"-Ipath1 -Ipath2/sub -Nfoo/src -Nfoo/filegroup/sub -Nout/soong/.intermediates/foo/gen1/gen",
+			rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(tot=2) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/foo/bar-iface_interface/1/preprocessed.aidl")
