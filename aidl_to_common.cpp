@@ -19,6 +19,10 @@
 namespace android {
 namespace aidl {
 
+bool ShouldForceDowngradeFor(CommunicationSide e) {
+  return kDowngradeCommunicationBitmap & static_cast<int>(e);
+}
+
 void GenerateAutoGenHeader(CodeWriter& out, const Options& options) {
   out << "/*\n";
   out << " * This file is auto-generated.  DO NOT MODIFY.\n";

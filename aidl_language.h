@@ -501,6 +501,11 @@ class AidlMember : public AidlAnnotatable {
   AidlMember(AidlMember&&) = delete;
   AidlMember& operator=(const AidlMember&) = delete;
   AidlMember& operator=(AidlMember&&) = delete;
+  void MarkNew() { new_ = true; }
+  bool IsNew() const { return new_; }
+
+ private:
+  bool new_ = false;
 };
 
 // TODO: This class is used for method arguments and also parcelable fields,

@@ -18,6 +18,11 @@ package android.aidl.service;
 
 import android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray;
 import android.aidl.fixedsizearray.FixedSizeArrayExample.IntParcelable;
+import android.aidl.test.trunk.ITrunkStableTest;
+import android.aidl.test.trunk.ITrunkStableTest.IMyCallback;
+import android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable;
+import android.aidl.test.trunk.ITrunkStableTest.MyParcelable;
+import android.aidl.test.trunk.ITrunkStableTest.MyUnion;
 import android.aidl.tests.BackendType;
 import android.aidl.tests.BadParcelable;
 import android.aidl.tests.ByteEnum;
@@ -79,6 +84,9 @@ public class TestServiceServer extends ITestService.Stub {
 
     FixedSizeArrayService fixedSize = new FixedSizeArrayService();
     ServiceManager.addService(IRepeatFixedSizeArray.DESCRIPTOR, fixedSize);
+
+    TrunkStableService trunkStable = new TrunkStableService();
+    ServiceManager.addService(ITrunkStableTest.DESCRIPTOR, trunkStable);
 
     Binder.joinThreadPool();
   }
@@ -800,5 +808,57 @@ public class TestServiceServer extends ITestService.Stub {
   public ICircular GetCircular(CircularParcelable cp) throws RemoteException {
     cp.testService = this;
     return new MyCircular(this);
+  }
+
+  public static class TrunkStableService extends ITrunkStableTest.Stub {
+    @Override
+    public MyParcelable repeatParcelable(MyParcelable input) throws android.os.RemoteException {
+      return input;
+    }
+    @Override
+    public byte repeatEnum(byte input) throws android.os.RemoteException {
+      return input;
+    }
+    @Override
+    public ITrunkStableTest.MyUnion repeatUnion(MyUnion input) throws android.os.RemoteException {
+      return input;
+    }
+    @Override
+    public void callMyCallback(IMyCallback cb) throws android.os.RemoteException {
+      MyParcelable p1, p2;
+      p1 = new MyParcelable();
+      p2 = cb.repeatParcelable(p1);
+
+      byte e1, e2;
+      e1 = MyEnum.THREE;
+      e2 = cb.repeatEnum(e1);
+
+      MyUnion u1, u2;
+      u1 = new MyUnion();
+      u2 = cb.repeatUnion(u1);
+
+      MyOtherParcelable o1, o2;
+      o1 = new MyOtherParcelable();
+      // expected to fail when not using the frozen version
+      try {
+        o2 = cb.repeatOtherParcelable(o1);
+      } catch (RemoteException e) {
+      }
+    }
+    @Override
+    public MyOtherParcelable repeatOtherParcelable(MyOtherParcelable input)
+        throws android.os.RemoteException {
+      return input;
+    }
+
+    @Override
+    public final int getInterfaceVersion() {
+      return super.VERSION;
+    }
+
+    @Override
+    public final String getInterfaceHash() {
+      return super.HASH;
+    }
   }
 }
