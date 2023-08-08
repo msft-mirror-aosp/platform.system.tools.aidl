@@ -244,6 +244,7 @@ python_test_host {
     ],
     data_device_bins_both: [
         "aidl_test_client",
+        "aidl_test_v1_client",
         "aidl_test_service",
         "aidl_test_client_ndk",
         "aidl_test_service_ndk",
@@ -476,6 +477,27 @@ cc_test {
         "tests/aidl_test_client_loggable_interface.cpp",
         "tests/aidl_test_client_nested.cpp",
         "tests/aidl_test_client_trunk_stable.cpp",
+    ],
+    cflags: ["-DAIDL_USE_V2_INTERFACE"],
+}
+
+cc_test {
+    name: "aidl_test_v1_client",
+    defaults: ["aidl_test_defaults"],
+    static_libs: [
+        "libaidl-integration-test",
+        "libcutils",
+        "libgmock",
+        "android.aidl.test.trunk-V1-cpp",
+    ],
+    product_variables: {
+        release_aidl_use_unfrozen: {
+            cflags: ["-DAIDL_USE_UNFROZEN"],
+        },
+    },
+    srcs: [
+        "tests/aidl_test_client_trunk_stable.cpp",
+        "tests/aidl_test_client.cpp",
     ],
 }
 
