@@ -507,14 +507,6 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << "::ndk::ScopedAParcel _aidl_out;\n";
   out << "\n";
 
-  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
-      method.IsUserDefined()) {
-    out << "if (true) {\n";
-    out << "  _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;\n";
-    out << "  goto _aidl_error;\n";
-    out << "}\n";
-  }
-
   if (options.GenLog()) {
     out << cpp::GenLogBeforeExecute(q_name, method, false /* isServer */, true /* isNdk */);
   }
@@ -522,6 +514,14 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     out << "ScopedTrace _aidl_trace(\"AIDL::" << to_string(options.TargetLanguage())
         << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
         << "::client\");\n";
+  }
+
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      method.IsUserDefined()) {
+    out << "if (true) {\n";
+    out << "  _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;\n";
+    out << "  goto _aidl_error;\n";
+    out << "}\n";
   }
 
   out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
