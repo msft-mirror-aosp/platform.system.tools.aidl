@@ -35,7 +35,9 @@ using android::String16;
 using android::aidl::test::trunk::ITrunkStableTest;
 using android::binder::Status;
 using MyParcelable = android::aidl::test::trunk::ITrunkStableTest::MyParcelable;
+#ifdef AIDL_USE_V2_INTERFACE
 using MyOtherParcelable = android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable;
+#endif  // AIDL_USE_V2_INTERFACE
 using MyEnum = android::aidl::test::trunk::ITrunkStableTest::MyEnum;
 using MyUnion = android::aidl::test::trunk::ITrunkStableTest::MyUnion;
 
@@ -77,22 +79,28 @@ TEST_F(TrunkInterfaceTest, repeatParcelable) {
   MyParcelable in, out;
   in.a = 14;
   in.b = 15;
+#ifdef AIDL_USE_V2_INTERFACE
   in.c = 16;
-
+#endif  // AIDL_USE_V2_INTERFACE
   auto status = service->repeatParcelable(in, &out);
   ASSERT_TRUE(status.isOk()) << status;
   if (kUseUnfrozen) {
     EXPECT_EQ(in.a, out.a);
     EXPECT_EQ(in.b, out.b);
+#ifdef AIDL_USE_V2_INTERFACE
     EXPECT_EQ(in.c, out.c);
+#endif  // AIDL_USE_V2_INTERFACE
   } else {
     EXPECT_EQ(in.a, out.a);
     EXPECT_EQ(in.b, out.b);
+#ifdef AIDL_USE_V2_INTERFACE
     EXPECT_NE(in.c, out.c);
     EXPECT_EQ(0, out.c);
+#endif  // AIDL_USE_V2_INTERFACE
   }
 }
 
+#ifdef AIDL_USE_V2_INTERFACE
 // repeatOtherParcelable is a new API that isn't implemented
 TEST_F(TrunkInterfaceTest, repeatOtherParcelable) {
   MyOtherParcelable in, out;
@@ -109,10 +117,11 @@ TEST_F(TrunkInterfaceTest, repeatOtherParcelable) {
     EXPECT_EQ(::android::UNKNOWN_TRANSACTION, status.transactionError()) << status;
   }
 }
+#endif  // AIDL_USE_V2_INTERFACE
 
 // enums aren't handled differently.
 TEST_F(TrunkInterfaceTest, repeatEnum) {
-  MyEnum in = MyEnum::THREE;
+  MyEnum in = MyEnum::TWO;
   MyEnum out = MyEnum::ZERO;
 
   auto status = service->repeatEnum(in, &out);
@@ -125,14 +134,17 @@ TEST_F(TrunkInterfaceTest, repeatEnum) {
 TEST_F(TrunkInterfaceTest, repeatUnion) {
   MyUnion in_ok = MyUnion::make<MyUnion::b>(13);
   ;
+#ifdef AIDL_USE_V2_INTERFACE
   MyUnion in_test = MyUnion::make<MyUnion::c>(12);
   ;
+#endif  // AIDL_USE_V2_INTERFACE
   MyUnion out;
 
   auto status = service->repeatUnion(in_ok, &out);
   ASSERT_TRUE(status.isOk()) << status;
   EXPECT_EQ(in_ok, out);
 
+#ifdef AIDL_USE_V2_INTERFACE
   status = service->repeatUnion(in_test, &out);
   if (kUseUnfrozen) {
     ASSERT_TRUE(status.isOk()) << status;
@@ -141,6 +153,7 @@ TEST_F(TrunkInterfaceTest, repeatUnion) {
     ASSERT_FALSE(status.isOk()) << status;
     EXPECT_NE(in_test, out);
   }
+#endif  // AIDL_USE_V2_INTERFACE
 }
 
 class MyCallback : public ITrunkStableTest::BnMyCallback {
@@ -163,18 +176,20 @@ class MyCallback : public ITrunkStableTest::BnMyCallback {
     repeatUnionCalled = true;
     return Status::ok();
   }
-
+#ifdef AIDL_USE_V2_INTERFACE
   Status repeatOtherParcelable(const MyOtherParcelable& input,
                                MyOtherParcelable* _aidl_return) override {
     *_aidl_return = input;
     repeatOtherParcelableCalled = true;
     return Status::ok();
   }
-
+#endif  // AIDL_USE_V2_INTERFACE
   bool repeatParcelableCalled = false;
   bool repeatEnumCalled = false;
   bool repeatUnionCalled = false;
+#ifdef AIDL_USE_V2_INTERFACE
   bool repeatOtherParcelableCalled = false;
+#endif  // AIDL_USE_V2_INTERFACE
 };
 
 // repeatOtherParcelable is new in V2, so it won't be called
@@ -187,11 +202,15 @@ TEST_F(TrunkInterfaceTest, callMyCallback) {
     EXPECT_TRUE(cb->repeatParcelableCalled);
     EXPECT_TRUE(cb->repeatEnumCalled);
     EXPECT_TRUE(cb->repeatUnionCalled);
+#ifdef AIDL_USE_V2_INTERFACE
     EXPECT_TRUE(cb->repeatOtherParcelableCalled);
+#endif  // AIDL_USE_V2_INTERFACE
   } else {
     EXPECT_TRUE(cb->repeatParcelableCalled);
     EXPECT_TRUE(cb->repeatEnumCalled);
     EXPECT_TRUE(cb->repeatUnionCalled);
+#ifdef AIDL_USE_V2_INTERFACE
     EXPECT_FALSE(cb->repeatOtherParcelableCalled);
+#endif  // AIDL_USE_V2_INTERFACE
   }
 }

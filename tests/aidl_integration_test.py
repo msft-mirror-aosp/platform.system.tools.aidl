@@ -16,6 +16,7 @@ BITNESS_64 = ("64", "64")
 APP_PROCESS_FOR_PRETTY_BITNESS = 'app_process%s'
 CPP_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service/aidl_test_service%s'
 CPP_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client/aidl_test_client%s'
+CPP_TEST_V1_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_v1_client/aidl_test_v1_client%s'
 NDK_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service_ndk/aidl_test_service_ndk%s'
 NDK_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client_ndk/aidl_test_client_ndk%s'
 RUST_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_client/aidl_test_rust_client%s'
@@ -134,6 +135,12 @@ class CppClient(NativeClient):
         self.name = "%s_bit_cpp_client" % pretty_bitness(bitness)
         self.host = host
         self.binary = CPP_TEST_CLIENT_FOR_BITNESS % bitness
+
+class CppV1Client(NativeClient):
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_cpp_v1_client" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = CPP_TEST_V1_CLIENT_FOR_BITNESS % bitness
 
 class NdkServer(NativeServer):
     def __init__(self, host, bitness):
@@ -325,6 +332,7 @@ if __name__ == '__main__':
         servers += [NdkServer(host, bitness)]
 
         clients += [CppClient(host, bitness)]
+        clients += [CppV1Client(host, bitness)]
         servers += [CppServer(host, bitness)]
 
         clients += [JavaClient(host, bitness)]
