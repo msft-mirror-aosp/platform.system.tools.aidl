@@ -108,6 +108,7 @@ type rustProperties struct {
 
 type Bazel_module struct {
 	Bp2build_available *bool
+	Label              *string
 }
 type bazelProperties struct {
 	*Bazel_module
