@@ -970,20 +970,27 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		shouldGenerateLangBackendMap[langNdkPlatform] = i.shouldGenerateNdkBackend()
 	}
 
+	var bp2build bool
+	// TODO: b/295566168 - this will need to change once build files are checked in to account for
+	// checked in modules in mixed builds
+	if b, ok := mctx.Module().(android.Bazelable); ok {
+		bp2build = b.ShouldConvertWithBp2build(mctx)
+	}
+
 	for lang, shouldGenerate := range shouldGenerateLangBackendMap {
 		if !shouldGenerate {
 			continue
 		}
-		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion, requireFrozenReason))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion, requireFrozenReason, bp2build))
 		for _, version := range versions {
-			libs = append(libs, addLibrary(mctx, i, version, lang, false, "this is a known frozen version"))
+			libs = append(libs, addLibrary(mctx, i, version, lang, false, "this is a known frozen version", bp2build))
 		}
 	}
 
 	// In the future, we may want to force the -cpp backend to be on host,
 	// and limit its visibility, even if it's not created normally
 	if i.shouldGenerateCppBackend() && len(i.properties.Imports) == 0 {
-		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false, "analysis always uses latest version even if frozen"))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false, "analysis always uses latest version even if frozen", bp2build))
 	}
 
 	if unstable {
