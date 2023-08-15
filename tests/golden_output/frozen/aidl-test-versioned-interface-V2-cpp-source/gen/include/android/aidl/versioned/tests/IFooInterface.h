@@ -29,8 +29,8 @@ class IFooInterface : public ::android::IInterface {
 public:
   typedef IFooInterfaceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(FooInterface)
-  const int32_t VERSION = 2;
-  const std::string HASH = "da8c4bc94ca7feff0e0a65563a466787698b5891";
+  static inline const int32_t VERSION = 2;
+  static inline const std::string HASH = "da8c4bc94ca7feff0e0a65563a466787698b5891";
   virtual ::android::binder::Status originalApi() = 0;
   virtual ::android::binder::Status acceptUnionAndReturnString(const ::android::aidl::versioned::tests::BazUnion& u, ::std::string* _aidl_return) = 0;
   virtual ::android::binder::Status ignoreParcelablesAndRepeatInt(const ::android::aidl::versioned::tests::Foo& inFoo, ::android::aidl::versioned::tests::Foo* inoutFoo, ::android::aidl::versioned::tests::Foo* outFoo, int32_t value, int32_t* _aidl_return) = 0;

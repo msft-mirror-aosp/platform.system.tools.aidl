@@ -33,7 +33,7 @@ public:
   IFooInterface();
   virtual ~IFooInterface();
 
-  static const int32_t version = 1;
+  static inline const int32_t version = 1;
   static inline const std::string hash = "9e7be1859820c59d9d55dd133e71a3687b5d2e5b";
   static constexpr uint32_t TRANSACTION_originalApi = FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_acceptUnionAndReturnString = FIRST_CALL_TRANSACTION + 1;
