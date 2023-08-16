@@ -1054,10 +1054,10 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << "typedef " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << " DefaultDelegator;\n";
   out << "DECLARE_META_INTERFACE(" << ClassName(interface, ClassNames::BASE) << ")\n";
   if (options.Version() > 0) {
-    out << "const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
+    out << "static inline const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
   }
   if (!options.Hash().empty()) {
-    out << "const std::string HASH = \"" << options.Hash() << "\";\n";
+    out << "static inline const std::string HASH = \"" << options.Hash() << "\";\n";
   }
   GenerateNestedTypeDecls(out, interface, typenames, options);
   GenerateConstantDeclarations(out, interface, typenames);
