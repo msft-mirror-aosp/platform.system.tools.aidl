@@ -62,6 +62,14 @@ function _golden_test() {
     "aidl-test-fixedsizearray-ndk-source"
     "aidl-test-fixedsizearray-rust-source"
     "aidl-test-interface-cpp-analyzer-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-ndk-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-java-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-rust-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-rust-source"
   )
 
   local root="."
