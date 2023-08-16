@@ -196,7 +196,7 @@ public:
     IMyCallback();
     virtual ~IMyCallback();
 
-    static const int32_t version = 1;
+    static inline const int32_t version = 1;
     static inline const std::string hash = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
     static constexpr uint32_t TRANSACTION_repeatParcelable = FIRST_CALL_TRANSACTION + 0;
     static constexpr uint32_t TRANSACTION_repeatEnum = FIRST_CALL_TRANSACTION + 1;
@@ -279,7 +279,7 @@ public:
     ::ndk::SpAIBinder createBinder() override;
   private:
   };
-  static const int32_t version = 1;
+  static inline const int32_t version = 1;
   static inline const std::string hash = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
   static constexpr uint32_t TRANSACTION_repeatParcelable = FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_repeatEnum = FIRST_CALL_TRANSACTION + 1;
