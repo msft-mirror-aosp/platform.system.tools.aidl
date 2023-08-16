@@ -82,7 +82,7 @@ fn read_json_file<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
 /// it doesn't look like an AIDL lib.
 fn extract_aidl_instance(installed_file: &InstalledFile) -> Option<AidlInstance> {
     // example: android.hardware.security.keymint-V2-ndk.so
-    let lib_regex = regex::Regex::new(r#".*/(lib|lib64)/([^-]*)-V(\d+)-([^.]+)\."#)
+    let lib_regex = regex::Regex::new(r".*/(lib|lib64)/([^-]*)-V(\d+)-([^.]+)\.")
         .expect("failed to parse regex");
     let captures = lib_regex.captures(&installed_file.name)?;
     let (dir, name, version, variant) = (&captures[1], &captures[2], &captures[3], &captures[4]);
