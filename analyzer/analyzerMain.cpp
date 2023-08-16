@@ -236,7 +236,10 @@ status_t startCommandEntryPoint(int argc, char* argv[]) {
   }
 
   sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
-
+  if (binder == nullptr) {
+    helpCommandEntryPoint(argc, argv);
+    return android::BAD_VALUE;
+  }
   string filename = argv[2];
   std::replace(filename.begin(), filename.end(), '/', '.');
   auto filePath = kStandardRecordingPath + filename;
@@ -255,6 +258,10 @@ status_t stopCommandEntryPoint(int argc, char* argv[]) {
   }
 
   sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
+  if (binder == nullptr) {
+    helpCommandEntryPoint(argc, argv);
+    return android::BAD_VALUE;
+  }
   return stopRecording(binder);
 }
 

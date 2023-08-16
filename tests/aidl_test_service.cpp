@@ -301,8 +301,7 @@ class NativeService : public BnTestService {
   virtual ~NativeService() = default;
 
   void LogRepeatedStringToken(const String16& token) {
-    ALOGI("Repeating '%s' of length=%zu", android::String8(token).string(),
-          token.size());
+    ALOGI("Repeating '%s' of length=%zu", android::String8(token).c_str(), token.size());
   }
 
   template <typename T>
