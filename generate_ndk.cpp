@@ -1182,7 +1182,7 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   GenerateNestedTypeDecls(out, types, defined_type, options);
   GenerateConstantDeclarations(out, types, defined_type);
   if (options.Version() > 0) {
-    out << "static const int32_t " << kVersion << " = " << std::to_string(options.Version())
+    out << "static inline const int32_t " << kVersion << " = " << std::to_string(options.Version())
         << ";\n";
   }
   if (!options.Hash().empty()) {
