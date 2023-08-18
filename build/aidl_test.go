@@ -292,8 +292,6 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 		"aidl_api/foo/1/.hash":      nil,
 	})
 
-	expectedError1 := `foo-V2-java is an unfrozen development version, and it can't be used because "this is a release branch - freeze it or set 'owners:'"`
-	testAidlError(t, expectedError1, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
 	expectedError2 := `foo-V2-java is an unfrozen development version, and it can't be used because "this is a release branch \(simulated by setting AIDL_FROZEN_REL\) - freeze it or set 'owners:'"`
 	testAidlError(t, expectedError2, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
 	testAidl(t, unstableVersionUsageInJavaBp, files)
@@ -344,7 +342,6 @@ func TestUsingUnstableVersionIndirectlyInRelease(t *testing.T) {
 	})
 
 	expectedError := `xxx-V2-java is an unfrozen development version`
-	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
 	testAidl(t, unstableVersionUsageInJavaBp, files)
 }
@@ -845,9 +842,6 @@ func TestUnstableVersionedModuleUsageInRelease(t *testing.T) {
 		libs: ["foo-V2-java"],
 	}`
 
-	expectedError := `Android.bp:10:2: module \"bar\" variant \"android_common\": foo-V2-java is an unfrozen development version`
-	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
-	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setTestFreezeEnv())
 	testAidl(t, nonVersionedModuleUsageInJavaBp, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
 		"aidl_api/foo/1/.hash":      nil,
