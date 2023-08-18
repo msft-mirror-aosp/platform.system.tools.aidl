@@ -938,11 +938,6 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 
 	requireFrozenVersion, requireFrozenReason := i.checkRequireFrozenAndReason(mctx)
 
-	// surface error early, main check is via checkUnstableModuleMutator
-	if requireFrozenVersion && !i.hasVersion() {
-		mctx.PropertyErrorf("versions", "must be set (need to be frozen) because: %q", requireFrozenReason)
-	}
-
 	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
 		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||
 		proptools.Bool(i.properties.Backend.Ndk.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled)
