@@ -577,34 +577,12 @@ void GenerateServerMetaTransaction(CodeWriter& out, const AidlInterface& interfa
   if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
     out << "_aidl_data.checkInterface(this);\n"
         << "_aidl_reply->writeNoException();\n";
-    if (options.IsLatestUnfrozenVersion()) {
-      out << "if (true) {\n";
-      out << "  _aidl_reply->writeInt32(" << std::to_string(options.PreviousVersion()) << ");\n";
-      out << "} else {\n";
-      out.Indent();
-    }
     out << "_aidl_reply->writeInt32(" << iface << "::VERSION);\n";
-    if (options.IsLatestUnfrozenVersion()) {
-      out.Dedent();
-      out << "}\n";
-    }
   }
-  if (method.GetName() == kGetInterfaceHash &&
-      (!options.Hash().empty() || options.IsLatestUnfrozenVersion())) {
+  if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
     out << "_aidl_data.checkInterface(this);\n"
         << "_aidl_reply->writeNoException();\n";
-    if (options.IsLatestUnfrozenVersion()) {
-      out << "if (true) {\n";
-      out << "  _aidl_reply->writeUtf8AsUtf16(std::string(\"" << options.PreviousHash()
-          << "\"));\n";
-      out << "} else {\n";
-      out.Indent();
-    }
     out << "_aidl_reply->writeUtf8AsUtf16(" << iface << "::HASH);\n";
-    if (options.IsLatestUnfrozenVersion()) {
-      out.Dedent();
-      out << "}\n";
-    }
   }
 }
 
@@ -1054,10 +1032,21 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << "typedef " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << " DefaultDelegator;\n";
   out << "DECLARE_META_INTERFACE(" << ClassName(interface, ClassNames::BASE) << ")\n";
   if (options.Version() > 0) {
-    out << "static inline const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const int32_t VERSION = true ? "
+          << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
+          << ";\n";
+    } else {
+      out << "static inline const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
+    }
   }
   if (!options.Hash().empty()) {
-    out << "static inline const std::string HASH = \"" << options.Hash() << "\";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const std::string HASH = true ? \"" << options.PreviousHash()
+          << "\" : \"" << options.Hash() << "\";\n";
+    } else {
+      out << "static inline const std::string HASH = \"" << options.Hash() << "\";\n";
+    }
   }
   GenerateNestedTypeDecls(out, interface, typenames, options);
   GenerateConstantDeclarations(out, interface, typenames);
