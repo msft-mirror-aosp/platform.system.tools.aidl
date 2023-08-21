@@ -1323,7 +1323,7 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
          << " */\n"
          << "public static final int VERSION = ";
     if (options.IsLatestUnfrozenVersion()) {
-      code << options.PreviousVersion() << ";\n";
+      code << "true ? " << options.PreviousVersion() << " : " << options.Version() << ";\n";
     } else {
       code << options.Version() << ";\n";
     }
