@@ -132,8 +132,8 @@ use lazy_static::lazy_static;
 lazy_static! {
   static ref DEFAULT_IMPL: std::sync::Mutex<ITrunkStableTestDefaultRef> = std::sync::Mutex::new(None);
 }
-pub const VERSION: i32 = 1;
-pub const HASH: &str = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+pub const VERSION: i32 = if true {1} else {2};
+pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
 impl BpTrunkStableTest {
   fn build_parcel_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
@@ -756,8 +756,8 @@ pub mod r#IMyCallback {
   lazy_static! {
     static ref DEFAULT_IMPL: std::sync::Mutex<IMyCallbackDefaultRef> = std::sync::Mutex::new(None);
   }
-  pub const VERSION: i32 = 1;
-  pub const HASH: &str = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+  pub const VERSION: i32 = if true {1} else {2};
+  pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
   impl BpMyCallback {
     fn build_parcel_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<binder::binder_impl::Parcel> {
       let mut aidl_data = self.binder.prepare_transact()?;

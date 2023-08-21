@@ -626,22 +626,14 @@ BnTrunkStableTest::BnTrunkStableTest()
   {
     _aidl_data.checkInterface(this);
     _aidl_reply->writeNoException();
-    if (true) {
-      _aidl_reply->writeInt32(1);
-    } else {
-      _aidl_reply->writeInt32(ITrunkStableTest::VERSION);
-    }
+    _aidl_reply->writeInt32(ITrunkStableTest::VERSION);
   }
   break;
   case BnTrunkStableTest::TRANSACTION_getInterfaceHash:
   {
     _aidl_data.checkInterface(this);
     _aidl_reply->writeNoException();
-    if (true) {
-      _aidl_reply->writeUtf8AsUtf16(std::string("88311b9118fb6fe9eff4a2ca19121de0587f6d5f"));
-    } else {
-      _aidl_reply->writeUtf8AsUtf16(ITrunkStableTest::HASH);
-    }
+    _aidl_reply->writeUtf8AsUtf16(ITrunkStableTest::HASH);
   }
   break;
   default:
@@ -1328,22 +1320,14 @@ ITrunkStableTest::BnMyCallback::BnMyCallback()
   {
     _aidl_data.checkInterface(this);
     _aidl_reply->writeNoException();
-    if (true) {
-      _aidl_reply->writeInt32(1);
-    } else {
-      _aidl_reply->writeInt32(IMyCallback::VERSION);
-    }
+    _aidl_reply->writeInt32(IMyCallback::VERSION);
   }
   break;
   case BnMyCallback::TRANSACTION_getInterfaceHash:
   {
     _aidl_data.checkInterface(this);
     _aidl_reply->writeNoException();
-    if (true) {
-      _aidl_reply->writeUtf8AsUtf16(std::string("88311b9118fb6fe9eff4a2ca19121de0587f6d5f"));
-    } else {
-      _aidl_reply->writeUtf8AsUtf16(IMyCallback::HASH);
-    }
+    _aidl_reply->writeUtf8AsUtf16(IMyCallback::HASH);
   }
   break;
   default:
