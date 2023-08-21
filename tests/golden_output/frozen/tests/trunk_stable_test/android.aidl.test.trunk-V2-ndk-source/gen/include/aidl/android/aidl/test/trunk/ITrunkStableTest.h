@@ -242,8 +242,8 @@ public:
     IMyCallback();
     virtual ~IMyCallback();
 
-    static inline const int32_t version = 2;
-    static inline const std::string hash = "notfrozen";
+    static inline const int32_t version = true ? 1 : 2;
+    static inline const std::string hash = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
     static constexpr uint32_t TRANSACTION_repeatParcelable = FIRST_CALL_TRANSACTION + 0;
     static constexpr uint32_t TRANSACTION_repeatEnum = FIRST_CALL_TRANSACTION + 1;
     static constexpr uint32_t TRANSACTION_repeatUnion = FIRST_CALL_TRANSACTION + 2;
@@ -329,8 +329,8 @@ public:
     ::ndk::SpAIBinder createBinder() override;
   private:
   };
-  static inline const int32_t version = 2;
-  static inline const std::string hash = "notfrozen";
+  static inline const int32_t version = true ? 1 : 2;
+  static inline const std::string hash = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
   static constexpr uint32_t TRANSACTION_repeatParcelable = FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_repeatEnum = FIRST_CALL_TRANSACTION + 1;
   static constexpr uint32_t TRANSACTION_repeatUnion = FIRST_CALL_TRANSACTION + 2;

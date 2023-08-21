@@ -60,8 +60,10 @@ public class TrunkStableTests {
   public void testGetInterfaceVersion() throws RemoteException {
     if (mRemoteVersion == 1) {
       assertThat(service.getInterfaceVersion(), is(1));
+      assertThat(ITrunkStableTest.VERSION, is(1));
     } else {
       assertThat(service.getInterfaceVersion(), is(2));
+      assertThat(ITrunkStableTest.VERSION, is(2));
     }
   }
 
@@ -69,8 +71,10 @@ public class TrunkStableTests {
   public void testGetInterfaceHash() throws RemoteException {
     if (mRemoteVersion == 1) {
       assertThat(service.getInterfaceHash(), is("88311b9118fb6fe9eff4a2ca19121de0587f6d5f"));
+      assertThat(ITrunkStableTest.HASH, is("88311b9118fb6fe9eff4a2ca19121de0587f6d5f"));
     } else {
       assertThat(service.getInterfaceHash(), is("notfrozen"));
+      assertThat(ITrunkStableTest.HASH, is("notfrozen"));
     }
   }
 
