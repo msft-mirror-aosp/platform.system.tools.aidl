@@ -39,8 +39,8 @@ class ITrunkStableTest : public ::android::IInterface {
 public:
   typedef ITrunkStableTestDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TrunkStableTest)
-  const int32_t VERSION = 2;
-  const std::string HASH = "notfrozen";
+  static inline const int32_t VERSION = true ? 1 : 2;
+  static inline const std::string HASH = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
   class MyParcelable : public ::android::Parcelable {
   public:
     int32_t a = 0;
@@ -227,8 +227,8 @@ public:
   public:
     typedef IMyCallbackDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(MyCallback)
-    const int32_t VERSION = 2;
-    const std::string HASH = "notfrozen";
+    static inline const int32_t VERSION = true ? 1 : 2;
+    static inline const std::string HASH = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
     virtual ::android::binder::Status repeatParcelable(const ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& input, ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) = 0;
     virtual ::android::binder::Status repeatEnum(::android::aidl::test::trunk::ITrunkStableTest::MyEnum input, ::android::aidl::test::trunk::ITrunkStableTest::MyEnum* _aidl_return) = 0;
     virtual ::android::binder::Status repeatUnion(const ::android::aidl::test::trunk::ITrunkStableTest::MyUnion& input, ::android::aidl::test::trunk::ITrunkStableTest::MyUnion* _aidl_return) = 0;

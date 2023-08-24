@@ -1343,8 +1343,26 @@ fn test_trunk_stable_hash() {
             hash.as_ref().map(String::as_str),
             Ok("88311b9118fb6fe9eff4a2ca19121de0587f6d5f")
         );
+        // Check local values of version and hash
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::VERSION,
+            1
+        );
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::HASH,
+            "88311b9118fb6fe9eff4a2ca19121de0587f6d5f"
+        );
     } else {
         assert_eq!(hash.as_ref().map(String::as_str), Ok("notfrozen"));
+        // Check local values of version and hash
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::VERSION,
+            2
+        );
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::HASH,
+            "notfrozen"
+        );
     }
 }
 

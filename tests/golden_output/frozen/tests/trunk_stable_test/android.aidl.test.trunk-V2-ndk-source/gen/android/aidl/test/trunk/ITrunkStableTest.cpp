@@ -726,19 +726,11 @@ std::function<void(const BnTrunkStableTest::TransactionLog&)> BnTrunkStableTest:
   return ::ndk::SpAIBinder(binder);
 }
 ::ndk::ScopedAStatus BnTrunkStableTest::getInterfaceVersion(int32_t* _aidl_return) {
-  if (true) {
-    *_aidl_return = 1;
-  } else {
-    *_aidl_return = ITrunkStableTest::version;
-  }
+  *_aidl_return = ITrunkStableTest::version;
   return ::ndk::ScopedAStatus(AStatus_newOk());
 }
 ::ndk::ScopedAStatus BnTrunkStableTest::getInterfaceHash(std::string* _aidl_return) {
-  if (true) {
-    *_aidl_return = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
-  } else {
-    *_aidl_return = ITrunkStableTest::hash;
-  }
+  *_aidl_return = ITrunkStableTest::hash;
   return ::ndk::ScopedAStatus(AStatus_newOk());
 }
 // Source for ITrunkStableTest
@@ -1588,19 +1580,11 @@ std::function<void(const ITrunkStableTest::BnMyCallback::TransactionLog&)> ITrun
   return ::ndk::SpAIBinder(binder);
 }
 ::ndk::ScopedAStatus ITrunkStableTest::BnMyCallback::getInterfaceVersion(int32_t* _aidl_return) {
-  if (true) {
-    *_aidl_return = 1;
-  } else {
-    *_aidl_return = IMyCallback::version;
-  }
+  *_aidl_return = IMyCallback::version;
   return ::ndk::ScopedAStatus(AStatus_newOk());
 }
 ::ndk::ScopedAStatus ITrunkStableTest::BnMyCallback::getInterfaceHash(std::string* _aidl_return) {
-  if (true) {
-    *_aidl_return = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
-  } else {
-    *_aidl_return = IMyCallback::hash;
-  }
+  *_aidl_return = IMyCallback::hash;
   return ::ndk::ScopedAStatus(AStatus_newOk());
 }
 // Source for IMyCallback

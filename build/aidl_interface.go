@@ -874,9 +874,7 @@ func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleCont
 	}
 
 	if i.Owner() == "" {
-		if !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview() {
-			return true, "this is a release branch - freeze it or set 'owners:'"
-		} else if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
+		if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
 			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owners:'"
 		}
 	} else {
@@ -937,11 +935,6 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	}
 
 	requireFrozenVersion, requireFrozenReason := i.checkRequireFrozenAndReason(mctx)
-
-	// surface error early, main check is via checkUnstableModuleMutator
-	if requireFrozenVersion && !i.hasVersion() {
-		mctx.PropertyErrorf("versions", "must be set (need to be frozen) because: %q", requireFrozenReason)
-	}
 
 	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
 		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||

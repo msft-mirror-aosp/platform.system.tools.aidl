@@ -856,15 +856,17 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   // https://doc.rust-lang.org/reference/items/traits.html#object-safety
   if (options.Version() > 0) {
     if (options.IsLatestUnfrozenVersion()) {
-      *code_writer << "pub const VERSION: i32 = " << std::to_string(options.PreviousVersion())
-                   << ";\n";
+      *code_writer << "pub const VERSION: i32 = if true {"
+                   << std::to_string(options.PreviousVersion()) << "} else {"
+                   << std::to_string(options.Version()) << "};\n";
     } else {
       *code_writer << "pub const VERSION: i32 = " << std::to_string(options.Version()) << ";\n";
     }
   }
   if (!options.Hash().empty() || options.IsLatestUnfrozenVersion()) {
     if (options.IsLatestUnfrozenVersion()) {
-      *code_writer << "pub const HASH: &str = \"" << options.PreviousHash() << "\";\n";
+      *code_writer << "pub const HASH: &str = if true {\"" << options.PreviousHash()
+                   << "\"} else {\"" << options.Hash() << "\"};\n";
     } else {
       *code_writer << "pub const HASH: &str = \"" << options.Hash() << "\";\n";
     }

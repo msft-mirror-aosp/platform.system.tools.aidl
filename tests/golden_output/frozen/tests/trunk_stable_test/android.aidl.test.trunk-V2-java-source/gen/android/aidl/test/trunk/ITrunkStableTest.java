@@ -11,7 +11,7 @@ public interface ITrunkStableTest extends android.os.IInterface
    * getInterfaceVersion} returns as that is the version of the interface
    * that the remote object is implementing.
    */
-  public static final int VERSION = 1;
+  public static final int VERSION = true ? 1 : 2;
   public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
   /** Default implementation for ITrunkStableTest. */
   public static class Default implements android.aidl.test.trunk.ITrunkStableTest
@@ -612,7 +612,7 @@ public interface ITrunkStableTest extends android.os.IInterface
      * getInterfaceVersion} returns as that is the version of the interface
      * that the remote object is implementing.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = true ? 1 : 2;
     public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
     /** Default implementation for IMyCallback. */
     public static class Default implements android.aidl.test.trunk.ITrunkStableTest.IMyCallback
