@@ -61,16 +61,34 @@ TEST_F(TrunkInterfaceTest, getInterfaceVersion) {
   // really "enabled"/"disabled"
   if (kUseUnfrozen) {
     EXPECT_EQ(2, service->getInterfaceVersion());
+    // Check the local version as well
+#ifdef AIDL_USE_V2_INTERFACE
+    EXPECT_EQ(2, ITrunkStableTest::VERSION);
+#else
+    // linked against V1 explicitly
+    EXPECT_EQ(1, ITrunkStableTest::VERSION);
+#endif
   } else {
     EXPECT_EQ(1, service->getInterfaceVersion());
+    // Check the local version as well
+    EXPECT_EQ(1, ITrunkStableTest::VERSION);
   }
 }
 
 TEST_F(TrunkInterfaceTest, getInterfaceHash) {
   if (kUseUnfrozen) {
     EXPECT_EQ("notfrozen", service->getInterfaceHash());
+    // Check the local hash as well
+#ifdef AIDL_USE_V2_INTERFACE
+    EXPECT_EQ("notfrozen", ITrunkStableTest::HASH);
+#else
+    // linked against V1 explicitly
+    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", ITrunkStableTest::HASH);
+#endif
   } else {
     EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", service->getInterfaceHash());
+    // Check the local hash as well
+    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", ITrunkStableTest::HASH);
   }
 }
 
