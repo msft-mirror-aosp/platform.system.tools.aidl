@@ -1168,6 +1168,7 @@ type commonBackendAttributes struct {
 
 type commonNativeBackendAttributes struct {
 	commonBackendAttributes
+	Additional_dynamic_deps bazel.LabelListAttribute
 }
 
 type versionWithInfoAttribute struct {
@@ -1237,13 +1238,51 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		cppConfig = &cppConfigAttributes{}
 		cppConfig.Enabled = true
 		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
-		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Cpp.Apex_available)
+		apexAvailable := i.properties.Backend.Cpp.Apex_available
+		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
+		cppConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
+		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Cpp.Additional_shared_libraries)
+		for _, l := range additionalSharedLabels.Includes {
+			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
+			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
+				cppConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
+			}
+		}
+		cc.SetStubsForDynamicDeps(
+			ctx,
+			bazel.NoConfigAxis,
+			"",
+			apexAvailable,
+			additionalSharedLabels,
+			&cppConfig.Additional_dynamic_deps,
+			0,
+			false,
+		)
 	}
 	if i.shouldGenerateNdkBackend() {
 		ndkConfig = &ndkConfigAttributes{}
 		ndkConfig.Enabled = true
 		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
-		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Ndk.Apex_available)
+		apexAvailable := i.properties.Backend.Ndk.Apex_available
+		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
+		ndkConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
+		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Ndk.Additional_shared_libraries)
+		for _, l := range additionalSharedLabels.Includes {
+			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
+			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
+				ndkConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
+			}
+		}
+		cc.SetStubsForDynamicDeps(
+			ctx,
+			bazel.NoConfigAxis,
+			"",
+			apexAvailable,
+			additionalSharedLabels,
+			&ndkConfig.Additional_dynamic_deps,
+			0,
+			false,
+		)
 	}
 
 	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
@@ -1299,15 +1338,6 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		deps = bazel.MakeLabelListAttribute(imports)
 	}
 
-	deps.Append(
-		bazel.MakeLabelListAttribute(
-			android.BazelLabelForModuleDeps(
-				ctx,
-				i.properties.Headers,
-			),
-		),
-	)
-
 	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
 	var stripImportPrefixAttr *string = nil
 	if i.properties.Local_include_dir != "" && !srcsAttr.IsEmpty() {
@@ -1325,6 +1355,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 			Srcs:                srcsAttr,
 			Flags:               i.properties.Flags,
 			Deps:                deps,
+			Hdrs:                bazel.MakeLabelListAttribute(android.BazelLabelForModuleDeps(ctx, i.properties.Headers)),
 			Strip_import_prefix: stripImportPrefixAttr,
 		},
 		Stability:          i.properties.Stability,
