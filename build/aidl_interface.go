@@ -21,6 +21,7 @@ import (
 	"android/soong/java"
 	"android/soong/phony"
 	"android/soong/rust"
+	"android/soong/ui/metrics/bp2build_metrics_proto"
 
 	"fmt"
 	"path/filepath"
@@ -1305,6 +1306,11 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 	var stripImportPrefixAttr *string = nil
 	if i.properties.Local_include_dir != "" && !srcsAttr.IsEmpty() {
 		stripImportPrefixAttr = &i.properties.Local_include_dir
+	}
+
+	if len(i.properties.Include_dirs) != 0 {
+		// TODO(b/298246873) remove include_dirs property from aidl_interface
+		ctx.MarkBp2buildUnconvertible(bp2build_metrics_proto.UnconvertedReasonType_PROPERTY_UNSUPPORTED, "include_dirs not supported")
 	}
 
 	attrs := &aidlInterfaceAttributes{
