@@ -879,9 +879,8 @@ func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleCont
 		}
 	} else {
 		// has an OWNER
-		// REL branches don't enforce downstream interfaces or owned interfaces
-		// to be frozen. Instead, these interfaces are verified by other tests
-		// like vts_treble_vintf_vendor_test
+		// These interfaces are verified by other tests like vts_treble_vintf_vendor_test
+		// but this can be used to verify they are frozen at build time.
 		if android.InList(i.Owner(), strings.Fields(mctx.Config().Getenv("AIDL_FROZEN_OWNERS"))) {
 			return true, "the owner field is in environment variable AIDL_FROZEN_OWNERS"
 		}
@@ -935,6 +934,11 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	}
 
 	requireFrozenVersion, requireFrozenReason := i.checkRequireFrozenAndReason(mctx)
+
+	// surface error early, main check is via checkUnstableModuleMutator
+	if requireFrozenVersion && !i.hasVersion() {
+		mctx.PropertyErrorf("versions", "must be set (need to be frozen) because: %q", requireFrozenReason)
+	}
 
 	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
 		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||
