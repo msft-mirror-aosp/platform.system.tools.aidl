@@ -46,10 +46,6 @@ func intPtr(v int) *int {
 
 func setReleaseEnv() android.FixturePreparer {
 	return android.FixtureModifyProductVariables(func(variables android.FixtureProductVariables) {
-		// Q is finalized as 29. No codename that is actively being developed.
-		variables.Platform_sdk_version = intPtr(29)
-		variables.Platform_version_active_codenames = []string{}
-		variables.Platform_sdk_final = proptools.BoolPtr(true)
 		variables.Release_aidl_use_unfrozen = proptools.BoolPtr(false)
 	})
 }
@@ -168,12 +164,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 	`))
 
 	preparers = append(preparers, android.FixtureModifyProductVariables(func(variables android.FixtureProductVariables) {
-		// To keep tests stable, fix Platform_sdk_codename and Platform_sdk_final
-		// Use setReleaseEnv() to test release version
-		variables.Platform_sdk_version = intPtr(28)
-		variables.Platform_sdk_codename = proptools.StringPtr("Q")
-		variables.Platform_version_active_codenames = []string{"Q"}
-		variables.Platform_sdk_final = proptools.BoolPtr(false)
 		variables.Release_aidl_use_unfrozen = proptools.BoolPtr(true)
 	}))
 
