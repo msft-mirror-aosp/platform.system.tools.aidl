@@ -49,8 +49,8 @@ func setReleaseEnv() android.FixturePreparer {
 		// Q is finalized as 29. No codename that is actively being developed.
 		variables.Platform_sdk_version = intPtr(29)
 		variables.Platform_sdk_codename = proptools.StringPtr("REL")
-		variables.Platform_sdk_final = proptools.BoolPtr(true)
 		variables.Platform_version_active_codenames = []string{}
+		variables.Platform_sdk_final = proptools.BoolPtr(true)
 		variables.Release_aidl_use_unfrozen = proptools.BoolPtr(false)
 	})
 }
@@ -2247,5 +2247,87 @@ func TestFreezeApiDeps(t *testing.T) {
 			testMethod(t, "Only if AIDL_TRANSITIVE_FREEZE is set and an aidl_interface depends on an another aidl_interface's ToT version, an imported aidl_interface should be frozen as well.",
 				fooFreezeApiRule.Implicits.Strings(), commonFreezeApiOutput)
 		}
+	}
+}
+
+func TestAidlNoUnfrozen(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+			aidl_interface {
+				name: "foo-iface",
+				srcs: ["a/Foo.aidl"],
+				versions: ["1", "2"],
+			}
+		`),
+		"foo/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/1/.hash":            nil,
+		"foo/aidl_api/foo-iface/2/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/2/.hash":            nil,
+	})
+	// setReleaseEnv() to set RELEASE_AIDL_USE_UNFROZEN to false
+	ctx, _ := testAidl(t, ``, setReleaseEnv(), customizer)
+
+	// compile (v1)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V1-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Frozen versions should not have the -previous_api_dir set",
+			rule.Args["optionalFlags"],
+			"-previous")
+	}
+	// compile (v2)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Frozen versions should not have the -previous_api_dir set",
+			rule.Args["optionalFlags"],
+			"-previous")
+	}
+	// compile ToT(v3)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V3-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesContain(t, "An unfrozen interface with previously frozen version must have --previous_api_dir when RELEASE_AIDL_USE_UNFROZEN is false (setReleaseEnv())",
+			rule.Args["optionalFlags"],
+			"-previous_api_dir")
+		android.AssertStringDoesContain(t, "An unfrozen interface with previously frozen version must have --previous_hash when RELEASE_AIDL_USE_UNFROZEN is false (setReleaseEnv())",
+			rule.Args["optionalFlags"],
+			"-previous_hash")
+		android.AssertStringDoesContain(t, "--previous_hash must use the last frozen version's hash file",
+			rule.Args["optionalFlags"],
+			"foo-iface/2/.hash")
+	}
+}
+
+func TestAidlUsingUnfrozen(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+			aidl_interface {
+				name: "foo-iface",
+				srcs: ["a/Foo.aidl"],
+				versions: ["1", "2"],
+			}
+		`),
+		"foo/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/1/.hash":            nil,
+		"foo/aidl_api/foo-iface/2/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/2/.hash":            nil,
+	})
+	ctx, _ := testAidl(t, ``, customizer)
+
+	// compile (v2)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Frozen versions should not have the -previous_api_dir set",
+			rule.Args["optionalFlags"],
+			"-previous")
+	}
+	// compile ToT(v3)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V3-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Unfrozen versions should not have the -previous options when RELEASE_AIDL_USE_UNFROZEN is true (default)",
+			rule.Args["optionalFlags"],
+			"-previous")
 	}
 }
