@@ -451,10 +451,6 @@ func (m *aidlApi) checkEquality(ctx android.ModuleContext, oldDump apiDump, newD
 	} else {
 		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality.txt")
 	}
-	sdkIsFinal := !ctx.Config().DefaultAppTargetSdk(ctx).IsPreview()
-	if sdkIsFinal {
-		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality_release.txt")
-	}
 	formattedMessageFile := android.PathForModuleOut(ctx, "message_check_equality.txt")
 	rb := android.NewRuleBuilder(pctx, ctx)
 	rb.Command().Text("sed").Flag(" s/%s/" + m.properties.BaseName + "/g ").Input(messageFile).Text(" > ").Output(formattedMessageFile)
