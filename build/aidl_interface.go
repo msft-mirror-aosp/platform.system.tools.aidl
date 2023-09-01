@@ -1311,6 +1311,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 	if len(i.properties.Include_dirs) != 0 {
 		// TODO(b/298246873) remove include_dirs property from aidl_interface
 		ctx.MarkBp2buildUnconvertible(bp2build_metrics_proto.UnconvertedReasonType_PROPERTY_UNSUPPORTED, "include_dirs not supported")
+		return
 	}
 
 	attrs := &aidlInterfaceAttributes{
