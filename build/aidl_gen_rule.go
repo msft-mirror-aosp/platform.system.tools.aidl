@@ -234,11 +234,11 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	}
 	optionalFlags = append(optionalFlags, wrap("-p", g.deps.preprocessed.Strings(), "")...)
 
-	useUnfrozen := ctx.DeviceConfig().Release_aidl_use_unfrozen()
-
-	if useUnfrozen == false && previousVersion != "" &&
-		proptools.Bool(g.properties.Unstable) != true &&
-		g.hashFile == nil {
+	// If this is an unfrozen version of a previously frozen interface, we want (1) the location
+	// of the previously frozen source and (2) the previously frozen hash so the generated
+	// library can behave like both versions at run time.
+	if !ctx.DeviceConfig().Release_aidl_use_unfrozen() && previousVersion != "" &&
+		!proptools.Bool(g.properties.Unstable) && g.hashFile == nil {
 		apiDirPath := android.ExistentPathForSource(ctx, previousApiDir)
 		if apiDirPath.Valid() {
 			optionalFlags = append(optionalFlags, "--previous_api_dir="+apiDirPath.Path().String())
@@ -249,8 +249,6 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 		if hashFile.Valid() {
 			previousHash := "$$(tail -1 '" + hashFile.Path().String() + "')"
 			implicits = append(implicits, hashFile.Path())
-
-			//	g.previousHashFile = hashFile.Path()
 			optionalFlags = append(optionalFlags, "--previous_hash "+previousHash)
 		} else {
 			ctx.ModuleErrorf("Failed to find previous version's hash file in %s", previousApiDir)
