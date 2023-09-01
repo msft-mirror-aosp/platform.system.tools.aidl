@@ -4,6 +4,7 @@ import (
 	"android/soong/aidl_library"
 	"android/soong/android"
 	"android/soong/bp2build"
+	"fmt"
 	"testing"
 )
 
@@ -100,6 +101,21 @@ func TestAidlInterface(t *testing.T) {
 			}),
 		},
 	})
+}
+
+func TestAidlInterfaceWithIncludeDirs(t *testing.T) {
+	runAidlInterfaceTestCase(t,
+		bp2build.Bp2buildTestCase{
+			Description: `aidl_interface sets include_dirs property`,
+			Blueprint: `
+				aidl_interface {
+					name: "aidl-interface1",
+					include_dirs: ["dir1"],
+				}
+			`,
+			ExpectedErr: fmt.Errorf("module 'aidl-interface1' marked unconvertible and also is converted"),
+		},
+	)
 }
 
 func TestAidlInterfaceWithNoProperties(t *testing.T) {
