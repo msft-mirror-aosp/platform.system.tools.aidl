@@ -4,7 +4,6 @@ import (
 	"android/soong/aidl_library"
 	"android/soong/android"
 	"android/soong/bp2build"
-	"fmt"
 	"testing"
 )
 
@@ -103,17 +102,17 @@ func TestAidlInterface(t *testing.T) {
 	})
 }
 
-func TestAidlInterfaceWithIncludeDirs(t *testing.T) {
+func TestAidlInterfaceWithIncludeDirsNotGenerated(t *testing.T) {
 	runAidlInterfaceTestCase(t,
 		bp2build.Bp2buildTestCase{
-			Description: `aidl_interface sets include_dirs property`,
+			Description: `aidl_interface with include_dirs property does not generate a Bazel target`,
 			Blueprint: `
 				aidl_interface {
 					name: "aidl-interface1",
 					include_dirs: ["dir1"],
 				}
 			`,
-			ExpectedErr: fmt.Errorf("module 'aidl-interface1' marked unconvertible and also is converted"),
+			ExpectedBazelTargets: []string{},
 		},
 	)
 }
