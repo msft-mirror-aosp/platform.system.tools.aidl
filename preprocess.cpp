@@ -94,6 +94,9 @@ struct PreprocessVisitor : AidlVisitor {
     if (const auto& ndk_header = t.GetNdkHeader(); !ndk_header.empty()) {
       out << " ndk_header " << ndk_header;
     }
+    if (const auto& rust_type = t.GetRustType(); !rust_type.empty()) {
+      out << " rust_type " << rust_type;
+    }
     out << ";\n";
   }
   void Visit(const AidlStructuredParcelable& t) override {
