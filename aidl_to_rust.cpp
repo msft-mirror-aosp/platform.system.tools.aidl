@@ -90,6 +90,18 @@ std::string ConstantValueDecoratorInternal(
 }
 
 std::string GetRawRustName(const AidlTypeSpecifier& type) {
+  const auto defined_type = type.GetDefinedType();
+  if (defined_type != nullptr) {
+    const auto unstructured = AidlCast<AidlParcelable>(*defined_type);
+    if (unstructured != nullptr) {
+      // Unstructured parcelable should set its rust_type. Use it.
+      const std::string rust_type = unstructured->GetRustType();
+      AIDL_FATAL_IF(rust_type.empty(), unstructured)
+          << "Parcelable " << unstructured->GetCanonicalName() << " has no rust_type defined.";
+      return rust_type;
+    }
+  }
+
   // Each Rust type is defined in a file with the same name,
   // e.g., IFoo is in IFoo.rs
   auto split_name = type.GetSplitName();

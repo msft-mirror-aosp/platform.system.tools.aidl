@@ -451,6 +451,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Apex_available:    i.properties.Backend.Rust.Apex_available,
 		Min_sdk_version:   i.minSdkVersion(langRust),
 		Target:            rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
+		Rustlibs:          i.properties.Backend.Rust.Additional_rustlibs,
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),
 	}, &aidlRustSourceProviderProperties{

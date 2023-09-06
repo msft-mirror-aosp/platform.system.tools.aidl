@@ -147,6 +147,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "NdkOnlyStableParcelable",
        CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
        {}},
+      {AidlAnnotation::Type::RUST_STABLE_PARCELABLE,
+       "RustOnlyStableParcelable",
+       CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
+       {}},
       {AidlAnnotation::Type::BACKING,
        "Backing",
        CONTEXT_TYPE_ENUM,
@@ -533,6 +537,8 @@ bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
     return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_STABLE_PARCELABLE);
   if (lang == Options::Language::NDK)
     return GetAnnotation(annotations_, AidlAnnotation::Type::NDK_STABLE_PARCELABLE);
+  if (lang == Options::Language::RUST)
+    return GetAnnotation(annotations_, AidlAnnotation::Type::RUST_STABLE_PARCELABLE);
   return false;
 }
 
@@ -1444,6 +1450,9 @@ AidlParcelable::AidlParcelable(const AidlLocation& location, const std::string& 
   }
   if (headers_.ndk.length() >= 2) {
     headers_.ndk = headers_.ndk.substr(1, headers_.ndk.length() - 2);
+  }
+  if (headers_.rust_type.length() >= 2) {
+    headers_.rust_type = headers_.rust_type.substr(1, headers_.rust_type.length() - 2);
   }
 }
 
