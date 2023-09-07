@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ArrayOfInterfaces.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ArrayOfInterfaces.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ArrayOfInterfaces.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ArrayOfInterfaces.aidl
  */
 package android.aidl.tests;
 public class ArrayOfInterfaces implements android.os.Parcelable
@@ -134,7 +134,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         return 0;
       }
     }
-    public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ArrayOfInterfaces$IEmptyInterface".replace('$', '.');
+    public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ArrayOfInterfaces.IEmptyInterface";
   }
   public interface IMyInterface extends android.os.IInterface
   {
@@ -306,7 +306,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         return 0;
       }
     }
-    public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ArrayOfInterfaces$IMyInterface".replace('$', '.');
+    public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ArrayOfInterfaces.IMyInterface";
     public android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] methodWithInterfaces(android.aidl.tests.ArrayOfInterfaces.IEmptyInterface iface, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface nullable_iface, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] iface_array_in, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] iface_array_out, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] iface_array_inout, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] nullable_iface_array_in, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] nullable_iface_array_out, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] nullable_iface_array_inout) throws android.os.RemoteException;
   }
   public static class MyParcelable implements android.os.Parcelable

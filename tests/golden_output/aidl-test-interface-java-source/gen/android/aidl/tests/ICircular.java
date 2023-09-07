@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ICircular.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ICircular.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ICircular.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ICircular.aidl
  */
 package android.aidl.tests;
 public interface ICircular extends android.os.IInterface
@@ -130,6 +130,6 @@ public interface ICircular extends android.os.IInterface
       return 0;
     }
   }
-  public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ICircular".replace('$', '.');
+  public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ICircular";
   public android.aidl.tests.ITestService GetTestService() throws android.os.RemoteException;
 }

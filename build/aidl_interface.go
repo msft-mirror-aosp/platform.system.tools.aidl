@@ -1105,8 +1105,11 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	imports = append(imports, i.properties.Include_dirs...)
 
 	preprocessCommand := rb.Command().BuiltTool("aidl").
-		FlagWithOutput("--preprocess ", preprocessed).
-		Flag("--structured")
+		FlagWithOutput("--preprocess ", preprocessed)
+
+	if !proptools.Bool(i.properties.Unstable) {
+		preprocessCommand.Flag("--structured")
+	}
 	if i.properties.Stability != nil {
 		preprocessCommand.FlagWithArg("--stability ", *i.properties.Stability)
 	}
