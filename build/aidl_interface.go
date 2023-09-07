@@ -281,7 +281,7 @@ type CommonNativeBackendProperties struct {
 	// Default: false
 	Gen_log *bool
 
-	// VNDK properties for correspdoning backend.
+	// VNDK properties for corresponding backend.
 	cc.VndkProperties
 }
 
@@ -420,6 +420,9 @@ type aidlInterfaceProperties struct {
 		// When enabled, this creates a target called "<name>-rust".
 		Rust struct {
 			CommonBackendProperties
+
+			// Rustlibs needed for unstructured parcelables.
+			Additional_rustlibs []string
 		}
 	}
 
