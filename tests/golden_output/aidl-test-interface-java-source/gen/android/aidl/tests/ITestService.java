@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ITestService.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ITestService.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
  */
 package android.aidl.tests;
 /** interface comment */
@@ -3533,7 +3533,7 @@ public interface ITestService extends android.os.IInterface
       return Stub.Proxy.sDefaultImpl;
     }
   }
-  public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService".replace('$', '.');
+  public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService";
   // Test that constants are accessible
   /** extra doc comment */
   // extra line comment
@@ -4024,7 +4024,7 @@ public interface ITestService extends android.os.IInterface
           return 0;
         }
       }
-      public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService$CompilerChecks$Foo".replace('$', '.');
+      public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService.CompilerChecks.Foo";
     }
     public static class HasDeprecated implements android.os.Parcelable
     {
@@ -4336,7 +4336,7 @@ public interface ITestService extends android.os.IInterface
           return 0;
         }
       }
-      public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService$CompilerChecks$NoPrefixInterface".replace('$', '.');
+      public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface";
       public void foo() throws android.os.RemoteException;
       public static class Nested implements android.os.Parcelable
       {
@@ -4502,7 +4502,7 @@ public interface ITestService extends android.os.IInterface
             return 0;
           }
         }
-        public static final java.lang.String DESCRIPTOR = "android$aidl$tests$ITestService$CompilerChecks$NoPrefixInterface$NestedNoPrefixInterface".replace('$', '.');
+        public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface";
         public void foo() throws android.os.RemoteException;
       }
     }
