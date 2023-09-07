@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-java-source/gen/android/aidl/loggable/ILoggableInterface.java.d -o out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/loggable/ILoggableInterface.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-java-source/gen/android/aidl/loggable/ILoggableInterface.java.d -o out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/loggable/ILoggableInterface.aidl
  */
 package android.aidl.loggable;
 public interface ILoggableInterface extends android.os.IInterface
@@ -218,7 +218,7 @@ public interface ILoggableInterface extends android.os.IInterface
       return 0;
     }
   }
-  public static final java.lang.String DESCRIPTOR = "android$aidl$loggable$ILoggableInterface".replace('$', '.');
+  public static final java.lang.String DESCRIPTOR = "android.aidl.loggable.ILoggableInterface";
   public java.lang.String[] LogThis(boolean boolValue, boolean[] boolArray, byte byteValue, byte[] byteArray, char charValue, char[] charArray, int intValue, int[] intArray, long longValue, long[] longArray, float floatValue, float[] floatArray, double doubleValue, double[] doubleArray, java.lang.String stringValue, java.lang.String[] stringArray, java.util.List<java.lang.String> listValue, android.aidl.loggable.Data dataValue, android.os.IBinder binderValue, android.os.ParcelFileDescriptor pfdValue, android.os.ParcelFileDescriptor[] pfdArray) throws android.os.RemoteException;
   public interface ISub extends android.os.IInterface
   {
@@ -346,7 +346,7 @@ public interface ILoggableInterface extends android.os.IInterface
         return 0;
       }
     }
-    public static final java.lang.String DESCRIPTOR = "android$aidl$loggable$ILoggableInterface$ISub".replace('$', '.');
+    public static final java.lang.String DESCRIPTOR = "android.aidl.loggable.ILoggableInterface.ISub";
     public void Log(int value) throws android.os.RemoteException;
   }
 }

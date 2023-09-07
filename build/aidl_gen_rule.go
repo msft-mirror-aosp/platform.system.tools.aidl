@@ -39,7 +39,7 @@ var (
 		Command: `mkdir -p "${headerDir}" && ` +
 			`mkdir -p "${outDir}/staging" && ` +
 			`mkdir -p "${headerDir}/staging" && ` +
-			`${aidlCmd} --lang=${lang} ${optionalFlags} --structured --ninja -d ${outStagingFile}.d ` +
+			`${aidlCmd} --lang=${lang} ${optionalFlags} --ninja -d ${outStagingFile}.d ` +
 			`-h ${headerDir}/staging -o ${outDir}/staging ${imports} ${nextImports} ${in} && ` +
 			`rsync --checksum ${outStagingFile}.d ${out}.d && ` +
 			`rsync --checksum ${outStagingFile} ${out} && ` +
@@ -55,7 +55,7 @@ var (
 		"fullHeaderDir")
 
 	aidlJavaRule = pctx.StaticRule("aidlJavaRule", blueprint.RuleParams{
-		Command: `${aidlCmd} --lang=java ${optionalFlags} --structured --ninja -d ${out}.d ` +
+		Command: `${aidlCmd} --lang=java ${optionalFlags} --ninja -d ${out}.d ` +
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
@@ -65,7 +65,7 @@ var (
 	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlRustRule = pctx.StaticRule("aidlRustRule", blueprint.RuleParams{
-		Command: `${aidlCmd} --lang=rust ${optionalFlags} --structured --ninja -d ${out}.d ` +
+		Command: `${aidlCmd} --lang=rust ${optionalFlags} --ninja -d ${out}.d ` +
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
@@ -204,6 +204,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 
 	optionalFlags := append([]string{}, g.properties.Flags...)
 	if proptools.Bool(g.properties.Unstable) != true {
+		optionalFlags = append(optionalFlags, "--structured")
 		optionalFlags = append(optionalFlags, "--version "+version)
 		hash := "notfrozen"
 		if !strings.HasPrefix(baseDir, ctx.Config().SoongOutDir()) {
