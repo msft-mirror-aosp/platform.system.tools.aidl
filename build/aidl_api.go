@@ -32,7 +32,7 @@ import (
 var (
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{
 		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
-			`${aidlCmd} --dumpapi --structured ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
+			`${aidlCmd} --dumpapi ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
 			`${aidlHashGen} ${outDir} ${latestVersion} ${hashFile}`,
 		CommandDeps: []string{"${aidlCmd}", "${aidlHashGen}"},
 	}, "optionalFlags", "imports", "outDir", "hashFile", "latestVersion")
@@ -56,6 +56,7 @@ type aidlApiProperties struct {
 	Srcs      []string `android:"path"`
 	AidlRoot  string   // base directory for the input aidl file
 	Stability *string
+	Unstable  *bool
 	Imports   []string
 	Headers   []string
 	Versions  []string
@@ -149,6 +150,9 @@ func (m *aidlApi) createApiDumpFromSource(ctx android.ModuleContext) apiDump {
 	hashFile = android.PathForModuleOut(ctx, "dump", ".hash")
 
 	var optionalFlags []string
+	if !proptools.Bool(m.properties.Unstable) {
+		optionalFlags = append(optionalFlags, "--structured")
+	}
 	if m.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *m.properties.Stability)
 	}
@@ -702,6 +706,7 @@ func addApiModule(mctx android.DefaultableHookContext, i *aidlInterface) string 
 		Srcs:      srcs,
 		AidlRoot:  aidlRoot,
 		Stability: i.properties.Stability,
+		Unstable:  i.properties.Unstable,
 		Imports:   i.properties.Imports,
 		Headers:   i.properties.Headers,
 		Versions:  i.getVersions(),
