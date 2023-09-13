@@ -4,6 +4,7 @@ import (
 	"android/soong/aidl_library"
 	"android/soong/android"
 	"android/soong/bp2build"
+	"android/soong/cc"
 	"testing"
 )
 
@@ -14,6 +15,7 @@ func runAidlInterfaceTestCase(t *testing.T, tc bp2build.Bp2buildTestCase) {
 		func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 			ctx.RegisterModuleType("aidl_library", aidl_library.AidlLibraryFactory)
+			ctx.RegisterModuleType("cc_library_shared", cc.LibrarySharedFactory)
 		},
 		tc,
 	)
@@ -37,7 +39,7 @@ func TestAidlInterface(t *testing.T) {
 				name: "aidl-interface1",
 				flags: ["-Wsomething"],
 				imports: [
-				"aidl-interface-import-V1",
+					"aidl-interface-import-V1",
 				],
 				headers: [
 					"aidl-interface-headers",
@@ -81,7 +83,7 @@ func TestAidlInterface(t *testing.T) {
 				"ndk_config": `{
         "enabled": True,
     }`,
-				"deps":  `[":aidl-interface-headers"]`,
+				"hdrs":  `[":aidl-interface-headers"]`,
 				"flags": `["-Wsomething"]`,
 				"versions_with_info": `[
         {
@@ -428,6 +430,69 @@ func TestAidlInterfaceWithApexAvailable(t *testing.T) {
             "apex_available=com.android.abd",
             "apex_available=//apex_available:platform",
         ],
+    }`,
+			}),
+		},
+	})
+}
+
+func TestAidlInterfaceWithAdditionalDynamicDeps(t *testing.T) {
+	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
+		Description: `aidl_interface apex_available`,
+		Blueprint: `
+			cc_library_shared {
+				name: "shared_dep",
+				bazel_module: {bp2build_available: false},
+			}
+			cc_library_shared {
+				name: "shared_stub_dep",
+				stubs: {
+				    symbol_file: "libnativewindow.map.txt",
+				    versions: ["29"],
+				},
+				bazel_module: {bp2build_available: false},
+			}
+			aidl_interface {
+				name: "aidl-interface1",
+				backend: {
+					java: {
+						enabled: false,
+					},
+					cpp: {
+						enabled: true,
+						apex_available: ["com.android.myapex"],
+						additional_shared_libraries: [
+							"shared_dep",
+							"shared_stub_dep",
+						],
+					},
+					ndk: {
+						enabled: true,
+						apex_available: ["com.android.myapex"],
+						additional_shared_libraries: [
+							"shared_dep",
+							"shared_stub_dep",
+						],
+					},
+				}
+			}`,
+		ExpectedBazelTargets: []string{
+			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
+				"cpp_config": `{
+        "additional_dynamic_deps": [":shared_dep"] + select({
+            "//build/bazel/rules/apex:com.android.myapex": ["@api_surfaces//module-libapi/current:shared_stub_dep"],
+            "//conditions:default": [":shared_stub_dep"],
+        }),
+        "enabled": True,
+        "tags": ["apex_available=com.android.myapex"],
+    }`,
+				"ndk_config": `{
+        "additional_dynamic_deps": [":shared_dep"] + select({
+            "//build/bazel/rules/apex:com.android.myapex": ["@api_surfaces//module-libapi/current:shared_stub_dep"],
+            "//conditions:default": [":shared_stub_dep"],
+        }),
+        "enabled": True,
+        "tags": ["apex_available=com.android.myapex"],
     }`,
 			}),
 		},
