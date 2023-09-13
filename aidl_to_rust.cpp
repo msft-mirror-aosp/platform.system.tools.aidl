@@ -389,6 +389,15 @@ bool TypeNeedsOption(const AidlTypeSpecifier& type, const AidlTypenames& typenam
     return true;
   }
 
+  // Unstructured parcelables may not implement Default.
+  const auto defined_type = type.GetDefinedType();
+  if (defined_type != nullptr) {
+    const auto unstructured = AidlCast<AidlParcelable>(*defined_type);
+    if (unstructured != nullptr) {
+      return true;
+    }
+  }
+
   return false;
 }
 
