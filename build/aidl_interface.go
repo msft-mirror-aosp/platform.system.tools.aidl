@@ -1188,7 +1188,7 @@ type aidlLibraryAttributes struct {
 
 // getBazelLabelListForImports returns a bazel label list converted from
 // aidl_interface.imports or aidl_interface.versions_with_info.imports prop
-func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports []string) bazel.LabelList {
+func getBazelLabelListForImports(ctx android.Bp2buildMutatorContext, imports []string) bazel.LabelList {
 	type nameAndVersion struct {
 		name    string
 		version string
@@ -1224,7 +1224,7 @@ func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports
 	return bazelLabels
 }
 
-func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+func (i *aidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
 	var javaConfig *javaConfigAttributes
 	var cppConfig *cppConfigAttributes
 	var ndkConfig *ndkConfigAttributes
