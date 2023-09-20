@@ -363,7 +363,7 @@ func (g *aidlGenRule) DepsMutator(ctx android.BottomUpMutatorContext) {
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
 
-func (g *aidlGenRule) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+func (g *aidlGenRule) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
 	aidlLang := g.properties.Lang
 	switch aidlLang {
 	case langCpp, langNdk:
