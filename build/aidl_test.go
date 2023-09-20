@@ -1321,7 +1321,7 @@ func TestImports(t *testing.T) {
 	}
 
 	rustcRule := ctx.ModuleForTests("foo-V1-rust", nativeRustVariant).Rule("rustc")
-	libFlags = rustcRule.Args["libFlags"]
+	libFlags = rustcRule.RuleParams.Command
 	libBar = filepath.Join("out", "soong", ".intermediates", "bar.1-V1-rust", nativeRustVariant, "unstripped", "libbar_1_V1.dylib.so")
 	libBarFlag := "--extern bar_1=" + libBar
 	if !strings.Contains(libFlags, libBarFlag) {
