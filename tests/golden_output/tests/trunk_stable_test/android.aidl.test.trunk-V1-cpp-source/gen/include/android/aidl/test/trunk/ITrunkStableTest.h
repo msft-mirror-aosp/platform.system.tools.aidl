@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp --version 1 --hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f -t --min_sdk_version current --log --structured --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp --structured --version 1 --hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1/android/aidl/test/trunk/ITrunkStableTest.aidl
  */
 #pragma once
 
@@ -39,8 +39,8 @@ class ITrunkStableTest : public ::android::IInterface {
 public:
   typedef ITrunkStableTestDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TrunkStableTest)
-  const int32_t VERSION = 1;
-  const std::string HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+  static inline const int32_t VERSION = 1;
+  static inline const std::string HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
   class MyParcelable : public ::android::Parcelable {
   public:
     int32_t a = 0;
@@ -183,8 +183,8 @@ public:
   public:
     typedef IMyCallbackDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(MyCallback)
-    const int32_t VERSION = 1;
-    const std::string HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+    static inline const int32_t VERSION = 1;
+    static inline const std::string HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
     virtual ::android::binder::Status repeatParcelable(const ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& input, ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) = 0;
     virtual ::android::binder::Status repeatEnum(::android::aidl::test::trunk::ITrunkStableTest::MyEnum input, ::android::aidl::test::trunk::ITrunkStableTest::MyEnum* _aidl_return) = 0;
     virtual ::android::binder::Status repeatUnion(const ::android::aidl::test::trunk::ITrunkStableTest::MyUnion& input, ::android::aidl::test::trunk::ITrunkStableTest::MyUnion* _aidl_return) = 0;

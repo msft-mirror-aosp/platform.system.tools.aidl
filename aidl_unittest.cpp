@@ -550,12 +550,13 @@ TEST_F(AidlTest, ParsesNdkOnlyStableParcelable) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Cannot declare unstructured"));
 }
 
-TEST_P(AidlTest, NdkAndJavaStabilityIsVintfStable) {
+TEST_P(AidlTest, NdkAndJavaAndRustStabilityIsVintfStable) {
   CaptureStderr();
 
-  io_delegate_.SetFileContents("NonPortableThing.aidl",
-                               "@NdkOnlyStableParcelable @JavaOnlyStableParcelable parcelable "
-                               "NonPortableThing ndk_header \"lol.h\" cpp_header \"lolol.h\";");
+  io_delegate_.SetFileContents(
+      "NonPortableThing.aidl",
+      "@NdkOnlyStableParcelable @JavaOnlyStableParcelable @RustOnlyStableParcelable parcelable "
+      "NonPortableThing ndk_header \"lol.h\" cpp_header \"lolol.h\" rust_type \"lol::Lol\";");
   import_paths_.emplace("");
 
   auto result =
@@ -563,7 +564,8 @@ TEST_P(AidlTest, NdkAndJavaStabilityIsVintfStable) {
             "import NonPortableThing; @VintfStability interface IFoo { NonPortableThing get(); }",
             typenames_, GetLanguage(), nullptr, {"--structured", "--stability", "vintf"});
 
-  if (GetLanguage() == Options::Language::NDK || GetLanguage() == Options::Language::JAVA) {
+  if (GetLanguage() == Options::Language::NDK || GetLanguage() == Options::Language::JAVA ||
+      GetLanguage() == Options::Language::RUST) {
     EXPECT_NE(result, nullptr);
     EXPECT_EQ(GetCapturedStderr(), "");
   } else {
@@ -795,7 +797,8 @@ TEST_P(AidlTest, WritesComments) {
 TEST_P(AidlTest, CppHeaderCanBeIdentifierAsWell) {
   io_delegate_.SetFileContents("p/cpp_header.aidl",
                                R"(package p;
-         parcelable cpp_header cpp_header "bar/header" ndk_header "ndk/bar/header";)");
+         parcelable cpp_header cpp_header "bar/header" ndk_header "ndk/bar/header" )"
+                               R"(rust_type "package::SomeType";)");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = R"(package p;
@@ -1231,9 +1234,9 @@ TEST_P(AidlTest, RequireOuterClass) {
 }
 
 TEST_P(AidlTest, ParseCompoundParcelableFromPreprocess) {
-  io_delegate_.SetFileContents(
-      "preprocessed",
-      "parcelable p.Outer.Inner cpp_header \"inner.h\" ndk_header \"ndk/inner.h\";");
+  io_delegate_.SetFileContents("preprocessed",
+                               "parcelable p.Outer.Inner cpp_header \"inner.h\" ndk_header "
+                               "\"ndk/inner.h\" rust_type \"package::Inner\";");
   preprocessed_files_.push_back("preprocessed");
   auto parse_result = Parse("p/IFoo.aidl", "package p; interface IFoo { void f(in Inner c); }",
                             typenames_, GetLanguage());
@@ -1302,7 +1305,7 @@ TEST_P(AidlTest, StructuredFailOnUnstructuredParcelable) {
       "o.WhoKnowsWhat is not structured, but this is a structured interface";
   io_delegate_.SetFileContents("o/WhoKnowsWhat.aidl",
                                "package o; parcelable WhoKnowsWhat cpp_header \"who_knows.h\" "
-                               "ndk_header \"ndk/who_knows.h\";");
+                               "ndk_header \"ndk/who_knows.h\" rust_type \"WhoKnows\";");
   import_paths_.emplace("");
   AidlError error;
   CaptureStderr();
@@ -1666,9 +1669,9 @@ TEST_F(AidlTest, ByteAndByteArrayDifferInNdk) {
 }
 
 TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
-  io_delegate_.SetFileContents(
-      "p/Outer.aidl",
-      "package p; parcelable Outer.Inner cpp_header \"baz/header\" ndk_header \"ndk/baz/header\";");
+  io_delegate_.SetFileContents("p/Outer.aidl",
+                               "package p; parcelable Outer.Inner cpp_header \"baz/header\" "
+                               "ndk_header \"ndk/baz/header\" rust_type \"baz::Inner\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; import p.Outer; interface IFoo"
@@ -1685,9 +1688,9 @@ TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
 }
 
 TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelablesWithoutImports) {
-  io_delegate_.SetFileContents(
-      "p/Outer.aidl",
-      "package p; parcelable Outer.Inner cpp_header \"baz/header\" ndk_header \"ndk/baz/header\";");
+  io_delegate_.SetFileContents("p/Outer.aidl",
+                               "package p; parcelable Outer.Inner cpp_header \"baz/header\" "
+                               "ndk_header \"ndk/baz/header\" rust_type \"baz::Inner\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; interface IFoo { p.Outer.Inner get(); }";

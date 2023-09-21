@@ -811,36 +811,15 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
     if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
       out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
-      if (options.IsLatestUnfrozenVersion()) {
-        out << "if (true) {\n";
-        out << "  *_aidl_return = " << std::to_string(options.PreviousVersion()) << ";\n";
-        out << "} else {\n";
-        out.Indent();
-      }
       out << "*_aidl_return = " << iface << "::" << kVersion << ";\n";
-      if (options.IsLatestUnfrozenVersion()) {
-        out.Dedent();
-        out << "}\n";
-      }
       out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
       out.Dedent();
       out << "}\n";
     }
-    if (method->GetName() == kGetInterfaceHash &&
-        (!options.Hash().empty() || options.IsLatestUnfrozenVersion())) {
+    if (method->GetName() == kGetInterfaceHash && (!options.Hash().empty())) {
       out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
-      if (options.IsLatestUnfrozenVersion()) {
-        out << "if (true) {\n";
-        out << "  *_aidl_return = \"" << options.PreviousHash() << "\";\n";
-        out << "} else {\n";
-        out.Indent();
-      }
       out << "*_aidl_return = " << iface << "::" << kHash << ";\n";
-      if (options.IsLatestUnfrozenVersion()) {
-        out.Dedent();
-        out << "}\n";
-      }
       out << "return ::ndk::ScopedAStatus(AStatus_newOk());\n";
       out.Dedent();
       out << "}\n";
@@ -1182,11 +1161,22 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   GenerateNestedTypeDecls(out, types, defined_type, options);
   GenerateConstantDeclarations(out, types, defined_type);
   if (options.Version() > 0) {
-    out << "static const int32_t " << kVersion << " = " << std::to_string(options.Version())
-        << ";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const int32_t " << kVersion << " = true ? "
+          << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
+          << ";\n";
+    } else {
+      out << "static inline const int32_t " << kVersion << " = "
+          << std::to_string(options.Version()) << ";\n";
+    }
   }
   if (!options.Hash().empty()) {
-    out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const std::string " << kHash << " = true ? \"" << options.PreviousHash()
+          << "\" : \"" << options.Hash() << "\";\n";
+    } else {
+      out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
+    }
   }
   for (const auto& method : defined_type.GetMethods()) {
     if (!method->IsUserDefined()) {

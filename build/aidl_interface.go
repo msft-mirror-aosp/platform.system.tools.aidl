@@ -21,6 +21,7 @@ import (
 	"android/soong/java"
 	"android/soong/phony"
 	"android/soong/rust"
+	"android/soong/ui/metrics/bp2build_metrics_proto"
 
 	"fmt"
 	"path/filepath"
@@ -280,7 +281,7 @@ type CommonNativeBackendProperties struct {
 	// Default: false
 	Gen_log *bool
 
-	// VNDK properties for correspdoning backend.
+	// VNDK properties for corresponding backend.
 	cc.VndkProperties
 }
 
@@ -419,6 +420,9 @@ type aidlInterfaceProperties struct {
 		// When enabled, this creates a target called "<name>-rust".
 		Rust struct {
 			CommonBackendProperties
+
+			// Rustlibs needed for unstructured parcelables.
+			Additional_rustlibs []string
 		}
 	}
 
@@ -874,16 +878,13 @@ func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleCont
 	}
 
 	if i.Owner() == "" {
-		if !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview() {
-			return true, "this is a release branch - freeze it or set 'owners:'"
-		} else if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
+		if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
 			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owners:'"
 		}
 	} else {
 		// has an OWNER
-		// REL branches don't enforce downstream interfaces or owned interfaces
-		// to be frozen. Instead, these interfaces are verified by other tests
-		// like vts_treble_vintf_vendor_test
+		// These interfaces are verified by other tests like vts_treble_vintf_vendor_test
+		// but this can be used to verify they are frozen at build time.
 		if android.InList(i.Owner(), strings.Fields(mctx.Config().Getenv("AIDL_FROZEN_OWNERS"))) {
 			return true, "the owner field is in environment variable AIDL_FROZEN_OWNERS"
 		}
@@ -1104,8 +1105,11 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	imports = append(imports, i.properties.Include_dirs...)
 
 	preprocessCommand := rb.Command().BuiltTool("aidl").
-		FlagWithOutput("--preprocess ", preprocessed).
-		Flag("--structured")
+		FlagWithOutput("--preprocess ", preprocessed)
+
+	if !proptools.Bool(i.properties.Unstable) {
+		preprocessCommand.Flag("--structured")
+	}
 	if i.properties.Stability != nil {
 		preprocessCommand.FlagWithArg("--stability ", *i.properties.Stability)
 	}
@@ -1164,6 +1168,7 @@ type commonBackendAttributes struct {
 
 type commonNativeBackendAttributes struct {
 	commonBackendAttributes
+	Additional_dynamic_deps bazel.LabelListAttribute
 }
 
 type versionWithInfoAttribute struct {
@@ -1183,7 +1188,7 @@ type aidlLibraryAttributes struct {
 
 // getBazelLabelListForImports returns a bazel label list converted from
 // aidl_interface.imports or aidl_interface.versions_with_info.imports prop
-func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports []string) bazel.LabelList {
+func getBazelLabelListForImports(ctx android.Bp2buildMutatorContext, imports []string) bazel.LabelList {
 	type nameAndVersion struct {
 		name    string
 		version string
@@ -1219,7 +1224,7 @@ func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports
 	return bazelLabels
 }
 
-func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+func (i *aidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
 	var javaConfig *javaConfigAttributes
 	var cppConfig *cppConfigAttributes
 	var ndkConfig *ndkConfigAttributes
@@ -1233,13 +1238,51 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		cppConfig = &cppConfigAttributes{}
 		cppConfig.Enabled = true
 		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
-		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Cpp.Apex_available)
+		apexAvailable := i.properties.Backend.Cpp.Apex_available
+		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
+		cppConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
+		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Cpp.Additional_shared_libraries)
+		for _, l := range additionalSharedLabels.Includes {
+			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
+			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
+				cppConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
+			}
+		}
+		cc.SetStubsForDynamicDeps(
+			ctx,
+			bazel.NoConfigAxis,
+			"",
+			apexAvailable,
+			additionalSharedLabels,
+			&cppConfig.Additional_dynamic_deps,
+			0,
+			false,
+		)
 	}
 	if i.shouldGenerateNdkBackend() {
 		ndkConfig = &ndkConfigAttributes{}
 		ndkConfig.Enabled = true
 		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
-		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Ndk.Apex_available)
+		apexAvailable := i.properties.Backend.Ndk.Apex_available
+		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
+		ndkConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
+		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Ndk.Additional_shared_libraries)
+		for _, l := range additionalSharedLabels.Includes {
+			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
+			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
+				ndkConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
+			}
+		}
+		cc.SetStubsForDynamicDeps(
+			ctx,
+			bazel.NoConfigAxis,
+			"",
+			apexAvailable,
+			additionalSharedLabels,
+			&ndkConfig.Additional_dynamic_deps,
+			0,
+			false,
+		)
 	}
 
 	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
@@ -1295,19 +1338,16 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		deps = bazel.MakeLabelListAttribute(imports)
 	}
 
-	deps.Append(
-		bazel.MakeLabelListAttribute(
-			android.BazelLabelForModuleDeps(
-				ctx,
-				i.properties.Headers,
-			),
-		),
-	)
-
 	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
 	var stripImportPrefixAttr *string = nil
 	if i.properties.Local_include_dir != "" && !srcsAttr.IsEmpty() {
 		stripImportPrefixAttr = &i.properties.Local_include_dir
+	}
+
+	if len(i.properties.Include_dirs) != 0 {
+		// TODO(b/298246873) remove include_dirs property from aidl_interface
+		ctx.MarkBp2buildUnconvertible(bp2build_metrics_proto.UnconvertedReasonType_PROPERTY_UNSUPPORTED, "include_dirs not supported")
+		return
 	}
 
 	attrs := &aidlInterfaceAttributes{
@@ -1315,6 +1355,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 			Srcs:                srcsAttr,
 			Flags:               i.properties.Flags,
 			Deps:                deps,
+			Hdrs:                bazel.MakeLabelListAttribute(android.BazelLabelForModuleDeps(ctx, i.properties.Headers)),
 			Strip_import_prefix: stripImportPrefixAttr,
 		},
 		Stability:          i.properties.Stability,

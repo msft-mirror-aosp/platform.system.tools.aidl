@@ -119,6 +119,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token UNKNOWN "unrecognized character"
 %token<token> CPP_HEADER "cpp_header (which can also be used as an identifier)"
 %token<token> NDK_HEADER "ndk_header (which can also be used as an identifier)"
+%token<token> RUST_TYPE "rust_type (which can also be used as an identifier)"
 %token IN "in"
 %token INOUT "inout"
 %token OUT "out"
@@ -210,6 +211,7 @@ identifier
  : IDENTIFIER
  | CPP_HEADER
  | NDK_HEADER
+ | RUST_TYPE
  ;
 
 optional_package
@@ -315,6 +317,12 @@ optional_unstructured_headers
  | optional_unstructured_headers NDK_HEADER C_STR {
      $$ = $1;
      $$->ndk = $3->GetText();
+     delete $2;
+     delete $3;
+ }
+ | optional_unstructured_headers RUST_TYPE C_STR {
+     $$ = $1;
+     $$->rust_type = $3->GetText();
      delete $2;
      delete $3;
  }
