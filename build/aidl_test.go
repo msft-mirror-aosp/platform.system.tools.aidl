@@ -124,22 +124,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			nocrt: true,
 			system_shared_libs: [],
 		}
-		prebuilt_build_tool {
-			name: "rustc",
-			src: "bin/rustc",
-		}
-		prebuilt_build_tool {
-			name: "rust_extractor",
-			src: "bin/rust_extractor",
-		}
-		prebuilt_build_tool {
-			name: "rustdoc",
-			src: "bin/rustdoc",
-		}
-		prebuilt_build_tool {
-			name: "clippy-driver",
-			src: "bin/clippy-driver",
-		}
 		rust_library {
 			name: "libstd",
 			crate_name: "std",
@@ -1337,7 +1321,7 @@ func TestImports(t *testing.T) {
 	}
 
 	rustcRule := ctx.ModuleForTests("foo-V1-rust", nativeRustVariant).Rule("rustc")
-	libFlags = rustcRule.RuleParams.Command
+	libFlags = rustcRule.Args["libFlags"]
 	libBar = filepath.Join("out", "soong", ".intermediates", "bar.1-V1-rust", nativeRustVariant, "unstripped", "libbar_1_V1.dylib.so")
 	libBarFlag := "--extern bar_1=" + libBar
 	if !strings.Contains(libFlags, libBarFlag) {
