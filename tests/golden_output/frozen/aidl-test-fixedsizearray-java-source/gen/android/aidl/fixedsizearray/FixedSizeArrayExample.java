@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation --min_sdk_version current --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen/android/aidl/fixedsizearray/FixedSizeArrayExample.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen/android/aidl/fixedsizearray/FixedSizeArrayExample.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
  */
 package android.aidl.fixedsizearray;
 public class FixedSizeArrayExample implements android.os.Parcelable
@@ -722,7 +722,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
       static final int TRANSACTION_Repeat2dBinders = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
       static final int TRANSACTION_Repeat2dParcelables = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
     }
-    public static final java.lang.String DESCRIPTOR = "android$aidl$fixedsizearray$FixedSizeArrayExample$IRepeatFixedSizeArray".replace('$', '.');
+    public static final java.lang.String DESCRIPTOR = "android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray";
     public byte[] RepeatBytes(byte[] input, byte[] repeated) throws android.os.RemoteException;
     public int[] RepeatInts(int[] input, int[] repeated) throws android.os.RemoteException;
     public android.os.IBinder[] RepeatBinders(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
@@ -870,6 +870,6 @@ public class FixedSizeArrayExample implements android.os.Parcelable
         }
       }
     }
-    public static final java.lang.String DESCRIPTOR = "android$aidl$fixedsizearray$FixedSizeArrayExample$IEmptyInterface".replace('$', '.');
+    public static final java.lang.String DESCRIPTOR = "android.aidl.fixedsizearray.FixedSizeArrayExample.IEmptyInterface";
   }
 }
