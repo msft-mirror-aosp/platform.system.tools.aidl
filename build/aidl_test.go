@@ -124,22 +124,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			nocrt: true,
 			system_shared_libs: [],
 		}
-		prebuilt_build_tool {
-			name: "rustc",
-			src: "bin/rustc",
-		}
-		prebuilt_build_tool {
-			name: "rust_extractor",
-			src: "bin/rust_extractor",
-		}
-		prebuilt_build_tool {
-			name: "rustdoc",
-			src: "bin/rustdoc",
-		}
-		prebuilt_build_tool {
-			name: "clippy-driver",
-			src: "bin/clippy-driver",
-		}
 		rust_library {
 			name: "libstd",
 			crate_name: "std",
