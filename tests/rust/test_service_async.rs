@@ -519,9 +519,9 @@ impl ITestService::ITestServiceAsyncServer for TestService {
     async fn RepeatSimpleParcelable(
         &self,
         input: &SimpleParcelable,
-        repeat: &mut Option<SimpleParcelable>,
+        repeat: &mut SimpleParcelable,
     ) -> binder::Result<SimpleParcelable> {
-        *repeat = Some(input.clone());
+        *repeat = input.clone();
         Ok(input.clone())
     }
 
