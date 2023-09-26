@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/nested/INestedService.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/nested/INestedService.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/nested/INestedService.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/nested/INestedService.aidl
  */
 package android.aidl.tests.nested;
 public interface INestedService extends android.os.IInterface
@@ -169,7 +169,7 @@ public interface INestedService extends android.os.IInterface
       return 1;
     }
   }
-  public static final java.lang.String DESCRIPTOR = "android$aidl$tests$nested$INestedService".replace('$', '.');
+  public static final java.lang.String DESCRIPTOR = "android.aidl.tests.nested.INestedService";
   public android.aidl.tests.nested.INestedService.Result flipStatus(android.aidl.tests.nested.ParcelableWithNested p) throws android.os.RemoteException;
   public void flipStatusWithCallback(byte status, android.aidl.tests.nested.INestedService.ICallback cb) throws android.os.RemoteException;
   public static class Result implements android.os.Parcelable
@@ -344,7 +344,7 @@ public interface INestedService extends android.os.IInterface
         return 0;
       }
     }
-    public static final java.lang.String DESCRIPTOR = "android$aidl$tests$nested$INestedService$ICallback".replace('$', '.');
+    public static final java.lang.String DESCRIPTOR = "android.aidl.tests.nested.INestedService.ICallback";
     public void done(byte status) throws android.os.RemoteException;
   }
 }
