@@ -1228,6 +1228,8 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) 
 	var javaConfig *javaConfigAttributes
 	var cppConfig *cppConfigAttributes
 	var ndkConfig *ndkConfigAttributes
+	var deps bazel.LabelListAttribute
+
 	if i.shouldGenerateJavaBackend() {
 		javaConfig = &javaConfigAttributes{}
 		javaConfig.Enabled = true
@@ -1255,6 +1257,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) 
 			apexAvailable,
 			additionalSharedLabels,
 			&cppConfig.Additional_dynamic_deps,
+			&deps,
 			0,
 			false,
 		)
@@ -1280,6 +1283,7 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) 
 			apexAvailable,
 			additionalSharedLabels,
 			&ndkConfig.Additional_dynamic_deps,
+			&deps,
 			0,
 			false,
 		)
@@ -1329,8 +1333,6 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) 
 			}
 		}
 	}
-
-	var deps bazel.LabelListAttribute
 
 	if len(i.properties.Srcs) > 0 && !imports.IsEmpty() {
 		// imports is only needed for (non-frozen) srcs
