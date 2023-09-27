@@ -785,14 +785,17 @@ genrule {
     name: "aidl-golden-test-build-hook-gen",
     tools: ["aidl-golden-test"],
 
+    // We don't have access to TARGET_RELEASE in the script when it's called from this
+    // hook, so we pass it explicitly. All the script needs to know is whether or not
+    // $TARGET_RELEASE is "next"
     product_variables: {
         release_aidl_use_unfrozen: {
-            cmd: "AIDL_USE_UNFROZEN=true $(location aidl-golden-test) check && " +
+            cmd: "TARGET_RELEASE=trunk_staging $(location aidl-golden-test) check && " +
                 "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
         },
     },
 
-    cmd: "AIDL_USE_UNFROZEN=false $(location aidl-golden-test) check && " +
+    cmd: "TARGET_RELEASE=next $(location aidl-golden-test) check && " +
         "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
     srcs: [
         // warning: keep this list up to date with tests/golden_test.sh
