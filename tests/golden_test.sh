@@ -30,7 +30,7 @@ function _golden_test() {
       update=1
       ;;
     *)
-      echo "Argument must be 'check' or 'update' but is $1"
+      echo "Argument must be 'check' or 'update'"
       exit 1
       ;;
   esac
@@ -72,28 +72,32 @@ function _golden_test() {
     "tests/trunk_stable_test/android.aidl.test.trunk-V2-rust-source"
   )
 
-  local use_unfrozen="$3"
-  # If override_unfrozen is true, we override the RELEASE_AIDL_USE_UNFROZEN build flag with an
-  # environment variable.
-  local override_unfrozen="$4"
-  local root="$2"
+  local root="."
+  if [ "$ANDROID_BUILD_TOP" != "" ]; then
+    root="$ANDROID_BUILD_TOP"
+  fi
+
   if [ "$update" = 1 ]; then
-    if [ "$override_unfrozen" == true ]; then
-      export AIDL_USE_UNFROZEN_OVERRIDE="$use_unfrozen"
-    fi
     "$root"/build/soong/soong_ui.bash --make-mode \
       $(for i in "${modules[@]}"; do
           echo "out/soong/.intermediates/system/tools/aidl/$i/timestamp"
-        done) ; export AIDL_USE_UNFROZEN_OVERRIDE=
+        done)
   fi
+
   local e=0
   for module in "${modules[@]}"; do
     local built="$root/out/soong/.intermediates/system/tools/aidl/$module/"
     local module_path
-    if [ "$use_unfrozen" == "True" ]; then
+    if [ "$AIDL_USE_UNFROZEN" == "true" ]; then
       module_path=$module
-    else
+    elif [ "$AIDL_USE_UNFROZEN" == "false" ]; then
       module_path="frozen/$module"
+    else
+      echo "ERROR: AIDL_USE_UNFROZEN must be set to true or false."
+      echo "ERROR: This should be the same value of the flag RELEASE_AIDL_USE_UNFROZEN"
+      echo "ERROR: when the interfaces were last built."
+      echo "ERROR:     AIDL_USE_UNFROZEN=true golden_test.sh update."
+      exit 1
     fi
 
     local golden="$root/system/tools/aidl/tests/golden_output/$module_path/"
@@ -110,7 +114,9 @@ function _golden_test() {
   if [ "$e" = 1 ]; then
     echo "ERROR: The AIDL compiler is outputting files in an unknown way."
     echo "ERROR: to accept these changes, please run:"
-    echo "ERROR:     \$ANDROID_BUILD_TOP/system/tools/aidl/tests/golden_test.sh update"
+    echo "ERROR:     AIDL_USE_UNFROZEN=$AIDL_USE_UNFROZEN \$ANDROID_BUILD_TOP/system/tools/aidl/tests/golden_test.sh update"
+    echo "ERROR: Then, flip the RELEASE_AIDL_USE_UNFROZEN build flag and rebuild/regenerate the"
+    echo "ERROR: other set of golden output files."
     exit 1
   else
     if [ "$update" = 1 ]; then
@@ -119,26 +125,4 @@ function _golden_test() {
   fi
 }
 
-root="."
-if [ "$ANDROID_BUILD_TOP" != "" ]; then
-  root="$ANDROID_BUILD_TOP"
-fi
-use_unfrozen=$(sed -rn 's/ *flag\(\"RELEASE_AIDL_USE_UNFROZEN\", ALL, (.*)\),/\1/p' "$root/build/release/build_flags.bzl")
-if [[ "$use_unfrozen" != "True" && "$use_unfrozen" != "False" ]]; then
-  echo "ERROR: Unexpected value of RELEASE_AIDL_USE_UNFROZEN in $root/build/release/build_flags.bzl of $use_unfrozen."
-  exit 1
-fi
-
-if [ "$1" == "update" ]; then
-  if [ "$use_unfrozen" == "True" ]; then
-    # build update the opposite value first, so we leave the intermediates
-    # in the state of the tree
-    _golden_test "$@" "$root" "False" true
-    _golden_test "$@" "$root" "True" false
-  else
-    _golden_test "$@" "$root" "True" true
-    _golden_test "$@" "$root" "False" false
-  fi
-else
-_golden_test "$@" "$root" "$use_unfrozen"
-fi
+_golden_test "$@"
