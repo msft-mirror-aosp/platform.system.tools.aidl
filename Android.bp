@@ -785,7 +785,14 @@ genrule {
     name: "aidl-golden-test-build-hook-gen",
     tools: ["aidl-golden-test"],
 
-    cmd: "$(location aidl-golden-test) check && " +
+    product_variables: {
+        release_aidl_use_unfrozen: {
+            cmd: "AIDL_USE_UNFROZEN=true $(location aidl-golden-test) check && " +
+                "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
+        },
+    },
+
+    cmd: "AIDL_USE_UNFROZEN=false $(location aidl-golden-test) check && " +
         "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
     srcs: [
         // warning: keep this list up to date with tests/golden_test.sh
