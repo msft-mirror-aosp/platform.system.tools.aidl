@@ -19,7 +19,6 @@ import (
 	"android/soong/bazel"
 	"android/soong/cc"
 	"android/soong/java"
-	"android/soong/phony"
 	"android/soong/rust"
 	"android/soong/ui/metrics/bp2build_metrics_proto"
 
@@ -976,6 +975,8 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	// checked in modules in mixed builds
 	if b, ok := mctx.Module().(android.Bazelable); ok {
 		bp2build = b.ShouldConvertWithBp2build(mctx)
+	} else {
+		panic(fmt.Errorf("aidlInterface must support Bazelable"))
 	}
 
 	for lang, shouldGenerate := range shouldGenerateLangBackendMap {
@@ -1005,12 +1006,31 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		addApiModule(mctx, i)
 	}
 
-	// Reserve this module name for future use
-	mctx.CreateModule(phony.PhonyFactory, &phonyProperties{
+	// Reserve this module name for future use, and make it responsible for
+	// generating a Bazel definition.
+	factoryFunc := func() android.Module {
+		result := &phonyAidlInterface{
+			origin: i,
+		}
+		android.InitAndroidModule(result)
+		android.InitBazelModule(result)
+		return result
+	}
+	mctx.CreateModule(factoryFunc, &phonyProperties{
 		Name: proptools.StringPtr(i.ModuleBase.Name()),
 	})
 
 	i.internalModuleNames = libs
+}
+
+func (p *phonyAidlInterface) GenerateAndroidBuildActions(_ android.ModuleContext) {
+	// No-op.
+}
+
+type phonyAidlInterface struct {
+	android.ModuleBase
+	android.BazelModuleBase
+	origin *aidlInterface
 }
 
 func (i *aidlInterface) commonBackendProperties(lang string) CommonBackendProperties {
@@ -1132,8 +1152,11 @@ func AidlInterfaceFactory() android.Module {
 	i := &aidlInterface{}
 	i.AddProperties(&i.properties)
 	android.InitAndroidModule(i)
-	android.InitBazelModule(i)
 	android.InitDefaultableModule(i)
+	android.InitBazelModule(i)
+	android.AddBazelHandcraftedHook(i, func(ctx android.LoadHookContext) string {
+		return strings.TrimSuffix(i.Name(), "_interface")
+	})
 	i.SetDefaultableHook(func(ctx android.DefaultableHookContext) { aidlInterfaceHook(ctx, i) })
 	return i
 }
@@ -1224,7 +1247,14 @@ func getBazelLabelListForImports(ctx android.Bp2buildMutatorContext, imports []s
 	return bazelLabels
 }
 
-func (i *aidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
+func (p *aidlInterface) ConvertWithBp2build(_ android.Bp2buildMutatorContext) {
+	// aidlInterface should have a label set by its load hook; modules it creates
+	// are responsible for generating the actual definition.
+	panic("aidlInterface should always appear to have an existing label")
+}
+
+func (p *phonyAidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
+	i := p.origin
 	var javaConfig *javaConfigAttributes
 	var cppConfig *cppConfigAttributes
 	var ndkConfig *ndkConfigAttributes
