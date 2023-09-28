@@ -57,6 +57,18 @@ func setTestFreezeEnv() android.FixturePreparer {
 	})
 }
 
+func setUseUnfrozenOverrideEnvTrue() android.FixturePreparer {
+	return android.FixtureMergeEnv(map[string]string{
+		"AIDL_USE_UNFROZEN_OVERRIDE": "True",
+	})
+}
+
+func setUseUnfrozenOverrideEnvFalse() android.FixturePreparer {
+	return android.FixtureMergeEnv(map[string]string{
+		"AIDL_USE_UNFROZEN_OVERRIDE": "False",
+	})
+}
+
 func setTransitiveFreezeEnv() android.FixturePreparer {
 	return android.FixtureMergeEnv(map[string]string{
 		"AIDL_TRANSITIVE_FREEZE": "true",
@@ -2343,4 +2355,44 @@ func TestAidlUsingUnfrozen(t *testing.T) {
 			rule.Args["optionalFlags"],
 			"-previous")
 	}
+}
+
+func TestAidlUseUnfrozenOverrideFalse(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+                        aidl_interface {
+                                name: "foo-iface",
+                                srcs: ["a/Foo.aidl"],
+                                versions: ["1"],
+                        }
+                `),
+		"foo/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/1/.hash": nil,
+	})
+	ctx, _ := testAidl(t, ``, setUseUnfrozenOverrideEnvFalse(), customizer)
+
+	rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+	android.AssertStringDoesContain(t, "Unfrozen interfaces should have -previous_api_dir set when overriding the RELEASE_AIDL_USE_UNFROZEN flag",
+		rule.Args["optionalFlags"],
+		"-previous")
+}
+
+func TestAidlUseUnfrozenOverrideTrue(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+                        aidl_interface {
+                                name: "foo-iface",
+                                srcs: ["a/Foo.aidl"],
+                                versions: ["1"],
+                        }
+                `),
+		"foo/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/1/.hash": nil,
+	})
+	ctx, _ := testAidl(t, ``, setUseUnfrozenOverrideEnvTrue(), customizer)
+
+	rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+	android.AssertStringDoesNotContain(t, "Unfrozen interfaces should not have -previous_api_dir set when overriding the RELEASE_AIDL_USE_UNFROZEN flag",
+		rule.Args["optionalFlags"],
+		"-previous")
 }
