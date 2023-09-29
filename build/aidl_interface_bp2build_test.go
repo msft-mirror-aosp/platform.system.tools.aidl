@@ -1,11 +1,12 @@
 package aidl
 
 import (
+	"testing"
+
 	"android/soong/aidl_library"
 	"android/soong/android"
 	"android/soong/bp2build"
 	"android/soong/cc"
-	"testing"
 )
 
 func runAidlInterfaceTestCase(t *testing.T, tc bp2build.Bp2buildTestCase) {
@@ -438,11 +439,11 @@ func TestAidlInterfaceWithApexAvailable(t *testing.T) {
 
 func TestAidlInterfaceWithAdditionalDynamicDeps(t *testing.T) {
 	runAidlInterfaceTestCase(t, bp2build.Bp2buildTestCase{
-		Description: `aidl_interface apex_available`,
+		Description:             `aidl_interface apex_available`,
+		StubbedBuildDefinitions: []string{"shared_dep", "shared_stub_dep"},
 		Blueprint: `
 			cc_library_shared {
 				name: "shared_dep",
-				bazel_module: {bp2build_available: false},
 			}
 			cc_library_shared {
 				name: "shared_stub_dep",
@@ -450,7 +451,6 @@ func TestAidlInterfaceWithAdditionalDynamicDeps(t *testing.T) {
 				    symbol_file: "libnativewindow.map.txt",
 				    versions: ["29"],
 				},
-				bazel_module: {bp2build_available: false},
 			}
 			aidl_interface {
 				name: "aidl-interface1",
