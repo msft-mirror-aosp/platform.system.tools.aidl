@@ -227,6 +227,7 @@ class AidlAnnotation : public AidlNode {
     BACKING = 1,
     JAVA_STABLE_PARCELABLE,
     NDK_STABLE_PARCELABLE,
+    RUST_STABLE_PARCELABLE,
     UNSUPPORTED_APP_USAGE,
     VINTF_STABILITY,
     NULLABLE,
@@ -501,6 +502,11 @@ class AidlMember : public AidlAnnotatable {
   AidlMember(AidlMember&&) = delete;
   AidlMember& operator=(const AidlMember&) = delete;
   AidlMember& operator=(AidlMember&&) = delete;
+  void MarkNew() { new_ = true; }
+  bool IsNew() const { return new_; }
+
+ private:
+  bool new_ = false;
 };
 
 // TODO: This class is used for method arguments and also parcelable fields,
@@ -1051,6 +1057,7 @@ class AidlDefinedType : public AidlMember, public AidlScope {
 struct AidlUnstructuredHeaders {
   std::string cpp;
   std::string ndk;
+  std::string rust_type;
 };
 
 class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::string> {
@@ -1069,6 +1076,7 @@ class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::s
 
   std::string GetCppHeader() const { return headers_.cpp; }
   std::string GetNdkHeader() const { return headers_.ndk; }
+  std::string GetRustType() const { return headers_.rust_type; }
 
   bool CheckValid(const AidlTypenames& typenames) const override;
   const AidlParcelable* AsParcelable() const override { return this; }

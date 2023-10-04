@@ -19,8 +19,8 @@ import (
 	"android/soong/bazel"
 	"android/soong/cc"
 	"android/soong/java"
-	"android/soong/phony"
 	"android/soong/rust"
+	"android/soong/ui/metrics/bp2build_metrics_proto"
 
 	"fmt"
 	"path/filepath"
@@ -280,7 +280,7 @@ type CommonNativeBackendProperties struct {
 	// Default: false
 	Gen_log *bool
 
-	// VNDK properties for correspdoning backend.
+	// VNDK properties for corresponding backend.
 	cc.VndkProperties
 }
 
@@ -419,6 +419,9 @@ type aidlInterfaceProperties struct {
 		// When enabled, this creates a target called "<name>-rust".
 		Rust struct {
 			CommonBackendProperties
+
+			// Rustlibs needed for unstructured parcelables.
+			Additional_rustlibs []string
 		}
 	}
 
@@ -874,16 +877,13 @@ func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleCont
 	}
 
 	if i.Owner() == "" {
-		if !mctx.Config().DefaultAppTargetSdk(mctx).IsPreview() {
-			return true, "this is a release branch - freeze it or set 'owners:'"
-		} else if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
+		if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
 			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owners:'"
 		}
 	} else {
 		// has an OWNER
-		// REL branches don't enforce downstream interfaces or owned interfaces
-		// to be frozen. Instead, these interfaces are verified by other tests
-		// like vts_treble_vintf_vendor_test
+		// These interfaces are verified by other tests like vts_treble_vintf_vendor_test
+		// but this can be used to verify they are frozen at build time.
 		if android.InList(i.Owner(), strings.Fields(mctx.Config().Getenv("AIDL_FROZEN_OWNERS"))) {
 			return true, "the owner field is in environment variable AIDL_FROZEN_OWNERS"
 		}
@@ -970,20 +970,29 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		shouldGenerateLangBackendMap[langNdkPlatform] = i.shouldGenerateNdkBackend()
 	}
 
+	var bp2build bool
+	// TODO: b/295566168 - this will need to change once build files are checked in to account for
+	// checked in modules in mixed builds
+	if b, ok := mctx.Module().(android.Bazelable); ok {
+		bp2build = b.ShouldConvertWithBp2build(mctx)
+	} else {
+		panic(fmt.Errorf("aidlInterface must support Bazelable"))
+	}
+
 	for lang, shouldGenerate := range shouldGenerateLangBackendMap {
 		if !shouldGenerate {
 			continue
 		}
-		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion, requireFrozenReason))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion, requireFrozenReason, bp2build))
 		for _, version := range versions {
-			libs = append(libs, addLibrary(mctx, i, version, lang, false, "this is a known frozen version"))
+			libs = append(libs, addLibrary(mctx, i, version, lang, false, "this is a known frozen version", bp2build))
 		}
 	}
 
 	// In the future, we may want to force the -cpp backend to be on host,
 	// and limit its visibility, even if it's not created normally
 	if i.shouldGenerateCppBackend() && len(i.properties.Imports) == 0 {
-		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false, "analysis always uses latest version even if frozen"))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false, "analysis always uses latest version even if frozen", bp2build))
 	}
 
 	if unstable {
@@ -997,12 +1006,31 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		addApiModule(mctx, i)
 	}
 
-	// Reserve this module name for future use
-	mctx.CreateModule(phony.PhonyFactory, &phonyProperties{
+	// Reserve this module name for future use, and make it responsible for
+	// generating a Bazel definition.
+	factoryFunc := func() android.Module {
+		result := &phonyAidlInterface{
+			origin: i,
+		}
+		android.InitAndroidModule(result)
+		android.InitBazelModule(result)
+		return result
+	}
+	mctx.CreateModule(factoryFunc, &phonyProperties{
 		Name: proptools.StringPtr(i.ModuleBase.Name()),
 	})
 
 	i.internalModuleNames = libs
+}
+
+func (p *phonyAidlInterface) GenerateAndroidBuildActions(_ android.ModuleContext) {
+	// No-op.
+}
+
+type phonyAidlInterface struct {
+	android.ModuleBase
+	android.BazelModuleBase
+	origin *aidlInterface
 }
 
 func (i *aidlInterface) commonBackendProperties(lang string) CommonBackendProperties {
@@ -1097,8 +1125,11 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	imports = append(imports, i.properties.Include_dirs...)
 
 	preprocessCommand := rb.Command().BuiltTool("aidl").
-		FlagWithOutput("--preprocess ", preprocessed).
-		Flag("--structured")
+		FlagWithOutput("--preprocess ", preprocessed)
+
+	if !proptools.Bool(i.properties.Unstable) {
+		preprocessCommand.Flag("--structured")
+	}
 	if i.properties.Stability != nil {
 		preprocessCommand.FlagWithArg("--stability ", *i.properties.Stability)
 	}
@@ -1121,8 +1152,11 @@ func AidlInterfaceFactory() android.Module {
 	i := &aidlInterface{}
 	i.AddProperties(&i.properties)
 	android.InitAndroidModule(i)
-	android.InitBazelModule(i)
 	android.InitDefaultableModule(i)
+	android.InitBazelModule(i)
+	android.AddBazelHandcraftedHook(i, func(ctx android.LoadHookContext) string {
+		return strings.TrimSuffix(i.Name(), "_interface")
+	})
 	i.SetDefaultableHook(func(ctx android.DefaultableHookContext) { aidlInterfaceHook(ctx, i) })
 	return i
 }
@@ -1157,6 +1191,7 @@ type commonBackendAttributes struct {
 
 type commonNativeBackendAttributes struct {
 	commonBackendAttributes
+	Additional_dynamic_deps bazel.LabelListAttribute
 }
 
 type versionWithInfoAttribute struct {
@@ -1176,7 +1211,7 @@ type aidlLibraryAttributes struct {
 
 // getBazelLabelListForImports returns a bazel label list converted from
 // aidl_interface.imports or aidl_interface.versions_with_info.imports prop
-func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports []string) bazel.LabelList {
+func getBazelLabelListForImports(ctx android.Bp2buildMutatorContext, imports []string) bazel.LabelList {
 	type nameAndVersion struct {
 		name    string
 		version string
@@ -1212,10 +1247,19 @@ func getBazelLabelListForImports(ctx android.BazelConversionPathContext, imports
 	return bazelLabels
 }
 
-func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+func (p *aidlInterface) ConvertWithBp2build(_ android.Bp2buildMutatorContext) {
+	// aidlInterface should have a label set by its load hook; modules it creates
+	// are responsible for generating the actual definition.
+	panic("aidlInterface should always appear to have an existing label")
+}
+
+func (p *phonyAidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
+	i := p.origin
 	var javaConfig *javaConfigAttributes
 	var cppConfig *cppConfigAttributes
 	var ndkConfig *ndkConfigAttributes
+	var deps bazel.LabelListAttribute
+
 	if i.shouldGenerateJavaBackend() {
 		javaConfig = &javaConfigAttributes{}
 		javaConfig.Enabled = true
@@ -1226,13 +1270,53 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		cppConfig = &cppConfigAttributes{}
 		cppConfig.Enabled = true
 		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
-		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Cpp.Apex_available)
+		apexAvailable := i.properties.Backend.Cpp.Apex_available
+		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
+		cppConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
+		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Cpp.Additional_shared_libraries)
+		for _, l := range additionalSharedLabels.Includes {
+			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
+			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
+				cppConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
+			}
+		}
+		cc.SetStubsForDynamicDeps(
+			ctx,
+			bazel.NoConfigAxis,
+			"",
+			apexAvailable,
+			additionalSharedLabels,
+			&cppConfig.Additional_dynamic_deps,
+			&deps,
+			0,
+			false,
+		)
 	}
 	if i.shouldGenerateNdkBackend() {
 		ndkConfig = &ndkConfigAttributes{}
 		ndkConfig.Enabled = true
 		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
-		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Ndk.Apex_available)
+		apexAvailable := i.properties.Backend.Ndk.Apex_available
+		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
+		ndkConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
+		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Ndk.Additional_shared_libraries)
+		for _, l := range additionalSharedLabels.Includes {
+			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
+			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
+				ndkConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
+			}
+		}
+		cc.SetStubsForDynamicDeps(
+			ctx,
+			bazel.NoConfigAxis,
+			"",
+			apexAvailable,
+			additionalSharedLabels,
+			&ndkConfig.Additional_dynamic_deps,
+			&deps,
+			0,
+			false,
+		)
 	}
 
 	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
@@ -1280,22 +1364,11 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		}
 	}
 
-	var deps bazel.LabelListAttribute
-
 	if len(i.properties.Srcs) > 0 && !imports.IsEmpty() {
 		// imports is only needed for (non-frozen) srcs
 		// frozen verions use imports in versions_with_info
 		deps = bazel.MakeLabelListAttribute(imports)
 	}
-
-	deps.Append(
-		bazel.MakeLabelListAttribute(
-			android.BazelLabelForModuleDeps(
-				ctx,
-				i.properties.Headers,
-			),
-		),
-	)
 
 	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
 	var stripImportPrefixAttr *string = nil
@@ -1303,11 +1376,18 @@ func (i *aidlInterface) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
 		stripImportPrefixAttr = &i.properties.Local_include_dir
 	}
 
+	if len(i.properties.Include_dirs) != 0 {
+		// TODO(b/298246873) remove include_dirs property from aidl_interface
+		ctx.MarkBp2buildUnconvertible(bp2build_metrics_proto.UnconvertedReasonType_PROPERTY_UNSUPPORTED, "include_dirs not supported")
+		return
+	}
+
 	attrs := &aidlInterfaceAttributes{
 		aidlLibraryAttributes: aidlLibraryAttributes{
 			Srcs:                srcsAttr,
 			Flags:               i.properties.Flags,
 			Deps:                deps,
+			Hdrs:                bazel.MakeLabelListAttribute(android.BazelLabelForModuleDeps(ctx, i.properties.Headers)),
 			Strip_import_prefix: stripImportPrefixAttr,
 		},
 		Stability:          i.properties.Stability,

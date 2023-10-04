@@ -46,11 +46,7 @@ func intPtr(v int) *int {
 
 func setReleaseEnv() android.FixturePreparer {
 	return android.FixtureModifyProductVariables(func(variables android.FixtureProductVariables) {
-		// Q is finalized as 29. No codename that is actively being developed.
-		variables.Platform_sdk_version = intPtr(29)
-		variables.Platform_sdk_codename = proptools.StringPtr("REL")
-		variables.Platform_sdk_final = proptools.BoolPtr(true)
-		variables.Platform_version_active_codenames = []string{}
+		variables.Release_aidl_use_unfrozen = proptools.BoolPtr(false)
 	})
 }
 
@@ -58,6 +54,18 @@ func setTestFreezeEnv() android.FixturePreparer {
 	return android.FixtureMergeEnv(map[string]string{
 		"AIDL_FROZEN_REL":    "true",
 		"AIDL_FROZEN_OWNERS": "aosp test",
+	})
+}
+
+func setUseUnfrozenOverrideEnvTrue() android.FixturePreparer {
+	return android.FixtureMergeEnv(map[string]string{
+		"AIDL_USE_UNFROZEN_OVERRIDE": "true",
+	})
+}
+
+func setUseUnfrozenOverrideEnvFalse() android.FixturePreparer {
+	return android.FixtureMergeEnv(map[string]string{
+		"AIDL_USE_UNFROZEN_OVERRIDE": "false",
 	})
 }
 
@@ -168,12 +176,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 	`))
 
 	preparers = append(preparers, android.FixtureModifyProductVariables(func(variables android.FixtureProductVariables) {
-		// To keep tests stable, fix Platform_sdk_codename and Platform_sdk_final
-		// Use setReleaseEnv() to test release version
-		variables.Platform_sdk_version = intPtr(28)
-		variables.Platform_sdk_codename = proptools.StringPtr("Q")
-		variables.Platform_version_active_codenames = []string{"Q"}
-		variables.Platform_sdk_final = proptools.BoolPtr(false)
+		variables.Release_aidl_use_unfrozen = proptools.BoolPtr(true)
 	}))
 
 	preparers = append(preparers, customizers...)
@@ -258,6 +261,7 @@ func TestVintfWithoutVersionInRelease(t *testing.T) {
 		srcs: [
 			"IFoo.aidl",
 		],
+		owner: "test",
 		backend: {
 			rust: {
 				enabled: true,
@@ -265,10 +269,11 @@ func TestVintfWithoutVersionInRelease(t *testing.T) {
 		},
 	}`
 	expectedError := `module "foo_interface": versions: must be set \(need to be frozen\) because`
-	testAidlError(t, expectedError, vintfWithoutVersionBp, setReleaseEnv())
 	testAidlError(t, expectedError, vintfWithoutVersionBp, setTestFreezeEnv())
 
-	ctx, _ := testAidl(t, vintfWithoutVersionBp)
+	ctx, _ := testAidl(t, vintfWithoutVersionBp, setReleaseEnv())
+	assertModulesExists(t, ctx, "foo-V1-java", "foo-V1-rust", "foo-V1-cpp", "foo-V1-ndk")
+	ctx, _ = testAidl(t, vintfWithoutVersionBp)
 	assertModulesExists(t, ctx, "foo-V1-java", "foo-V1-rust", "foo-V1-cpp", "foo-V1-ndk")
 }
 
@@ -293,10 +298,9 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 		"aidl_api/foo/1/.hash":      nil,
 	})
 
-	expectedError1 := `foo-V2-java is an unfrozen development version, and it can't be used because "this is a release branch - freeze it or set 'owners:'"`
-	testAidlError(t, expectedError1, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
-	expectedError2 := `foo-V2-java is an unfrozen development version, and it can't be used because "this is a release branch \(simulated by setting AIDL_FROZEN_REL\) - freeze it or set 'owners:'"`
-	testAidlError(t, expectedError2, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
+	expectedError := `foo-V2-java is an unfrozen development version, and it can't be used because`
+	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
+	testAidl(t, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
 	testAidl(t, unstableVersionUsageInJavaBp, files)
 
 	// A stable version can be used in release version
@@ -345,8 +349,8 @@ func TestUsingUnstableVersionIndirectlyInRelease(t *testing.T) {
 	})
 
 	expectedError := `xxx-V2-java is an unfrozen development version`
-	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
 	testAidlError(t, expectedError, unstableVersionUsageInJavaBp, setTestFreezeEnv(), files)
+	testAidl(t, unstableVersionUsageInJavaBp, setReleaseEnv(), files)
 	testAidl(t, unstableVersionUsageInJavaBp, files)
 }
 
@@ -473,6 +477,7 @@ func TestFrozenImportingUnfrozen(t *testing.T) {
 	aidl_interface {
 		name: "xxx",
 		srcs: ["IFoo.aidl"],
+		owner: "test",
 		frozen: false,
 	}
 	aidl_interface {
@@ -490,10 +495,10 @@ func TestFrozenImportingUnfrozen(t *testing.T) {
 	})
 
 	expectedError := `versions: must be set \(need to be frozen\) because`
-	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
 	testAidlError(t, expectedError, frozenTest, files, setTestFreezeEnv())
 
 	expectedError = `"foo" imports "xxx" which is not frozen. Either "foo" must`
+	testAidlError(t, expectedError, frozenTest, files, setReleaseEnv())
 	testAidlError(t, expectedError, frozenTest, files)
 }
 
@@ -737,6 +742,7 @@ func TestNonVersionedModuleUsageInRelease(t *testing.T) {
 		srcs: [
 			"IFoo.aidl",
 		],
+		owner: "test",
 	}
 
 	java_library {
@@ -745,8 +751,8 @@ func TestNonVersionedModuleUsageInRelease(t *testing.T) {
 	}`
 
 	expectedError := `"foo_interface": versions: must be set \(need to be frozen\) because`
-	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setTestFreezeEnv())
+	testAidl(t, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
 	testAidl(t, nonVersionedModuleUsageInJavaBp)
 
 	nonVersionedUnstableModuleUsageInJavaBp := `
@@ -855,9 +861,12 @@ func TestUnstableVersionedModuleUsageInRelease(t *testing.T) {
 		libs: ["foo-V2-java"],
 	}`
 
-	expectedError := `Android.bp:10:2: module \"bar\" variant \"android_common\": foo-V2-java is an unfrozen development version`
-	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setReleaseEnv())
+	expectedError := `module \"bar\" variant \"android_common\": foo-V2-java is an unfrozen development version`
 	testAidlError(t, expectedError, nonVersionedModuleUsageInJavaBp, setTestFreezeEnv())
+	testAidl(t, nonVersionedModuleUsageInJavaBp, withFiles(map[string][]byte{
+		"aidl_api/foo/1/foo.1.aidl": nil,
+		"aidl_api/foo/1/.hash":      nil,
+	}), setReleaseEnv())
 	testAidl(t, nonVersionedModuleUsageInJavaBp, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
 		"aidl_api/foo/1/.hash":      nil,
@@ -1606,8 +1615,8 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 	{
 		rule := ctx.ModuleForTests("foo-iface-V1-cpp-source", "").Output("a/Foo.cpp")
 		android.AssertStringEquals(t, "compile(old=1) should import aidl_api/1",
-			"-Ifoo/aidl_api/foo-iface/1 -Iboq",
-			rule.Args["imports"])
+			"-Iboq -Nfoo/aidl_api/foo-iface/1",
+			rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(old=1) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/bar/bar-iface_interface/2/preprocessed.aidl")
@@ -1615,7 +1624,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 	// compile ToT(v2)
 	{
 		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
-		android.AssertStringEquals(t, "compile(tot=2) should import base dirs of srcs", "-Ifoo -Iboq", rule.Args["imports"])
+		android.AssertStringEquals(t, "compile(tot=2) should import base dirs of srcs", "-Iboq -Nfoo", rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(tot=2) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/bar/bar-iface_interface/2/preprocessed.aidl")
@@ -1697,8 +1706,8 @@ func TestAidlImportFlagsForUnstable(t *testing.T) {
 
 	rule := ctx.ModuleForTests("foo-iface-cpp-source", "").Output("foo/Foo.cpp")
 	android.AssertStringEquals(t, "compile(unstable) should import foo/base_dirs(target) and bar/base_dirs(imported)",
-		"-Ifoo/src -Ipath1 -Ipath2/sub",
-		rule.Args["imports"])
+		"-Ipath1 -Ipath2/sub -Nfoo/src",
+		rule.Args["imports"]+" "+rule.Args["nextImports"])
 	android.AssertStringDoesContain(t, "compile(unstable) should import bar.preprocessed",
 		rule.Args["optionalFlags"],
 		"-pout/soong/.intermediates/foo/bar-iface_interface/preprocessed.aidl")
@@ -1765,8 +1774,8 @@ func TestSupportsGenruleAndFilegroup(t *testing.T) {
 	{
 		rule := ctx.ModuleForTests("foo-iface-V1-cpp-source", "").Output("foo/Foo.cpp")
 		android.AssertStringEquals(t, "compile(1) should import foo/aidl_api/1",
-			"-Ifoo/aidl_api/foo-iface/1 -Ipath1 -Ipath2/sub",
-			rule.Args["imports"])
+			"-Ipath1 -Ipath2/sub -Nfoo/aidl_api/foo-iface/1",
+			rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(1) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/foo/bar-iface_interface/1/preprocessed.aidl")
@@ -1775,8 +1784,8 @@ func TestSupportsGenruleAndFilegroup(t *testing.T) {
 	{
 		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("foo/Foo.cpp")
 		android.AssertStringEquals(t, "compile(tot=2) should import foo.base_dirs",
-			"-Ifoo/src -Ifoo/filegroup/sub -Iout/soong/.intermediates/foo/gen1/gen -Ipath1 -Ipath2/sub",
-			rule.Args["imports"])
+			"-Ipath1 -Ipath2/sub -Nfoo/src -Nfoo/filegroup/sub -Nout/soong/.intermediates/foo/gen1/gen",
+			rule.Args["imports"]+" "+rule.Args["nextImports"])
 		android.AssertStringDoesContain(t, "compile(tot=2) should import bar.preprocessed",
 			rule.Args["optionalFlags"],
 			"-pout/soong/.intermediates/foo/bar-iface_interface/1/preprocessed.aidl")
@@ -2264,4 +2273,126 @@ func TestFreezeApiDeps(t *testing.T) {
 				fooFreezeApiRule.Implicits.Strings(), commonFreezeApiOutput)
 		}
 	}
+}
+
+func TestAidlNoUnfrozen(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+			aidl_interface {
+				name: "foo-iface",
+				srcs: ["a/Foo.aidl"],
+				versions: ["1", "2"],
+			}
+		`),
+		"foo/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/1/.hash":            nil,
+		"foo/aidl_api/foo-iface/2/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/2/.hash":            nil,
+	})
+	// setReleaseEnv() to set RELEASE_AIDL_USE_UNFROZEN to false
+	ctx, _ := testAidl(t, ``, setReleaseEnv(), customizer)
+
+	// compile (v1)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V1-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Frozen versions should not have the -previous_api_dir set",
+			rule.Args["optionalFlags"],
+			"-previous")
+	}
+	// compile (v2)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Frozen versions should not have the -previous_api_dir set",
+			rule.Args["optionalFlags"],
+			"-previous")
+	}
+	// compile ToT(v3)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V3-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesContain(t, "An unfrozen interface with previously frozen version must have --previous_api_dir when RELEASE_AIDL_USE_UNFROZEN is false (setReleaseEnv())",
+			rule.Args["optionalFlags"],
+			"-previous_api_dir")
+		android.AssertStringDoesContain(t, "An unfrozen interface with previously frozen version must have --previous_hash when RELEASE_AIDL_USE_UNFROZEN is false (setReleaseEnv())",
+			rule.Args["optionalFlags"],
+			"-previous_hash")
+		android.AssertStringDoesContain(t, "--previous_hash must use the last frozen version's hash file",
+			rule.Args["optionalFlags"],
+			"foo-iface/2/.hash")
+	}
+}
+
+func TestAidlUsingUnfrozen(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+			aidl_interface {
+				name: "foo-iface",
+				srcs: ["a/Foo.aidl"],
+				versions: ["1", "2"],
+			}
+		`),
+		"foo/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/1/.hash":            nil,
+		"foo/aidl_api/foo-iface/2/a/Foo.aidl":       nil,
+		"foo/aidl_api/foo-iface/2/.hash":            nil,
+	})
+	ctx, _ := testAidl(t, ``, customizer)
+
+	// compile (v2)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Frozen versions should not have the -previous_api_dir set",
+			rule.Args["optionalFlags"],
+			"-previous")
+	}
+	// compile ToT(v3)
+	{
+		rule := ctx.ModuleForTests("foo-iface-V3-cpp-source", "").Output("a/Foo.cpp")
+		android.AssertStringDoesNotContain(t, "Unfrozen versions should not have the -previous options when RELEASE_AIDL_USE_UNFROZEN is true (default)",
+			rule.Args["optionalFlags"],
+			"-previous")
+	}
+}
+
+func TestAidlUseUnfrozenOverrideFalse(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+                        aidl_interface {
+                                name: "foo-iface",
+                                srcs: ["a/Foo.aidl"],
+                                versions: ["1"],
+                        }
+                `),
+		"foo/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/1/.hash": nil,
+	})
+	ctx, _ := testAidl(t, ``, setUseUnfrozenOverrideEnvFalse(), customizer)
+
+	rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+	android.AssertStringDoesContain(t, "Unfrozen interfaces should have -previous_api_dir set when overriding the RELEASE_AIDL_USE_UNFROZEN flag",
+		rule.Args["optionalFlags"],
+		"-previous")
+}
+
+func TestAidlUseUnfrozenOverrideTrue(t *testing.T) {
+	customizer := withFiles(map[string][]byte{
+		"foo/Android.bp": []byte(`
+                        aidl_interface {
+                                name: "foo-iface",
+                                srcs: ["a/Foo.aidl"],
+                                versions: ["1"],
+                        }
+                `),
+		"foo/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/current/a/Foo.aidl": nil,
+		"foo/aidl_api/foo-iface/1/a/Foo.aidl": nil, "foo/aidl_api/foo-iface/1/.hash": nil,
+	})
+	ctx, _ := testAidl(t, ``, setUseUnfrozenOverrideEnvTrue(), customizer)
+
+	rule := ctx.ModuleForTests("foo-iface-V2-cpp-source", "").Output("a/Foo.cpp")
+	android.AssertStringDoesNotContain(t, "Unfrozen interfaces should not have -previous_api_dir set when overriding the RELEASE_AIDL_USE_UNFROZEN flag",
+		rule.Args["optionalFlags"],
+		"-previous")
 }

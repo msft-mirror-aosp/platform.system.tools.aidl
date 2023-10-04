@@ -48,7 +48,7 @@ status_t SimpleParcelable::readFromParcel(const Parcel* parcel) {
 }
 
 std::string SimpleParcelable::toString() const {
-    return StringPrintf("%s(%d)", String8(name_).string(), number_);
+  return StringPrintf("%s(%d)", String8(name_).c_str(), number_);
 }
 
 }  // namespace tests

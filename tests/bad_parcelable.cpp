@@ -46,7 +46,7 @@ status_t BadParcelable::readFromParcel(const Parcel* parcel) {
 }
 
 std::string BadParcelable::toString() const {
-  return StringPrintf("BadParcelable{bad=%d,name=%s,number=%d}", bad_, String8(name_).string(),
+  return StringPrintf("BadParcelable{bad=%d,name=%s,number=%d}", bad_, String8(name_).c_str(),
                       number_);
 }
 

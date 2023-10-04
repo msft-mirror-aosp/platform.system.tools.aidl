@@ -25,7 +25,17 @@ aidl_interface {
     name: "android.aidl.test.trunk",
     srcs: ["android/aidl/test/trunk/*.aidl"],
     flags: ["-Werror"],
+    gen_trace: true,
     backend: {
+        cpp: {
+            gen_log: true,
+        },
+        ndk: {
+            gen_log: true,
+        },
+        java: {
+            platform_apis: true,
+        },
         rust: {
             enabled: true,
         },
@@ -37,6 +47,9 @@ aidl_interface {
         },
     ],
     frozen: false,
+    // Some tests rely on the last version not being frozen.
+    // Owner is set so the interface isn't frozen with the rest.
+    owner: "aosp",
 
 }
 
@@ -52,6 +65,8 @@ cc_test {
     shared_libs: [
         "libbinder_ndk",
         "libbase",
+        "libcutils",
+        "liblog",
     ],
     cflags: [
         "-DAIDL_TEST_TRUNK_VER=1",
@@ -67,6 +82,8 @@ cc_test {
     name: "aidl_ndk_V2_trunk_stable_unittest",
     srcs: ["trunk_ndk_unittest.cpp"],
     shared_libs: [
+        "libcutils",
+        "liblog",
         "libbinder_ndk",
         "libbase",
     ],

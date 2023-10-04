@@ -92,7 +92,9 @@ string Options::GetUsage() const {
 
   sstr << "OPTION:" << endl
        << "  -I DIR, --include=DIR" << endl
-       << "          Use DIR as a search path for import statements." << endl
+       << "          Use DIR as a search path for import statements of dependencies." << endl
+       << "  -N DIR, --next_include=DIR" << endl
+       << "          Use DIR as a search path for local import statements." << endl
        << "  -p FILE, --preprocessed=FILE" << endl
        << "          Include FILE which is created by --preprocess." << endl
        << "  -d FILE, --dep=FILE" << endl
@@ -102,6 +104,8 @@ string Options::GetUsage() const {
        << "          Use DIR as the base output directory for generated files." << endl
        << "  -h DIR, --header_out=DIR" << endl
        << "          Generate C++ headers under DIR." << endl
+       << "  --previous_api_dir=DIR" << endl
+       << "          The aidl_api directory of the previous version of this interface." << endl
        << "  -a" << endl
        << "          Generate dependency file next to the output file with the" << endl
        << "          name based on the input file." << endl
@@ -136,6 +140,8 @@ string Options::GetUsage() const {
        << "          VER must be an interger greater than 0." << endl
        << "  --hash=HASH" << endl
        << "          Set the interface hash to HASH." << endl
+       << "  --previous_hash=HASH" << endl
+       << "          Set the interface previous version's hash to HASH." << endl
        << "  --log" << endl
        << "          Information about the transaction, e.g., method name, argument" << endl
        << "          values, execution time, etc., is provided via callback." << endl
@@ -272,6 +278,20 @@ static std::string ComputeRawArgs(int argc, const char* const raw_argv[]) {
   return Join(args, " ");
 }
 
+static std::string ToCanonicalDirectory(const std::string& optarg) {
+  std::string dir = Trim(optarg);
+  if (!dir.empty() && dir.back() != OS_PATH_SEPARATOR) {
+    dir.push_back(OS_PATH_SEPARATOR);
+  }
+  return dir;
+}
+
+Options Options::PlusImportDir(const std::string& import_dir) const {
+  Options copy(*this);
+  copy.import_dirs_.insert(ToCanonicalDirectory(import_dir));
+  return copy;
+}
+
 Options::Options(int argc, const char* const raw_argv[], Options::Language default_lang)
     : myname_(argc >= 1 ? raw_argv[0] : "aidl"),
       raw_args_(ComputeRawArgs(argc, raw_argv)),
@@ -291,6 +311,7 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         {"checkapi", optional_argument, 0, 'A'},
         {"apimapping", required_argument, 0, 'i'},
         {"include", required_argument, 0, 'I'},
+        {"next_include", required_argument, 0, 'N'},
         {"preprocessed", required_argument, 0, 'p'},
         {"dep", required_argument, 0, 'd'},
         {"out", required_argument, 0, 'o'},
@@ -303,14 +324,16 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         {"structured", no_argument, 0, 'S'},
         {"trace", no_argument, 0, 't'},
         {"transaction_names", no_argument, 0, 'c'},
+        {"previous_api_dir", required_argument, 0, 'f'},
         {"version", required_argument, 0, 'v'},
         {"log", no_argument, 0, 'L'},
         {"hash", required_argument, 0, 'H'},
+        {"previous_hash", required_argument, 0, 'P'},
         {"help", no_argument, 0, 'e'},
         {0, 0, 0, 0},
     };
     const int c = getopt_long(argc, const_cast<char* const*>(argv.data()),
-                              "I:p:d:o:h:abtv:i:", long_options, nullptr);
+                              "I:N:p:d:o:h:abtv:i:", long_options, nullptr);
     if (c == -1) {
       // no more options
       break;
@@ -371,7 +394,9 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         }
         break;
       case 'I': {
-        import_dirs_.emplace(Trim(optarg));
+        // imports for dependencies
+        import_dirs_.emplace(ToCanonicalDirectory(optarg));
+        previous_import_dirs_.emplace(ToCanonicalDirectory(optarg));
         break;
       }
       case 'p':
@@ -381,19 +406,20 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         dependency_file_ = Trim(optarg);
         break;
       case 'o':
-        output_dir_ = Trim(optarg);
-        if (output_dir_.back() != OS_PATH_SEPARATOR) {
-          output_dir_.push_back(OS_PATH_SEPARATOR);
-        }
+        output_dir_ = ToCanonicalDirectory(optarg);
+        break;
+      case 'N':
+        import_dirs_.emplace(ToCanonicalDirectory(optarg));
+        break;
+      case 'f':
+        previous_api_dir_ = ToCanonicalDirectory(optarg);
+        previous_import_dirs_.emplace(ToCanonicalDirectory(optarg));
         break;
       case 'O':
         raw_args_ = "cmd not shown due to `--omit_invocation`";
         break;
       case 'h':
-        output_header_dir_ = Trim(optarg);
-        if (output_header_dir_.back() != OS_PATH_SEPARATOR) {
-          output_header_dir_.push_back(OS_PATH_SEPARATOR);
-        }
+        output_header_dir_ = ToCanonicalDirectory(optarg);
         break;
       case 'n':
         dependency_file_ninja_ = true;
@@ -448,6 +474,9 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
       case 'H':
         hash_ = Trim(optarg);
         break;
+      case 'P':
+        previous_hash_ = Trim(optarg);
+        break;
       case 'L':
         gen_log_ = true;
         break;
@@ -496,10 +525,7 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         error_message_ << "No HEADER_DIR or OUTPUT." << endl;
         return;
       }
-      output_header_dir_ = argv[optind++];
-      if (output_header_dir_.back() != OS_PATH_SEPARATOR) {
-        output_header_dir_.push_back(OS_PATH_SEPARATOR);
-      }
+      output_header_dir_ = ToCanonicalDirectory(argv[optind++]);
       output_file_ = argv[optind++];
     }
     if (argc - optind > 0) {
@@ -568,6 +594,18 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
       }
     }
   }
+  if (!previous_api_dir_.empty()) {
+    if (previous_hash_.empty()) {
+      error_message_ << "--previous_hash must be set if --previous_api_dir is set" << endl;
+      return;
+    }
+  } else {
+    if (!previous_hash_.empty()) {
+      error_message_ << "--previous_hash must not be set if --previous_api_dir is not set" << endl;
+      return;
+    }
+  }
+
   if (task_ == Options::Task::COMPILE) {
     for (const string& input : input_files_) {
       if (!android::base::EndsWith(input, ".aidl")) {

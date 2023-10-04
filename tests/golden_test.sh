@@ -30,7 +30,7 @@ function _golden_test() {
       update=1
       ;;
     *)
-      echo "Argument must be 'check' or 'update'"
+      echo "Argument must be 'check' or 'update' but is $1"
       exit 1
       ;;
   esac
@@ -43,6 +43,14 @@ function _golden_test() {
     "aidl-test-versioned-interface-V1-java-source"
     "aidl-test-versioned-interface-V1-ndk-source"
     "aidl-test-versioned-interface-V1-rust-source"
+    "aidl-test-versioned-interface-V2-cpp-source"
+    "aidl-test-versioned-interface-V2-java-source"
+    "aidl-test-versioned-interface-V2-ndk-source"
+    "aidl-test-versioned-interface-V2-rust-source"
+    "aidl-test-versioned-interface-V3-cpp-source"
+    "aidl-test-versioned-interface-V3-java-source"
+    "aidl-test-versioned-interface-V3-ndk-source"
+    "aidl-test-versioned-interface-V3-rust-source"
     "aidl-test-interface-ndk-source"
     "aidl-test-interface-rust-source"
     "aidl_test_loggable_interface-cpp-source"
@@ -54,24 +62,41 @@ function _golden_test() {
     "aidl-test-fixedsizearray-ndk-source"
     "aidl-test-fixedsizearray-rust-source"
     "aidl-test-interface-cpp-analyzer-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-cpp-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-ndk-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-java-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V1-rust-source"
+    "tests/trunk_stable_test/android.aidl.test.trunk-V2-rust-source"
   )
 
-  local root="."
-  if [ "$ANDROID_BUILD_TOP" != "" ]; then
-    root="$ANDROID_BUILD_TOP"
-  fi
-
+  local use_unfrozen="$3"
+  # If override_unfrozen is true, we override the RELEASE_AIDL_USE_UNFROZEN build flag with an
+  # environment variable.
+  local override_unfrozen="$4"
+  local root="$2"
   if [ "$update" = 1 ]; then
+    if [ "$override_unfrozen" == true ]; then
+      export AIDL_USE_UNFROZEN_OVERRIDE="$use_unfrozen"
+    fi
     "$root"/build/soong/soong_ui.bash --make-mode \
       $(for i in "${modules[@]}"; do
           echo "out/soong/.intermediates/system/tools/aidl/$i/timestamp"
-        done)
+        done) ; export AIDL_USE_UNFROZEN_OVERRIDE=
   fi
-
   local e=0
   for module in "${modules[@]}"; do
     local built="$root/out/soong/.intermediates/system/tools/aidl/$module/"
-    local golden="$root/system/tools/aidl/tests/golden_output/$module/"
+    local module_path
+    if [ "$use_unfrozen" == "true" ]; then
+      module_path=$module
+    else
+      module_path="frozen/$module"
+    fi
+
+    local golden="$root/system/tools/aidl/tests/golden_output/$module_path/"
 
     if [ "$update" = 1 ]; then
       rm -rf "$golden"
@@ -94,4 +119,26 @@ function _golden_test() {
   fi
 }
 
-_golden_test "$@"
+root="."
+if [ "$ANDROID_BUILD_TOP" != "" ]; then
+  root="$ANDROID_BUILD_TOP"
+fi
+if [[ "$TARGET_RELEASE" == "next" ]]; then
+  use_unfrozen=false
+else
+  use_unfrozen=true
+fi
+
+if [ "$1" == "update" ]; then
+  if [ "$use_unfrozen" == "true" ]; then
+    # build update the opposite value first, so we leave the intermediates
+    # in the state of the tree
+    _golden_test "$@" "$root" "false" true
+    _golden_test "$@" "$root" "true" false
+  else
+    _golden_test "$@" "$root" "true" true
+    _golden_test "$@" "$root" "false" false
+  fi
+else
+_golden_test "$@" "$root" "$use_unfrozen"
+fi

@@ -127,6 +127,8 @@ TEST_F(AidlTest, nullBinder) {
 
   if (backend == BackendType::JAVA) {
     ASSERT_TRUE(status.isOk()) << status;
+  } else if (backend == BackendType::NDK) {
+    ASSERT_THAT(status.transactionError(), Eq(android::UNEXPECTED_NULL)) << status;
   } else {
     ASSERT_THAT(status.exceptionCode(), Eq(android::binder::Status::EX_NULL_POINTER)) << status;
   }
@@ -138,8 +140,10 @@ TEST_F(AidlTest, binderListWithNull) {
 
   if (backend == BackendType::JAVA) {
     ASSERT_TRUE(status.isOk()) << status;
+  } else if (backend == BackendType::NDK) {
+    ASSERT_THAT(status.transactionError(), Eq(android::UNEXPECTED_NULL)) << status;
   } else {
-    ASSERT_THAT(status.exceptionCode(), Eq(android::binder::Status::EX_NULL_POINTER));
+    ASSERT_THAT(status.exceptionCode(), Eq(android::binder::Status::EX_NULL_POINTER)) << status;
   }
 }
 

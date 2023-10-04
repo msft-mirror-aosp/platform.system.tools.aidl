@@ -130,6 +130,8 @@ cpp_header            { yylval->token = new AidlToken("cpp_header", comments);
                         return yy::parser::token::CPP_HEADER; }
 ndk_header            { yylval->token = new AidlToken("ndk_header", comments);
                         return yy::parser::token::NDK_HEADER; }
+rust_type            { yylval->token = new AidlToken("rust_type", comments);
+                        return yy::parser::token::RUST_TYPE; }
 const                 { yylval->token = new AidlToken("const", comments);
                         return yy::parser::token::CONST; }
 true                  { return yy::parser::token::TRUE_LITERAL; }
