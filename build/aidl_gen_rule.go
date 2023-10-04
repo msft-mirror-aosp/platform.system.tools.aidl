@@ -235,10 +235,23 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	}
 	optionalFlags = append(optionalFlags, wrap("-p", g.deps.preprocessed.Strings(), "")...)
 
+	unfrozen_override := ctx.Config().Getenv("AIDL_USE_UNFROZEN_OVERRIDE")
+	var use_unfrozen bool
+	if unfrozen_override != "" {
+		if unfrozen_override == "true" {
+			use_unfrozen = true
+		} else if unfrozen_override == "false" {
+			use_unfrozen = false
+		} else {
+			ctx.PropertyErrorf("AIDL_USE_UNFROZEN_OVERRIDE has unexpected value of \"%s\". Should be \"true\" or \"false\".", unfrozen_override)
+		}
+	} else {
+		use_unfrozen = ctx.DeviceConfig().Release_aidl_use_unfrozen()
+	}
 	// If this is an unfrozen version of a previously frozen interface, we want (1) the location
 	// of the previously frozen source and (2) the previously frozen hash so the generated
 	// library can behave like both versions at run time.
-	if !ctx.DeviceConfig().Release_aidl_use_unfrozen() && previousVersion != "" &&
+	if !use_unfrozen && previousVersion != "" &&
 		!proptools.Bool(g.properties.Unstable) && g.hashFile == nil {
 		apiDirPath := android.ExistentPathForSource(ctx, previousApiDir)
 		if apiDirPath.Valid() {
