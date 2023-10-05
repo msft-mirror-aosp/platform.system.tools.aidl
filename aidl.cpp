@@ -423,6 +423,12 @@ bool ValidateHeaders(Options::Language language, const AidlDocument& doc) {
     validator.getHeader = &AidlParcelable::GetNdkHeader;
     VisitTopDown(validator, doc);
     return validator.success;
+  } else if (language == Options::Language::RUST) {
+    HeaderVisitor validator;
+    validator.str = "rust_type";
+    validator.getHeader = &AidlParcelable::GetRustType;
+    VisitTopDown(validator, doc);
+    return validator.success;
   }
   return true;
 }

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --structured --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-permission-java-source/gen/android/aidl/tests/permission/INoPermission.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-permission-java-source/gen -Iframeworks/base/core/java -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/permission/INoPermission.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-permission-java-source/gen/android/aidl/tests/permission/INoPermission.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-permission-java-source/gen -Iframeworks/base/core/java -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/permission/INoPermission.aidl
  */
 package android.aidl.tests.permission;
 public interface INoPermission extends android.os.IInterface
@@ -125,7 +125,7 @@ public interface INoPermission extends android.os.IInterface
       return 0;
     }
   }
-  public static final java.lang.String DESCRIPTOR = "android$aidl$tests$permission$INoPermission".replace('$', '.');
+  public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.INoPermission";
   @android.annotation.RequiresNoPermission
   public void foo() throws android.os.RemoteException;
 }

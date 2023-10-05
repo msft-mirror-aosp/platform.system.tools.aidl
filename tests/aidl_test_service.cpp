@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "aidl_native_service"
 
 #include <map>
 #include <mutex>
@@ -68,10 +69,6 @@
 
 #include "android/aidl/fixedsizearray/FixedSizeArrayExample.h"
 
-// Used implicitly.
-#undef LOG_TAG
-#define LOG_TAG "aidl_native_service"
-
 // libbase
 using android::base::unique_fd;
 
@@ -80,12 +77,14 @@ using android::Looper;
 using android::LooperCallback;
 using android::OK;
 using android::sp;
+using android::status_t;
 using android::String16;
 using android::String8;
 
 // libbinder:
 using android::BnInterface;
 using android::defaultServiceManager;
+using android::IBinder;
 using android::IInterface;
 using android::IPCThreadState;
 using android::Parcel;
@@ -127,17 +126,6 @@ using std::string;
 using std::vector;
 
 namespace {
-
-class BinderCallback : public LooperCallback {
- public:
-  BinderCallback() {}
-  ~BinderCallback() override {}
-
-  int handleEvent(int /* fd */, int /* events */, void* /* data */) override {
-    IPCThreadState::self()->handlePolledCommands();
-    return 1;  // Continue receiving callbacks.
-  }
-};
 
 class NamedCallback : public BnNamedCallback {
  public:
@@ -809,8 +797,7 @@ class NativeService : public BnTestService {
     return Status::ok();
   }
 
-  android::status_t onTransact(uint32_t code, const Parcel& data, Parcel* reply,
-                               uint32_t flags) override {
+  status_t onTransact(uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags) override {
     if (code == ::android::IBinder::FIRST_CALL_TRANSACTION + 0 /* UnimplementedMethod */) {
       // pretend that UnimplementedMethod isn't implemented by this service.
       return android::UNKNOWN_TRANSACTION;
@@ -1015,83 +1002,26 @@ class FixedSizeArrayService : public FixedSizeArrayExample::BnRepeatFixedSizeArr
   }
 };
 
-int Run() {
-  android::sp<NativeService> service = new NativeService;
-  sp<Looper> looper(Looper::prepare(0 /* opts */));
-
-  int binder_fd = -1;
-  ProcessState::self()->setThreadPoolMaxThreadCount(0);
-  IPCThreadState::self()->disableBackgroundScheduling(true);
-  IPCThreadState::self()->setupPolling(&binder_fd);
-  ALOGI("Got binder FD %d", binder_fd);
-  if (binder_fd < 0) return -1;
-
-  sp<BinderCallback> cb(new BinderCallback);
-  if (looper->addFd(binder_fd, Looper::POLL_CALLBACK, Looper::EVENT_INPUT, cb,
-                    nullptr) != 1) {
-    ALOGE("Failed to add binder FD to Looper");
-    return -1;
-  }
-
-  auto status = defaultServiceManager()->addService(service->getInterfaceDescriptor(), service);
-  if (status != OK) {
-    ALOGE("Failed to add service %s", String8(service->getInterfaceDescriptor()).c_str());
-    return -1;
-  }
-
-  android::sp<VersionedService> versionedService = new VersionedService;
-  status = defaultServiceManager()->addService(versionedService->getInterfaceDescriptor(),
-                                               versionedService);
-  if (status != OK) {
-    ALOGE("Failed to add service %s", String8(versionedService->getInterfaceDescriptor()).c_str());
-    return -1;
-  }
-
-  android::sp<TrunkStableService> trunkStableService = new TrunkStableService;
-  status = defaultServiceManager()->addService(trunkStableService->getInterfaceDescriptor(),
-                                               trunkStableService);
-  if (status != OK) {
-    ALOGE("Failed to add service %s",
-          String8(trunkStableService->getInterfaceDescriptor()).c_str());
-    return -1;
-  }
-
-  android::sp<LoggableInterfaceService> loggableInterfaceService = new LoggableInterfaceService;
-  status = defaultServiceManager()->addService(loggableInterfaceService->getInterfaceDescriptor(),
-                                               loggableInterfaceService);
-  if (status != OK) {
-    ALOGE("Failed to add service %s",
-          String8(loggableInterfaceService->getInterfaceDescriptor()).c_str());
-    return -1;
-  }
-
-  android::sp<NestedService> nestedService = new NestedService;
-  status =
-      defaultServiceManager()->addService(nestedService->getInterfaceDescriptor(), nestedService);
-  if (status != OK) {
-    ALOGE("Failed to add service %s", String8(nestedService->getInterfaceDescriptor()).c_str());
-    return -1;
-  }
-
-  android::sp<FixedSizeArrayService> fixedSizeArrayService = new FixedSizeArrayService;
-  status = defaultServiceManager()->addService(fixedSizeArrayService->getInterfaceDescriptor(),
-                                               fixedSizeArrayService);
-  if (status != OK) {
-    ALOGE("Failed to add service %s",
-          String8(fixedSizeArrayService->getInterfaceDescriptor()).c_str());
-    return -1;
-  }
-
-  ALOGI("Entering loop");
-  while (true) {
-    const int result = looper->pollAll(-1 /* timeoutMillis */);
-    ALOGI("Looper returned %d", result);
-  }
-  return 0;
-}
-
 }  // namespace
 
-int main(int /* argc */, char* /* argv */ []) {
-  return Run();
+int main(int /* argc */, char* /* argv */[]) {
+  IPCThreadState::self()->disableBackgroundScheduling(true);
+
+  std::vector<sp<IBinder>> services = {
+      sp<FixedSizeArrayService>::make(), sp<LoggableInterfaceService>::make(),
+      sp<NativeService>::make(),         sp<NestedService>::make(),
+      sp<TrunkStableService>::make(),    sp<VersionedService>::make(),
+  };
+
+  for (const auto& service : services) {
+    status_t status =
+        defaultServiceManager()->addService(service->getInterfaceDescriptor(), service);
+    if (status != OK) {
+      ALOGE("Failed to add service %s", String8(service->getInterfaceDescriptor()).c_str());
+      return EXIT_FAILURE;
+    }
+  }
+
+  IPCThreadState::self()->joinThreadPool();
+  return EXIT_FAILURE;
 }
