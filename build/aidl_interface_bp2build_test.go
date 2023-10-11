@@ -511,7 +511,6 @@ func TestAidlInterfaceWithCppBackend(t *testing.T) {
 		Blueprint: `
 			cc_library_shared {
 				name: "shared_dep",
-				bazel_module: {bp2build_available: false},
 			}
 			cc_library_shared {
 				name: "shared_stub_dep",
@@ -519,7 +518,6 @@ func TestAidlInterfaceWithCppBackend(t *testing.T) {
 				    symbol_file: "libnativewindow.map.txt",
 				    versions: ["29"],
 				},
-				bazel_module: {bp2build_available: false},
 			}
 			aidl_interface {
 				name: "aidl-interface1",
@@ -543,6 +541,7 @@ func TestAidlInterfaceWithCppBackend(t *testing.T) {
 					},
 				}
 			}`,
+		StubbedBuildDefinitions:    []string{"shared_dep", "shared_stub_dep"},
 		ExpectedHandcraftedModules: []string{"aidl-interface1_interface", "aidl-interface1-V1-cpp"},
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{
