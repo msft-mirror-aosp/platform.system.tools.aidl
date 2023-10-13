@@ -131,6 +131,31 @@ class OverflowGuard {
   bool mOverflowed = false;
 };
 
+// some compilers don't provide __builtin_add_overflow for bool
+// see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71479
+template <>
+bool OverflowGuard<bool>::operator+(bool o) {
+  if (mValue && o) {
+    mOverflowed = true;
+    return false;
+  }
+  return mValue || o;
+}
+
+template <>
+bool OverflowGuard<bool>::operator-(bool o) {
+  if (!mValue && o) {
+    mOverflowed = true;
+    return true;
+  }
+  return mValue && !o;
+}
+
+template <>
+bool OverflowGuard<bool>::operator*(bool o) {
+  return mValue && o;
+}
+
 template <typename T>
 bool processGuard(const OverflowGuard<T>& guard, const AidlConstantValue& context) {
   if (guard.Overflowed()) {
