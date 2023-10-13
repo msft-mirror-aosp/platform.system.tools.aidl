@@ -296,7 +296,7 @@ class AidlAnnotation : public AidlNode {
   Result<unique_ptr<android::aidl::perm::Expression>> EnforceExpression() const;
 
  private:
-  struct ParamType {
+  struct ParamTypeDetails {
     std::string name;
     const AidlTypeSpecifier& type;
     bool required = false;
@@ -306,10 +306,10 @@ class AidlAnnotation : public AidlNode {
     AidlAnnotation::Type type;
     std::string name;
     TargetContext target_context;
-    std::vector<ParamType> parameters;
+    std::vector<ParamTypeDetails> parameters;
     bool repeatable = false;
 
-    const ParamType* ParamType(const std::string& name) const {
+    const ParamTypeDetails* ParamType(const std::string& name) const {
       for (const auto& param : parameters) {
         if (param.name == name) {
           return &param;
