@@ -277,7 +277,7 @@ bool AidlAnnotation::CheckValid() const {
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
 
-    const ParamType* param_type = schema_.ParamType(param_name);
+    const auto param_type = schema_.ParamType(param_name);
     if (!param_type) {
       std::ostringstream stream;
       stream << "Parameter " << param_name << " not supported ";
@@ -384,7 +384,7 @@ std::map<std::string, std::string> AidlAnnotation::AnnotationParams(
   for (const auto& name_and_param : parameters_) {
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
-    const ParamType* param_type = schema_.ParamType(param_name);
+    const auto param_type = schema_.ParamType(param_name);
     AIDL_FATAL_IF(!param_type, this);
     raw_params.emplace(param_name, param->ValueString(param_type->type, decorator));
   }
