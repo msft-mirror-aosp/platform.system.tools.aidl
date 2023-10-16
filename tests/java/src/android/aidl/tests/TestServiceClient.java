@@ -393,30 +393,26 @@ public class TestServiceClient {
 
     @Test
     public void testRepeatParcelable() throws RemoteException {
-        assumeTrue(cpp_java_tests != null);
-
-        SimpleParcelable input = new SimpleParcelable("foo", 42);
-        SimpleParcelable out_param = new SimpleParcelable();
-        SimpleParcelable returned = cpp_java_tests.RepeatSimpleParcelable(input, out_param);
-        assertThat(out_param, is(input));
-        assertThat(returned, is(input));
+      SimpleParcelable input = new SimpleParcelable("foo", 42);
+      SimpleParcelable out_param = new SimpleParcelable();
+      SimpleParcelable returned = service.RepeatSimpleParcelable(input, out_param);
+      assertThat(out_param, is(input));
+      assertThat(returned, is(input));
     }
 
     @Test
     public void testReverseParcelable() throws RemoteException {
-        assumeTrue(cpp_java_tests != null);
-
-        SimpleParcelable[] input = new SimpleParcelable[3];
-        input[0] = new SimpleParcelable("a", 1);
-        input[1] = new SimpleParcelable("b", 2);
-        input[2] = new SimpleParcelable("c", 3);
-        SimpleParcelable[] repeated = new SimpleParcelable[3];
-        SimpleParcelable[] reversed = cpp_java_tests.ReverseSimpleParcelables(input, repeated);
-        assertThat(repeated, is(input));
-        assertThat(reversed.length, is(input.length));
-        for (int i = 0, k = input.length - 1; i < input.length; ++i, --k) {
+      SimpleParcelable[] input = new SimpleParcelable[3];
+      input[0] = new SimpleParcelable("a", 1);
+      input[1] = new SimpleParcelable("b", 2);
+      input[2] = new SimpleParcelable("c", 3);
+      SimpleParcelable[] repeated = new SimpleParcelable[3];
+      SimpleParcelable[] reversed = service.ReverseSimpleParcelables(input, repeated);
+      assertThat(repeated, is(input));
+      assertThat(reversed.length, is(input.length));
+      for (int i = 0, k = input.length - 1; i < input.length; ++i, --k) {
             assertThat(reversed[k], is(input[i]));
-        }
+      }
     }
 
     @Test
