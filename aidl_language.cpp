@@ -147,6 +147,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "NdkOnlyStableParcelable",
        CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
        {}},
+      {AidlAnnotation::Type::RUST_STABLE_PARCELABLE,
+       "RustOnlyStableParcelable",
+       CONTEXT_TYPE_UNSTRUCTURED_PARCELABLE,
+       {}},
       {AidlAnnotation::Type::BACKING,
        "Backing",
        CONTEXT_TYPE_ENUM,
@@ -273,7 +277,7 @@ bool AidlAnnotation::CheckValid() const {
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
 
-    const ParamType* param_type = schema_.ParamType(param_name);
+    const auto param_type = schema_.ParamType(param_name);
     if (!param_type) {
       std::ostringstream stream;
       stream << "Parameter " << param_name << " not supported ";
@@ -380,7 +384,7 @@ std::map<std::string, std::string> AidlAnnotation::AnnotationParams(
   for (const auto& name_and_param : parameters_) {
     const std::string& param_name = name_and_param.first;
     const std::shared_ptr<AidlConstantValue>& param = name_and_param.second;
-    const ParamType* param_type = schema_.ParamType(param_name);
+    const auto param_type = schema_.ParamType(param_name);
     AIDL_FATAL_IF(!param_type, this);
     raw_params.emplace(param_name, param->ValueString(param_type->type, decorator));
   }
@@ -533,6 +537,8 @@ bool AidlAnnotatable::IsStableApiParcelable(Options::Language lang) const {
     return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_STABLE_PARCELABLE);
   if (lang == Options::Language::NDK)
     return GetAnnotation(annotations_, AidlAnnotation::Type::NDK_STABLE_PARCELABLE);
+  if (lang == Options::Language::RUST)
+    return GetAnnotation(annotations_, AidlAnnotation::Type::RUST_STABLE_PARCELABLE);
   return false;
 }
 
@@ -1444,6 +1450,9 @@ AidlParcelable::AidlParcelable(const AidlLocation& location, const std::string& 
   }
   if (headers_.ndk.length() >= 2) {
     headers_.ndk = headers_.ndk.substr(1, headers_.ndk.length() - 2);
+  }
+  if (headers_.rust_type.length() >= 2) {
+    headers_.rust_type = headers_.rust_type.substr(1, headers_.rust_type.length() - 2);
   }
 }
 

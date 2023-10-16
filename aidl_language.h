@@ -227,6 +227,7 @@ class AidlAnnotation : public AidlNode {
     BACKING = 1,
     JAVA_STABLE_PARCELABLE,
     NDK_STABLE_PARCELABLE,
+    RUST_STABLE_PARCELABLE,
     UNSUPPORTED_APP_USAGE,
     VINTF_STABILITY,
     NULLABLE,
@@ -295,7 +296,7 @@ class AidlAnnotation : public AidlNode {
   Result<unique_ptr<android::aidl::perm::Expression>> EnforceExpression() const;
 
  private:
-  struct ParamType {
+  struct ParamTypeDetails {
     std::string name;
     const AidlTypeSpecifier& type;
     bool required = false;
@@ -305,10 +306,10 @@ class AidlAnnotation : public AidlNode {
     AidlAnnotation::Type type;
     std::string name;
     TargetContext target_context;
-    std::vector<ParamType> parameters;
+    std::vector<ParamTypeDetails> parameters;
     bool repeatable = false;
 
-    const ParamType* ParamType(const std::string& name) const {
+    const ParamTypeDetails* ParamType(const std::string& name) const {
       for (const auto& param : parameters) {
         if (param.name == name) {
           return &param;
@@ -1056,6 +1057,7 @@ class AidlDefinedType : public AidlMember, public AidlScope {
 struct AidlUnstructuredHeaders {
   std::string cpp;
   std::string ndk;
+  std::string rust_type;
 };
 
 class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::string> {
@@ -1074,6 +1076,7 @@ class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::s
 
   std::string GetCppHeader() const { return headers_.cpp; }
   std::string GetNdkHeader() const { return headers_.ndk; }
+  std::string GetRustType() const { return headers_.rust_type; }
 
   bool CheckValid(const AidlTypenames& typenames) const override;
   const AidlParcelable* AsParcelable() const override { return this; }

@@ -39,7 +39,7 @@ var (
 		Command: `mkdir -p "${headerDir}" && ` +
 			`mkdir -p "${outDir}/staging" && ` +
 			`mkdir -p "${headerDir}/staging" && ` +
-			`${aidlCmd} --lang=${lang} ${optionalFlags} --structured --ninja -d ${outStagingFile}.d ` +
+			`${aidlCmd} --lang=${lang} ${optionalFlags} --ninja -d ${outStagingFile}.d ` +
 			`-h ${headerDir}/staging -o ${outDir}/staging ${imports} ${nextImports} ${in} && ` +
 			`rsync --checksum ${outStagingFile}.d ${out}.d && ` +
 			`rsync --checksum ${outStagingFile} ${out} && ` +
@@ -55,7 +55,7 @@ var (
 		"fullHeaderDir")
 
 	aidlJavaRule = pctx.StaticRule("aidlJavaRule", blueprint.RuleParams{
-		Command: `${aidlCmd} --lang=java ${optionalFlags} --structured --ninja -d ${out}.d ` +
+		Command: `${aidlCmd} --lang=java ${optionalFlags} --ninja -d ${out}.d ` +
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
@@ -65,7 +65,7 @@ var (
 	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlRustRule = pctx.StaticRule("aidlRustRule", blueprint.RuleParams{
-		Command: `${aidlCmd} --lang=rust ${optionalFlags} --structured --ninja -d ${out}.d ` +
+		Command: `${aidlCmd} --lang=rust ${optionalFlags} --ninja -d ${out}.d ` +
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		Depfile:     "${out}.d",
 		Deps:        blueprint.DepsGCC,
@@ -204,6 +204,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 
 	optionalFlags := append([]string{}, g.properties.Flags...)
 	if proptools.Bool(g.properties.Unstable) != true {
+		optionalFlags = append(optionalFlags, "--structured")
 		optionalFlags = append(optionalFlags, "--version "+version)
 		hash := "notfrozen"
 		if !strings.HasPrefix(baseDir, ctx.Config().SoongOutDir()) {
@@ -234,11 +235,24 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	}
 	optionalFlags = append(optionalFlags, wrap("-p", g.deps.preprocessed.Strings(), "")...)
 
-	useUnfrozen := ctx.DeviceConfig().Release_aidl_use_unfrozen()
-
-	if useUnfrozen == false && previousVersion != "" &&
-		proptools.Bool(g.properties.Unstable) != true &&
-		g.hashFile == nil {
+	unfrozen_override := ctx.Config().Getenv("AIDL_USE_UNFROZEN_OVERRIDE")
+	var use_unfrozen bool
+	if unfrozen_override != "" {
+		if unfrozen_override == "true" {
+			use_unfrozen = true
+		} else if unfrozen_override == "false" {
+			use_unfrozen = false
+		} else {
+			ctx.PropertyErrorf("AIDL_USE_UNFROZEN_OVERRIDE has unexpected value of \"%s\". Should be \"true\" or \"false\".", unfrozen_override)
+		}
+	} else {
+		use_unfrozen = ctx.DeviceConfig().Release_aidl_use_unfrozen()
+	}
+	// If this is an unfrozen version of a previously frozen interface, we want (1) the location
+	// of the previously frozen source and (2) the previously frozen hash so the generated
+	// library can behave like both versions at run time.
+	if !use_unfrozen && previousVersion != "" &&
+		!proptools.Bool(g.properties.Unstable) && g.hashFile == nil {
 		apiDirPath := android.ExistentPathForSource(ctx, previousApiDir)
 		if apiDirPath.Valid() {
 			optionalFlags = append(optionalFlags, "--previous_api_dir="+apiDirPath.Path().String())
@@ -249,8 +263,6 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 		if hashFile.Valid() {
 			previousHash := "$$(tail -1 '" + hashFile.Path().String() + "')"
 			implicits = append(implicits, hashFile.Path())
-
-			//	g.previousHashFile = hashFile.Path()
 			optionalFlags = append(optionalFlags, "--previous_hash "+previousHash)
 		} else {
 			ctx.ModuleErrorf("Failed to find previous version's hash file in %s", previousApiDir)
@@ -364,7 +376,7 @@ func (g *aidlGenRule) DepsMutator(ctx android.BottomUpMutatorContext) {
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
 
-func (g *aidlGenRule) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
+func (g *aidlGenRule) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
 	aidlLang := g.properties.Lang
 	switch aidlLang {
 	case langCpp, langNdk:

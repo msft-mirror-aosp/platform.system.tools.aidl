@@ -423,6 +423,12 @@ bool ValidateHeaders(Options::Language language, const AidlDocument& doc) {
     validator.getHeader = &AidlParcelable::GetNdkHeader;
     VisitTopDown(validator, doc);
     return validator.success;
+  } else if (language == Options::Language::RUST) {
+    HeaderVisitor validator;
+    validator.str = "rust_type";
+    validator.getHeader = &AidlParcelable::GetRustType;
+    VisitTopDown(validator, doc);
+    return validator.success;
   }
   return true;
 }
@@ -843,8 +849,16 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
         success = true;
       } else if (lang == Options::Language::JAVA) {
         if (defined_type->AsUnstructuredParcelable() != nullptr) {
-          // Legacy behavior. For parcelable declarations in Java, don't generate output file.
+          // Legacy behavior. For parcelable declarations in Java, don't generate code.
           success = true;
+          // If the output directory is set, we're not going to be dropping a file right
+          // next to the .aidl code, so we shouldn't be clobbering an existing
+          // implementation unless someone has set their output dir to be their source
+          // dir explicitly.
+          // The build system expects us to produce an output file, so produce an empty one.
+          if (!options.OutputDir().empty()) {
+            io_delegate.GetCodeWriter(output_file_name)->Close();
+          }
         } else {
           java::GenerateJava(output_file_name, options, typenames, *defined_type, io_delegate);
           success = true;

@@ -57,19 +57,28 @@ TEST_F(TrunkInterfaceTest, getInterfaceVersion) {
   ASSERT_TRUE(status.isOk());
   if (kUseUnfrozen) {
     EXPECT_EQ(2, ver);
+    // Check the local version as well
+    EXPECT_EQ(2, ITrunkStableTest::version);
   } else {
     EXPECT_EQ(1, ver);
+    // Check the local version as well
+    EXPECT_EQ(1, ITrunkStableTest::version);
   }
 }
 
 TEST_F(TrunkInterfaceTest, getInterfaceHash) {
   std::string hash;
+  std::string localHash;
   auto status = service->getInterfaceHash(&hash);
   ASSERT_TRUE(status.isOk());
   if (kUseUnfrozen) {
     EXPECT_EQ("notfrozen", hash);
+    // Check the local hash as well
+    EXPECT_EQ("notfrozen", ITrunkStableTest::hash);
   } else {
     EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", hash);
+    // Check the local hash as well
+    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", ITrunkStableTest::hash);
   }
 }
 

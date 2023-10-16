@@ -233,30 +233,30 @@ macro_rules! test_reverse_array {
     };
 }
 
-test_reverse_array! {test_array_boolean, ReverseBoolean, vec![true, false, false]}
-test_reverse_array! {test_array_byte, ReverseByte, vec![255u8, 0u8, 127u8]}
+test_reverse_array! {test_array_boolean, ReverseBoolean, [true, false, false]}
+test_reverse_array! {test_array_byte, ReverseByte, [255u8, 0u8, 127u8]}
 test_reverse_array! {
     service,
     ReverseChar,
-    vec!['A' as u16, 'B' as u16, 'C' as u16]
+    ['A' as u16, 'B' as u16, 'C' as u16]
 }
-test_reverse_array! {test_array_int, ReverseInt, vec![1, 2, 3]}
-test_reverse_array! {test_array_long, ReverseLong, vec![-1i64, 0i64, 1i64 << 60]}
-test_reverse_array! {test_array_float, ReverseFloat, vec![-0.3f32, -0.7f32, 8.0f32]}
+test_reverse_array! {test_array_int, ReverseInt, [1, 2, 3]}
+test_reverse_array! {test_array_long, ReverseLong, [-1i64, 0i64, 1i64 << 60]}
+test_reverse_array! {test_array_float, ReverseFloat, [-0.3f32, -0.7f32, 8.0f32]}
 test_reverse_array! {
     test_array_double,
     ReverseDouble,
-    vec![1.0f64 / 3.0f64, 1.0f64 / 7.0f64, 42.0f64]
+    [1.0f64 / 3.0f64, 1.0f64 / 7.0f64, 42.0f64]
 }
 test_reverse_array! {
     test_array_string,
     ReverseString,
-    vec!["f".into(), "a".into(), "b".into()]
+    ["f".into(), "a".into(), "b".into()]
 }
 test_reverse_array! {
     test_array_byte_enum,
     ReverseByteEnum,
-    vec![ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAR]
+    [ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAR]
 }
 test_reverse_array! {
     test_array_byte_enum_values,
@@ -266,27 +266,27 @@ test_reverse_array! {
 test_reverse_array! {
     test_array_byte_enum_v2,
     ReverseByteEnum,
-    vec![ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAZ]
+    [ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAZ]
 }
 test_reverse_array! {
     test_array_int_enum,
     ReverseIntEnum,
-    vec![IntEnum::FOO, IntEnum::BAR, IntEnum::BAR]
+    [IntEnum::FOO, IntEnum::BAR, IntEnum::BAR]
 }
 test_reverse_array! {
     test_array_long_enum,
     ReverseLongEnum,
-    vec![LongEnum::FOO, LongEnum::BAR, LongEnum::BAR]
+    [LongEnum::FOO, LongEnum::BAR, LongEnum::BAR]
 }
 test_reverse_array! {
     test_array_string_list,
     ReverseStringList,
-    vec!["f".into(), "a".into(), "b".into()]
+    ["f".into(), "a".into(), "b".into()]
 }
 test_reverse_array! {
     test_array_utf8_string,
     ReverseUtf8CppString,
-    vec![
+    [
         "a".into(),
         String::new(),
         std::str::from_utf8(&[0xC3, 0xB8])
@@ -1343,8 +1343,26 @@ fn test_trunk_stable_hash() {
             hash.as_ref().map(String::as_str),
             Ok("88311b9118fb6fe9eff4a2ca19121de0587f6d5f")
         );
+        // Check local values of version and hash
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::VERSION,
+            1
+        );
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::HASH,
+            "88311b9118fb6fe9eff4a2ca19121de0587f6d5f"
+        );
     } else {
         assert_eq!(hash.as_ref().map(String::as_str), Ok("notfrozen"));
+        // Check local values of version and hash
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::VERSION,
+            2
+        );
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::HASH,
+            "notfrozen"
+        );
     }
 }
 
