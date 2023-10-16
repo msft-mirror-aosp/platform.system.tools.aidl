@@ -45,7 +45,6 @@ use android_aidl_test_trunk::aidl::android::aidl::test::trunk::{
     ITrunkStableTest::MyOtherParcelable::MyOtherParcelable,
     ITrunkStableTest::MyParcelable::MyParcelable, ITrunkStableTest::MyUnion::MyUnion,
 };
-use simple_parcelable::SimpleParcelable;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -467,24 +466,6 @@ impl ITestService::ITestService for TestService {
         let input = input.expect("input is null");
         *repeated = Some(input.to_vec());
         Ok(Some(input.iter().rev().cloned().collect()))
-    }
-
-    fn RepeatSimpleParcelable(
-        &self,
-        input: &SimpleParcelable,
-        repeat: &mut Option<SimpleParcelable>,
-    ) -> binder::Result<SimpleParcelable> {
-        *repeat = Some(input.clone());
-        Ok(input.clone())
-    }
-
-    fn ReverseSimpleParcelables(
-        &self,
-        input: &[SimpleParcelable],
-        repeated: &mut Vec<SimpleParcelable>,
-    ) -> binder::Result<Vec<SimpleParcelable>> {
-        *repeated = input.to_vec();
-        Ok(input.iter().rev().cloned().collect())
     }
 
     fn GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn IOldName::IOldName>> {

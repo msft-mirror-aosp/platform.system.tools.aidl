@@ -341,32 +341,6 @@ java_library {
     ],
 }
 
-cc_library {
-    name: "libsimpleparcelable_ndk",
-    export_include_dirs: [
-        ".",
-    ],
-    srcs: [
-        "tests/simple_parcelable_ndk.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libbinder_ndk",
-    ],
-}
-
-
-rust_library {
-    name: "libsimple_parcelable_rust",
-    crate_name: "simple_parcelable",
-    srcs: [
-        "tests/rust/simple_parcelable.rs",
-    ],
-    rustlibs: [
-        "libbinder_rs",
-    ],
-}
-
 aidl_interface {
     name: "aidl-test-interface",
     unstable: true,
@@ -402,28 +376,15 @@ aidl_interface {
     ],
     local_include_dir: "tests",
     backend: {
-        cpp: {
-            additional_shared_libraries: [
-                "libsimpleparcelable",
-            ],
-        },
+        cpp: {},
         java: {
-            additional_libs: [
-                "libsimpleparcelable_java",
-            ],
             platform_apis: true,
         },
         rust: {
             enabled: true,
-            additional_rustlibs: [
-                "libsimple_parcelable_rust",
-            ],
         },
         ndk: {
             apps_enabled: false,
-            additional_shared_libraries: [
-                "libsimpleparcelable_ndk",
-            ],
         },
     },
 }
@@ -434,6 +395,7 @@ aidl_interface {
     srcs: [
         "tests/android/aidl/tests/BadParcelable.aidl",
         "tests/android/aidl/tests/ICppJavaTests.aidl",
+        "tests/android/aidl/tests/SimpleParcelable.aidl",
     ],
     local_include_dir: "tests",
     include_dirs: [
@@ -556,7 +518,6 @@ cc_test {
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
         "android.aidl.test.trunk-V2-ndk",
-        "libsimpleparcelable_ndk",
     ],
     srcs: ["tests/aidl_test_service_ndk.cpp"],
 }
@@ -639,7 +600,6 @@ cc_test {
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
         "android.aidl.test.trunk-V2-ndk",
-        "libsimpleparcelable_ndk",
     ],
     shared_libs: [
         "libbinder_ndk",
@@ -1017,7 +977,6 @@ rust_test {
         // for a few internal types like Parcel
         // and traits like Parcelable
         "libbinder_rs",
-        "libsimple_parcelable_rust",
     ],
     prefer_rlib: true,
     compile_multilib: "both",
@@ -1044,7 +1003,6 @@ rust_test {
         "aidl-test-fixedsizearray-rust",
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
-        "libsimple_parcelable_rust",
     ],
     prefer_rlib: true,
     compile_multilib: "both",
@@ -1072,7 +1030,6 @@ rust_test {
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
         "libbinder_tokio_rs",
-        "libsimple_parcelable_rust",
         "libtokio",
     ],
     proc_macros: ["libasync_trait"],
