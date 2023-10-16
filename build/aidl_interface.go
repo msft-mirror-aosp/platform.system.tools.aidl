@@ -378,6 +378,8 @@ type aidlInterfaceProperties struct {
 		// When enabled, this creates a target called "<name>-java".
 		Java struct {
 			CommonBackendProperties
+			// Additional java libraries, for unstructured parcelables
+			Additional_libs []string
 			// Set to the version of the sdk to compile against
 			// Default: system_current
 			Sdk_version *string

@@ -280,6 +280,8 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	recoveryAvailable := i.properties.Recovery_available
 	productAvailable = nil
 
+	commonProperties := &i.properties.Backend.Cpp.CommonNativeBackendProperties
+
 	g := aidlImplementationGeneratorProperties{
 		ModuleProperties: []interface{}{
 			&ccProperties{
@@ -295,7 +297,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 				Generated_sources:         []string{cppAnalyzerSourceGen},
 				Generated_headers:         []string{cppAnalyzerSourceGen},
 				Export_generated_headers:  []string{cppAnalyzerSourceGen},
-				Shared_libs:               append(importExportDependencies, i.versionedName(version)+"-"+langCpp),
+				Shared_libs:               append(append(importExportDependencies, i.versionedName(version)+"-"+langCpp), commonProperties.Additional_shared_libraries...),
 				Static_libs:               []string{"aidl-analyzer-main"},
 				Export_shared_lib_headers: importExportDependencies,
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
@@ -390,6 +392,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 				Srcs:            []string{":" + javaSourceGen},
 				Apex_available:  i.properties.Backend.Java.Apex_available,
 				Min_sdk_version: i.minSdkVersion(langJava),
+				Static_libs:     i.properties.Backend.Java.Additional_libs,
 			},
 			&i.properties.Backend.Java.LintProperties,
 			// the logic to create implementation libraries has been reimplemented
@@ -597,7 +600,7 @@ func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDown
 	imports := wrap("", getImportsWithVersion(ctx, g.properties.AidlInterfaceName, g.properties.Version), "-"+g.properties.Lang)
 	if g.properties.Lang == langJava {
 		if p, ok := g.properties.ModuleProperties[0].(*javaProperties); ok {
-			p.Static_libs = imports
+			p.Static_libs = append(p.Static_libs, imports...)
 		}
 		ctx.CreateModule(wrapLibraryFactory(java.LibraryFactory), g.properties.ModuleProperties...)
 	} else {
