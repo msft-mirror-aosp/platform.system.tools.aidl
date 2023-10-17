@@ -37,6 +37,7 @@
 #include <aidl/android/aidl/versioned/tests/IFooInterface.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <tests/simple_parcelable_ndk.h>
 
 #include <map>
 #include <mutex>
@@ -64,6 +65,7 @@ using aidl::android::aidl::tests::IOldName;
 using aidl::android::aidl::tests::ITestService;
 using aidl::android::aidl::tests::LongEnum;
 using aidl::android::aidl::tests::RecursiveList;
+using aidl::android::aidl::tests::SimpleParcelable;
 using aidl::android::aidl::tests::StructuredParcelable;
 using aidl::android::aidl::tests::Union;
 using aidl::android::aidl::tests::extension::ExtendableParcelable;
@@ -613,6 +615,20 @@ class NativeService : public BnTestService {
       std::reverse((*_aidl_return)->begin(), (*_aidl_return)->end());
     }
     return ScopedAStatus::ok();
+  }
+
+  ScopedAStatus RepeatSimpleParcelable(const SimpleParcelable& input, SimpleParcelable* repeat,
+                                       SimpleParcelable* _aidl_return) override {
+    ALOGI("Repeated a SimpleParcelable %s", input.toString().c_str());
+    *repeat = input;
+    *_aidl_return = input;
+    return ScopedAStatus::ok();
+  }
+
+  ScopedAStatus ReverseSimpleParcelables(const vector<SimpleParcelable>& input,
+                                         vector<SimpleParcelable>* repeated,
+                                         vector<SimpleParcelable>* _aidl_return) override {
+    return ReverseArray(input, repeated, _aidl_return);
   }
 
   ScopedAStatus UnimplementedMethod(int32_t /* arg */, int32_t* /* _aidl_return */) override {

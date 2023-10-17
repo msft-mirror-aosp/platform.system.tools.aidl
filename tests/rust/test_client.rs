@@ -58,6 +58,7 @@ use android_aidl_test_trunk::aidl::android::aidl::test::trunk::{
     ITrunkStableTest::MyOtherParcelable::MyOtherParcelable,
     ITrunkStableTest::MyParcelable::MyParcelable, ITrunkStableTest::MyUnion::MyUnion,
 };
+use simple_parcelable::SimpleParcelable;
 
 use std::fs::File;
 use std::io::{Read, Write};
@@ -216,6 +217,16 @@ fn test_repeat_string() {
     }
 }
 
+#[test]
+fn test_repeat_parcelable() {
+    let service = get_test_service();
+    let input = SimpleParcelable { name: "foo".to_string(), number: 42 };
+    let mut out_param = None;
+    let returned = service.RepeatSimpleParcelable(&input, &mut out_param);
+    assert_eq!(returned, Ok(input.clone()));
+    assert_eq!(out_param, Some(input));
+}
+
 macro_rules! test_reverse_array {
     ($test:ident, $func:ident, $array:expr) => {
         #[test]
@@ -292,6 +303,15 @@ test_reverse_array! {
         std::str::from_utf8(&[0xC3, 0xB8])
             .expect("error converting string")
             .into(),
+    ]
+}
+test_reverse_array! {
+    test_reverse_parcelable,
+    ReverseSimpleParcelables,
+    [
+        SimpleParcelable {name: "a".to_string(), number: 1 },
+        SimpleParcelable {name: "b".to_string(), number: 2 },
+        SimpleParcelable {name: "c".to_string(), number: 3 },
     ]
 }
 

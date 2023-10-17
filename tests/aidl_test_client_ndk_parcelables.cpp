@@ -41,6 +41,7 @@ using BnEmptyInterface =
 using aidl::android::aidl::tests::BackendType;
 using aidl::android::aidl::tests::ITestService;
 using aidl::android::aidl::tests::RecursiveList;
+using aidl::android::aidl::tests::SimpleParcelable;
 using aidl::android::aidl::tests::Union;
 using android::OK;
 using ndk::AParcel_readData;
@@ -60,6 +61,36 @@ struct AidlTest : testing::Test {
 };
 
 // TODO(b/196454897): copy more tests from aidl_test_client
+
+TEST_F(AidlTest, RepeatSimpleParcelable) {
+  SimpleParcelable input("foo", 42);
+  SimpleParcelable out_param, returned;
+  auto status = getService<ITestService>()->RepeatSimpleParcelable(input, &out_param, &returned);
+  ASSERT_TRUE(status.isOk());
+  EXPECT_EQ(input, out_param) << input.toString() << " " << out_param.toString();
+  EXPECT_EQ(input, returned) << input.toString() << " " << returned.toString();
+}
+
+TEST_F(AidlTest, ReverseSimpleParcelable) {
+  BackendType backend;
+  auto status = getService<ITestService>()->getBackendType(&backend);
+  ASSERT_TRUE(status.isOk());
+
+  const std::vector<SimpleParcelable> original{SimpleParcelable("a", 1), SimpleParcelable("b", 2),
+                                               SimpleParcelable("c", 3)};
+  std::vector<SimpleParcelable> repeated;
+  if (backend == BackendType::JAVA) {
+    repeated = std::vector<SimpleParcelable>(original.size());
+  }
+  std::vector<SimpleParcelable> reversed;
+  status = getService<ITestService>()->ReverseSimpleParcelables(original, &repeated, &reversed);
+  ASSERT_TRUE(status.isOk());
+
+  EXPECT_EQ(repeated, original);
+
+  std::reverse(reversed.begin(), reversed.end());
+  EXPECT_EQ(reversed, original);
+}
 
 TEST_F(AidlTest, ReverseRecursiveList) {
   std::unique_ptr<RecursiveList> head;
