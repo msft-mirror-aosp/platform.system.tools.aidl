@@ -8,7 +8,6 @@ out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-analyzer-sour
   system/tools/aidl/tests/android/aidl/tests/StructuredParcelable.aidl \
   system/tools/aidl/tests/android/aidl/tests/extension/ExtendableParcelable.aidl \
   system/tools/aidl/tests/android/aidl/tests/RecursiveList.aidl \
-  system/tools/aidl/tests/android/aidl/tests/SimpleParcelable.aidl \
   system/tools/aidl/tests/android/aidl/tests/IOldName.aidl \
   system/tools/aidl/tests/android/aidl/tests/INewName.aidl \
   system/tools/aidl/tests/android/aidl/tests/Union.aidl \

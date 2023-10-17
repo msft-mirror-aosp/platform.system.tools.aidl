@@ -10,7 +10,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <tests/simple_parcelable_ndk.h>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -620,14 +619,12 @@ public:
   static constexpr uint32_t TRANSACTION_ReverseList = FIRST_CALL_TRANSACTION + 59;
   static constexpr uint32_t TRANSACTION_ReverseIBinderArray = FIRST_CALL_TRANSACTION + 60;
   static constexpr uint32_t TRANSACTION_ReverseNullableIBinderArray = FIRST_CALL_TRANSACTION + 61;
-  static constexpr uint32_t TRANSACTION_RepeatSimpleParcelable = FIRST_CALL_TRANSACTION + 62;
-  static constexpr uint32_t TRANSACTION_ReverseSimpleParcelables = FIRST_CALL_TRANSACTION + 63;
-  static constexpr uint32_t TRANSACTION_GetOldNameInterface = FIRST_CALL_TRANSACTION + 64;
-  static constexpr uint32_t TRANSACTION_GetNewNameInterface = FIRST_CALL_TRANSACTION + 65;
-  static constexpr uint32_t TRANSACTION_GetUnionTags = FIRST_CALL_TRANSACTION + 66;
-  static constexpr uint32_t TRANSACTION_GetCppJavaTests = FIRST_CALL_TRANSACTION + 67;
-  static constexpr uint32_t TRANSACTION_getBackendType = FIRST_CALL_TRANSACTION + 68;
-  static constexpr uint32_t TRANSACTION_GetCircular = FIRST_CALL_TRANSACTION + 69;
+  static constexpr uint32_t TRANSACTION_GetOldNameInterface = FIRST_CALL_TRANSACTION + 62;
+  static constexpr uint32_t TRANSACTION_GetNewNameInterface = FIRST_CALL_TRANSACTION + 63;
+  static constexpr uint32_t TRANSACTION_GetUnionTags = FIRST_CALL_TRANSACTION + 64;
+  static constexpr uint32_t TRANSACTION_GetCppJavaTests = FIRST_CALL_TRANSACTION + 65;
+  static constexpr uint32_t TRANSACTION_getBackendType = FIRST_CALL_TRANSACTION + 66;
+  static constexpr uint32_t TRANSACTION_GetCircular = FIRST_CALL_TRANSACTION + 67;
 
   static std::shared_ptr<ITestService> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<ITestService>& instance);
@@ -696,8 +693,6 @@ public:
   virtual ::ndk::ScopedAStatus ReverseList(const ::aidl::android::aidl::tests::RecursiveList& in_list, ::aidl::android::aidl::tests::RecursiveList* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus ReverseIBinderArray(const std::vector<::ndk::SpAIBinder>& in_input, std::vector<::ndk::SpAIBinder>* out_repeated, std::vector<::ndk::SpAIBinder>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus ReverseNullableIBinderArray(const std::optional<std::vector<::ndk::SpAIBinder>>& in_input, std::optional<std::vector<::ndk::SpAIBinder>>* out_repeated, std::optional<std::vector<::ndk::SpAIBinder>>* _aidl_return) = 0;
-  virtual ::ndk::ScopedAStatus RepeatSimpleParcelable(const ::aidl::android::aidl::tests::SimpleParcelable& in_input, ::aidl::android::aidl::tests::SimpleParcelable* out_repeat, ::aidl::android::aidl::tests::SimpleParcelable* _aidl_return) = 0;
-  virtual ::ndk::ScopedAStatus ReverseSimpleParcelables(const std::vector<::aidl::android::aidl::tests::SimpleParcelable>& in_input, std::vector<::aidl::android::aidl::tests::SimpleParcelable>* out_repeated, std::vector<::aidl::android::aidl::tests::SimpleParcelable>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus GetOldNameInterface(std::shared_ptr<::aidl::android::aidl::tests::IOldName>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus GetNewNameInterface(std::shared_ptr<::aidl::android::aidl::tests::INewName>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus GetUnionTags(const std::vector<::aidl::android::aidl::tests::Union>& in_input, std::vector<::aidl::android::aidl::tests::Union::Tag>* _aidl_return) = 0;
@@ -771,8 +766,6 @@ public:
   ::ndk::ScopedAStatus ReverseList(const ::aidl::android::aidl::tests::RecursiveList& in_list, ::aidl::android::aidl::tests::RecursiveList* _aidl_return) override;
   ::ndk::ScopedAStatus ReverseIBinderArray(const std::vector<::ndk::SpAIBinder>& in_input, std::vector<::ndk::SpAIBinder>* out_repeated, std::vector<::ndk::SpAIBinder>* _aidl_return) override;
   ::ndk::ScopedAStatus ReverseNullableIBinderArray(const std::optional<std::vector<::ndk::SpAIBinder>>& in_input, std::optional<std::vector<::ndk::SpAIBinder>>* out_repeated, std::optional<std::vector<::ndk::SpAIBinder>>* _aidl_return) override;
-  ::ndk::ScopedAStatus RepeatSimpleParcelable(const ::aidl::android::aidl::tests::SimpleParcelable& in_input, ::aidl::android::aidl::tests::SimpleParcelable* out_repeat, ::aidl::android::aidl::tests::SimpleParcelable* _aidl_return) override;
-  ::ndk::ScopedAStatus ReverseSimpleParcelables(const std::vector<::aidl::android::aidl::tests::SimpleParcelable>& in_input, std::vector<::aidl::android::aidl::tests::SimpleParcelable>* out_repeated, std::vector<::aidl::android::aidl::tests::SimpleParcelable>* _aidl_return) override;
   ::ndk::ScopedAStatus GetOldNameInterface(std::shared_ptr<::aidl::android::aidl::tests::IOldName>* _aidl_return) override;
   ::ndk::ScopedAStatus GetNewNameInterface(std::shared_ptr<::aidl::android::aidl::tests::INewName>* _aidl_return) override;
   ::ndk::ScopedAStatus GetUnionTags(const std::vector<::aidl::android::aidl::tests::Union>& in_input, std::vector<::aidl::android::aidl::tests::Union::Tag>* _aidl_return) override;
