@@ -19,7 +19,6 @@ package android.aidl.tests;
 import android.aidl.tests.BadParcelable;
 import android.aidl.tests.GenericStructuredParcelable;
 import android.aidl.tests.IntEnum;
-import android.aidl.tests.SimpleParcelable;
 import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.Union;
 import android.os.PersistableBundle;
@@ -28,14 +27,11 @@ import android.os.PersistableBundle;
 interface ICppJavaTests {
     BadParcelable RepeatBadParcelable(in BadParcelable input);
 
-    SimpleParcelable RepeatSimpleParcelable(in SimpleParcelable input, out SimpleParcelable repeat);
     GenericStructuredParcelable<int, StructuredParcelable, IntEnum> RepeatGenericParcelable(
             in GenericStructuredParcelable<int, StructuredParcelable, IntEnum> input,
             out GenericStructuredParcelable<int, StructuredParcelable, IntEnum> repeat);
     PersistableBundle RepeatPersistableBundle(in PersistableBundle input);
 
-    SimpleParcelable[] ReverseSimpleParcelables(
-            in SimpleParcelable[] input, out SimpleParcelable[] repeated);
     PersistableBundle[] ReversePersistableBundles(
             in PersistableBundle[] input, out PersistableBundle[] repeated);
     Union ReverseUnion(in Union input, out Union repeated);
