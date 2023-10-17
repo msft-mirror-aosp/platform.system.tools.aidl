@@ -218,12 +218,6 @@ public:
   ::ndk::ScopedAStatus ReverseNullableIBinderArray(const std::optional<std::vector<::ndk::SpAIBinder>>& in_input, std::optional<std::vector<::ndk::SpAIBinder>>* out_repeated, std::optional<std::vector<::ndk::SpAIBinder>>* _aidl_return) override {
     return _impl->ReverseNullableIBinderArray(in_input, out_repeated, _aidl_return);
   }
-  ::ndk::ScopedAStatus RepeatSimpleParcelable(const ::aidl::android::aidl::tests::SimpleParcelable& in_input, ::aidl::android::aidl::tests::SimpleParcelable* out_repeat, ::aidl::android::aidl::tests::SimpleParcelable* _aidl_return) override {
-    return _impl->RepeatSimpleParcelable(in_input, out_repeat, _aidl_return);
-  }
-  ::ndk::ScopedAStatus ReverseSimpleParcelables(const std::vector<::aidl::android::aidl::tests::SimpleParcelable>& in_input, std::vector<::aidl::android::aidl::tests::SimpleParcelable>* out_repeated, std::vector<::aidl::android::aidl::tests::SimpleParcelable>* _aidl_return) override {
-    return _impl->ReverseSimpleParcelables(in_input, out_repeated, _aidl_return);
-  }
   ::ndk::ScopedAStatus GetOldNameInterface(std::shared_ptr<::aidl::android::aidl::tests::IOldName>* _aidl_return) override {
     return _impl->GetOldNameInterface(_aidl_return);
   }

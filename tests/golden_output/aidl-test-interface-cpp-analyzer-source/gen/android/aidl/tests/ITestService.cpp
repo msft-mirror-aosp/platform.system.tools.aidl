@@ -2484,98 +2484,6 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
     break;
     case ::android::IBinder::FIRST_CALL_TRANSACTION + 62:
     {
-      std::cout << "ITestService.RepeatSimpleParcelable()" << std::endl;
-      _aidl_ret_status = ::android::OK;
-      if (!(_aidl_data.enforceInterface(android::String16("android.aidl.tests.ITestService")))) {
-        _aidl_ret_status = ::android::BAD_TYPE;
-        std::cout << "  Failure: Parcel interface does not match." << std::endl;
-        break;
-      }
-      ::android::aidl::tests::SimpleParcelable in_input;
-      ::android::aidl::tests::SimpleParcelable out_repeat;
-      ::android::binder::Status binderStatus;
-      binderStatus.readFromParcel(_aidl_reply);
-      ::android::aidl::tests::SimpleParcelable _aidl_return;
-      bool returnError = false;
-      _aidl_ret_status = _aidl_reply.readParcelable(&_aidl_return);
-      if (((_aidl_ret_status) != (android::NO_ERROR))) {
-        std::cerr << "Failure: error in reading return value from Parcel." << std::endl;
-        returnError = true;
-      }
-      do { // Single-pass loop to break if argument reading fails
-        _aidl_ret_status = _aidl_data.readParcelable(&in_input);
-        if (((_aidl_ret_status) != (android::NO_ERROR))) {
-          std::cerr << "Failure: error in reading argument input from Parcel." << std::endl;
-          break;
-        }
-        _aidl_ret_status = _aidl_data.readParcelable(&out_repeat);
-        if (((_aidl_ret_status) != (android::NO_ERROR))) {
-          std::cerr << "Failure: error in reading argument repeat from Parcel." << std::endl;
-          break;
-        }
-      } while(false);
-      if (!_aidl_data.enforceNoDataAvail().isOk()) {
-        _aidl_ret_status = android::BAD_VALUE;
-        std::cout << "  Failure: Parcel has too much data." << std::endl;
-        break;
-      }
-      std::cout << "  arguments: " << std::endl;
-      std::cout << "    input: " << ::android::internal::ToString(in_input) << std::endl;
-      std::cout << "    repeat: " << ::android::internal::ToString(out_repeat) << std::endl;
-      if (returnError) {
-        std::cout << "  return: <error>" << std::endl;
-      } else {std::cout << "  return: " << ::android::internal::ToString(_aidl_return) << std::endl;
-      }
-    }
-    break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 63:
-    {
-      std::cout << "ITestService.ReverseSimpleParcelables()" << std::endl;
-      _aidl_ret_status = ::android::OK;
-      if (!(_aidl_data.enforceInterface(android::String16("android.aidl.tests.ITestService")))) {
-        _aidl_ret_status = ::android::BAD_TYPE;
-        std::cout << "  Failure: Parcel interface does not match." << std::endl;
-        break;
-      }
-      ::std::vector<::android::aidl::tests::SimpleParcelable> in_input;
-      ::std::vector<::android::aidl::tests::SimpleParcelable> out_repeated;
-      ::android::binder::Status binderStatus;
-      binderStatus.readFromParcel(_aidl_reply);
-      ::std::vector<::android::aidl::tests::SimpleParcelable> _aidl_return;
-      bool returnError = false;
-      _aidl_ret_status = _aidl_reply.readParcelableVector(&_aidl_return);
-      if (((_aidl_ret_status) != (android::NO_ERROR))) {
-        std::cerr << "Failure: error in reading return value from Parcel." << std::endl;
-        returnError = true;
-      }
-      do { // Single-pass loop to break if argument reading fails
-        _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
-        if (((_aidl_ret_status) != (android::NO_ERROR))) {
-          std::cerr << "Failure: error in reading argument input from Parcel." << std::endl;
-          break;
-        }
-        _aidl_ret_status = _aidl_data.readParcelableVector(&out_repeated);
-        if (((_aidl_ret_status) != (android::NO_ERROR))) {
-          std::cerr << "Failure: error in reading argument repeated from Parcel." << std::endl;
-          break;
-        }
-      } while(false);
-      if (!_aidl_data.enforceNoDataAvail().isOk()) {
-        _aidl_ret_status = android::BAD_VALUE;
-        std::cout << "  Failure: Parcel has too much data." << std::endl;
-        break;
-      }
-      std::cout << "  arguments: " << std::endl;
-      std::cout << "    input: " << ::android::internal::ToString(in_input) << std::endl;
-      std::cout << "    repeated: " << ::android::internal::ToString(out_repeated) << std::endl;
-      if (returnError) {
-        std::cout << "  return: <error>" << std::endl;
-      } else {std::cout << "  return: " << ::android::internal::ToString(_aidl_return) << std::endl;
-      }
-    }
-    break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 64:
-    {
       std::cout << "ITestService.GetOldNameInterface()" << std::endl;
       _aidl_ret_status = ::android::OK;
       if (!(_aidl_data.enforceInterface(android::String16("android.aidl.tests.ITestService")))) {
@@ -2601,7 +2509,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 65:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 63:
     {
       std::cout << "ITestService.GetNewNameInterface()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2628,7 +2536,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 66:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 64:
     {
       std::cout << "ITestService.GetUnionTags()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2667,7 +2575,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 67:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 65:
     {
       std::cout << "ITestService.GetCppJavaTests()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2694,7 +2602,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 68:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 66:
     {
       std::cout << "ITestService.getBackendType()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2721,7 +2629,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 69:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 67:
     {
       std::cout << "ITestService.GetCircular()" << std::endl;
       _aidl_ret_status = ::android::OK;
