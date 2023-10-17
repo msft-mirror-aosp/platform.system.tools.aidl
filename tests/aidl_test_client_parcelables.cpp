@@ -78,9 +78,11 @@ TEST_F(AidlTest, BadParcelable) {
 }
 
 TEST_F(AidlTest, RepeatSimpleParcelable) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   SimpleParcelable input("Booya", 42);
   SimpleParcelable out_param, returned;
-  Status status = service->RepeatSimpleParcelable(input, &out_param, &returned);
+  Status status = cpp_java_tests->RepeatSimpleParcelable(input, &out_param, &returned);
   ASSERT_TRUE(status.isOk()) << status.toString8();
   EXPECT_EQ(input, out_param) << input.toString() << " " << out_param.toString();
   EXPECT_EQ(input, returned) << input.toString() << " " << returned.toString();
@@ -99,6 +101,8 @@ TEST_F(AidlTest, RepeatGenericStructureParcelable) {
 }
 
 TEST_F(AidlTest, ReverseSimpleParcelable) {
+  if (!cpp_java_tests) GTEST_SKIP() << "Service does not support the CPP/Java-only tests.";
+
   const vector<SimpleParcelable> original{SimpleParcelable("first", 0),
                                           SimpleParcelable("second", 1),
                                           SimpleParcelable("third", 2)};
@@ -107,7 +111,7 @@ TEST_F(AidlTest, ReverseSimpleParcelable) {
     repeated = vector<SimpleParcelable>(original.size());
   }
   vector<SimpleParcelable> reversed;
-  Status status = service->ReverseSimpleParcelables(original, &repeated, &reversed);
+  Status status = cpp_java_tests->ReverseSimpleParcelables(original, &repeated, &reversed);
   ASSERT_TRUE(status.isOk()) << status.toString8();
 
   EXPECT_EQ(repeated, original);
