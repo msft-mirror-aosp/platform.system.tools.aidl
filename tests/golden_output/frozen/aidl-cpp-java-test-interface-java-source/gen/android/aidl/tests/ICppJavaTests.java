@@ -13,19 +13,11 @@ public interface ICppJavaTests extends android.os.IInterface
     {
       return null;
     }
-    @Override public android.aidl.tests.SimpleParcelable RepeatSimpleParcelable(android.aidl.tests.SimpleParcelable input, android.aidl.tests.SimpleParcelable repeat) throws android.os.RemoteException
-    {
-      return null;
-    }
     @Override public android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> RepeatGenericParcelable(android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> input, android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> repeat) throws android.os.RemoteException
     {
       return null;
     }
     @Override public android.os.PersistableBundle RepeatPersistableBundle(android.os.PersistableBundle input) throws android.os.RemoteException
-    {
-      return null;
-    }
-    @Override public android.aidl.tests.SimpleParcelable[] ReverseSimpleParcelables(android.aidl.tests.SimpleParcelable[] input, android.aidl.tests.SimpleParcelable[] repeated) throws android.os.RemoteException
     {
       return null;
     }
@@ -91,10 +83,6 @@ public interface ICppJavaTests extends android.os.IInterface
         {
           return "RepeatBadParcelable";
         }
-        case TRANSACTION_RepeatSimpleParcelable:
-        {
-          return "RepeatSimpleParcelable";
-        }
         case TRANSACTION_RepeatGenericParcelable:
         {
           return "RepeatGenericParcelable";
@@ -102,10 +90,6 @@ public interface ICppJavaTests extends android.os.IInterface
         case TRANSACTION_RepeatPersistableBundle:
         {
           return "RepeatPersistableBundle";
-        }
-        case TRANSACTION_ReverseSimpleParcelables:
-        {
-          return "ReverseSimpleParcelables";
         }
         case TRANSACTION_ReversePersistableBundles:
         {
@@ -160,19 +144,6 @@ public interface ICppJavaTests extends android.os.IInterface
           reply.writeTypedObject(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
         }
-        case TRANSACTION_RepeatSimpleParcelable:
-        {
-          android.aidl.tests.SimpleParcelable _arg0;
-          _arg0 = data.readTypedObject(android.aidl.tests.SimpleParcelable.CREATOR);
-          android.aidl.tests.SimpleParcelable _arg1;
-          _arg1 = new android.aidl.tests.SimpleParcelable();
-          data.enforceNoDataAvail();
-          android.aidl.tests.SimpleParcelable _result = this.RepeatSimpleParcelable(_arg0, _arg1);
-          reply.writeNoException();
-          reply.writeTypedObject(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-          reply.writeTypedObject(_arg1, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-          break;
-        }
         case TRANSACTION_RepeatGenericParcelable:
         {
           android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> _arg0;
@@ -194,24 +165,6 @@ public interface ICppJavaTests extends android.os.IInterface
           android.os.PersistableBundle _result = this.RepeatPersistableBundle(_arg0);
           reply.writeNoException();
           reply.writeTypedObject(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-          break;
-        }
-        case TRANSACTION_ReverseSimpleParcelables:
-        {
-          android.aidl.tests.SimpleParcelable[] _arg0;
-          _arg0 = data.createTypedArray(android.aidl.tests.SimpleParcelable.CREATOR);
-          android.aidl.tests.SimpleParcelable[] _arg1;
-          int _arg1_length = data.readInt();
-          if (_arg1_length < 0) {
-            _arg1 = null;
-          } else {
-            _arg1 = new android.aidl.tests.SimpleParcelable[_arg1_length];
-          }
-          data.enforceNoDataAvail();
-          android.aidl.tests.SimpleParcelable[] _result = this.ReverseSimpleParcelables(_arg0, _arg1);
-          reply.writeNoException();
-          reply.writeTypedArray(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-          reply.writeTypedArray(_arg1, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
         }
         case TRANSACTION_ReversePersistableBundles:
@@ -326,27 +279,6 @@ public interface ICppJavaTests extends android.os.IInterface
         }
         return _result;
       }
-      @Override public android.aidl.tests.SimpleParcelable RepeatSimpleParcelable(android.aidl.tests.SimpleParcelable input, android.aidl.tests.SimpleParcelable repeat) throws android.os.RemoteException
-      {
-        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
-        android.os.Parcel _reply = android.os.Parcel.obtain();
-        android.aidl.tests.SimpleParcelable _result;
-        try {
-          _data.writeInterfaceToken(DESCRIPTOR);
-          _data.writeTypedObject(input, 0);
-          boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatSimpleParcelable, _data, _reply, 0);
-          _reply.readException();
-          _result = _reply.readTypedObject(android.aidl.tests.SimpleParcelable.CREATOR);
-          if ((0!=_reply.readInt())) {
-            repeat.readFromParcel(_reply);
-          }
-        }
-        finally {
-          _reply.recycle();
-          _data.recycle();
-        }
-        return _result;
-      }
       @Override public android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> RepeatGenericParcelable(android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> input, android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> repeat) throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
@@ -379,26 +311,6 @@ public interface ICppJavaTests extends android.os.IInterface
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatPersistableBundle, _data, _reply, 0);
           _reply.readException();
           _result = _reply.readTypedObject(android.os.PersistableBundle.CREATOR);
-        }
-        finally {
-          _reply.recycle();
-          _data.recycle();
-        }
-        return _result;
-      }
-      @Override public android.aidl.tests.SimpleParcelable[] ReverseSimpleParcelables(android.aidl.tests.SimpleParcelable[] input, android.aidl.tests.SimpleParcelable[] repeated) throws android.os.RemoteException
-      {
-        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
-        android.os.Parcel _reply = android.os.Parcel.obtain();
-        android.aidl.tests.SimpleParcelable[] _result;
-        try {
-          _data.writeInterfaceToken(DESCRIPTOR);
-          _data.writeTypedArray(input, 0);
-          _data.writeInt(repeated.length);
-          boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseSimpleParcelables, _data, _reply, 0);
-          _reply.readException();
-          _result = _reply.createTypedArray(android.aidl.tests.SimpleParcelable.CREATOR);
-          _reply.readTypedArray(repeated, android.aidl.tests.SimpleParcelable.CREATOR);
         }
         finally {
           _reply.recycle();
@@ -507,27 +419,23 @@ public interface ICppJavaTests extends android.os.IInterface
       }
     }
     static final int TRANSACTION_RepeatBadParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-    static final int TRANSACTION_RepeatSimpleParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-    static final int TRANSACTION_RepeatGenericParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-    static final int TRANSACTION_RepeatPersistableBundle = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
-    static final int TRANSACTION_ReverseSimpleParcelables = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
-    static final int TRANSACTION_ReversePersistableBundles = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
-    static final int TRANSACTION_ReverseUnion = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
-    static final int TRANSACTION_ReverseNamedCallbackList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
-    static final int TRANSACTION_RepeatFileDescriptor = (android.os.IBinder.FIRST_CALL_TRANSACTION + 8);
-    static final int TRANSACTION_ReverseFileDescriptorArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 9);
+    static final int TRANSACTION_RepeatGenericParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    static final int TRANSACTION_RepeatPersistableBundle = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
+    static final int TRANSACTION_ReversePersistableBundles = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
+    static final int TRANSACTION_ReverseUnion = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+    static final int TRANSACTION_ReverseNamedCallbackList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
+    static final int TRANSACTION_RepeatFileDescriptor = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
+    static final int TRANSACTION_ReverseFileDescriptorArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
     /** @hide */
     public int getMaxTransactionId()
     {
-      return 9;
+      return 7;
     }
   }
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ICppJavaTests";
   public android.aidl.tests.BadParcelable RepeatBadParcelable(android.aidl.tests.BadParcelable input) throws android.os.RemoteException;
-  public android.aidl.tests.SimpleParcelable RepeatSimpleParcelable(android.aidl.tests.SimpleParcelable input, android.aidl.tests.SimpleParcelable repeat) throws android.os.RemoteException;
   public android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> RepeatGenericParcelable(android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> input, android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> repeat) throws android.os.RemoteException;
   public android.os.PersistableBundle RepeatPersistableBundle(android.os.PersistableBundle input) throws android.os.RemoteException;
-  public android.aidl.tests.SimpleParcelable[] ReverseSimpleParcelables(android.aidl.tests.SimpleParcelable[] input, android.aidl.tests.SimpleParcelable[] repeated) throws android.os.RemoteException;
   public android.os.PersistableBundle[] ReversePersistableBundles(android.os.PersistableBundle[] input, android.os.PersistableBundle[] repeated) throws android.os.RemoteException;
   public android.aidl.tests.Union ReverseUnion(android.aidl.tests.Union input, android.aidl.tests.Union repeated) throws android.os.RemoteException;
   // Test that List<T> types work correctly.
