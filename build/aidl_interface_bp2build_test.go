@@ -11,15 +11,15 @@ import (
 
 func runAidlInterfaceTestCase(t *testing.T, tc bp2build.Bp2buildTestCase) {
 	t.Helper()
-	bp2build.RunBp2BuildTestCaseExtraContext(
+	tc.ExtraFixturePreparer = android.FixtureModifyContext(func(ctx *android.TestContext) {
+		ctx.PreArchBp2BuildMutators(registerPreArchMutators)
+	})
+	bp2build.RunBp2BuildTestCase(
 		t,
 		func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 			ctx.RegisterModuleType("aidl_library", aidl_library.AidlLibraryFactory)
 			ctx.RegisterModuleType("cc_library_shared", cc.LibrarySharedFactory)
-		},
-		func(ctx *android.TestContext) {
-			ctx.PreArchBp2BuildMutators(registerPreArchMutators)
 		},
 		tc,
 	)
