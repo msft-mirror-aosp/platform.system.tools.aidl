@@ -17,10 +17,8 @@ public:
   explicit BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpCppJavaTests() = default;
   ::android::binder::Status RepeatBadParcelable(const ::android::aidl::tests::BadParcelable& input, ::android::aidl::tests::BadParcelable* _aidl_return) override;
-  ::android::binder::Status RepeatSimpleParcelable(const ::android::aidl::tests::SimpleParcelable& input, ::android::aidl::tests::SimpleParcelable* repeat, ::android::aidl::tests::SimpleParcelable* _aidl_return) override;
   ::android::binder::Status RepeatGenericParcelable(const ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>& input, ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>* repeat, ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>* _aidl_return) override;
   ::android::binder::Status RepeatPersistableBundle(const ::android::os::PersistableBundle& input, ::android::os::PersistableBundle* _aidl_return) override;
-  ::android::binder::Status ReverseSimpleParcelables(const ::std::vector<::android::aidl::tests::SimpleParcelable>& input, ::std::vector<::android::aidl::tests::SimpleParcelable>* repeated, ::std::vector<::android::aidl::tests::SimpleParcelable>* _aidl_return) override;
   ::android::binder::Status ReversePersistableBundles(const ::std::vector<::android::os::PersistableBundle>& input, ::std::vector<::android::os::PersistableBundle>* repeated, ::std::vector<::android::os::PersistableBundle>* _aidl_return) override;
   ::android::binder::Status ReverseUnion(const ::android::aidl::tests::Union& input, ::android::aidl::tests::Union* repeated, ::android::aidl::tests::Union* _aidl_return) override;
   ::android::binder::Status ReverseNamedCallbackList(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* repeated, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) override;

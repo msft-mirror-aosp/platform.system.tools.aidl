@@ -602,6 +602,22 @@ public class TestServiceServer extends ITestService.Stub {
     }
     return reversed;
   }
+  @Override
+  public SimpleParcelable RepeatSimpleParcelable(SimpleParcelable input, SimpleParcelable repeat)
+      throws RemoteException {
+    repeat.set(input.getName(), input.getNumber());
+    return input;
+  }
+  @Override
+  public SimpleParcelable[] ReverseSimpleParcelables(
+      SimpleParcelable[] input, SimpleParcelable[] repeated) throws RemoteException {
+    SimpleParcelable[] reversed = new SimpleParcelable[input.length];
+    for (int i = 0; i < input.length; i++) {
+      repeated[i] = input[i];
+      reversed[i] = input[input.length - i - 1];
+    }
+    return reversed;
+  }
   private static class MyOldName extends IOldName.Stub {
     @Override
     public String RealName() {
@@ -641,12 +657,6 @@ public class TestServiceServer extends ITestService.Stub {
       return input;
     }
     @Override
-    public SimpleParcelable RepeatSimpleParcelable(SimpleParcelable input, SimpleParcelable repeat)
-        throws RemoteException {
-      repeat.set(input.getName(), input.getNumber());
-      return input;
-    }
-    @Override
     public GenericStructuredParcelable<Integer, StructuredParcelable, Integer>
     RepeatGenericParcelable(
         GenericStructuredParcelable<Integer, StructuredParcelable, Integer> input,
@@ -660,16 +670,6 @@ public class TestServiceServer extends ITestService.Stub {
     public PersistableBundle RepeatPersistableBundle(PersistableBundle input)
         throws RemoteException {
       return input;
-    }
-    @Override
-    public SimpleParcelable[] ReverseSimpleParcelables(
-        SimpleParcelable[] input, SimpleParcelable[] repeated) throws RemoteException {
-      SimpleParcelable[] reversed = new SimpleParcelable[input.length];
-      for (int i = 0; i < input.length; i++) {
-        repeated[i] = input[i];
-        reversed[i] = input[input.length - i - 1];
-      }
-      return reversed;
     }
     @Override
     public PersistableBundle[] ReversePersistableBundles(

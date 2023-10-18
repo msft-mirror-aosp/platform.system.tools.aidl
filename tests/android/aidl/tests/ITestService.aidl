@@ -26,6 +26,7 @@ import android.aidl.tests.IOldName;
 import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.RecursiveList;
+import android.aidl.tests.SimpleParcelable;
 import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.Union;
 import android.aidl.tests.extension.ExtendableParcelable;
@@ -219,6 +220,10 @@ interface ITestService {
     IBinder[] ReverseIBinderArray(in IBinder[] input, out IBinder[] repeated);
     @nullable IBinder[] ReverseNullableIBinderArray(
             in @nullable IBinder[] input, out @nullable IBinder[] repeated);
+
+    SimpleParcelable RepeatSimpleParcelable(in SimpleParcelable input, out SimpleParcelable repeat);
+    SimpleParcelable[] ReverseSimpleParcelables(
+            in SimpleParcelable[] input, out SimpleParcelable[] repeated);
 
     // All these constant expressions should be equal to 1
     const int A1 = (~(-1)) == 0;
