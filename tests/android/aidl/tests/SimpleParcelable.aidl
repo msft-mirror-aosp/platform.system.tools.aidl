@@ -16,4 +16,6 @@
 
 package android.aidl.tests;
 
-parcelable SimpleParcelable cpp_header "tests/simple_parcelable.h";
+parcelable SimpleParcelable cpp_header "tests/simple_parcelable.h" ndk_header
+                                       "tests/simple_parcelable_ndk.h" rust_type
+                                       "simple_parcelable::SimpleParcelable";

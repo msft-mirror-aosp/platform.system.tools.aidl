@@ -81,6 +81,8 @@ pub trait ITestService: binder::Interface + Send {
   fn r#ReverseList(&self, _arg_list: &crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList>;
   fn r#ReverseIBinderArray(&self, _arg_input: &[binder::SpIBinder], _arg_repeated: &mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>>;
   fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>>;
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable>;
+  fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>>;
   fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>;
   fn r#GetNewNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>>;
   fn r#GetUnionTags(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>>;
@@ -159,6 +161,8 @@ pub trait ITestServiceAsync<P>: binder::Interface + Send {
   fn r#ReverseList<'a>(&'a self, _arg_list: &'a crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList>>;
   fn r#ReverseIBinderArray<'a>(&'a self, _arg_input: &'a [binder::SpIBinder], _arg_repeated: &'a mut Vec<Option<binder::SpIBinder>>) -> binder::BoxFuture<'a, binder::Result<Vec<binder::SpIBinder>>>;
   fn r#ReverseNullableIBinderArray<'a>(&'a self, _arg_input: Option<&'a [Option<binder::SpIBinder>]>, _arg_repeated: &'a mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<binder::SpIBinder>>>>>;
+  fn r#RepeatSimpleParcelable<'a>(&'a self, _arg_input: &'a simple_parcelable::SimpleParcelable, _arg_repeat: &'a mut Option<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<simple_parcelable::SimpleParcelable>>;
+  fn r#ReverseSimpleParcelables<'a>(&'a self, _arg_input: &'a [simple_parcelable::SimpleParcelable], _arg_repeated: &'a mut Vec<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<Vec<simple_parcelable::SimpleParcelable>>>;
   fn r#GetOldNameInterface<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>>;
   fn r#GetNewNameInterface<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>>>;
   fn r#GetUnionTags<'a>(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::BoxFuture<'a, binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>>>;
@@ -232,6 +236,8 @@ pub trait ITestServiceAsyncServer: binder::Interface + Send {
   async fn r#ReverseList(&self, _arg_list: &crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList>;
   async fn r#ReverseIBinderArray(&self, _arg_input: &[binder::SpIBinder], _arg_repeated: &mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>>;
   async fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>>;
+  async fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable>;
+  async fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>>;
   async fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>;
   async fn r#GetNewNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>>;
   async fn r#GetUnionTags(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>>;
@@ -445,6 +451,12 @@ impl BnTestService {
       fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> {
         self._rt.block_on(self._inner.r#ReverseNullableIBinderArray(_arg_input, _arg_repeated))
       }
+      fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+        self._rt.block_on(self._inner.r#RepeatSimpleParcelable(_arg_input, _arg_repeat))
+      }
+      fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
+        self._rt.block_on(self._inner.r#ReverseSimpleParcelables(_arg_input, _arg_repeated))
+      }
       fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> {
         self._rt.block_on(self._inner.r#GetOldNameInterface())
       }
@@ -655,6 +667,12 @@ pub trait ITestServiceDefault: Send + Sync {
   fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
+  }
+  fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
+    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
+  }
   fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
@@ -737,12 +755,14 @@ pub mod transactions {
   pub const r#ReverseList: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 59;
   pub const r#ReverseIBinderArray: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 60;
   pub const r#ReverseNullableIBinderArray: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 61;
-  pub const r#GetOldNameInterface: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 62;
-  pub const r#GetNewNameInterface: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 63;
-  pub const r#GetUnionTags: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 64;
-  pub const r#GetCppJavaTests: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 65;
-  pub const r#getBackendType: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 66;
-  pub const r#GetCircular: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 67;
+  pub const r#RepeatSimpleParcelable: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 62;
+  pub const r#ReverseSimpleParcelables: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 63;
+  pub const r#GetOldNameInterface: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 64;
+  pub const r#GetNewNameInterface: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 65;
+  pub const r#GetUnionTags: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 66;
+  pub const r#GetCppJavaTests: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 67;
+  pub const r#getBackendType: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 68;
+  pub const r#GetCircular: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 69;
 }
 pub type ITestServiceDefaultRef = Option<std::sync::Arc<dyn ITestServiceDefault>>;
 use lazy_static::lazy_static;
@@ -1984,6 +2004,45 @@ impl BpTestService {
     _aidl_reply.read_onto(_arg_repeated)?;
     Ok(_aidl_return)
   }
+  fn build_parcel_RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<binder::binder_impl::Parcel> {
+    let mut aidl_data = self.binder.prepare_transact()?;
+    aidl_data.mark_sensitive();
+    aidl_data.write(_arg_input)?;
+    Ok(aidl_data)
+  }
+  fn read_response_RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
+      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
+        return _aidl_default_impl.r#RepeatSimpleParcelable(_arg_input, _arg_repeat);
+      }
+    }
+    let _aidl_reply = _aidl_reply?;
+    let _aidl_status: binder::Status = _aidl_reply.read()?;
+    if !_aidl_status.is_ok() { return Err(_aidl_status); }
+    let _aidl_return: simple_parcelable::SimpleParcelable = _aidl_reply.read()?;
+    _aidl_reply.read_onto(_arg_repeat)?;
+    Ok(_aidl_return)
+  }
+  fn build_parcel_ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<binder::binder_impl::Parcel> {
+    let mut aidl_data = self.binder.prepare_transact()?;
+    aidl_data.mark_sensitive();
+    aidl_data.write(_arg_input)?;
+    aidl_data.write_slice_size(Some(_arg_repeated))?;
+    Ok(aidl_data)
+  }
+  fn read_response_ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
+    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
+      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
+        return _aidl_default_impl.r#ReverseSimpleParcelables(_arg_input, _arg_repeated);
+      }
+    }
+    let _aidl_reply = _aidl_reply?;
+    let _aidl_status: binder::Status = _aidl_reply.read()?;
+    if !_aidl_status.is_ok() { return Err(_aidl_status); }
+    let _aidl_return: Vec<simple_parcelable::SimpleParcelable> = _aidl_reply.read()?;
+    _aidl_reply.read_onto(_arg_repeated)?;
+    Ok(_aidl_return)
+  }
   fn build_parcel_GetOldNameInterface(&self) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
     aidl_data.mark_sensitive();
@@ -2399,6 +2458,16 @@ impl ITestService for BpTestService {
     let _aidl_data = self.build_parcel_ReverseNullableIBinderArray(_arg_input, _arg_repeated)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseNullableIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseNullableIBinderArray(_arg_input, _arg_repeated, _aidl_reply)
+  }
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+    let _aidl_data = self.build_parcel_RepeatSimpleParcelable(_arg_input, _arg_repeat)?;
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatSimpleParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
+    self.read_response_RepeatSimpleParcelable(_arg_input, _arg_repeat, _aidl_reply)
+  }
+  fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
+    let _aidl_data = self.build_parcel_ReverseSimpleParcelables(_arg_input, _arg_repeated)?;
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseSimpleParcelables, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
+    self.read_response_ReverseSimpleParcelables(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> {
     let _aidl_data = self.build_parcel_GetOldNameInterface()?;
@@ -3233,6 +3302,32 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
       }
     )
   }
+  fn r#RepeatSimpleParcelable<'a>(&'a self, _arg_input: &'a simple_parcelable::SimpleParcelable, _arg_repeat: &'a mut Option<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<simple_parcelable::SimpleParcelable>> {
+    let _aidl_data = match self.build_parcel_RepeatSimpleParcelable(_arg_input, _arg_repeat) {
+      Ok(_aidl_data) => _aidl_data,
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
+    };
+    let binder = self.binder.clone();
+    P::spawn(
+      move || binder.submit_transact(transactions::r#RepeatSimpleParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL),
+      move |_aidl_reply| async move {
+        self.read_response_RepeatSimpleParcelable(_arg_input, _arg_repeat, _aidl_reply)
+      }
+    )
+  }
+  fn r#ReverseSimpleParcelables<'a>(&'a self, _arg_input: &'a [simple_parcelable::SimpleParcelable], _arg_repeated: &'a mut Vec<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<Vec<simple_parcelable::SimpleParcelable>>> {
+    let _aidl_data = match self.build_parcel_ReverseSimpleParcelables(_arg_input, _arg_repeated) {
+      Ok(_aidl_data) => _aidl_data,
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
+    };
+    let binder = self.binder.clone();
+    P::spawn(
+      move || binder.submit_transact(transactions::r#ReverseSimpleParcelables, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL),
+      move |_aidl_reply| async move {
+        self.read_response_ReverseSimpleParcelables(_arg_input, _arg_repeated, _aidl_reply)
+      }
+    )
+  }
   fn r#GetOldNameInterface<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>> {
     let _aidl_data = match self.build_parcel_GetOldNameInterface() {
       Ok(_aidl_data) => _aidl_data,
@@ -3375,6 +3470,8 @@ impl ITestService for binder::binder_impl::Binder<BnTestService> {
   fn r#ReverseList(&self, _arg_list: &crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList> { self.0.r#ReverseList(_arg_list) }
   fn r#ReverseIBinderArray(&self, _arg_input: &[binder::SpIBinder], _arg_repeated: &mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>> { self.0.r#ReverseIBinderArray(_arg_input, _arg_repeated) }
   fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> { self.0.r#ReverseNullableIBinderArray(_arg_input, _arg_repeated) }
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> { self.0.r#RepeatSimpleParcelable(_arg_input, _arg_repeat) }
+  fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> { self.0.r#ReverseSimpleParcelables(_arg_input, _arg_repeated) }
   fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> { self.0.r#GetOldNameInterface() }
   fn r#GetNewNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>> { self.0.r#GetNewNameInterface() }
   fn r#GetUnionTags(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>> { self.0.r#GetUnionTags(_arg_input) }
@@ -4162,6 +4259,36 @@ fn on_transact(_aidl_service: &dyn ITestService, _aidl_code: binder::binder_impl
       let mut _arg_repeated: Option<Vec<Option<binder::SpIBinder>>> = Default::default();
       _aidl_data.resize_nullable_out_vec(&mut _arg_repeated)?;
       let _aidl_return = _aidl_service.r#ReverseNullableIBinderArray(_arg_input.as_deref(), &mut _arg_repeated);
+      match &_aidl_return {
+        Ok(_aidl_return) => {
+          _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
+          _aidl_reply.write(_aidl_return)?;
+          _aidl_reply.write(&_arg_repeated)?;
+        }
+        Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
+      }
+      Ok(())
+    }
+    transactions::r#RepeatSimpleParcelable => {
+      let _arg_input: simple_parcelable::SimpleParcelable = _aidl_data.read()?;
+      let mut _arg_repeat: Option<simple_parcelable::SimpleParcelable> = Default::default();
+      let _aidl_return = _aidl_service.r#RepeatSimpleParcelable(&_arg_input, &mut _arg_repeat);
+      match &_aidl_return {
+        Ok(_aidl_return) => {
+          _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
+          _aidl_reply.write(_aidl_return)?;
+          let _arg_repeat = _arg_repeat.ok_or(binder::StatusCode::UNEXPECTED_NULL)?;
+          _aidl_reply.write(&_arg_repeat)?;
+        }
+        Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
+      }
+      Ok(())
+    }
+    transactions::r#ReverseSimpleParcelables => {
+      let _arg_input: Vec<simple_parcelable::SimpleParcelable> = _aidl_data.read()?;
+      let mut _arg_repeated: Vec<simple_parcelable::SimpleParcelable> = Default::default();
+      _aidl_data.resize_out_vec(&mut _arg_repeated)?;
+      let _aidl_return = _aidl_service.r#ReverseSimpleParcelables(&_arg_input, &mut _arg_repeated);
       match &_aidl_return {
         Ok(_aidl_return) => {
           _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
