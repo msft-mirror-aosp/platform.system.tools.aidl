@@ -62,48 +62,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   return _aidl_status;
 }
 
-::android::binder::Status BpCppJavaTests::RepeatSimpleParcelable(const ::android::aidl::tests::SimpleParcelable& input, ::android::aidl::tests::SimpleParcelable* repeat, ::android::aidl::tests::SimpleParcelable* _aidl_return) {
-  ::android::Parcel _aidl_data;
-  _aidl_data.markForBinder(remoteStrong());
-  ::android::Parcel _aidl_reply;
-  ::android::status_t _aidl_ret_status = ::android::OK;
-  ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatSimpleParcelable::cppClient");
-  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = _aidl_data.writeParcelable(input);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_RepeatSimpleParcelable, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl())) {
-     return ICppJavaTests::getDefaultImpl()->RepeatSimpleParcelable(input, repeat, _aidl_return);
-  }
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = _aidl_status.readFromParcel(_aidl_reply);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  if (!_aidl_status.isOk()) {
-    return _aidl_status;
-  }
-  _aidl_ret_status = _aidl_reply.readParcelable(_aidl_return);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = _aidl_reply.readParcelable(repeat);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_error:
-  _aidl_status.setFromStatusT(_aidl_ret_status);
-  return _aidl_status;
-}
-
 ::android::binder::Status BpCppJavaTests::RepeatGenericParcelable(const ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>& input, ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>* repeat, ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markForBinder(remoteStrong());
@@ -176,52 +134,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     return _aidl_status;
   }
   _aidl_ret_status = _aidl_reply.readParcelable(_aidl_return);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_error:
-  _aidl_status.setFromStatusT(_aidl_ret_status);
-  return _aidl_status;
-}
-
-::android::binder::Status BpCppJavaTests::ReverseSimpleParcelables(const ::std::vector<::android::aidl::tests::SimpleParcelable>& input, ::std::vector<::android::aidl::tests::SimpleParcelable>* repeated, ::std::vector<::android::aidl::tests::SimpleParcelable>* _aidl_return) {
-  ::android::Parcel _aidl_data;
-  _aidl_data.markForBinder(remoteStrong());
-  ::android::Parcel _aidl_reply;
-  ::android::status_t _aidl_ret_status = ::android::OK;
-  ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseSimpleParcelables::cppClient");
-  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = _aidl_data.writeParcelableVector(input);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = _aidl_data.writeVectorSize(*repeated);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_ReverseSimpleParcelables, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl())) {
-     return ICppJavaTests::getDefaultImpl()->ReverseSimpleParcelables(input, repeated, _aidl_return);
-  }
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = _aidl_status.readFromParcel(_aidl_reply);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  if (!_aidl_status.isOk()) {
-    return _aidl_status;
-  }
-  _aidl_ret_status = _aidl_reply.readParcelableVector(_aidl_return);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = _aidl_reply.readParcelableVector(repeated);
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -494,42 +406,6 @@ BnCppJavaTests::BnCppJavaTests()
     }
   }
   break;
-  case BnCppJavaTests::TRANSACTION_RepeatSimpleParcelable:
-  {
-    ::android::aidl::tests::SimpleParcelable in_input;
-    ::android::aidl::tests::SimpleParcelable out_repeat;
-    ::android::aidl::tests::SimpleParcelable _aidl_return;
-    if (!(_aidl_data.checkInterface(this))) {
-      _aidl_ret_status = ::android::BAD_TYPE;
-      break;
-    }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatSimpleParcelable::cppServer");
-    _aidl_ret_status = _aidl_data.readParcelable(&in_input);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
-      _aidl_ret_status = st.writeToParcel(_aidl_reply);
-      break;
-    }
-    ::android::binder::Status _aidl_status(RepeatSimpleParcelable(in_input, &out_repeat, &_aidl_return));
-    _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-    if (!_aidl_status.isOk()) {
-      break;
-    }
-    _aidl_ret_status = _aidl_reply->writeParcelable(_aidl_return);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-    _aidl_ret_status = _aidl_reply->writeParcelable(out_repeat);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-  }
-  break;
   case BnCppJavaTests::TRANSACTION_RepeatGenericParcelable:
   {
     ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum> in_input;
@@ -592,46 +468,6 @@ BnCppJavaTests::BnCppJavaTests()
       break;
     }
     _aidl_ret_status = _aidl_reply->writeParcelable(_aidl_return);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-  }
-  break;
-  case BnCppJavaTests::TRANSACTION_ReverseSimpleParcelables:
-  {
-    ::std::vector<::android::aidl::tests::SimpleParcelable> in_input;
-    ::std::vector<::android::aidl::tests::SimpleParcelable> out_repeated;
-    ::std::vector<::android::aidl::tests::SimpleParcelable> _aidl_return;
-    if (!(_aidl_data.checkInterface(this))) {
-      _aidl_ret_status = ::android::BAD_TYPE;
-      break;
-    }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseSimpleParcelables::cppServer");
-    _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-    _aidl_ret_status = _aidl_data.resizeOutVector(&out_repeated);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
-      _aidl_ret_status = st.writeToParcel(_aidl_reply);
-      break;
-    }
-    ::android::binder::Status _aidl_status(ReverseSimpleParcelables(in_input, &out_repeated, &_aidl_return));
-    _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-    if (!_aidl_status.isOk()) {
-      break;
-    }
-    _aidl_ret_status = _aidl_reply->writeParcelableVector(_aidl_return);
-    if (((_aidl_ret_status) != (::android::OK))) {
-      break;
-    }
-    _aidl_ret_status = _aidl_reply->writeParcelableVector(out_repeated);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
     }
