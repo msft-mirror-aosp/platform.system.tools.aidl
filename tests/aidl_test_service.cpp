@@ -202,14 +202,6 @@ class CppJavaTests : public BnCppJavaTests {
     return Status::ok();
   }
 
-  Status RepeatSimpleParcelable(const SimpleParcelable& input, SimpleParcelable* repeat,
-                                SimpleParcelable* _aidl_return) override {
-    ALOGI("Repeated a SimpleParcelable %s", input.toString().c_str());
-    *repeat = input;
-    *_aidl_return = input;
-    return Status::ok();
-  }
-
   Status RepeatGenericParcelable(
       const GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>& input,
       GenericStructuredParcelable<int32_t, StructuredParcelable, IntEnum>* repeat,
@@ -227,11 +219,6 @@ class CppJavaTests : public BnCppJavaTests {
     return Status::ok();
   }
 
-  Status ReverseSimpleParcelables(const vector<SimpleParcelable>& input,
-                                  vector<SimpleParcelable>* repeated,
-                                  vector<SimpleParcelable>* _aidl_return) override {
-    return ReverseArray(input, repeated, _aidl_return);
-  }
   Status ReversePersistableBundles(const vector<PersistableBundle>& input,
                                    vector<PersistableBundle>* repeated,
                                    vector<PersistableBundle>* _aidl_return) override {
@@ -755,6 +742,20 @@ class NativeService : public BnTestService {
       std::reverse((*_aidl_return)->begin(), (*_aidl_return)->end());
     }
     return Status::ok();
+  }
+
+  Status RepeatSimpleParcelable(const SimpleParcelable& input, SimpleParcelable* repeat,
+                                SimpleParcelable* _aidl_return) override {
+    ALOGI("Repeated a SimpleParcelable %s", input.toString().c_str());
+    *repeat = input;
+    *_aidl_return = input;
+    return Status::ok();
+  }
+
+  Status ReverseSimpleParcelables(const vector<SimpleParcelable>& input,
+                                  vector<SimpleParcelable>* repeated,
+                                  vector<SimpleParcelable>* _aidl_return) override {
+    return ReverseArray(input, repeated, _aidl_return);
   }
 
   Status UnimplementedMethod(int32_t /* arg */, int32_t* /* _aidl_return */) override {
