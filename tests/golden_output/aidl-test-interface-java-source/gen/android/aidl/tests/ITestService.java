@@ -274,14 +274,6 @@ public interface ITestService extends android.os.IInterface
     {
       return null;
     }
-    @Override public android.aidl.tests.SimpleParcelable RepeatSimpleParcelable(android.aidl.tests.SimpleParcelable input, android.aidl.tests.SimpleParcelable repeat) throws android.os.RemoteException
-    {
-      return null;
-    }
-    @Override public android.aidl.tests.SimpleParcelable[] ReverseSimpleParcelables(android.aidl.tests.SimpleParcelable[] input, android.aidl.tests.SimpleParcelable[] repeated) throws android.os.RemoteException
-    {
-      return null;
-    }
     @Override public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException
     {
       return null;
@@ -592,14 +584,6 @@ public interface ITestService extends android.os.IInterface
     {
       return mImpl.ReverseNullableIBinderArray(input,repeated);
     }
-    @Override public android.aidl.tests.SimpleParcelable RepeatSimpleParcelable(android.aidl.tests.SimpleParcelable input, android.aidl.tests.SimpleParcelable repeat) throws android.os.RemoteException
-    {
-      return mImpl.RepeatSimpleParcelable(input,repeat);
-    }
-    @Override public android.aidl.tests.SimpleParcelable[] ReverseSimpleParcelables(android.aidl.tests.SimpleParcelable[] input, android.aidl.tests.SimpleParcelable[] repeated) throws android.os.RemoteException
-    {
-      return mImpl.ReverseSimpleParcelables(input,repeated);
-    }
     @Override public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException
     {
       return mImpl.GetOldNameInterface();
@@ -906,14 +890,6 @@ public interface ITestService extends android.os.IInterface
         case TRANSACTION_ReverseNullableIBinderArray:
         {
           return "ReverseNullableIBinderArray";
-        }
-        case TRANSACTION_RepeatSimpleParcelable:
-        {
-          return "RepeatSimpleParcelable";
-        }
-        case TRANSACTION_ReverseSimpleParcelables:
-        {
-          return "ReverseSimpleParcelables";
         }
         case TRANSACTION_GetOldNameInterface:
         {
@@ -1712,37 +1688,6 @@ public interface ITestService extends android.os.IInterface
           reply.writeNoException();
           reply.writeBinderArray(_result);
           reply.writeBinderArray(_arg1);
-          break;
-        }
-        case TRANSACTION_RepeatSimpleParcelable:
-        {
-          android.aidl.tests.SimpleParcelable _arg0;
-          _arg0 = data.readTypedObject(android.aidl.tests.SimpleParcelable.CREATOR);
-          android.aidl.tests.SimpleParcelable _arg1;
-          _arg1 = new android.aidl.tests.SimpleParcelable();
-          data.enforceNoDataAvail();
-          android.aidl.tests.SimpleParcelable _result = this.RepeatSimpleParcelable(_arg0, _arg1);
-          reply.writeNoException();
-          reply.writeTypedObject(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-          reply.writeTypedObject(_arg1, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-          break;
-        }
-        case TRANSACTION_ReverseSimpleParcelables:
-        {
-          android.aidl.tests.SimpleParcelable[] _arg0;
-          _arg0 = data.createTypedArray(android.aidl.tests.SimpleParcelable.CREATOR);
-          android.aidl.tests.SimpleParcelable[] _arg1;
-          int _arg1_length = data.readInt();
-          if (_arg1_length < 0) {
-            _arg1 = null;
-          } else {
-            _arg1 = new android.aidl.tests.SimpleParcelable[_arg1_length];
-          }
-          data.enforceNoDataAvail();
-          android.aidl.tests.SimpleParcelable[] _result = this.ReverseSimpleParcelables(_arg0, _arg1);
-          reply.writeNoException();
-          reply.writeTypedArray(_result, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-          reply.writeTypedArray(_arg1, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
         }
         case TRANSACTION_GetOldNameInterface:
@@ -3353,59 +3298,6 @@ public interface ITestService extends android.os.IInterface
         }
         return _result;
       }
-      @Override public android.aidl.tests.SimpleParcelable RepeatSimpleParcelable(android.aidl.tests.SimpleParcelable input, android.aidl.tests.SimpleParcelable repeat) throws android.os.RemoteException
-      {
-        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
-        _data.markSensitive();
-        android.os.Parcel _reply = android.os.Parcel.obtain();
-        android.aidl.tests.SimpleParcelable _result;
-        try {
-          _data.writeInterfaceToken(DESCRIPTOR);
-          _data.writeTypedObject(input, 0);
-          boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatSimpleParcelable, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              return getDefaultImpl().RepeatSimpleParcelable(input, repeat);
-            }
-          }
-          _reply.readException();
-          _result = _reply.readTypedObject(android.aidl.tests.SimpleParcelable.CREATOR);
-          if ((0!=_reply.readInt())) {
-            repeat.readFromParcel(_reply);
-          }
-        }
-        finally {
-          _reply.recycle();
-          _data.recycle();
-        }
-        return _result;
-      }
-      @Override public android.aidl.tests.SimpleParcelable[] ReverseSimpleParcelables(android.aidl.tests.SimpleParcelable[] input, android.aidl.tests.SimpleParcelable[] repeated) throws android.os.RemoteException
-      {
-        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
-        _data.markSensitive();
-        android.os.Parcel _reply = android.os.Parcel.obtain();
-        android.aidl.tests.SimpleParcelable[] _result;
-        try {
-          _data.writeInterfaceToken(DESCRIPTOR);
-          _data.writeTypedArray(input, 0);
-          _data.writeInt(repeated.length);
-          boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseSimpleParcelables, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
-          if (!_status) {
-            if (getDefaultImpl() != null) {
-              return getDefaultImpl().ReverseSimpleParcelables(input, repeated);
-            }
-          }
-          _reply.readException();
-          _result = _reply.createTypedArray(android.aidl.tests.SimpleParcelable.CREATOR);
-          _reply.readTypedArray(repeated, android.aidl.tests.SimpleParcelable.CREATOR);
-        }
-        finally {
-          _reply.recycle();
-          _data.recycle();
-        }
-        return _result;
-      }
       @Override public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
@@ -3613,18 +3505,16 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 59);
     static final int TRANSACTION_ReverseIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 60);
     static final int TRANSACTION_ReverseNullableIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 61);
-    static final int TRANSACTION_RepeatSimpleParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 62);
-    static final int TRANSACTION_ReverseSimpleParcelables = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
-    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
-    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
-    static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 66);
-    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 67);
-    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 68);
-    static final int TRANSACTION_GetCircular = (android.os.IBinder.FIRST_CALL_TRANSACTION + 69);
+    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 62);
+    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
+    static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
+    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
+    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 66);
+    static final int TRANSACTION_GetCircular = (android.os.IBinder.FIRST_CALL_TRANSACTION + 67);
     /** @hide */
     public int getMaxTransactionId()
     {
-      return 69;
+      return 67;
     }
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
@@ -3831,8 +3721,6 @@ public interface ITestService extends android.os.IInterface
   public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException;
   public android.os.IBinder[] ReverseIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
   public android.os.IBinder[] ReverseNullableIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
-  public android.aidl.tests.SimpleParcelable RepeatSimpleParcelable(android.aidl.tests.SimpleParcelable input, android.aidl.tests.SimpleParcelable repeat) throws android.os.RemoteException;
-  public android.aidl.tests.SimpleParcelable[] ReverseSimpleParcelables(android.aidl.tests.SimpleParcelable[] input, android.aidl.tests.SimpleParcelable[] repeated) throws android.os.RemoteException;
   public android.aidl.tests.IOldName GetOldNameInterface() throws android.os.RemoteException;
   public android.aidl.tests.INewName GetNewNameInterface() throws android.os.RemoteException;
   public int[] GetUnionTags(android.aidl.tests.Union[] input) throws android.os.RemoteException;

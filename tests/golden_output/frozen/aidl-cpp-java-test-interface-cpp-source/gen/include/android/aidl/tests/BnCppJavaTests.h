@@ -16,13 +16,15 @@ namespace tests {
 class BnCppJavaTests : public ::android::BnInterface<ICppJavaTests> {
 public:
   static constexpr uint32_t TRANSACTION_RepeatBadParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
-  static constexpr uint32_t TRANSACTION_RepeatGenericParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
-  static constexpr uint32_t TRANSACTION_RepeatPersistableBundle = ::android::IBinder::FIRST_CALL_TRANSACTION + 2;
-  static constexpr uint32_t TRANSACTION_ReversePersistableBundles = ::android::IBinder::FIRST_CALL_TRANSACTION + 3;
-  static constexpr uint32_t TRANSACTION_ReverseUnion = ::android::IBinder::FIRST_CALL_TRANSACTION + 4;
-  static constexpr uint32_t TRANSACTION_ReverseNamedCallbackList = ::android::IBinder::FIRST_CALL_TRANSACTION + 5;
-  static constexpr uint32_t TRANSACTION_RepeatFileDescriptor = ::android::IBinder::FIRST_CALL_TRANSACTION + 6;
-  static constexpr uint32_t TRANSACTION_ReverseFileDescriptorArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 7;
+  static constexpr uint32_t TRANSACTION_RepeatSimpleParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
+  static constexpr uint32_t TRANSACTION_RepeatGenericParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 2;
+  static constexpr uint32_t TRANSACTION_RepeatPersistableBundle = ::android::IBinder::FIRST_CALL_TRANSACTION + 3;
+  static constexpr uint32_t TRANSACTION_ReverseSimpleParcelables = ::android::IBinder::FIRST_CALL_TRANSACTION + 4;
+  static constexpr uint32_t TRANSACTION_ReversePersistableBundles = ::android::IBinder::FIRST_CALL_TRANSACTION + 5;
+  static constexpr uint32_t TRANSACTION_ReverseUnion = ::android::IBinder::FIRST_CALL_TRANSACTION + 6;
+  static constexpr uint32_t TRANSACTION_ReverseNamedCallbackList = ::android::IBinder::FIRST_CALL_TRANSACTION + 7;
+  static constexpr uint32_t TRANSACTION_RepeatFileDescriptor = ::android::IBinder::FIRST_CALL_TRANSACTION + 8;
+  static constexpr uint32_t TRANSACTION_ReverseFileDescriptorArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 9;
   explicit BnCppJavaTests();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnCppJavaTests
@@ -35,11 +37,17 @@ public:
   ::android::binder::Status RepeatBadParcelable(const ::android::aidl::tests::BadParcelable& input, ::android::aidl::tests::BadParcelable* _aidl_return) override {
     return _aidl_delegate->RepeatBadParcelable(input, _aidl_return);
   }
+  ::android::binder::Status RepeatSimpleParcelable(const ::android::aidl::tests::SimpleParcelable& input, ::android::aidl::tests::SimpleParcelable* repeat, ::android::aidl::tests::SimpleParcelable* _aidl_return) override {
+    return _aidl_delegate->RepeatSimpleParcelable(input, repeat, _aidl_return);
+  }
   ::android::binder::Status RepeatGenericParcelable(const ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>& input, ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>* repeat, ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum>* _aidl_return) override {
     return _aidl_delegate->RepeatGenericParcelable(input, repeat, _aidl_return);
   }
   ::android::binder::Status RepeatPersistableBundle(const ::android::os::PersistableBundle& input, ::android::os::PersistableBundle* _aidl_return) override {
     return _aidl_delegate->RepeatPersistableBundle(input, _aidl_return);
+  }
+  ::android::binder::Status ReverseSimpleParcelables(const ::std::vector<::android::aidl::tests::SimpleParcelable>& input, ::std::vector<::android::aidl::tests::SimpleParcelable>* repeated, ::std::vector<::android::aidl::tests::SimpleParcelable>* _aidl_return) override {
+    return _aidl_delegate->ReverseSimpleParcelables(input, repeated, _aidl_return);
   }
   ::android::binder::Status ReversePersistableBundles(const ::std::vector<::android::os::PersistableBundle>& input, ::std::vector<::android::os::PersistableBundle>* repeated, ::std::vector<::android::os::PersistableBundle>* _aidl_return) override {
     return _aidl_delegate->ReversePersistableBundles(input, repeated, _aidl_return);
