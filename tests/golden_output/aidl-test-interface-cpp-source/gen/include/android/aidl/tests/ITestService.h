@@ -32,7 +32,6 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <tests/simple_parcelable.h>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -605,8 +604,6 @@ public:
   virtual ::android::binder::Status ReverseList(const ::android::aidl::tests::RecursiveList& list, ::android::aidl::tests::RecursiveList* _aidl_return) = 0;
   virtual ::android::binder::Status ReverseIBinderArray(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* repeated, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) = 0;
   virtual ::android::binder::Status ReverseNullableIBinderArray(const ::std::optional<::std::vector<::android::sp<::android::IBinder>>>& input, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* repeated, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* _aidl_return) = 0;
-  virtual ::android::binder::Status RepeatSimpleParcelable(const ::android::aidl::tests::SimpleParcelable& input, ::android::aidl::tests::SimpleParcelable* repeat, ::android::aidl::tests::SimpleParcelable* _aidl_return) = 0;
-  virtual ::android::binder::Status ReverseSimpleParcelables(const ::std::vector<::android::aidl::tests::SimpleParcelable>& input, ::std::vector<::android::aidl::tests::SimpleParcelable>* repeated, ::std::vector<::android::aidl::tests::SimpleParcelable>* _aidl_return) = 0;
   virtual ::android::binder::Status GetOldNameInterface(::android::sp<::android::aidl::tests::IOldName>* _aidl_return) = 0;
   virtual ::android::binder::Status GetNewNameInterface(::android::sp<::android::aidl::tests::INewName>* _aidl_return) = 0;
   virtual ::android::binder::Status GetUnionTags(const ::std::vector<::android::aidl::tests::Union>& input, ::std::vector<::android::aidl::tests::Union::Tag>* _aidl_return) = 0;
@@ -804,12 +801,6 @@ public:
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
   ::android::binder::Status ReverseNullableIBinderArray(const ::std::optional<::std::vector<::android::sp<::android::IBinder>>>& /*input*/, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* /*repeated*/, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* /*_aidl_return*/) override {
-    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-  }
-  ::android::binder::Status RepeatSimpleParcelable(const ::android::aidl::tests::SimpleParcelable& /*input*/, ::android::aidl::tests::SimpleParcelable* /*repeat*/, ::android::aidl::tests::SimpleParcelable* /*_aidl_return*/) override {
-    return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
-  }
-  ::android::binder::Status ReverseSimpleParcelables(const ::std::vector<::android::aidl::tests::SimpleParcelable>& /*input*/, ::std::vector<::android::aidl::tests::SimpleParcelable>* /*repeated*/, ::std::vector<::android::aidl::tests::SimpleParcelable>* /*_aidl_return*/) override {
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
   }
   ::android::binder::Status GetOldNameInterface(::android::sp<::android::aidl::tests::IOldName>* /*_aidl_return*/) override {
