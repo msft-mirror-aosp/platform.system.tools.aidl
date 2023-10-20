@@ -84,6 +84,10 @@ function _golden_test() {
     if [ "$override_unfrozen" == true ]; then
       export AIDL_USE_UNFROZEN_OVERRIDE="$use_unfrozen"
     fi
+    # clean up intermediates before building these modules
+    for i in "${modules[@]}"; do
+      rm -rf "$root/out/soong/.intermediates/system/tools/aidl/$module/gen"
+    done
     "$root"/build/soong/soong_ui.bash --make-mode \
       $(for i in "${modules[@]}"; do
           echo "out/soong/.intermediates/system/tools/aidl/$i/timestamp"
