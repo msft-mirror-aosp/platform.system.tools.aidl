@@ -85,7 +85,7 @@ function _golden_test() {
       export AIDL_USE_UNFROZEN_OVERRIDE="$use_unfrozen"
     fi
     # clean up intermediates before building these modules
-    for i in "${modules[@]}"; do
+    for module in "${modules[@]}"; do
       rm -rf "$root/out/soong/.intermediates/system/tools/aidl/$module/gen"
     done
     "$root"/build/soong/soong_ui.bash --make-mode \
