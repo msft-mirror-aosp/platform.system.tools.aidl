@@ -880,12 +880,12 @@ genrule {
     // $TARGET_RELEASE is "next"
     product_variables: {
         release_aidl_use_unfrozen: {
-            cmd: "TARGET_RELEASE=trunk_staging $(location aidl-golden-test) check $(in) && " +
+            cmd: "TARGET_RELEASE=trunk_staging $(location aidl-golden-test) check && " +
                 "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
         },
     },
 
-    cmd: "TARGET_RELEASE=next $(location aidl-golden-test) check $(in) && " +
+    cmd: "TARGET_RELEASE=next $(location aidl-golden-test) check && " +
         "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
     srcs: [
         // warning: keep this list up to date with tests/golden_test.sh
