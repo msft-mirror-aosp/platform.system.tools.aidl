@@ -82,12 +82,14 @@ public:
   static constexpr uint32_t TRANSACTION_ReverseList = ::android::IBinder::FIRST_CALL_TRANSACTION + 59;
   static constexpr uint32_t TRANSACTION_ReverseIBinderArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 60;
   static constexpr uint32_t TRANSACTION_ReverseNullableIBinderArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 61;
-  static constexpr uint32_t TRANSACTION_GetOldNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 62;
-  static constexpr uint32_t TRANSACTION_GetNewNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 63;
-  static constexpr uint32_t TRANSACTION_GetUnionTags = ::android::IBinder::FIRST_CALL_TRANSACTION + 64;
-  static constexpr uint32_t TRANSACTION_GetCppJavaTests = ::android::IBinder::FIRST_CALL_TRANSACTION + 65;
-  static constexpr uint32_t TRANSACTION_getBackendType = ::android::IBinder::FIRST_CALL_TRANSACTION + 66;
-  static constexpr uint32_t TRANSACTION_GetCircular = ::android::IBinder::FIRST_CALL_TRANSACTION + 67;
+  static constexpr uint32_t TRANSACTION_RepeatSimpleParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 62;
+  static constexpr uint32_t TRANSACTION_ReverseSimpleParcelables = ::android::IBinder::FIRST_CALL_TRANSACTION + 63;
+  static constexpr uint32_t TRANSACTION_GetOldNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 64;
+  static constexpr uint32_t TRANSACTION_GetNewNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 65;
+  static constexpr uint32_t TRANSACTION_GetUnionTags = ::android::IBinder::FIRST_CALL_TRANSACTION + 66;
+  static constexpr uint32_t TRANSACTION_GetCppJavaTests = ::android::IBinder::FIRST_CALL_TRANSACTION + 67;
+  static constexpr uint32_t TRANSACTION_getBackendType = ::android::IBinder::FIRST_CALL_TRANSACTION + 68;
+  static constexpr uint32_t TRANSACTION_GetCircular = ::android::IBinder::FIRST_CALL_TRANSACTION + 69;
   explicit BnTestService();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnTestService
@@ -298,6 +300,12 @@ public:
   }
   ::android::binder::Status ReverseNullableIBinderArray(const ::std::optional<::std::vector<::android::sp<::android::IBinder>>>& input, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* repeated, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* _aidl_return) override {
     return _aidl_delegate->ReverseNullableIBinderArray(input, repeated, _aidl_return);
+  }
+  ::android::binder::Status RepeatSimpleParcelable(const ::android::aidl::tests::SimpleParcelable& input, ::android::aidl::tests::SimpleParcelable* repeat, ::android::aidl::tests::SimpleParcelable* _aidl_return) override {
+    return _aidl_delegate->RepeatSimpleParcelable(input, repeat, _aidl_return);
+  }
+  ::android::binder::Status ReverseSimpleParcelables(const ::std::vector<::android::aidl::tests::SimpleParcelable>& input, ::std::vector<::android::aidl::tests::SimpleParcelable>* repeated, ::std::vector<::android::aidl::tests::SimpleParcelable>* _aidl_return) override {
+    return _aidl_delegate->ReverseSimpleParcelables(input, repeated, _aidl_return);
   }
   ::android::binder::Status GetOldNameInterface(::android::sp<::android::aidl::tests::IOldName>* _aidl_return) override {
     auto _status = _aidl_delegate->GetOldNameInterface(_aidl_return);
