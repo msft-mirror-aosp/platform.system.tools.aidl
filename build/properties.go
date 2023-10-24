@@ -67,6 +67,7 @@ type ccProperties struct {
 	Stl                       *string
 	Cpp_std                   *string
 	Cflags                    []string
+	Ldflags                   []string
 	Stem                      *string
 	Apex_available            []string
 	Min_sdk_version           *string
