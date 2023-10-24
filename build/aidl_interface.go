@@ -275,6 +275,11 @@ type CommonNativeBackendProperties struct {
 	// practical.
 	Cflags []string
 
+	// linker flags to forward to native compilation. This is expected
+	// to be more useful for AIDL compiler developers than being
+	// practical
+	Ldflags []string
+
 	// Whether to generate additional code for gathering information
 	// about the transactions.
 	// Default: false
