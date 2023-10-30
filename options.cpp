@@ -298,7 +298,9 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
       language_(default_lang) {
   std::vector<const char*> argv = warning_options_.Parse(argc, raw_argv, error_message_);
   if (!Ok()) return;
+
   argc = argv.size();
+  argv.push_back(nullptr);
 
   bool lang_option_found = false;
   optind = 0;
