@@ -16,8 +16,8 @@
 
 set -e
 
-if [ $# != 1 ]; then
-  echo "Usage: golden_test.sh [check|update]"
+if [ $# == 0 ]; then
+  echo "Usage: golden_test.sh [check|update] <input files>"
 fi
 
 function _golden_test() {
@@ -39,6 +39,11 @@ function _golden_test() {
   modules=(
     "aidl-test-interface-cpp-source"
     "aidl-test-interface-java-source"
+    "aidl-test-interface-ndk-source"
+    "aidl-test-interface-rust-source"
+    "aidl-test-extras-java-source"
+    "aidl-cpp-java-test-interface-cpp-source"
+    "aidl-cpp-java-test-interface-java-source"
     "aidl-test-versioned-interface-V1-cpp-source"
     "aidl-test-versioned-interface-V1-java-source"
     "aidl-test-versioned-interface-V1-ndk-source"
@@ -51,8 +56,6 @@ function _golden_test() {
     "aidl-test-versioned-interface-V3-java-source"
     "aidl-test-versioned-interface-V3-ndk-source"
     "aidl-test-versioned-interface-V3-rust-source"
-    "aidl-test-interface-ndk-source"
-    "aidl-test-interface-rust-source"
     "aidl_test_loggable_interface-cpp-source"
     "aidl_test_loggable_interface-java-source"
     "aidl_test_loggable_interface-ndk-source"
@@ -77,35 +80,63 @@ function _golden_test() {
   # environment variable.
   local override_unfrozen="$4"
   local root="$2"
+  local input_files=$5
   if [ "$update" = 1 ]; then
     if [ "$override_unfrozen" == true ]; then
       export AIDL_USE_UNFROZEN_OVERRIDE="$use_unfrozen"
     fi
+    # clean up intermediates before building these modules
+    for module in "${modules[@]}"; do
+      rm -rf "$root/out/soong/.intermediates/system/tools/aidl/$module/gen"
+    done
     "$root"/build/soong/soong_ui.bash --make-mode \
       $(for i in "${modules[@]}"; do
           echo "out/soong/.intermediates/system/tools/aidl/$i/timestamp"
         done) ; export AIDL_USE_UNFROZEN_OVERRIDE=
   fi
   local e=0
-  for module in "${modules[@]}"; do
-    local built="$root/out/soong/.intermediates/system/tools/aidl/$module/"
-    local module_path
-    if [ "$use_unfrozen" == "true" ]; then
-      module_path=$module
-    else
-      module_path="frozen/$module"
-    fi
+  if [ -z "$input_files" ]; then
+    for module in "${modules[@]}"; do
+      local built="$root/out/soong/.intermediates/system/tools/aidl/$module/"
+      local module_path
+      if [ "$use_unfrozen" == "true" ]; then
+        module_path=$module
+      else
+        module_path="frozen/$module"
+      fi
 
-    local golden="$root/system/tools/aidl/tests/golden_output/$module_path/"
+      local golden="$root/system/tools/aidl/tests/golden_output/$module_path/"
 
-    if [ "$update" = 1 ]; then
-      rm -rf "$golden"
-      mkdir -p "$golden"
-      cp -r "$built/gen" "$golden"
-    else
-      diff -rN "$built/gen" "$golden/gen" || e=1
-    fi
-  done
+      if [ "$update" = 1 ]; then
+        rm -rf "$golden"
+        mkdir -p "$golden"
+        cp -r "$built/gen" "$golden"
+      else
+        diff -rN "$built/gen" "$golden/gen" || e=1
+      fi
+    done
+  else
+    for file in $input_files; do
+      if [[ "$file" =~ ^system.* ]]; then
+        continue
+      fi
+      name=$(echo "$file" | sed -e "s/^out\/soong\/.intermediates\/system\/tools\/aidl\///")
+      if [ "$use_unfrozen" == "true" ]; then
+        module_path="$name"
+      else
+        module_path="frozen/$name"
+      fi
+      golden_file="system/tools/aidl/tests/golden_output/$module_path"
+      if [ "$update" = 1 ]; then
+        # We don't get header files in the build hook's $in, and we want them in
+        # the golden_output, so run this script manually.
+        echo update does not support multiple files as arguments.
+        exit 1
+      else
+        diff -N --unified=0 "$file" "$golden_file" || e=1
+      fi
+    done
+  fi
 
   if [ "$e" = 1 ]; then
     echo "ERROR: The AIDL compiler is outputting files in an unknown way."
@@ -129,16 +160,20 @@ else
   use_unfrozen=true
 fi
 
-if [ "$1" == "update" ]; then
+action=$1
+# we only want the input files in $@
+shift
+
+if [ "$action" == "update" ]; then
   if [ "$use_unfrozen" == "true" ]; then
     # build update the opposite value first, so we leave the intermediates
     # in the state of the tree
-    _golden_test "$@" "$root" "false" true
-    _golden_test "$@" "$root" "true" false
+    _golden_test "$action" "$root" "false" true
+    _golden_test "$action" "$root" "true" false
   else
-    _golden_test "$@" "$root" "true" true
-    _golden_test "$@" "$root" "false" false
+    _golden_test "$action" "$root" "true" true
+    _golden_test "$action" "$root" "false" false
   fi
 else
-_golden_test "$@" "$root" "$use_unfrozen"
+_golden_test "$action" "$root" "$use_unfrozen" false "$*"
 fi

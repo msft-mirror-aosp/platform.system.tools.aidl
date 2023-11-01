@@ -11,15 +11,15 @@ import (
 
 func runAidlInterfaceTestCase(t *testing.T, tc bp2build.Bp2buildTestCase) {
 	t.Helper()
-	bp2build.RunBp2BuildTestCaseExtraContext(
+	tc.ExtraFixturePreparer = android.FixtureModifyContext(func(ctx *android.TestContext) {
+		ctx.PreArchBp2BuildMutators(registerPreArchMutators)
+	})
+	bp2build.RunBp2BuildTestCase(
 		t,
 		func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 			ctx.RegisterModuleType("aidl_library", aidl_library.AidlLibraryFactory)
 			ctx.RegisterModuleType("cc_library_shared", cc.LibrarySharedFactory)
-		},
-		func(ctx *android.TestContext) {
-			ctx.PreArchBp2BuildMutators(registerPreArchMutators)
 		},
 		tc,
 	)
@@ -511,7 +511,6 @@ func TestAidlInterfaceWithCppBackend(t *testing.T) {
 		Blueprint: `
 			cc_library_shared {
 				name: "shared_dep",
-				bazel_module: {bp2build_available: false},
 			}
 			cc_library_shared {
 				name: "shared_stub_dep",
@@ -519,7 +518,6 @@ func TestAidlInterfaceWithCppBackend(t *testing.T) {
 				    symbol_file: "libnativewindow.map.txt",
 				    versions: ["29"],
 				},
-				bazel_module: {bp2build_available: false},
 			}
 			aidl_interface {
 				name: "aidl-interface1",
@@ -543,6 +541,7 @@ func TestAidlInterfaceWithCppBackend(t *testing.T) {
 					},
 				}
 			}`,
+		StubbedBuildDefinitions:    []string{"shared_dep", "shared_stub_dep"},
 		ExpectedHandcraftedModules: []string{"aidl-interface1_interface", "aidl-interface1-V1-cpp"},
 		ExpectedBazelTargets: []string{
 			bp2build.MakeBazelTargetNoRestrictions("aidl_interface", "aidl-interface1", bp2build.AttrNameToString{

@@ -275,6 +275,11 @@ type CommonNativeBackendProperties struct {
 	// practical.
 	Cflags []string
 
+	// linker flags to forward to native compilation. This is expected
+	// to be more useful for AIDL compiler developers than being
+	// practical
+	Ldflags []string
+
 	// Whether to generate additional code for gathering information
 	// about the transactions.
 	// Default: false
@@ -378,6 +383,8 @@ type aidlInterfaceProperties struct {
 		// When enabled, this creates a target called "<name>-java".
 		Java struct {
 			CommonBackendProperties
+			// Additional java libraries, for unstructured parcelables
+			Additional_libs []string
 			// Set to the version of the sdk to compile against
 			// Default: system_current
 			Sdk_version *string

@@ -316,9 +316,61 @@ cc_library_headers {
     ],
 }
 
-// TODO: switch to aidl-test-interface
-filegroup {
-    name: "libaidl-integration-test-files",
+cc_library {
+    name: "libsimpleparcelable",
+    export_include_dirs: [
+        ".",
+    ],
+    srcs: [
+        "tests/bad_parcelable.cpp",
+        "tests/simple_parcelable.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder",
+        "libutils",
+    ],
+}
+
+java_library {
+    name: "libsimpleparcelable_java",
+    srcs: [
+        "tests/java/src/android/aidl/tests/BadParcelable.java",
+        "tests/java/src/android/aidl/tests/SimpleParcelable.java",
+        "tests/java/src/android/aidl/tests/generic/Pair.java",
+    ],
+}
+
+cc_library {
+    name: "libsimpleparcelable_ndk",
+    export_include_dirs: [
+        ".",
+    ],
+    srcs: [
+        "tests/simple_parcelable_ndk.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+    ],
+}
+
+
+rust_library {
+    name: "libsimple_parcelable_rust",
+    crate_name: "simple_parcelable",
+    srcs: [
+        "tests/rust/simple_parcelable.rs",
+    ],
+    rustlibs: [
+        "libbinder_rs",
+    ],
+}
+
+aidl_interface {
+    name: "aidl-test-interface",
+    unstable: true,
+    flags: ["-Werror"],
     srcs: [
         "tests/android/aidl/tests/ArrayOfInterfaces.aidl",
         "tests/android/aidl/tests/BackendType.aidl",
@@ -348,27 +400,92 @@ filegroup {
         "tests/android/aidl/tests/nested/*.aidl",
         "tests/android/aidl/tests/unions/*.aidl",
     ],
-    path: "tests",
+    local_include_dir: "tests",
+    backend: {
+        cpp: {
+            additional_shared_libraries: [
+                "libsimpleparcelable",
+            ],
+        },
+        java: {
+            additional_libs: [
+                "libsimpleparcelable_java",
+            ],
+            platform_apis: true,
+        },
+        rust: {
+            enabled: true,
+            additional_rustlibs: [
+                "libsimple_parcelable_rust",
+            ],
+        },
+        ndk: {
+            apps_enabled: false,
+            additional_shared_libraries: [
+                "libsimpleparcelable_ndk",
+            ],
+        },
+    },
 }
 
-// TODO: switch to aidl-test-interface now that we can add library deps to aidl_interface
-filegroup {
-    name: "libaidl-integration-cpp-java-test-files",
+aidl_interface {
+    name: "aidl-cpp-java-test-interface",
+    unstable: true,
     srcs: [
         "tests/android/aidl/tests/BadParcelable.aidl",
         "tests/android/aidl/tests/ICppJavaTests.aidl",
-        "tests/android/aidl/tests/SimpleParcelable.aidl",
     ],
-    path: "tests",
+    local_include_dir: "tests",
+    include_dirs: [
+        "frameworks/native/aidl/binder",
+    ],
+    imports: ["aidl-test-interface"],
+    backend: {
+        cpp: {
+            additional_shared_libraries: ["libsimpleparcelable"],
+            enabled: true,
+        },
+        java: {
+            additional_libs: [
+                "libsimpleparcelable_java",
+            ],
+            platform_apis: true,
+            enabled: true,
+        },
+        rust: {
+            enabled: false,
+        },
+        ndk: {
+            enabled: false,
+        },
+    },
 }
 
-// TODO: switch to aidl-test-interface
-filegroup {
-    name: "libaidl-integration-permission-test-files",
+aidl_interface {
+    name: "aidl-test-interface-permission",
     srcs: [
         "tests/android/aidl/tests/permission/**/*.aidl",
     ],
-    path: "tests",
+    unstable: true,
+    flags: ["-Werror"],
+    include_dirs: [
+        "frameworks/base/core/java",
+    ],
+    local_include_dir: "tests",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            platform_apis: true,
+        },
+        rust: {
+            enabled: false,
+        },
+        ndk: {
+            enabled: false,
+        },
+    },
 }
 
 aidl_interface {
@@ -406,31 +523,14 @@ aidl_interface {
 
 }
 
-cc_library_static {
-    name: "libaidl-integration-test",
-    defaults: ["aidl_test_defaults"],
-    aidl: {
-        generate_traces: true,
-        export_aidl_headers: true,
-        local_include_dirs: ["tests"],
-        include_dirs: [
-            "frameworks/native/aidl/binder",
-        ],
-    },
-    srcs: [
-        ":libaidl-integration-test-files",
-        ":libaidl-integration-cpp-java-test-files",
-        "tests/bad_parcelable.cpp",
-        "tests/simple_parcelable.cpp",
-    ],
-}
-
 cc_test {
     name: "aidl_test_service",
     gtest: false,
     defaults: ["aidl_test_defaults"],
     static_libs: [
-        "libaidl-integration-test",
+        "aidl-test-interface-cpp",
+        "aidl-cpp-java-test-interface-cpp",
+        "libsimpleparcelable",
         "libcutils",
         // service uses the old version
         "aidl-test-versioned-interface-V1-cpp",
@@ -456,6 +556,7 @@ cc_test {
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
         "android.aidl.test.trunk-V2-ndk",
+        "libsimpleparcelable_ndk",
     ],
     srcs: ["tests/aidl_test_service_ndk.cpp"],
 }
@@ -464,7 +565,9 @@ cc_test {
     name: "aidl_test_client",
     defaults: ["aidl_test_defaults"],
     static_libs: [
-        "libaidl-integration-test",
+        "aidl-test-interface-cpp",
+        "aidl-cpp-java-test-interface-cpp",
+        "libsimpleparcelable",
         "libcutils",
         "libgmock",
         //  client uses the latest version
@@ -506,7 +609,9 @@ cc_test {
     name: "aidl_test_v1_client",
     defaults: ["aidl_test_defaults"],
     static_libs: [
-        "libaidl-integration-test",
+        "aidl-test-interface-cpp",
+        "aidl-cpp-java-test-interface-cpp",
+        "libsimpleparcelable",
         "libcutils",
         "libgmock",
         "android.aidl.test.trunk-V1-cpp",
@@ -534,6 +639,7 @@ cc_test {
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
         "android.aidl.test.trunk-V2-ndk",
+        "libsimpleparcelable_ndk",
     ],
     shared_libs: [
         "libbinder_ndk",
@@ -607,37 +713,21 @@ java_defaults {
         "aidl_test_unstable_parcelable-java",
         "aidl_test_vintf_parcelable-V1-java",
         "aidl-test-fixedsizearray-java",
+        "aidl-cpp-java-test-interface-java",
         // TODO: remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",
     ],
-    srcs: [
-        "tests/android/aidl/tests/*.aidl",
-        "tests/android/aidl/tests/generic/*.aidl",
-        "tests/android/aidl/tests/immutable/*.aidl",
-        "tests/android/aidl/tests/map/*.aidl",
-        "tests/android/aidl/tests/extension/*.aidl",
-        "tests/android/aidl/tests/nested/*.aidl",
-        "tests/android/aidl/tests/unions/*.aidl",
-        "tests/java/src/android/aidl/tests/BadParcelable.java",
-        "tests/java/src/android/aidl/tests/SimpleParcelable.java",
-        "tests/java/src/android/aidl/tests/generic/Pair.java",
-    ],
-    aidl: {
-        include_dirs: [
-            "system/tools/aidl/tests/",
-        ],
-        generate_traces: true,
-    },
 }
 
 java_test {
     name: "aidl_test_java_client",
     defaults: ["aidl_test_java_defaults"],
     static_libs: [
+        "aidl-test-extras-java",
         // client uses the new version
         "aidl-test-versioned-interface-V3-java",
-        "android.aidl.test.trunk-V2-java"
+        "android.aidl.test.trunk-V2-java",
     ],
     // tests are included in defaults
     srcs: [
@@ -667,7 +757,7 @@ java_test {
     static_libs: [
         // service uses the old version
         "aidl-test-versioned-interface-V1-java",
-        "android.aidl.test.trunk-V2-java"
+        "android.aidl.test.trunk-V2-java",
     ],
     srcs: [
         "tests/java/src/android/aidl/service/**/*.java",
@@ -790,17 +880,22 @@ genrule {
     // $TARGET_RELEASE is "next"
     product_variables: {
         release_aidl_use_unfrozen: {
-            cmd: "TARGET_RELEASE=trunk_staging $(location aidl-golden-test) check && " +
+            cmd: "TARGET_RELEASE=trunk_staging $(location aidl-golden-test) check $(in) && " +
                 "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
         },
     },
 
-    cmd: "TARGET_RELEASE=next $(location aidl-golden-test) check && " +
+    cmd: "TARGET_RELEASE=next $(location aidl-golden-test) check $(in) && " +
         "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
     srcs: [
         // warning: keep this list up to date with tests/golden_test.sh
         ":aidl-test-interface-cpp-source",
         ":aidl-test-interface-java-source",
+        ":aidl-test-interface-ndk-source",
+        ":aidl-test-interface-rust-source",
+        ":aidl-test-extras-java-source",
+        ":aidl-cpp-java-test-interface-cpp-source",
+        ":aidl-cpp-java-test-interface-java-source",
         ":aidl-test-versioned-interface-V1-cpp-source",
         ":aidl-test-versioned-interface-V1-java-source",
         ":aidl-test-versioned-interface-V1-ndk-source",
@@ -813,8 +908,6 @@ genrule {
         ":aidl-test-versioned-interface-V3-java-source",
         ":aidl-test-versioned-interface-V3-ndk-source",
         ":aidl-test-versioned-interface-V3-rust-source",
-        ":aidl-test-interface-ndk-source",
-        ":aidl-test-interface-rust-source",
         ":aidl_test_loggable_interface-cpp-source",
         ":aidl_test_loggable_interface-java-source",
         ":aidl_test_loggable_interface-ndk-source",
@@ -873,40 +966,24 @@ aidl_interface {
 }
 
 aidl_interface {
-    name: "aidl-test-interface",
+    name: "aidl-test-extras",
     unstable: true,
     flags: ["-Werror"],
-    srcs: [":libaidl-integration-test-files"],
-    local_include_dir: "tests",
-    backend: {
-        cpp: {
-        },
-        java: {
-            platform_apis: true,
-        },
-        rust: {
-            enabled: true,
-        },
-        ndk: {
-            apps_enabled: false,
-        },
-    },
-}
-
-aidl_interface {
-    name: "aidl-test-interface-permission",
-    unstable: true,
-    flags: ["-Werror"],
-    srcs: [":libaidl-integration-permission-test-files"],
-    include_dirs: [
-        "frameworks/base/core/java",
+    srcs: [
+        "tests/android/aidl/tests/generic/*.aidl",
+        "tests/android/aidl/tests/immutable/*.aidl",
+        "tests/android/aidl/tests/map/*.aidl",
     ],
     local_include_dir: "tests",
+    // Map is only valid for Java for now
     backend: {
         cpp: {
             enabled: false,
         },
         java: {
+            additional_libs: [
+                "libsimpleparcelable_java",
+            ],
             platform_apis: true,
         },
         rust: {
@@ -940,6 +1017,7 @@ rust_test {
         // for a few internal types like Parcel
         // and traits like Parcelable
         "libbinder_rs",
+        "libsimple_parcelable_rust",
     ],
     prefer_rlib: true,
     compile_multilib: "both",
@@ -966,6 +1044,7 @@ rust_test {
         "aidl-test-fixedsizearray-rust",
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
+        "libsimple_parcelable_rust",
     ],
     prefer_rlib: true,
     compile_multilib: "both",
@@ -993,6 +1072,7 @@ rust_test {
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
         "libbinder_tokio_rs",
+        "libsimple_parcelable_rust",
         "libtokio",
     ],
     proc_macros: ["libasync_trait"],
