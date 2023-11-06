@@ -759,7 +759,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   code_writer->Dedent();
   *code_writer << "}\n";
   *code_writer << "impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: "
-                  "Send + Sync {\n";
+                  "Send + Sync + 'static {\n";
   code_writer->Indent();
   *code_writer << "fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }\n";
   *code_writer
