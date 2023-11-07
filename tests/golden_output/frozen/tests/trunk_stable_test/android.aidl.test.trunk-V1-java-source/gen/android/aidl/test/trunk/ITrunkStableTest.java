@@ -324,6 +324,7 @@ public interface ITrunkStableTest extends android.os.IInterface
       return 16777214;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android$aidl$test$trunk$ITrunkStableTest".replace('$', '.');
   public android.aidl.test.trunk.ITrunkStableTest.MyParcelable repeatParcelable(android.aidl.test.trunk.ITrunkStableTest.MyParcelable input) throws android.os.RemoteException;
   public byte repeatEnum(byte input) throws android.os.RemoteException;
@@ -802,6 +803,7 @@ public interface ITrunkStableTest extends android.os.IInterface
         return 16777214;
       }
     }
+    /** @hide */
     public static final java.lang.String DESCRIPTOR = "android$aidl$test$trunk$ITrunkStableTest$IMyCallback".replace('$', '.');
     public android.aidl.test.trunk.ITrunkStableTest.MyParcelable repeatParcelable(android.aidl.test.trunk.ITrunkStableTest.MyParcelable input) throws android.os.RemoteException;
     public byte repeatEnum(byte input) throws android.os.RemoteException;
