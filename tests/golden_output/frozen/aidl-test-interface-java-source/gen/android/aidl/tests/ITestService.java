@@ -3643,6 +3643,7 @@ public interface ITestService extends android.os.IInterface
       return Stub.Proxy.sDefaultImpl;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService";
   // Test that constants are accessible
   /** extra doc comment */
@@ -4136,6 +4137,7 @@ public interface ITestService extends android.os.IInterface
           return 0;
         }
       }
+      /** @hide */
       public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService.CompilerChecks.Foo";
     }
     public static class HasDeprecated implements android.os.Parcelable
@@ -4448,6 +4450,7 @@ public interface ITestService extends android.os.IInterface
           return 0;
         }
       }
+      /** @hide */
       public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface";
       public void foo() throws android.os.RemoteException;
       public static class Nested implements android.os.Parcelable
@@ -4614,6 +4617,7 @@ public interface ITestService extends android.os.IInterface
             return 0;
           }
         }
+        /** @hide */
         public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface";
         public void foo() throws android.os.RemoteException;
       }

@@ -125,6 +125,7 @@ public interface INoPermission extends android.os.IInterface
       return 0;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.INoPermission";
   @android.annotation.RequiresNoPermission
   public void foo() throws android.os.RemoteException;
