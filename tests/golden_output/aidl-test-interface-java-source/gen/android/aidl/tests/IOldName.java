@@ -130,6 +130,7 @@ public interface IOldName extends android.os.IInterface
       return 0;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.IOldName";
   public java.lang.String RealName() throws android.os.RemoteException;
 }

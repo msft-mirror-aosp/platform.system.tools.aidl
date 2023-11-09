@@ -318,6 +318,7 @@ public interface IFooInterface extends android.os.IInterface
     static final int TRANSACTION_getInterfaceVersion = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16777214);
     static final int TRANSACTION_getInterfaceHash = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16777213);
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android$aidl$versioned$tests$IFooInterface".replace('$', '.');
   public void originalApi() throws android.os.RemoteException;
   public java.lang.String acceptUnionAndReturnString(android.aidl.versioned.tests.BazUnion u) throws android.os.RemoteException;
