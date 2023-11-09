@@ -432,6 +432,7 @@ public interface ICppJavaTests extends android.os.IInterface
       return 7;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ICppJavaTests";
   public android.aidl.tests.BadParcelable RepeatBadParcelable(android.aidl.tests.BadParcelable input) throws android.os.RemoteException;
   public android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> RepeatGenericParcelable(android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> input, android.aidl.tests.GenericStructuredParcelable<Integer,android.aidl.tests.StructuredParcelable,Integer> repeat) throws android.os.RemoteException;

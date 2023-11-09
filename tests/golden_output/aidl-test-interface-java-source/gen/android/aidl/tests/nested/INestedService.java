@@ -169,6 +169,7 @@ public interface INestedService extends android.os.IInterface
       return 1;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.nested.INestedService";
   public android.aidl.tests.nested.INestedService.Result flipStatus(android.aidl.tests.nested.ParcelableWithNested p) throws android.os.RemoteException;
   public void flipStatusWithCallback(byte status, android.aidl.tests.nested.INestedService.ICallback cb) throws android.os.RemoteException;
@@ -344,6 +345,7 @@ public interface INestedService extends android.os.IInterface
         return 0;
       }
     }
+    /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.tests.nested.INestedService.ICallback";
     public void done(byte status) throws android.os.RemoteException;
   }
