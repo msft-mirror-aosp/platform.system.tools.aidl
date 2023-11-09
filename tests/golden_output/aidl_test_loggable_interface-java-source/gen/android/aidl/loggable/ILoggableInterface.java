@@ -218,6 +218,7 @@ public interface ILoggableInterface extends android.os.IInterface
       return 0;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.loggable.ILoggableInterface";
   public java.lang.String[] LogThis(boolean boolValue, boolean[] boolArray, byte byteValue, byte[] byteArray, char charValue, char[] charArray, int intValue, int[] intArray, long longValue, long[] longArray, float floatValue, float[] floatArray, double doubleValue, double[] doubleArray, java.lang.String stringValue, java.lang.String[] stringArray, java.util.List<java.lang.String> listValue, android.aidl.loggable.Data dataValue, android.os.IBinder binderValue, android.os.ParcelFileDescriptor pfdValue, android.os.ParcelFileDescriptor[] pfdArray) throws android.os.RemoteException;
   public interface ISub extends android.os.IInterface
@@ -346,6 +347,7 @@ public interface ILoggableInterface extends android.os.IInterface
         return 0;
       }
     }
+    /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.loggable.ILoggableInterface.ISub";
     public void Log(int value) throws android.os.RemoteException;
   }

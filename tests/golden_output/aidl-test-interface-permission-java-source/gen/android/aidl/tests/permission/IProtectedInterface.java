@@ -172,6 +172,7 @@ public interface IProtectedInterface extends android.os.IInterface
       return 1;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.IProtectedInterface";
   @android.annotation.EnforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
   public void Method1() throws android.os.RemoteException;

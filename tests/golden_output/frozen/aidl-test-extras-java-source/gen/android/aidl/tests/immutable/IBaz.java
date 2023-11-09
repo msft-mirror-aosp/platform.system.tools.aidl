@@ -134,6 +134,7 @@ public interface IBaz extends android.os.IInterface
       return 0;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.immutable.IBaz";
   public android.aidl.tests.immutable.Foo RepeatFoo(android.aidl.tests.immutable.Foo a) throws android.os.RemoteException;
 }

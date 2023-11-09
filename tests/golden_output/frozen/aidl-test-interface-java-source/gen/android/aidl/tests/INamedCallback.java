@@ -130,6 +130,7 @@ public interface INamedCallback extends android.os.IInterface
       return 0;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.INamedCallback";
   public java.lang.String GetName() throws android.os.RemoteException;
 }
