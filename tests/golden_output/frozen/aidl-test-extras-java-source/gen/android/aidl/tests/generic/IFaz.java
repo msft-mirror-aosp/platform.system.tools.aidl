@@ -196,6 +196,7 @@ public interface IFaz extends android.os.IInterface
       return 2;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.generic.IFaz";
   public android.aidl.tests.generic.Pair<Integer,java.lang.String> getPair() throws android.os.RemoteException;
   public android.aidl.tests.generic.Pair<android.aidl.tests.generic.Baz,android.aidl.tests.generic.Baz> getPair2() throws android.os.RemoteException;

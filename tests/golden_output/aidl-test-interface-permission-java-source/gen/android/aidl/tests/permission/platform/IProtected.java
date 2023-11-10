@@ -145,6 +145,7 @@ public interface IProtected extends android.os.IInterface
       return 0;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.platform.IProtected";
   @android.annotation.EnforcePermission(allOf = {android.Manifest.permission.INTERNET, android.Manifest.permission.VIBRATE})
   public void ProtectedWithSourceAttribution(android.content.AttributionSource source) throws android.os.RemoteException;
