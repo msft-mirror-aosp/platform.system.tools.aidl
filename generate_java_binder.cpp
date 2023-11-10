@@ -1091,6 +1091,7 @@ static void GenerateInterfaceDescriptors(const Options& options, const AidlInter
   }
   auto descriptor = std::make_shared<Field>(
       STATIC | FINAL | PUBLIC, std::make_shared<Variable>("java.lang.String", "DESCRIPTOR"));
+  descriptor->comment = "/** @hide */";
   std::string name = iface->GetDescriptor();
 
   // TODO(b/242862858): avoid differentiating behahavior. This is currently blocked
