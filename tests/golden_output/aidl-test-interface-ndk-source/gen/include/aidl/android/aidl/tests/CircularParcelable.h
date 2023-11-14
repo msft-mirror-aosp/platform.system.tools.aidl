@@ -55,11 +55,11 @@ public:
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "CircularParcelable{";
-    os << "testService: " << ::android::internal::ToString(testService);
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "CircularParcelable{";
+    _aidl_os << "testService: " << ::android::internal::ToString(testService);
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };
 }  // namespace tests

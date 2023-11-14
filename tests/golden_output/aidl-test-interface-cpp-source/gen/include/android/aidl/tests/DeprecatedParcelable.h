@@ -41,10 +41,10 @@ public:
     return DESCRIPTOR;
   }
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "DeprecatedParcelable{";
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "DeprecatedParcelable{";
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };  // class DeprecatedParcelable
 }  // namespace tests
