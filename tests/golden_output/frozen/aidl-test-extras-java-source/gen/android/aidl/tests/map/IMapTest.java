@@ -809,6 +809,7 @@ public interface IMapTest extends android.os.IInterface
       return 7;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.map.IMapTest";
   public java.util.Map<java.lang.String,int[]> repeatIntEnumArrayMap(java.util.Map<java.lang.String,int[]> input, java.util.Map<java.lang.String,int[]> output) throws android.os.RemoteException;
   public java.util.Map<java.lang.String,int[]> repeatIntArrayMap(java.util.Map<java.lang.String,int[]> input, java.util.Map<java.lang.String,int[]> output) throws android.os.RemoteException;

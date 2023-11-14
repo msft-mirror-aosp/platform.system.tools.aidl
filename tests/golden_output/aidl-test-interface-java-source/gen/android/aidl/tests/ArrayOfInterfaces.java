@@ -134,6 +134,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         return 0;
       }
     }
+    /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ArrayOfInterfaces.IEmptyInterface";
   }
   public interface IMyInterface extends android.os.IInterface
@@ -306,6 +307,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         return 0;
       }
     }
+    /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ArrayOfInterfaces.IMyInterface";
     public android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] methodWithInterfaces(android.aidl.tests.ArrayOfInterfaces.IEmptyInterface iface, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface nullable_iface, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] iface_array_in, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] iface_array_out, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] iface_array_inout, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] nullable_iface_array_in, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] nullable_iface_array_out, android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] nullable_iface_array_inout) throws android.os.RemoteException;
   }
