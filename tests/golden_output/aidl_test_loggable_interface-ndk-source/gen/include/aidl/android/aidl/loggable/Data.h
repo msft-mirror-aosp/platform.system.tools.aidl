@@ -56,14 +56,14 @@ public:
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "Data{";
-    os << "num: " << ::android::internal::ToString(num);
-    os << ", str: " << ::android::internal::ToString(str);
-    os << ", nestedUnion: " << ::android::internal::ToString(nestedUnion);
-    os << ", nestedEnum: " << ::android::internal::ToString(nestedEnum);
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "Data{";
+    _aidl_os << "num: " << ::android::internal::ToString(num);
+    _aidl_os << ", str: " << ::android::internal::ToString(str);
+    _aidl_os << ", nestedUnion: " << ::android::internal::ToString(nestedUnion);
+    _aidl_os << ", nestedEnum: " << ::android::internal::ToString(nestedEnum);
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };
 }  // namespace loggable
