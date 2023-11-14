@@ -51,10 +51,10 @@ public:
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "Foo{";
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "Foo{";
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };
 }  // namespace tests
