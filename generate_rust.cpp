@@ -1055,11 +1055,11 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlStructuredParcelab
     } else {
       out << "self.r#" << variable->GetName() << " = subparcel.read()?;\n";
     }
-    out.Dedent();
     if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out.Dedent();
       out << "}\n";
     }
+    out.Dedent();
     out << "}\n";
   }
   out << "Ok(())\n";
