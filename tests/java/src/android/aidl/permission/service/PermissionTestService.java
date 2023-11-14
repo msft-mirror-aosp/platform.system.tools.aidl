@@ -57,7 +57,7 @@ public class PermissionTestService extends IProtected.Stub {
   }
 
   @Override
-  @EnforcePermission("android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK")
+  @EnforcePermission("android.permission.MAINLINE_NETWORK_STACK")
   public void NonManifestPermission() {
     NonManifestPermission_enforcePermission();
   }
