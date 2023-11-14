@@ -77,33 +77,33 @@ public:
     return DESCRIPTOR;
   }
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "ParcelableForToString{";
-    os << "intValue: " << ::android::internal::ToString(intValue);
-    os << ", intArray: " << ::android::internal::ToString(intArray);
-    os << ", longValue: " << ::android::internal::ToString(longValue);
-    os << ", longArray: " << ::android::internal::ToString(longArray);
-    os << ", doubleValue: " << ::android::internal::ToString(doubleValue);
-    os << ", doubleArray: " << ::android::internal::ToString(doubleArray);
-    os << ", floatValue: " << ::android::internal::ToString(floatValue);
-    os << ", floatArray: " << ::android::internal::ToString(floatArray);
-    os << ", byteValue: " << ::android::internal::ToString(byteValue);
-    os << ", byteArray: " << ::android::internal::ToString(byteArray);
-    os << ", booleanValue: " << ::android::internal::ToString(booleanValue);
-    os << ", booleanArray: " << ::android::internal::ToString(booleanArray);
-    os << ", stringValue: " << ::android::internal::ToString(stringValue);
-    os << ", stringArray: " << ::android::internal::ToString(stringArray);
-    os << ", stringList: " << ::android::internal::ToString(stringList);
-    os << ", parcelableValue: " << ::android::internal::ToString(parcelableValue);
-    os << ", parcelableArray: " << ::android::internal::ToString(parcelableArray);
-    os << ", enumValue: " << ::android::internal::ToString(enumValue);
-    os << ", enumArray: " << ::android::internal::ToString(enumArray);
-    os << ", nullArray: " << ::android::internal::ToString(nullArray);
-    os << ", nullList: " << ::android::internal::ToString(nullList);
-    os << ", parcelableGeneric: " << ::android::internal::ToString(parcelableGeneric);
-    os << ", unionValue: " << ::android::internal::ToString(unionValue);
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "ParcelableForToString{";
+    _aidl_os << "intValue: " << ::android::internal::ToString(intValue);
+    _aidl_os << ", intArray: " << ::android::internal::ToString(intArray);
+    _aidl_os << ", longValue: " << ::android::internal::ToString(longValue);
+    _aidl_os << ", longArray: " << ::android::internal::ToString(longArray);
+    _aidl_os << ", doubleValue: " << ::android::internal::ToString(doubleValue);
+    _aidl_os << ", doubleArray: " << ::android::internal::ToString(doubleArray);
+    _aidl_os << ", floatValue: " << ::android::internal::ToString(floatValue);
+    _aidl_os << ", floatArray: " << ::android::internal::ToString(floatArray);
+    _aidl_os << ", byteValue: " << ::android::internal::ToString(byteValue);
+    _aidl_os << ", byteArray: " << ::android::internal::ToString(byteArray);
+    _aidl_os << ", booleanValue: " << ::android::internal::ToString(booleanValue);
+    _aidl_os << ", booleanArray: " << ::android::internal::ToString(booleanArray);
+    _aidl_os << ", stringValue: " << ::android::internal::ToString(stringValue);
+    _aidl_os << ", stringArray: " << ::android::internal::ToString(stringArray);
+    _aidl_os << ", stringList: " << ::android::internal::ToString(stringList);
+    _aidl_os << ", parcelableValue: " << ::android::internal::ToString(parcelableValue);
+    _aidl_os << ", parcelableArray: " << ::android::internal::ToString(parcelableArray);
+    _aidl_os << ", enumValue: " << ::android::internal::ToString(enumValue);
+    _aidl_os << ", enumArray: " << ::android::internal::ToString(enumArray);
+    _aidl_os << ", nullArray: " << ::android::internal::ToString(nullArray);
+    _aidl_os << ", nullList: " << ::android::internal::ToString(nullList);
+    _aidl_os << ", parcelableGeneric: " << ::android::internal::ToString(parcelableGeneric);
+    _aidl_os << ", unionValue: " << ::android::internal::ToString(unionValue);
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };  // class ParcelableForToString
 }  // namespace tests

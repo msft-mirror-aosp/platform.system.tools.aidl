@@ -79,13 +79,13 @@ public:
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
     inline std::string toString() const {
-      std::ostringstream os;
-      os << "MyParcelable{";
-      os << "a: " << ::android::internal::ToString(a);
-      os << ", b: " << ::android::internal::ToString(b);
-      os << ", c: " << ::android::internal::ToString(c);
-      os << "}";
-      return os.str();
+      std::ostringstream _aidl_os;
+      _aidl_os << "MyParcelable{";
+      _aidl_os << "a: " << ::android::internal::ToString(a);
+      _aidl_os << ", b: " << ::android::internal::ToString(b);
+      _aidl_os << ", c: " << ::android::internal::ToString(c);
+      _aidl_os << "}";
+      return _aidl_os.str();
     }
   };
   enum class MyEnum : int8_t {
@@ -225,12 +225,12 @@ public:
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
     inline std::string toString() const {
-      std::ostringstream os;
-      os << "MyOtherParcelable{";
-      os << "a: " << ::android::internal::ToString(a);
-      os << ", b: " << ::android::internal::ToString(b);
-      os << "}";
-      return os.str();
+      std::ostringstream _aidl_os;
+      _aidl_os << "MyOtherParcelable{";
+      _aidl_os << "a: " << ::android::internal::ToString(a);
+      _aidl_os << ", b: " << ::android::internal::ToString(b);
+      _aidl_os << "}";
+      return _aidl_os.str();
     }
   };
   class IMyCallbackDelegator;

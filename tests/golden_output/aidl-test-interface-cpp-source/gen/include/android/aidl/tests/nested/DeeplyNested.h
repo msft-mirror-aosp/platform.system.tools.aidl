@@ -56,10 +56,10 @@ public:
           return DESCRIPTOR;
         }
         inline std::string toString() const {
-          std::ostringstream os;
-          os << "D{";
-          os << "}";
-          return os.str();
+          std::ostringstream _aidl_os;
+          _aidl_os << "D{";
+          _aidl_os << "}";
+          return _aidl_os.str();
         }
       };  // class D
       inline bool operator!=(const C&) const {
@@ -88,10 +88,10 @@ public:
         return DESCRIPTOR;
       }
       inline std::string toString() const {
-        std::ostringstream os;
-        os << "C{";
-        os << "}";
-        return os.str();
+        std::ostringstream _aidl_os;
+        _aidl_os << "C{";
+        _aidl_os << "}";
+        return _aidl_os.str();
       }
     };  // class C
     inline bool operator!=(const B&) const {
@@ -120,10 +120,10 @@ public:
       return DESCRIPTOR;
     }
     inline std::string toString() const {
-      std::ostringstream os;
-      os << "B{";
-      os << "}";
-      return os.str();
+      std::ostringstream _aidl_os;
+      _aidl_os << "B{";
+      _aidl_os << "}";
+      return _aidl_os.str();
     }
   };  // class B
   class A : public ::android::Parcelable {
@@ -155,11 +155,11 @@ public:
       return DESCRIPTOR;
     }
     inline std::string toString() const {
-      std::ostringstream os;
-      os << "A{";
-      os << "e: " << ::android::internal::ToString(e);
-      os << "}";
-      return os.str();
+      std::ostringstream _aidl_os;
+      _aidl_os << "A{";
+      _aidl_os << "e: " << ::android::internal::ToString(e);
+      _aidl_os << "}";
+      return _aidl_os.str();
     }
   };  // class A
   inline bool operator!=(const DeeplyNested&) const {
@@ -188,10 +188,10 @@ public:
     return DESCRIPTOR;
   }
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "DeeplyNested{";
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "DeeplyNested{";
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };  // class DeeplyNested
 }  // namespace nested
