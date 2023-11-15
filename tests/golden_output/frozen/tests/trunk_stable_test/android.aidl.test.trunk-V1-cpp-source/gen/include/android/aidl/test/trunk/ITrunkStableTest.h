@@ -71,12 +71,12 @@ public:
       return DESCRIPTOR;
     }
     inline std::string toString() const {
-      std::ostringstream os;
-      os << "MyParcelable{";
-      os << "a: " << ::android::internal::ToString(a);
-      os << ", b: " << ::android::internal::ToString(b);
-      os << "}";
-      return os.str();
+      std::ostringstream _aidl_os;
+      _aidl_os << "MyParcelable{";
+      _aidl_os << "a: " << ::android::internal::ToString(a);
+      _aidl_os << ", b: " << ::android::internal::ToString(b);
+      _aidl_os << "}";
+      return _aidl_os.str();
     }
   };  // class MyParcelable
   enum class MyEnum : int8_t {

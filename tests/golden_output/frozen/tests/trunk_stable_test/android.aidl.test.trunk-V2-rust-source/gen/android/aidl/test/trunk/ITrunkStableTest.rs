@@ -535,7 +535,7 @@ pub mod r#MyParcelable {
         if (false) {
           if subparcel.has_more_data() {
             self.r#c = subparcel.read()?;
-        }
+          }
         }
         Ok(())
       })

@@ -411,31 +411,31 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
 
 // Output may look like:
 // inline std::string toString() const {
-//   std::ostringstream os;
-//   os << "MyData{";
-//   os << "field1: " << field1;
-//   os << ", field2: " << v.field2;
+//   std::ostringstream _aidl_os;
+//   _aidl_os << "MyData{";
+//   _aidl_os << "field1: " << field1;
+//   _aidl_os << ", field2: " << v.field2;
 //   ...
-//   os << "}";
-//   return os.str();
+//   _aidl_os << "}";
+//   return _aidl_os.str();
 // }
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable) {
   out << "inline std::string toString() const {\n";
   out.Indent();
-  out << "std::ostringstream os;\n";
-  out << "os << \"" << parcelable.GetName() << "{\";\n";
+  out << "std::ostringstream _aidl_os;\n";
+  out << "_aidl_os << \"" << parcelable.GetName() << "{\";\n";
   bool first = true;
   for (const auto& f : parcelable.GetFields()) {
     if (first) {
-      out << "os << \"";
+      out << "_aidl_os << \"";
       first = false;
     } else {
-      out << "os << \", ";
+      out << "_aidl_os << \", ";
     }
     out << f->GetName() << ": \" << ::android::internal::ToString(" << f->GetName() << ");\n";
   }
-  out << "os << \"}\";\n";
-  out << "return os.str();\n";
+  out << "_aidl_os << \"}\";\n";
+  out << "return _aidl_os.str();\n";
   out.Dedent();
   out << "}\n";
 }

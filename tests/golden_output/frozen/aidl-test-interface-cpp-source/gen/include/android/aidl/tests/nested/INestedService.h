@@ -59,11 +59,11 @@ public:
       return DESCRIPTOR;
     }
     inline std::string toString() const {
-      std::ostringstream os;
-      os << "Result{";
-      os << "status: " << ::android::internal::ToString(status);
-      os << "}";
-      return os.str();
+      std::ostringstream _aidl_os;
+      _aidl_os << "Result{";
+      _aidl_os << "status: " << ::android::internal::ToString(status);
+      _aidl_os << "}";
+      return _aidl_os.str();
     }
   };  // class Result
   class ICallbackDelegator;

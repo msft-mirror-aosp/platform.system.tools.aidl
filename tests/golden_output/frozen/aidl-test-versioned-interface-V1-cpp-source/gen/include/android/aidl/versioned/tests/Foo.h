@@ -42,10 +42,10 @@ public:
     return DESCRIPTOR;
   }
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "Foo{";
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "Foo{";
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };  // class Foo
 }  // namespace tests
