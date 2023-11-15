@@ -44,11 +44,11 @@ public:
     return DESCRIPTOR;
   }
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "Foo{";
-    os << "intDefault42: " << ::android::internal::ToString(intDefault42);
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "Foo{";
+    _aidl_os << "intDefault42: " << ::android::internal::ToString(intDefault42);
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };  // class Foo
 }  // namespace tests

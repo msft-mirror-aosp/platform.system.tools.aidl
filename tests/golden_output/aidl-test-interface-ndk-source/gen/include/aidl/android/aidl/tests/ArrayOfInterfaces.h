@@ -149,14 +149,14 @@ public:
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
     inline std::string toString() const {
-      std::ostringstream os;
-      os << "MyParcelable{";
-      os << "iface: " << ::android::internal::ToString(iface);
-      os << ", nullable_iface: " << ::android::internal::ToString(nullable_iface);
-      os << ", iface_array: " << ::android::internal::ToString(iface_array);
-      os << ", nullable_iface_array: " << ::android::internal::ToString(nullable_iface_array);
-      os << "}";
-      return os.str();
+      std::ostringstream _aidl_os;
+      _aidl_os << "MyParcelable{";
+      _aidl_os << "iface: " << ::android::internal::ToString(iface);
+      _aidl_os << ", nullable_iface: " << ::android::internal::ToString(nullable_iface);
+      _aidl_os << ", iface_array: " << ::android::internal::ToString(iface_array);
+      _aidl_os << ", nullable_iface_array: " << ::android::internal::ToString(nullable_iface_array);
+      _aidl_os << "}";
+      return _aidl_os.str();
     }
   };
   class MyUnion {
@@ -285,10 +285,10 @@ public:
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "ArrayOfInterfaces{";
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "ArrayOfInterfaces{";
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };
 }  // namespace tests
