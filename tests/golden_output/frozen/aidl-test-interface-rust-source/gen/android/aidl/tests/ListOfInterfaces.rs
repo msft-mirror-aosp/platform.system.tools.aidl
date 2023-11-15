@@ -72,7 +72,7 @@ pub mod r#IEmptyInterface {
       }
       impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
         fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
-        fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }
+        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
       }
       impl<T, R> IEmptyInterface for Wrapper<T, R>
       where
@@ -152,7 +152,7 @@ pub mod r#IMyInterface {
       }
       impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
         fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
-        fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }
+        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
       }
       impl<T, R> IMyInterface for Wrapper<T, R>
       where
