@@ -332,6 +332,7 @@ public interface IProtected extends android.os.IInterface
       return 6;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.IProtected";
   @android.annotation.EnforcePermission(android.Manifest.permission.READ_PHONE_STATE)
   public void PermissionProtected() throws android.os.RemoteException;

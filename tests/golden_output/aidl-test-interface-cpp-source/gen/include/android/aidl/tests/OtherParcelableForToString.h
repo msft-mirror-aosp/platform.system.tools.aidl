@@ -42,11 +42,11 @@ public:
     return DESCRIPTOR;
   }
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "OtherParcelableForToString{";
-    os << "field: " << ::android::internal::ToString(field);
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "OtherParcelableForToString{";
+    _aidl_os << "field: " << ::android::internal::ToString(field);
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };  // class OtherParcelableForToString
 }  // namespace tests

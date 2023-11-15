@@ -130,6 +130,7 @@ public interface ICircular extends android.os.IInterface
       return 0;
     }
   }
+  /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ICircular";
   public android.aidl.tests.ITestService GetTestService() throws android.os.RemoteException;
 }
