@@ -31,6 +31,7 @@ using android::sp;
 using android::status_t;
 using android::String16;
 using android::aidl::Analyzer;
+using android::base::unique_fd;
 using android::binder::debug::RecordedTransaction;
 using std::string;
 
@@ -48,8 +49,8 @@ status_t startRecording(const sp<IBinder>& binder, const string& filePath) {
   }
 
   int openFlags = O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC | O_BINARY;
-  android::base::unique_fd fd(open(filePath.c_str(), openFlags, 0666));
-  if (fd == -1) {
+  unique_fd fd(open(filePath.c_str(), openFlags, 0666));
+  if (!fd.ok()) {
     std::cout << "Failed to open file for recording with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
@@ -117,8 +118,8 @@ void printTransaction(const RecordedTransaction& transaction) {
 status_t inspectRecording(const string& path) {
   auto& analyzers = Analyzer::getAnalyzers();
 
-  android::base::unique_fd fd(open(path.c_str(), O_RDONLY));
-  if (fd.get() == -1) {
+  unique_fd fd(open(path.c_str(), O_RDONLY));
+  if (!fd.ok()) {
     std::cout << "Failed to open recording file with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
@@ -143,8 +144,8 @@ void incrementCtrlCCount(int signum) {
 }
 
 status_t listenToFile(const string& filePath) {
-  android::base::unique_fd listenFd(open(filePath.c_str(), O_RDONLY));
-  if (listenFd == -1) {
+  unique_fd listenFd(open(filePath.c_str(), O_RDONLY));
+  if (!listenFd.ok()) {
     std::cout << "Failed to open listening file with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
@@ -170,8 +171,8 @@ status_t listenToFile(const string& filePath) {
 status_t replayFile(const sp<IBinder>& binder, const string& path) {
   auto& analyzers = Analyzer::getAnalyzers();
 
-  android::base::unique_fd fd(open(path.c_str(), O_RDONLY));
-  if (fd.get() == -1) {
+  unique_fd fd(open(path.c_str(), O_RDONLY));
+  if (!fd.ok()) {
     std::cout << "Failed to open recording file with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
