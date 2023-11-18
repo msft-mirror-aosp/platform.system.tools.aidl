@@ -346,17 +346,11 @@ bool AidlUnaryConstExpression::IsCompatibleType(Type type, const string& op) {
 }
 
 bool AidlBinaryConstExpression::AreCompatibleTypes(Type t1, Type t2) {
+  if (t1 == t2) {
+    return true;
+  }
+
   switch (t1) {
-    case Type::ARRAY:
-      if (t2 == Type::ARRAY) {
-        return true;
-      }
-      break;
-    case Type::STRING:
-      if (t2 == Type::STRING) {
-        return true;
-      }
-      break;
     case Type::BOOLEAN:  // fall-through
     case Type::INT8:     // fall-through
     case Type::INT32:    // fall-through
