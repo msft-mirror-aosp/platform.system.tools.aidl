@@ -759,12 +759,13 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   code_writer->Dedent();
   *code_writer << "}\n";
   *code_writer << "impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: "
-                  "Send + Sync {\n";
+                  "Send + Sync + 'static {\n";
   code_writer->Indent();
   *code_writer << "fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }\n";
   *code_writer
-      << "fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> "
-         "std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }\n";
+      << "fn dump(&self, _writer: &mut dyn std::io::Write, _args: "
+         "&[&std::ffi::CStr]) -> "
+         "std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }\n";
   code_writer->Dedent();
   *code_writer << "}\n";
   *code_writer << "impl<T, R> " << trait_name << " for Wrapper<T, R>\n";
@@ -1055,11 +1056,11 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlStructuredParcelab
     } else {
       out << "self.r#" << variable->GetName() << " = subparcel.read()?;\n";
     }
-    out.Dedent();
     if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
       out.Dedent();
       out << "}\n";
     }
+    out.Dedent();
     out << "}\n";
   }
   out << "Ok(())\n";

@@ -1430,6 +1430,15 @@ TEST_F(AidlTest, AidlConstantValue_EvaluatedValue) {
   EXPECT_EQ(
       expected,
       Ptr(AidlConstantValue::Array(loc, std::move(values)))->EvaluatedValue<vector<string>>());
+
+  // evaluate array of floating
+  vector<float> testFloats({32.f, 14.f, 50.f});
+  auto testFloatValues = unique_ptr<vector<Ptr>>{new vector<Ptr>()};
+  testFloatValues->emplace_back(AidlConstantValue::Floating(loc, "32.f"));
+  testFloatValues->emplace_back(AidlConstantValue::Floating(loc, "14.f"));
+  testFloatValues->emplace_back(AidlConstantValue::Floating(loc, "50.f"));
+  EXPECT_EQ(testFloats, Ptr(AidlConstantValue::Array(loc, std::move(testFloatValues)))
+                            ->EvaluatedValue<vector<float>>());
 }
 
 TEST_F(AidlTest, AidlConstantCharacterDefault) {

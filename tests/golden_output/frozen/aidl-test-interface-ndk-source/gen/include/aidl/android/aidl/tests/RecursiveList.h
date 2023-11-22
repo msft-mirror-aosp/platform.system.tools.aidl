@@ -56,12 +56,12 @@ public:
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
   inline std::string toString() const {
-    std::ostringstream os;
-    os << "RecursiveList{";
-    os << "value: " << ::android::internal::ToString(value);
-    os << ", next: " << ::android::internal::ToString(next);
-    os << "}";
-    return os.str();
+    std::ostringstream _aidl_os;
+    _aidl_os << "RecursiveList{";
+    _aidl_os << "value: " << ::android::internal::ToString(value);
+    _aidl_os << ", next: " << ::android::internal::ToString(next);
+    _aidl_os << "}";
+    return _aidl_os.str();
   }
 };
 }  // namespace tests

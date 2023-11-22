@@ -62,7 +62,7 @@ use simple_parcelable::SimpleParcelable;
 
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::unix::io::FromRawFd;
+use std::os::fd::{FromRawFd, OwnedFd};
 use std::sync::{Arc, Mutex};
 
 fn get_test_service() -> binder::Strong<dyn ITestService::ITestService> {
@@ -371,7 +371,7 @@ fn test_interface_list_exchange() {
     );
 }
 
-fn build_pipe() -> (File, File) {
+fn build_pipe() -> (OwnedFd, OwnedFd) {
     // Safety: we get two file descriptors from pipe()
     // and pass them after checking if the function returned
     // without an error, so the descriptors should be valid
@@ -381,22 +381,31 @@ fn build_pipe() -> (File, File) {
         if libc::pipe(fds.as_mut_ptr()) != 0 {
             panic!("pipe() error");
         }
-        (File::from_raw_fd(fds[0]), File::from_raw_fd(fds[1]))
+        (OwnedFd::from_raw_fd(fds[0]), OwnedFd::from_raw_fd(fds[1]))
     }
+}
+
+/// Helper function that constructs a `File` from a `ParcelFileDescriptor`.
+///
+/// This is needed because `File` is currently the way to read and write
+/// to pipes using the `Read` and `Write` traits.
+fn file_from_pfd(fd: &binder::ParcelFileDescriptor) -> File {
+    fd.as_ref().try_clone().expect("failed to clone file descriptor").into()
 }
 
 #[test]
 fn test_parcel_file_descriptor() {
     let service = get_test_service();
-    let (mut read_file, write_file) = build_pipe();
+    let (read_fd, write_fd) = build_pipe();
+    let mut read_file = File::from(read_fd);
 
-    let write_pfd = binder::ParcelFileDescriptor::new(write_file);
+    let write_pfd = binder::ParcelFileDescriptor::new(write_fd);
     let result_pfd = service
         .RepeatParcelFileDescriptor(&write_pfd)
         .expect("error calling RepeatParcelFileDescriptor");
 
     const TEST_DATA: &[u8] = b"FrazzleSnazzleFlimFlamFlibbityGumboChops";
-    result_pfd.as_ref().write_all(TEST_DATA).expect("error writing to pipe");
+    file_from_pfd(&result_pfd).write_all(TEST_DATA).expect("error writing to pipe");
 
     let mut buf = [0u8; TEST_DATA.len()];
     read_file.read_exact(&mut buf).expect("error reading from pipe");
@@ -407,10 +416,10 @@ fn test_parcel_file_descriptor() {
 fn test_parcel_file_descriptor_array() {
     let service = get_test_service();
 
-    let (read_file, write_file) = build_pipe();
+    let (read_fd, write_fd) = build_pipe();
     let input = vec![
-        binder::ParcelFileDescriptor::new(read_file),
-        binder::ParcelFileDescriptor::new(write_file),
+        binder::ParcelFileDescriptor::new(read_fd),
+        binder::ParcelFileDescriptor::new(write_fd),
     ];
 
     let mut repeated = vec![];
@@ -427,18 +436,15 @@ fn test_parcel_file_descriptor_array() {
         .ReverseParcelFileDescriptorArray(&input[..], &mut repeated)
         .expect("error calling ReverseParcelFileDescriptorArray");
 
-    input[1].as_ref().write_all(b"First").expect("error writing to pipe");
-    repeated[1]
-        .as_mut()
-        .expect("received None for ParcelFileDescriptor")
-        .as_ref()
+    file_from_pfd(&input[1]).write_all(b"First").expect("error writing to pipe");
+    file_from_pfd(repeated[1].as_ref().expect("received None for ParcelFileDescriptor"))
         .write_all(b"Second")
         .expect("error writing to pipe");
-    result[0].as_ref().write_all(b"Third").expect("error writing to pipe");
+    file_from_pfd(&result[0]).write_all(b"Third").expect("error writing to pipe");
 
     const TEST_DATA: &[u8] = b"FirstSecondThird";
     let mut buf = [0u8; TEST_DATA.len()];
-    input[0].as_ref().read_exact(&mut buf).expect("error reading from pipe");
+    file_from_pfd(&input[0]).read_exact(&mut buf).expect("error reading from pipe");
     assert_eq!(&buf[..], TEST_DATA);
 }
 

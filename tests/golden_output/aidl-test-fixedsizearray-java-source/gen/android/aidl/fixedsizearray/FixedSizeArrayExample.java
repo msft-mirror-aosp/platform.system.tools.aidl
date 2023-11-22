@@ -722,6 +722,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
       static final int TRANSACTION_Repeat2dBinders = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
       static final int TRANSACTION_Repeat2dParcelables = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
     }
+    /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray";
     public byte[] RepeatBytes(byte[] input, byte[] repeated) throws android.os.RemoteException;
     public int[] RepeatInts(int[] input, int[] repeated) throws android.os.RemoteException;
@@ -870,6 +871,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
         }
       }
     }
+    /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.fixedsizearray.FixedSizeArrayExample.IEmptyInterface";
   }
 }
