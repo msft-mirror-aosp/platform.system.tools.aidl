@@ -704,6 +704,7 @@ class AidlConstantValue : public AidlNode {
   void DispatchVisit(AidlVisitor& visitor) const override { visitor.Visit(*this); }
   size_t Size() const { return values_.size(); }
   const AidlConstantValue& ValueAt(size_t index) const { return *values_.at(index); }
+  static string ToString(Type type);
 
  private:
   AidlConstantValue(const AidlLocation& location, Type parsed_type, int64_t parsed_value,
@@ -712,7 +713,6 @@ class AidlConstantValue : public AidlNode {
   AidlConstantValue(const AidlLocation& location, Type type,
                     std::unique_ptr<vector<unique_ptr<AidlConstantValue>>> values,
                     const std::string& value);
-  static string ToString(Type type);
   static bool ParseIntegral(const string& value, int64_t* parsed_value, Type* parsed_type);
   static bool IsHex(const string& value);
 
@@ -790,7 +790,9 @@ class AidlBinaryConstExpression : public AidlConstantValue {
 
   bool CheckValid() const override;
 
-  static bool AreCompatibleTypes(Type t1, Type t2);
+  static bool AreCompatibleOperandTypes(Type t1, Type t2);
+  static bool AreCompatibleArrayTypes(Type t1, Type t2);
+
   // Returns the promoted kind for both operands
   static Type UsualArithmeticConversion(Type left, Type right);
   // Returns the promoted integral type where INT32 is the smallest type
