@@ -120,7 +120,7 @@ function _golden_test() {
       if [[ "$file" =~ ^system.* ]]; then
         continue
       fi
-      name=$(echo "$file" | sed -e "s/^out\/soong\/.intermediates\/system\/tools\/aidl\///")
+      name=$(echo "$file" | sed -e "s@^.*/system/tools/aidl/@@")
       if [ "$use_unfrozen" == "true" ]; then
         module_path="$name"
       else
