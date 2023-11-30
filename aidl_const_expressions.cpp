@@ -345,12 +345,21 @@ bool AidlUnaryConstExpression::IsCompatibleType(Type type, const string& op) {
   }
 }
 
-bool AidlBinaryConstExpression::AreCompatibleTypes(Type t1, Type t2) {
-  if (t1 == t2) {
-    return true;
-  }
-
+bool AidlBinaryConstExpression::AreCompatibleOperandTypes(Type t1, Type t2) {
   switch (t1) {
+    case Type::ARRAY:
+      if (t2 == Type::ARRAY) {
+        return true;
+      }
+      break;
+    case Type::STRING:
+      if (t2 == Type::STRING) {
+        return true;
+      }
+      break;
+    case Type::FLOATING:
+      // TODO: b/313951203, check op for supported floating operands (+ - * / < > <= >= == !=)
+      return false;
     case Type::BOOLEAN:  // fall-through
     case Type::INT8:     // fall-through
     case Type::INT32:    // fall-through
@@ -373,10 +382,18 @@ bool AidlBinaryConstExpression::AreCompatibleTypes(Type t1, Type t2) {
   return false;
 }
 
+bool AidlBinaryConstExpression::AreCompatibleArrayTypes(Type t1, Type t2) {
+  // treat floating type differently here, because float array is supported but not operand
+  if (t1 == Type::FLOATING && t2 == Type::FLOATING) return true;
+
+  return AreCompatibleOperandTypes(t1, t2);
+}
+
 // Returns the promoted kind for both operands
 AidlConstantValue::Type AidlBinaryConstExpression::UsualArithmeticConversion(Type left,
                                                                              Type right) {
   // These are handled as special cases
+  // TODO: b/313951203, remove this after support string and floating operands
   AIDL_FATAL_IF(left == Type::STRING || right == Type::STRING, AIDL_LOCATION_HERE);
   AIDL_FATAL_IF(left == Type::FLOATING || right == Type::FLOATING, AIDL_LOCATION_HERE);
 
@@ -770,8 +787,8 @@ bool AidlConstantValue::evaluate() const {
           }
           if (array_type == Type::ERROR) {
             array_type = value->final_type_;
-          } else if (!AidlBinaryConstExpression::AreCompatibleTypes(array_type,
-                                                                    value->final_type_)) {
+          } else if (!AidlBinaryConstExpression::AreCompatibleArrayTypes(array_type,
+                                                                         value->final_type_)) {
             AIDL_ERROR(this) << "Incompatible array element type: " << ToString(value->final_type_)
                              << ". Expecting type compatible with " << ToString(array_type);
             success = false;
@@ -1033,7 +1050,7 @@ bool AidlBinaryConstExpression::evaluate() const {
     is_valid_ = false;
     return false;
   }
-  is_valid_ = AreCompatibleTypes(left_val_->final_type_, right_val_->final_type_);
+  is_valid_ = AreCompatibleOperandTypes(left_val_->final_type_, right_val_->final_type_);
   if (!is_valid_) {
     AIDL_ERROR(this) << "Cannot perform operation '" << op_ << "' on "
                      << ToString(right_val_->GetType()) << " and " << ToString(left_val_->GetType())
