@@ -25,6 +25,8 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -1439,6 +1441,47 @@ TEST_F(AidlTest, AidlConstantValue_EvaluatedValue) {
   testFloatValues->emplace_back(AidlConstantValue::Floating(loc, "50.f"));
   EXPECT_EQ(testFloats, Ptr(AidlConstantValue::Array(loc, std::move(testFloatValues)))
                             ->EvaluatedValue<vector<float>>());
+}
+
+// TODO: b/313951203 add floating/string operands test
+TEST_F(AidlTest, AidlBinaryConstExpression_CompatibleTypes) {
+  const AidlLocation& loc = AIDL_LOCATION_HERE;
+  static const std::unordered_map<AidlConstantValue::Type,
+                                  const std::unordered_set<AidlConstantValue::Type>>
+      compatibleTypesMap({{AidlConstantValue::Type::BOOLEAN,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::INT8,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::INT32,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::INT64,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::ARRAY, {AidlConstantValue::Type::ARRAY}},
+                          {AidlConstantValue::Type::STRING, {AidlConstantValue::Type::STRING}}});
+
+  // go over all possible combination
+  for (int l = 0; l <= (int)AidlConstantValue::Type::ERROR; ++l) {
+    for (int r = 0; r <= (int)AidlConstantValue::Type::ERROR; ++r) {
+      const AidlConstantValue::Type lType = static_cast<AidlConstantValue::Type>(l),
+                                    rType = static_cast<AidlConstantValue::Type>(r);
+      const auto typeItor = compatibleTypesMap.find(lType);
+      const bool isCompatibleOperandType = typeItor != compatibleTypesMap.end() &&
+                                           typeItor->second.find(rType) != typeItor->second.end();
+      const bool isCompatibleArrayType =
+          isCompatibleOperandType || (lType == AidlConstantValue::Type::FLOATING &&
+                                      rType == AidlConstantValue::Type::FLOATING);
+      EXPECT_EQ(isCompatibleOperandType,
+                AidlBinaryConstExpression::AreCompatibleOperandTypes(lType, rType))
+          << AidlConstantValue::ToString(lType) << ", " << AidlConstantValue::ToString(rType);
+      EXPECT_EQ(isCompatibleArrayType,
+                AidlBinaryConstExpression::AreCompatibleArrayTypes(lType, rType))
+          << AidlConstantValue::ToString(lType) << ", " << AidlConstantValue::ToString(rType);
+    }
+  }
 }
 
 TEST_F(AidlTest, AidlConstantCharacterDefault) {
