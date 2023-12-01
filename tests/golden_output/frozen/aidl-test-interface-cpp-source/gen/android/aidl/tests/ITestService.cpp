@@ -26,7 +26,6 @@ const ::std::string& ITestService::STRING_CONSTANT_UTF8() {
 #include <android/aidl/tests/BpTestService.h>
 #include <android/aidl/tests/BnTestService.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -53,7 +52,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_UnimplementedMethod, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->UnimplementedMethod(arg, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -88,7 +87,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_Deprecated, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->Deprecated();
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -119,7 +118,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_TestOneway, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_ONEWAY | ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->TestOneway();
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -147,7 +146,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatBoolean, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatBoolean(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -186,7 +185,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatByte, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatByte(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -225,7 +224,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatChar, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatChar(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -264,7 +263,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatInt, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatInt(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -303,7 +302,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatLong, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatLong(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -342,7 +341,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatFloat, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatFloat(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -381,7 +380,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatDouble, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatDouble(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -420,7 +419,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatString, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatString(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -459,7 +458,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatByteEnum, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatByteEnum(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -498,7 +497,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatIntEnum, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatIntEnum(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -537,7 +536,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatLongEnum, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatLongEnum(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -580,7 +579,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseBoolean, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseBoolean(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -627,7 +626,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseByte, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseByte(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -674,7 +673,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseChar, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseChar(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -721,7 +720,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseInt, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseInt(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -768,7 +767,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseLong, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseLong(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -815,7 +814,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseFloat, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseFloat(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -862,7 +861,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseDouble, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseDouble(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -909,7 +908,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseString, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseString(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -956,7 +955,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseByteEnum, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseByteEnum(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1003,7 +1002,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseIntEnum, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseIntEnum(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1050,7 +1049,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseLongEnum, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseLongEnum(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1093,7 +1092,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetOtherTestService, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetOtherTestService(name, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1136,7 +1135,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_SetOtherTestService, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->SetOtherTestService(name, service, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1179,7 +1178,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_VerifyName, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->VerifyName(service, name, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1218,7 +1217,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetInterfaceArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetInterfaceArray(names, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1261,7 +1260,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_VerifyNamesWithInterfaceArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->VerifyNamesWithInterfaceArray(services, names, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1300,7 +1299,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetNullableInterfaceArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetNullableInterfaceArray(names, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1343,7 +1342,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_VerifyNamesWithNullableInterfaceArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->VerifyNamesWithNullableInterfaceArray(services, names, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1382,7 +1381,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetInterfaceList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetInterfaceList(names, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1425,7 +1424,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_VerifyNamesWithInterfaceList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->VerifyNamesWithInterfaceList(services, names, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1464,7 +1463,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseStringList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseStringList(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1507,7 +1506,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatParcelFileDescriptor, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatParcelFileDescriptor(read, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1550,7 +1549,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseParcelFileDescriptorArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseParcelFileDescriptorArray(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1593,7 +1592,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ThrowServiceException, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ThrowServiceException(code);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1628,7 +1627,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableIntArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableIntArray(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1667,7 +1666,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableByteEnumArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableByteEnumArray(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1706,7 +1705,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableIntEnumArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableIntEnumArray(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1745,7 +1744,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableLongEnumArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableLongEnumArray(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1784,7 +1783,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableString, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableString(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1823,7 +1822,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableStringList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableStringList(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1862,7 +1861,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableParcelable, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableParcelable(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1901,7 +1900,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableParcelableArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableParcelableArray(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1940,7 +1939,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableParcelableList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableParcelableList(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1979,7 +1978,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_TakesAnIBinder, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->TakesAnIBinder(input);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2014,7 +2013,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_TakesANullableIBinder, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->TakesANullableIBinder(input);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2049,7 +2048,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_TakesAnIBinderList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->TakesAnIBinderList(input);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2084,7 +2083,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_TakesANullableIBinderList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->TakesANullableIBinderList(input);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2119,7 +2118,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatUtf8CppString, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatUtf8CppString(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2158,7 +2157,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatNullableUtf8CppString, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatNullableUtf8CppString(token, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2201,7 +2200,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseUtf8CppString, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseUtf8CppString(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2248,7 +2247,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseNullableUtf8CppString, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseNullableUtf8CppString(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2291,7 +2290,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseUtf8CppStringList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseUtf8CppStringList(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2334,7 +2333,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetCallback, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetCallback(return_null, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2373,7 +2372,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_FillOutStructuredParcelable, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->FillOutStructuredParcelable(parcel);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2412,7 +2411,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatExtendableParcelable, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatExtendableParcelable(ep, ep2);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2451,7 +2450,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseList, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseList(list, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2494,7 +2493,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseIBinderArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseIBinderArray(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2541,7 +2540,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseNullableIBinderArray, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseNullableIBinderArray(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2584,7 +2583,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatSimpleParcelable, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->RepeatSimpleParcelable(input, repeat, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2631,7 +2630,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_ReverseSimpleParcelables, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->ReverseSimpleParcelables(input, repeated, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2670,7 +2669,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetOldNameInterface, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetOldNameInterface(_aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2705,7 +2704,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetNewNameInterface, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetNewNameInterface(_aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2744,7 +2743,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetUnionTags, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetUnionTags(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2779,7 +2778,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetCppJavaTests, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetCppJavaTests(_aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2814,7 +2813,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_getBackendType, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->getBackendType(_aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -2849,7 +2848,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_GetCircular, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->GetCircular(cp, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -5472,7 +5471,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ITestService::CompilerChe
 #include <android/aidl/tests/ITestService.h>
 #include <android/aidl/tests/ITestService.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -5620,7 +5618,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ITestService::CompilerChe
 #include <android/aidl/tests/ITestService.h>
 #include <android/aidl/tests/ITestService.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -5642,7 +5639,7 @@ ITestService::CompilerChecks::BpNoPrefixInterface::BpNoPrefixInterface(const ::a
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITestService::CompilerChecks::BnNoPrefixInterface::TRANSACTION_foo, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INoPrefixInterface::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INoPrefixInterface::getDefaultImpl()) [[unlikely]] {
      return INoPrefixInterface::getDefaultImpl()->foo();
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -5755,7 +5752,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ITestService::CompilerChe
 #include <android/aidl/tests/ITestService.h>
 #include <android/aidl/tests/ITestService.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -5777,7 +5773,7 @@ ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::BpN
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::TRANSACTION_foo, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedNoPrefixInterface::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedNoPrefixInterface::getDefaultImpl()) [[unlikely]] {
      return INestedNoPrefixInterface::getDefaultImpl()->foo();
   }
   if (((_aidl_ret_status) != (::android::OK))) {
