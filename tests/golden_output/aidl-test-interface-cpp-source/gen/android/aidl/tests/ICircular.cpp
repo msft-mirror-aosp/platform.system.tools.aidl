@@ -14,7 +14,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(Circular, "android.aidl.tests.IC
 #include <android/aidl/tests/BpCircular.h>
 #include <android/aidl/tests/BnCircular.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -36,7 +35,7 @@ BpCircular::BpCircular(const ::android::sp<::android::IBinder>& _aidl_impl)
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCircular::TRANSACTION_GetTestService, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICircular::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICircular::getDefaultImpl()) [[unlikely]] {
      return ICircular::getDefaultImpl()->GetTestService(_aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
