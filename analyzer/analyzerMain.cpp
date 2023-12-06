@@ -37,8 +37,8 @@ using std::string;
 
 namespace {
 
-static volatile size_t gCtrlCCount = 0;
-static constexpr size_t kCtrlCLimit = 3;
+static std::atomic_uint gCtrlCCount = 0;
+static constexpr unsigned kCtrlCLimit = 3;
 static const char kStandardRecordingPath[] = "/data/local/recordings/";
 
 status_t startRecording(const sp<IBinder>& binder, const string& filePath) {
@@ -134,8 +134,7 @@ status_t inspectRecording(const string& path) {
 }
 
 void incrementCtrlCCount(int signum) {
-  gCtrlCCount++;
-  if (gCtrlCCount > kCtrlCLimit) {
+  if (++gCtrlCCount > kCtrlCLimit) {
     std::cout
         << "Ctrl+C multiple times, but could not quit application. If recording still running, you "
            "might stop it manually.\n";
