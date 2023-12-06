@@ -14,7 +14,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(LoggableInterface, "android.aidl
 #include <android/aidl/loggable/BpLoggableInterface.h>
 #include <android/aidl/loggable/BnLoggableInterface.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 #include <chrono>
 #include <functional>
 
@@ -149,7 +148,7 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnLoggableInterface::TRANSACTION_LogThis, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ILoggableInterface::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ILoggableInterface::getDefaultImpl()) [[unlikely]] {
      return ILoggableInterface::getDefaultImpl()->LogThis(boolValue, boolArray, byteValue, byteArray, charValue, charArray, intValue, intArray, longValue, longArray, floatValue, floatArray, doubleValue, doubleArray, stringValue, stringArray, listValue, dataValue, binderValue, pfdValue, pfdArray, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -514,7 +513,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ILoggableInterface, Sub, 
 #include <android/aidl/loggable/ILoggableInterface.h>
 #include <android/aidl/loggable/ILoggableInterface.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 #include <chrono>
 #include <functional>
 
@@ -549,7 +547,7 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ILoggableInterface::BnSub::TRANSACTION_Log, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ISub::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ISub::getDefaultImpl()) [[unlikely]] {
      return ISub::getDefaultImpl()->Log(value);
   }
   if (((_aidl_ret_status) != (::android::OK))) {

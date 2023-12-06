@@ -16,7 +16,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(NestedService, "android.aidl.tes
 #include <android/aidl/tests/nested/BpNestedService.h>
 #include <android/aidl/tests/nested/BnNestedService.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -43,7 +42,7 @@ BpNestedService::BpNestedService(const ::android::sp<::android::IBinder>& _aidl_
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnNestedService::TRANSACTION_flipStatus, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedService::getDefaultImpl()) [[unlikely]] {
      return INestedService::getDefaultImpl()->flipStatus(p, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -85,7 +84,7 @@ BpNestedService::BpNestedService(const ::android::sp<::android::IBinder>& _aidl_
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnNestedService::TRANSACTION_flipStatusWithCallback, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedService::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedService::getDefaultImpl()) [[unlikely]] {
      return INestedService::getDefaultImpl()->flipStatusWithCallback(status, cb);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -262,7 +261,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(INestedService, Callback,
 #include <android/aidl/tests/nested/INestedService.h>
 #include <android/aidl/tests/nested/INestedService.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -289,7 +287,7 @@ INestedService::BpCallback::BpCallback(const ::android::sp<::android::IBinder>& 
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(INestedService::BnCallback::TRANSACTION_done, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICallback::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICallback::getDefaultImpl()) [[unlikely]] {
      return ICallback::getDefaultImpl()->done(status);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
