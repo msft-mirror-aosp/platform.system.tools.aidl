@@ -353,7 +353,7 @@ void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable
     auto name = parcelable.GetName();
     auto max_tag = parcelable.GetFields().back()->GetName();
     auto min_tag = parcelable.GetFields().front()->GetName();
-    auto tmpl = R"--(static int _cmp(const {name}& _lhs, const {name}& _rhs) {{
+    constexpr auto tmpl = R"--(static int _cmp(const {name}& _lhs, const {name}& _rhs) {{
   return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<{max_tag}>(_lhs, _rhs);
 }}
 template <Tag _Tag>
@@ -576,7 +576,7 @@ void UnionWriter::PublicFields(CodeWriter& out) const {
       field_types.push_back(name_of(f->GetType(), typenames));
     }
     auto typelist = Join(field_types, ", ");
-    auto tmpl = R"--(
+    constexpr auto tmpl = R"--(
 template <Tag _Tag>
 using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<{typelist}>>::type;
 template <Tag _Tag, typename _Type>
@@ -612,7 +612,7 @@ void set(_Type&& _arg) {{
     const auto& default_value = name_of(first_field->GetType(), typenames) + "(" +
                                 first_field->ValueString(decorator) + ")";
 
-    auto tmpl = R"--(
+    constexpr auto tmpl = R"--(
 template<typename _Tp>
 static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, {name}>;
 
