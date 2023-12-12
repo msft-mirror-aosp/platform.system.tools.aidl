@@ -17,8 +17,6 @@ package aidl
 import (
 	"android/soong/android"
 	"android/soong/genrule"
-	"android/soong/ui/metrics/bp2build_metrics_proto"
-	"fmt"
 	"strconv"
 
 	"path/filepath"
@@ -98,7 +96,6 @@ type aidlGenProperties struct {
 
 type aidlGenRule struct {
 	android.ModuleBase
-	android.BazelModuleBase
 
 	properties aidlGenProperties
 
@@ -375,24 +372,9 @@ func (g *aidlGenRule) GeneratedHeaderDirs() android.Paths {
 func (g *aidlGenRule) DepsMutator(ctx android.BottomUpMutatorContext) {
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
-
-func (g *aidlGenRule) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
-	aidlLang := g.properties.Lang
-	switch aidlLang {
-	case langCpp, langNdk:
-		panic(fmt.Errorf("Conversion of %q is handled via macros in Bazel", ctx.ModuleName()))
-	case langJava:
-		// TODO: b/285574832 - re-enable Java backend
-		fallthrough
-	default:
-		ctx.MarkBp2buildUnconvertible(bp2build_metrics_proto.UnconvertedReasonType_PROPERTY_UNSUPPORTED, fmt.Sprintf("Lang: %q", aidlLang))
-	}
-}
-
 func aidlGenFactory() android.Module {
 	g := &aidlGenRule{}
 	g.AddProperties(&g.properties)
 	android.InitAndroidModule(g)
-	android.InitBazelModule(g)
 	return g
 }

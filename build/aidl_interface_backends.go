@@ -27,21 +27,21 @@ import (
 	"github.com/google/blueprint/proptools"
 )
 
-func addLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool, requireFrozenReason string, bp2build bool) string {
+func addLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool, requireFrozenReason string) string {
 	if lang == langJava {
-		return addJavaLibrary(mctx, i, version, notFrozen, requireFrozenReason, bp2build)
+		return addJavaLibrary(mctx, i, version, notFrozen, requireFrozenReason)
 	} else if lang == langRust {
 		return addRustLibrary(mctx, i, version, notFrozen, requireFrozenReason)
 	} else if lang == langCppAnalyzer {
 		return addCppAnalyzerLibrary(mctx, i, version, notFrozen, requireFrozenReason)
 	} else if lang == langCpp || lang == langNdk || lang == langNdkPlatform {
-		return addCppLibrary(mctx, i, version, lang, notFrozen, requireFrozenReason, bp2build)
+		return addCppLibrary(mctx, i, version, lang, notFrozen, requireFrozenReason)
 	} else {
 		panic(fmt.Errorf("unsupported language backend %q\n", lang))
 	}
 }
 
-func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool, requireFrozenReason string, bp2build bool) string {
+func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool, requireFrozenReason string) string {
 	cppSourceGen := i.versionedName(version) + "-" + lang + "-source"
 	cppModuleGen := i.versionedName(version) + "-" + lang
 
@@ -76,15 +76,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	genLog := proptools.Bool(commonProperties.Gen_log)
 	genTrace := i.genTrace(lang)
 
-	var cppGenLabel, cppLabel *string
-	var bp2buildAvailable *bool
-	if bp2build {
-		cppGenLabel = proptools.StringPtr(fmt.Sprintf("//%s:%s", mctx.ModuleDir(), cppSourceGen))
-		cppLabel = proptools.StringPtr(fmt.Sprintf("//%s:%s", mctx.ModuleDir(), cppModuleGen))
-	} else {
-		bp2buildAvailable = proptools.BoolPtr(false)
-	}
-
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
 	}, &aidlGenProperties{
@@ -104,12 +95,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
 	},
-		&bazelProperties{
-			&Bazel_module{
-				Label:              cppGenLabel,
-				Bp2build_available: bp2buildAvailable,
-			},
-		},
 	)
 
 	importExportDependencies := []string{}
@@ -222,17 +207,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
-			// the logic to create implementation libraries has been reimplemented
-			// in a Bazel macro, so these libraries should not be converted with
-			// bp2build
-			// TODO(b/237810289) perhaps do something different here so that we aren't
-			// also disabling these modules in mixed builds
-			&bazelProperties{
-				&Bazel_module{
-					Label:              cppLabel,
-					Bp2build_available: bp2buildAvailable,
-				},
-			},
 		},
 	})
 
@@ -316,12 +290,6 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
 				},
 			},
-			// TODO(b/237810289) disable converting -cpp-analyzer module in bp2build
-			&bazelProperties{
-				&Bazel_module{
-					Bp2build_available: proptools.BoolPtr(false),
-				},
-			},
 		},
 	}
 
@@ -329,7 +297,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	return cppAnalyzerModuleGen
 }
 
-func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool, requireFrozenReason string, bp2build bool) string {
+func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, notFrozen bool, requireFrozenReason string) string {
 	javaSourceGen := i.versionedName(version) + "-java-source"
 	javaModuleGen := i.versionedName(version) + "-java"
 	srcs, aidlRoot := i.srcsForVersion(mctx, version)
@@ -371,12 +339,6 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Flags:               i.flagsForAidlGenRule(version),
 	})
 
-	var javaLabel *string
-	// TODO: b/285574832 - re-enable Java backend
-	if false && bp2build {
-		javaLabel = proptools.StringPtr(fmt.Sprintf("//%s:%s", mctx.ModuleDir(), javaModuleGen))
-	}
-
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
 		Name: proptools.StringPtr(javaModuleGen + "-generator"),
 	}, &aidlImplementationGeneratorProperties{
@@ -397,16 +359,6 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 				Static_libs:     i.properties.Backend.Java.Additional_libs,
 			},
 			&i.properties.Backend.Java.LintProperties,
-			// the logic to create implementation libraries has been reimplemented
-			// in a Bazel macro, so these libraries should not be converted with
-			// bp2build
-			// TODO(b/237810289) perhaps do something different here so that we aren't
-			// also disabling these modules in mixed builds
-			&bazelProperties{
-				&Bazel_module{
-					Label: javaLabel,
-				},
-			},
 		},
 	})
 
