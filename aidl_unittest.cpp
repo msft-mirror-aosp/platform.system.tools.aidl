@@ -5701,7 +5701,7 @@ class AidlTypeParamTest
     io.SetFileContents("a/Enum.aidl", "package a; enum Enum { A }");
     io.SetFileContents("a/Union.aidl", "package a; union Union { int a; }");
     io.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { int a; }");
-    std::string decl = fmt::format(generic_type_decl, std::get<1>(param).literal);
+    std::string decl = fmt::format(fmt::runtime(generic_type_decl), std::get<1>(param).literal);
     if (nullable) {
       decl = "@nullable " + decl;
     }
