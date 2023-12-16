@@ -16,7 +16,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(TrunkStableTest, "android.aidl.t
 #include <android/aidl/test/trunk/BpTrunkStableTest.h>
 #include <android/aidl/test/trunk/BnTrunkStableTest.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 #include <chrono>
 #include <functional>
 
@@ -52,7 +51,7 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatParcelable, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
      return ITrunkStableTest::getDefaultImpl()->repeatParcelable(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -109,7 +108,7 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatEnum, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
      return ITrunkStableTest::getDefaultImpl()->repeatEnum(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -166,7 +165,7 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatUnion, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
      return ITrunkStableTest::getDefaultImpl()->repeatUnion(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -223,7 +222,7 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_callMyCallback, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
      return ITrunkStableTest::getDefaultImpl()->callMyCallback(cb);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -275,7 +274,7 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatOtherParcelable, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
      return ITrunkStableTest::getDefaultImpl()->repeatOtherParcelable(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -793,7 +792,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ITrunkStableTest, MyCallb
 #include <android/aidl/test/trunk/ITrunkStableTest.h>
 #include <android/aidl/test/trunk/ITrunkStableTest.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 #include <chrono>
 #include <functional>
 
@@ -829,7 +827,7 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatParcelable, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) [[unlikely]] {
      return IMyCallback::getDefaultImpl()->repeatParcelable(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -886,7 +884,7 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatEnum, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) [[unlikely]] {
      return IMyCallback::getDefaultImpl()->repeatEnum(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -943,7 +941,7 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatUnion, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) [[unlikely]] {
      return IMyCallback::getDefaultImpl()->repeatUnion(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -1000,7 +998,7 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatOtherParcelable, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) [[unlikely]] {
      return IMyCallback::getDefaultImpl()->repeatOtherParcelable(input, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {

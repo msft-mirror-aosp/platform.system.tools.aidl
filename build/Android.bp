@@ -29,7 +29,6 @@ bootstrap_go_package {
         "soong",
         "soong-android",
         "soong-aidl-library",
-        "soong-bp2build",
         "soong-cc",
         "soong-genrule",
         "soong-phony",
@@ -50,7 +49,6 @@ bootstrap_go_package {
     ],
     testSrcs: [
         "aidl_test.go",
-        "aidl_interface_bp2build_test.go",
     ],
     pluginFor: ["soong_build"],
 }
