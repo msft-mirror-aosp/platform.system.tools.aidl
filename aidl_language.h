@@ -717,6 +717,7 @@ class AidlConstantValue : public AidlNode {
   static bool IsHex(const string& value);
 
   virtual bool evaluate() const;
+  bool IsLiteral() const;
 
   const Type type_ = Type::ERROR;
   const vector<unique_ptr<AidlConstantValue>> values_;  // if type_ == ARRAY
