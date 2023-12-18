@@ -562,8 +562,18 @@ func (m *aidlApi) checkForDevelopment(ctx android.ModuleContext, latestVersionDu
 				hasDevCommand.
 					Text(fmt.Sprintf("2> /dev/null && %s && exit -1 || echo $? >", msg)).Output(hasDevPath)
 			} else {
-				hasDevCommand.
-					Text("2> /dev/null; echo $? >").Output(hasDevPath)
+				// if is explicitly frozen
+				if m.isFrozen() {
+					// Throw an error if checkapi returns WITH differences
+					msg := fmt.Sprintf("echo \"Interface %s can not be marked \\`frozen: true\\` because there are changes "+
+						"between the current version and the last frozen version.\"", m.properties.BaseName)
+					hasDevCommand.
+						Text(fmt.Sprintf("2> /dev/null || ( %s && exit -1) && echo 0 >", msg)).Output(hasDevPath)
+				} else {
+					hasDevCommand.
+						Text("2> /dev/null; echo $? >").Output(hasDevPath)
+				}
+
 			}
 		} else {
 			// We know there are different imports which means has_development must be true
