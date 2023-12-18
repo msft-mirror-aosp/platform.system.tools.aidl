@@ -392,7 +392,7 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
 			deps.implicits = append(deps.implicits, api.hasDevelopment)
 		case interfaceHeadersDepTag:
-			aidlLibraryInfo, ok := ctx.OtherModuleProvider(dep, aidl_library.AidlLibraryProvider).(aidl_library.AidlLibraryInfo)
+			aidlLibraryInfo, ok := android.OtherModuleProvider(ctx, dep, aidl_library.AidlLibraryProvider)
 			if !ok {
 				ctx.PropertyErrorf("headers", "module %v does not provide AidlLibraryInfo", dep.Name())
 				return

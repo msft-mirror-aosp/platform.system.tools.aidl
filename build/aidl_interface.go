@@ -107,7 +107,7 @@ type AidlVersionInfo struct {
 	sourceMap            map[string]string
 }
 
-var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AidlVersionInfo{}, "checkAidlGeneratedModules")
+var AidlVersionInfoProvider = blueprint.NewMutatorProvider[AidlVersionInfo]("checkAidlGeneratedModules")
 
 // Merges `other` version info into this one.
 // Returns the pair of mismatching versions when there's conflict. Otherwise returns nil.
@@ -176,7 +176,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 			notFrozen = []string{strings.TrimSuffix(mctx.ModuleName(), "-source")}
 			requireFrozenReasons = []string{gen.properties.RequireFrozenReason}
 		}
-		mctx.SetProvider(AidlVersionInfoProvider, AidlVersionInfo{
+		android.SetProvider(mctx, AidlVersionInfoProvider, AidlVersionInfo{
 			notFrozen:            notFrozen,
 			requireFrozenReasons: requireFrozenReasons,
 			sourceMap: map[string]string{
@@ -188,8 +188,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 	// Collect/merge AidlVersionInfos from direct dependencies
 	var info AidlVersionInfo
 	mctx.VisitDirectDeps(func(dep android.Module) {
-		if mctx.OtherModuleHasProvider(dep, AidlVersionInfoProvider) {
-			otherInfo := mctx.OtherModuleProvider(dep, AidlVersionInfoProvider).(AidlVersionInfo)
+		if otherInfo, ok := android.OtherModuleProvider(mctx, dep, AidlVersionInfoProvider); ok {
 			if violators := info.merge(otherInfo); violators != nil {
 				reportMultipleVersionError(mctx, violators)
 			}
@@ -202,7 +201,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 		return
 	}
 	if info.sourceMap != nil || len(info.notFrozen) > 0 {
-		mctx.SetProvider(AidlVersionInfoProvider, info)
+		android.SetProvider(mctx, AidlVersionInfoProvider, info)
 	}
 }
 
