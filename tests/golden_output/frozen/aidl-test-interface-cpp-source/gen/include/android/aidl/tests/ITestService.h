@@ -68,23 +68,23 @@ public:
   DECLARE_META_INTERFACE(TestService)
   class Empty : public ::android::Parcelable {
   public:
-    inline bool operator!=(const Empty&) const {
-      return std::tie() != std::tie();
+    inline bool operator==(const Empty&) const {
+      return std::tie() == std::tie();
     }
     inline bool operator<(const Empty&) const {
       return std::tie() < std::tie();
     }
-    inline bool operator<=(const Empty&) const {
-      return std::tie() <= std::tie();
+    inline bool operator!=(const Empty& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const Empty&) const {
-      return std::tie() == std::tie();
+    inline bool operator>(const Empty& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const Empty&) const {
-      return std::tie() > std::tie();
+    inline bool operator>=(const Empty& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const Empty&) const {
-      return std::tie() >= std::tie();
+    inline bool operator<=(const Empty& _rhs) const {
+      return !(_rhs < *this);
     }
 
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
@@ -140,23 +140,23 @@ public:
     class HasDeprecated : public ::android::Parcelable {
     public:
       int32_t __attribute__((deprecated("field"))) deprecated = 0;
-      inline bool operator!=(const HasDeprecated& rhs) const {
-        return std::tie(deprecated) != std::tie(rhs.deprecated);
+      inline bool operator==(const HasDeprecated& _rhs) const {
+        return std::tie(deprecated) == std::tie(_rhs.deprecated);
       }
-      inline bool operator<(const HasDeprecated& rhs) const {
-        return std::tie(deprecated) < std::tie(rhs.deprecated);
+      inline bool operator<(const HasDeprecated& _rhs) const {
+        return std::tie(deprecated) < std::tie(_rhs.deprecated);
       }
-      inline bool operator<=(const HasDeprecated& rhs) const {
-        return std::tie(deprecated) <= std::tie(rhs.deprecated);
+      inline bool operator!=(const HasDeprecated& _rhs) const {
+        return !(*this == _rhs);
       }
-      inline bool operator==(const HasDeprecated& rhs) const {
-        return std::tie(deprecated) == std::tie(rhs.deprecated);
+      inline bool operator>(const HasDeprecated& _rhs) const {
+        return _rhs < *this;
       }
-      inline bool operator>(const HasDeprecated& rhs) const {
-        return std::tie(deprecated) > std::tie(rhs.deprecated);
+      inline bool operator>=(const HasDeprecated& _rhs) const {
+        return !(*this < _rhs);
       }
-      inline bool operator>=(const HasDeprecated& rhs) const {
-        return std::tie(deprecated) >= std::tie(rhs.deprecated);
+      inline bool operator<=(const HasDeprecated& _rhs) const {
+        return !(_rhs < *this);
       }
 
       ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
@@ -229,23 +229,23 @@ public:
         _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
       }
 
-      inline bool operator!=(const UsingHasDeprecated& rhs) const {
-        return _value != rhs._value;
+      inline bool operator==(const UsingHasDeprecated& _rhs) const {
+        return _value == _rhs._value;
       }
-      inline bool operator<(const UsingHasDeprecated& rhs) const {
-        return _value < rhs._value;
+      inline bool operator<(const UsingHasDeprecated& _rhs) const {
+        return _value < _rhs._value;
       }
-      inline bool operator<=(const UsingHasDeprecated& rhs) const {
-        return _value <= rhs._value;
+      inline bool operator!=(const UsingHasDeprecated& _rhs) const {
+        return !(*this == _rhs);
       }
-      inline bool operator==(const UsingHasDeprecated& rhs) const {
-        return _value == rhs._value;
+      inline bool operator>(const UsingHasDeprecated& _rhs) const {
+        return _rhs < *this;
       }
-      inline bool operator>(const UsingHasDeprecated& rhs) const {
-        return _value > rhs._value;
+      inline bool operator>=(const UsingHasDeprecated& _rhs) const {
+        return !(*this < _rhs);
       }
-      inline bool operator>=(const UsingHasDeprecated& rhs) const {
-        return _value >= rhs._value;
+      inline bool operator<=(const UsingHasDeprecated& _rhs) const {
+        return !(_rhs < *this);
       }
 
       ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
@@ -275,23 +275,23 @@ public:
       DECLARE_META_INTERFACE(NoPrefixInterface)
       class Nested : public ::android::Parcelable {
       public:
-        inline bool operator!=(const Nested&) const {
-          return std::tie() != std::tie();
+        inline bool operator==(const Nested&) const {
+          return std::tie() == std::tie();
         }
         inline bool operator<(const Nested&) const {
           return std::tie() < std::tie();
         }
-        inline bool operator<=(const Nested&) const {
-          return std::tie() <= std::tie();
+        inline bool operator!=(const Nested& _rhs) const {
+          return !(*this == _rhs);
         }
-        inline bool operator==(const Nested&) const {
-          return std::tie() == std::tie();
+        inline bool operator>(const Nested& _rhs) const {
+          return _rhs < *this;
         }
-        inline bool operator>(const Nested&) const {
-          return std::tie() > std::tie();
+        inline bool operator>=(const Nested& _rhs) const {
+          return !(*this < _rhs);
         }
-        inline bool operator>=(const Nested&) const {
-          return std::tie() >= std::tie();
+        inline bool operator<=(const Nested& _rhs) const {
+          return !(_rhs < *this);
         }
 
         ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
@@ -403,23 +403,23 @@ public:
     ::std::optional<::std::vector<::std::optional<::android::aidl::tests::ITestService::Empty>>> nullable_parcel_array;
     ::std::vector<::android::aidl::tests::ITestService::Empty> parcel_list;
     ::std::optional<::std::vector<::std::optional<::android::aidl::tests::ITestService::Empty>>> nullable_parcel_list;
-    inline bool operator!=(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) != std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
+    inline bool operator==(const CompilerChecks& _rhs) const {
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) == std::tie(_rhs.binder, _rhs.nullable_binder, _rhs.binder_array, _rhs.nullable_binder_array, _rhs.binder_list, _rhs.nullable_binder_list, _rhs.pfd, _rhs.nullable_pfd, _rhs.pfd_array, _rhs.nullable_pfd_array, _rhs.pfd_list, _rhs.nullable_pfd_list, _rhs.parcel, _rhs.nullable_parcel, _rhs.parcel_array, _rhs.nullable_parcel_array, _rhs.parcel_list, _rhs.nullable_parcel_list);
     }
-    inline bool operator<(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) < std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
+    inline bool operator<(const CompilerChecks& _rhs) const {
+      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) < std::tie(_rhs.binder, _rhs.nullable_binder, _rhs.binder_array, _rhs.nullable_binder_array, _rhs.binder_list, _rhs.nullable_binder_list, _rhs.pfd, _rhs.nullable_pfd, _rhs.pfd_array, _rhs.nullable_pfd_array, _rhs.pfd_list, _rhs.nullable_pfd_list, _rhs.parcel, _rhs.nullable_parcel, _rhs.parcel_array, _rhs.nullable_parcel_array, _rhs.parcel_list, _rhs.nullable_parcel_list);
     }
-    inline bool operator<=(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) <= std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
+    inline bool operator!=(const CompilerChecks& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) == std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
+    inline bool operator>(const CompilerChecks& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) > std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
+    inline bool operator>=(const CompilerChecks& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const CompilerChecks& rhs) const {
-      return std::tie(binder, nullable_binder, binder_array, nullable_binder_array, binder_list, nullable_binder_list, pfd, nullable_pfd, pfd_array, nullable_pfd_array, pfd_list, nullable_pfd_list, parcel, nullable_parcel, parcel_array, nullable_parcel_array, parcel_list, nullable_parcel_list) >= std::tie(rhs.binder, rhs.nullable_binder, rhs.binder_array, rhs.nullable_binder_array, rhs.binder_list, rhs.nullable_binder_list, rhs.pfd, rhs.nullable_pfd, rhs.pfd_array, rhs.nullable_pfd_array, rhs.pfd_list, rhs.nullable_pfd_list, rhs.parcel, rhs.nullable_parcel, rhs.parcel_array, rhs.nullable_parcel_array, rhs.parcel_list, rhs.nullable_parcel_list);
+    inline bool operator<=(const CompilerChecks& _rhs) const {
+      return !(_rhs < *this);
     }
 
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
