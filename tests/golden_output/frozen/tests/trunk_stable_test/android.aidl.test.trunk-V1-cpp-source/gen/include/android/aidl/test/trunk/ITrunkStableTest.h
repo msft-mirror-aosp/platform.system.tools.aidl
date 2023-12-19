@@ -45,23 +45,23 @@ public:
   public:
     int32_t a = 0;
     int32_t b = 0;
-    inline bool operator!=(const MyParcelable& rhs) const {
-      return std::tie(a, b) != std::tie(rhs.a, rhs.b);
+    inline bool operator==(const MyParcelable& _rhs) const {
+      return std::tie(a, b) == std::tie(_rhs.a, _rhs.b);
     }
-    inline bool operator<(const MyParcelable& rhs) const {
-      return std::tie(a, b) < std::tie(rhs.a, rhs.b);
+    inline bool operator<(const MyParcelable& _rhs) const {
+      return std::tie(a, b) < std::tie(_rhs.a, _rhs.b);
     }
-    inline bool operator<=(const MyParcelable& rhs) const {
-      return std::tie(a, b) <= std::tie(rhs.a, rhs.b);
+    inline bool operator!=(const MyParcelable& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const MyParcelable& rhs) const {
-      return std::tie(a, b) == std::tie(rhs.a, rhs.b);
+    inline bool operator>(const MyParcelable& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const MyParcelable& rhs) const {
-      return std::tie(a, b) > std::tie(rhs.a, rhs.b);
+    inline bool operator>=(const MyParcelable& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const MyParcelable& rhs) const {
-      return std::tie(a, b) >= std::tie(rhs.a, rhs.b);
+    inline bool operator<=(const MyParcelable& _rhs) const {
+      return !(_rhs < *this);
     }
 
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
@@ -139,23 +139,23 @@ public:
       _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
     }
 
-    inline bool operator!=(const MyUnion& rhs) const {
-      return _value != rhs._value;
+    inline bool operator==(const MyUnion& _rhs) const {
+      return _value == _rhs._value;
     }
-    inline bool operator<(const MyUnion& rhs) const {
-      return _value < rhs._value;
+    inline bool operator<(const MyUnion& _rhs) const {
+      return _value < _rhs._value;
     }
-    inline bool operator<=(const MyUnion& rhs) const {
-      return _value <= rhs._value;
+    inline bool operator!=(const MyUnion& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const MyUnion& rhs) const {
-      return _value == rhs._value;
+    inline bool operator>(const MyUnion& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const MyUnion& rhs) const {
-      return _value > rhs._value;
+    inline bool operator>=(const MyUnion& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const MyUnion& rhs) const {
-      return _value >= rhs._value;
+    inline bool operator<=(const MyUnion& _rhs) const {
+      return !(_rhs < *this);
     }
 
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

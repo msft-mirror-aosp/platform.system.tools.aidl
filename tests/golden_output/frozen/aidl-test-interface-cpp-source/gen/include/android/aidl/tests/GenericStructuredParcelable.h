@@ -19,23 +19,23 @@ class GenericStructuredParcelable : public ::android::Parcelable {
 public:
   int32_t a = 0;
   int32_t b = 0;
-  inline bool operator!=(const GenericStructuredParcelable& rhs) const {
-    return std::tie(a, b) != std::tie(rhs.a, rhs.b);
+  inline bool operator==(const GenericStructuredParcelable& _rhs) const {
+    return std::tie(a, b) == std::tie(_rhs.a, _rhs.b);
   }
-  inline bool operator<(const GenericStructuredParcelable& rhs) const {
-    return std::tie(a, b) < std::tie(rhs.a, rhs.b);
+  inline bool operator<(const GenericStructuredParcelable& _rhs) const {
+    return std::tie(a, b) < std::tie(_rhs.a, _rhs.b);
   }
-  inline bool operator<=(const GenericStructuredParcelable& rhs) const {
-    return std::tie(a, b) <= std::tie(rhs.a, rhs.b);
+  inline bool operator!=(const GenericStructuredParcelable& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const GenericStructuredParcelable& rhs) const {
-    return std::tie(a, b) == std::tie(rhs.a, rhs.b);
+  inline bool operator>(const GenericStructuredParcelable& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const GenericStructuredParcelable& rhs) const {
-    return std::tie(a, b) > std::tie(rhs.a, rhs.b);
+  inline bool operator>=(const GenericStructuredParcelable& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const GenericStructuredParcelable& rhs) const {
-    return std::tie(a, b) >= std::tie(rhs.a, rhs.b);
+  inline bool operator<=(const GenericStructuredParcelable& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
