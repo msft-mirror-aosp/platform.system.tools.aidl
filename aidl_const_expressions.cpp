@@ -602,6 +602,8 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
     return "";
   }
 
+  std::vector<std::string> alternatives;
+
   const AidlDefinedType* defined_type = type.GetDefinedType();
   if (defined_type && final_type_ != Type::ARRAY) {
     const AidlEnumDeclaration* enum_type = defined_type->AsEnumDeclaration();
@@ -641,6 +643,10 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
       if (type_string == "byte") {
         if (final_value_ > INT8_MAX || final_value_ < INT8_MIN) {
           err = -1;
+
+          if (final_value_ >= 0 && final_value_ <= UINT8_MAX && IsLiteral()) {
+            alternatives.push_back(value_ + "u8");
+          }
           break;
         }
         return decorator(type, std::to_string(static_cast<int8_t>(final_value_)));
@@ -720,9 +726,14 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
       break;
   }
 
+  std::string alternative_help;
+  if (!alternatives.empty()) {
+    alternative_help = " Did you mean: " + Join(alternatives, ", ") + "?";
+  }
+
   AIDL_FATAL_IF(err == 0, this);
   AIDL_ERROR(this) << "Invalid type specifier for " << ToString(final_type_) << ": " << type_string
-                   << " (" << value_ << ")";
+                   << " (" << value_ << ")." << alternative_help;
   return "";
 }
 
@@ -835,6 +846,11 @@ bool AidlConstantValue::evaluate() const {
   }
 
   return (err == 0) ? true : false;
+}
+
+bool AidlConstantValue::IsLiteral() const {
+  return !AidlCast<AidlUnaryConstExpression>(*this) &&
+         !AidlCast<AidlBinaryConstExpression>(*this) && !AidlCast<AidlConstantReference>(*this);
 }
 
 string AidlConstantValue::ToString(Type type) {
