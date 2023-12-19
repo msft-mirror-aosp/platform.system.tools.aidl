@@ -80,23 +80,23 @@ public:
     _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
   }
 
-  inline bool operator!=(const BazUnion& rhs) const {
-    return _value != rhs._value;
+  inline bool operator==(const BazUnion& _rhs) const {
+    return _value == _rhs._value;
   }
-  inline bool operator<(const BazUnion& rhs) const {
-    return _value < rhs._value;
+  inline bool operator<(const BazUnion& _rhs) const {
+    return _value < _rhs._value;
   }
-  inline bool operator<=(const BazUnion& rhs) const {
-    return _value <= rhs._value;
+  inline bool operator!=(const BazUnion& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const BazUnion& rhs) const {
-    return _value == rhs._value;
+  inline bool operator>(const BazUnion& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const BazUnion& rhs) const {
-    return _value > rhs._value;
+  inline bool operator>=(const BazUnion& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const BazUnion& rhs) const {
-    return _value >= rhs._value;
+  inline bool operator<=(const BazUnion& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

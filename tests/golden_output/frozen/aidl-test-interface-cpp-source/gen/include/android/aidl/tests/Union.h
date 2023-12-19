@@ -92,23 +92,23 @@ public:
     _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
   }
 
-  inline bool operator!=(const Union& rhs) const {
-    return _value != rhs._value;
+  inline bool operator==(const Union& _rhs) const {
+    return _value == _rhs._value;
   }
-  inline bool operator<(const Union& rhs) const {
-    return _value < rhs._value;
+  inline bool operator<(const Union& _rhs) const {
+    return _value < _rhs._value;
   }
-  inline bool operator<=(const Union& rhs) const {
-    return _value <= rhs._value;
+  inline bool operator!=(const Union& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const Union& rhs) const {
-    return _value == rhs._value;
+  inline bool operator>(const Union& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const Union& rhs) const {
-    return _value > rhs._value;
+  inline bool operator>=(const Union& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const Union& rhs) const {
-    return _value >= rhs._value;
+  inline bool operator<=(const Union& _rhs) const {
+    return !(_rhs < *this);
   }
 
   static const ::std::string& S1();
