@@ -51,23 +51,23 @@ public:
   ::std::vector<::android::String16> nullList;
   ::android::aidl::tests::GenericStructuredParcelable<int32_t, ::android::aidl::tests::StructuredParcelable, ::android::aidl::tests::IntEnum> parcelableGeneric;
   ::android::aidl::tests::Union unionValue;
-  inline bool operator!=(const ParcelableForToString& rhs) const {
-    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) != std::tie(rhs.intValue, rhs.intArray, rhs.longValue, rhs.longArray, rhs.doubleValue, rhs.doubleArray, rhs.floatValue, rhs.floatArray, rhs.byteValue, rhs.byteArray, rhs.booleanValue, rhs.booleanArray, rhs.stringValue, rhs.stringArray, rhs.stringList, rhs.parcelableValue, rhs.parcelableArray, rhs.enumValue, rhs.enumArray, rhs.nullArray, rhs.nullList, rhs.parcelableGeneric, rhs.unionValue);
+  inline bool operator==(const ParcelableForToString& _rhs) const {
+    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) == std::tie(_rhs.intValue, _rhs.intArray, _rhs.longValue, _rhs.longArray, _rhs.doubleValue, _rhs.doubleArray, _rhs.floatValue, _rhs.floatArray, _rhs.byteValue, _rhs.byteArray, _rhs.booleanValue, _rhs.booleanArray, _rhs.stringValue, _rhs.stringArray, _rhs.stringList, _rhs.parcelableValue, _rhs.parcelableArray, _rhs.enumValue, _rhs.enumArray, _rhs.nullArray, _rhs.nullList, _rhs.parcelableGeneric, _rhs.unionValue);
   }
-  inline bool operator<(const ParcelableForToString& rhs) const {
-    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) < std::tie(rhs.intValue, rhs.intArray, rhs.longValue, rhs.longArray, rhs.doubleValue, rhs.doubleArray, rhs.floatValue, rhs.floatArray, rhs.byteValue, rhs.byteArray, rhs.booleanValue, rhs.booleanArray, rhs.stringValue, rhs.stringArray, rhs.stringList, rhs.parcelableValue, rhs.parcelableArray, rhs.enumValue, rhs.enumArray, rhs.nullArray, rhs.nullList, rhs.parcelableGeneric, rhs.unionValue);
+  inline bool operator<(const ParcelableForToString& _rhs) const {
+    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) < std::tie(_rhs.intValue, _rhs.intArray, _rhs.longValue, _rhs.longArray, _rhs.doubleValue, _rhs.doubleArray, _rhs.floatValue, _rhs.floatArray, _rhs.byteValue, _rhs.byteArray, _rhs.booleanValue, _rhs.booleanArray, _rhs.stringValue, _rhs.stringArray, _rhs.stringList, _rhs.parcelableValue, _rhs.parcelableArray, _rhs.enumValue, _rhs.enumArray, _rhs.nullArray, _rhs.nullList, _rhs.parcelableGeneric, _rhs.unionValue);
   }
-  inline bool operator<=(const ParcelableForToString& rhs) const {
-    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) <= std::tie(rhs.intValue, rhs.intArray, rhs.longValue, rhs.longArray, rhs.doubleValue, rhs.doubleArray, rhs.floatValue, rhs.floatArray, rhs.byteValue, rhs.byteArray, rhs.booleanValue, rhs.booleanArray, rhs.stringValue, rhs.stringArray, rhs.stringList, rhs.parcelableValue, rhs.parcelableArray, rhs.enumValue, rhs.enumArray, rhs.nullArray, rhs.nullList, rhs.parcelableGeneric, rhs.unionValue);
+  inline bool operator!=(const ParcelableForToString& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const ParcelableForToString& rhs) const {
-    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) == std::tie(rhs.intValue, rhs.intArray, rhs.longValue, rhs.longArray, rhs.doubleValue, rhs.doubleArray, rhs.floatValue, rhs.floatArray, rhs.byteValue, rhs.byteArray, rhs.booleanValue, rhs.booleanArray, rhs.stringValue, rhs.stringArray, rhs.stringList, rhs.parcelableValue, rhs.parcelableArray, rhs.enumValue, rhs.enumArray, rhs.nullArray, rhs.nullList, rhs.parcelableGeneric, rhs.unionValue);
+  inline bool operator>(const ParcelableForToString& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const ParcelableForToString& rhs) const {
-    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) > std::tie(rhs.intValue, rhs.intArray, rhs.longValue, rhs.longArray, rhs.doubleValue, rhs.doubleArray, rhs.floatValue, rhs.floatArray, rhs.byteValue, rhs.byteArray, rhs.booleanValue, rhs.booleanArray, rhs.stringValue, rhs.stringArray, rhs.stringList, rhs.parcelableValue, rhs.parcelableArray, rhs.enumValue, rhs.enumArray, rhs.nullArray, rhs.nullList, rhs.parcelableGeneric, rhs.unionValue);
+  inline bool operator>=(const ParcelableForToString& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const ParcelableForToString& rhs) const {
-    return std::tie(intValue, intArray, longValue, longArray, doubleValue, doubleArray, floatValue, floatArray, byteValue, byteArray, booleanValue, booleanArray, stringValue, stringArray, stringList, parcelableValue, parcelableArray, enumValue, enumArray, nullArray, nullList, parcelableGeneric, unionValue) >= std::tie(rhs.intValue, rhs.intArray, rhs.longValue, rhs.longArray, rhs.doubleValue, rhs.doubleArray, rhs.floatValue, rhs.floatArray, rhs.byteValue, rhs.byteArray, rhs.booleanValue, rhs.booleanArray, rhs.stringValue, rhs.stringArray, rhs.stringList, rhs.parcelableValue, rhs.parcelableArray, rhs.enumValue, rhs.enumArray, rhs.nullArray, rhs.nullList, rhs.parcelableGeneric, rhs.unionValue);
+  inline bool operator<=(const ParcelableForToString& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

@@ -399,13 +399,31 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
   };
 
   string lhs = comparable("");
-  string rhs = comparable("rhs.");
-  for (const auto& op : operators) {
+  string rhs = comparable("_rhs.");
+
+  // Delegate < and == to the fields.
+  for (const auto& op : {"==", "<"}) {
     out << "inline bool operator" << op << "(const " << parcelable.GetName() << "&"
-        << (is_empty ? "" : " rhs") << ") const {\n"
+        << (is_empty ? "" : " _rhs") << ") const {\n"
         << "  return " << lhs << " " << op << " " << rhs << ";\n"
         << "}\n";
   }
+  // Delegate other ops to < and == for *this, which lets a custom parcelable
+  // to be used with structured parcelables without implementation all operations.
+  out << fmt::format(R"--(inline bool operator!=(const {name}& _rhs) const {{
+  return !(*this == _rhs);
+}}
+inline bool operator>(const {name}& _rhs) const {{
+  return _rhs < *this;
+}}
+inline bool operator>=(const {name}& _rhs) const {{
+  return !(*this < _rhs);
+}}
+inline bool operator<=(const {name}& _rhs) const {{
+  return !(_rhs < *this);
+}}
+)--",
+                     fmt::arg("name", parcelable.GetName()));
   out << "\n";
 }
 

@@ -16,23 +16,23 @@ namespace versioned {
 namespace tests {
 class Foo : public ::android::Parcelable {
 public:
-  inline bool operator!=(const Foo&) const {
-    return std::tie() != std::tie();
+  inline bool operator==(const Foo&) const {
+    return std::tie() == std::tie();
   }
   inline bool operator<(const Foo&) const {
     return std::tie() < std::tie();
   }
-  inline bool operator<=(const Foo&) const {
-    return std::tie() <= std::tie();
+  inline bool operator!=(const Foo& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const Foo&) const {
-    return std::tie() == std::tie();
+  inline bool operator>(const Foo& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const Foo&) const {
-    return std::tie() > std::tie();
+  inline bool operator>=(const Foo& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const Foo&) const {
-    return std::tie() >= std::tie();
+  inline bool operator<=(const Foo& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
