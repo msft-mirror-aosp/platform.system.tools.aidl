@@ -92,23 +92,23 @@ public:
   binder_status_t readFromParcel(const AParcel* _parcel);
   binder_status_t writeToParcel(AParcel* _parcel) const;
 
-  inline bool operator!=(const UnionWithFd& rhs) const {
-    return _value != rhs._value;
+  inline bool operator==(const UnionWithFd& _rhs) const {
+    return _value == _rhs._value;
   }
-  inline bool operator<(const UnionWithFd& rhs) const {
-    return _value < rhs._value;
+  inline bool operator<(const UnionWithFd& _rhs) const {
+    return _value < _rhs._value;
   }
-  inline bool operator<=(const UnionWithFd& rhs) const {
-    return _value <= rhs._value;
+  inline bool operator!=(const UnionWithFd& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const UnionWithFd& rhs) const {
-    return _value == rhs._value;
+  inline bool operator>(const UnionWithFd& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const UnionWithFd& rhs) const {
-    return _value > rhs._value;
+  inline bool operator>=(const UnionWithFd& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const UnionWithFd& rhs) const {
-    return _value >= rhs._value;
+  inline bool operator<=(const UnionWithFd& _rhs) const {
+    return !(_rhs < *this);
   }
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;

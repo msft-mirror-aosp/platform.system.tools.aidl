@@ -25,23 +25,23 @@ public:
   int32_t a = 0;
   ::android::aidl::tests::extension::MyExt b;
   ::std::string c;
-  inline bool operator!=(const MyExt2& rhs) const {
-    return std::tie(a, b, c) != std::tie(rhs.a, rhs.b, rhs.c);
+  inline bool operator==(const MyExt2& _rhs) const {
+    return std::tie(a, b, c) == std::tie(_rhs.a, _rhs.b, _rhs.c);
   }
-  inline bool operator<(const MyExt2& rhs) const {
-    return std::tie(a, b, c) < std::tie(rhs.a, rhs.b, rhs.c);
+  inline bool operator<(const MyExt2& _rhs) const {
+    return std::tie(a, b, c) < std::tie(_rhs.a, _rhs.b, _rhs.c);
   }
-  inline bool operator<=(const MyExt2& rhs) const {
-    return std::tie(a, b, c) <= std::tie(rhs.a, rhs.b, rhs.c);
+  inline bool operator!=(const MyExt2& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const MyExt2& rhs) const {
-    return std::tie(a, b, c) == std::tie(rhs.a, rhs.b, rhs.c);
+  inline bool operator>(const MyExt2& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const MyExt2& rhs) const {
-    return std::tie(a, b, c) > std::tie(rhs.a, rhs.b, rhs.c);
+  inline bool operator>=(const MyExt2& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const MyExt2& rhs) const {
-    return std::tie(a, b, c) >= std::tie(rhs.a, rhs.b, rhs.c);
+  inline bool operator<=(const MyExt2& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

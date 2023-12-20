@@ -160,23 +160,23 @@ public:
     double doubleValue = 0.000000;
     ::android::aidl::tests::LongEnum enumValue = ::android::aidl::tests::LongEnum::FOO;
     ::android::aidl::tests::FixedSize::FixedUnion parcelableValue;
-    inline bool operator!=(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) != std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator==(const FixedParcelable& _rhs) const {
+      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) == std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
     }
-    inline bool operator<(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) < std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator<(const FixedParcelable& _rhs) const {
+      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) < std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
     }
-    inline bool operator<=(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) <= std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator!=(const FixedParcelable& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) == std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator>(const FixedParcelable& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) > std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator>=(const FixedParcelable& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) >= std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator<=(const FixedParcelable& _rhs) const {
+      return !(_rhs < *this);
     }
 
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
@@ -201,23 +201,23 @@ public:
       return _aidl_os.str();
     }
   };  // class FixedParcelable
-  inline bool operator!=(const FixedSize&) const {
-    return std::tie() != std::tie();
+  inline bool operator==(const FixedSize&) const {
+    return std::tie() == std::tie();
   }
   inline bool operator<(const FixedSize&) const {
     return std::tie() < std::tie();
   }
-  inline bool operator<=(const FixedSize&) const {
-    return std::tie() <= std::tie();
+  inline bool operator!=(const FixedSize& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const FixedSize&) const {
-    return std::tie() == std::tie();
+  inline bool operator>(const FixedSize& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const FixedSize&) const {
-    return std::tie() > std::tie();
+  inline bool operator>=(const FixedSize& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const FixedSize&) const {
-    return std::tie() >= std::tie();
+  inline bool operator<=(const FixedSize& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

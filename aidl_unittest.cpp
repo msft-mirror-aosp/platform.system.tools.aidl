@@ -1388,7 +1388,7 @@ TEST_F(AidlTest, CosntantValueType) {
 TEST_P(AidlTest, FailOnTooBigConstant) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/IFoo.aidl:3.48-52: Invalid type specifier for an int32 literal: byte (256)\n";
+      "ERROR: p/IFoo.aidl:3.48-52: Invalid type specifier for an int32 literal: byte (256).\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -1560,6 +1560,13 @@ TEST_P(AidlTest, FailOnMalformedQualifiedNameAsIdentifier) {
                            GetLanguage(), &error));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnAssigningByteSizeIntToByteWithHelp) {
+  EvaluateInvalidAssignment(
+      R"(package a; interface IFoo { const byte INT_VALUE = 0xFF; })",
+      "Invalid type specifier for an int32 literal: byte (0xFF). Did you mean: 0xFFu8?", typenames_,
+      GetLanguage());
 }
 
 TEST_P(AidlTest, FailOnAssigningDoubleInFloatConst) {
@@ -4412,7 +4419,8 @@ TEST_F(AidlOutputPathTest, NoOutDirWithNoOutputFile) {
 TEST_P(AidlTest, FailOnOutOfBoundsInt32MaxConstInt) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/IFoo.aidl:3.58-69: Invalid type specifier for an int64 literal: int (2147483650)\n";
+      "ERROR: p/IFoo.aidl:3.58-69: Invalid type specifier for an int64 literal: int "
+      "(2147483650).\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -4429,7 +4437,7 @@ TEST_P(AidlTest, FailOnOutOfBoundsInt32MinConstInt) {
   AidlError error;
   const string expected_stderr =
       "ERROR: p/IFoo.aidl:3.58-60: Invalid type specifier for an int64 literal: int "
-      "(-2147483650)\n";
+      "(-2147483650).\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -4477,7 +4485,7 @@ TEST_P(AidlTest, FailOnOutOfBoundsInt64MinConstInt) {
 TEST_P(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/TestEnum.aidl:5.1-36: Invalid type specifier for an int32 literal: byte (FOO+1)\n"
+      "ERROR: p/TestEnum.aidl:5.1-36: Invalid type specifier for an int32 literal: byte (FOO+1).\n"
       "ERROR: p/TestEnum.aidl:5.1-36: Enumerator type differs from enum backing type.\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/TestEnum.aidl",
@@ -5701,7 +5709,7 @@ class AidlTypeParamTest
     io.SetFileContents("a/Enum.aidl", "package a; enum Enum { A }");
     io.SetFileContents("a/Union.aidl", "package a; union Union { int a; }");
     io.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { int a; }");
-    std::string decl = fmt::format(generic_type_decl, std::get<1>(param).literal);
+    std::string decl = fmt::format(fmt::runtime(generic_type_decl), std::get<1>(param).literal);
     if (nullable) {
       decl = "@nullable " + decl;
     }

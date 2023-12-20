@@ -23,23 +23,23 @@ public:
   ::std::string str;
   ::android::aidl::loggable::Union nestedUnion;
   ::android::aidl::loggable::Enum nestedEnum = ::android::aidl::loggable::Enum::FOO;
-  inline bool operator!=(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) != std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator==(const Data& _rhs) const {
+    return std::tie(num, str, nestedUnion, nestedEnum) == std::tie(_rhs.num, _rhs.str, _rhs.nestedUnion, _rhs.nestedEnum);
   }
-  inline bool operator<(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) < std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator<(const Data& _rhs) const {
+    return std::tie(num, str, nestedUnion, nestedEnum) < std::tie(_rhs.num, _rhs.str, _rhs.nestedUnion, _rhs.nestedEnum);
   }
-  inline bool operator<=(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) <= std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator!=(const Data& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) == std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator>(const Data& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) > std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator>=(const Data& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) >= std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator<=(const Data& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
