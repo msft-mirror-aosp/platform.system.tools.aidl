@@ -30,23 +30,23 @@ public:
   binder_status_t readFromParcel(const AParcel* parcel);
   binder_status_t writeToParcel(AParcel* parcel) const;
 
-  inline bool operator!=(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) != std::tie(rhs.field);
+  inline bool operator==(const OtherParcelableForToString& _rhs) const {
+    return std::tie(field) == std::tie(_rhs.field);
   }
-  inline bool operator<(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) < std::tie(rhs.field);
+  inline bool operator<(const OtherParcelableForToString& _rhs) const {
+    return std::tie(field) < std::tie(_rhs.field);
   }
-  inline bool operator<=(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) <= std::tie(rhs.field);
+  inline bool operator!=(const OtherParcelableForToString& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) == std::tie(rhs.field);
+  inline bool operator>(const OtherParcelableForToString& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) > std::tie(rhs.field);
+  inline bool operator>=(const OtherParcelableForToString& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) >= std::tie(rhs.field);
+  inline bool operator<=(const OtherParcelableForToString& _rhs) const {
+    return !(_rhs < *this);
   }
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;

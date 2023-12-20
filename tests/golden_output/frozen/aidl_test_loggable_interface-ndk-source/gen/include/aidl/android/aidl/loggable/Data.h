@@ -35,23 +35,23 @@ public:
   binder_status_t readFromParcel(const AParcel* parcel);
   binder_status_t writeToParcel(AParcel* parcel) const;
 
-  inline bool operator!=(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) != std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator==(const Data& _rhs) const {
+    return std::tie(num, str, nestedUnion, nestedEnum) == std::tie(_rhs.num, _rhs.str, _rhs.nestedUnion, _rhs.nestedEnum);
   }
-  inline bool operator<(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) < std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator<(const Data& _rhs) const {
+    return std::tie(num, str, nestedUnion, nestedEnum) < std::tie(_rhs.num, _rhs.str, _rhs.nestedUnion, _rhs.nestedEnum);
   }
-  inline bool operator<=(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) <= std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator!=(const Data& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) == std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator>(const Data& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) > std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator>=(const Data& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const Data& rhs) const {
-    return std::tie(num, str, nestedUnion, nestedEnum) >= std::tie(rhs.num, rhs.str, rhs.nestedUnion, rhs.nestedEnum);
+  inline bool operator<=(const Data& _rhs) const {
+    return !(_rhs < *this);
   }
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;

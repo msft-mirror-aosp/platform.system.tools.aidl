@@ -23,23 +23,23 @@ class RecursiveList : public ::android::Parcelable {
 public:
   int32_t value = 0;
   ::std::unique_ptr<::android::aidl::tests::RecursiveList> next;
-  inline bool operator!=(const RecursiveList& rhs) const {
-    return std::tie(value, next) != std::tie(rhs.value, rhs.next);
+  inline bool operator==(const RecursiveList& _rhs) const {
+    return std::tie(value, next) == std::tie(_rhs.value, _rhs.next);
   }
-  inline bool operator<(const RecursiveList& rhs) const {
-    return std::tie(value, next) < std::tie(rhs.value, rhs.next);
+  inline bool operator<(const RecursiveList& _rhs) const {
+    return std::tie(value, next) < std::tie(_rhs.value, _rhs.next);
   }
-  inline bool operator<=(const RecursiveList& rhs) const {
-    return std::tie(value, next) <= std::tie(rhs.value, rhs.next);
+  inline bool operator!=(const RecursiveList& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const RecursiveList& rhs) const {
-    return std::tie(value, next) == std::tie(rhs.value, rhs.next);
+  inline bool operator>(const RecursiveList& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const RecursiveList& rhs) const {
-    return std::tie(value, next) > std::tie(rhs.value, rhs.next);
+  inline bool operator>=(const RecursiveList& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const RecursiveList& rhs) const {
-    return std::tie(value, next) >= std::tie(rhs.value, rhs.next);
+  inline bool operator<=(const RecursiveList& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
