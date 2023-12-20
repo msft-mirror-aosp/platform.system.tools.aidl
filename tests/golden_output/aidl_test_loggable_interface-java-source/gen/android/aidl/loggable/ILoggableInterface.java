@@ -21,6 +21,7 @@ public interface ILoggableInterface extends android.os.IInterface
   public static abstract class Stub extends android.os.Binder implements android.aidl.loggable.ILoggableInterface
   {
     /** Construct the stub at attach it to the interface. */
+    @SuppressWarnings("this-escape")
     public Stub()
     {
       this.attachInterface(this, DESCRIPTOR);
@@ -238,6 +239,7 @@ public interface ILoggableInterface extends android.os.IInterface
     public static abstract class Stub extends android.os.Binder implements android.aidl.loggable.ILoggableInterface.ISub
     {
       /** Construct the stub at attach it to the interface. */
+      @SuppressWarnings("this-escape")
       public Stub()
       {
         this.attachInterface(this, DESCRIPTOR);

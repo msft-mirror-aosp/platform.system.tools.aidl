@@ -49,6 +49,7 @@ public interface IMapTest extends android.os.IInterface
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.map.IMapTest
   {
     /** Construct the stub at attach it to the interface. */
+    @SuppressWarnings("this-escape")
     public Stub()
     {
       this.attachInterface(this, DESCRIPTOR);
