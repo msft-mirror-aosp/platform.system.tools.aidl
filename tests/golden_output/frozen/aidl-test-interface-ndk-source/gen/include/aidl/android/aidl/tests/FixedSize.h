@@ -178,23 +178,23 @@ public:
     binder_status_t readFromParcel(const AParcel* parcel);
     binder_status_t writeToParcel(AParcel* parcel) const;
 
-    inline bool operator!=(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) != std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator==(const FixedParcelable& _rhs) const {
+      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) == std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
     }
-    inline bool operator<(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) < std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator<(const FixedParcelable& _rhs) const {
+      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) < std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
     }
-    inline bool operator<=(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) <= std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator!=(const FixedParcelable& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) == std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator>(const FixedParcelable& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) > std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator>=(const FixedParcelable& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const FixedParcelable& rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) >= std::tie(rhs.booleanValue, rhs.byteValue, rhs.charValue, rhs.intValue, rhs.longValue, rhs.floatValue, rhs.doubleValue, rhs.enumValue, rhs.parcelableValue);
+    inline bool operator<=(const FixedParcelable& _rhs) const {
+      return !(_rhs < *this);
     }
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
@@ -218,23 +218,23 @@ public:
   binder_status_t readFromParcel(const AParcel* parcel);
   binder_status_t writeToParcel(AParcel* parcel) const;
 
-  inline bool operator!=(const FixedSize&) const {
-    return std::tie() != std::tie();
+  inline bool operator==(const FixedSize&) const {
+    return std::tie() == std::tie();
   }
   inline bool operator<(const FixedSize&) const {
     return std::tie() < std::tie();
   }
-  inline bool operator<=(const FixedSize&) const {
-    return std::tie() <= std::tie();
+  inline bool operator!=(const FixedSize& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const FixedSize&) const {
-    return std::tie() == std::tie();
+  inline bool operator>(const FixedSize& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const FixedSize&) const {
-    return std::tie() > std::tie();
+  inline bool operator>=(const FixedSize& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const FixedSize&) const {
-    return std::tie() >= std::tie();
+  inline bool operator<=(const FixedSize& _rhs) const {
+    return !(_rhs < *this);
   }
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;

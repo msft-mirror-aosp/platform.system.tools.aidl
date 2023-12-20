@@ -21,23 +21,23 @@ namespace tests {
 class CircularParcelable : public ::android::Parcelable {
 public:
   ::android::sp<::android::aidl::tests::ITestService> testService;
-  inline bool operator!=(const CircularParcelable& rhs) const {
-    return std::tie(testService) != std::tie(rhs.testService);
+  inline bool operator==(const CircularParcelable& _rhs) const {
+    return std::tie(testService) == std::tie(_rhs.testService);
   }
-  inline bool operator<(const CircularParcelable& rhs) const {
-    return std::tie(testService) < std::tie(rhs.testService);
+  inline bool operator<(const CircularParcelable& _rhs) const {
+    return std::tie(testService) < std::tie(_rhs.testService);
   }
-  inline bool operator<=(const CircularParcelable& rhs) const {
-    return std::tie(testService) <= std::tie(rhs.testService);
+  inline bool operator!=(const CircularParcelable& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const CircularParcelable& rhs) const {
-    return std::tie(testService) == std::tie(rhs.testService);
+  inline bool operator>(const CircularParcelable& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const CircularParcelable& rhs) const {
-    return std::tie(testService) > std::tie(rhs.testService);
+  inline bool operator>=(const CircularParcelable& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const CircularParcelable& rhs) const {
-    return std::tie(testService) >= std::tie(rhs.testService);
+  inline bool operator<=(const CircularParcelable& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
