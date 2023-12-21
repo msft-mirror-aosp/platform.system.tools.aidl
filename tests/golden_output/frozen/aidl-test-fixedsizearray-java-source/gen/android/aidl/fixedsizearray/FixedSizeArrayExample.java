@@ -399,6 +399,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
     public static abstract class Stub extends android.os.Binder implements android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray
     {
       /** Construct the stub at attach it to the interface. */
+      @SuppressWarnings("this-escape")
       public Stub()
       {
         this.attachInterface(this, DESCRIPTOR);
@@ -816,6 +817,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
     public static abstract class Stub extends android.os.Binder implements android.aidl.fixedsizearray.FixedSizeArrayExample.IEmptyInterface
     {
       /** Construct the stub at attach it to the interface. */
+      @SuppressWarnings("this-escape")
       public Stub()
       {
         this.attachInterface(this, DESCRIPTOR);
