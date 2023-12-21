@@ -52,6 +52,7 @@ public interface ITrunkStableTest extends android.os.IInterface
   public static abstract class Stub extends android.os.Binder implements android.aidl.test.trunk.ITrunkStableTest
   {
     /** Construct the stub at attach it to the interface. */
+    @SuppressWarnings("this-escape")
     public Stub()
     {
       this.attachInterface(this, DESCRIPTOR);
@@ -639,6 +640,7 @@ public interface ITrunkStableTest extends android.os.IInterface
     public static abstract class Stub extends android.os.Binder implements android.aidl.test.trunk.ITrunkStableTest.IMyCallback
     {
       /** Construct the stub at attach it to the interface. */
+      @SuppressWarnings("this-escape")
       public Stub()
       {
         this.attachInterface(this, DESCRIPTOR);

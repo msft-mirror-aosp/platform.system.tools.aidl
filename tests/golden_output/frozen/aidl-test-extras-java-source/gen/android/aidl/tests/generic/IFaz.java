@@ -29,6 +29,7 @@ public interface IFaz extends android.os.IInterface
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.generic.IFaz
   {
     /** Construct the stub at attach it to the interface. */
+    @SuppressWarnings("this-escape")
     public Stub()
     {
       this.attachInterface(this, DESCRIPTOR);
