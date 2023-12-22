@@ -58,6 +58,7 @@ public class ListOfInterfaces implements android.os.Parcelable
     public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ListOfInterfaces.IEmptyInterface
     {
       /** Construct the stub at attach it to the interface. */
+      @SuppressWarnings("this-escape")
       public Stub()
       {
         this.attachInterface(this, DESCRIPTOR);
@@ -155,6 +156,7 @@ public class ListOfInterfaces implements android.os.Parcelable
     public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ListOfInterfaces.IMyInterface
     {
       /** Construct the stub at attach it to the interface. */
+      @SuppressWarnings("this-escape")
       public Stub()
       {
         this.attachInterface(this, DESCRIPTOR);
