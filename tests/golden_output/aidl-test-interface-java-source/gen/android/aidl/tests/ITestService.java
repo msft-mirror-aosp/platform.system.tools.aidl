@@ -4,6 +4,9 @@
  */
 package android.aidl.tests;
 /** interface comment */
+/** interface comment 2 */
+// interface comment 3
+// interface comment 4
 public interface ITestService extends android.os.IInterface
 {
   /** Default implementation for ITestService. */
