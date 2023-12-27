@@ -104,7 +104,7 @@ impl Default for r#StructuredParcelable {
       r#empty: Default::default(),
       r#int8_1: vec![1, 1, 1, 1, 1],
       r#int32_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      r#int64_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      r#int64_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       r#hexInt32_pos_1: 1,
       r#hexInt64_pos_1: 1,
       r#const_exprs_1: Default::default(),
