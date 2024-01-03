@@ -1337,6 +1337,68 @@ TEST_P(AidlTest, FailOnDuplicateConstantNames) {
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
+TEST_P(AidlTest, FailOnDoubleUnderscore) {
+  AidlError error;
+  const string expected_stderr = "ERROR: p/IFoo.aidl:3.52-57: Could not parse integer: 1__0\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = 1__0;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnUnderscoreBeforeModifier) {
+  AidlError error;
+  const string expected_stderr = "ERROR: p/IFoo.aidl:3.52-59: Could not parse hexvalue: 0xFF_L\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = 0xFF_L;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnEndingUnderscore) {
+  AidlError error;
+  const string expected_stderr = "ERROR: p/IFoo.aidl:3.52-56: Could not parse integer: 10_\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = 10_;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnLeadingUnderscore) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.52-56: Can't find _10 in IFoo\nERROR: p/IFoo.aidl:3.52-56: Unknown "
+      "reference '_10'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = _10;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
 TEST_P(AidlTest, InvalidConstString) {
   AidlError error;
   const string expected_stderr =

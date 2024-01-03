@@ -103,7 +103,7 @@ public:
   ::aidl::android::aidl::tests::StructuredParcelable::Empty empty;
   std::vector<uint8_t> int8_1 = {1, 1, 1, 1, 1};
   std::vector<int32_t> int32_1 = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  std::vector<int64_t> int64_1 = {1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L};
+  std::vector<int64_t> int64_1 = {1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L};
   int32_t hexInt32_pos_1 = 1;
   int32_t hexInt64_pos_1 = 1;
   ::aidl::android::aidl::tests::ConstantExpressionEnum const_exprs_1 = ::aidl::android::aidl::tests::ConstantExpressionEnum(0);
