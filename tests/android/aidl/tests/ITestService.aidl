@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// package comment
 package android.aidl.tests;
 
 import android.aidl.tests.BackendType;
@@ -22,6 +23,7 @@ import android.aidl.tests.CircularParcelable;
 import android.aidl.tests.ICircular;
 import android.aidl.tests.INamedCallback;
 import android.aidl.tests.INewName;
+// import comment
 import android.aidl.tests.IOldName;
 import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
@@ -35,8 +37,13 @@ import android.aidl.tests.extension.ExtendableParcelable;
  * interface comment
  */
 @SuppressWarnings(value={"inout-parameter", "mixed-oneway", "out-array", "interface-name"})
+/**
+ * interface comment 2
+ */
 @SensitiveData
+// interface comment 3
 @JavaDefault
+// interface comment 4
 @JavaDelegator
 interface ITestService {
     // Test that constants are accessible
