@@ -2481,6 +2481,7 @@ TEST_F(AidlTest, ApiDump) {
                                "// comment\n"
                                "package foo.bar;\n"
                                "import foo.bar.IFoo;\n"
+                               "@JavaDerive(equals=true, toString=true)\n"
                                "/* @hide*/\n"
                                "parcelable Data {\n"
                                "   // @hide\n"
@@ -2523,6 +2524,7 @@ interface IFoo {
   EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Data.aidl", &actual));
   EXPECT_EQ(string("// comment\n").append(string(kPreamble)).append(R"(package foo.bar;
 /* @hide */
+@JavaDerive(equals=true, toString=true)
 parcelable Data {
   int x = 10;
   int y;
