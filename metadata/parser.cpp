@@ -57,6 +57,7 @@ int main(int argc, char** argv) {
     }
     std::cout << "}," << std::endl;
     std::cout << entry["has_development"].asString() << "," << std::endl;
+    std::cout << entry["use_unfrozen"].asString() << "," << std::endl;
     std::cout << "std::vector<size_t>{" << std::endl;
     for (const Json::Value& intf : entry["versions"]) {
       std::cout << intf.asString() << "," << std::endl;
