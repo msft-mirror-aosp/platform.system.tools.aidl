@@ -160,7 +160,9 @@ class AidlNode {
   virtual void DispatchVisit(AidlVisitor&) const = 0;
 
   const Comments& GetComments() const { return comments_; }
-  void SetComments(const Comments& comments) { comments_ = comments; }
+  void PrependComments(const Comments& comments) {
+    comments_.insert(comments_.begin(), comments.begin(), comments.end());
+  }
 
   static void ClearUnvisitedNodes();
   static const std::vector<AidlLocation>& GetLocationsOfUnvisitedNodes();
@@ -343,6 +345,13 @@ class AidlAnnotatable : public AidlCommentable {
   virtual ~AidlAnnotatable() = default;
 
   void Annotate(vector<std::unique_ptr<AidlAnnotation>>&& annotations) {
+    for (auto i = annotations.rbegin(); i != annotations.rend(); ++i) {
+      // TODO: we may want to mark all comments as "unoutputed"
+      // in the lexer phase, and then verify after successful backend
+      // output that every comment is "emitted". If we do this, we would
+      // need to move rather than copy the comments here.
+      PrependComments((*i)->GetComments());
+    }
     for (auto& annotation : annotations) {
       annotations_.emplace_back(std::move(annotation));
     }
@@ -892,6 +901,8 @@ class AidlMethod : public AidlMember {
   const std::string& GetName() const { return name_; }
   bool HasId() const { return has_id_; }
   int GetId() const { return id_; }
+
+  // TODO: Set is errorprone, what if it was set before?
   void SetId(unsigned id) { id_ = id; }
 
   const std::vector<std::unique_ptr<AidlArgument>>& GetArguments() const {
@@ -1133,6 +1144,7 @@ class AidlEnumerator : public AidlCommentable {
   string ValueString(const AidlTypeSpecifier& backing_type,
                      const ConstantValueDecorator& decorator) const;
 
+  // TODO: Set is errorprone. What if it was set before?
   void SetValue(std::unique_ptr<AidlConstantValue> value) { value_ = std::move(value); }
   bool IsValueUserSpecified() const { return value_user_specified_; }
 
