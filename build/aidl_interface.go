@@ -334,6 +334,17 @@ type aidlInterfaceProperties struct {
 	// List of .aidl files which compose this interface.
 	Srcs []string `android:"path"`
 
+	// Normally, in release configurations, such as next, unfrozen AIDL
+	// interfaces may be disabled. However, for some partners developing
+	// on Android, they may prefer to use the release configuration
+	// while making a small amount of changes for development. In this
+	// case, the VTS test vts_treble_vintf_vendor_test would still fail.
+	// However, the build would be unblocked.
+	//
+	// Note: this will not work for AOSP android.* interfaces because they
+	// will not be available in the compatibility matrix.
+	Always_use_unfrozen *bool
+
 	// List of aidl_interface modules that this uses. If one of your AIDL interfaces uses an
 	// interface or parcelable from another aidl_interface, you should put its name here.
 	// It could be an aidl_interface solely or with version(such as -V1)
@@ -488,6 +499,31 @@ func (i *aidlInterface) shouldGenerateAppNdkBackend() bool {
 
 func (i *aidlInterface) shouldGenerateRustBackend() bool {
 	return i.properties.Backend.Rust.Enabled != nil && *i.properties.Backend.Rust.Enabled
+}
+
+func (i *aidlInterface) useUnfrozen(ctx android.EarlyModuleContext) bool {
+	var use_unfrozen bool
+
+	unfrozen_override := ctx.Config().Getenv("AIDL_USE_UNFROZEN_OVERRIDE")
+	if unfrozen_override != "" {
+		if unfrozen_override == "true" {
+			use_unfrozen = true
+		} else if unfrozen_override == "false" {
+			use_unfrozen = false
+		} else {
+			ctx.PropertyErrorf("AIDL_USE_UNFROZEN_OVERRIDE has unexpected value of \"%s\". Should be \"true\" or \"false\".", unfrozen_override)
+		}
+	} else {
+		use_unfrozen = ctx.DeviceConfig().Release_aidl_use_unfrozen()
+	}
+
+	// could check this earlier and return, but make sure we always verify
+	// environmental variables
+	if proptools.Bool(i.properties.Always_use_unfrozen) {
+		use_unfrozen = true
+	}
+
+	return use_unfrozen
 }
 
 func (i *aidlInterface) minSdkVersion(lang string) *string {
