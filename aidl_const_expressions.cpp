@@ -31,6 +31,7 @@
 using android::base::ConsumeSuffix;
 using android::base::EndsWith;
 using android::base::Join;
+using android::base::Split;
 using android::base::StartsWith;
 using std::string;
 using std::unique_ptr;
@@ -477,7 +478,17 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
   std::string_view value_view = value;
   const bool is_byte = ConsumeSuffix(&value_view, "u8");
   const bool is_long = ConsumeSuffix(&value_view, "l") || ConsumeSuffix(&value_view, "L");
-  const std::string value_substr = std::string(value_view);
+
+  const std::string value_substr = ({
+    std::string raw_value_substr = std::string(value_view);
+    // remove "_" in integral constant
+    const std::vector<std::string> value_pieces = Split(raw_value_substr, "_");
+    if (std::any_of(value_pieces.begin(), value_pieces.end(),
+                    [](const auto& s) { return s.empty(); })) {
+      return false;
+    }
+    Join(value_pieces, "");
+  });
 
   *parsed_value = 0;
   *parsed_type = Type::ERROR;
