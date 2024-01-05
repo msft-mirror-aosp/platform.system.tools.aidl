@@ -94,6 +94,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	},
 	)
 
@@ -237,6 +238,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	importExportDependencies := []string{}
@@ -337,6 +339,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
@@ -392,6 +395,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))

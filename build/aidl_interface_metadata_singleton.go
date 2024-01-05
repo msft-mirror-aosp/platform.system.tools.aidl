@@ -33,11 +33,12 @@ var (
 			`echo "\"types\": [${types}]," && ` +
 			`echo "\"hashes\": [${hashes}]," && ` +
 			`echo "\"has_development\": ${has_development}," && ` +
+			`echo "\"use_unfrozen\": ${use_unfrozen}," && ` +
 			`echo "\"versions\": [${versions}]" && ` +
 			`echo '}' ` +
 			`;} >> ${out}`,
 		Description: "AIDL metadata: ${out}",
-	}, "name", "stability", "types", "hashes", "has_development", "versions")
+	}, "name", "stability", "types", "hashes", "has_development", "use_unfrozen", "versions")
 
 	joinJsonObjectsToArrayRule = pctx.StaticRule("joinJsonObjectsToArrayRule", blueprint.RuleParams{
 		Rspfile:        "$out.rsp",
@@ -84,6 +85,7 @@ func (m *aidlInterfacesMetadataSingleton) GenerateAndroidBuildActions(ctx androi
 		ComputedTypes  []string
 		HashFiles      []string
 		HasDevelopment android.WritablePath
+		UseUnfrozen    bool
 		Versions       []string
 	}
 
@@ -100,6 +102,7 @@ func (m *aidlInterfacesMetadataSingleton) GenerateAndroidBuildActions(ctx androi
 			info.Stability = proptools.StringDefault(t.properties.Stability, "")
 			info.ComputedTypes = t.computedTypes
 			info.Versions = t.getVersions()
+			info.UseUnfrozen = t.useUnfrozen(ctx)
 			moduleInfos[t.ModuleBase.Name()] = info
 		case *aidlGenRule:
 			info := moduleInfos[t.properties.BaseName]
@@ -138,6 +141,11 @@ func (m *aidlInterfacesMetadataSingleton) GenerateAndroidBuildActions(ctx androi
 				")\" = \"1\" ]; then echo true; else echo false; fi)"
 		}
 
+		useUnfrozenValue := "false"
+		if info.UseUnfrozen {
+			useUnfrozenValue = "true"
+		}
+
 		ctx.Build(pctx, android.BuildParams{
 			Rule:      aidlMetadataRule,
 			Implicits: implicits,
@@ -149,6 +157,7 @@ func (m *aidlInterfacesMetadataSingleton) GenerateAndroidBuildActions(ctx androi
 				"types":           strings.Join(wrap(`\"`, info.ComputedTypes, `\"`), ", "),
 				"hashes":          readHashes,
 				"has_development": hasDevelopmentValue,
+				"use_unfrozen":    useUnfrozenValue,
 				"versions":        strings.Join(info.Versions, ", "),
 			},
 		})
