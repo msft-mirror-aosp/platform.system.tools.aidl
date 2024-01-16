@@ -72,10 +72,7 @@ pub mod transactions {
   pub const r#GetTestService: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
 }
 pub type ICircularDefaultRef = Option<std::sync::Arc<dyn ICircularDefault>>;
-use lazy_static::lazy_static;
-lazy_static! {
-  static ref DEFAULT_IMPL: std::sync::Mutex<ICircularDefaultRef> = std::sync::Mutex::new(None);
-}
+static DEFAULT_IMPL: std::sync::Mutex<ICircularDefaultRef> = std::sync::Mutex::new(None);
 impl BpCircular {
   fn build_parcel_GetTestService(&self) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;

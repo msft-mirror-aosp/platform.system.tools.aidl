@@ -151,11 +151,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			sysroot: true,
 		}
 		rust_library {
-			name: "liblazy_static",
-			crate_name: "lazy_static",
-			srcs: [""],
-		}
-		rust_library {
 			name: "libbinder_rs",
 			crate_name: "binder",
 			srcs: [""],

@@ -128,10 +128,7 @@ pub mod transactions {
   pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
 }
 pub type IFooInterfaceDefaultRef = Option<std::sync::Arc<dyn IFooInterfaceDefault>>;
-use lazy_static::lazy_static;
-lazy_static! {
-  static ref DEFAULT_IMPL: std::sync::Mutex<IFooInterfaceDefaultRef> = std::sync::Mutex::new(None);
-}
+static DEFAULT_IMPL: std::sync::Mutex<IFooInterfaceDefaultRef> = std::sync::Mutex::new(None);
 pub const VERSION: i32 = 2;
 pub const HASH: &str = "da8c4bc94ca7feff0e0a65563a466787698b5891";
 impl BpFooInterface {

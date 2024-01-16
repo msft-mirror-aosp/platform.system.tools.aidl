@@ -72,10 +72,7 @@ pub mod transactions {
   pub const r#RealName: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
 }
 pub type INewNameDefaultRef = Option<std::sync::Arc<dyn INewNameDefault>>;
-use lazy_static::lazy_static;
-lazy_static! {
-  static ref DEFAULT_IMPL: std::sync::Mutex<INewNameDefaultRef> = std::sync::Mutex::new(None);
-}
+static DEFAULT_IMPL: std::sync::Mutex<INewNameDefaultRef> = std::sync::Mutex::new(None);
 impl BpNewName {
   fn build_parcel_RealName(&self) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
