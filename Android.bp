@@ -46,7 +46,6 @@ cc_defaults {
         "-bugprone-misplaced-widening-cast",
         "-bugprone-signed-char-misuse",
         "-bugprone-sizeof-expression",
-        "-cert-dcl50-cpp",
         "-cert-err34-c",
         "-cert-err52-cpp",
         "-cert-str34-c",
