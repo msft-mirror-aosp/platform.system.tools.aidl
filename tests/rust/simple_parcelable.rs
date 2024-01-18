@@ -17,10 +17,8 @@
 //! Rust implementation of `SimpleParcelable`.
 
 use binder::{
-    binder_impl::{
-        BorrowedParcel, Deserialize, DeserializeArray, DeserializeOption, Serialize,
-        SerializeArray, SerializeOption, NON_NULL_PARCELABLE_FLAG, NULL_PARCELABLE_FLAG,
-    },
+    binder_impl::{BorrowedParcel, UnstructuredParcelable},
+    impl_deserialize_for_unstructured_parcelable, impl_serialize_for_unstructured_parcelable,
     StatusCode,
 };
 
@@ -33,63 +31,19 @@ pub struct SimpleParcelable {
     pub number: i32,
 }
 
-impl Serialize for SimpleParcelable {
-    fn serialize(&self, parcel: &mut BorrowedParcel) -> Result<(), StatusCode> {
-        // Parcelables are always treated as optional, because of Java.
-        SerializeOption::serialize_option(Some(self), parcel)
-    }
-}
-
-impl SerializeOption for SimpleParcelable {
-    fn serialize_option(
-        this: Option<&Self>,
-        parcel: &mut BorrowedParcel,
-    ) -> Result<(), StatusCode> {
-        if let Some(this) = this {
-            parcel.write(&NON_NULL_PARCELABLE_FLAG)?;
-            parcel.write(&this.name)?;
-            parcel.write(&this.number)?;
-        } else {
-            parcel.write(&NULL_PARCELABLE_FLAG)?;
-        }
+impl UnstructuredParcelable for SimpleParcelable {
+    fn write_to_parcel(&self, parcel: &mut BorrowedParcel) -> Result<(), StatusCode> {
+        parcel.write(&self.name)?;
+        parcel.write(&self.number)?;
         Ok(())
     }
-}
 
-impl Deserialize for SimpleParcelable {
-    type UninitType = Option<Self>;
-
-    fn uninit() -> Option<Self> {
-        None
-    }
-
-    fn from_init(value: Self) -> Option<Self> {
-        Some(value)
-    }
-
-    fn deserialize(parcel: &BorrowedParcel) -> Result<Self, StatusCode> {
-        // Parcelables are always treated as optional, because of Java.
-        DeserializeOption::deserialize_option(parcel)
-            .transpose()
-            .unwrap_or(Err(StatusCode::UNEXPECTED_NULL))
+    fn from_parcel(parcel: &BorrowedParcel) -> Result<Self, StatusCode> {
+        let name = parcel.read()?;
+        let number = parcel.read()?;
+        Ok(Self { name, number })
     }
 }
 
-impl DeserializeOption for SimpleParcelable {
-    fn deserialize_option(parcel: &BorrowedParcel) -> Result<Option<Self>, StatusCode> {
-        let present: i32 = parcel.read()?;
-        match present {
-            NULL_PARCELABLE_FLAG => Ok(None),
-            NON_NULL_PARCELABLE_FLAG => {
-                let name = parcel.read()?;
-                let number = parcel.read()?;
-                Ok(Some(Self { name, number }))
-            }
-            _ => Err(StatusCode::BAD_VALUE),
-        }
-    }
-}
-
-impl SerializeArray for SimpleParcelable {}
-
-impl DeserializeArray for SimpleParcelable {}
+impl_deserialize_for_unstructured_parcelable!(SimpleParcelable);
+impl_serialize_for_unstructured_parcelable!(SimpleParcelable);
