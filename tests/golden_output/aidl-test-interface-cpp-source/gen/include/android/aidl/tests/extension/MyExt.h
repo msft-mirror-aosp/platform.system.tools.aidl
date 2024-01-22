@@ -20,23 +20,23 @@ class MyExt : public ::android::Parcelable {
 public:
   int32_t a = 0;
   ::std::string b;
-  inline bool operator!=(const MyExt& rhs) const {
-    return std::tie(a, b) != std::tie(rhs.a, rhs.b);
+  inline bool operator==(const MyExt& _rhs) const {
+    return std::tie(a, b) == std::tie(_rhs.a, _rhs.b);
   }
-  inline bool operator<(const MyExt& rhs) const {
-    return std::tie(a, b) < std::tie(rhs.a, rhs.b);
+  inline bool operator<(const MyExt& _rhs) const {
+    return std::tie(a, b) < std::tie(_rhs.a, _rhs.b);
   }
-  inline bool operator<=(const MyExt& rhs) const {
-    return std::tie(a, b) <= std::tie(rhs.a, rhs.b);
+  inline bool operator!=(const MyExt& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const MyExt& rhs) const {
-    return std::tie(a, b) == std::tie(rhs.a, rhs.b);
+  inline bool operator>(const MyExt& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const MyExt& rhs) const {
-    return std::tie(a, b) > std::tie(rhs.a, rhs.b);
+  inline bool operator>=(const MyExt& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const MyExt& rhs) const {
-    return std::tie(a, b) >= std::tie(rhs.a, rhs.b);
+  inline bool operator<=(const MyExt& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

@@ -31,6 +31,7 @@
 using android::base::ConsumeSuffix;
 using android::base::EndsWith;
 using android::base::Join;
+using android::base::Split;
 using android::base::StartsWith;
 using std::string;
 using std::unique_ptr;
@@ -345,12 +346,21 @@ bool AidlUnaryConstExpression::IsCompatibleType(Type type, const string& op) {
   }
 }
 
-bool AidlBinaryConstExpression::AreCompatibleTypes(Type t1, Type t2) {
-  if (t1 == t2) {
-    return true;
-  }
-
+bool AidlBinaryConstExpression::AreCompatibleOperandTypes(Type t1, Type t2) {
   switch (t1) {
+    case Type::ARRAY:
+      if (t2 == Type::ARRAY) {
+        return true;
+      }
+      break;
+    case Type::STRING:
+      if (t2 == Type::STRING) {
+        return true;
+      }
+      break;
+    case Type::FLOATING:
+      // TODO: b/313951203, check op for supported floating operands (+ - * / < > <= >= == !=)
+      return false;
     case Type::BOOLEAN:  // fall-through
     case Type::INT8:     // fall-through
     case Type::INT32:    // fall-through
@@ -373,10 +383,18 @@ bool AidlBinaryConstExpression::AreCompatibleTypes(Type t1, Type t2) {
   return false;
 }
 
+bool AidlBinaryConstExpression::AreCompatibleArrayTypes(Type t1, Type t2) {
+  // treat floating type differently here, because float array is supported but not operand
+  if (t1 == Type::FLOATING && t2 == Type::FLOATING) return true;
+
+  return AreCompatibleOperandTypes(t1, t2);
+}
+
 // Returns the promoted kind for both operands
 AidlConstantValue::Type AidlBinaryConstExpression::UsualArithmeticConversion(Type left,
                                                                              Type right) {
   // These are handled as special cases
+  // TODO: b/313951203, remove this after support string and floating operands
   AIDL_FATAL_IF(left == Type::STRING || right == Type::STRING, AIDL_LOCATION_HERE);
   AIDL_FATAL_IF(left == Type::FLOATING || right == Type::FLOATING, AIDL_LOCATION_HERE);
 
@@ -460,7 +478,17 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
   std::string_view value_view = value;
   const bool is_byte = ConsumeSuffix(&value_view, "u8");
   const bool is_long = ConsumeSuffix(&value_view, "l") || ConsumeSuffix(&value_view, "L");
-  const std::string value_substr = std::string(value_view);
+
+  const std::string value_substr = ({
+    std::string raw_value_substr = std::string(value_view);
+    // remove "_" in integral constant
+    const std::vector<std::string> value_pieces = Split(raw_value_substr, "_");
+    if (std::any_of(value_pieces.begin(), value_pieces.end(),
+                    [](const auto& s) { return s.empty(); })) {
+      return false;
+    }
+    Join(value_pieces, "");
+  });
 
   *parsed_value = 0;
   *parsed_type = Type::ERROR;
@@ -585,6 +613,8 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
     return "";
   }
 
+  std::vector<std::string> alternatives;
+
   const AidlDefinedType* defined_type = type.GetDefinedType();
   if (defined_type && final_type_ != Type::ARRAY) {
     const AidlEnumDeclaration* enum_type = defined_type->AsEnumDeclaration();
@@ -624,6 +654,10 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
       if (type_string == "byte") {
         if (final_value_ > INT8_MAX || final_value_ < INT8_MIN) {
           err = -1;
+
+          if (final_value_ >= 0 && final_value_ <= UINT8_MAX && IsLiteral()) {
+            alternatives.push_back(value_ + "u8");
+          }
           break;
         }
         return decorator(type, std::to_string(static_cast<int8_t>(final_value_)));
@@ -703,9 +737,14 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
       break;
   }
 
+  std::string alternative_help;
+  if (!alternatives.empty()) {
+    alternative_help = " Did you mean: " + Join(alternatives, ", ") + "?";
+  }
+
   AIDL_FATAL_IF(err == 0, this);
   AIDL_ERROR(this) << "Invalid type specifier for " << ToString(final_type_) << ": " << type_string
-                   << " (" << value_ << ")";
+                   << " (" << value_ << ")." << alternative_help;
   return "";
 }
 
@@ -770,8 +809,8 @@ bool AidlConstantValue::evaluate() const {
           }
           if (array_type == Type::ERROR) {
             array_type = value->final_type_;
-          } else if (!AidlBinaryConstExpression::AreCompatibleTypes(array_type,
-                                                                    value->final_type_)) {
+          } else if (!AidlBinaryConstExpression::AreCompatibleArrayTypes(array_type,
+                                                                         value->final_type_)) {
             AIDL_ERROR(this) << "Incompatible array element type: " << ToString(value->final_type_)
                              << ". Expecting type compatible with " << ToString(array_type);
             success = false;
@@ -818,6 +857,11 @@ bool AidlConstantValue::evaluate() const {
   }
 
   return (err == 0) ? true : false;
+}
+
+bool AidlConstantValue::IsLiteral() const {
+  return !AidlCast<AidlUnaryConstExpression>(*this) &&
+         !AidlCast<AidlBinaryConstExpression>(*this) && !AidlCast<AidlConstantReference>(*this);
 }
 
 string AidlConstantValue::ToString(Type type) {
@@ -1033,7 +1077,7 @@ bool AidlBinaryConstExpression::evaluate() const {
     is_valid_ = false;
     return false;
   }
-  is_valid_ = AreCompatibleTypes(left_val_->final_type_, right_val_->final_type_);
+  is_valid_ = AreCompatibleOperandTypes(left_val_->final_type_, right_val_->final_type_);
   if (!is_valid_) {
     AIDL_ERROR(this) << "Cannot perform operation '" << op_ << "' on "
                      << ToString(right_val_->GetType()) << " and " << ToString(left_val_->GetType())

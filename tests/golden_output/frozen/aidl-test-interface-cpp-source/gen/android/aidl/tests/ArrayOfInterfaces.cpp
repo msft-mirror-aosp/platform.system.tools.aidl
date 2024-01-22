@@ -46,7 +46,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ArrayOfInterfaces, EmptyI
 #include <android/aidl/tests/ArrayOfInterfaces.h>
 #include <android/aidl/tests/ArrayOfInterfaces.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -102,7 +101,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE(ArrayOfInterfaces, MyInte
 #include <android/aidl/tests/ArrayOfInterfaces.h>
 #include <android/aidl/tests/ArrayOfInterfaces.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -156,7 +154,7 @@ ArrayOfInterfaces::BpMyInterface::BpMyInterface(const ::android::sp<::android::I
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ArrayOfInterfaces::BnMyInterface::TRANSACTION_methodWithInterfaces, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyInterface::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyInterface::getDefaultImpl()) [[unlikely]] {
      return IMyInterface::getDefaultImpl()->methodWithInterfaces(iface, nullable_iface, iface_array_in, iface_array_out, iface_array_inout, nullable_iface_array_in, nullable_iface_array_out, nullable_iface_array_inout, _aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {

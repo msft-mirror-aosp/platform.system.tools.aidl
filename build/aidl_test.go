@@ -151,11 +151,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			sysroot: true,
 		}
 		rust_library {
-			name: "liblazy_static",
-			crate_name: "lazy_static",
-			srcs: [""],
-		}
-		rust_library {
 			name: "libbinder_rs",
 			crate_name: "binder",
 			srcs: [""],
@@ -1472,47 +1467,6 @@ func TestDuplicatedVersions(t *testing.T) {
 		"aidl_api/myiface/1/myiface.1.aidl": nil,
 		"aidl_api/myiface/1/.hash":          nil,
 	}))
-}
-
-func TestVndkRequiresFrozen(t *testing.T) {
-	testAidlError(t, `frozen: true or false must be specified when the VNDK is enabled on a versioned interface`, `
-		aidl_interface {
-			name: "myiface",
-			vendor_available: true,
-			product_available: true,
-			srcs: ["IFoo.aidl"],
-			vndk: {
-				enabled: true,
-			},
-		}
-	`)
-	testAidlError(t, `vndk_use_version: must be specified if interface is unfrozen`, `
-		aidl_interface {
-			name: "myiface",
-			vendor_available: true,
-			product_available: true,
-			srcs: ["IFoo.aidl"],
-			stability: "vintf",
-			frozen: false,
-			vndk: {
-				enabled: true,
-			},
-		}
-	`)
-	testAidl(t, `
-		aidl_interface {
-			name: "myiface",
-			vendor_available: true,
-			product_available: true,
-			srcs: ["IFoo.aidl"],
-			stability: "vintf",
-			frozen: false,
-			vndk_use_version: "1",
-			vndk: {
-				enabled: true,
-			},
-		}
-	`)
 }
 
 func TestRecoveryAvailable(t *testing.T) {

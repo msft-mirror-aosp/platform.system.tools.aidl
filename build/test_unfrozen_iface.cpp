@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-package c.d;
+#include <vendor/IFoo.h>
 
-import a.b.AB;
-
-parcelable CD {
-    int cd;
-    AB ab;
-}
+static_assert(vendor::IFoo::VERSION == 2, "version must always be 2");

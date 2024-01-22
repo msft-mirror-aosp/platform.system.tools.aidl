@@ -128,23 +128,23 @@ public:
     binder_status_t readFromParcel(const AParcel* parcel);
     binder_status_t writeToParcel(AParcel* parcel) const;
 
-    inline bool operator!=(const MyParcelable& rhs) const {
-      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) != std::tie(rhs.iface, rhs.nullable_iface, rhs.iface_list, rhs.nullable_iface_list);
+    inline bool operator==(const MyParcelable& _rhs) const {
+      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) == std::tie(_rhs.iface, _rhs.nullable_iface, _rhs.iface_list, _rhs.nullable_iface_list);
     }
-    inline bool operator<(const MyParcelable& rhs) const {
-      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) < std::tie(rhs.iface, rhs.nullable_iface, rhs.iface_list, rhs.nullable_iface_list);
+    inline bool operator<(const MyParcelable& _rhs) const {
+      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) < std::tie(_rhs.iface, _rhs.nullable_iface, _rhs.iface_list, _rhs.nullable_iface_list);
     }
-    inline bool operator<=(const MyParcelable& rhs) const {
-      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) <= std::tie(rhs.iface, rhs.nullable_iface, rhs.iface_list, rhs.nullable_iface_list);
+    inline bool operator!=(const MyParcelable& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const MyParcelable& rhs) const {
-      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) == std::tie(rhs.iface, rhs.nullable_iface, rhs.iface_list, rhs.nullable_iface_list);
+    inline bool operator>(const MyParcelable& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const MyParcelable& rhs) const {
-      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) > std::tie(rhs.iface, rhs.nullable_iface, rhs.iface_list, rhs.nullable_iface_list);
+    inline bool operator>=(const MyParcelable& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const MyParcelable& rhs) const {
-      return std::tie(iface, nullable_iface, iface_list, nullable_iface_list) >= std::tie(rhs.iface, rhs.nullable_iface, rhs.iface_list, rhs.nullable_iface_list);
+    inline bool operator<=(const MyParcelable& _rhs) const {
+      return !(_rhs < *this);
     }
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
@@ -225,23 +225,23 @@ public:
     binder_status_t readFromParcel(const AParcel* _parcel);
     binder_status_t writeToParcel(AParcel* _parcel) const;
 
-    inline bool operator!=(const MyUnion& rhs) const {
-      return _value != rhs._value;
+    inline bool operator==(const MyUnion& _rhs) const {
+      return _value == _rhs._value;
     }
-    inline bool operator<(const MyUnion& rhs) const {
-      return _value < rhs._value;
+    inline bool operator<(const MyUnion& _rhs) const {
+      return _value < _rhs._value;
     }
-    inline bool operator<=(const MyUnion& rhs) const {
-      return _value <= rhs._value;
+    inline bool operator!=(const MyUnion& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const MyUnion& rhs) const {
-      return _value == rhs._value;
+    inline bool operator>(const MyUnion& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const MyUnion& rhs) const {
-      return _value > rhs._value;
+    inline bool operator>=(const MyUnion& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const MyUnion& rhs) const {
-      return _value >= rhs._value;
+    inline bool operator<=(const MyUnion& _rhs) const {
+      return !(_rhs < *this);
     }
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
@@ -264,23 +264,23 @@ public:
   binder_status_t readFromParcel(const AParcel* parcel);
   binder_status_t writeToParcel(AParcel* parcel) const;
 
-  inline bool operator!=(const ListOfInterfaces&) const {
-    return std::tie() != std::tie();
+  inline bool operator==(const ListOfInterfaces&) const {
+    return std::tie() == std::tie();
   }
   inline bool operator<(const ListOfInterfaces&) const {
     return std::tie() < std::tie();
   }
-  inline bool operator<=(const ListOfInterfaces&) const {
-    return std::tie() <= std::tie();
+  inline bool operator!=(const ListOfInterfaces& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const ListOfInterfaces&) const {
-    return std::tie() == std::tie();
+  inline bool operator>(const ListOfInterfaces& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const ListOfInterfaces&) const {
-    return std::tie() > std::tie();
+  inline bool operator>=(const ListOfInterfaces& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const ListOfInterfaces&) const {
-    return std::tie() >= std::tie();
+  inline bool operator<=(const ListOfInterfaces& _rhs) const {
+    return !(_rhs < *this);
   }
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;

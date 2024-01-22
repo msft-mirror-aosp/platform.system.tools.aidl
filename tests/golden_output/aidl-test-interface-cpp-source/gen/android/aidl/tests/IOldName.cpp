@@ -14,7 +14,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(OldName, "android.aidl.tests.IOl
 #include <android/aidl/tests/BpOldName.h>
 #include <android/aidl/tests/BnOldName.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -36,7 +35,7 @@ BpOldName::BpOldName(const ::android::sp<::android::IBinder>& _aidl_impl)
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnOldName::TRANSACTION_RealName, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IOldName::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IOldName::getDefaultImpl()) [[unlikely]] {
      return IOldName::getDefaultImpl()->RealName(_aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {

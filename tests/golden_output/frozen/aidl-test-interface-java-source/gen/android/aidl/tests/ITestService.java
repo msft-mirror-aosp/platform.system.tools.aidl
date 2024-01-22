@@ -4,6 +4,9 @@
  */
 package android.aidl.tests;
 /** interface comment */
+/** interface comment 2 */
+// interface comment 3
+// interface comment 4
 public interface ITestService extends android.os.IInterface
 {
   /** Default implementation for ITestService. */
@@ -631,6 +634,7 @@ public interface ITestService extends android.os.IInterface
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService
   {
     /** Construct the stub at attach it to the interface. */
+    @SuppressWarnings("this-escape")
     public Stub()
     {
       this.attachInterface(this, DESCRIPTOR);
@@ -4061,6 +4065,7 @@ public interface ITestService extends android.os.IInterface
       public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.Foo
       {
         /** Construct the stub at attach it to the interface. */
+        @SuppressWarnings("this-escape")
         public Stub()
         {
           this.attachInterface(this, DESCRIPTOR);
@@ -4345,6 +4350,7 @@ public interface ITestService extends android.os.IInterface
       public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface
       {
         /** Construct the stub at attach it to the interface. */
+        @SuppressWarnings("this-escape")
         public Stub()
         {
           this.attachInterface(this, DESCRIPTOR);
@@ -4512,6 +4518,7 @@ public interface ITestService extends android.os.IInterface
         public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface
         {
           /** Construct the stub at attach it to the interface. */
+          @SuppressWarnings("this-escape")
           public Stub()
           {
             this.attachInterface(this, DESCRIPTOR);

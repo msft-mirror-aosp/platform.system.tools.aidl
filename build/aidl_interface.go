@@ -16,11 +16,9 @@ package aidl
 
 import (
 	"android/soong/android"
-	"android/soong/bazel"
 	"android/soong/cc"
 	"android/soong/java"
 	"android/soong/rust"
-	"android/soong/ui/metrics/bp2build_metrics_proto"
 
 	"fmt"
 	"path/filepath"
@@ -60,7 +58,6 @@ func init() {
 	pctx.SourcePathVariable("aidlRustGlueCmd", "system/tools/aidl/build/aidl_rust_glue.py")
 	android.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 	android.PreArchMutators(registerPreArchMutators)
-	android.PreArchBp2BuildMutators(registerPreArchMutators)
 	android.PostDepsMutators(registerPostDepsMutators)
 }
 
@@ -110,7 +107,7 @@ type AidlVersionInfo struct {
 	sourceMap            map[string]string
 }
 
-var AidlVersionInfoProvider = blueprint.NewMutatorProvider(AidlVersionInfo{}, "checkAidlGeneratedModules")
+var AidlVersionInfoProvider = blueprint.NewMutatorProvider[AidlVersionInfo]("checkAidlGeneratedModules")
 
 // Merges `other` version info into this one.
 // Returns the pair of mismatching versions when there's conflict. Otherwise returns nil.
@@ -179,7 +176,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 			notFrozen = []string{strings.TrimSuffix(mctx.ModuleName(), "-source")}
 			requireFrozenReasons = []string{gen.properties.RequireFrozenReason}
 		}
-		mctx.SetProvider(AidlVersionInfoProvider, AidlVersionInfo{
+		android.SetProvider(mctx, AidlVersionInfoProvider, AidlVersionInfo{
 			notFrozen:            notFrozen,
 			requireFrozenReasons: requireFrozenReasons,
 			sourceMap: map[string]string{
@@ -191,8 +188,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 	// Collect/merge AidlVersionInfos from direct dependencies
 	var info AidlVersionInfo
 	mctx.VisitDirectDeps(func(dep android.Module) {
-		if mctx.OtherModuleHasProvider(dep, AidlVersionInfoProvider) {
-			otherInfo := mctx.OtherModuleProvider(dep, AidlVersionInfoProvider).(AidlVersionInfo)
+		if otherInfo, ok := android.OtherModuleProvider(mctx, dep, AidlVersionInfoProvider); ok {
 			if violators := info.merge(otherInfo); violators != nil {
 				reportMultipleVersionError(mctx, violators)
 			}
@@ -205,7 +201,7 @@ func checkAidlGeneratedModules(mctx android.BottomUpMutatorContext) {
 		return
 	}
 	if info.sourceMap != nil || len(info.notFrozen) > 0 {
-		mctx.SetProvider(AidlVersionInfoProvider, info)
+		android.SetProvider(mctx, AidlVersionInfoProvider, info)
 	}
 }
 
@@ -338,6 +334,17 @@ type aidlInterfaceProperties struct {
 	// List of .aidl files which compose this interface.
 	Srcs []string `android:"path"`
 
+	// Normally, in release configurations, such as next, unfrozen AIDL
+	// interfaces may be disabled. However, for some partners developing
+	// on Android, they may prefer to use the release configuration
+	// while making a small amount of changes for development. In this
+	// case, the VTS test vts_treble_vintf_vendor_test would still fail.
+	// However, the build would be unblocked.
+	//
+	// Note: this will not work for AOSP android.* interfaces because they
+	// will not be available in the compatibility matrix.
+	Always_use_unfrozen *bool
+
 	// List of aidl_interface modules that this uses. If one of your AIDL interfaces uses an
 	// interface or parcelable from another aidl_interface, you should put its name here.
 	// It could be an aidl_interface solely or with version(such as -V1)
@@ -448,7 +455,6 @@ type aidlInterfaceProperties struct {
 
 type aidlInterface struct {
 	android.ModuleBase
-	android.BazelModuleBase
 	android.DefaultableModuleBase
 
 	properties aidlInterfaceProperties
@@ -493,6 +499,31 @@ func (i *aidlInterface) shouldGenerateAppNdkBackend() bool {
 
 func (i *aidlInterface) shouldGenerateRustBackend() bool {
 	return i.properties.Backend.Rust.Enabled != nil && *i.properties.Backend.Rust.Enabled
+}
+
+func (i *aidlInterface) useUnfrozen(ctx android.EarlyModuleContext) bool {
+	var use_unfrozen bool
+
+	unfrozen_override := ctx.Config().Getenv("AIDL_USE_UNFROZEN_OVERRIDE")
+	if unfrozen_override != "" {
+		if unfrozen_override == "true" {
+			use_unfrozen = true
+		} else if unfrozen_override == "false" {
+			use_unfrozen = false
+		} else {
+			ctx.PropertyErrorf("AIDL_USE_UNFROZEN_OVERRIDE has unexpected value of \"%s\". Should be \"true\" or \"false\".", unfrozen_override)
+		}
+	} else {
+		use_unfrozen = ctx.DeviceConfig().Release_aidl_use_unfrozen()
+	}
+
+	// could check this earlier and return, but make sure we always verify
+	// environmental variables
+	if proptools.Bool(i.properties.Always_use_unfrozen) {
+		use_unfrozen = true
+	}
+
+	return use_unfrozen
 }
 
 func (i *aidlInterface) minSdkVersion(lang string) *string {
@@ -977,29 +1008,20 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		shouldGenerateLangBackendMap[langNdkPlatform] = i.shouldGenerateNdkBackend()
 	}
 
-	var bp2build bool
-	// TODO: b/295566168 - this will need to change once build files are checked in to account for
-	// checked in modules in mixed builds
-	if b, ok := mctx.Module().(android.Bazelable); ok {
-		bp2build = b.ShouldConvertWithBp2build(mctx)
-	} else {
-		panic(fmt.Errorf("aidlInterface must support Bazelable"))
-	}
-
 	for lang, shouldGenerate := range shouldGenerateLangBackendMap {
 		if !shouldGenerate {
 			continue
 		}
-		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion, requireFrozenReason, bp2build))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, lang, requireFrozenVersion, requireFrozenReason))
 		for _, version := range versions {
-			libs = append(libs, addLibrary(mctx, i, version, lang, false, "this is a known frozen version", bp2build))
+			libs = append(libs, addLibrary(mctx, i, version, lang, false, "this is a known frozen version"))
 		}
 	}
 
 	// In the future, we may want to force the -cpp backend to be on host,
 	// and limit its visibility, even if it's not created normally
 	if i.shouldGenerateCppBackend() && len(i.properties.Imports) == 0 {
-		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false, "analysis always uses latest version even if frozen", bp2build))
+		libs = append(libs, addLibrary(mctx, i, nextVersion, langCppAnalyzer, false, "analysis always uses latest version even if frozen"))
 	}
 
 	if unstable {
@@ -1013,14 +1035,12 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 		addApiModule(mctx, i)
 	}
 
-	// Reserve this module name for future use, and make it responsible for
-	// generating a Bazel definition.
+	// Reserve this module name for future use.
 	factoryFunc := func() android.Module {
 		result := &phonyAidlInterface{
 			origin: i,
 		}
 		android.InitAndroidModule(result)
-		android.InitBazelModule(result)
 		return result
 	}
 	mctx.CreateModule(factoryFunc, &phonyProperties{
@@ -1036,7 +1056,6 @@ func (p *phonyAidlInterface) GenerateAndroidBuildActions(_ android.ModuleContext
 
 type phonyAidlInterface struct {
 	android.ModuleBase
-	android.BazelModuleBase
 	origin *aidlInterface
 }
 
@@ -1160,260 +1179,6 @@ func AidlInterfaceFactory() android.Module {
 	i.AddProperties(&i.properties)
 	android.InitAndroidModule(i)
 	android.InitDefaultableModule(i)
-	android.InitBazelModule(i)
-	android.AddBazelHandcraftedHook(i, func(ctx android.LoadHookContext) string {
-		return strings.TrimSuffix(i.Name(), "_interface")
-	})
 	i.SetDefaultableHook(func(ctx android.DefaultableHookContext) { aidlInterfaceHook(ctx, i) })
 	return i
-}
-
-type aidlInterfaceAttributes struct {
-	aidlLibraryAttributes
-	Stability          *string
-	Versions_with_info []versionWithInfoAttribute
-	Java_config        *javaConfigAttributes
-	Cpp_config         *cppConfigAttributes
-	Ndk_config         *ndkConfigAttributes
-	// Backend_Configs    backendConfigAttributes
-	Unstable *bool
-	Frozen   *bool
-}
-
-type javaConfigAttributes struct {
-	commonBackendAttributes
-}
-type cppConfigAttributes struct {
-	commonNativeBackendAttributes
-}
-type ndkConfigAttributes struct {
-	commonNativeBackendAttributes
-}
-
-type commonBackendAttributes struct {
-	Enabled         bool
-	Min_sdk_version *string
-	Tags            []string
-}
-
-type commonNativeBackendAttributes struct {
-	commonBackendAttributes
-	Additional_dynamic_deps bazel.LabelListAttribute
-}
-
-type versionWithInfoAttribute struct {
-	Version string
-	// Versions_with_info.Deps in Bazel is analogous to Versions_with_info.Imports in Soong.
-	// Deps is chosen to be consistent with other Bazel rules/macros for AIDL
-	Deps bazel.LabelListAttribute
-}
-
-type aidlLibraryAttributes struct {
-	Srcs                bazel.LabelListAttribute
-	Hdrs                bazel.LabelListAttribute
-	Deps                bazel.LabelListAttribute
-	Strip_import_prefix *string
-	Flags               []string
-}
-
-// getBazelLabelListForImports returns a bazel label list converted from
-// aidl_interface.imports or aidl_interface.versions_with_info.imports prop
-func getBazelLabelListForImports(ctx android.Bp2buildMutatorContext, imports []string) bazel.LabelList {
-	type nameAndVersion struct {
-		name    string
-		version string
-	}
-	// An aidl_interface with a version designation doesn't correspond to a specific
-	// module, but rather just imforms Soong on which collection of sources to provide
-	// from a particular interface module.
-	// However in Bazel, we will be creating an aidl_library for each version, so we can
-	// depend directly on a "versioned" module. But, we must look up the "unversioned"
-	// module name in BazelLabelForModuleDeps and then re-attach the version information.
-	namesAndVersions := make([]nameAndVersion, len(imports))
-	names := make([]string, len(imports))
-	for i, dep := range imports {
-		// Split dep into two parts
-		name, version := parseModuleWithVersion(dep)
-		if version == "" {
-			version = "-latest"
-		} else {
-			version = "-V" + version
-		}
-		namesAndVersions[i] = nameAndVersion{
-			name:    name,
-			version: version,
-		}
-		names[i] = name
-	}
-	// Look up bazel label by name without version
-	bazelLabels := android.BazelLabelForModuleDeps(ctx, names)
-	for i := range bazelLabels.Includes {
-		// Re-attach the version to the name
-		bazelLabels.Includes[i].Label = bazelLabels.Includes[i].Label + namesAndVersions[i].version
-	}
-	return bazelLabels
-}
-
-func (p *aidlInterface) ConvertWithBp2build(_ android.Bp2buildMutatorContext) {
-	// aidlInterface should have a label set by its load hook; modules it creates
-	// are responsible for generating the actual definition.
-	panic("aidlInterface should always appear to have an existing label")
-}
-
-func (p *phonyAidlInterface) ConvertWithBp2build(ctx android.Bp2buildMutatorContext) {
-	i := p.origin
-	var javaConfig *javaConfigAttributes
-	var cppConfig *cppConfigAttributes
-	var ndkConfig *ndkConfigAttributes
-	var deps bazel.LabelListAttribute
-
-	if i.shouldGenerateJavaBackend() {
-		javaConfig = &javaConfigAttributes{}
-		javaConfig.Enabled = true
-		javaConfig.Min_sdk_version = i.minSdkVersion(langJava)
-		javaConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, i.properties.Backend.Java.Apex_available)
-	}
-	if i.shouldGenerateCppBackend() {
-		cppConfig = &cppConfigAttributes{}
-		cppConfig.Enabled = true
-		cppConfig.Min_sdk_version = i.minSdkVersion(langCpp)
-		apexAvailable := i.properties.Backend.Cpp.Apex_available
-		cppConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
-		cppConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
-		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Cpp.Additional_shared_libraries)
-		for _, l := range additionalSharedLabels.Includes {
-			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
-			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
-				cppConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
-			}
-		}
-		cc.SetStubsForDynamicDeps(
-			ctx,
-			bazel.NoConfigAxis,
-			"",
-			apexAvailable,
-			additionalSharedLabels,
-			&cppConfig.Additional_dynamic_deps,
-			&deps,
-			0,
-			false,
-		)
-	}
-	if i.shouldGenerateNdkBackend() {
-		ndkConfig = &ndkConfigAttributes{}
-		ndkConfig.Enabled = true
-		ndkConfig.Min_sdk_version = i.minSdkVersion(langNdk)
-		apexAvailable := i.properties.Backend.Ndk.Apex_available
-		ndkConfig.Tags = android.ConvertApexAvailableToTagsWithoutTestApexes(ctx, apexAvailable)
-		ndkConfig.Additional_dynamic_deps = bazel.LabelListAttribute{}
-		additionalSharedLabels := android.BazelLabelForModuleDeps(ctx, i.properties.Backend.Ndk.Additional_shared_libraries)
-		for _, l := range additionalSharedLabels.Includes {
-			dep, _ := ctx.ModuleFromName(l.OriginalModuleName)
-			if c, ok := dep.(*cc.Module); !ok || !c.HasStubsVariants() {
-				ndkConfig.Additional_dynamic_deps.Add(bazel.MakeLabelAttribute(l.Label))
-			}
-		}
-		cc.SetStubsForDynamicDeps(
-			ctx,
-			bazel.NoConfigAxis,
-			"",
-			apexAvailable,
-			additionalSharedLabels,
-			&ndkConfig.Additional_dynamic_deps,
-			&deps,
-			0,
-			false,
-		)
-	}
-
-	imports := getBazelLabelListForImports(ctx, i.properties.Imports)
-
-	var versionsWithInfos []versionWithInfoAttribute
-
-	if len(i.properties.Versions_with_info) > 0 {
-		for _, versionWithInfo := range i.properties.Versions_with_info {
-			versionedImports := getBazelLabelListForImports(ctx, versionWithInfo.Imports)
-			if !versionedImports.IsEmpty() {
-				versionsWithInfos = append(
-					versionsWithInfos,
-					versionWithInfoAttribute{
-						Version: versionWithInfo.Version,
-						Deps:    bazel.MakeLabelListAttribute(versionedImports),
-					},
-				)
-			} else {
-				versionsWithInfos = append(
-					versionsWithInfos,
-					versionWithInfoAttribute{
-						Version: versionWithInfo.Version,
-					},
-				)
-			}
-		}
-	} else if len(i.properties.Versions) > 0 {
-		for _, version := range i.properties.Versions {
-			if !imports.IsEmpty() {
-				versionsWithInfos = append(
-					versionsWithInfos,
-					versionWithInfoAttribute{
-						Version: version,
-						Deps:    bazel.MakeLabelListAttribute(imports),
-					},
-				)
-			} else {
-				versionsWithInfos = append(
-					versionsWithInfos,
-					versionWithInfoAttribute{
-						Version: version,
-					},
-				)
-			}
-		}
-	}
-
-	if len(i.properties.Srcs) > 0 && !imports.IsEmpty() {
-		// imports is only needed for (non-frozen) srcs
-		// frozen verions use imports in versions_with_info
-		deps = bazel.MakeLabelListAttribute(imports)
-	}
-
-	srcsAttr := bazel.MakeLabelListAttribute(android.BazelLabelForModuleSrc(ctx, i.properties.Srcs))
-	var stripImportPrefixAttr *string = nil
-	if i.properties.Local_include_dir != "" && !srcsAttr.IsEmpty() {
-		stripImportPrefixAttr = &i.properties.Local_include_dir
-	}
-
-	if len(i.properties.Include_dirs) != 0 {
-		// TODO(b/298246873) remove include_dirs property from aidl_interface
-		ctx.MarkBp2buildUnconvertible(bp2build_metrics_proto.UnconvertedReasonType_PROPERTY_UNSUPPORTED, "include_dirs not supported")
-		return
-	}
-
-	attrs := &aidlInterfaceAttributes{
-		aidlLibraryAttributes: aidlLibraryAttributes{
-			Srcs:                srcsAttr,
-			Flags:               i.properties.Flags,
-			Deps:                deps,
-			Hdrs:                bazel.MakeLabelListAttribute(android.BazelLabelForModuleDeps(ctx, i.properties.Headers)),
-			Strip_import_prefix: stripImportPrefixAttr,
-		},
-		Stability:          i.properties.Stability,
-		Versions_with_info: versionsWithInfos,
-		Java_config:        javaConfig,
-		Cpp_config:         cppConfig,
-		Ndk_config:         ndkConfig,
-		Unstable:           i.properties.Unstable,
-		Frozen:             i.properties.Frozen,
-	}
-
-	interfaceName := strings.TrimSuffix(i.Name(), "_interface")
-
-	ctx.CreateBazelTargetModule(
-		bazel.BazelTargetModuleProperties{
-			Rule_class:        "aidl_interface",
-			Bzl_load_location: "//build/bazel/rules/aidl:aidl_interface.bzl",
-		},
-		android.CommonAttributes{Name: interfaceName},
-		attrs,
-	)
 }

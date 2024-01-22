@@ -160,7 +160,9 @@ class AidlNode {
   virtual void DispatchVisit(AidlVisitor&) const = 0;
 
   const Comments& GetComments() const { return comments_; }
-  void SetComments(const Comments& comments) { comments_ = comments; }
+  void PrependComments(const Comments& comments) {
+    comments_.insert(comments_.begin(), comments.begin(), comments.end());
+  }
 
   static void ClearUnvisitedNodes();
   static const std::vector<AidlLocation>& GetLocationsOfUnvisitedNodes();
@@ -343,6 +345,13 @@ class AidlAnnotatable : public AidlCommentable {
   virtual ~AidlAnnotatable() = default;
 
   void Annotate(vector<std::unique_ptr<AidlAnnotation>>&& annotations) {
+    for (auto i = annotations.rbegin(); i != annotations.rend(); ++i) {
+      // TODO: we may want to mark all comments as "unoutputed"
+      // in the lexer phase, and then verify after successful backend
+      // output that every comment is "emitted". If we do this, we would
+      // need to move rather than copy the comments here.
+      PrependComments((*i)->GetComments());
+    }
     for (auto& annotation : annotations) {
       annotations_.emplace_back(std::move(annotation));
     }
@@ -704,6 +713,7 @@ class AidlConstantValue : public AidlNode {
   void DispatchVisit(AidlVisitor& visitor) const override { visitor.Visit(*this); }
   size_t Size() const { return values_.size(); }
   const AidlConstantValue& ValueAt(size_t index) const { return *values_.at(index); }
+  static string ToString(Type type);
 
  private:
   AidlConstantValue(const AidlLocation& location, Type parsed_type, int64_t parsed_value,
@@ -712,11 +722,11 @@ class AidlConstantValue : public AidlNode {
   AidlConstantValue(const AidlLocation& location, Type type,
                     std::unique_ptr<vector<unique_ptr<AidlConstantValue>>> values,
                     const std::string& value);
-  static string ToString(Type type);
   static bool ParseIntegral(const string& value, int64_t* parsed_value, Type* parsed_type);
   static bool IsHex(const string& value);
 
   virtual bool evaluate() const;
+  bool IsLiteral() const;
 
   const Type type_ = Type::ERROR;
   const vector<unique_ptr<AidlConstantValue>> values_;  // if type_ == ARRAY
@@ -790,7 +800,9 @@ class AidlBinaryConstExpression : public AidlConstantValue {
 
   bool CheckValid() const override;
 
-  static bool AreCompatibleTypes(Type t1, Type t2);
+  static bool AreCompatibleOperandTypes(Type t1, Type t2);
+  static bool AreCompatibleArrayTypes(Type t1, Type t2);
+
   // Returns the promoted kind for both operands
   static Type UsualArithmeticConversion(Type left, Type right);
   // Returns the promoted integral type where INT32 is the smallest type
@@ -889,6 +901,8 @@ class AidlMethod : public AidlMember {
   const std::string& GetName() const { return name_; }
   bool HasId() const { return has_id_; }
   int GetId() const { return id_; }
+
+  // TODO: Set is errorprone, what if it was set before?
   void SetId(unsigned id) { id_ = id; }
 
   const std::vector<std::unique_ptr<AidlArgument>>& GetArguments() const {
@@ -1130,6 +1144,7 @@ class AidlEnumerator : public AidlCommentable {
   string ValueString(const AidlTypeSpecifier& backing_type,
                      const ConstantValueDecorator& decorator) const;
 
+  // TODO: Set is errorprone. What if it was set before?
   void SetValue(std::unique_ptr<AidlConstantValue> value) { value_ = std::move(value); }
   bool IsValueUserSpecified() const { return value_user_specified_; }
 

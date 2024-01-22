@@ -24,6 +24,8 @@
 #include <string>
 #include <utility>
 
+#include <android-base/stringprintf.h>
+
 namespace android {
 namespace aidl {
 
@@ -41,7 +43,21 @@ class CodeWriter {
   static CodeWriterPtr ForString(std::string* buf);
   // Write a formatted string to this writer in the usual printf sense.
   // Returns false on error.
-  virtual bool Write(const char* format, ...) __attribute__((format(printf, 2, 3)));
+  template <typename... Args>
+  bool Write(const char* format, Args... args) __attribute__((format(printf, 2, 0))) {
+    std::string formatted;
+    android::base::StringAppendF(&formatted, format, args...);
+
+    return WriteString(formatted);
+  }
+
+  template <>
+  bool Write(const char* str) {
+    return WriteString(str);
+  }
+
+  virtual bool WriteString(const std::string&);
+
   void Indent();
   void Dedent();
   virtual bool Close();

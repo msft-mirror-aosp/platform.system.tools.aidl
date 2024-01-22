@@ -25,6 +25,8 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -1335,6 +1337,68 @@ TEST_P(AidlTest, FailOnDuplicateConstantNames) {
   EXPECT_EQ(AidlError::BAD_TYPE, error);
 }
 
+TEST_P(AidlTest, FailOnDoubleUnderscore) {
+  AidlError error;
+  const string expected_stderr = "ERROR: p/IFoo.aidl:3.52-57: Could not parse integer: 1__0\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = 1__0;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnUnderscoreBeforeModifier) {
+  AidlError error;
+  const string expected_stderr = "ERROR: p/IFoo.aidl:3.52-59: Could not parse hexvalue: 0xFF_L\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = 0xFF_L;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnEndingUnderscore) {
+  AidlError error;
+  const string expected_stderr = "ERROR: p/IFoo.aidl:3.52-56: Could not parse integer: 10_\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = 10_;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnLeadingUnderscore) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.52-56: Can't find _10 in IFoo\nERROR: p/IFoo.aidl:3.52-56: Unknown "
+      "reference '_10'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                      interface IFoo {
+                        const int UNDERSCORE_USER = _10;
+                      }
+                   )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
 TEST_P(AidlTest, InvalidConstString) {
   AidlError error;
   const string expected_stderr =
@@ -1386,7 +1450,7 @@ TEST_F(AidlTest, CosntantValueType) {
 TEST_P(AidlTest, FailOnTooBigConstant) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/IFoo.aidl:3.48-52: Invalid type specifier for an int32 literal: byte (256)\n";
+      "ERROR: p/IFoo.aidl:3.48-52: Invalid type specifier for an int32 literal: byte (256).\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -1439,6 +1503,47 @@ TEST_F(AidlTest, AidlConstantValue_EvaluatedValue) {
   testFloatValues->emplace_back(AidlConstantValue::Floating(loc, "50.f"));
   EXPECT_EQ(testFloats, Ptr(AidlConstantValue::Array(loc, std::move(testFloatValues)))
                             ->EvaluatedValue<vector<float>>());
+}
+
+// TODO: b/313951203 add floating/string operands test
+TEST_F(AidlTest, AidlBinaryConstExpression_CompatibleTypes) {
+  const AidlLocation& loc = AIDL_LOCATION_HERE;
+  static const std::unordered_map<AidlConstantValue::Type,
+                                  const std::unordered_set<AidlConstantValue::Type>>
+      compatibleTypesMap({{AidlConstantValue::Type::BOOLEAN,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::INT8,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::INT32,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::INT64,
+                           {AidlConstantValue::Type::BOOLEAN, AidlConstantValue::Type::INT8,
+                            AidlConstantValue::Type::INT32, AidlConstantValue::Type::INT64}},
+                          {AidlConstantValue::Type::ARRAY, {AidlConstantValue::Type::ARRAY}},
+                          {AidlConstantValue::Type::STRING, {AidlConstantValue::Type::STRING}}});
+
+  // go over all possible combination
+  for (int l = 0; l <= (int)AidlConstantValue::Type::ERROR; ++l) {
+    for (int r = 0; r <= (int)AidlConstantValue::Type::ERROR; ++r) {
+      const AidlConstantValue::Type lType = static_cast<AidlConstantValue::Type>(l),
+                                    rType = static_cast<AidlConstantValue::Type>(r);
+      const auto typeItor = compatibleTypesMap.find(lType);
+      const bool isCompatibleOperandType = typeItor != compatibleTypesMap.end() &&
+                                           typeItor->second.find(rType) != typeItor->second.end();
+      const bool isCompatibleArrayType =
+          isCompatibleOperandType || (lType == AidlConstantValue::Type::FLOATING &&
+                                      rType == AidlConstantValue::Type::FLOATING);
+      EXPECT_EQ(isCompatibleOperandType,
+                AidlBinaryConstExpression::AreCompatibleOperandTypes(lType, rType))
+          << AidlConstantValue::ToString(lType) << ", " << AidlConstantValue::ToString(rType);
+      EXPECT_EQ(isCompatibleArrayType,
+                AidlBinaryConstExpression::AreCompatibleArrayTypes(lType, rType))
+          << AidlConstantValue::ToString(lType) << ", " << AidlConstantValue::ToString(rType);
+    }
+  }
 }
 
 TEST_F(AidlTest, AidlConstantCharacterDefault) {
@@ -1517,6 +1622,13 @@ TEST_P(AidlTest, FailOnMalformedQualifiedNameAsIdentifier) {
                            GetLanguage(), &error));
   EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
   EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, FailOnAssigningByteSizeIntToByteWithHelp) {
+  EvaluateInvalidAssignment(
+      R"(package a; interface IFoo { const byte INT_VALUE = 0xFF; })",
+      "Invalid type specifier for an int32 literal: byte (0xFF). Did you mean: 0xFFu8?", typenames_,
+      GetLanguage());
 }
 
 TEST_P(AidlTest, FailOnAssigningDoubleInFloatConst) {
@@ -2431,6 +2543,7 @@ TEST_F(AidlTest, ApiDump) {
                                "// comment\n"
                                "package foo.bar;\n"
                                "import foo.bar.IFoo;\n"
+                               "@JavaDerive(equals=true, toString=true)\n"
                                "/* @hide*/\n"
                                "parcelable Data {\n"
                                "   // @hide\n"
@@ -2473,6 +2586,7 @@ interface IFoo {
   EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Data.aidl", &actual));
   EXPECT_EQ(string("// comment\n").append(string(kPreamble)).append(R"(package foo.bar;
 /* @hide */
+@JavaDerive(equals=true, toString=true)
 parcelable Data {
   int x = 10;
   int y;
@@ -4369,7 +4483,8 @@ TEST_F(AidlOutputPathTest, NoOutDirWithNoOutputFile) {
 TEST_P(AidlTest, FailOnOutOfBoundsInt32MaxConstInt) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/IFoo.aidl:3.58-69: Invalid type specifier for an int64 literal: int (2147483650)\n";
+      "ERROR: p/IFoo.aidl:3.58-69: Invalid type specifier for an int64 literal: int "
+      "(2147483650).\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -4386,7 +4501,7 @@ TEST_P(AidlTest, FailOnOutOfBoundsInt32MinConstInt) {
   AidlError error;
   const string expected_stderr =
       "ERROR: p/IFoo.aidl:3.58-60: Invalid type specifier for an int64 literal: int "
-      "(-2147483650)\n";
+      "(-2147483650).\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
@@ -4434,7 +4549,7 @@ TEST_P(AidlTest, FailOnOutOfBoundsInt64MinConstInt) {
 TEST_P(AidlTest, FailOnOutOfBoundsAutofilledEnum) {
   AidlError error;
   const string expected_stderr =
-      "ERROR: p/TestEnum.aidl:5.1-36: Invalid type specifier for an int32 literal: byte (FOO+1)\n"
+      "ERROR: p/TestEnum.aidl:5.1-36: Invalid type specifier for an int32 literal: byte (FOO+1).\n"
       "ERROR: p/TestEnum.aidl:5.1-36: Enumerator type differs from enum backing type.\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/TestEnum.aidl",
@@ -5658,7 +5773,7 @@ class AidlTypeParamTest
     io.SetFileContents("a/Enum.aidl", "package a; enum Enum { A }");
     io.SetFileContents("a/Union.aidl", "package a; union Union { int a; }");
     io.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { int a; }");
-    std::string decl = fmt::format(generic_type_decl, std::get<1>(param).literal);
+    std::string decl = fmt::format(fmt::runtime(generic_type_decl), std::get<1>(param).literal);
     if (nullable) {
       decl = "@nullable " + decl;
     }

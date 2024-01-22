@@ -162,6 +162,11 @@ class NativeService : public BnTestService {
     ALOGI("Repeating token %s", token_str.str().c_str());
   }
 
+  template <>
+  void LogRepeatedToken(const char16_t& token) {
+    ALOGI("Repeating token (char16_t) %d", token);
+  }
+
   ScopedAStatus TestOneway() override { return ScopedAStatus::fromStatus(android::UNKNOWN_ERROR); }
 
   ScopedAStatus Deprecated() override { return ScopedAStatus::ok(); }

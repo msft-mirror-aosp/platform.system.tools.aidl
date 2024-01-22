@@ -285,6 +285,7 @@ void StubClass::MakeConstructors(const AidlInterface* interfaceType) {
     code << "public Stub(android.os.PermissionEnforcer enforcer)\n";
   } else {
     code << "/** Construct the stub at attach it to the interface. */\n";
+    code << "@SuppressWarnings(\"this-escape\")\n";
     code << "public Stub()\n";
   }
   code << "{\n";

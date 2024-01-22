@@ -76,6 +76,8 @@ class Parser {
   const std::string& FileName() const { return filename_; }
   void* Scanner() const { return scanner_; }
 
+  AidlDocument* GetDocument() { return document_.get(); }
+
   // This restricts the grammar to something more reasonable. One alternative
   // would be to support multiple sets of type specifiers in our AST, but then a
   // lot of later code would have to deal with this more complicated type. So,

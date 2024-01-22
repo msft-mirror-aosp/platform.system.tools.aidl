@@ -91,9 +91,9 @@ parcelable StructuredParcelable {
             (~(-1)) == 0,
             ~~(1 << 31) == (1 << 31),
             -0x7fffffff < 0,
-            0x80000000 < 0,
+            0x8000_0000 < 0,
 
-            0x7fffffff == 2147483647,
+            0x7fffffff == 2_147_483_647,
 
             // Shifting for more than 31 bits are undefined. Not tested.
             (1 << 31) == 0x80000000,
@@ -161,11 +161,13 @@ parcelable StructuredParcelable {
             ~~(1L << 63) == (1L << 63),
             -0x7FFFFFFFFFFFFFFF < 0,
 
-            0x7fffffff == 2147483647,
+            0x7fff_ffff == 2147483647,
             0xfffffffff == 68719476735,
             0xffffffffffffffff == -1,
             (0xfL << 32L) == 0xf00000000,
             (0xfL << 32) == 0xf00000000,
+            10L == 1_0L,
+            10_0_0 == 1000L,
     };
     int hexInt32_pos_1 = -0xffffffff;
     int hexInt64_pos_1 = -0xfffffffffff < 0;
