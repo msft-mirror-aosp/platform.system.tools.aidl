@@ -65,10 +65,7 @@ pub trait IDeprecatedDefault: Send + Sync {
 pub mod transactions {
 }
 pub type IDeprecatedDefaultRef = Option<std::sync::Arc<dyn IDeprecatedDefault>>;
-use lazy_static::lazy_static;
-lazy_static! {
-  static ref DEFAULT_IMPL: std::sync::Mutex<IDeprecatedDefaultRef> = std::sync::Mutex::new(None);
-}
+static DEFAULT_IMPL: std::sync::Mutex<IDeprecatedDefaultRef> = std::sync::Mutex::new(None);
 impl BpDeprecated {
 }
 impl IDeprecated for BpDeprecated {
