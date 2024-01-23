@@ -128,10 +128,7 @@ pub mod transactions {
   pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
 }
 pub type ITrunkStableTestDefaultRef = Option<std::sync::Arc<dyn ITrunkStableTestDefault>>;
-use lazy_static::lazy_static;
-lazy_static! {
-  static ref DEFAULT_IMPL: std::sync::Mutex<ITrunkStableTestDefaultRef> = std::sync::Mutex::new(None);
-}
+static DEFAULT_IMPL: std::sync::Mutex<ITrunkStableTestDefaultRef> = std::sync::Mutex::new(None);
 pub const VERSION: i32 = if true {1} else {2};
 pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
 impl BpTrunkStableTest {
@@ -752,10 +749,7 @@ pub mod r#IMyCallback {
     pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
   }
   pub type IMyCallbackDefaultRef = Option<std::sync::Arc<dyn IMyCallbackDefault>>;
-  use lazy_static::lazy_static;
-  lazy_static! {
-    static ref DEFAULT_IMPL: std::sync::Mutex<IMyCallbackDefaultRef> = std::sync::Mutex::new(None);
-  }
+  static DEFAULT_IMPL: std::sync::Mutex<IMyCallbackDefaultRef> = std::sync::Mutex::new(None);
   pub const VERSION: i32 = if true {1} else {2};
   pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
   impl BpMyCallback {
