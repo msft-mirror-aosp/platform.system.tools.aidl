@@ -765,10 +765,7 @@ pub mod transactions {
   pub const r#GetCircular: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 69;
 }
 pub type ITestServiceDefaultRef = Option<std::sync::Arc<dyn ITestServiceDefault>>;
-use lazy_static::lazy_static;
-lazy_static! {
-  static ref DEFAULT_IMPL: std::sync::Mutex<ITestServiceDefaultRef> = std::sync::Mutex::new(None);
-}
+static DEFAULT_IMPL: std::sync::Mutex<ITestServiceDefaultRef> = std::sync::Mutex::new(None);
 pub const r#CONSTANT: i32 = 42;
 pub const r#CONSTANT2: i32 = -42;
 pub const r#CONSTANT3: i32 = 42;
@@ -4595,10 +4592,7 @@ pub mod r#CompilerChecks {
     pub mod transactions {
     }
     pub type IFooDefaultRef = Option<std::sync::Arc<dyn IFooDefault>>;
-    use lazy_static::lazy_static;
-    lazy_static! {
-      static ref DEFAULT_IMPL: std::sync::Mutex<IFooDefaultRef> = std::sync::Mutex::new(None);
-    }
+    static DEFAULT_IMPL: std::sync::Mutex<IFooDefaultRef> = std::sync::Mutex::new(None);
     impl BpFoo {
     }
     impl IFoo for BpFoo {
@@ -4776,10 +4770,7 @@ pub mod r#CompilerChecks {
       pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
     }
     pub type INoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INoPrefixInterfaceDefault>>;
-    use lazy_static::lazy_static;
-    lazy_static! {
-      static ref DEFAULT_IMPL: std::sync::Mutex<INoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
-    }
+    static DEFAULT_IMPL: std::sync::Mutex<INoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
     impl BpNoPrefixInterface {
       fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
         let mut aidl_data = self.binder.prepare_transact()?;
@@ -4934,10 +4925,7 @@ pub mod r#CompilerChecks {
         pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
       }
       pub type INestedNoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INestedNoPrefixInterfaceDefault>>;
-      use lazy_static::lazy_static;
-      lazy_static! {
-        static ref DEFAULT_IMPL: std::sync::Mutex<INestedNoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
-      }
+      static DEFAULT_IMPL: std::sync::Mutex<INestedNoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
       impl BpNestedNoPrefixInterface {
         fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
           let mut aidl_data = self.binder.prepare_transact()?;

@@ -499,10 +499,7 @@ pub mod r#IRepeatFixedSizeArray {
     pub const r#Repeat2dParcelables: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 7;
   }
   pub type IRepeatFixedSizeArrayDefaultRef = Option<std::sync::Arc<dyn IRepeatFixedSizeArrayDefault>>;
-  use lazy_static::lazy_static;
-  lazy_static! {
-    static ref DEFAULT_IMPL: std::sync::Mutex<IRepeatFixedSizeArrayDefaultRef> = std::sync::Mutex::new(None);
-  }
+  static DEFAULT_IMPL: std::sync::Mutex<IRepeatFixedSizeArrayDefaultRef> = std::sync::Mutex::new(None);
   impl BpRepeatFixedSizeArray {
     fn build_parcel_RepeatBytes(&self, _arg_input: &[u8; 3], _arg_repeated: &mut [u8; 3]) -> binder::Result<binder::binder_impl::Parcel> {
       let mut aidl_data = self.binder.prepare_transact()?;
@@ -1045,10 +1042,7 @@ pub mod r#IEmptyInterface {
   pub mod transactions {
   }
   pub type IEmptyInterfaceDefaultRef = Option<std::sync::Arc<dyn IEmptyInterfaceDefault>>;
-  use lazy_static::lazy_static;
-  lazy_static! {
-    static ref DEFAULT_IMPL: std::sync::Mutex<IEmptyInterfaceDefaultRef> = std::sync::Mutex::new(None);
-  }
+  static DEFAULT_IMPL: std::sync::Mutex<IEmptyInterfaceDefaultRef> = std::sync::Mutex::new(None);
   impl BpEmptyInterface {
   }
   impl IEmptyInterface for BpEmptyInterface {
