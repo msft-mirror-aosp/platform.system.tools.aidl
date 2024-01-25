@@ -221,10 +221,10 @@ fn test_repeat_string() {
 fn test_repeat_parcelable() {
     let service = get_test_service();
     let input = SimpleParcelable { name: "foo".to_string(), number: 42 };
-    let mut out_param = None;
+    let mut out_param = SimpleParcelable::default();
     let returned = service.RepeatSimpleParcelable(&input, &mut out_param);
     assert_eq!(returned, Ok(input.clone()));
-    assert_eq!(out_param, Some(input));
+    assert_eq!(out_param, input);
 }
 
 macro_rules! test_reverse_array {
