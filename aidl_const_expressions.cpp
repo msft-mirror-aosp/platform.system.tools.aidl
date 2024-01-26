@@ -477,7 +477,11 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
 
   std::string_view value_view = value;
   const bool is_byte = ConsumeSuffix(&value_view, "u8");
+  const bool is_unsigned_int = ConsumeSuffix(&value_view, "u32");
   const bool is_long = ConsumeSuffix(&value_view, "l") || ConsumeSuffix(&value_view, "L");
+  const bool is_unsigned_long = ConsumeSuffix(&value_view, "u64");
+
+  if (is_byte + is_long + is_unsigned_int + is_unsigned_long > 1) return false;
 
   const std::string value_substr = ({
     std::string raw_value_substr = std::string(value_view);
@@ -492,8 +496,6 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
 
   *parsed_value = 0;
   *parsed_type = Type::ERROR;
-
-  if (is_byte && is_long) return false;
 
   if (IsHex(value)) {
     // AIDL considers 'const int foo = 0xffffffff' as -1, but if we want to
@@ -515,7 +517,8 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
       *parsed_value = static_cast<int8_t>(raw_value8);
       *parsed_type = Type::INT8;
     } else if (uint32_t raw_value32;
-               !is_long && android::base::ParseUint<uint32_t>(value_substr, &raw_value32)) {
+               (!is_long || is_unsigned_int) &&
+               android::base::ParseUint<uint32_t>(value_substr, &raw_value32)) {
       *parsed_value = static_cast<int32_t>(raw_value32);
       *parsed_type = Type::INT32;
     } else if (uint64_t raw_value64;
@@ -528,6 +531,15 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
     return true;
   }
 
+  if (is_unsigned_long) {
+    if (uint64_t raw_value64; android::base::ParseUint<uint64_t>(value_substr, &raw_value64)) {
+      *parsed_value = static_cast<int64_t>(raw_value64);
+      *parsed_type = Type::INT64;
+      return true;
+    } else {
+      return false;
+    }
+  }
   if (!android::base::ParseInt<int64_t>(value_substr, parsed_value)) {
     return false;
   }
@@ -538,6 +550,12 @@ bool AidlConstantValue::ParseIntegral(const string& value, int64_t* parsed_value
     }
     *parsed_value = static_cast<int8_t>(*parsed_value);
     *parsed_type = Type::INT8;
+  } else if (is_unsigned_int) {
+    if (*parsed_value > UINT32_MAX || *parsed_value < 0) {
+      return false;
+    }
+    *parsed_value = static_cast<int32_t>(*parsed_value);
+    *parsed_type = Type::INT32;
   } else if (is_long) {
     *parsed_type = Type::INT64;
   } else {
@@ -664,6 +682,9 @@ string AidlConstantValue::ValueString(const AidlTypeSpecifier& type,
       } else if (type_string == "int") {
         if (final_value_ > INT32_MAX || final_value_ < INT32_MIN) {
           err = -1;
+          if (final_value_ >= 0 && final_value_ <= UINT32_MAX && IsLiteral()) {
+            alternatives.push_back(value_ + "u32");
+          }
           break;
         }
         return decorator(type, std::to_string(static_cast<int32_t>(final_value_)));
