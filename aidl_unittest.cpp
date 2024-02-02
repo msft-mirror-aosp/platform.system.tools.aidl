@@ -4480,11 +4480,100 @@ TEST_F(AidlOutputPathTest, NoOutDirWithNoOutputFile) {
   Test(Options::From("aidl -I sub/dir sub/dir/foo/bar/IFoo.aidl"), "sub/dir/foo/bar/IFoo.java");
 }
 
+TEST_P(AidlTest, PassOnValidUnsignedInt32Int) {
+  EvaluateValidAssignment(
+      R"(package a; interface IFoo { const int UINT32_VALUE = 2147483650u32; })", "", typenames_,
+      GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnOutOfBoundsUInt32MaxConstInt) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.59-73: Could not parse integer: 4294967300u32\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                              interface IFoo {
+                                const int uint32_max_oob = 4294967300u32;
+                              }
+                             )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, PassOnValidUnsignedInt64Int) {
+  EvaluateValidAssignment(
+      R"(package a; interface IFoo { const long UINT64_VALUE = 18446744073709551615u64; })", "",
+      typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnOutOfBoundsUInt64MaxConstInt) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.60-84: Could not parse integer: 18446744073709551620u64\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                              interface IFoo {
+                                const long uint64_max_oob = 18446744073709551620u64;
+                              }
+                             )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, PassOnValidUnsignedInt32Hex) {
+  EvaluateValidAssignment(
+      R"(package a; interface IFoo { const int UINT32_VALUE = 0xffffffffu32; })", "", typenames_,
+      GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnOutOfBoundsUInt32MaxConstHex) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.59-74: Invalid type specifier for an int64 literal: int "
+      "(0xfffffffffu32).\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                              interface IFoo {
+                                const int uint32_max_oob = 0xfffffffffu32;
+                              }
+                             )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::BAD_TYPE, error);
+}
+
+TEST_P(AidlTest, PassOnValidUnsignedInt64Hex) {
+  EvaluateValidAssignment(
+      R"(package a; interface IFoo { const int UINT64_VALUE = 0xffffffffffffffffu64; })", "",
+      typenames_, GetLanguage());
+}
+
+TEST_P(AidlTest, FailOnOutOfBoundsUInt64MaxConstHex) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/IFoo.aidl:3.59-82: Could not parse hexvalue: 0xfffffffffffffffffu64\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
+                           R"(package p;
+                              interface IFoo {
+                                const int uint64_max_oob = 0xfffffffffffffffffu64;
+                              }
+                             )",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
 TEST_P(AidlTest, FailOnOutOfBoundsInt32MaxConstInt) {
   AidlError error;
   const string expected_stderr =
       "ERROR: p/IFoo.aidl:3.58-69: Invalid type specifier for an int64 literal: int "
-      "(2147483650).\n";
+      "(2147483650). Did you mean: 2147483650u32?\n";
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
                            R"(package p;
