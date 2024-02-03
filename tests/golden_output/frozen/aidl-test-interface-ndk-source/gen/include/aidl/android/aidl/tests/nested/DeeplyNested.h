@@ -52,23 +52,23 @@ public:
         binder_status_t readFromParcel(const AParcel* parcel);
         binder_status_t writeToParcel(AParcel* parcel) const;
 
-        inline bool operator!=(const D&) const {
-          return std::tie() != std::tie();
+        inline bool operator==(const D&) const {
+          return std::tie() == std::tie();
         }
         inline bool operator<(const D&) const {
           return std::tie() < std::tie();
         }
-        inline bool operator<=(const D&) const {
-          return std::tie() <= std::tie();
+        inline bool operator!=(const D& _rhs) const {
+          return !(*this == _rhs);
         }
-        inline bool operator==(const D&) const {
-          return std::tie() == std::tie();
+        inline bool operator>(const D& _rhs) const {
+          return _rhs < *this;
         }
-        inline bool operator>(const D&) const {
-          return std::tie() > std::tie();
+        inline bool operator>=(const D& _rhs) const {
+          return !(*this < _rhs);
         }
-        inline bool operator>=(const D&) const {
-          return std::tie() >= std::tie();
+        inline bool operator<=(const D& _rhs) const {
+          return !(_rhs < *this);
         }
 
         static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
@@ -83,23 +83,23 @@ public:
       binder_status_t readFromParcel(const AParcel* parcel);
       binder_status_t writeToParcel(AParcel* parcel) const;
 
-      inline bool operator!=(const C&) const {
-        return std::tie() != std::tie();
+      inline bool operator==(const C&) const {
+        return std::tie() == std::tie();
       }
       inline bool operator<(const C&) const {
         return std::tie() < std::tie();
       }
-      inline bool operator<=(const C&) const {
-        return std::tie() <= std::tie();
+      inline bool operator!=(const C& _rhs) const {
+        return !(*this == _rhs);
       }
-      inline bool operator==(const C&) const {
-        return std::tie() == std::tie();
+      inline bool operator>(const C& _rhs) const {
+        return _rhs < *this;
       }
-      inline bool operator>(const C&) const {
-        return std::tie() > std::tie();
+      inline bool operator>=(const C& _rhs) const {
+        return !(*this < _rhs);
       }
-      inline bool operator>=(const C&) const {
-        return std::tie() >= std::tie();
+      inline bool operator<=(const C& _rhs) const {
+        return !(_rhs < *this);
       }
 
       static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
@@ -114,23 +114,23 @@ public:
     binder_status_t readFromParcel(const AParcel* parcel);
     binder_status_t writeToParcel(AParcel* parcel) const;
 
-    inline bool operator!=(const B&) const {
-      return std::tie() != std::tie();
+    inline bool operator==(const B&) const {
+      return std::tie() == std::tie();
     }
     inline bool operator<(const B&) const {
       return std::tie() < std::tie();
     }
-    inline bool operator<=(const B&) const {
-      return std::tie() <= std::tie();
+    inline bool operator!=(const B& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const B&) const {
-      return std::tie() == std::tie();
+    inline bool operator>(const B& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const B&) const {
-      return std::tie() > std::tie();
+    inline bool operator>=(const B& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const B&) const {
-      return std::tie() >= std::tie();
+    inline bool operator<=(const B& _rhs) const {
+      return !(_rhs < *this);
     }
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
@@ -151,23 +151,23 @@ public:
     binder_status_t readFromParcel(const AParcel* parcel);
     binder_status_t writeToParcel(AParcel* parcel) const;
 
-    inline bool operator!=(const A& rhs) const {
-      return std::tie(e) != std::tie(rhs.e);
+    inline bool operator==(const A& _rhs) const {
+      return std::tie(e) == std::tie(_rhs.e);
     }
-    inline bool operator<(const A& rhs) const {
-      return std::tie(e) < std::tie(rhs.e);
+    inline bool operator<(const A& _rhs) const {
+      return std::tie(e) < std::tie(_rhs.e);
     }
-    inline bool operator<=(const A& rhs) const {
-      return std::tie(e) <= std::tie(rhs.e);
+    inline bool operator!=(const A& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator==(const A& rhs) const {
-      return std::tie(e) == std::tie(rhs.e);
+    inline bool operator>(const A& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator>(const A& rhs) const {
-      return std::tie(e) > std::tie(rhs.e);
+    inline bool operator>=(const A& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator>=(const A& rhs) const {
-      return std::tie(e) >= std::tie(rhs.e);
+    inline bool operator<=(const A& _rhs) const {
+      return !(_rhs < *this);
     }
 
     static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
@@ -183,23 +183,23 @@ public:
   binder_status_t readFromParcel(const AParcel* parcel);
   binder_status_t writeToParcel(AParcel* parcel) const;
 
-  inline bool operator!=(const DeeplyNested&) const {
-    return std::tie() != std::tie();
+  inline bool operator==(const DeeplyNested&) const {
+    return std::tie() == std::tie();
   }
   inline bool operator<(const DeeplyNested&) const {
     return std::tie() < std::tie();
   }
-  inline bool operator<=(const DeeplyNested&) const {
-    return std::tie() <= std::tie();
+  inline bool operator!=(const DeeplyNested& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const DeeplyNested&) const {
-    return std::tie() == std::tie();
+  inline bool operator>(const DeeplyNested& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const DeeplyNested&) const {
-    return std::tie() > std::tie();
+  inline bool operator>=(const DeeplyNested& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const DeeplyNested&) const {
-    return std::tie() >= std::tie();
+  inline bool operator<=(const DeeplyNested& _rhs) const {
+    return !(_rhs < *this);
   }
 
   static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;

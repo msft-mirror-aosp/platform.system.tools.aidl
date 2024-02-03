@@ -14,7 +14,6 @@ DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(NamedCallback, "android.aidl.tes
 #include <android/aidl/tests/BpNamedCallback.h>
 #include <android/aidl/tests/BnNamedCallback.h>
 #include <binder/Parcel.h>
-#include <android-base/macros.h>
 
 namespace android {
 namespace aidl {
@@ -36,7 +35,7 @@ BpNamedCallback::BpNamedCallback(const ::android::sp<::android::IBinder>& _aidl_
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnNamedCallback::TRANSACTION_GetName, _aidl_data, &_aidl_reply, 0);
-  if (UNLIKELY(_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INamedCallback::getDefaultImpl())) {
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INamedCallback::getDefaultImpl()) [[unlikely]] {
      return INamedCallback::getDefaultImpl()->GetName(_aidl_return);
   }
   if (((_aidl_ret_status) != (::android::OK))) {

@@ -842,11 +842,8 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   // Emit the default implementation code outside the trait
   *code_writer << "pub type " << default_ref_name << " = Option<std::sync::Arc<dyn "
                << default_trait_name << ">>;\n";
-  *code_writer << "use lazy_static::lazy_static;\n";
-  *code_writer << "lazy_static! {\n";
-  *code_writer << "  static ref DEFAULT_IMPL: std::sync::Mutex<" << default_ref_name
+  *code_writer << "static DEFAULT_IMPL: std::sync::Mutex<" << default_ref_name
                << "> = std::sync::Mutex::new(None);\n";
-  *code_writer << "}\n";
 
   // Emit the interface constants
   GenerateConstantDeclarations(*code_writer, *iface, typenames);

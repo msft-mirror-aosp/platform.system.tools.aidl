@@ -21,6 +21,7 @@ public interface IBaz extends android.os.IInterface
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.immutable.IBaz
   {
     /** Construct the stub at attach it to the interface. */
+    @SuppressWarnings("this-escape")
     public Stub()
     {
       this.attachInterface(this, DESCRIPTOR);

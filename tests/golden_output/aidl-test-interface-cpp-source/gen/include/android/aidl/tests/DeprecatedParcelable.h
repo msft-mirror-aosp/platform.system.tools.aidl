@@ -15,23 +15,23 @@ namespace aidl {
 namespace tests {
 class __attribute__((deprecated("test"))) DeprecatedParcelable : public ::android::Parcelable {
 public:
-  inline bool operator!=(const DeprecatedParcelable&) const {
-    return std::tie() != std::tie();
+  inline bool operator==(const DeprecatedParcelable&) const {
+    return std::tie() == std::tie();
   }
   inline bool operator<(const DeprecatedParcelable&) const {
     return std::tie() < std::tie();
   }
-  inline bool operator<=(const DeprecatedParcelable&) const {
-    return std::tie() <= std::tie();
+  inline bool operator!=(const DeprecatedParcelable& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const DeprecatedParcelable&) const {
-    return std::tie() == std::tie();
+  inline bool operator>(const DeprecatedParcelable& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const DeprecatedParcelable&) const {
-    return std::tie() > std::tie();
+  inline bool operator>=(const DeprecatedParcelable& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const DeprecatedParcelable&) const {
-    return std::tie() >= std::tie();
+  inline bool operator<=(const DeprecatedParcelable& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

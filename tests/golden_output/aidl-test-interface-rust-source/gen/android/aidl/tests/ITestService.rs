@@ -81,7 +81,7 @@ pub trait ITestService: binder::Interface + Send {
   fn r#ReverseList(&self, _arg_list: &crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList>;
   fn r#ReverseIBinderArray(&self, _arg_input: &[binder::SpIBinder], _arg_repeated: &mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>>;
   fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>>;
-  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable>;
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable>;
   fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>>;
   fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>;
   fn r#GetNewNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>>;
@@ -161,7 +161,7 @@ pub trait ITestServiceAsync<P>: binder::Interface + Send {
   fn r#ReverseList<'a>(&'a self, _arg_list: &'a crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList>>;
   fn r#ReverseIBinderArray<'a>(&'a self, _arg_input: &'a [binder::SpIBinder], _arg_repeated: &'a mut Vec<Option<binder::SpIBinder>>) -> binder::BoxFuture<'a, binder::Result<Vec<binder::SpIBinder>>>;
   fn r#ReverseNullableIBinderArray<'a>(&'a self, _arg_input: Option<&'a [Option<binder::SpIBinder>]>, _arg_repeated: &'a mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<binder::SpIBinder>>>>>;
-  fn r#RepeatSimpleParcelable<'a>(&'a self, _arg_input: &'a simple_parcelable::SimpleParcelable, _arg_repeat: &'a mut Option<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<simple_parcelable::SimpleParcelable>>;
+  fn r#RepeatSimpleParcelable<'a>(&'a self, _arg_input: &'a simple_parcelable::SimpleParcelable, _arg_repeat: &'a mut simple_parcelable::SimpleParcelable) -> binder::BoxFuture<'a, binder::Result<simple_parcelable::SimpleParcelable>>;
   fn r#ReverseSimpleParcelables<'a>(&'a self, _arg_input: &'a [simple_parcelable::SimpleParcelable], _arg_repeated: &'a mut Vec<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<Vec<simple_parcelable::SimpleParcelable>>>;
   fn r#GetOldNameInterface<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>>;
   fn r#GetNewNameInterface<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>>>;
@@ -236,7 +236,7 @@ pub trait ITestServiceAsyncServer: binder::Interface + Send {
   async fn r#ReverseList(&self, _arg_list: &crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList>;
   async fn r#ReverseIBinderArray(&self, _arg_input: &[binder::SpIBinder], _arg_repeated: &mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>>;
   async fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>>;
-  async fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable>;
+  async fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable>;
   async fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>>;
   async fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>;
   async fn r#GetNewNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>>;
@@ -451,7 +451,7 @@ impl BnTestService {
       fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> {
         self._rt.block_on(self._inner.r#ReverseNullableIBinderArray(_arg_input, _arg_repeated))
       }
-      fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+      fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable> {
         self._rt.block_on(self._inner.r#RepeatSimpleParcelable(_arg_input, _arg_repeat))
       }
       fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
@@ -667,7 +667,7 @@ pub trait ITestServiceDefault: Send + Sync {
   fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
   fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
@@ -765,10 +765,7 @@ pub mod transactions {
   pub const r#GetCircular: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 69;
 }
 pub type ITestServiceDefaultRef = Option<std::sync::Arc<dyn ITestServiceDefault>>;
-use lazy_static::lazy_static;
-lazy_static! {
-  static ref DEFAULT_IMPL: std::sync::Mutex<ITestServiceDefaultRef> = std::sync::Mutex::new(None);
-}
+static DEFAULT_IMPL: std::sync::Mutex<ITestServiceDefaultRef> = std::sync::Mutex::new(None);
 pub const r#CONSTANT: i32 = 42;
 pub const r#CONSTANT2: i32 = -42;
 pub const r#CONSTANT3: i32 = 42;
@@ -2004,13 +2001,13 @@ impl BpTestService {
     _aidl_reply.read_onto(_arg_repeated)?;
     Ok(_aidl_return)
   }
-  fn build_parcel_RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<binder::binder_impl::Parcel> {
+  fn build_parcel_RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
     aidl_data.mark_sensitive();
     aidl_data.write(_arg_input)?;
     Ok(aidl_data)
   }
-  fn read_response_RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+  fn read_response_RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<simple_parcelable::SimpleParcelable> {
     if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
       if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
         return _aidl_default_impl.r#RepeatSimpleParcelable(_arg_input, _arg_repeat);
@@ -2459,7 +2456,7 @@ impl ITestService for BpTestService {
     let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseNullableIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseNullableIBinderArray(_arg_input, _arg_repeated, _aidl_reply)
   }
-  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> {
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable> {
     let _aidl_data = self.build_parcel_RepeatSimpleParcelable(_arg_input, _arg_repeat)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatSimpleParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatSimpleParcelable(_arg_input, _arg_repeat, _aidl_reply)
@@ -3302,7 +3299,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
       }
     )
   }
-  fn r#RepeatSimpleParcelable<'a>(&'a self, _arg_input: &'a simple_parcelable::SimpleParcelable, _arg_repeat: &'a mut Option<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<simple_parcelable::SimpleParcelable>> {
+  fn r#RepeatSimpleParcelable<'a>(&'a self, _arg_input: &'a simple_parcelable::SimpleParcelable, _arg_repeat: &'a mut simple_parcelable::SimpleParcelable) -> binder::BoxFuture<'a, binder::Result<simple_parcelable::SimpleParcelable>> {
     let _aidl_data = match self.build_parcel_RepeatSimpleParcelable(_arg_input, _arg_repeat) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -3470,7 +3467,7 @@ impl ITestService for binder::binder_impl::Binder<BnTestService> {
   fn r#ReverseList(&self, _arg_list: &crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList> { self.0.r#ReverseList(_arg_list) }
   fn r#ReverseIBinderArray(&self, _arg_input: &[binder::SpIBinder], _arg_repeated: &mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>> { self.0.r#ReverseIBinderArray(_arg_input, _arg_repeated) }
   fn r#ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> { self.0.r#ReverseNullableIBinderArray(_arg_input, _arg_repeated) }
-  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut Option<simple_parcelable::SimpleParcelable>) -> binder::Result<simple_parcelable::SimpleParcelable> { self.0.r#RepeatSimpleParcelable(_arg_input, _arg_repeat) }
+  fn r#RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable> { self.0.r#RepeatSimpleParcelable(_arg_input, _arg_repeat) }
   fn r#ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> { self.0.r#ReverseSimpleParcelables(_arg_input, _arg_repeated) }
   fn r#GetOldNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> { self.0.r#GetOldNameInterface() }
   fn r#GetNewNameInterface(&self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>> { self.0.r#GetNewNameInterface() }
@@ -4271,13 +4268,12 @@ fn on_transact(_aidl_service: &dyn ITestService, _aidl_code: binder::binder_impl
     }
     transactions::r#RepeatSimpleParcelable => {
       let _arg_input: simple_parcelable::SimpleParcelable = _aidl_data.read()?;
-      let mut _arg_repeat: Option<simple_parcelable::SimpleParcelable> = Default::default();
+      let mut _arg_repeat: simple_parcelable::SimpleParcelable = Default::default();
       let _aidl_return = _aidl_service.r#RepeatSimpleParcelable(&_arg_input, &mut _arg_repeat);
       match &_aidl_return {
         Ok(_aidl_return) => {
           _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
           _aidl_reply.write(_aidl_return)?;
-          let _arg_repeat = _arg_repeat.ok_or(binder::StatusCode::UNEXPECTED_NULL)?;
           _aidl_reply.write(&_arg_repeat)?;
         }
         Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
@@ -4595,10 +4591,7 @@ pub mod r#CompilerChecks {
     pub mod transactions {
     }
     pub type IFooDefaultRef = Option<std::sync::Arc<dyn IFooDefault>>;
-    use lazy_static::lazy_static;
-    lazy_static! {
-      static ref DEFAULT_IMPL: std::sync::Mutex<IFooDefaultRef> = std::sync::Mutex::new(None);
-    }
+    static DEFAULT_IMPL: std::sync::Mutex<IFooDefaultRef> = std::sync::Mutex::new(None);
     impl BpFoo {
     }
     impl IFoo for BpFoo {
@@ -4776,10 +4769,7 @@ pub mod r#CompilerChecks {
       pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
     }
     pub type INoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INoPrefixInterfaceDefault>>;
-    use lazy_static::lazy_static;
-    lazy_static! {
-      static ref DEFAULT_IMPL: std::sync::Mutex<INoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
-    }
+    static DEFAULT_IMPL: std::sync::Mutex<INoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
     impl BpNoPrefixInterface {
       fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
         let mut aidl_data = self.binder.prepare_transact()?;
@@ -4934,10 +4924,7 @@ pub mod r#CompilerChecks {
         pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
       }
       pub type INestedNoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INestedNoPrefixInterfaceDefault>>;
-      use lazy_static::lazy_static;
-      lazy_static! {
-        static ref DEFAULT_IMPL: std::sync::Mutex<INestedNoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
-      }
+      static DEFAULT_IMPL: std::sync::Mutex<INestedNoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
       impl BpNestedNoPrefixInterface {
         fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
           let mut aidl_data = self.binder.prepare_transact()?;

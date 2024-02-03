@@ -16,23 +16,23 @@ namespace tests {
 class OtherParcelableForToString : public ::android::Parcelable {
 public:
   ::android::String16 field;
-  inline bool operator!=(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) != std::tie(rhs.field);
+  inline bool operator==(const OtherParcelableForToString& _rhs) const {
+    return std::tie(field) == std::tie(_rhs.field);
   }
-  inline bool operator<(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) < std::tie(rhs.field);
+  inline bool operator<(const OtherParcelableForToString& _rhs) const {
+    return std::tie(field) < std::tie(_rhs.field);
   }
-  inline bool operator<=(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) <= std::tie(rhs.field);
+  inline bool operator!=(const OtherParcelableForToString& _rhs) const {
+    return !(*this == _rhs);
   }
-  inline bool operator==(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) == std::tie(rhs.field);
+  inline bool operator>(const OtherParcelableForToString& _rhs) const {
+    return _rhs < *this;
   }
-  inline bool operator>(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) > std::tie(rhs.field);
+  inline bool operator>=(const OtherParcelableForToString& _rhs) const {
+    return !(*this < _rhs);
   }
-  inline bool operator>=(const OtherParcelableForToString& rhs) const {
-    return std::tie(field) >= std::tie(rhs.field);
+  inline bool operator<=(const OtherParcelableForToString& _rhs) const {
+    return !(_rhs < *this);
   }
 
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;

@@ -46,7 +46,6 @@ cc_defaults {
         "-bugprone-misplaced-widening-cast",
         "-bugprone-signed-char-misuse",
         "-bugprone-sizeof-expression",
-        "-cert-dcl50-cpp",
         "-cert-err34-c",
         "-cert-err52-cpp",
         "-cert-str34-c",
@@ -210,7 +209,9 @@ cc_test {
         },
     },
 
-    required: ["aidl-golden-test-build-hook"],
+    data: [
+        ":aidl-golden-test-build-hook-gen",
+    ],
 }
 
 cc_fuzz {
@@ -226,6 +227,7 @@ cc_fuzz {
             "aidl-bugs@google.com",
         ],
         triage_assignee: "smoreland@google.com",
+        use_for_presubmit: true,
     },
 
     srcs: [
@@ -881,12 +883,11 @@ genrule {
     product_variables: {
         release_aidl_use_unfrozen: {
             cmd: "TARGET_RELEASE=trunk_staging $(location aidl-golden-test) check $(in) && " +
-                "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
+                "touch $(out)",
         },
     },
 
-    cmd: "TARGET_RELEASE=next $(location aidl-golden-test) check $(in) && " +
-        "echo 'int main(){return 0;}' > $(genDir)/TODO_b_37575883.cpp",
+    cmd: "TARGET_RELEASE=next $(location aidl-golden-test) check $(in) && touch $(out)",
     srcs: [
         // warning: keep this list up to date with tests/golden_test.sh
         ":aidl-test-interface-cpp-source",
@@ -927,13 +928,7 @@ genrule {
         ":android.aidl.test.trunk-V2-rust-source",
         "tests/golden_output/**/*",
     ],
-    out: ["TODO_b_37575883.cpp"],
-}
-
-cc_test_host {
-    name: "aidl-golden-test-build-hook",
-    generated_sources: ["aidl-golden-test-build-hook-gen"],
-    gtest: false,
+    out: ["aidl_golden_test_stamp.txt"],
 }
 
 //

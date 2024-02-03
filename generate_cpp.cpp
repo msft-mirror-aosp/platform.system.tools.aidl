@@ -76,7 +76,6 @@ const char kStatusHeader[] = "binder/Status.h";
 const char kString16Header[] = "utils/String16.h";
 const char kTraceHeader[] = "binder/Trace.h";
 const char kStrongPointerHeader[] = "utils/StrongPointer.h";
-const char kAndroidBaseMacrosHeader[] = "android-base/macros.h";
 
 void GenerateBreakOnStatusNotOk(CodeWriter& out) {
   out.Write("if (((%s) != (%s))) {\n", kAndroidStatusVarName, kAndroidStatusOk);
@@ -261,7 +260,7 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
     out.Dedent();
     out << "}\n";
   }
-  out.Write("if (UNLIKELY(%s == ::android::UNKNOWN_TRANSACTION && %s::getDefaultImpl())) {\n",
+  out.Write("if (%s == ::android::UNKNOWN_TRANSACTION && %s::getDefaultImpl()) [[unlikely]] {\n",
             kAndroidStatusVarName, i_name.c_str());
   out.Write("   return %s::getDefaultImpl()->%s(%s);\n", i_name.c_str(), method.GetName().c_str(),
             Join(arg_names, ", ").c_str());
@@ -378,7 +377,7 @@ void GenerateClientSource(CodeWriter& out, const AidlInterface& interface,
   vector<string> include_list = {
       HeaderFile(interface, ClassNames::CLIENT, false),
       HeaderFile(interface, ClassNames::SERVER, false),  // for TRANSACTION_* consts
-      kParcelHeader, kAndroidBaseMacrosHeader};
+      kParcelHeader};
   if (options.GenLog()) {
     include_list.emplace_back("chrono");
     include_list.emplace_back("functional");
