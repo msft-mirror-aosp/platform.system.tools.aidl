@@ -498,8 +498,7 @@ func (i *aidlInterface) shouldGenerateAppNdkBackend() bool {
 }
 
 func (i *aidlInterface) shouldGenerateRustBackend() bool {
-	// explicitly true if not specified to give early warning to devs
-	return proptools.BoolDefault(i.properties.Backend.Rust.Enabled, true)
+	return i.properties.Backend.Rust.Enabled != nil && *i.properties.Backend.Rust.Enabled
 }
 
 func (i *aidlInterface) useUnfrozen(ctx android.EarlyModuleContext) bool {
