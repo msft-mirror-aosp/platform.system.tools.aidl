@@ -21,6 +21,7 @@
 #include <binder/Parcel.h>
 #include <binder/RecordedTransaction.h>
 #include <signal.h>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include "include/Analyzer.h"
