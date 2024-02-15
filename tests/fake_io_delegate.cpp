@@ -36,7 +36,7 @@ namespace test {
 
 // Claims to always write successfully, but can't close the file.
 class BrokenCodeWriter : public CodeWriter {
-  bool Write(const char* /* format */, ...) override {  return true; }
+  bool WriteString(const std::string& /* str */) override { return true; }
   bool Close() override { return false; }
   ~BrokenCodeWriter() override = default;
 };  // class BrokenCodeWriter

@@ -160,7 +160,7 @@ TEST(OptionsTests, ParsesCompileJavaNinja) {
 TEST(OptionsTests, ParsesCompileCpp) {
   unique_ptr<Options> options = GetOptions(kCompileCppCommand, Options::Language::CPP);
   ASSERT_EQ(1u, options->ImportDirs().size());
-  EXPECT_EQ(string{kCompileCommandIncludePath}.substr(2), *options->ImportDirs().begin());
+  EXPECT_EQ(string{kCompileCommandIncludePath}.substr(2) + "/", *options->ImportDirs().begin());
   EXPECT_EQ(string{kCompileDepFile}.substr(2), options->DependencyFile());
   EXPECT_EQ(false, options->DependencyFileNinja());
   EXPECT_EQ(kCompileCommandInput, options->InputFiles().front());
@@ -171,7 +171,7 @@ TEST(OptionsTests, ParsesCompileCpp) {
 TEST(OptionsTests, ParsesCompileCppNinja) {
   unique_ptr<Options> options = GetOptions(kCompileCppCommandNinja, Options::Language::CPP);
   ASSERT_EQ(1u, options->ImportDirs().size());
-  EXPECT_EQ(string{kCompileCommandIncludePath}.substr(2), *options->ImportDirs().begin());
+  EXPECT_EQ(string{kCompileCommandIncludePath}.substr(2) + "/", *options->ImportDirs().begin());
   EXPECT_EQ(string{kCompileDepFile}.substr(2), options->DependencyFile());
   EXPECT_EQ(true, options->DependencyFileNinja());
   EXPECT_EQ(kCompileCommandInput, options->InputFiles().front());
@@ -470,6 +470,16 @@ TEST(OptionsTests, AcceptUCodeNameAsMinSdkVersion) {
   auto options = GetOptions(args);
   EXPECT_TRUE(options->Ok());
   EXPECT_EQ(34u, options->GetMinSdkVersion());
+}
+
+TEST(OptionsTests, AcceptVCodeNameAsMinSdkVersion) {
+  const char* args[] = {
+      "aidl",      "--lang=java", "--min_sdk_version=VanillaIceCream",
+      "--out=out", "input.aidl",  nullptr,
+  };
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  EXPECT_EQ(10000u, options->GetMinSdkVersion());  // TODO: finalize to version
 }
 
 TEST(OptionsTest, DefaultMinSdkVersion) {

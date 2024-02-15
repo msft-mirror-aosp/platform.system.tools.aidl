@@ -26,6 +26,7 @@
 #include <memory>
 #include <sstream>
 
+#include "aidl_to_common.h"
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_rust.h"
 #include "code_writer.h"
@@ -348,6 +349,13 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
   switch (kind) {
     case MethodKind::NORMAL:
     case MethodKind::ASYNC:
+      if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+          method.IsUserDefined()) {
+        out << "if (true) {\n";
+        out << " return Err(binder::Status::from(binder::StatusCode::UNKNOWN_TRANSACTION));\n";
+        out << "} else {\n";
+        out.Indent();
+      }
       // Prepare transaction.
       out << "let _aidl_data = self.build_parcel_" + method.GetName() + "(" + build_parcel_args +
                  ")?;\n";
@@ -358,6 +366,15 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
       out << "self.read_response_" + method.GetName() + "(" + read_response_args + ")\n";
       break;
     case MethodKind::READY_FUTURE:
+      if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+          method.IsUserDefined()) {
+        out << "if (true) {\n";
+        out << " return "
+               "std::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_"
+               "TRANSACTION)));\n";
+        out << "} else {\n";
+        out.Indent();
+      }
       // Prepare transaction.
       out << "let _aidl_data = match self.build_parcel_" + method.GetName() + "(" +
                  build_parcel_args + ") {\n";
@@ -374,6 +391,15 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
                  read_response_args + "))\n";
       break;
     case MethodKind::BOXED_FUTURE:
+      if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+          method.IsUserDefined()) {
+        out << "if (true) {\n";
+        out << " return "
+               "Box::pin(std::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_"
+               "TRANSACTION))));\n";
+        out << "} else {\n";
+        out.Indent();
+      }
       // Prepare transaction.
       out << "let _aidl_data = match self.build_parcel_" + method.GetName() + "(" +
                  build_parcel_args + ") {\n";
@@ -399,6 +425,11 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
       break;
   }
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      method.IsUserDefined()) {
+    out.Dedent();
+    out << "}\n";
+  }
   out.Dedent();
   out << "}\n";
 }
@@ -407,6 +438,13 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
                                const AidlMethod& method, const AidlTypenames& typenames) {
   out << "transactions::r#" << method.GetName() << " => {\n";
   out.Indent();
+  if (method.IsUserDefined() && method.IsNew() &&
+      ShouldForceDowngradeFor(CommunicationSide::READ)) {
+    out << "if (true) {\n";
+    out << "  Err(binder::StatusCode::UNKNOWN_TRANSACTION)\n";
+    out << "} else {\n";
+    out.Indent();
+  }
 
   if (interface.EnforceExpression() || method.GetType().EnforceExpression()) {
     out << "compile_error!(\"Permission checks not support for the Rust backend\");\n";
@@ -478,6 +516,11 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
     out << "}\n";
   }
   out << "Ok(())\n";
+  if (method.IsUserDefined() && method.IsNew() &&
+      ShouldForceDowngradeFor(CommunicationSide::READ)) {
+    out.Dedent();
+    out << "}\n";
+  }
   out.Dedent();
   out << "}\n";
 }
@@ -716,12 +759,13 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   code_writer->Dedent();
   *code_writer << "}\n";
   *code_writer << "impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: "
-                  "Send + Sync {\n";
+                  "Send + Sync + 'static {\n";
   code_writer->Indent();
   *code_writer << "fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }\n";
   *code_writer
-      << "fn dump(&self, _file: &std::fs::File, _args: &[&std::ffi::CStr]) -> "
-         "std::result::Result<(), binder::StatusCode> { self._inner.dump(_file, _args) }\n";
+      << "fn dump(&self, _writer: &mut dyn std::io::Write, _args: "
+         "&[&std::ffi::CStr]) -> "
+         "std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }\n";
   code_writer->Dedent();
   *code_writer << "}\n";
   *code_writer << "impl<T, R> " << trait_name << " for Wrapper<T, R>\n";
@@ -798,11 +842,8 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   // Emit the default implementation code outside the trait
   *code_writer << "pub type " << default_ref_name << " = Option<std::sync::Arc<dyn "
                << default_trait_name << ">>;\n";
-  *code_writer << "use lazy_static::lazy_static;\n";
-  *code_writer << "lazy_static! {\n";
-  *code_writer << "  static ref DEFAULT_IMPL: std::sync::Mutex<" << default_ref_name
+  *code_writer << "static DEFAULT_IMPL: std::sync::Mutex<" << default_ref_name
                << "> = std::sync::Mutex::new(None);\n";
-  *code_writer << "}\n";
 
   // Emit the interface constants
   GenerateConstantDeclarations(*code_writer, *iface, typenames);
@@ -812,10 +853,21 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   // because the latter are incompatible with trait objects, see
   // https://doc.rust-lang.org/reference/items/traits.html#object-safety
   if (options.Version() > 0) {
-    *code_writer << "pub const VERSION: i32 = " << std::to_string(options.Version()) << ";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      *code_writer << "pub const VERSION: i32 = if true {"
+                   << std::to_string(options.PreviousVersion()) << "} else {"
+                   << std::to_string(options.Version()) << "};\n";
+    } else {
+      *code_writer << "pub const VERSION: i32 = " << std::to_string(options.Version()) << ";\n";
+    }
   }
-  if (!options.Hash().empty()) {
-    *code_writer << "pub const HASH: &str = \"" << options.Hash() << "\";\n";
+  if (!options.Hash().empty() || options.IsLatestUnfrozenVersion()) {
+    if (options.IsLatestUnfrozenVersion()) {
+      *code_writer << "pub const HASH: &str = if true {\"" << options.PreviousHash()
+                   << "\"} else {\"" << options.Hash() << "\"};\n";
+    } else {
+      *code_writer << "pub const HASH: &str = \"" << options.Hash() << "\";\n";
+    }
   }
 
   // Generate the client-side method helpers
@@ -963,12 +1015,20 @@ void GenerateParcelSerializeBody(CodeWriter& out, const AidlStructuredParcelable
   out << "parcel.sized_write(|subparcel| {\n";
   out.Indent();
   for (const auto& variable : parcel->GetFields()) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out << "if (false) {\n";
+      out.Indent();
+    }
     if (TypeNeedsOption(variable->GetType(), typenames)) {
       out << "let __field_ref = self.r#" << variable->GetName()
           << ".as_ref().ok_or(binder::StatusCode::UNEXPECTED_NULL)?;\n";
       out << "subparcel.write(__field_ref)?;\n";
     } else {
       out << "subparcel.write(&self.r#" << variable->GetName() << ")?;\n";
+    }
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out.Dedent();
+      out << "}\n";
     }
   }
   out << "Ok(())\n";
@@ -982,12 +1042,20 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlStructuredParcelab
   out.Indent();
 
   for (const auto& variable : parcel->GetFields()) {
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out << "if (false) {\n";
+      out.Indent();
+    }
     out << "if subparcel.has_more_data() {\n";
     out.Indent();
     if (TypeNeedsOption(variable->GetType(), typenames)) {
       out << "self.r#" << variable->GetName() << " = Some(subparcel.read()?);\n";
     } else {
       out << "self.r#" << variable->GetName() << " = subparcel.read()?;\n";
+    }
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out.Dedent();
+      out << "}\n";
     }
     out.Dedent();
     out << "}\n";
@@ -1048,12 +1116,22 @@ void GenerateParcelSerializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
   for (const auto& variable : parcel->GetFields()) {
     out << "Self::" << variable->GetCapitalizedName() << "(v) => {\n";
     out.Indent();
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out << "if (true) {\n";
+      out << "  Err(binder::StatusCode::BAD_VALUE)\n";
+      out << "} else {\n";
+      out.Indent();
+    }
     out << "parcel.write(&" << std::to_string(tag++) << "i32)?;\n";
     if (TypeNeedsOption(variable->GetType(), typenames)) {
       out << "let __field_ref = v.as_ref().ok_or(binder::StatusCode::UNEXPECTED_NULL)?;\n";
       out << "parcel.write(__field_ref)\n";
     } else {
       out << "parcel.write(v)\n";
+    }
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out.Dedent();
+      out << "}\n";
     }
     out.Dedent();
     out << "}\n";
@@ -1074,6 +1152,12 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
 
     out << std::to_string(tag++) << " => {\n";
     out.Indent();
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out << "if (true) {\n";
+      out << "  Err(binder::StatusCode::BAD_VALUE)\n";
+      out << "} else {\n";
+      out.Indent();
+    }
     out << "let value: " << field_type << " = ";
     if (TypeNeedsOption(variable->GetType(), typenames)) {
       out << "Some(parcel.read()?);\n";
@@ -1082,6 +1166,10 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
     }
     out << "*self = Self::" << variable->GetCapitalizedName() << "(value);\n";
     out << "Ok(())\n";
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out.Dedent();
+      out << "}\n";
+    }
     out.Dedent();
     out << "}\n";
   }
@@ -1225,11 +1313,13 @@ void GenerateRust(const string& filename, const Options& options, const AidlType
                   const AidlDefinedType& defined_type, const IoDelegate& io_delegate) {
   CodeWriterPtr code_writer = io_delegate.GetCodeWriter(filename);
 
+  GenerateAutoGenHeader(*code_writer, options);
+
   // Forbid the use of unsafe in auto-generated code.
   // Unsafe code should only be allowed in libbinder_rs.
   *code_writer << "#![forbid(unsafe_code)]\n";
   // Disable rustfmt on auto-generated files, including the golden outputs
-  *code_writer << "#![rustfmt::skip]\n";
+  *code_writer << "#![cfg_attr(rustfmt, rustfmt_skip)]\n";
   GenerateClass(code_writer.get(), defined_type, types, options);
   GenerateMangledAliases(*code_writer, defined_type);
 

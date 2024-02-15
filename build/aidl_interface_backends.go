@@ -94,7 +94,9 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
-	})
+		UseUnfrozen:         i.useUnfrozen(mctx),
+	},
+	)
 
 	importExportDependencies := []string{}
 	sharedLibDependency := commonProperties.Additional_shared_libraries
@@ -189,6 +191,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 				Stl:                       stl,
 				Cpp_std:                   cpp_std,
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
+				Ldflags:                   commonProperties.Ldflags,
 				Apex_available:            commonProperties.Apex_available,
 				Min_sdk_version:           i.minSdkVersion(lang),
 				Target:                    targetProp,
@@ -205,16 +208,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
-			// the logic to create implementation libraries has been reimplemented
-			// in a Bazel macro, so these libraries should not be converted with
-			// bp2build
-			// TODO(b/237810289) perhaps do something different here so that we aren't
-			// also disabling these modules in mixed builds
-			&bazelProperties{
-				&Bazel_module{
-					Bp2build_available: proptools.BoolPtr(false),
-				},
-			},
 		},
 	})
 
@@ -245,6 +238,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	importExportDependencies := []string{}
@@ -263,6 +257,8 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	recoveryAvailable := i.properties.Recovery_available
 	productAvailable = nil
 
+	commonProperties := &i.properties.Backend.Cpp.CommonNativeBackendProperties
+
 	g := aidlImplementationGeneratorProperties{
 		ModuleProperties: []interface{}{
 			&ccProperties{
@@ -278,10 +274,11 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 				Generated_sources:         []string{cppAnalyzerSourceGen},
 				Generated_headers:         []string{cppAnalyzerSourceGen},
 				Export_generated_headers:  []string{cppAnalyzerSourceGen},
-				Shared_libs:               append(importExportDependencies, i.versionedName(version)+"-"+langCpp),
+				Shared_libs:               append(append(importExportDependencies, i.versionedName(version)+"-"+langCpp), commonProperties.Additional_shared_libraries...),
 				Static_libs:               []string{"aidl-analyzer-main"},
 				Export_shared_lib_headers: importExportDependencies,
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
+				Ldflags:                   commonProperties.Ldflags,
 				Min_sdk_version:           i.minSdkVersion(langCpp),
 				Target:                    targetProp,
 				Tidy:                      proptools.BoolPtr(true),
@@ -293,12 +290,6 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 					"-clang-analyzer-deadcode.DeadStores",       // b/253079031
 					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
-				},
-			},
-			// TODO(b/237810289) disable converting -cpp-analyzer module in bp2build
-			&bazelProperties{
-				&Bazel_module{
-					Bp2build_available: proptools.BoolPtr(false),
 				},
 			},
 		},
@@ -348,6 +339,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
@@ -367,18 +359,9 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 				Srcs:            []string{":" + javaSourceGen},
 				Apex_available:  i.properties.Backend.Java.Apex_available,
 				Min_sdk_version: i.minSdkVersion(langJava),
+				Static_libs:     i.properties.Backend.Java.Additional_libs,
 			},
 			&i.properties.Backend.Java.LintProperties,
-			// the logic to create implementation libraries has been reimplemented
-			// in a Bazel macro, so these libraries should not be converted with
-			// bp2build
-			// TODO(b/237810289) perhaps do something different here so that we aren't
-			// also disabling these modules in mixed builds
-			&bazelProperties{
-				&Bazel_module{
-					Bp2build_available: proptools.BoolPtr(false),
-				},
-			},
 		},
 	})
 
@@ -412,6 +395,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))
@@ -428,6 +412,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Apex_available:    i.properties.Backend.Rust.Apex_available,
 		Min_sdk_version:   i.minSdkVersion(langRust),
 		Target:            rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
+		Rustlibs:          i.properties.Backend.Rust.Additional_rustlibs,
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),
 	}, &aidlRustSourceProviderProperties{
@@ -483,10 +468,11 @@ func (i *aidlInterface) versionForInitVersionCompat(version string) string {
 }
 
 func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
-	flags = append(flags, i.properties.Flags...)
-	// For ToT, turn on "-Weverything" (enable all warnings)
-	if version == i.nextVersion() {
+	// For the latest unfrozen version of an interface we turn on all warnings and use
+	// all flags supplied by the 'flags' field in the aidl_interface module
+	if version == i.nextVersion() && !i.isFrozen() {
 		flags = append(flags, "-Weverything -Wno-missing-permission-annotation")
+		flags = append(flags, i.properties.Flags...)
 	}
 	return
 }
@@ -572,7 +558,7 @@ func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDown
 	imports := wrap("", getImportsWithVersion(ctx, g.properties.AidlInterfaceName, g.properties.Version), "-"+g.properties.Lang)
 	if g.properties.Lang == langJava {
 		if p, ok := g.properties.ModuleProperties[0].(*javaProperties); ok {
-			p.Static_libs = imports
+			p.Static_libs = append(p.Static_libs, imports...)
 		}
 		ctx.CreateModule(wrapLibraryFactory(java.LibraryFactory), g.properties.ModuleProperties...)
 	} else {

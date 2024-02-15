@@ -7,24 +7,32 @@ import pipes
 import re
 import subprocess
 import sys
+import textwrap
 import unittest
 
 BITNESS_32 = ("", "32")
 BITNESS_64 = ("64", "64")
 
 APP_PROCESS_FOR_PRETTY_BITNESS = 'app_process%s'
-NATIVE_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service/aidl_test_service%s'
+CPP_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service/aidl_test_service%s'
 CPP_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client/aidl_test_client%s'
+CPP_TEST_V1_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_v1_client/aidl_test_v1_client%s'
+NDK_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service_ndk/aidl_test_service_ndk%s'
 NDK_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client_ndk/aidl_test_client_ndk%s'
 RUST_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_client/aidl_test_rust_client%s'
 RUST_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service/aidl_test_rust_service%s'
+RUST_TEST_SERVICE_ASYNC_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service_async/aidl_test_rust_service_async%s'
 
 # From AidlTestsJava.java
 INSTRUMENTATION_SUCCESS_PATTERN = r'TEST SUCCESS\n$'
 
-class TestFail(Exception):
+class ShellResultFail(Exception):
     """Raised on test failures."""
-    pass
+    def __init__(self, err):
+        stderr = textwrap.indent(err.stderr, "    ")
+        stdout = textwrap.indent(err.stdout, "    ")
+
+        super().__init__(f"STDOUT:\n{stdout}\nSTDERR:\n{stderr}\nRESULT:{err.exit_status}")
 
 def pretty_bitness(bitness):
     """Returns a human readable version of bitness, corresponding to BITNESS_* variable"""
@@ -102,10 +110,6 @@ class AdbHost(object):
         return ShellResult(p.returncode, stdout, stderr)
 
 class NativeServer:
-    def __init__(self, host, bitness):
-        self.name = "%s_bit_native_server" % pretty_bitness(bitness)
-        self.host = host
-        self.binary = NATIVE_TEST_SERVICE_FOR_BITNESS % bitness
     def cleanup(self):
         self.host.run('killall %s' % self.binary, ignore_status=True)
     def run(self):
@@ -118,13 +122,31 @@ class NativeClient:
         result = self.host.run(self.binary + ' --gtest_color=yes', ignore_status=True)
         print(result.printable_string())
         if result.exit_status:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
+
+class CppServer(NativeServer):
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_cpp_server" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = CPP_TEST_SERVICE_FOR_BITNESS % bitness
 
 class CppClient(NativeClient):
     def __init__(self, host, bitness):
         self.name = "%s_bit_cpp_client" % pretty_bitness(bitness)
         self.host = host
         self.binary = CPP_TEST_CLIENT_FOR_BITNESS % bitness
+
+class CppV1Client(NativeClient):
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_cpp_v1_client" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = CPP_TEST_V1_CLIENT_FOR_BITNESS % bitness
+
+class NdkServer(NativeServer):
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_ndk_server" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = NDK_TEST_SERVICE_FOR_BITNESS % bitness
 
 class NdkClient(NativeClient):
     def __init__(self, host, bitness):
@@ -160,7 +182,7 @@ class JavaClient:
                                ' /data/framework android.aidl.tests.AidlJavaTests')
         print(result.printable_string())
         if re.search(INSTRUMENTATION_SUCCESS_PATTERN, result.stdout) is None:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class JavaVersionTestClient:
     def __init__(self, host, bitness, ver):
@@ -177,7 +199,7 @@ class JavaVersionTestClient:
                                ' /data/framework android.aidl.sdkversion.tests.AidlJavaVersionTests')
         print(result.printable_string())
         if re.search(INSTRUMENTATION_SUCCESS_PATTERN, result.stdout) is None:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class JavaVersionTestServer:
     def __init__(self, host, bitness, ver):
@@ -208,7 +230,7 @@ class JavaPermissionClient:
                                ' /data/framework android.aidl.permission.tests.PermissionTests')
         print(result.printable_string())
         if re.search(INSTRUMENTATION_SUCCESS_PATTERN, result.stdout) is None:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class JavaPermissionServer:
     def __init__(self, host, bitness):
@@ -238,7 +260,7 @@ class RustClient:
         result = self.host.run(self.binary, ignore_status=True)
         print(result.printable_string())
         if result.exit_status:
-            raise TestFail(result.stdout)
+            raise ShellResultFail(result)
 
 class RustServer:
     def __init__(self, host, bitness):
@@ -254,7 +276,7 @@ class RustAsyncServer:
     def __init__(self, host, bitness):
         self.name = "%s_bit_rust_server_async" % pretty_bitness(bitness)
         self.host = host
-        self.binary = RUST_TEST_SERVICE_FOR_BITNESS % bitness
+        self.binary = RUST_TEST_SERVICE_ASYNC_FOR_BITNESS % bitness
     def cleanup(self):
         self.host.run('killall %s' % self.binary, ignore_status=True)
     def run(self):
@@ -307,9 +329,11 @@ if __name__ == '__main__':
 
     for bitness in bitnesses:
         clients += [NdkClient(host, bitness)]
+        servers += [NdkServer(host, bitness)]
 
         clients += [CppClient(host, bitness)]
-        servers += [NativeServer(host, bitness)]
+        clients += [CppV1Client(host, bitness)]
+        servers += [CppServer(host, bitness)]
 
         clients += [JavaClient(host, bitness)]
         servers += [JavaServer(host, bitness)]

@@ -67,6 +67,7 @@ type ccProperties struct {
 	Stl                       *string
 	Cpp_std                   *string
 	Cflags                    []string
+	Ldflags                   []string
 	Stem                      *string
 	Apex_available            []string
 	Min_sdk_version           *string
@@ -104,13 +105,6 @@ type rustProperties struct {
 	Target            rustTargetProperties
 	Apex_available    []string
 	Min_sdk_version   *string
-}
-
-type Bazel_module struct {
-	Bp2build_available *bool
-}
-type bazelProperties struct {
-	*Bazel_module
 }
 
 type phonyProperties struct {

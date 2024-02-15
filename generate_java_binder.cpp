@@ -16,6 +16,7 @@
 
 #include "aidl.h"
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_java.h"
 #include "aidl_typenames.h"
 #include "ast_java.h"
@@ -85,7 +86,7 @@ class StubClass : public Class {
   std::shared_ptr<Variable> transact_data;
   std::shared_ptr<Variable> transact_reply;
   std::shared_ptr<Variable> transact_flags;
-  std::shared_ptr<SwitchStatement> transact_switch_meta;
+  std::vector<std::shared_ptr<IfStatement>> transact_if_statements_meta;
   std::shared_ptr<SwitchStatement> transact_switch_user;
   std::shared_ptr<StatementBlock> transact_statements;
   std::shared_ptr<SwitchStatement> code_to_method_name_switch;
@@ -181,7 +182,6 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
   transact_statements = onTransact->statements;
   onTransact->exceptions.push_back("android.os.RemoteException");
   this->elements.push_back(onTransact);
-  this->transact_switch_meta = std::make_shared<SwitchStatement>(this->transact_code);
   this->transact_switch_user = std::make_shared<SwitchStatement>(this->transact_code);
 }
 
@@ -210,8 +210,22 @@ void StubClass::Finish() {
     transact_statements->Add(ifStatement);
   }
 
+  // Build the if/else chain for the meta methods. There at most 3 different
+  // statements so if/else is more efficient than a switch statement.
   // Meta transactions are looked up prior to user-defined transactions.
-  transact_statements->Add(this->transact_switch_meta);
+  AIDL_FATAL_IF(this->transact_if_statements_meta.size() == 0, AIDL_LOCATION_HERE)
+      << "Expecting to have meta methods and found none.";
+  AIDL_FATAL_IF(this->transact_if_statements_meta.size() > 3, AIDL_LOCATION_HERE)
+      << "Expecting to have at most 3 meta methods and found "
+      << this->transact_if_statements_meta.size();
+  auto ifStatement = this->transact_if_statements_meta[0];
+  std::shared_ptr<IfStatement> currentIfStatement = ifStatement;
+  for (size_t i = 1; i < transact_if_statements_meta.size(); i++) {
+    currentIfStatement->elseif = this->transact_if_statements_meta[i];
+    currentIfStatement = currentIfStatement->elseif;
+  }
+
+  transact_statements->Add(ifStatement);
   transact_statements->Add(this->transact_switch_user);
 
   // getTransactionName
@@ -271,6 +285,7 @@ void StubClass::MakeConstructors(const AidlInterface* interfaceType) {
     code << "public Stub(android.os.PermissionEnforcer enforcer)\n";
   } else {
     code << "/** Construct the stub at attach it to the interface. */\n";
+    code << "@SuppressWarnings(\"this-escape\")\n";
     code << "public Stub()\n";
   }
   code << "{\n";
@@ -559,6 +574,16 @@ static void GenerateStubCode(const AidlMethod& method, bool oneway,
     // keep this across different args in order to create the classloader
     // at most once.
     bool is_classloader_created = false;
+
+    if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      auto if_statement = std::make_shared<IfStatement>();
+      if_statement->expression = std::make_shared<LiteralExpression>("true");
+      if_statement->statements = std::make_shared<StatementBlock>();
+      if_statement->statements->Add(
+          std::make_shared<LiteralExpression>("throw new android.os.RemoteException(\"Method " +
+                                              method.GetName() + " is unimplemented.\")"));
+      statements->Add(if_statement);
+    }
     for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
       std::shared_ptr<Variable> v = stubArgs.Get(arg->GetType());
 
@@ -720,6 +745,13 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
   out << "@Override public " << JavaSignatureOf(method.GetType()) << " " << method.GetName() << "("
       << ArgList(method, FormatArgForDecl) << ") throws android.os.RemoteException\n{\n";
   out.Indent();
+
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    out << "if (true) {\n";
+    out << "  throw new android.os.RemoteException(\"Method " + method.GetName() +
+               " is unimplemented.\");\n";
+    out << "}\n";
+  }
 
   // the parcels
   if (options.GenRpc()) {
@@ -925,22 +957,24 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
     }
   } else {
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
-      auto c = std::make_shared<Case>(transactCodeName);
+      auto ifStatement = std::make_shared<IfStatement>();
+      ifStatement->expression = std::make_shared<LiteralExpression>("code == " + transactCodeName);
       std::ostringstream code;
       code << "reply.writeNoException();\n"
            << "reply.writeInt(" << kGetInterfaceVersion << "());\n"
            << "return true;\n";
-      c->statements->Add(std::make_shared<LiteralStatement>(code.str()));
-      stubClass->transact_switch_meta->cases.push_back(c);
+      ifStatement->statements->Add(std::make_shared<LiteralStatement>(code.str()));
+      stubClass->transact_if_statements_meta.push_back(ifStatement);
     }
     if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
-      auto c = std::make_shared<Case>(transactCodeName);
+      auto ifStatement = std::make_shared<IfStatement>();
+      ifStatement->expression = std::make_shared<LiteralExpression>("code == " + transactCodeName);
       std::ostringstream code;
       code << "reply.writeNoException();\n"
            << "reply.writeString(" << kGetInterfaceHash << "());\n"
            << "return true;\n";
-      c->statements->Add(std::make_shared<LiteralStatement>(code.str()));
-      stubClass->transact_switch_meta->cases.push_back(c);
+      ifStatement->statements->Add(std::make_shared<LiteralStatement>(code.str()));
+      stubClass->transact_if_statements_meta.push_back(ifStatement);
     }
   }
 
@@ -1028,12 +1062,13 @@ static void GenerateInterfaceDescriptors(const Options& options, const AidlInter
                                          Class* interface, std::shared_ptr<StubClass> stub,
                                          std::shared_ptr<ProxyClass> proxy) {
   // the interface descriptor transaction handler
-  auto c = std::make_shared<Case>("INTERFACE_TRANSACTION");
-  c->statements->Add(std::make_shared<MethodCall>(
+  auto ifStatement = std::make_shared<IfStatement>();
+  ifStatement->expression = std::make_shared<LiteralExpression>("code == INTERFACE_TRANSACTION");
+  ifStatement->statements->Add(std::make_shared<MethodCall>(
       stub->transact_reply, "writeString",
       std::vector<std::shared_ptr<Expression>>{stub->GetTransactDescriptor(nullptr)}));
-  c->statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
-  stub->transact_switch_meta->cases.push_back(c);
+  ifStatement->statements->Add(std::make_shared<ReturnStatement>(TRUE_VALUE));
+  stub->transact_if_statements_meta.push_back(ifStatement);
 
   // and the proxy-side method returning the descriptor directly
   auto getDesc = std::make_shared<Method>();
@@ -1057,6 +1092,7 @@ static void GenerateInterfaceDescriptors(const Options& options, const AidlInter
   }
   auto descriptor = std::make_shared<Field>(
       STATIC | FINAL | PUBLIC, std::make_shared<Variable>("java.lang.String", "DESCRIPTOR"));
+  descriptor->comment = "/** @hide */";
   std::string name = iface->GetDescriptor();
 
   // TODO(b/242862858): avoid differentiating behahavior. This is currently blocked
@@ -1287,12 +1323,23 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
          << " * getInterfaceVersion} returns as that is the version of the interface\n"
          << " * that the remote object is implementing.\n"
          << " */\n"
-         << "public static final int VERSION = " << options.Version() << ";\n";
+         << "public static final int VERSION = ";
+    if (options.IsLatestUnfrozenVersion()) {
+      code << "true ? " << options.PreviousVersion() << " : " << options.Version() << ";\n";
+    } else {
+      code << options.Version() << ";\n";
+    }
+
     interface->elements.emplace_back(std::make_shared<LiteralClassElement>(code.str()));
   }
-  if (!options.Hash().empty()) {
+  if (!options.Hash().empty() || options.IsLatestUnfrozenVersion()) {
     std::ostringstream code;
-    code << "public static final String HASH = \"" << options.Hash() << "\";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      code << "public static final String HASH = \"" << options.PreviousHash() << "\";\n";
+    } else {
+      code << "public static final String HASH = \"" << options.Hash() << "\";\n";
+    }
+
     interface->elements.emplace_back(std::make_shared<LiteralClassElement>(code.str()));
   }
 

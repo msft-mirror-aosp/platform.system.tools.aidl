@@ -20,6 +20,7 @@ import android.aidl.tests.permission.IProtected;
 import android.annotation.EnforcePermission;
 import android.os.Binder;
 import android.os.ServiceManager;
+import android.os.test.FakePermissionEnforcer;
 import java.util.List;
 
 public class PermissionTestService extends IProtected.Stub {
@@ -56,13 +57,23 @@ public class PermissionTestService extends IProtected.Stub {
   }
 
   @Override
-  @EnforcePermission("android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK")
+  @EnforcePermission("android.permission.MAINLINE_NETWORK_STACK")
   public void NonManifestPermission() {
     NonManifestPermission_enforcePermission();
   }
 
   @Override
-  public void SetGranted(List<String> permissions) {
-    mPermissionEnforcer.setGranted(permissions);
+  public void Grant(String permission) {
+    mPermissionEnforcer.grant(permission);
+  }
+
+  @Override
+  public void Revoke(String permission) {
+    mPermissionEnforcer.revoke(permission);
+  }
+
+  @Override
+  public void RevokeAll() {
+    mPermissionEnforcer.revokeAll();
   }
 }
