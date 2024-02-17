@@ -5200,11 +5200,11 @@ namespace tests {
 }
 ::android::status_t ITestService::Empty::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -5376,7 +5376,7 @@ namespace tests {
 }
 ::android::status_t ITestService::CompilerChecks::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
   _aidl_ret_status = _aidl_parcel->writeStrongBinder(binder);
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -5450,9 +5450,9 @@ namespace tests {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -5545,15 +5545,15 @@ namespace tests {
 }
 ::android::status_t ITestService::CompilerChecks::HasDeprecated::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
   _aidl_ret_status = _aidl_parcel->writeInt32(deprecated);
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -5729,11 +5729,11 @@ namespace tests {
 }
 ::android::status_t ITestService::CompilerChecks::INoPrefixInterface::Nested::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
