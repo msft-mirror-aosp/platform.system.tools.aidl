@@ -1153,7 +1153,7 @@ void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& par
 void GenerateWriteToParcel(CodeWriter& out, const AidlStructuredParcelable& parcel,
                            const AidlTypenames& typenames) {
   out << "::android::status_t _aidl_ret_status = ::android::OK;\n";
-  out << "auto _aidl_start_pos = " << kParcelVarName << "->dataPosition();\n";
+  out << "size_t _aidl_start_pos = " << kParcelVarName << "->dataPosition();\n";
   out << kParcelVarName << "->writeInt32(0);\n";
   for (const auto& variable : parcel.GetFields()) {
     string method = ParcelWriteMethodOf(variable->GetType(), typenames);
@@ -1171,9 +1171,9 @@ void GenerateWriteToParcel(CodeWriter& out, const AidlStructuredParcelable& parc
       out << "}\n";
     }
   }
-  out << "auto _aidl_end_pos = " << kParcelVarName << "->dataPosition();\n";
+  out << "size_t _aidl_end_pos = " << kParcelVarName << "->dataPosition();\n";
   out << kParcelVarName << "->setDataPosition(_aidl_start_pos);\n";
-  out << kParcelVarName << "->writeInt32(_aidl_end_pos - _aidl_start_pos);\n";
+  out << kParcelVarName << "->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));\n";
   out << kParcelVarName << "->setDataPosition(_aidl_end_pos);\n";
   out << "return _aidl_ret_status;\n";
 }
