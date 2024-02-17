@@ -24,11 +24,11 @@ namespace nested {
 }
 ::android::status_t DeeplyNested::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -66,15 +66,15 @@ namespace nested {
 }
 ::android::status_t DeeplyNested::A::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
   _aidl_ret_status = _aidl_parcel->writeByte(static_cast<int8_t>(e));
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -104,11 +104,11 @@ namespace nested {
 }
 ::android::status_t DeeplyNested::B::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -138,11 +138,11 @@ namespace nested {
 }
 ::android::status_t DeeplyNested::B::C::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -172,11 +172,11 @@ namespace nested {
 }
 ::android::status_t DeeplyNested::B::C::D::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
