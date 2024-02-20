@@ -48,7 +48,7 @@ namespace extension {
 }
 ::android::status_t MyExt2::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
   _aidl_ret_status = _aidl_parcel->writeInt32(a);
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -62,9 +62,9 @@ namespace extension {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
