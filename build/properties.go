@@ -84,7 +84,6 @@ type javaProperties struct {
 	Defaults        []string
 	Installable     *bool
 	Sdk_version     *string
-	Platform_apis   *bool
 	Srcs            []string
 	Static_libs     []string
 	Apex_available  []string
