@@ -355,7 +355,6 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 				Installable:     proptools.BoolPtr(true),
 				Defaults:        []string{"aidl-java-module-defaults"},
 				Sdk_version:     sdkVersion,
-				Platform_apis:   i.properties.Backend.Java.Platform_apis,
 				Srcs:            []string{":" + javaSourceGen},
 				Apex_available:  i.properties.Backend.Java.Apex_available,
 				Min_sdk_version: i.minSdkVersion(langJava),
