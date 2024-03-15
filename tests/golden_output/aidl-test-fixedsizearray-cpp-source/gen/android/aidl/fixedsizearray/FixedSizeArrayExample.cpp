@@ -463,7 +463,7 @@ namespace fixedsizearray {
 }
 ::android::status_t FixedSizeArrayExample::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
   _aidl_ret_status = _aidl_parcel->writeFixedArray(int2x3);
   if (((_aidl_ret_status) != (::android::OK))) {
@@ -685,9 +685,9 @@ namespace fixedsizearray {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
@@ -1402,15 +1402,15 @@ namespace fixedsizearray {
 }
 ::android::status_t FixedSizeArrayExample::IntParcelable::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
-  auto _aidl_start_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);
   _aidl_ret_status = _aidl_parcel->writeInt32(value);
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  auto _aidl_end_pos = _aidl_parcel->dataPosition();
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
-  _aidl_parcel->writeInt32(_aidl_end_pos - _aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
   _aidl_parcel->setDataPosition(_aidl_end_pos);
   return _aidl_ret_status;
 }
