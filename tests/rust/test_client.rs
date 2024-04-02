@@ -417,10 +417,8 @@ fn test_parcel_file_descriptor_array() {
     let service = get_test_service();
 
     let (read_fd, write_fd) = build_pipe();
-    let input = vec![
-        binder::ParcelFileDescriptor::new(read_fd),
-        binder::ParcelFileDescriptor::new(write_fd),
-    ];
+    let input =
+        [binder::ParcelFileDescriptor::new(read_fd), binder::ParcelFileDescriptor::new(write_fd)];
 
     let mut repeated = vec![];
 
