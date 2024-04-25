@@ -102,6 +102,20 @@ binder_status_t FixedSize::FixedParcelable::readFromParcel(const AParcel* _aidl_
     AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
   }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &intArray);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &multiDimensionLongArray);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
   _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &doubleValue);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
@@ -144,6 +158,12 @@ binder_status_t FixedSize::FixedParcelable::writeToParcel(AParcel* _aidl_parcel)
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, floatValue);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, intArray);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, multiDimensionLongArray);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, doubleValue);
@@ -237,6 +257,26 @@ binder_status_t FixedSize::FixedUnion::readFromParcel(const AParcel* _parcel) {
       set<floatValue>(std::move(_aidl_value));
     }
     return STATUS_OK; }
+  case intArray: {
+    std::array<int32_t, 3> _aidl_value;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<std::array<int32_t, 3>>) {
+      set<intArray>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<intArray>(std::move(_aidl_value));
+    }
+    return STATUS_OK; }
+  case multiDimensionLongArray: {
+    std::array<std::array<int64_t, 2>, 3> _aidl_value;
+    if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<std::array<std::array<int64_t, 2>, 3>>) {
+      set<multiDimensionLongArray>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<multiDimensionLongArray>(std::move(_aidl_value));
+    }
+    return STATUS_OK; }
   case doubleValue: {
     double _aidl_value;
     if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
@@ -270,6 +310,8 @@ binder_status_t FixedSize::FixedUnion::writeToParcel(AParcel* _parcel) const {
   case intValue: return ::ndk::AParcel_writeData(_parcel, get<intValue>());
   case longValue: return ::ndk::AParcel_writeData(_parcel, get<longValue>());
   case floatValue: return ::ndk::AParcel_writeData(_parcel, get<floatValue>());
+  case intArray: return ::ndk::AParcel_writeData(_parcel, get<intArray>());
+  case multiDimensionLongArray: return ::ndk::AParcel_writeData(_parcel, get<multiDimensionLongArray>());
   case doubleValue: return ::ndk::AParcel_writeData(_parcel, get<doubleValue>());
   case enumValue: return ::ndk::AParcel_writeData(_parcel, get<enumValue>());
   }
