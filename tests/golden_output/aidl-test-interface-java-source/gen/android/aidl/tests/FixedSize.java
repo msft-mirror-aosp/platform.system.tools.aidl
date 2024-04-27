@@ -52,6 +52,8 @@ public class FixedSize implements android.os.Parcelable
     public int intValue = 0;
     public long longValue = 0L;
     public float floatValue = 0.000000f;
+    public int[] intArray;
+    public long[][] multiDimensionLongArray;
     public double doubleValue = 0.000000;
     public long enumValue = android.aidl.tests.LongEnum.FOO;
     public android.aidl.tests.FixedSize.FixedUnion parcelableValue;
@@ -77,6 +79,8 @@ public class FixedSize implements android.os.Parcelable
       _aidl_parcel.writeInt(intValue);
       _aidl_parcel.writeLong(longValue);
       _aidl_parcel.writeFloat(floatValue);
+      _aidl_parcel.writeFixedArray(intArray, _aidl_flag, 3);
+      _aidl_parcel.writeFixedArray(multiDimensionLongArray, _aidl_flag, 3, 2);
       _aidl_parcel.writeDouble(doubleValue);
       _aidl_parcel.writeLong(enumValue);
       _aidl_parcel.writeTypedObject(parcelableValue, _aidl_flag);
@@ -103,6 +107,10 @@ public class FixedSize implements android.os.Parcelable
         longValue = _aidl_parcel.readLong();
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
         floatValue = _aidl_parcel.readFloat();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        intArray = _aidl_parcel.createFixedArray(int[].class, 3);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        multiDimensionLongArray = _aidl_parcel.createFixedArray(long[][].class, 3, 2);
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
         doubleValue = _aidl_parcel.readDouble();
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
@@ -138,8 +146,10 @@ public class FixedSize implements android.os.Parcelable
     public final static int intValue = 3;  // int intValue;
     public final static int longValue = 4;  // long longValue;
     public final static int floatValue = 5;  // float floatValue;
-    public final static int doubleValue = 6;  // double doubleValue;
-    public final static int enumValue = 7;  // android.aidl.tests.LongEnum enumValue;
+    public final static int intArray = 6;  // int[3] intArray;
+    public final static int multiDimensionLongArray = 7;  // long[3][2] multiDimensionLongArray;
+    public final static int doubleValue = 8;  // double doubleValue;
+    public final static int enumValue = 9;  // android.aidl.tests.LongEnum enumValue;
 
     private int _tag;
     private Object _value;
@@ -253,6 +263,36 @@ public class FixedSize implements android.os.Parcelable
       _set(floatValue, _value);
     }
 
+    // int[3] intArray;
+
+    public static FixedUnion intArray(int[] _value) {
+      return new FixedUnion(intArray, _value);
+    }
+
+    public int[] getIntArray() {
+      _assertTag(intArray);
+      return (int[]) _value;
+    }
+
+    public void setIntArray(int[] _value) {
+      _set(intArray, _value);
+    }
+
+    // long[3][2] multiDimensionLongArray;
+
+    public static FixedUnion multiDimensionLongArray(long[][] _value) {
+      return new FixedUnion(multiDimensionLongArray, _value);
+    }
+
+    public long[][] getMultiDimensionLongArray() {
+      _assertTag(multiDimensionLongArray);
+      return (long[][]) _value;
+    }
+
+    public void setMultiDimensionLongArray(long[][] _value) {
+      _set(multiDimensionLongArray, _value);
+    }
+
     // double doubleValue;
 
     public static FixedUnion doubleValue(double _value) {
@@ -316,6 +356,12 @@ public class FixedSize implements android.os.Parcelable
       case floatValue:
         _aidl_parcel.writeFloat(getFloatValue());
         break;
+      case intArray:
+        _aidl_parcel.writeFixedArray(getIntArray(), _aidl_flag, 3);
+        break;
+      case multiDimensionLongArray:
+        _aidl_parcel.writeFixedArray(getMultiDimensionLongArray(), _aidl_flag, 3, 2);
+        break;
       case doubleValue:
         _aidl_parcel.writeDouble(getDoubleValue());
         break;
@@ -359,6 +405,16 @@ public class FixedSize implements android.os.Parcelable
         _aidl_value = _aidl_parcel.readFloat();
         _set(_aidl_tag, _aidl_value);
         return; }
+      case intArray: {
+        int[] _aidl_value;
+        _aidl_value = _aidl_parcel.createFixedArray(int[].class, 3);
+        _set(_aidl_tag, _aidl_value);
+        return; }
+      case multiDimensionLongArray: {
+        long[][] _aidl_value;
+        _aidl_value = _aidl_parcel.createFixedArray(long[][].class, 3, 2);
+        _set(_aidl_tag, _aidl_value);
+        return; }
       case doubleValue: {
         double _aidl_value;
         _aidl_value = _aidl_parcel.readDouble();
@@ -395,6 +451,8 @@ public class FixedSize implements android.os.Parcelable
       case intValue: return "intValue";
       case longValue: return "longValue";
       case floatValue: return "floatValue";
+      case intArray: return "intArray";
+      case multiDimensionLongArray: return "multiDimensionLongArray";
       case doubleValue: return "doubleValue";
       case enumValue: return "enumValue";
       }
@@ -412,8 +470,10 @@ public class FixedSize implements android.os.Parcelable
       public static final byte intValue = 3;
       public static final byte longValue = 4;
       public static final byte floatValue = 5;
-      public static final byte doubleValue = 6;
-      public static final byte enumValue = 7;
+      public static final byte intArray = 6;
+      public static final byte multiDimensionLongArray = 7;
+      public static final byte doubleValue = 8;
+      public static final byte enumValue = 9;
     }
   }
 }

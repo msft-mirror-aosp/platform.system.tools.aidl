@@ -38,8 +38,10 @@ public:
       intValue = 3,
       longValue = 4,
       floatValue = 5,
-      doubleValue = 6,
-      enumValue = 7,
+      intArray = 6,
+      multiDimensionLongArray = 7,
+      doubleValue = 8,
+      enumValue = 9,
     };
     // Expose tag symbols for legacy code
     static const inline Tag booleanValue = Tag::booleanValue;
@@ -48,11 +50,13 @@ public:
     static const inline Tag intValue = Tag::intValue;
     static const inline Tag longValue = Tag::longValue;
     static const inline Tag floatValue = Tag::floatValue;
+    static const inline Tag intArray = Tag::intArray;
+    static const inline Tag multiDimensionLongArray = Tag::multiDimensionLongArray;
     static const inline Tag doubleValue = Tag::doubleValue;
     static const inline Tag enumValue = Tag::enumValue;
 
     template <Tag _Tag>
-    using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<bool, int8_t, char16_t, int32_t, int64_t, float, double, ::android::aidl::tests::LongEnum>>::type;
+    using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<bool, int8_t, char16_t, int32_t, int64_t, float, std::array<int32_t, 3>, std::array<std::array<int64_t, 2>, 3>, double, ::android::aidl::tests::LongEnum>>::type;
     template <Tag _Tag, typename _Type>
     static FixedUnion make(_Type&& _arg) {
       FixedUnion _inst;
@@ -128,6 +132,8 @@ public:
       case intValue: os << "intValue: " << ::android::internal::ToString(get<intValue>()); break;
       case longValue: os << "longValue: " << ::android::internal::ToString(get<longValue>()); break;
       case floatValue: os << "floatValue: " << ::android::internal::ToString(get<floatValue>()); break;
+      case intArray: os << "intArray: " << ::android::internal::ToString(get<intArray>()); break;
+      case multiDimensionLongArray: os << "multiDimensionLongArray: " << ::android::internal::ToString(get<multiDimensionLongArray>()); break;
       case doubleValue: os << "doubleValue: " << ::android::internal::ToString(get<doubleValue>()); break;
       case enumValue: os << "enumValue: " << ::android::internal::ToString(get<enumValue>()); break;
       }
@@ -145,6 +151,8 @@ public:
       int32_t intValue __attribute__((aligned (4)));
       int64_t longValue __attribute__((aligned (8)));
       float floatValue __attribute__((aligned (4)));
+      std::array<int32_t, 3> intArray __attribute__((aligned (4)));
+      std::array<std::array<int64_t, 2>, 3> multiDimensionLongArray __attribute__((aligned (8)));
       double doubleValue __attribute__((aligned (8)));
       ::android::aidl::tests::LongEnum enumValue __attribute__((aligned (8)));
     } _value;
@@ -157,14 +165,16 @@ public:
     int32_t intValue = 0;
     int64_t longValue = 0L;
     float floatValue = 0.000000f;
+    std::array<int32_t, 3> intArray = {{}};
+    std::array<std::array<int64_t, 2>, 3> multiDimensionLongArray = {{}};
     double doubleValue = 0.000000;
     ::android::aidl::tests::LongEnum enumValue = ::android::aidl::tests::LongEnum::FOO;
     ::android::aidl::tests::FixedSize::FixedUnion parcelableValue;
     inline bool operator==(const FixedParcelable& _rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) == std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
+      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, intArray, multiDimensionLongArray, doubleValue, enumValue, parcelableValue) == std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.intArray, _rhs.multiDimensionLongArray, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
     }
     inline bool operator<(const FixedParcelable& _rhs) const {
-      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, doubleValue, enumValue, parcelableValue) < std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
+      return std::tie(booleanValue, byteValue, charValue, intValue, longValue, floatValue, intArray, multiDimensionLongArray, doubleValue, enumValue, parcelableValue) < std::tie(_rhs.booleanValue, _rhs.byteValue, _rhs.charValue, _rhs.intValue, _rhs.longValue, _rhs.floatValue, _rhs.intArray, _rhs.multiDimensionLongArray, _rhs.doubleValue, _rhs.enumValue, _rhs.parcelableValue);
     }
     inline bool operator!=(const FixedParcelable& _rhs) const {
       return !(*this == _rhs);
@@ -194,6 +204,8 @@ public:
       _aidl_os << ", intValue: " << ::android::internal::ToString(intValue);
       _aidl_os << ", longValue: " << ::android::internal::ToString(longValue);
       _aidl_os << ", floatValue: " << ::android::internal::ToString(floatValue);
+      _aidl_os << ", intArray: " << ::android::internal::ToString(intArray);
+      _aidl_os << ", multiDimensionLongArray: " << ::android::internal::ToString(multiDimensionLongArray);
       _aidl_os << ", doubleValue: " << ::android::internal::ToString(doubleValue);
       _aidl_os << ", enumValue: " << ::android::internal::ToString(enumValue);
       _aidl_os << ", parcelableValue: " << ::android::internal::ToString(parcelableValue);
@@ -253,6 +265,10 @@ namespace tests {
     return "longValue";
   case FixedSize::FixedUnion::Tag::floatValue:
     return "floatValue";
+  case FixedSize::FixedUnion::Tag::intArray:
+    return "intArray";
+  case FixedSize::FixedUnion::Tag::multiDimensionLongArray:
+    return "multiDimensionLongArray";
   case FixedSize::FixedUnion::Tag::doubleValue:
     return "doubleValue";
   case FixedSize::FixedUnion::Tag::enumValue:
@@ -269,13 +285,15 @@ namespace internal {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++17-extensions"
 template <>
-constexpr inline std::array<::android::aidl::tests::FixedSize::FixedUnion::Tag, 8> enum_values<::android::aidl::tests::FixedSize::FixedUnion::Tag> = {
+constexpr inline std::array<::android::aidl::tests::FixedSize::FixedUnion::Tag, 10> enum_values<::android::aidl::tests::FixedSize::FixedUnion::Tag> = {
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::booleanValue,
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::byteValue,
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::charValue,
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::intValue,
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::longValue,
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::floatValue,
+  ::android::aidl::tests::FixedSize::FixedUnion::Tag::intArray,
+  ::android::aidl::tests::FixedSize::FixedUnion::Tag::multiDimensionLongArray,
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::doubleValue,
   ::android::aidl::tests::FixedSize::FixedUnion::Tag::enumValue,
 };

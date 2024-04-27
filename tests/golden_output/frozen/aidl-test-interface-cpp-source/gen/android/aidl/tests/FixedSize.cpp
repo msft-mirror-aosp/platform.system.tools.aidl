@@ -102,6 +102,22 @@ namespace tests {
     _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
   }
+  _aidl_ret_status = _aidl_parcel->readFixedArray(&intArray);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
+    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->readFixedArray(&multiDimensionLongArray);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
+    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
   _aidl_ret_status = _aidl_parcel->readDouble(&doubleValue);
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
@@ -150,6 +166,14 @@ namespace tests {
     return _aidl_ret_status;
   }
   _aidl_ret_status = _aidl_parcel->writeFloat(floatValue);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->writeFixedArray(intArray);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->writeFixedArray(multiDimensionLongArray);
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
@@ -244,6 +268,26 @@ namespace tests {
       set<floatValue>(std::move(_aidl_value));
     }
     return ::android::OK; }
+  case intArray: {
+    std::array<int32_t, 3> _aidl_value;
+    if ((_aidl_ret_status = _aidl_parcel->readFixedArray(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<std::array<int32_t, 3>>) {
+      set<intArray>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<intArray>(std::move(_aidl_value));
+    }
+    return ::android::OK; }
+  case multiDimensionLongArray: {
+    std::array<std::array<int64_t, 2>, 3> _aidl_value;
+    if ((_aidl_ret_status = _aidl_parcel->readFixedArray(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<std::array<std::array<int64_t, 2>, 3>>) {
+      set<multiDimensionLongArray>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<multiDimensionLongArray>(std::move(_aidl_value));
+    }
+    return ::android::OK; }
   case doubleValue: {
     double _aidl_value;
     if ((_aidl_ret_status = _aidl_parcel->readDouble(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
@@ -277,6 +321,8 @@ namespace tests {
   case intValue: return _aidl_parcel->writeInt32(get<intValue>());
   case longValue: return _aidl_parcel->writeInt64(get<longValue>());
   case floatValue: return _aidl_parcel->writeFloat(get<floatValue>());
+  case intArray: return _aidl_parcel->writeFixedArray(get<intArray>());
+  case multiDimensionLongArray: return _aidl_parcel->writeFixedArray(get<multiDimensionLongArray>());
   case doubleValue: return _aidl_parcel->writeDouble(get<doubleValue>());
   case enumValue: return _aidl_parcel->writeInt64(static_cast<int64_t>(get<enumValue>()));
   }

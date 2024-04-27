@@ -39,6 +39,8 @@ pub mod r#FixedParcelable {
     pub r#intValue: i32,
     pub r#longValue: i64,
     pub r#floatValue: f32,
+    pub r#intArray: [i32; 3],
+    pub r#multiDimensionLongArray: [[i64; 2]; 3],
     pub r#doubleValue: f64,
     pub r#enumValue: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum,
     pub r#parcelableValue: crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion,
@@ -52,6 +54,8 @@ pub mod r#FixedParcelable {
         r#intValue: 0,
         r#longValue: 0,
         r#floatValue: 0.000000f32,
+        r#intArray: [Default::default(), Default::default(), Default::default()],
+        r#multiDimensionLongArray: [[Default::default(), Default::default()], [Default::default(), Default::default()], [Default::default(), Default::default()]],
         r#doubleValue: 0.000000f64,
         r#enumValue: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum::FOO,
         r#parcelableValue: Default::default(),
@@ -67,6 +71,8 @@ pub mod r#FixedParcelable {
         subparcel.write(&self.r#intValue)?;
         subparcel.write(&self.r#longValue)?;
         subparcel.write(&self.r#floatValue)?;
+        subparcel.write(&self.r#intArray)?;
+        subparcel.write(&self.r#multiDimensionLongArray)?;
         subparcel.write(&self.r#doubleValue)?;
         subparcel.write(&self.r#enumValue)?;
         subparcel.write(&self.r#parcelableValue)?;
@@ -92,6 +98,12 @@ pub mod r#FixedParcelable {
         }
         if subparcel.has_more_data() {
           self.r#floatValue = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#intArray = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#multiDimensionLongArray = subparcel.read()?;
         }
         if subparcel.has_more_data() {
           self.r#doubleValue = subparcel.read()?;
@@ -121,6 +133,8 @@ pub mod r#FixedUnion {
     IntValue(i32),
     LongValue(i64),
     FloatValue(f32),
+    IntArray([i32; 3]),
+    MultiDimensionLongArray([[i64; 2]; 3]),
     DoubleValue(f64),
     EnumValue(crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum),
   }
@@ -156,12 +170,20 @@ pub mod r#FixedUnion {
           parcel.write(&5i32)?;
           parcel.write(v)
         }
-        Self::DoubleValue(v) => {
+        Self::IntArray(v) => {
           parcel.write(&6i32)?;
           parcel.write(v)
         }
-        Self::EnumValue(v) => {
+        Self::MultiDimensionLongArray(v) => {
           parcel.write(&7i32)?;
+          parcel.write(v)
+        }
+        Self::DoubleValue(v) => {
+          parcel.write(&8i32)?;
+          parcel.write(v)
+        }
+        Self::EnumValue(v) => {
+          parcel.write(&9i32)?;
           parcel.write(v)
         }
       }
@@ -200,11 +222,21 @@ pub mod r#FixedUnion {
           Ok(())
         }
         6 => {
+          let value: [i32; 3] = parcel.read()?;
+          *self = Self::IntArray(value);
+          Ok(())
+        }
+        7 => {
+          let value: [[i64; 2]; 3] = parcel.read()?;
+          *self = Self::MultiDimensionLongArray(value);
+          Ok(())
+        }
+        8 => {
           let value: f64 = parcel.read()?;
           *self = Self::DoubleValue(value);
           Ok(())
         }
-        7 => {
+        9 => {
           let value: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum = parcel.read()?;
           *self = Self::EnumValue(value);
           Ok(())
@@ -224,15 +256,17 @@ pub mod r#FixedUnion {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
-      r#Tag : [i8; 8] {
+      r#Tag : [i8; 10] {
         r#booleanValue = 0,
         r#byteValue = 1,
         r#charValue = 2,
         r#intValue = 3,
         r#longValue = 4,
         r#floatValue = 5,
-        r#doubleValue = 6,
-        r#enumValue = 7,
+        r#intArray = 6,
+        r#multiDimensionLongArray = 7,
+        r#doubleValue = 8,
+        r#enumValue = 9,
       }
     }
   }

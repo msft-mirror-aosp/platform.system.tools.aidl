@@ -27,6 +27,8 @@ parcelable FixedSize {
         int intValue;
         long longValue;
         float floatValue;
+        int[3] intArray;
+        long[3][2] multiDimensionLongArray;
         double doubleValue;
         LongEnum enumValue = LongEnum.FOO;
         FixedUnion parcelableValue;
@@ -40,6 +42,8 @@ parcelable FixedSize {
         int intValue;
         long longValue;
         float floatValue;
+        int[3] intArray;
+        long[3][2] multiDimensionLongArray;
         double doubleValue;
         LongEnum enumValue;
     }
