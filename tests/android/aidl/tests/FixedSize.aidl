@@ -32,7 +32,12 @@ parcelable FixedSize {
         double doubleValue;
         LongEnum enumValue = LongEnum.FOO;
         FixedUnion parcelableValue;
+        EmptyParcelable[3] parcelableArray;
+        FixedUnion[4] unionArray;
     }
+
+    @FixedSize
+    parcelable EmptyParcelable {}
 
     @FixedSize
     union FixedUnion {
@@ -46,5 +51,23 @@ parcelable FixedSize {
         long[3][2] multiDimensionLongArray;
         double doubleValue;
         LongEnum enumValue;
+    }
+
+    /* A union with no padding between the tag and value */
+    @FixedSize
+    union FixedUnionNoPadding {
+        byte byteValue;
+    }
+
+    /* A union with one byte of padding between the tag and value */
+    @FixedSize
+    union FixedUnionSmallPadding {
+        char charValue;
+    }
+
+    /* A union with seven bytes of padding between the tag and value */
+    @FixedSize
+    union FixedUnionLongPadding {
+        long longValue;
     }
 }
