@@ -138,6 +138,22 @@ namespace tests {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
+  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
+    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->readFixedArray(&parcelableArray);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcel->dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) {
+    _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->readFixedArray(&unionArray);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
   _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
   return _aidl_ret_status;
 }
@@ -189,6 +205,46 @@ namespace tests {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
+  _aidl_ret_status = _aidl_parcel->writeFixedArray(parcelableArray);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = _aidl_parcel->writeFixedArray(unionArray);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  size_t _aidl_end_pos = _aidl_parcel->dataPosition();
+  _aidl_parcel->setDataPosition(_aidl_start_pos);
+  _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
+  _aidl_parcel->setDataPosition(_aidl_end_pos);
+  return _aidl_ret_status;
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/FixedSize.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+::android::status_t FixedSize::EmptyParcelable::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
+  int32_t _aidl_parcelable_raw_size = 0;
+  _aidl_ret_status = _aidl_parcel->readInt32(&_aidl_parcelable_raw_size);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    return _aidl_ret_status;
+  }
+  if (_aidl_parcelable_raw_size < 4) return ::android::BAD_VALUE;
+  size_t _aidl_parcelable_size = static_cast<size_t>(_aidl_parcelable_raw_size);
+  if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return ::android::BAD_VALUE;
+  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+  return _aidl_ret_status;
+}
+::android::status_t FixedSize::EmptyParcelable::writeToParcel(::android::Parcel* _aidl_parcel) const {
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  size_t _aidl_start_pos = _aidl_parcel->dataPosition();
+  _aidl_parcel->writeInt32(0);
   size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
   _aidl_parcel->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));
@@ -325,6 +381,108 @@ namespace tests {
   case multiDimensionLongArray: return _aidl_parcel->writeFixedArray(get<multiDimensionLongArray>());
   case doubleValue: return _aidl_parcel->writeDouble(get<doubleValue>());
   case enumValue: return _aidl_parcel->writeInt64(static_cast<int64_t>(get<enumValue>()));
+  }
+  __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/FixedSize.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+::android::status_t FixedSize::FixedUnionNoPadding::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+  ::android::status_t _aidl_ret_status;
+  int32_t _aidl_tag;
+  if ((_aidl_ret_status = _aidl_parcel->readInt32(&_aidl_tag)) != ::android::OK) return _aidl_ret_status;
+  switch (static_cast<Tag>(_aidl_tag)) {
+  case byteValue: {
+    int8_t _aidl_value;
+    if ((_aidl_ret_status = _aidl_parcel->readByte(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<int8_t>) {
+      set<byteValue>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<byteValue>(std::move(_aidl_value));
+    }
+    return ::android::OK; }
+  }
+  return ::android::BAD_VALUE;
+}
+::android::status_t FixedSize::FixedUnionNoPadding::writeToParcel(::android::Parcel* _aidl_parcel) const {
+  ::android::status_t _aidl_ret_status = _aidl_parcel->writeInt32(static_cast<int32_t>(getTag()));
+  if (_aidl_ret_status != ::android::OK) return _aidl_ret_status;
+  switch (getTag()) {
+  case byteValue: return _aidl_parcel->writeByte(get<byteValue>());
+  }
+  __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/FixedSize.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+::android::status_t FixedSize::FixedUnionSmallPadding::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+  ::android::status_t _aidl_ret_status;
+  int32_t _aidl_tag;
+  if ((_aidl_ret_status = _aidl_parcel->readInt32(&_aidl_tag)) != ::android::OK) return _aidl_ret_status;
+  switch (static_cast<Tag>(_aidl_tag)) {
+  case charValue: {
+    char16_t _aidl_value;
+    if ((_aidl_ret_status = _aidl_parcel->readChar(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<char16_t>) {
+      set<charValue>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<charValue>(std::move(_aidl_value));
+    }
+    return ::android::OK; }
+  }
+  return ::android::BAD_VALUE;
+}
+::android::status_t FixedSize::FixedUnionSmallPadding::writeToParcel(::android::Parcel* _aidl_parcel) const {
+  ::android::status_t _aidl_ret_status = _aidl_parcel->writeInt32(static_cast<int32_t>(getTag()));
+  if (_aidl_ret_status != ::android::OK) return _aidl_ret_status;
+  switch (getTag()) {
+  case charValue: return _aidl_parcel->writeChar(get<charValue>());
+  }
+  __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
+}
+}  // namespace tests
+}  // namespace aidl
+}  // namespace android
+#include <android/aidl/tests/FixedSize.h>
+
+namespace android {
+namespace aidl {
+namespace tests {
+::android::status_t FixedSize::FixedUnionLongPadding::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+  ::android::status_t _aidl_ret_status;
+  int32_t _aidl_tag;
+  if ((_aidl_ret_status = _aidl_parcel->readInt32(&_aidl_tag)) != ::android::OK) return _aidl_ret_status;
+  switch (static_cast<Tag>(_aidl_tag)) {
+  case longValue: {
+    int64_t _aidl_value;
+    if ((_aidl_ret_status = _aidl_parcel->readInt64(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
+    if constexpr (std::is_trivially_copyable_v<int64_t>) {
+      set<longValue>(_aidl_value);
+    } else {
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      set<longValue>(std::move(_aidl_value));
+    }
+    return ::android::OK; }
+  }
+  return ::android::BAD_VALUE;
+}
+::android::status_t FixedSize::FixedUnionLongPadding::writeToParcel(::android::Parcel* _aidl_parcel) const {
+  ::android::status_t _aidl_ret_status = _aidl_parcel->writeInt32(static_cast<int32_t>(getTag()));
+  if (_aidl_ret_status != ::android::OK) return _aidl_ret_status;
+  switch (getTag()) {
+  case longValue: return _aidl_parcel->writeInt64(get<longValue>());
   }
   __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
 }
