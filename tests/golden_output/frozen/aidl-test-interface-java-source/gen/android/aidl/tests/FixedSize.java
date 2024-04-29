@@ -57,6 +57,8 @@ public class FixedSize implements android.os.Parcelable
     public double doubleValue = 0.000000;
     public long enumValue = android.aidl.tests.LongEnum.FOO;
     public android.aidl.tests.FixedSize.FixedUnion parcelableValue;
+    public android.aidl.tests.FixedSize.EmptyParcelable[] parcelableArray;
+    public android.aidl.tests.FixedSize.FixedUnion[] unionArray;
     public static final android.os.Parcelable.Creator<FixedParcelable> CREATOR = new android.os.Parcelable.Creator<FixedParcelable>() {
       @Override
       public FixedParcelable createFromParcel(android.os.Parcel _aidl_source) {
@@ -84,6 +86,8 @@ public class FixedSize implements android.os.Parcelable
       _aidl_parcel.writeDouble(doubleValue);
       _aidl_parcel.writeLong(enumValue);
       _aidl_parcel.writeTypedObject(parcelableValue, _aidl_flag);
+      _aidl_parcel.writeFixedArray(parcelableArray, _aidl_flag, 3);
+      _aidl_parcel.writeFixedArray(unionArray, _aidl_flag, 4);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
       _aidl_parcel.setDataPosition(_aidl_start_pos);
       _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
@@ -117,6 +121,10 @@ public class FixedSize implements android.os.Parcelable
         enumValue = _aidl_parcel.readLong();
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
         parcelableValue = _aidl_parcel.readTypedObject(android.aidl.tests.FixedSize.FixedUnion.CREATOR);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        parcelableArray = _aidl_parcel.createFixedArray(android.aidl.tests.FixedSize.EmptyParcelable[].class, android.aidl.tests.FixedSize.EmptyParcelable.CREATOR, 3);
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        unionArray = _aidl_parcel.createFixedArray(android.aidl.tests.FixedSize.FixedUnion[].class, android.aidl.tests.FixedSize.FixedUnion.CREATOR, 4);
       } finally {
         if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
           throw new android.os.BadParcelableException("Overflow in the size of parcelable");
@@ -128,14 +136,65 @@ public class FixedSize implements android.os.Parcelable
     public int describeContents() {
       int _mask = 0;
       _mask |= describeContents(parcelableValue);
+      _mask |= describeContents(parcelableArray);
+      _mask |= describeContents(unionArray);
       return _mask;
     }
     private int describeContents(Object _v) {
       if (_v == null) return 0;
+      if (_v instanceof Object[]) {
+        int _mask = 0;
+        for (Object o : (Object[]) _v) {
+          _mask |= describeContents(o);
+        }
+        return _mask;
+      }
       if (_v instanceof android.os.Parcelable) {
         return ((android.os.Parcelable) _v).describeContents();
       }
       return 0;
+    }
+  }
+  public static class EmptyParcelable implements android.os.Parcelable
+  {
+    public static final android.os.Parcelable.Creator<EmptyParcelable> CREATOR = new android.os.Parcelable.Creator<EmptyParcelable>() {
+      @Override
+      public EmptyParcelable createFromParcel(android.os.Parcel _aidl_source) {
+        EmptyParcelable _aidl_out = new EmptyParcelable();
+        _aidl_out.readFromParcel(_aidl_source);
+        return _aidl_out;
+      }
+      @Override
+      public EmptyParcelable[] newArray(int _aidl_size) {
+        return new EmptyParcelable[_aidl_size];
+      }
+    };
+    @Override public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.writeInt(0);
+      int _aidl_end_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.setDataPosition(_aidl_start_pos);
+      _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
+      _aidl_parcel.setDataPosition(_aidl_end_pos);
+    }
+    public final void readFromParcel(android.os.Parcel _aidl_parcel)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      int _aidl_parcelable_size = _aidl_parcel.readInt();
+      try {
+        if (_aidl_parcelable_size < 4) throw new android.os.BadParcelableException("Parcelable too small");;
+      } finally {
+        if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
+          throw new android.os.BadParcelableException("Overflow in the size of parcelable");
+        }
+        _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+      }
+    }
+    @Override
+    public int describeContents() {
+      int _mask = 0;
+      return _mask;
     }
   }
   public static final class FixedUnion implements android.os.Parcelable {
@@ -474,6 +533,321 @@ public class FixedSize implements android.os.Parcelable
       public static final byte multiDimensionLongArray = 7;
       public static final byte doubleValue = 8;
       public static final byte enumValue = 9;
+    }
+  }
+  /** A union with no padding between the tag and value */
+  public static final class FixedUnionNoPadding implements android.os.Parcelable {
+    // tags for union fields
+    public final static int byteValue = 0;  // byte byteValue;
+
+    private int _tag;
+    private Object _value;
+
+    public FixedUnionNoPadding() {
+      byte _value = 0;
+      this._tag = byteValue;
+      this._value = _value;
+    }
+
+    private FixedUnionNoPadding(android.os.Parcel _aidl_parcel) {
+      readFromParcel(_aidl_parcel);
+    }
+
+    private FixedUnionNoPadding(int _tag, Object _value) {
+      this._tag = _tag;
+      this._value = _value;
+    }
+
+    public int getTag() {
+      return _tag;
+    }
+
+    // byte byteValue;
+
+    public static FixedUnionNoPadding byteValue(byte _value) {
+      return new FixedUnionNoPadding(byteValue, _value);
+    }
+
+    public byte getByteValue() {
+      _assertTag(byteValue);
+      return (byte) _value;
+    }
+
+    public void setByteValue(byte _value) {
+      _set(byteValue, _value);
+    }
+
+    public static final android.os.Parcelable.Creator<FixedUnionNoPadding> CREATOR = new android.os.Parcelable.Creator<FixedUnionNoPadding>() {
+      @Override
+      public FixedUnionNoPadding createFromParcel(android.os.Parcel _aidl_source) {
+        return new FixedUnionNoPadding(_aidl_source);
+      }
+      @Override
+      public FixedUnionNoPadding[] newArray(int _aidl_size) {
+        return new FixedUnionNoPadding[_aidl_size];
+      }
+    };
+
+    @Override
+    public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag) {
+      _aidl_parcel.writeInt(_tag);
+      switch (_tag) {
+      case byteValue:
+        _aidl_parcel.writeByte(getByteValue());
+        break;
+      }
+    }
+
+    public void readFromParcel(android.os.Parcel _aidl_parcel) {
+      int _aidl_tag;
+      _aidl_tag = _aidl_parcel.readInt();
+      switch (_aidl_tag) {
+      case byteValue: {
+        byte _aidl_value;
+        _aidl_value = _aidl_parcel.readByte();
+        _set(_aidl_tag, _aidl_value);
+        return; }
+      }
+      throw new IllegalArgumentException("union: unknown tag: " + _aidl_tag);
+    }
+
+    @Override
+    public int describeContents() {
+      int _mask = 0;
+      switch (getTag()) {
+      }
+      return _mask;
+    }
+
+    private void _assertTag(int tag) {
+      if (getTag() != tag) {
+        throw new IllegalStateException("bad access: " + _tagString(tag) + ", " + _tagString(getTag()) + " is available.");
+      }
+    }
+
+    private String _tagString(int _tag) {
+      switch (_tag) {
+      case byteValue: return "byteValue";
+      }
+      throw new IllegalStateException("unknown field: " + _tag);
+    }
+
+    private void _set(int _tag, Object _value) {
+      this._tag = _tag;
+      this._value = _value;
+    }
+    public static @interface Tag {
+      public static final byte byteValue = 0;
+    }
+  }
+  /** A union with one byte of padding between the tag and value */
+  public static final class FixedUnionSmallPadding implements android.os.Parcelable {
+    // tags for union fields
+    public final static int charValue = 0;  // char charValue;
+
+    private int _tag;
+    private Object _value;
+
+    public FixedUnionSmallPadding() {
+      char _value = '\0';
+      this._tag = charValue;
+      this._value = _value;
+    }
+
+    private FixedUnionSmallPadding(android.os.Parcel _aidl_parcel) {
+      readFromParcel(_aidl_parcel);
+    }
+
+    private FixedUnionSmallPadding(int _tag, Object _value) {
+      this._tag = _tag;
+      this._value = _value;
+    }
+
+    public int getTag() {
+      return _tag;
+    }
+
+    // char charValue;
+
+    public static FixedUnionSmallPadding charValue(char _value) {
+      return new FixedUnionSmallPadding(charValue, _value);
+    }
+
+    public char getCharValue() {
+      _assertTag(charValue);
+      return (char) _value;
+    }
+
+    public void setCharValue(char _value) {
+      _set(charValue, _value);
+    }
+
+    public static final android.os.Parcelable.Creator<FixedUnionSmallPadding> CREATOR = new android.os.Parcelable.Creator<FixedUnionSmallPadding>() {
+      @Override
+      public FixedUnionSmallPadding createFromParcel(android.os.Parcel _aidl_source) {
+        return new FixedUnionSmallPadding(_aidl_source);
+      }
+      @Override
+      public FixedUnionSmallPadding[] newArray(int _aidl_size) {
+        return new FixedUnionSmallPadding[_aidl_size];
+      }
+    };
+
+    @Override
+    public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag) {
+      _aidl_parcel.writeInt(_tag);
+      switch (_tag) {
+      case charValue:
+        _aidl_parcel.writeInt(((int)getCharValue()));
+        break;
+      }
+    }
+
+    public void readFromParcel(android.os.Parcel _aidl_parcel) {
+      int _aidl_tag;
+      _aidl_tag = _aidl_parcel.readInt();
+      switch (_aidl_tag) {
+      case charValue: {
+        char _aidl_value;
+        _aidl_value = (char)_aidl_parcel.readInt();
+        _set(_aidl_tag, _aidl_value);
+        return; }
+      }
+      throw new IllegalArgumentException("union: unknown tag: " + _aidl_tag);
+    }
+
+    @Override
+    public int describeContents() {
+      int _mask = 0;
+      switch (getTag()) {
+      }
+      return _mask;
+    }
+
+    private void _assertTag(int tag) {
+      if (getTag() != tag) {
+        throw new IllegalStateException("bad access: " + _tagString(tag) + ", " + _tagString(getTag()) + " is available.");
+      }
+    }
+
+    private String _tagString(int _tag) {
+      switch (_tag) {
+      case charValue: return "charValue";
+      }
+      throw new IllegalStateException("unknown field: " + _tag);
+    }
+
+    private void _set(int _tag, Object _value) {
+      this._tag = _tag;
+      this._value = _value;
+    }
+    public static @interface Tag {
+      public static final byte charValue = 0;
+    }
+  }
+  /** A union with seven bytes of padding between the tag and value */
+  public static final class FixedUnionLongPadding implements android.os.Parcelable {
+    // tags for union fields
+    public final static int longValue = 0;  // long longValue;
+
+    private int _tag;
+    private Object _value;
+
+    public FixedUnionLongPadding() {
+      long _value = 0L;
+      this._tag = longValue;
+      this._value = _value;
+    }
+
+    private FixedUnionLongPadding(android.os.Parcel _aidl_parcel) {
+      readFromParcel(_aidl_parcel);
+    }
+
+    private FixedUnionLongPadding(int _tag, Object _value) {
+      this._tag = _tag;
+      this._value = _value;
+    }
+
+    public int getTag() {
+      return _tag;
+    }
+
+    // long longValue;
+
+    public static FixedUnionLongPadding longValue(long _value) {
+      return new FixedUnionLongPadding(longValue, _value);
+    }
+
+    public long getLongValue() {
+      _assertTag(longValue);
+      return (long) _value;
+    }
+
+    public void setLongValue(long _value) {
+      _set(longValue, _value);
+    }
+
+    public static final android.os.Parcelable.Creator<FixedUnionLongPadding> CREATOR = new android.os.Parcelable.Creator<FixedUnionLongPadding>() {
+      @Override
+      public FixedUnionLongPadding createFromParcel(android.os.Parcel _aidl_source) {
+        return new FixedUnionLongPadding(_aidl_source);
+      }
+      @Override
+      public FixedUnionLongPadding[] newArray(int _aidl_size) {
+        return new FixedUnionLongPadding[_aidl_size];
+      }
+    };
+
+    @Override
+    public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag) {
+      _aidl_parcel.writeInt(_tag);
+      switch (_tag) {
+      case longValue:
+        _aidl_parcel.writeLong(getLongValue());
+        break;
+      }
+    }
+
+    public void readFromParcel(android.os.Parcel _aidl_parcel) {
+      int _aidl_tag;
+      _aidl_tag = _aidl_parcel.readInt();
+      switch (_aidl_tag) {
+      case longValue: {
+        long _aidl_value;
+        _aidl_value = _aidl_parcel.readLong();
+        _set(_aidl_tag, _aidl_value);
+        return; }
+      }
+      throw new IllegalArgumentException("union: unknown tag: " + _aidl_tag);
+    }
+
+    @Override
+    public int describeContents() {
+      int _mask = 0;
+      switch (getTag()) {
+      }
+      return _mask;
+    }
+
+    private void _assertTag(int tag) {
+      if (getTag() != tag) {
+        throw new IllegalStateException("bad access: " + _tagString(tag) + ", " + _tagString(getTag()) + " is available.");
+      }
+    }
+
+    private String _tagString(int _tag) {
+      switch (_tag) {
+      case longValue: return "longValue";
+      }
+      throw new IllegalStateException("unknown field: " + _tag);
+    }
+
+    private void _set(int _tag, Object _value) {
+      this._tag = _tag;
+      this._value = _value;
+    }
+    public static @interface Tag {
+      public static final byte longValue = 0;
     }
   }
 }
