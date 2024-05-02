@@ -106,7 +106,9 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	var cpp_std *string
 	var hostSupported *bool
 	addCflags := commonProperties.Cflags
-	targetProp := ccTargetProperties{}
+	targetProp := ccTargetProperties{
+		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
+	}
 
 	if lang == langCpp {
 		importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
@@ -171,11 +173,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Imports:           i.getImportsForVersion(version),
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name: proptools.StringPtr(cppModuleGen),
-				Enabled: android.CreateSelectOsToBool(map[string]*bool{
-					"":       nil,
-					"darwin": proptools.BoolPtr(false),
-				}),
+				Name:                      proptools.StringPtr(cppModuleGen),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
@@ -246,7 +244,9 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	importExportDependencies := []string{}
 	var hostSupported *bool
 	var addCflags []string // not using cpp backend cflags for now
-	targetProp := ccTargetProperties{}
+	targetProp := ccTargetProperties{
+		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
+	}
 
 	importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
 	hostSupported = i.properties.Host_supported
@@ -262,11 +262,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	g := aidlImplementationGeneratorProperties{
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name: proptools.StringPtr(cppAnalyzerModuleGen),
-				Enabled: android.CreateSelectOsToBool(map[string]*bool{
-					"":       nil,
-					"darwin": proptools.BoolPtr(false),
-				}),
+				Name:                      proptools.StringPtr(cppAnalyzerModuleGen),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
@@ -405,11 +401,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
 	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
-		Name: proptools.StringPtr(rustModuleGen),
-		Enabled: android.CreateSelectOsToBool(map[string]*bool{
-			"darwin": proptools.BoolPtr(false),
-			"":       nil,
-		}),
+		Name:              proptools.StringPtr(rustModuleGen),
 		Crate_name:        rustCrateName,
 		Stem:              proptools.StringPtr("lib" + versionedRustName),
 		Defaults:          []string{"aidl-rust-module-defaults"},
@@ -418,6 +410,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Product_available: i.properties.Product_available,
 		Apex_available:    i.properties.Backend.Rust.Apex_available,
 		Min_sdk_version:   i.minSdkVersion(langRust),
+		Target:            rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
 		Rustlibs:          i.properties.Backend.Rust.Additional_rustlibs,
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),

@@ -14,16 +14,16 @@
 
 package aidl
 
-import (
-	"github.com/google/blueprint/proptools"
-)
-
 type nameProperties struct {
 	Name *string
 }
 
 type hostProperties struct {
 	Cflags []string
+}
+
+type darwinProperties struct {
+	Enabled *bool
 }
 
 type imageProperties struct {
@@ -35,14 +35,18 @@ type imageProperties struct {
 
 type ccTargetProperties struct {
 	Host     hostProperties
+	Darwin   darwinProperties
 	Platform imageProperties
 	Vendor   imageProperties
 	Product  imageProperties
 }
 
+type rustTargetProperties struct {
+	Darwin darwinProperties
+}
+
 type ccProperties struct {
 	Name                      *string
-	Enabled                   proptools.Configurable[bool]
 	Owner                     *string
 	Defaults                  []string
 	Double_loadable           *bool
@@ -88,7 +92,6 @@ type javaProperties struct {
 
 type rustProperties struct {
 	Name              *string
-	Enabled           proptools.Configurable[bool]
 	Crate_name        string
 	Owner             *string
 	Defaults          []string
@@ -98,6 +101,7 @@ type rustProperties struct {
 	Srcs              []string
 	Rustlibs          []string
 	Stem              *string
+	Target            rustTargetProperties
 	Apex_available    []string
 	Min_sdk_version   *string
 }
