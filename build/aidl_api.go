@@ -748,7 +748,7 @@ type freezeApiSingleton struct{}
 func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) {
 	var files android.Paths
 	ctx.VisitAllModules(func(module android.Module) {
-		if !module.Enabled() {
+		if !module.Enabled(ctx) {
 			return
 		}
 		if m, ok := module.(*aidlApi); ok {
