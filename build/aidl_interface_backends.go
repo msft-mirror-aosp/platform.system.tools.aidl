@@ -75,6 +75,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 
 	genLog := proptools.Bool(commonProperties.Gen_log)
 	genTrace := i.genTrace(lang)
+	aidlFlags := i.flagsForAidlGenRule(version)
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
@@ -93,7 +94,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Unstable:            i.properties.Unstable,
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
-		Flags:               i.flagsForAidlGenRule(version),
+		Flags:               aidlFlags,
 		UseUnfrozen:         i.useUnfrozen(mctx),
 	},
 	)
@@ -162,6 +163,11 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		productAvailable = nil
 	}
 
+	fullPathSources := make([]string, len(srcs))
+	for i, src := range srcs {
+		fullPathSources[i] = filepath.Join(mctx.ModuleDir(), aidlRoot, src)
+	}
+
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
 		Name: proptools.StringPtr(cppModuleGen + "-generator"),
 	}, &aidlImplementationGeneratorProperties{
@@ -207,6 +213,15 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
 				},
 				Include_build_directory: proptools.BoolPtr(false), // b/254682497
+				AidlInterface: struct {
+					Sources []string
+					Lang    string
+					Flags   []string
+				}{
+					Sources: fullPathSources,
+					Lang:    lang,
+					Flags:   aidlFlags,
+				},
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
