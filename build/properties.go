@@ -72,6 +72,11 @@ type ccProperties struct {
 	Tidy_flags                []string
 	Tidy_checks_as_errors     []string
 	Include_build_directory   *bool
+	AidlInterface             struct {
+		Sources []string
+		Lang    string
+		Flags   []string
+	}
 }
 
 type javaProperties struct {
