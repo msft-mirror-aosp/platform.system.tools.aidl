@@ -38,6 +38,7 @@ struct Comment {
   friend std::ostream& operator<<(std::ostream& out, const Comment& c) { return out << c.body; }
 };
 
+// TODO: smoreland says don't do this - instead use 'std::vector<Comment>' everywhere
 using Comments = std::vector<Comment>;
 
 bool HasHideInComments(const Comments& comments);

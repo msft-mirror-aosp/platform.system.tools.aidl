@@ -52,13 +52,26 @@ use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
 use aidl_test_vintf_parcelable::aidl::android::aidl::tests::vintf::{
     VintfExtendableParcelable::VintfExtendableParcelable, VintfParcelable::VintfParcelable,
 };
+use android_aidl_test_trunk::aidl::android::aidl::test::trunk::{
+    ITrunkStableTest::BpTrunkStableTest, ITrunkStableTest::IMyCallback,
+    ITrunkStableTest::ITrunkStableTest, ITrunkStableTest::MyEnum::MyEnum,
+    ITrunkStableTest::MyOtherParcelable::MyOtherParcelable,
+    ITrunkStableTest::MyParcelable::MyParcelable, ITrunkStableTest::MyUnion::MyUnion,
+};
+use simple_parcelable::SimpleParcelable;
+
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::unix::io::FromRawFd;
+use std::os::fd::{FromRawFd, OwnedFd};
 use std::sync::{Arc, Mutex};
 
 fn get_test_service() -> binder::Strong<dyn ITestService::ITestService> {
     binder::get_interface(<BpTestService as ITestService::ITestService>::get_descriptor())
+        .expect("did not get binder service")
+}
+
+fn get_test_trunk_stable_service() -> binder::Strong<dyn ITrunkStableTest> {
+    binder::get_interface(<BpTrunkStableTest as ITrunkStableTest>::get_descriptor())
         .expect("did not get binder service")
 }
 
@@ -121,6 +134,10 @@ fn test_constants() {
     assert_eq!(ITestService::A55, 1);
     assert_eq!(ITestService::A56, 1);
     assert_eq!(ITestService::A57, 1);
+    assert_eq!(ITestService::FLOAT_CONSTANT4, 2.2_f32);
+    assert_eq!(ITestService::FLOAT_CONSTANT5, -2.2_f32);
+    assert_eq!(ITestService::DOUBLE_CONSTANT4, 2.2_f64);
+    assert_eq!(ITestService::DOUBLE_CONSTANT5, -2.2_f64);
 }
 
 #[test]
@@ -148,23 +165,37 @@ test_primitive! {test_primitive_int, RepeatInt, 1i32 << 30}
 test_primitive! {test_primitive_long, RepeatLong, 1i64 << 60}
 test_primitive! {test_primitive_float, RepeatFloat, 1.0f32 / 3.0f32}
 test_primitive! {test_primitive_double, RepeatDouble, 1.0f64 / 3.0f64}
-test_primitive! {test_primitive_byte_constant, RepeatByte, ITestService::BYTE_TEST_CONSTANT}
-test_primitive! {test_primitive_constant1, RepeatInt, ITestService::TEST_CONSTANT}
-test_primitive! {test_primitive_constant2, RepeatInt, ITestService::TEST_CONSTANT2}
-test_primitive! {test_primitive_constant3, RepeatInt, ITestService::TEST_CONSTANT3}
-test_primitive! {test_primitive_constant4, RepeatInt, ITestService::TEST_CONSTANT4}
-test_primitive! {test_primitive_constant5, RepeatInt, ITestService::TEST_CONSTANT5}
-test_primitive! {test_primitive_constant6, RepeatInt, ITestService::TEST_CONSTANT6}
-test_primitive! {test_primitive_constant7, RepeatInt, ITestService::TEST_CONSTANT7}
-test_primitive! {test_primitive_constant8, RepeatInt, ITestService::TEST_CONSTANT8}
-test_primitive! {test_primitive_constant9, RepeatInt, ITestService::TEST_CONSTANT9}
-test_primitive! {test_primitive_constant10, RepeatInt, ITestService::TEST_CONSTANT10}
-test_primitive! {test_primitive_constant11, RepeatInt, ITestService::TEST_CONSTANT11}
-test_primitive! {test_primitive_constant12, RepeatInt, ITestService::TEST_CONSTANT12}
-test_primitive! {test_primitive_long_constant, RepeatLong, ITestService::LONG_TEST_CONSTANT}
+test_primitive! {test_primitive_byte_constant, RepeatByte, ITestService::BYTE_CONSTANT}
+test_primitive! {test_primitive_constant1, RepeatInt, ITestService::CONSTANT}
+test_primitive! {test_primitive_constant2, RepeatInt, ITestService::CONSTANT2}
+test_primitive! {test_primitive_constant3, RepeatInt, ITestService::CONSTANT3}
+test_primitive! {test_primitive_constant4, RepeatInt, ITestService::CONSTANT4}
+test_primitive! {test_primitive_constant5, RepeatInt, ITestService::CONSTANT5}
+test_primitive! {test_primitive_constant6, RepeatInt, ITestService::CONSTANT6}
+test_primitive! {test_primitive_constant7, RepeatInt, ITestService::CONSTANT7}
+test_primitive! {test_primitive_constant8, RepeatInt, ITestService::CONSTANT8}
+test_primitive! {test_primitive_constant9, RepeatInt, ITestService::CONSTANT9}
+test_primitive! {test_primitive_constant10, RepeatInt, ITestService::CONSTANT10}
+test_primitive! {test_primitive_constant11, RepeatInt, ITestService::CONSTANT11}
+test_primitive! {test_primitive_constant12, RepeatInt, ITestService::CONSTANT12}
+test_primitive! {test_primitive_long_constant, RepeatLong, ITestService::LONG_CONSTANT}
 test_primitive! {test_primitive_byte_enum, RepeatByteEnum, ByteEnum::FOO}
 test_primitive! {test_primitive_int_enum, RepeatIntEnum, IntEnum::BAR}
 test_primitive! {test_primitive_long_enum, RepeatLongEnum, LongEnum::FOO}
+test_primitive! {test_primitive_float_constant, RepeatFloat, ITestService::FLOAT_CONSTANT}
+test_primitive! {test_primitive_float_constant2, RepeatFloat, ITestService::FLOAT_CONSTANT2}
+test_primitive! {test_primitive_float_constant3, RepeatFloat, ITestService::FLOAT_CONSTANT3}
+test_primitive! {test_primitive_float_constant4, RepeatFloat, ITestService::FLOAT_CONSTANT4}
+test_primitive! {test_primitive_float_constant5, RepeatFloat, ITestService::FLOAT_CONSTANT5}
+test_primitive! {test_primitive_float_constant6, RepeatFloat, ITestService::FLOAT_CONSTANT6}
+test_primitive! {test_primitive_float_constant7, RepeatFloat, ITestService::FLOAT_CONSTANT7}
+test_primitive! {test_primitive_double_constant, RepeatDouble, ITestService::DOUBLE_CONSTANT}
+test_primitive! {test_primitive_double_constant2, RepeatDouble, ITestService::DOUBLE_CONSTANT2}
+test_primitive! {test_primitive_double_constant3, RepeatDouble, ITestService::DOUBLE_CONSTANT3}
+test_primitive! {test_primitive_double_constant4, RepeatDouble, ITestService::DOUBLE_CONSTANT4}
+test_primitive! {test_primitive_double_constant5, RepeatDouble, ITestService::DOUBLE_CONSTANT5}
+test_primitive! {test_primitive_double_constant6, RepeatDouble, ITestService::DOUBLE_CONSTANT6}
+test_primitive! {test_primitive_double_constant7, RepeatDouble, ITestService::DOUBLE_CONSTANT7}
 
 #[test]
 fn test_repeat_string() {
@@ -177,13 +208,23 @@ fn test_repeat_string() {
         //   U+10437: The 'small letter yee' character in the deseret alphabet
         //   U+20AC: A euro sign
         String::from_utf16(&[0xD801, 0xDC37, 0x20AC]).expect("error converting string"),
-        ITestService::STRING_TEST_CONSTANT.into(),
-        ITestService::STRING_TEST_CONSTANT2.into(),
+        ITestService::STRING_CONSTANT.into(),
+        ITestService::STRING_CONSTANT2.into(),
     ];
     for input in &inputs {
         let result = service.RepeatString(input);
         assert_eq!(result.as_ref(), Ok(input));
     }
+}
+
+#[test]
+fn test_repeat_parcelable() {
+    let service = get_test_service();
+    let input = SimpleParcelable { name: "foo".to_string(), number: 42 };
+    let mut out_param = SimpleParcelable::default();
+    let returned = service.RepeatSimpleParcelable(&input, &mut out_param);
+    assert_eq!(returned, Ok(input.clone()));
+    assert_eq!(out_param, input);
 }
 
 macro_rules! test_reverse_array {
@@ -203,30 +244,30 @@ macro_rules! test_reverse_array {
     };
 }
 
-test_reverse_array! {test_array_boolean, ReverseBoolean, vec![true, false, false]}
-test_reverse_array! {test_array_byte, ReverseByte, vec![255u8, 0u8, 127u8]}
+test_reverse_array! {test_array_boolean, ReverseBoolean, [true, false, false]}
+test_reverse_array! {test_array_byte, ReverseByte, [255u8, 0u8, 127u8]}
 test_reverse_array! {
     service,
     ReverseChar,
-    vec!['A' as u16, 'B' as u16, 'C' as u16]
+    ['A' as u16, 'B' as u16, 'C' as u16]
 }
-test_reverse_array! {test_array_int, ReverseInt, vec![1, 2, 3]}
-test_reverse_array! {test_array_long, ReverseLong, vec![-1i64, 0i64, 1i64 << 60]}
-test_reverse_array! {test_array_float, ReverseFloat, vec![-0.3f32, -0.7f32, 8.0f32]}
+test_reverse_array! {test_array_int, ReverseInt, [1, 2, 3]}
+test_reverse_array! {test_array_long, ReverseLong, [-1i64, 0i64, 1i64 << 60]}
+test_reverse_array! {test_array_float, ReverseFloat, [-0.3f32, -0.7f32, 8.0f32]}
 test_reverse_array! {
     test_array_double,
     ReverseDouble,
-    vec![1.0f64 / 3.0f64, 1.0f64 / 7.0f64, 42.0f64]
+    [1.0f64 / 3.0f64, 1.0f64 / 7.0f64, 42.0f64]
 }
 test_reverse_array! {
     test_array_string,
     ReverseString,
-    vec!["f".into(), "a".into(), "b".into()]
+    ["f".into(), "a".into(), "b".into()]
 }
 test_reverse_array! {
     test_array_byte_enum,
     ReverseByteEnum,
-    vec![ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAR]
+    [ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAR]
 }
 test_reverse_array! {
     test_array_byte_enum_values,
@@ -236,32 +277,41 @@ test_reverse_array! {
 test_reverse_array! {
     test_array_byte_enum_v2,
     ReverseByteEnum,
-    vec![ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAZ]
+    [ByteEnum::FOO, ByteEnum::BAR, ByteEnum::BAZ]
 }
 test_reverse_array! {
     test_array_int_enum,
     ReverseIntEnum,
-    vec![IntEnum::FOO, IntEnum::BAR, IntEnum::BAR]
+    [IntEnum::FOO, IntEnum::BAR, IntEnum::BAR]
 }
 test_reverse_array! {
     test_array_long_enum,
     ReverseLongEnum,
-    vec![LongEnum::FOO, LongEnum::BAR, LongEnum::BAR]
+    [LongEnum::FOO, LongEnum::BAR, LongEnum::BAR]
 }
 test_reverse_array! {
     test_array_string_list,
     ReverseStringList,
-    vec!["f".into(), "a".into(), "b".into()]
+    ["f".into(), "a".into(), "b".into()]
 }
 test_reverse_array! {
     test_array_utf8_string,
     ReverseUtf8CppString,
-    vec![
+    [
         "a".into(),
         String::new(),
         std::str::from_utf8(&[0xC3, 0xB8])
             .expect("error converting string")
             .into(),
+    ]
+}
+test_reverse_array! {
+    test_reverse_parcelable,
+    ReverseSimpleParcelables,
+    [
+        SimpleParcelable {name: "a".to_string(), number: 1 },
+        SimpleParcelable {name: "b".to_string(), number: 2 },
+        SimpleParcelable {name: "c".to_string(), number: 3 },
     ]
 }
 
@@ -321,7 +371,7 @@ fn test_interface_list_exchange() {
     );
 }
 
-fn build_pipe() -> (File, File) {
+fn build_pipe() -> (OwnedFd, OwnedFd) {
     // Safety: we get two file descriptors from pipe()
     // and pass them after checking if the function returned
     // without an error, so the descriptors should be valid
@@ -331,22 +381,31 @@ fn build_pipe() -> (File, File) {
         if libc::pipe(fds.as_mut_ptr()) != 0 {
             panic!("pipe() error");
         }
-        (File::from_raw_fd(fds[0]), File::from_raw_fd(fds[1]))
+        (OwnedFd::from_raw_fd(fds[0]), OwnedFd::from_raw_fd(fds[1]))
     }
+}
+
+/// Helper function that constructs a `File` from a `ParcelFileDescriptor`.
+///
+/// This is needed because `File` is currently the way to read and write
+/// to pipes using the `Read` and `Write` traits.
+fn file_from_pfd(fd: &binder::ParcelFileDescriptor) -> File {
+    fd.as_ref().try_clone().expect("failed to clone file descriptor").into()
 }
 
 #[test]
 fn test_parcel_file_descriptor() {
     let service = get_test_service();
-    let (mut read_file, write_file) = build_pipe();
+    let (read_fd, write_fd) = build_pipe();
+    let mut read_file = File::from(read_fd);
 
-    let write_pfd = binder::ParcelFileDescriptor::new(write_file);
+    let write_pfd = binder::ParcelFileDescriptor::new(write_fd);
     let result_pfd = service
         .RepeatParcelFileDescriptor(&write_pfd)
         .expect("error calling RepeatParcelFileDescriptor");
 
     const TEST_DATA: &[u8] = b"FrazzleSnazzleFlimFlamFlibbityGumboChops";
-    result_pfd.as_ref().write_all(TEST_DATA).expect("error writing to pipe");
+    file_from_pfd(&result_pfd).write_all(TEST_DATA).expect("error writing to pipe");
 
     let mut buf = [0u8; TEST_DATA.len()];
     read_file.read_exact(&mut buf).expect("error reading from pipe");
@@ -357,11 +416,9 @@ fn test_parcel_file_descriptor() {
 fn test_parcel_file_descriptor_array() {
     let service = get_test_service();
 
-    let (read_file, write_file) = build_pipe();
-    let input = vec![
-        binder::ParcelFileDescriptor::new(read_file),
-        binder::ParcelFileDescriptor::new(write_file),
-    ];
+    let (read_fd, write_fd) = build_pipe();
+    let input =
+        [binder::ParcelFileDescriptor::new(read_fd), binder::ParcelFileDescriptor::new(write_fd)];
 
     let mut repeated = vec![];
 
@@ -377,18 +434,15 @@ fn test_parcel_file_descriptor_array() {
         .ReverseParcelFileDescriptorArray(&input[..], &mut repeated)
         .expect("error calling ReverseParcelFileDescriptorArray");
 
-    input[1].as_ref().write_all(b"First").expect("error writing to pipe");
-    repeated[1]
-        .as_mut()
-        .expect("received None for ParcelFileDescriptor")
-        .as_ref()
+    file_from_pfd(&input[1]).write_all(b"First").expect("error writing to pipe");
+    file_from_pfd(repeated[1].as_ref().expect("received None for ParcelFileDescriptor"))
         .write_all(b"Second")
         .expect("error writing to pipe");
-    result[0].as_ref().write_all(b"Third").expect("error writing to pipe");
+    file_from_pfd(&result[0]).write_all(b"Third").expect("error writing to pipe");
 
     const TEST_DATA: &[u8] = b"FirstSecondThird";
     let mut buf = [0u8; TEST_DATA.len()];
-    input[0].as_ref().read_exact(&mut buf).expect("error reading from pipe");
+    file_from_pfd(&input[0]).read_exact(&mut buf).expect("error reading from pipe");
     assert_eq!(&buf[..], TEST_DATA);
 }
 
@@ -529,7 +583,7 @@ fn test_utf8_string() {
         "\0\0",
         std::str::from_utf8(&[0xF0, 0x90, 0x90, 0xB7, 0xE2, 0x82, 0xAC])
             .expect("error converting string"),
-        ITestService::STRING_TEST_CONSTANT_UTF8,
+        ITestService::STRING_CONSTANT_UTF8,
     ];
     for input in &inputs {
         let result = service.RepeatUtf8CppString(input);
@@ -551,7 +605,7 @@ fn test_utf8_string() {
                 .expect("error converting string")
                 .into(),
         ),
-        Some(ITestService::STRING_TEST_CONSTANT_UTF8.into()),
+        Some(ITestService::STRING_CONSTANT_UTF8.into()),
     ];
 
     // Java can't return a null list as a parameter
@@ -752,17 +806,23 @@ fn test_read_write_extension() {
     let mut parcel = Parcel::new();
     ep.write_to_parcel(&mut parcel.borrowed()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
     let mut ep1 = ExtendableParcelable::default();
     ep1.read_from_parcel(parcel.borrowed_ref()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
     ep1.write_to_parcel(&mut parcel.borrowed()).unwrap();
 
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1135,6 +1195,8 @@ fn test_read_write_fixed_size_array() {
         Some([[Some("hello".into()), Some("world".into())], Default::default()]);
 
     assert_eq!(parcel.write(&p), Ok(()));
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1146,6 +1208,8 @@ fn test_fixed_size_array_uses_array_optimization() {
     let mut parcel = Parcel::new();
     let byte_array = [[1u8, 2u8, 3u8], [4u8, 5u8, 6u8]];
     assert_eq!(parcel.write(&byte_array), Ok(()));
+    // SAFETY: 0 is less than the current size of the parcel data buffer, because the parcel is not
+    // empty.
     unsafe {
         parcel.set_data_position(0).unwrap();
     }
@@ -1228,4 +1292,170 @@ fn test_fixed_size_array_over_binder() {
 fn test_ping() {
     let test_service = get_test_service();
     assert_eq!(test_service.as_binder().ping_binder(), Ok(()));
+}
+
+#[test]
+fn test_trunk_stable_parcelable() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let p1 = MyParcelable { a: 12, b: 13, c: 14 };
+    let result = service.repeatParcelable(&p1);
+    assert!(result.is_ok());
+    let p2 = result.unwrap();
+    assert_eq!(p1.a, p2.a);
+    assert_eq!(p1.b, p2.b);
+    if version == 1 {
+        assert_ne!(p1.c, p2.c);
+        assert_eq!(0, p2.c);
+    } else {
+        assert_eq!(p1.c, p2.c);
+    }
+}
+
+#[test]
+fn test_trunk_stable_enum() {
+    let service = get_test_trunk_stable_service();
+    let e1 = MyEnum::THREE;
+    let result = service.repeatEnum(e1);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), e1);
+}
+#[test]
+fn test_trunk_stable_union() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let u1 = MyUnion::C(14);
+    let result = service.repeatUnion(&u1);
+    if version == 1 {
+        assert!(result.is_err());
+    } else {
+        assert!(result.is_ok());
+    }
+}
+#[test]
+fn test_trunk_stable_unimplemented() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let p1 = MyOtherParcelable { a: 12, b: 13 };
+    let result = service.repeatOtherParcelable(&p1);
+    if version == 1 {
+        assert!(result.is_err());
+    } else {
+        assert!(result.is_ok());
+    }
+}
+
+#[test]
+fn test_trunk_stable_hash() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let hash = service.getInterfaceHash();
+    if version == 1 {
+        assert_eq!(
+            hash.as_ref().map(String::as_str),
+            Ok("88311b9118fb6fe9eff4a2ca19121de0587f6d5f")
+        );
+        // Check local values of version and hash
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::VERSION,
+            1
+        );
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::HASH,
+            "88311b9118fb6fe9eff4a2ca19121de0587f6d5f"
+        );
+    } else {
+        assert_eq!(hash.as_ref().map(String::as_str), Ok("notfrozen"));
+        // Check local values of version and hash
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::VERSION,
+            2
+        );
+        assert_eq!(
+            android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::HASH,
+            "notfrozen"
+        );
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct MyCallback {
+    pub repeat_parcelable_called: Arc<Mutex<bool>>,
+    pub repeat_enum_called: Arc<Mutex<bool>>,
+    pub repeat_union_called: Arc<Mutex<bool>>,
+    pub repeat_other_parcelable_called: Arc<Mutex<bool>>,
+}
+
+impl Interface for MyCallback {}
+
+impl IMyCallback::IMyCallback for MyCallback {
+    fn repeatParcelable(&self, in_parcel: &MyParcelable) -> binder::Result<MyParcelable> {
+        *self.repeat_parcelable_called.lock().unwrap() = true;
+        let tmp: MyParcelable = MyParcelable { a: in_parcel.a, b: in_parcel.b, c: in_parcel.c };
+        Ok(tmp)
+    }
+    fn repeatEnum(&self, in_enum: MyEnum) -> binder::Result<MyEnum> {
+        *self.repeat_enum_called.lock().unwrap() = true;
+        Ok(in_enum)
+    }
+    fn repeatUnion(&self, in_union: &MyUnion) -> binder::Result<MyUnion> {
+        *self.repeat_union_called.lock().unwrap() = true;
+        match in_union {
+            MyUnion::A(n) => Ok(MyUnion::A(*n)),
+            MyUnion::B(n) => Ok(MyUnion::B(*n)),
+            MyUnion::C(n) => Ok(MyUnion::C(*n)),
+        }
+    }
+    fn repeatOtherParcelable(
+        &self,
+        in_parcel: &MyOtherParcelable,
+    ) -> binder::Result<MyOtherParcelable> {
+        *self.repeat_other_parcelable_called.lock().unwrap() = true;
+        let tmp: MyOtherParcelable = MyOtherParcelable { a: in_parcel.a, b: in_parcel.b };
+        Ok(tmp)
+    }
+}
+
+#[test]
+fn test_trunk_stable_callback() {
+    let service = get_test_trunk_stable_service();
+    let res = service.getInterfaceVersion();
+    assert!(res.is_ok());
+    let version = res.unwrap();
+
+    let repeat_parcelable_called = Arc::new(Mutex::new(false));
+    let repeat_enum_called = Arc::new(Mutex::new(false));
+    let repeat_union_called = Arc::new(Mutex::new(false));
+    let repeat_other_parcelable_called = Arc::new(Mutex::new(false));
+    let cb = IMyCallback::BnMyCallback::new_binder(
+        MyCallback {
+            repeat_parcelable_called: Arc::clone(&repeat_parcelable_called),
+            repeat_enum_called: Arc::clone(&repeat_enum_called),
+            repeat_union_called: Arc::clone(&repeat_union_called),
+            repeat_other_parcelable_called: Arc::clone(&repeat_other_parcelable_called),
+        },
+        BinderFeatures::default(),
+    );
+    let result = service.callMyCallback(&cb);
+    assert!(result.is_ok());
+    assert!(*repeat_parcelable_called.lock().unwrap());
+    assert!(*repeat_enum_called.lock().unwrap());
+    assert!(*repeat_union_called.lock().unwrap());
+    if version == 1 {
+        assert!(!*repeat_other_parcelable_called.lock().unwrap());
+    } else {
+        assert!(*repeat_other_parcelable_called.lock().unwrap());
+    }
 }

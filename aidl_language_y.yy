@@ -119,6 +119,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %token UNKNOWN "unrecognized character"
 %token<token> CPP_HEADER "cpp_header (which can also be used as an identifier)"
 %token<token> NDK_HEADER "ndk_header (which can also be used as an identifier)"
+%token<token> RUST_TYPE "rust_type (which can also be used as an identifier)"
 %token IN "in"
 %token INOUT "inout"
 %token OUT "out"
@@ -184,17 +185,20 @@ AidlLocation loc(const yy::parser::location_type& l) {
 
 document
  : optional_package imports decls {
-    Comments comments;
-    if ($1) {
-      comments = $1->GetComments();
-    } else if (!$2->empty()) {
-      comments = $2->front()->GetComments();
-    }
     std::vector<std::string> imports;
     for (const auto& import : *$2) {
       imports.push_back(import->GetText());
     }
-    ps->MakeDocument(loc(@1), comments, std::move(imports), std::move(*$3));
+
+    ps->MakeDocument(loc(@1), Comments(), std::move(imports), std::move(*$3));
+
+    for (auto i = $2->rbegin(); i != $2->rend(); ++i) {
+      ps->GetDocument()->PrependComments((*i)->GetComments());
+    }
+    if ($1) {
+      ps->GetDocument()->PrependComments($1->GetComments());
+    }
+
     delete $1;
     delete $2;
     delete $3;
@@ -210,6 +214,7 @@ identifier
  : IDENTIFIER
  | CPP_HEADER
  | NDK_HEADER
+ | RUST_TYPE
  ;
 
 optional_package
@@ -269,9 +274,7 @@ decl
    {
     $$ = $2;
 
-    if ($1->size() > 0 && $$ != nullptr) {
-      // copy comments from annotation to decl
-      $$->SetComments($1->begin()->get()->GetComments());
+    if ($$ != nullptr) {
       $$->Annotate(std::move(*$1));
     }
 
@@ -315,6 +318,12 @@ optional_unstructured_headers
  | optional_unstructured_headers NDK_HEADER C_STR {
      $$ = $1;
      $$->ndk = $3->GetText();
+     delete $2;
+     delete $3;
+ }
+ | optional_unstructured_headers RUST_TYPE C_STR {
+     $$ = $1;
+     $$->rust_type = $3->GetText();
      delete $2;
      delete $3;
  }
@@ -563,11 +572,7 @@ constant_value_non_empty_list
 
 constant_decl
  : annotation_list CONST type identifier '=' const_expr ';' {
-    if ($1->size() > 0) {
-      $3->SetComments($1->begin()->get()->GetComments());
-    } else {
-      $3->SetComments($2->GetComments());
-    }
+    $3->PrependComments($2->GetComments());
     // TODO(b/151102494) do not merge annotations.
     $3->Annotate(std::move(*$1));
     $$ = new AidlConstantDeclaration(loc(@4), $3, $4->GetText(), $6);
@@ -625,13 +630,15 @@ union_decl
 
 method_decl
  : type identifier '(' arg_list ')' ';' {
-    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $1->GetComments());
+    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $2->GetComments());
+    $$->PrependComments($1->GetComments());
     delete $2;
   }
  | annotation_list ONEWAY type identifier '(' arg_list ')' ';' {
-    const auto& comments = ($1->size() > 0) ? $1->begin()->get()->GetComments() : $2->GetComments();
-    $$ = new AidlMethod(loc(@4), true, $3, $4->GetText(), $6, comments);
+    $$ = new AidlMethod(loc(@4), true, $3, $4->GetText(), $6, $4->GetComments());
+    $3->PrependComments($2->GetComments());
     $3->Annotate(std::move(*$1));
+    $$->PrependComments($3->GetComments());
     delete $1;
     delete $2;
     delete $4;
@@ -642,19 +649,21 @@ method_decl
         AIDL_ERROR(loc(@7)) << "Could not parse int value: " << $7->GetText();
         ps->AddError();
     }
-    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $1->GetComments(), serial);
+    $$ = new AidlMethod(loc(@2), false, $1, $2->GetText(), $4, $2->GetComments(), serial);
+    $$->PrependComments($1->GetComments());
     delete $2;
     delete $7;
   }
  | annotation_list ONEWAY type identifier '(' arg_list ')' '=' INTVALUE ';' {
-    const auto& comments = ($1->size() > 0) ? $1->begin()->get()->GetComments() : $2->GetComments();
     int32_t serial = 0;
     if (!android::base::ParseInt($9->GetText(), &serial)) {
         AIDL_ERROR(loc(@9)) << "Could not parse int value: " << $9->GetText();
         ps->AddError();
     }
-    $$ = new AidlMethod(loc(@4), true, $3, $4->GetText(), $6, comments, serial);
+    $$ = new AidlMethod(loc(@4), true, $3, $4->GetText(), $6, $4->GetComments(), serial);
+    $3->PrependComments($2->GetComments());
     $3->Annotate(std::move(*$1));
+    $$->PrependComments($3->GetComments());
     delete $1;
     delete $2;
     delete $4;
@@ -690,10 +699,7 @@ arg
 non_array_type
  : annotation_list qualified_name {
     $$ = new AidlTypeSpecifier(loc(@2), $2->GetText(), /*array=*/std::nullopt, nullptr, $2->GetComments());
-    if (!$1->empty()) {
-      $$->SetComments($1->begin()->get()->GetComments());
-      $$->Annotate(std::move(*$1));
-    }
+    $$->Annotate(std::move(*$1));
     delete $1;
     delete $2;
   }

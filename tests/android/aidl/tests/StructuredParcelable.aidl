@@ -91,9 +91,9 @@ parcelable StructuredParcelable {
             (~(-1)) == 0,
             ~~(1 << 31) == (1 << 31),
             -0x7fffffff < 0,
-            0x80000000 < 0,
+            0x8000_0000 < 0,
 
-            0x7fffffff == 2147483647,
+            0x7fffffff == 2_147_483_647,
 
             // Shifting for more than 31 bits are undefined. Not tested.
             (1 << 31) == 0x80000000,
@@ -152,6 +152,12 @@ parcelable StructuredParcelable {
             (2 + 3 - 4 * -7 / (10 % 3)) - 33 == 0,
             (2 + (-3 & 4 / 7)) == 2,
             (((((1 + 0))))),
+            100u32 + 100u32 == 200u32,
+            0x80000000u32 / 2 == -0x40000000u32,
+            2000000000u32 - 1000000000u32 == 1000000000u32,
+            0xffffffffu32 + 1 == 0,
+            4294967295u32 + 1 == 0,
+            0x80000000u32 == -2147483648,
     };
 
     long[] int64_1 = {
@@ -161,11 +167,19 @@ parcelable StructuredParcelable {
             ~~(1L << 63) == (1L << 63),
             -0x7FFFFFFFFFFFFFFF < 0,
 
-            0x7fffffff == 2147483647,
+            0x7fff_ffff == 2147483647,
             0xfffffffff == 68719476735,
             0xffffffffffffffff == -1,
             (0xfL << 32L) == 0xf00000000,
             (0xfL << 32) == 0xf00000000,
+            10L == 1_0L,
+            10_0_0 == 1000L,
+            (8000000000u64 + 8000000000u64) == 16000000000u64,
+            0x8000000000000000u64 / 2 == -0x4000000000000000u64,
+            16000000000u64 - 8000000000u64 == 8000000000u64,
+            0xffffffffffffffffu64 + 1 == 0,
+            18446744073709551615u64 + 1 == 0,
+            0x8000000000000000u64 == -9223372036854775807L - 1,
     };
     int hexInt32_pos_1 = -0xffffffff;
     int hexInt64_pos_1 = -0xfffffffffff < 0;

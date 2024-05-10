@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// package comment
 package android.aidl.tests;
 
 import android.aidl.tests.BackendType;
@@ -22,10 +23,12 @@ import android.aidl.tests.CircularParcelable;
 import android.aidl.tests.ICircular;
 import android.aidl.tests.INamedCallback;
 import android.aidl.tests.INewName;
+// import comment
 import android.aidl.tests.IOldName;
 import android.aidl.tests.IntEnum;
 import android.aidl.tests.LongEnum;
 import android.aidl.tests.RecursiveList;
+import android.aidl.tests.SimpleParcelable;
 import android.aidl.tests.StructuredParcelable;
 import android.aidl.tests.Union;
 import android.aidl.tests.extension.ExtendableParcelable;
@@ -34,8 +37,13 @@ import android.aidl.tests.extension.ExtendableParcelable;
  * interface comment
  */
 @SuppressWarnings(value={"inout-parameter", "mixed-oneway", "out-array", "interface-name"})
+/**
+ * interface comment 2
+ */
 @SensitiveData
+// interface comment 3
 @JavaDefault
+// interface comment 4
 @JavaDelegator
 interface ITestService {
     // Test that constants are accessible
@@ -50,26 +58,44 @@ interface ITestService {
     /**
      * const comment
      */
-    const int TEST_CONSTANT = 42;
-    const int TEST_CONSTANT2 = -42;
-    const int TEST_CONSTANT3 = +42;
-    const int TEST_CONSTANT4 = +4;
-    const int TEST_CONSTANT5 = -4;
-    const int TEST_CONSTANT6 = -0;
-    const int TEST_CONSTANT7 = +0;
-    const int TEST_CONSTANT8 = 0;
-    const int TEST_CONSTANT9 = 0x56;
-    const int TEST_CONSTANT10 = 0xa5;
-    const int TEST_CONSTANT11 = 0xFA;
-    const int TEST_CONSTANT12 = 0xffffffff;
+    const int CONSTANT = 42;
+    const int CONSTANT2 = -42;
+    const int CONSTANT3 = +42;
+    const int CONSTANT4 = +4;
+    const int CONSTANT5 = -4;
+    const int CONSTANT6 = -0;
+    const int CONSTANT7 = +0;
+    const int CONSTANT8 = 0;
+    const int CONSTANT9 = 0x56;
+    const int CONSTANT10 = 0xa5;
+    const int CONSTANT11 = 0xFA;
+    const int CONSTANT12 = 0xffffffff;
 
-    const byte BYTE_TEST_CONSTANT = 17;
-    const long LONG_TEST_CONSTANT = 1L << 40;
+    const byte BYTE_CONSTANT = 17;
+    const long LONG_CONSTANT = 1L << 40;
 
-    const String STRING_TEST_CONSTANT = "foo";
-    const String STRING_TEST_CONSTANT2 = "bar";
+    const String STRING_CONSTANT = "foo";
+    const String STRING_CONSTANT2 = "bar";
 
-    const @utf8InCpp String STRING_TEST_CONSTANT_UTF8 = "baz";
+    const float FLOAT_CONSTANT = 1.0f;
+    const float FLOAT_CONSTANT2 = -1.0f;
+    const float FLOAT_CONSTANT3 = +1.0f;
+    const float FLOAT_CONSTANT4 = +2.2f;
+    const float FLOAT_CONSTANT5 = -2.2f;
+    const float FLOAT_CONSTANT6 = -0.0f;
+    const float FLOAT_CONSTANT7 = +0.0f;
+
+    const double DOUBLE_CONSTANT = 1.0;
+    const double DOUBLE_CONSTANT2 = -1.0;
+    const double DOUBLE_CONSTANT3 = +1.0;
+    const double DOUBLE_CONSTANT4 = +2.2;
+    const double DOUBLE_CONSTANT5 = -2.2;
+    const double DOUBLE_CONSTANT6 = -0.0;
+    const double DOUBLE_CONSTANT7 = +0.0;
+    const double DOUBLE_CONSTANT8 = 1.1f;
+    const double DOUBLE_CONSTANT9 = -1.1f;
+
+    const @utf8InCpp String STRING_CONSTANT_UTF8 = "baz";
 
     // This is to emulate a method that is added after the service is implemented.
     // So the client cannot assume that a call to this method will be successful
@@ -202,6 +228,10 @@ interface ITestService {
     @nullable IBinder[] ReverseNullableIBinderArray(
             in @nullable IBinder[] input, out @nullable IBinder[] repeated);
 
+    SimpleParcelable RepeatSimpleParcelable(in SimpleParcelable input, out SimpleParcelable repeat);
+    SimpleParcelable[] ReverseSimpleParcelables(
+            in SimpleParcelable[] input, out SimpleParcelable[] repeated);
+
     // All these constant expressions should be equal to 1
     const int A1 = (~(-1)) == 0;
     const int A2 = ~~(1 << 31) == (1 << 31);
@@ -306,6 +336,13 @@ interface ITestService {
         union UsingHasDeprecated {
             int n;
             HasDeprecated m;
+        }
+        interface NoPrefixInterface {
+            parcelable Nested {}
+            interface NestedNoPrefixInterface {
+                void foo();
+            }
+            void foo();
         }
     }
 

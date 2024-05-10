@@ -58,7 +58,9 @@
 #  define O_BINARY  0
 #endif
 
+using android::base::Error;
 using android::base::Join;
+using android::base::Result;
 using android::base::Split;
 using std::set;
 using std::string;
@@ -95,7 +97,7 @@ const int kLastMetaMethodId = kFirstMetaMethodId - 99;
 const int kMinUserSetMethodId = 0;
 const int kMaxUserSetMethodId = kLastMetaMethodId - 1;
 
-bool check_filename(const std::string& filename, const AidlDefinedType& defined_type) {
+bool check_filename(const std::string& filename, const Options& options, const AidlDefinedType& defined_type) {
     const char* p;
     string expected;
     string fn;
@@ -151,9 +153,36 @@ bool check_filename(const std::string& filename, const AidlDefinedType& defined_
 
     if (!valid) {
       AIDL_ERROR(defined_type) << name << " should be declared in a file called " << expected;
+      return false;
     }
 
-    return valid;
+    // Make sure that base directory of this AIDL file is one of the import directories. Base
+    // directory of an AIDL file `some/dir/package/name/Iface.aidl` is defined as `some/dir` if the
+    // package name is `package.name` and the type name is `Iface`. This check is needed because the
+    // build system that invokes this aidl compiler doesn't have knowledge about what the package
+    // name is for a given aidl file; because the build system doesn't parse the file. The only hint
+    // that user can give to the build system is the import path. In the above case, by specifying
+    // the import path to be `some/dir/`, the build system can know that the package name is what
+    // follows the import path: `package.name`.
+    // This is not used when the user has specified the exact output file path though.
+    if (options.OutputFile().empty()) {
+      std::string_view basedir(filename);
+      basedir.remove_suffix(expected.length());
+      if (basedir.empty()) {
+        basedir = "./";
+      }
+      const std::set<std::string>& i = options.ImportDirs();
+      if (std::find_if(i.begin(), i.end(), [&basedir](const std::string& i) {
+            return basedir == i;
+      }) == i.end()) {
+        AIDL_ERROR(defined_type) << "directory " << basedir << " is not found in any of the import paths:\n - " <<
+          base::Join(options.ImportDirs(), "\n - ");
+        return false;
+      }
+    }
+
+    // All checks passed
+    return true;
 }
 
 bool write_dep_file(const Options& options, const AidlDefinedType& defined_type,
@@ -394,6 +423,12 @@ bool ValidateHeaders(Options::Language language, const AidlDocument& doc) {
     validator.getHeader = &AidlParcelable::GetNdkHeader;
     VisitTopDown(validator, doc);
     return validator.success;
+  } else if (language == Options::Language::RUST) {
+    HeaderVisitor validator;
+    validator.str = "rust_type";
+    validator.getHeader = &AidlParcelable::GetRustType;
+    VisitTopDown(validator, doc);
+    return validator.success;
   }
   return true;
 }
@@ -402,6 +437,8 @@ bool ValidateHeaders(Options::Language language, const AidlDocument& doc) {
 
 namespace internals {
 
+// WARNING: options are passed here and below, but only the file contents should determine
+// what is generated for portability.
 AidlError load_and_validate_aidl(const std::string& input_file_name, const Options& options,
                                  const IoDelegate& io_delegate, AidlTypenames* typenames,
                                  vector<string>* imported_files) {
@@ -517,7 +554,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         defined_type);
 
     // Ensure that foo.bar.IFoo is defined in <some_path>/foo/bar/IFoo.aidl
-    if (num_defined_types == 1 && !check_filename(input_file_name, *defined_type)) {
+    if (num_defined_types == 1 && !check_filename(input_file_name, options, *defined_type)) {
       return AidlError::BAD_PACKAGE;
     }
 
@@ -571,13 +608,18 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     }
   }
 
-  // Add meta methods and assign method IDs to each interface
-  typenames->IterateTypes([&](const AidlDefinedType& type) {
-    auto interface = const_cast<AidlInterface*>(type.AsInterface());
-    if (interface != nullptr) {
-      // add the meta-method 'int getInterfaceVersion()' if version is specified.
-      if (options.Version() > 0) {
-        auto ret = typenames->MakeResolvedType(AIDL_LOCATION_HERE, "int", false);
+  // We only want to mutate the types defined in this AIDL file or subtypes. We can't
+  // use IterateTypes, as this will re-mutate types that have already been loaded
+  // when AidlTypenames is re-used (such as in dump API).
+  class MetaMethodVisitor : public AidlVisitor {
+   public:
+    MetaMethodVisitor(const Options* options, const AidlTypenames* typenames)
+        : mOptions(options), mTypenames(typenames) {}
+    virtual void Visit(const AidlInterface& const_interface) {
+      // TODO: we do not have mutable visitor infrastructure.
+      AidlInterface* interface = const_cast<AidlInterface*>(&const_interface);
+      if (mOptions->Version() > 0) {
+        auto ret = mTypenames->MakeResolvedType(AIDL_LOCATION_HERE, "int", false);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method = std::make_unique<AidlMethod>(AIDL_LOCATION_HERE, false, ret.release(),
                                                    "getInterfaceVersion", args, Comments{},
@@ -585,17 +627,30 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         interface->AddMethod(std::move(method));
       }
       // add the meta-method 'string getInterfaceHash()' if hash is specified.
-      if (!options.Hash().empty()) {
-        auto ret = typenames->MakeResolvedType(AIDL_LOCATION_HERE, "String", false);
+      if (!mOptions->Hash().empty()) {
+        auto ret = mTypenames->MakeResolvedType(AIDL_LOCATION_HERE, "String", false);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method =
             std::make_unique<AidlMethod>(AIDL_LOCATION_HERE, false, ret.release(),
                                          kGetInterfaceHash, args, Comments{}, kGetInterfaceHashId);
         interface->AddMethod(std::move(method));
       }
-      if (!CheckAndAssignMethodIDs(interface->GetMethods())) {
-        err = AidlError::BAD_METHOD_ID;
-      }
+    }
+
+   private:
+    const Options* mOptions;
+    const AidlTypenames* mTypenames;
+  };
+  MetaMethodVisitor meta_method_visitor(&options, typenames);
+  for (const auto& defined_type : types) {
+    VisitTopDown(meta_method_visitor, *defined_type);
+  }
+
+  typenames->IterateTypes([&](const AidlDefinedType& type) {
+    const AidlInterface* interface = type.AsInterface();
+    if (interface == nullptr) return;
+    if (!CheckAndAssignMethodIDs(interface->GetMethods())) {
+      err = AidlError::BAD_METHOD_ID;
     }
   });
   if (err != AidlError::OK) {
@@ -639,7 +694,8 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         !isStable) {
       err = AidlError::NOT_STRUCTURED;
       AIDL_ERROR(type) << type.GetCanonicalName()
-                       << " does not have VINTF level stability, but this interface requires it in "
+                       << " does not have VINTF level stability (marked @VintfStability), but this "
+                          "interface requires it in "
                        << to_string(options.TargetLanguage());
     }
 
@@ -687,10 +743,71 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
   return AidlError::OK;
 }
 
+void markNewAdditions(AidlTypenames& typenames, const AidlTypenames& previous_typenames) {
+  for (const AidlDefinedType* type : typenames.AllDefinedTypes()) {
+    const AidlDefinedType* previous_type = nullptr;
+    for (const AidlDefinedType* previous : previous_typenames.AllDefinedTypes()) {
+      if (type->GetCanonicalName() == previous->GetCanonicalName()) {
+        previous_type = previous;
+      }
+    }
+    if (previous_type == nullptr) {
+      // This is a new type for this version.
+      continue;
+    }
+    if (type->AsInterface()) {
+      for (const std::unique_ptr<AidlMethod>& member : type->AsInterface()->GetMethods()) {
+        if (!member->IsUserDefined()) continue;
+        bool found = false;
+        for (const std::unique_ptr<AidlMethod>& previous_member : previous_type->GetMethods()) {
+          if (previous_member->GetName() == member->GetName()) {
+            found = true;
+          }
+        }
+        if (!found) member->MarkNew();
+      }
+    } else if (type->AsStructuredParcelable() || type->AsUnionDeclaration()) {
+      for (const std::unique_ptr<AidlVariableDeclaration>& member : type->GetFields()) {
+        if (!member->IsUserDefined()) continue;
+        bool found = false;
+        for (const std::unique_ptr<AidlVariableDeclaration>& previous_member :
+             previous_type->GetFields()) {
+          if (previous_member->GetName() == member->GetName()) {
+            found = true;
+          }
+        }
+        if (!found) member->MarkNew();
+      }
+    } else if (type->AsEnumDeclaration() || type->AsUnstructuredParcelable()) {
+      // We have nothing to do for these types
+    } else {
+      AIDL_FATAL(type) << "Unexpected type when looking for new members";
+    }
+  }
+}
+
 } // namespace internals
 
 bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
   const Options::Language lang = options.TargetLanguage();
+
+  // load the previously frozen version if it exists
+  Result<AidlTypenames> previous_typenames_result;
+  if (options.IsLatestUnfrozenVersion()) {
+    // TODO(b/292005937) Once LoadApiDump can handle the OS_PATH_SEPARATOR at
+    // the end of PreviousApiDir, we can stop passing in a substr without it.
+    AIDL_FATAL_IF(options.PreviousApiDir().back() != OS_PATH_SEPARATOR, "Expecting a separator");
+    previous_typenames_result =
+        LoadApiDump(options.WithNoWarnings().WithoutVersion().AsPreviousVersion(), io_delegate,
+                    options.PreviousApiDir().substr(0, options.PreviousApiDir().size() - 1));
+    if (!previous_typenames_result.ok()) {
+      AIDL_ERROR(options.PreviousApiDir())
+          << "Failed to load api dump for '" << options.PreviousApiDir()
+          << "'. Error: " << previous_typenames_result.error().message();
+      return false;
+    }
+  }
+
   for (const string& input_file : options.InputFiles()) {
     AidlTypenames typenames;
 
@@ -700,6 +817,10 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
                                                            &typenames, &imported_files);
     if (aidl_err != AidlError::OK) {
       return false;
+    }
+
+    if (options.IsLatestUnfrozenVersion()) {
+      internals::markNewAdditions(typenames, previous_typenames_result.value());
     }
 
     for (const auto& defined_type : typenames.MainDocument().DefinedTypes()) {
@@ -728,8 +849,16 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
         success = true;
       } else if (lang == Options::Language::JAVA) {
         if (defined_type->AsUnstructuredParcelable() != nullptr) {
-          // Legacy behavior. For parcelable declarations in Java, don't generate output file.
+          // Legacy behavior. For parcelable declarations in Java, don't generate code.
           success = true;
+          // If the output directory is set, we're not going to be dropping a file right
+          // next to the .aidl code, so we shouldn't be clobbering an existing
+          // implementation unless someone has set their output dir to be their source
+          // dir explicitly.
+          // The build system expects us to produce an output file, so produce an empty one.
+          if (!options.OutputDir().empty()) {
+            io_delegate.GetCodeWriter(output_file_name)->Close();
+          }
         } else {
           java::GenerateJava(output_file_name, options, typenames, *defined_type, io_delegate);
           success = true;

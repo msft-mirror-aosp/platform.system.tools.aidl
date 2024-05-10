@@ -18,6 +18,7 @@
 
 #include "aidl.h"
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_ndk.h"
 #include "logging.h"
@@ -104,6 +105,9 @@ void GenerateNdk(const string& output_file, const Options& options, const AidlTy
   // Wrap Generate* function to handle CodeWriter for a file.
   auto gen = [&](auto file, GenFn fn) {
     unique_ptr<CodeWriter> writer(io_delegate.GetCodeWriter(file));
+
+    GenerateAutoGenHeader(*writer, options);
+
     fn(*writer, types, defined_type, options);
     AIDL_FATAL_IF(!writer->Close(), defined_type) << "I/O Error!";
   };
@@ -425,6 +429,11 @@ static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& t
       out << "static const char*";
       cpp::GenerateDeprecated(out, *constant);
       out << " " << constant->GetName() << ";\n";
+    } else if (type.Signature() == "float" || type.Signature() == "double") {
+      out << "static constexpr " << NdkNameOf(types, type, StorageMode::STACK) << " ";
+      out << constant->GetName();
+      cpp::GenerateDeprecated(out, *constant);
+      out << " = " << constant->ValueString(ConstantValueDecorator) << ";\n";
     } else {
       out << "enum : " << NdkNameOf(types, type, StorageMode::STACK) << " { ";
       out << constant->GetName();
@@ -505,6 +514,14 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     out << "ScopedTrace _aidl_trace(\"AIDL::" << to_string(options.TargetLanguage())
         << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
         << "::client\");\n";
+  }
+
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      method.IsUserDefined()) {
+    out << "if (true) {\n";
+    out << "  _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;\n";
+    out << "  goto _aidl_error;\n";
+    out << "}\n";
   }
 
   out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
@@ -610,6 +627,10 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     out.Write("#error Permission checks not implemented for the ndk backend\n");
   }
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ) &&
+      method.IsUserDefined()) {
+    out << "if (true) break;\n";
+  }
   for (const auto& arg : method.GetArguments()) {
     out << NdkNameOf(types, arg->GetType(), StorageMode::STACK) << " " << cpp::BuildVarName(*arg)
         << ";\n";
@@ -795,7 +816,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
       out.Dedent();
       out << "}\n";
     }
-    if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+    if (method->GetName() == kGetInterfaceHash && (!options.Hash().empty())) {
       out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
       out << "*_aidl_return = " << iface << "::" << kHash << ";\n";
@@ -824,7 +845,27 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
       << "::fromBinder(const ::ndk::SpAIBinder& binder) {\n";
   out.Indent();
   out << "if (!AIBinder_associateClass(binder.get(), " << GlobalClassVarName(defined_type)
-      << ")) { return nullptr; }\n";
+      << ")) {\n";
+  out.Indent();
+  // since NDK users don't use weak symbol support, we don't check builtin available. We could
+  // optionally check it if __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__ is defined, but this would
+  // also mean that app developers relying on this behavior would be missing test parity, and if
+  // local transactions aren't supported, due to missing the descriptor API, they will need to
+  // work around it a different way, so it's best to check based on __ANDROID_API__
+  out << "#if __ANDROID_API__ >= 31\n";
+  out << "const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());\n";
+  out << "if (originalClass == nullptr) return nullptr;\n";
+  out << "if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {\n";
+  out.Indent();
+  // parcel transactions in process, e.g. NDK<->Rust (okay..)
+  out << "return ::ndk::SharedRefBase::make<" << GetQualifiedName(defined_type, ClassNames::CLIENT)
+      << ">(binder);\n";
+  out.Dedent();
+  out << "}\n";
+  out << "#endif\n";
+  out << "return nullptr;\n";
+  out.Dedent();
+  out << "}\n";
   out << "std::shared_ptr<::ndk::ICInterface> interface = "
          "::ndk::ICInterface::asInterface(binder.get());\n";
   out << "if (interface) {\n";
@@ -1120,11 +1161,22 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   GenerateNestedTypeDecls(out, types, defined_type, options);
   GenerateConstantDeclarations(out, types, defined_type);
   if (options.Version() > 0) {
-    out << "static const int32_t " << kVersion << " = " << std::to_string(options.Version())
-        << ";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const int32_t " << kVersion << " = true ? "
+          << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
+          << ";\n";
+    } else {
+      out << "static inline const int32_t " << kVersion << " = "
+          << std::to_string(options.Version()) << ";\n";
+    }
   }
   if (!options.Hash().empty()) {
-    out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const std::string " << kHash << " = true ? \"" << options.PreviousHash()
+          << "\" : \"" << options.Hash() << "\";\n";
+    } else {
+      out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
+    }
   }
   for (const auto& method : defined_type.GetMethods()) {
     if (!method->IsUserDefined()) {
@@ -1290,6 +1342,11 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     out << "if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;\n";
     out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
     for (const auto& variable : defined_type.GetFields()) {
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+        out << "if (false) {\n";
+        out.Indent();
+      }
+
       out << "if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= "
              "_aidl_parcelable_size) "
              "{\n"
@@ -1301,6 +1358,10 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
           {out, types, variable->GetType(), "_aidl_parcel", "&" + variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+        out.Dedent();
+        out << "}\n";
+      }
     }
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
         << "return _aidl_ret_status;\n";
@@ -1317,10 +1378,18 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     StatusCheckReturn(out);
 
     for (const auto& variable : defined_type.GetFields()) {
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+        out << "if (false) {\n";
+        out.Indent();
+      }
       out << "_aidl_ret_status = ";
       WriteToParcelFor({out, types, variable->GetType(), "_aidl_parcel", variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+        out.Dedent();
+        out << "}\n";
+      }
     }
     out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";

@@ -160,7 +160,9 @@ class AidlNode {
   virtual void DispatchVisit(AidlVisitor&) const = 0;
 
   const Comments& GetComments() const { return comments_; }
-  void SetComments(const Comments& comments) { comments_ = comments; }
+  void PrependComments(const Comments& comments) {
+    comments_.insert(comments_.begin(), comments.begin(), comments.end());
+  }
 
   static void ClearUnvisitedNodes();
   static const std::vector<AidlLocation>& GetLocationsOfUnvisitedNodes();
@@ -227,6 +229,7 @@ class AidlAnnotation : public AidlNode {
     BACKING = 1,
     JAVA_STABLE_PARCELABLE,
     NDK_STABLE_PARCELABLE,
+    RUST_STABLE_PARCELABLE,
     UNSUPPORTED_APP_USAGE,
     VINTF_STABILITY,
     NULLABLE,
@@ -295,7 +298,7 @@ class AidlAnnotation : public AidlNode {
   Result<unique_ptr<android::aidl::perm::Expression>> EnforceExpression() const;
 
  private:
-  struct ParamType {
+  struct ParamTypeDetails {
     std::string name;
     const AidlTypeSpecifier& type;
     bool required = false;
@@ -305,10 +308,10 @@ class AidlAnnotation : public AidlNode {
     AidlAnnotation::Type type;
     std::string name;
     TargetContext target_context;
-    std::vector<ParamType> parameters;
+    std::vector<ParamTypeDetails> parameters;
     bool repeatable = false;
 
-    const ParamType* ParamType(const std::string& name) const {
+    const ParamTypeDetails* ParamType(const std::string& name) const {
       for (const auto& param : parameters) {
         if (param.name == name) {
           return &param;
@@ -342,6 +345,13 @@ class AidlAnnotatable : public AidlCommentable {
   virtual ~AidlAnnotatable() = default;
 
   void Annotate(vector<std::unique_ptr<AidlAnnotation>>&& annotations) {
+    for (auto i = annotations.rbegin(); i != annotations.rend(); ++i) {
+      // TODO: we may want to mark all comments as "unoutputed"
+      // in the lexer phase, and then verify after successful backend
+      // output that every comment is "emitted". If we do this, we would
+      // need to move rather than copy the comments here.
+      PrependComments((*i)->GetComments());
+    }
     for (auto& annotation : annotations) {
       annotations_.emplace_back(std::move(annotation));
     }
@@ -501,6 +511,11 @@ class AidlMember : public AidlAnnotatable {
   AidlMember(AidlMember&&) = delete;
   AidlMember& operator=(const AidlMember&) = delete;
   AidlMember& operator=(AidlMember&&) = delete;
+  void MarkNew() { new_ = true; }
+  bool IsNew() const { return new_; }
+
+ private:
+  bool new_ = false;
 };
 
 // TODO: This class is used for method arguments and also parcelable fields,
@@ -698,6 +713,7 @@ class AidlConstantValue : public AidlNode {
   void DispatchVisit(AidlVisitor& visitor) const override { visitor.Visit(*this); }
   size_t Size() const { return values_.size(); }
   const AidlConstantValue& ValueAt(size_t index) const { return *values_.at(index); }
+  static string ToString(Type type);
 
  private:
   AidlConstantValue(const AidlLocation& location, Type parsed_type, int64_t parsed_value,
@@ -706,11 +722,11 @@ class AidlConstantValue : public AidlNode {
   AidlConstantValue(const AidlLocation& location, Type type,
                     std::unique_ptr<vector<unique_ptr<AidlConstantValue>>> values,
                     const std::string& value);
-  static string ToString(Type type);
   static bool ParseIntegral(const string& value, int64_t* parsed_value, Type* parsed_type);
   static bool IsHex(const string& value);
 
   virtual bool evaluate() const;
+  bool IsLiteral() const;
 
   const Type type_ = Type::ERROR;
   const vector<unique_ptr<AidlConstantValue>> values_;  // if type_ == ARRAY
@@ -784,7 +800,9 @@ class AidlBinaryConstExpression : public AidlConstantValue {
 
   bool CheckValid() const override;
 
-  static bool AreCompatibleTypes(Type t1, Type t2);
+  static bool AreCompatibleOperandTypes(Type t1, Type t2);
+  static bool AreCompatibleArrayTypes(Type t1, Type t2);
+
   // Returns the promoted kind for both operands
   static Type UsualArithmeticConversion(Type left, Type right);
   // Returns the promoted integral type where INT32 is the smallest type
@@ -878,10 +896,13 @@ class AidlMethod : public AidlMember {
   // set if this method is part of an interface that is marked oneway
   void ApplyInterfaceOneway(bool oneway) { oneway_ = oneway_ || oneway; }
   bool IsOneway() const { return oneway_; }
+  bool HasOnewayAnnotation() const { return oneway_annotation_; }
 
   const std::string& GetName() const { return name_; }
   bool HasId() const { return has_id_; }
   int GetId() const { return id_; }
+
+  // TODO: Set is errorprone, what if it was set before?
   void SetId(unsigned id) { id_ = id; }
 
   const std::vector<std::unique_ptr<AidlArgument>>& GetArguments() const {
@@ -917,7 +938,11 @@ class AidlMethod : public AidlMember {
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
 
  private:
+  // oneway_ may be set by the method or the parent interface. If the interface is oneway,
+  // is also oneway. oneway_annotation_ may only be set on creation, and may not be overridden
+  // by the parent interface. It is used to detect redundant oneway annotations.
   bool oneway_;
+  bool oneway_annotation_;
   std::unique_ptr<AidlTypeSpecifier> type_;
   std::string name_;
   const std::vector<std::unique_ptr<AidlArgument>> arguments_;
@@ -1046,6 +1071,7 @@ class AidlDefinedType : public AidlMember, public AidlScope {
 struct AidlUnstructuredHeaders {
   std::string cpp;
   std::string ndk;
+  std::string rust_type;
 };
 
 class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::string> {
@@ -1064,6 +1090,7 @@ class AidlParcelable : public AidlDefinedType, public AidlParameterizable<std::s
 
   std::string GetCppHeader() const { return headers_.cpp; }
   std::string GetNdkHeader() const { return headers_.ndk; }
+  std::string GetRustType() const { return headers_.rust_type; }
 
   bool CheckValid(const AidlTypenames& typenames) const override;
   const AidlParcelable* AsParcelable() const override { return this; }
@@ -1117,6 +1144,7 @@ class AidlEnumerator : public AidlCommentable {
   string ValueString(const AidlTypeSpecifier& backing_type,
                      const ConstantValueDecorator& decorator) const;
 
+  // TODO: Set is errorprone. What if it was set before?
   void SetValue(std::unique_ptr<AidlConstantValue> value) { value_ = std::move(value); }
   bool IsValueUserSpecified() const { return value_user_specified_; }
 
@@ -1215,6 +1243,10 @@ class AidlInterface final : public AidlDefinedType {
   bool UsesPermissions() const;
   std::string GetDescriptor() const;
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
+  bool HasOnewayAnnotation() const { return oneway_annotation_; }
+
+ private:
+  bool oneway_annotation_;
 };
 
 inline std::string SimpleName(const std::string& qualified_name) {

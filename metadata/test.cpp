@@ -55,3 +55,8 @@ TEST(AidlMetadata, HasTestInstancesNoDevelopment) {
   EXPECT_THAT(info->versions, ElementsAre(1));
   EXPECT_EQ(info->has_development, false);
 }
+
+TEST(AidlMetadata, UseUnfrozen) {
+  const auto& info = metadataForModule("tests-unfrozen-vendor");
+  EXPECT_TRUE(info->use_unfrozen);
+}

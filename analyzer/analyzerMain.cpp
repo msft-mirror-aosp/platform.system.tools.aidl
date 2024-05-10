@@ -21,6 +21,7 @@
 #include <binder/Parcel.h>
 #include <binder/RecordedTransaction.h>
 #include <signal.h>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include "include/Analyzer.h"
@@ -30,17 +31,32 @@ using android::NO_ERROR;
 using android::sp;
 using android::status_t;
 using android::String16;
+using android::String8;
 using android::aidl::Analyzer;
+using android::base::unique_fd;
 using android::binder::debug::RecordedTransaction;
 using std::string;
-
 namespace {
 
-static volatile size_t gCtrlCCount = 0;
-static constexpr size_t kCtrlCLimit = 3;
+static std::atomic_uint gCtrlCCount = 0;
+static constexpr unsigned kCtrlCLimit = 3;
 static const char kStandardRecordingPath[] = "/data/local/recordings/";
 
-status_t startRecording(const sp<IBinder>& binder, const string& filePath) {
+string getRecordingPath(const string& serviceName) {
+  // Service names may contain '/', replace them with '.' to avoid interpreting as path
+  string filename = serviceName;
+  std::replace(filename.begin(), filename.end(), '/', '.');
+  return kStandardRecordingPath + filename;
+}
+
+status_t startRecording(const string& serviceName) {
+  sp<IBinder> binder =
+      android::defaultServiceManager()->checkService(String16(serviceName.c_str()));
+  if (binder == nullptr) {
+    return android::BAD_VALUE;
+  }
+
+  auto filePath = getRecordingPath(serviceName);
   if (auto mkdir_return = mkdir(kStandardRecordingPath, 0666);
       mkdir_return != 0 && errno != EEXIST) {
     std::cout << "Failed to create recordings directory.\n";
@@ -48,8 +64,8 @@ status_t startRecording(const sp<IBinder>& binder, const string& filePath) {
   }
 
   int openFlags = O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC | O_BINARY;
-  android::base::unique_fd fd(open(filePath.c_str(), openFlags, 0666));
-  if (fd == -1) {
+  unique_fd fd(open(filePath.c_str(), openFlags, 0666));
+  if (!fd.ok()) {
     std::cout << "Failed to open file for recording with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
@@ -86,14 +102,20 @@ status_t startRecording(const sp<IBinder>& binder, const string& filePath) {
   }
 }
 
-status_t stopRecording(const sp<IBinder>& binder) {
+status_t stopRecording(const string& serviceName) {
+  sp<IBinder> binder =
+      android::defaultServiceManager()->checkService(String16(serviceName.c_str()));
+  if (binder == nullptr) {
+    return android::BAD_VALUE;
+  }
+
   if (status_t err = binder->remoteBinder()->stopRecordingBinder(); err != NO_ERROR) {
     std::cout << "Failed to stop recording with error: " << err << '\n';
     return err;
-  } else {
-    std::cout << "Recording stopped successfully.\n";
-    return NO_ERROR;
   }
+
+  std::cout << "Recording stopped successfully.\n";
+  return NO_ERROR;
 }
 
 void printTransaction(const RecordedTransaction& transaction) {
@@ -117,8 +139,8 @@ void printTransaction(const RecordedTransaction& transaction) {
 status_t inspectRecording(const string& path) {
   auto& analyzers = Analyzer::getAnalyzers();
 
-  android::base::unique_fd fd(open(path.c_str(), O_RDONLY));
-  if (fd.get() == -1) {
+  unique_fd fd(open(path.c_str(), O_RDONLY));
+  if (!fd.ok()) {
     std::cout << "Failed to open recording file with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
@@ -133,8 +155,7 @@ status_t inspectRecording(const string& path) {
 }
 
 void incrementCtrlCCount(int signum) {
-  gCtrlCCount++;
-  if (gCtrlCCount > kCtrlCLimit) {
+  if (++gCtrlCCount > kCtrlCLimit) {
     std::cout
         << "Ctrl+C multiple times, but could not quit application. If recording still running, you "
            "might stop it manually.\n";
@@ -142,9 +163,10 @@ void incrementCtrlCCount(int signum) {
   }
 }
 
-status_t listenToFile(const string& filePath) {
-  android::base::unique_fd listenFd(open(filePath.c_str(), O_RDONLY));
-  if (listenFd == -1) {
+status_t listenToFile(const string& serviceName) {
+  auto filePath = getRecordingPath(serviceName);
+  unique_fd listenFd(open(filePath.c_str(), O_RDONLY));
+  if (!listenFd.ok()) {
     std::cout << "Failed to open listening file with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
@@ -170,8 +192,8 @@ status_t listenToFile(const string& filePath) {
 status_t replayFile(const sp<IBinder>& binder, const string& path) {
   auto& analyzers = Analyzer::getAnalyzers();
 
-  android::base::unique_fd fd(open(path.c_str(), O_RDONLY));
-  if (fd.get() == -1) {
+  unique_fd fd(open(path.c_str(), O_RDONLY));
+  if (!fd.ok()) {
     std::cout << "Failed to open recording file with error: " << strerror(errno) << '\n';
     return android::BAD_VALUE;
   }
@@ -229,38 +251,70 @@ const AnalyzerCommand helpCommand = {helpCommandEntryPoint, "Show help informati
 const AnalyzerCommand listCommand = {listAvailableInterfaces,
                                      "Prints a list of available interfaces.", "", ""};
 
+status_t startRecordingAllBinders() {
+  auto services = android::defaultServiceManager()->listServices();
+  for (auto service : services) {
+    std::string serviceName = String8(service.c_str()).c_str();
+    // Print failed service name. Don't exit early because it would leave the previous successful
+    // services recording.
+    if (status_t result = startRecording(serviceName); result != NO_ERROR) {
+      std::cout << "Failed to start binder recording on service : " << service << std::endl;
+    }
+  }
+
+  return NO_ERROR;
+}
+
 status_t startCommandEntryPoint(int argc, char* argv[]) {
   if (argc != 3) {
     helpCommandEntryPoint(argc, argv);
     return android::BAD_VALUE;
   }
 
-  sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
-
-  string filename = argv[2];
-  std::replace(filename.begin(), filename.end(), '/', '.');
-  auto filePath = kStandardRecordingPath + filename;
-
-  return startRecording(binder, filePath);
+  string startOption = argv[2];
+  if (startOption == "--all") {
+    return startRecordingAllBinders();
+  }
+  return startRecording(startOption);
 }
 
-const AnalyzerCommand startCommand = {
-    startCommandEntryPoint, "Start recording Binder transactions from a given service.",
-    "<service>", "  <service>\tService to record. See 'dumpsys -l'"};
+const AnalyzerCommand startCommand = {startCommandEntryPoint,
+                                      "Start recording Binder transactions from a given service. "
+                                      "Use --all to start recoding all binders.",
+                                      "<service>, --all",
+                                      "  <service>\tService to record. See 'dumpsys -l'"};
+
+status_t stopRecordingAllBinders() {
+  auto services = android::defaultServiceManager()->listServices();
+  for (auto service : services) {
+    std::string serviceName = String8(service.c_str()).c_str();
+    // Print failed service name. Don't exit early because it would leave the other recordings on.
+    if (status_t result = stopRecording(serviceName); result != NO_ERROR) {
+      std::cout << "Failed to stop binder recording on service : " << service << std::endl;
+    }
+  }
+
+  return NO_ERROR;
+}
 
 status_t stopCommandEntryPoint(int argc, char* argv[]) {
   if (argc != 3) {
     helpCommandEntryPoint(argc, argv);
     return android::BAD_VALUE;
   }
+  string stopOption = argv[2];
+  if (stopOption == "--all") {
+    stopRecordingAllBinders();
+  }
 
-  sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
-  return stopRecording(binder);
+  return stopRecording(stopOption);
 }
 
 const AnalyzerCommand stopCommand = {
     stopCommandEntryPoint,
-    "Stops recording Binder transactions from a given process. (See 'start')", "<service>",
+    "Stops recording Binder transactions from a given process. (See 'start') Use --all to stop "
+    "recoding all binders",
+    "<service>, --all",
     "  <service>\tService to stop recording; <service> argument to previous 'start' command."};
 
 status_t inspectCommandEntryPoint(int argc, char* argv[]) {
@@ -285,19 +339,14 @@ status_t listenCommandEntryPoint(int argc, char* argv[]) {
     return android::BAD_VALUE;
   }
 
-  sp<IBinder> binder = android::defaultServiceManager()->checkService(String16(argv[2]));
-
-  string filename = argv[2];
-  std::replace(filename.begin(), filename.end(), '/', '.');
-  auto filePath = kStandardRecordingPath + filename;
-
-  if (status_t startErr = startRecording(binder, filePath); startErr != NO_ERROR) {
+  string serviceName = argv[2];
+  if (status_t startErr = startRecording(serviceName); startErr != NO_ERROR) {
     return startErr;
   }
 
-  status_t listenStatus = listenToFile(filePath);
+  status_t listenStatus = listenToFile(serviceName);
 
-  if (status_t stopErr = stopRecording(binder); stopErr != NO_ERROR) {
+  if (status_t stopErr = stopRecording(serviceName); stopErr != NO_ERROR) {
     return stopErr;
   }
 

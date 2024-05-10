@@ -56,6 +56,9 @@ bool HasDeprecatedField(const AidlParcelable& parcelable) {
 }
 
 string ClassName(const AidlDefinedType& defined_type, ClassNames type) {
+  if (type == ClassNames::MAYBE_INTERFACE && defined_type.AsInterface()) {
+    type = ClassNames::INTERFACE;
+  }
   string base_name = defined_type.GetName();
   if (base_name.length() >= 2 && base_name[0] == 'I' && isupper(base_name[1])) {
     base_name = base_name.substr(1);
@@ -235,7 +238,7 @@ const string GenLogAfterExecute(const string className, const AidlInterface& int
 string GetQualifiedName(const AidlDefinedType& type, ClassNames class_names) {
   string q_name = ClassName(type, class_names);
   for (auto parent = type.GetParentType(); parent; parent = parent->GetParentType()) {
-    q_name = parent->GetName() + "::" + q_name;
+    q_name = ClassName(*parent, ClassNames::MAYBE_INTERFACE) + "::" + q_name;
   }
   return q_name;
 }
@@ -350,7 +353,7 @@ void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable
     auto name = parcelable.GetName();
     auto max_tag = parcelable.GetFields().back()->GetName();
     auto min_tag = parcelable.GetFields().front()->GetName();
-    auto tmpl = R"--(static int _cmp(const {name}& _lhs, const {name}& _rhs) {{
+    constexpr auto tmpl = R"--(static int _cmp(const {name}& _lhs, const {name}& _rhs) {{
   return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<{max_tag}>(_lhs, _rhs);
 }}
 template <Tag _Tag>
@@ -396,43 +399,61 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
   };
 
   string lhs = comparable("");
-  string rhs = comparable("rhs.");
-  for (const auto& op : operators) {
+  string rhs = comparable("_rhs.");
+
+  // Delegate < and == to the fields.
+  for (const auto& op : {"==", "<"}) {
     out << "inline bool operator" << op << "(const " << parcelable.GetName() << "&"
-        << (is_empty ? "" : " rhs") << ") const {\n"
+        << (is_empty ? "" : " _rhs") << ") const {\n"
         << "  return " << lhs << " " << op << " " << rhs << ";\n"
         << "}\n";
   }
+  // Delegate other ops to < and == for *this, which lets a custom parcelable
+  // to be used with structured parcelables without implementation all operations.
+  out << fmt::format(R"--(inline bool operator!=(const {name}& _rhs) const {{
+  return !(*this == _rhs);
+}}
+inline bool operator>(const {name}& _rhs) const {{
+  return _rhs < *this;
+}}
+inline bool operator>=(const {name}& _rhs) const {{
+  return !(*this < _rhs);
+}}
+inline bool operator<=(const {name}& _rhs) const {{
+  return !(_rhs < *this);
+}}
+)--",
+                     fmt::arg("name", parcelable.GetName()));
   out << "\n";
 }
 
 // Output may look like:
 // inline std::string toString() const {
-//   std::ostringstream os;
-//   os << "MyData{";
-//   os << "field1: " << field1;
-//   os << ", field2: " << v.field2;
+//   std::ostringstream _aidl_os;
+//   _aidl_os << "MyData{";
+//   _aidl_os << "field1: " << field1;
+//   _aidl_os << ", field2: " << v.field2;
 //   ...
-//   os << "}";
-//   return os.str();
+//   _aidl_os << "}";
+//   return _aidl_os.str();
 // }
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable) {
   out << "inline std::string toString() const {\n";
   out.Indent();
-  out << "std::ostringstream os;\n";
-  out << "os << \"" << parcelable.GetName() << "{\";\n";
+  out << "std::ostringstream _aidl_os;\n";
+  out << "_aidl_os << \"" << parcelable.GetName() << "{\";\n";
   bool first = true;
   for (const auto& f : parcelable.GetFields()) {
     if (first) {
-      out << "os << \"";
+      out << "_aidl_os << \"";
       first = false;
     } else {
-      out << "os << \", ";
+      out << "_aidl_os << \", ";
     }
     out << f->GetName() << ": \" << ::android::internal::ToString(" << f->GetName() << ");\n";
   }
-  out << "os << \"}\";\n";
-  out << "return os.str();\n";
+  out << "_aidl_os << \"}\";\n";
+  out << "return _aidl_os.str();\n";
   out.Dedent();
   out << "}\n";
 }
@@ -573,7 +594,7 @@ void UnionWriter::PublicFields(CodeWriter& out) const {
       field_types.push_back(name_of(f->GetType(), typenames));
     }
     auto typelist = Join(field_types, ", ");
-    auto tmpl = R"--(
+    constexpr auto tmpl = R"--(
 template <Tag _Tag>
 using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<{typelist}>>::type;
 template <Tag _Tag, typename _Type>
@@ -609,7 +630,7 @@ void set(_Type&& _arg) {{
     const auto& default_value = name_of(first_field->GetType(), typenames) + "(" +
                                 first_field->ValueString(decorator) + ")";
 
-    auto tmpl = R"--(
+    constexpr auto tmpl = R"--(
 template<typename _Tp>
 static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, {name}>;
 
@@ -683,6 +704,9 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
   for (const auto& variable : decl.GetFields()) {
     out << fmt::format("case {}: {{\n", variable->GetName());
     out.Indent();
+    if (variable->IsNew()) {
+      out << fmt::format("if (true) return {};\n", ctx.status_bad);
+    }
     const auto& type = variable->GetType();
     read_var(value, type);
     out << fmt::format("if constexpr (std::is_trivially_copyable_v<{}>) {{\n",
@@ -724,7 +748,11 @@ void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx)
       out << "#pragma clang diagnostic push\n";
       out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
     }
-    out << fmt::format("case {}: return ", variable->GetName());
+    if (variable->IsNew()) {
+      out << fmt::format("case {}: return true ? {} : ", variable->GetName(), ctx.status_bad);
+    } else {
+      out << fmt::format("case {}: return ", variable->GetName());
+    }
     ctx.write_func(out, "get<" + variable->GetName() + ">()", variable->GetType());
     out << ";\n";
     if (variable->IsDeprecated()) {

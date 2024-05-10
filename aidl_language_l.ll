@@ -44,8 +44,8 @@
 
 identifier  [_a-zA-Z][_a-zA-Z0-9]*
 whitespace  ([ \t\r]+)
-intvalue    [0-9]+[lL]?(u8)?
-hexvalue    0[x|X][0-9a-fA-F]+[lL]?(u8)?
+intvalue    [0-9_]+(u8|u32|u64|[lL])*
+hexvalue    0[x|X][0-9a-fA-F_]+(u8|u32|u64|[lL])*
 floatvalue  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?f?
 
 %%
@@ -130,6 +130,8 @@ cpp_header            { yylval->token = new AidlToken("cpp_header", comments);
                         return yy::parser::token::CPP_HEADER; }
 ndk_header            { yylval->token = new AidlToken("ndk_header", comments);
                         return yy::parser::token::NDK_HEADER; }
+rust_type            { yylval->token = new AidlToken("rust_type", comments);
+                        return yy::parser::token::RUST_TYPE; }
 const                 { yylval->token = new AidlToken("const", comments);
                         return yy::parser::token::CONST; }
 true                  { return yy::parser::token::TRUE_LITERAL; }
