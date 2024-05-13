@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include <mutex>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <utils/Errors.h>
