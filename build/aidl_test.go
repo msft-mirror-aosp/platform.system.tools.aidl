@@ -155,6 +155,11 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			crate_name: "binder",
 			srcs: [""],
 		}
+		rust_library {
+			name: "libstatic_assertions",
+			crate_name: "static_assertions",
+			srcs: [""],
+		}
 		rust_proc_macro {
 			name: "libasync_trait",
 			crate_name: "async_trait",

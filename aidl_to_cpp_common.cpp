@@ -497,7 +497,7 @@ std::string GetDeprecatedAttribute(const AidlCommentable& type) {
   return "";
 }
 
-size_t AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
+std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
   static map<string, size_t> alignment = {
       {"boolean", 1}, {"byte", 1}, {"char", 2}, {"double", 8},
       {"float", 4},   {"int", 4},  {"long", 8},
@@ -505,10 +505,120 @@ size_t AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames
 
   string name = type.GetName();
   if (auto enum_decl = typenames.GetEnumDeclaration(type); enum_decl) {
+    AIDL_FATAL_IF(type.IsArray() && !type.IsFixedSizeArray(), type);
     name = enum_decl->GetBackingType().GetName();
   }
-  // default to 0 for parcelable types
-  return alignment[name];
+  auto it = alignment.find(name);
+  if (it != alignment.end()) {
+    return it->second;
+  }
+  const AidlDefinedType* defined_type = type.GetDefinedType();
+  AIDL_FATAL_IF(defined_type == nullptr, type);
+  return AlignmentOfDefinedType(*defined_type, typenames);
+}
+
+std::optional<size_t> AlignmentOfDefinedType(const AidlDefinedType& defined_type,
+                                             const AidlTypenames& typenames) {
+  if (!defined_type.IsFixedSize()) {
+    return std::nullopt;
+  }
+  // Overall alignment is the maximum alignment of all fields
+  size_t align = 1;
+  for (const auto& variable : defined_type.GetFields()) {
+    auto field_alignment = cpp::AlignmentOf(variable->GetType(), typenames);
+    AIDL_FATAL_IF(field_alignment == std::nullopt, defined_type);
+    if (*field_alignment > align) {
+      align = *field_alignment;
+    }
+  }
+  return align;
+}
+
+std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
+  static map<string, size_t> sizes = {
+      {"boolean", 1}, {"byte", 1}, {"char", 2}, {"double", 8},
+      {"float", 4},   {"int", 4},  {"long", 8},
+  };
+  string name = type.GetName();
+  if (auto enum_decl = typenames.GetEnumDeclaration(type); enum_decl) {
+    name = enum_decl->GetBackingType().GetName();
+  }
+  // If it's an array of a basic type, take its dimensions into account for the size
+  size_t dims = 1;
+  if (type.IsFixedSizeArray()) {
+    AIDL_FATAL_IF(type.IsGeneric(), type);
+    const ArrayType& array = type.GetArray();
+    auto dimensions = std::get<FixedSizeArray>(array).GetDimensionInts();
+    for (auto dim : dimensions) {
+      dims *= dim;
+    }
+  }
+  auto it = sizes.find(name);
+  if (it != sizes.end()) {
+    size_t size = it->second;
+    return size * dims;
+  }
+  const AidlDefinedType* defined_type = type.GetDefinedType();
+  AIDL_FATAL_IF(defined_type == nullptr, type);
+  auto defined_type_size = SizeOfDefinedType(*defined_type, typenames);
+  if (defined_type_size) {
+    return *defined_type_size * dims;
+  }
+  return std::nullopt;
+}
+
+size_t AlignTo(size_t val, size_t align) {
+  return (val + (align - 1)) & ~(align - 1);
+}
+
+std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
+                                        const AidlTypenames& typenames) {
+  if (!defined_type.IsFixedSize()) {
+    return std::nullopt;
+  }
+  if (auto union_decl = defined_type.AsUnionDeclaration(); union_decl) {
+    // If it's a union find the size of the largest field
+    size_t size = 0;
+    for (const auto& variable : union_decl->GetFields()) {
+      const auto& var_type = variable->GetType();
+      auto field_size = cpp::SizeOf(var_type, typenames);
+      AIDL_FATAL_IF(field_size == std::nullopt, var_type);
+      if (*field_size > size) {
+        size = *field_size;
+      }
+    }
+    // union tag size is 1 byte plus padding based on overall alignment
+    auto align = cpp::AlignmentOfDefinedType(defined_type, typenames);
+    AIDL_FATAL_IF(align == std::nullopt, defined_type);
+    size_t tag_size = AlignTo(1, *align);
+    // Size of the union is largest field size plus its padding and the tag size
+    return AlignTo(size, *align) + tag_size;
+  }
+
+  // If it's not a union add the sizes of all fields and padding
+  size_t res = 0;
+  for (const auto& variable : defined_type.GetFields()) {
+    // add padding for the previous field based off of the alignment of the current field
+    const auto& var_type = variable->GetType();
+    auto alignment = cpp::AlignmentOf(var_type, typenames);
+    AIDL_FATAL_IF(alignment == std::nullopt, var_type);
+    res = AlignTo(res, *alignment);
+
+    // add the size of the current field itself
+    auto var_size = cpp::SizeOf(var_type, typenames);
+    AIDL_FATAL_IF(var_size == std::nullopt, var_type);
+    res += *var_size;
+  }
+  // add padding for the last field based off of the alignment of the overall struct
+  auto parcelable_alignment = cpp::AlignmentOfDefinedType(defined_type, typenames);
+  AIDL_FATAL_IF(parcelable_alignment == std::nullopt, defined_type);
+  res = AlignTo(res, *parcelable_alignment);
+
+  // structs with no members are 1-byte in C++
+  if (res == 0) {
+    return 1;
+  }
+  return res;
 }
 
 std::set<std::string> UnionWriter::GetHeaders(const AidlUnionDecl& decl) {
@@ -557,9 +667,9 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
       const auto& fn = f->GetName();
       out << name_of(f->GetType(), typenames) << " " << fn;
       if (decl.IsFixedSize()) {
-        int alignment = AlignmentOf(f->GetType(), typenames);
-        if (alignment > 0) {
-          out << " __attribute__((aligned (" << std::to_string(alignment) << ")))";
+        auto alignment = AlignmentOf(f->GetType(), typenames);
+        if (alignment) {
+          out << " __attribute__((aligned (" << std::to_string(*alignment) << ")))";
         }
       }
       if (fn == default_name) {

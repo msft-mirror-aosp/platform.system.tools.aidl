@@ -251,6 +251,52 @@ public:
       return _aidl_os.str();
     }
   };  // class FixedParcelable
+  class ExplicitPaddingParcelable : public ::android::Parcelable {
+  public:
+    int8_t byteValue = 0;
+    int64_t longValue = 0L;
+    char16_t charValue = '\0';
+    double doubleValue = 0.000000;
+    int32_t intValue = 0;
+    ::android::aidl::tests::LongEnum enumValue = ::android::aidl::tests::LongEnum::FOO;
+    inline bool operator==(const ExplicitPaddingParcelable& _rhs) const {
+      return std::tie(byteValue, longValue, charValue, doubleValue, intValue, enumValue) == std::tie(_rhs.byteValue, _rhs.longValue, _rhs.charValue, _rhs.doubleValue, _rhs.intValue, _rhs.enumValue);
+    }
+    inline bool operator<(const ExplicitPaddingParcelable& _rhs) const {
+      return std::tie(byteValue, longValue, charValue, doubleValue, intValue, enumValue) < std::tie(_rhs.byteValue, _rhs.longValue, _rhs.charValue, _rhs.doubleValue, _rhs.intValue, _rhs.enumValue);
+    }
+    inline bool operator!=(const ExplicitPaddingParcelable& _rhs) const {
+      return !(*this == _rhs);
+    }
+    inline bool operator>(const ExplicitPaddingParcelable& _rhs) const {
+      return _rhs < *this;
+    }
+    inline bool operator>=(const ExplicitPaddingParcelable& _rhs) const {
+      return !(*this < _rhs);
+    }
+    inline bool operator<=(const ExplicitPaddingParcelable& _rhs) const {
+      return !(_rhs < *this);
+    }
+
+    ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
+    ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
+    static const ::android::String16& getParcelableDescriptor() {
+      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.ExplicitPaddingParcelable");
+      return DESCRIPTOR;
+    }
+    inline std::string toString() const {
+      std::ostringstream _aidl_os;
+      _aidl_os << "ExplicitPaddingParcelable{";
+      _aidl_os << "byteValue: " << ::android::internal::ToString(byteValue);
+      _aidl_os << ", longValue: " << ::android::internal::ToString(longValue);
+      _aidl_os << ", charValue: " << ::android::internal::ToString(charValue);
+      _aidl_os << ", doubleValue: " << ::android::internal::ToString(doubleValue);
+      _aidl_os << ", intValue: " << ::android::internal::ToString(intValue);
+      _aidl_os << ", enumValue: " << ::android::internal::ToString(enumValue);
+      _aidl_os << "}";
+      return _aidl_os.str();
+    }
+  };  // class ExplicitPaddingParcelable
   class FixedUnionNoPadding : public ::android::Parcelable {
   public:
     enum class Tag : int8_t {

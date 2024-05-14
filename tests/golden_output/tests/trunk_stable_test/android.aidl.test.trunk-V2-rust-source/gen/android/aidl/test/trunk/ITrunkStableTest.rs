@@ -532,6 +532,7 @@ pub mod r#MyEnum {
   #![allow(non_upper_case_globals)]
   use binder::declare_binder_enum;
   declare_binder_enum! {
+    #[repr(C, align(1))]
     r#MyEnum : [i8; 4] {
       r#ZERO = 0,
       r#ONE = 1,
@@ -602,6 +603,7 @@ pub mod r#MyUnion {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
+      #[repr(C, align(4))]
       r#Tag : [i32; 3] {
         r#a = 0,
         r#b = 1,

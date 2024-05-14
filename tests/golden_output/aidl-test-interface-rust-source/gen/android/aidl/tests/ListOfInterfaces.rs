@@ -382,6 +382,7 @@ pub mod r#MyUnion {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
+      #[repr(C, align(4))]
       r#Tag : [i32; 4] {
         r#iface = 0,
         r#nullable_iface = 1,

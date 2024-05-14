@@ -40,6 +40,7 @@ pub mod r#Status {
   #![allow(non_upper_case_globals)]
   use binder::declare_binder_enum;
   declare_binder_enum! {
+    #[repr(C, align(1))]
     r#Status : [i8; 2] {
       r#OK = 0,
       r#NOT_OK = 1,
