@@ -155,6 +155,86 @@ public class FixedSize implements android.os.Parcelable
       return 0;
     }
   }
+  /**
+   * long and double are only aligned to 4 bytes on x86 so the generated rust
+   * structs need explicit padding for field offsets to match across archs
+   */
+  public static class ExplicitPaddingParcelable implements android.os.Parcelable
+  {
+    public byte byteValue = 0;
+    /** rust has an explicit [u8; 7] for padding here */
+    public long longValue = 0L;
+    public char charValue = '\0';
+    /** rust has an explicit [u8; 6] for padding here */
+    public double doubleValue = 0.000000;
+    public int intValue = 0;
+    /**
+     * We align enums correctly despite the backing type so there's no
+     * explicit padding here
+     */
+    public long enumValue = android.aidl.tests.LongEnum.FOO;
+    public static final android.os.Parcelable.Creator<ExplicitPaddingParcelable> CREATOR = new android.os.Parcelable.Creator<ExplicitPaddingParcelable>() {
+      @Override
+      public ExplicitPaddingParcelable createFromParcel(android.os.Parcel _aidl_source) {
+        ExplicitPaddingParcelable _aidl_out = new ExplicitPaddingParcelable();
+        _aidl_out.readFromParcel(_aidl_source);
+        return _aidl_out;
+      }
+      @Override
+      public ExplicitPaddingParcelable[] newArray(int _aidl_size) {
+        return new ExplicitPaddingParcelable[_aidl_size];
+      }
+    };
+    @Override public final void writeToParcel(android.os.Parcel _aidl_parcel, int _aidl_flag)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.writeInt(0);
+      _aidl_parcel.writeByte(byteValue);
+      _aidl_parcel.writeLong(longValue);
+      _aidl_parcel.writeInt(((int)charValue));
+      _aidl_parcel.writeDouble(doubleValue);
+      _aidl_parcel.writeInt(intValue);
+      _aidl_parcel.writeLong(enumValue);
+      int _aidl_end_pos = _aidl_parcel.dataPosition();
+      _aidl_parcel.setDataPosition(_aidl_start_pos);
+      _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
+      _aidl_parcel.setDataPosition(_aidl_end_pos);
+    }
+    public final void readFromParcel(android.os.Parcel _aidl_parcel)
+    {
+      int _aidl_start_pos = _aidl_parcel.dataPosition();
+      int _aidl_parcelable_size = _aidl_parcel.readInt();
+      try {
+        if (_aidl_parcelable_size < 4) throw new android.os.BadParcelableException("Parcelable too small");;
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        byteValue = _aidl_parcel.readByte();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        longValue = _aidl_parcel.readLong();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        charValue = (char)_aidl_parcel.readInt();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        doubleValue = _aidl_parcel.readDouble();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        intValue = _aidl_parcel.readInt();
+        if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
+        enumValue = _aidl_parcel.readLong();
+      } finally {
+        if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
+          throw new android.os.BadParcelableException("Overflow in the size of parcelable");
+        }
+        _aidl_parcel.setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
+      }
+    }
+    @Override
+    public int describeContents() {
+      int _mask = 0;
+      return _mask;
+    }
+  }
+  /**
+   * The NDK backend generates an empty struct which is 1 byte in C++ so the
+   * rust side must generate a struct with a u8 field
+   */
   public static class EmptyParcelable implements android.os.Parcelable
   {
     public static final android.os.Parcelable.Creator<EmptyParcelable> CREATOR = new android.os.Parcelable.Creator<EmptyParcelable>() {

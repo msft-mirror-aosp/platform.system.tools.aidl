@@ -4693,6 +4693,7 @@ pub mod r#CompilerChecks {
       #![allow(non_upper_case_globals)]
       use binder::declare_binder_enum;
       declare_binder_enum! {
+        #[repr(C, align(4))]
         r#Tag : [i32; 2] {
           r#n = 0,
           r#m = 1,
