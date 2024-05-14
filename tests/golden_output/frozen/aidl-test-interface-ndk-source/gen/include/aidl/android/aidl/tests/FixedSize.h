@@ -308,6 +308,68 @@ public:
   static_assert(sizeof(std::array<::aidl::android::aidl::tests::FixedSize::FixedUnion, 4>) == 224);
   static_assert(alignof(FixedParcelable) == 8);
   static_assert(sizeof(FixedParcelable) == 384);
+  class ExplicitPaddingParcelable {
+  public:
+    typedef std::true_type fixed_size;
+    static const char* descriptor;
+
+    int8_t byteValue __attribute__((aligned (1))) = 0;
+    int64_t longValue __attribute__((aligned (8))) = 0L;
+    char16_t charValue __attribute__((aligned (2))) = '\0';
+    double doubleValue __attribute__((aligned (8))) = 0.000000;
+    int32_t intValue __attribute__((aligned (4))) = 0;
+    ::aidl::android::aidl::tests::LongEnum enumValue __attribute__((aligned (8))) = ::aidl::android::aidl::tests::LongEnum::FOO;
+
+    binder_status_t readFromParcel(const AParcel* parcel);
+    binder_status_t writeToParcel(AParcel* parcel) const;
+
+    inline bool operator==(const ExplicitPaddingParcelable& _rhs) const {
+      return std::tie(byteValue, longValue, charValue, doubleValue, intValue, enumValue) == std::tie(_rhs.byteValue, _rhs.longValue, _rhs.charValue, _rhs.doubleValue, _rhs.intValue, _rhs.enumValue);
+    }
+    inline bool operator<(const ExplicitPaddingParcelable& _rhs) const {
+      return std::tie(byteValue, longValue, charValue, doubleValue, intValue, enumValue) < std::tie(_rhs.byteValue, _rhs.longValue, _rhs.charValue, _rhs.doubleValue, _rhs.intValue, _rhs.enumValue);
+    }
+    inline bool operator!=(const ExplicitPaddingParcelable& _rhs) const {
+      return !(*this == _rhs);
+    }
+    inline bool operator>(const ExplicitPaddingParcelable& _rhs) const {
+      return _rhs < *this;
+    }
+    inline bool operator>=(const ExplicitPaddingParcelable& _rhs) const {
+      return !(*this < _rhs);
+    }
+    inline bool operator<=(const ExplicitPaddingParcelable& _rhs) const {
+      return !(_rhs < *this);
+    }
+
+    static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::STABILITY_LOCAL;
+    inline std::string toString() const {
+      std::ostringstream _aidl_os;
+      _aidl_os << "ExplicitPaddingParcelable{";
+      _aidl_os << "byteValue: " << ::android::internal::ToString(byteValue);
+      _aidl_os << ", longValue: " << ::android::internal::ToString(longValue);
+      _aidl_os << ", charValue: " << ::android::internal::ToString(charValue);
+      _aidl_os << ", doubleValue: " << ::android::internal::ToString(doubleValue);
+      _aidl_os << ", intValue: " << ::android::internal::ToString(intValue);
+      _aidl_os << ", enumValue: " << ::android::internal::ToString(enumValue);
+      _aidl_os << "}";
+      return _aidl_os.str();
+    }
+  };
+  static_assert(offsetof(ExplicitPaddingParcelable, byteValue) == 0);
+  static_assert(sizeof(int8_t) == 1);
+  static_assert(offsetof(ExplicitPaddingParcelable, longValue) == 8);
+  static_assert(sizeof(int64_t) == 8);
+  static_assert(offsetof(ExplicitPaddingParcelable, charValue) == 16);
+  static_assert(sizeof(char16_t) == 2);
+  static_assert(offsetof(ExplicitPaddingParcelable, doubleValue) == 24);
+  static_assert(sizeof(double) == 8);
+  static_assert(offsetof(ExplicitPaddingParcelable, intValue) == 32);
+  static_assert(sizeof(int32_t) == 4);
+  static_assert(offsetof(ExplicitPaddingParcelable, enumValue) == 40);
+  static_assert(sizeof(::aidl::android::aidl::tests::LongEnum) == 8);
+  static_assert(alignof(ExplicitPaddingParcelable) == 8);
+  static_assert(sizeof(ExplicitPaddingParcelable) == 48);
   class FixedUnionNoPadding {
   public:
     typedef std::true_type fixed_size;
