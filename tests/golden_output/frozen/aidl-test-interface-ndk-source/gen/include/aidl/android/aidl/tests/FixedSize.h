@@ -168,6 +168,18 @@ public:
       ::aidl::android::aidl::tests::LongEnum enumValue __attribute__((aligned (8)));
     } _value;
   };
+  static_assert(sizeof(bool) == 1);
+  static_assert(sizeof(int8_t) == 1);
+  static_assert(sizeof(char16_t) == 2);
+  static_assert(sizeof(int32_t) == 4);
+  static_assert(sizeof(int64_t) == 8);
+  static_assert(sizeof(float) == 4);
+  static_assert(sizeof(std::array<int32_t, 3>) == 12);
+  static_assert(sizeof(std::array<std::array<int64_t, 2>, 3>) == 48);
+  static_assert(sizeof(double) == 8);
+  static_assert(sizeof(::aidl::android::aidl::tests::LongEnum) == 8);
+  static_assert(alignof(FixedUnion) == 8);
+  static_assert(sizeof(FixedUnion) == 56);
   class EmptyParcelable {
   public:
     typedef std::true_type fixed_size;
@@ -204,6 +216,8 @@ public:
       return _aidl_os.str();
     }
   };
+  static_assert(alignof(EmptyParcelable) == 1);
+  static_assert(sizeof(EmptyParcelable) == 1);
   class FixedParcelable {
   public:
     typedef std::true_type fixed_size;
@@ -219,9 +233,9 @@ public:
     std::array<std::array<int64_t, 2>, 3> multiDimensionLongArray __attribute__((aligned (8))) = {{}};
     double doubleValue __attribute__((aligned (8))) = 0.000000;
     ::aidl::android::aidl::tests::LongEnum enumValue __attribute__((aligned (8))) = ::aidl::android::aidl::tests::LongEnum::FOO;
-    ::aidl::android::aidl::tests::FixedSize::FixedUnion parcelableValue;
-    std::array<::aidl::android::aidl::tests::FixedSize::EmptyParcelable, 3> parcelableArray = {{}};
-    std::array<::aidl::android::aidl::tests::FixedSize::FixedUnion, 4> unionArray = {{}};
+    ::aidl::android::aidl::tests::FixedSize::FixedUnion parcelableValue __attribute__((aligned (8)));
+    std::array<::aidl::android::aidl::tests::FixedSize::EmptyParcelable, 3> parcelableArray __attribute__((aligned (1))) = {{}};
+    std::array<::aidl::android::aidl::tests::FixedSize::FixedUnion, 4> unionArray __attribute__((aligned (8))) = {{}};
 
     binder_status_t readFromParcel(const AParcel* parcel);
     binder_status_t writeToParcel(AParcel* parcel) const;
@@ -266,6 +280,34 @@ public:
       return _aidl_os.str();
     }
   };
+  static_assert(offsetof(FixedParcelable, booleanValue) == 0);
+  static_assert(sizeof(bool) == 1);
+  static_assert(offsetof(FixedParcelable, byteValue) == 1);
+  static_assert(sizeof(int8_t) == 1);
+  static_assert(offsetof(FixedParcelable, charValue) == 2);
+  static_assert(sizeof(char16_t) == 2);
+  static_assert(offsetof(FixedParcelable, intValue) == 4);
+  static_assert(sizeof(int32_t) == 4);
+  static_assert(offsetof(FixedParcelable, longValue) == 8);
+  static_assert(sizeof(int64_t) == 8);
+  static_assert(offsetof(FixedParcelable, floatValue) == 16);
+  static_assert(sizeof(float) == 4);
+  static_assert(offsetof(FixedParcelable, intArray) == 20);
+  static_assert(sizeof(std::array<int32_t, 3>) == 12);
+  static_assert(offsetof(FixedParcelable, multiDimensionLongArray) == 32);
+  static_assert(sizeof(std::array<std::array<int64_t, 2>, 3>) == 48);
+  static_assert(offsetof(FixedParcelable, doubleValue) == 80);
+  static_assert(sizeof(double) == 8);
+  static_assert(offsetof(FixedParcelable, enumValue) == 88);
+  static_assert(sizeof(::aidl::android::aidl::tests::LongEnum) == 8);
+  static_assert(offsetof(FixedParcelable, parcelableValue) == 96);
+  static_assert(sizeof(::aidl::android::aidl::tests::FixedSize::FixedUnion) == 56);
+  static_assert(offsetof(FixedParcelable, parcelableArray) == 152);
+  static_assert(sizeof(std::array<::aidl::android::aidl::tests::FixedSize::EmptyParcelable, 3>) == 3);
+  static_assert(offsetof(FixedParcelable, unionArray) == 160);
+  static_assert(sizeof(std::array<::aidl::android::aidl::tests::FixedSize::FixedUnion, 4>) == 224);
+  static_assert(alignof(FixedParcelable) == 8);
+  static_assert(sizeof(FixedParcelable) == 384);
   class FixedUnionNoPadding {
   public:
     typedef std::true_type fixed_size;
@@ -360,6 +402,9 @@ public:
       int8_t byteValue __attribute__((aligned (1))) = int8_t(0);
     } _value;
   };
+  static_assert(sizeof(int8_t) == 1);
+  static_assert(alignof(FixedUnionNoPadding) == 1);
+  static_assert(sizeof(FixedUnionNoPadding) == 2);
   class FixedUnionSmallPadding {
   public:
     typedef std::true_type fixed_size;
@@ -454,6 +499,9 @@ public:
       char16_t charValue __attribute__((aligned (2))) = char16_t('\0');
     } _value;
   };
+  static_assert(sizeof(char16_t) == 2);
+  static_assert(alignof(FixedUnionSmallPadding) == 2);
+  static_assert(sizeof(FixedUnionSmallPadding) == 4);
   class FixedUnionLongPadding {
   public:
     typedef std::true_type fixed_size;
@@ -548,6 +596,9 @@ public:
       int64_t longValue __attribute__((aligned (8))) = int64_t(0L);
     } _value;
   };
+  static_assert(sizeof(int64_t) == 8);
+  static_assert(alignof(FixedUnionLongPadding) == 8);
+  static_assert(sizeof(FixedUnionLongPadding) == 16);
 
   binder_status_t readFromParcel(const AParcel* parcel);
   binder_status_t writeToParcel(AParcel* parcel) const;
