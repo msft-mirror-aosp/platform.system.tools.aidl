@@ -944,27 +944,106 @@ void WriteParams(CodeWriter& out, const AidlParameterizable<std::string>* parcel
   WriteParams(out, parcel, "");
 }
 
+static void GeneratePaddingField(CodeWriter& out, const std::string& field_type, size_t struct_size,
+                                 size_t& padding_index, const std::string& padding_element) {
+  // If current field is i64 or f64, generate padding for previous field. AIDL enums
+  // backed by these types have structs with alignment attributes generated so we only need to
+  // take primitive types that have variable alignment across archs into account here.
+  if (field_type == "i64" || field_type == "f64") {
+    // Align total struct size to 8 bytes since current field should have 8 byte alignment
+    auto padding_size = cpp::AlignTo(struct_size, 8) - struct_size;
+    if (padding_size != 0) {
+      out << "_pad_" << std::to_string(padding_index) << ": [" << padding_element << "; "
+          << std::to_string(padding_size) << "],\n";
+      padding_index += 1;
+    }
+  }
+}
+
 void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
                         const AidlTypenames& typenames) {
   GenerateDeprecated(out, *parcel);
+  auto parcelable_alignment = cpp::AlignmentOfDefinedType(*parcel, typenames);
+  if (parcelable_alignment || parcel->IsFixedSize()) {
+    AIDL_FATAL_IF(!parcel->IsFixedSize(), parcel);
+    AIDL_FATAL_IF(parcelable_alignment == std::nullopt, parcel);
+    // i64/f64 are aligned to 4 bytes on x86 which may underalign the whole struct if it's the
+    // largest field so we need to set the alignment manually as if these types were aligned to 8
+    // bytes.
+    out << "#[repr(C, align(" << std::to_string(*parcelable_alignment) << "))]\n";
+  }
   out << "pub struct r#" << parcel->GetName();
   WriteParams(out, parcel);
   out << " {\n";
   out.Indent();
-  for (const auto& variable : parcel->GetFields()) {
-    GenerateDeprecated(out, *variable);
-    auto field_type =
-        RustNameOf(variable->GetType(), typenames, StorageMode::PARCELABLE_FIELD, Lifetime::NONE);
-    out << "pub r#" << variable->GetName() << ": " << field_type << ",\n";
-  }
-  for (const auto& unused_param : FreeParams(parcel)) {
-    out << "_phantom_" << unused_param << ": std::marker::PhantomData<" << unused_param << ">,\n";
+  const auto& fields = parcel->GetFields();
+  // empty structs in C++ are 1 byte so generate an unused field in this case to make the layouts
+  // match
+  if (fields.size() == 0 && parcel->IsFixedSize()) {
+    out << "_unused: u8,\n";
+  } else {
+    size_t padding_index = 0;
+    size_t struct_size = 0;
+    for (const auto& variable : fields) {
+      GenerateDeprecated(out, *variable);
+      const auto& var_type = variable->GetType();
+      auto field_type =
+          RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD, Lifetime::NONE);
+      if (parcel->IsFixedSize()) {
+        GeneratePaddingField(out, field_type, struct_size, padding_index, "u8");
+
+        auto alignment = cpp::AlignmentOf(var_type, typenames);
+        AIDL_FATAL_IF(alignment == std::nullopt, var_type);
+        struct_size = cpp::AlignTo(struct_size, *alignment);
+        auto var_size = cpp::SizeOf(var_type, typenames);
+        AIDL_FATAL_IF(var_size == std::nullopt, var_type);
+        struct_size += *var_size;
+      }
+      out << "pub r#" << variable->GetName() << ": " << field_type << ",\n";
+    }
+    for (const auto& unused_param : FreeParams(parcel)) {
+      out << "_phantom_" << unused_param << ": std::marker::PhantomData<" << unused_param << ">,\n";
+    }
   }
   out.Dedent();
   out << "}\n";
+  if (parcel->IsFixedSize()) {
+    size_t variable_offset = 0;
+    for (const auto& variable : fields) {
+      const auto& var_type = variable->GetType();
+      // Assert the offset of each field within the struct
+      auto alignment = cpp::AlignmentOf(var_type, typenames);
+      AIDL_FATAL_IF(alignment == std::nullopt, var_type);
+      variable_offset = cpp::AlignTo(variable_offset, *alignment);
+      out << "static_assertions::const_assert_eq!(std::mem::offset_of!(" << parcel->GetName()
+          << ", r#" << variable->GetName() << "), " << std::to_string(variable_offset) << ");\n";
+
+      // Assert the size of each field
+      auto variable_size = cpp::SizeOf(var_type, typenames);
+      AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
+      std::string rust_type =
+          RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD, Lifetime::NONE);
+      out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << rust_type << ">(), "
+          << std::to_string(*variable_size) << ");\n";
+
+      variable_offset += *variable_size;
+    }
+    // Assert the alignment of the struct
+    auto parcelable_alignment = cpp::AlignmentOfDefinedType(*parcel, typenames);
+    AIDL_FATAL_IF(parcelable_alignment == std::nullopt, *parcel);
+    out << "static_assertions::const_assert_eq!(std::mem::align_of::<" << parcel->GetName()
+        << ">(), " << std::to_string(*parcelable_alignment) << ");\n";
+
+    // Assert the size of the struct
+    auto parcelable_size = cpp::SizeOfDefinedType(*parcel, typenames);
+    AIDL_FATAL_IF(parcelable_size == std::nullopt, *parcel);
+    out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << parcel->GetName()
+        << ">(), " << std::to_string(*parcelable_size) << ");\n";
+  }
 }
 
-void GenerateParcelDefault(CodeWriter& out, const AidlStructuredParcelable* parcel) {
+void GenerateParcelDefault(CodeWriter& out, const AidlStructuredParcelable* parcel,
+                           const AidlTypenames& typenames) {
   out << "impl";
   WriteParams(out, parcel, ": Default");
   out << " Default for r#" << parcel->GetName();
@@ -975,32 +1054,55 @@ void GenerateParcelDefault(CodeWriter& out, const AidlStructuredParcelable* parc
   out.Indent();
   out << "Self {\n";
   out.Indent();
-  for (const auto& variable : parcel->GetFields()) {
-    out << "r#" << variable->GetName() << ": ";
-    if (variable->GetDefaultValue()) {
-      out << variable->ValueString(ConstantValueDecorator);
-    } else {
-      // Some types don't implement "Default".
-      // - ParcelableHolder
-      // - Arrays
-      if (variable->GetType().GetName() == "ParcelableHolder") {
-        out << "binder::ParcelableHolder::new(";
-        if (parcel->IsVintfStability()) {
-          out << "binder::binder_impl::Stability::Vintf";
-        } else {
-          out << "binder::binder_impl::Stability::Local";
-        }
-        out << ")";
-      } else if (variable->GetType().IsFixedSizeArray() && !variable->GetType().IsNullable()) {
-        out << ArrayDefaultValue(variable->GetType());
-      } else {
-        out << "Default::default()";
+  size_t padding_index = 0;
+  size_t struct_size = 0;
+  const auto& fields = parcel->GetFields();
+  if (fields.size() == 0 && parcel->IsFixedSize()) {
+    out << "_unused: 0,\n";
+  } else {
+    for (const auto& variable : fields) {
+      const auto& var_type = variable->GetType();
+      // Generate initializer for padding for previous field if current field is i64 or f64
+      if (parcel->IsFixedSize()) {
+        auto field_type =
+            RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD, Lifetime::NONE);
+        GeneratePaddingField(out, field_type, struct_size, padding_index, "0");
+
+        auto alignment = cpp::AlignmentOf(var_type, typenames);
+        AIDL_FATAL_IF(alignment == std::nullopt, var_type);
+        struct_size = cpp::AlignTo(struct_size, *alignment);
+
+        auto var_size = cpp::SizeOf(var_type, typenames);
+        AIDL_FATAL_IF(var_size == std::nullopt, var_type);
+        struct_size += *var_size;
       }
+
+      out << "r#" << variable->GetName() << ": ";
+      if (variable->GetDefaultValue()) {
+        out << variable->ValueString(ConstantValueDecorator);
+      } else {
+        // Some types don't implement "Default".
+        // - ParcelableHolder
+        // - Arrays
+        if (variable->GetType().GetName() == "ParcelableHolder") {
+          out << "binder::ParcelableHolder::new(";
+          if (parcel->IsVintfStability()) {
+            out << "binder::binder_impl::Stability::Vintf";
+          } else {
+            out << "binder::binder_impl::Stability::Local";
+          }
+          out << ")";
+        } else if (variable->GetType().IsFixedSizeArray() && !variable->GetType().IsNullable()) {
+          out << ArrayDefaultValue(variable->GetType());
+        } else {
+          out << "Default::default()";
+        }
+      }
+      out << ",\n";
     }
-    out << ",\n";
-  }
-  for (const auto& unused_param : FreeParams(parcel)) {
-    out << "r#_phantom_" << unused_param << ": Default::default(),\n";
+    for (const auto& unused_param : FreeParams(parcel)) {
+      out << "r#_phantom_" << unused_param << ": Default::default(),\n";
+    }
   }
   out.Dedent();
   out << "}\n";
@@ -1068,6 +1170,14 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlStructuredParcelab
 void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
                         const AidlTypenames& typenames) {
   GenerateDeprecated(out, *parcel);
+  auto alignment = cpp::AlignmentOfDefinedType(*parcel, typenames);
+  if (parcel->IsFixedSize()) {
+    AIDL_FATAL_IF(alignment == std::nullopt, *parcel);
+    auto tag = std::to_string(*alignment * 8);
+    // This repr may use a tag larger than u8 to make sure the tag padding takes into account that
+    // the overall alignment is computed as if i64/f64 were always 8-byte aligned
+    out << "#[repr(C, u" << tag << ", align(" << std::to_string(*alignment) << "))]\n";
+  }
   out << "pub enum r#" << parcel->GetName() << " {\n";
   out.Indent();
   for (const auto& variable : parcel->GetFields()) {
@@ -1078,9 +1188,32 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
   }
   out.Dedent();
   out << "}\n";
+  if (parcel->IsFixedSize()) {
+    for (const auto& variable : parcel->GetFields()) {
+      const auto& var_type = variable->GetType();
+      std::string rust_type =
+          RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD, Lifetime::NONE);
+      // Assert the size of each enum variant's payload
+      auto variable_size = cpp::SizeOf(var_type, typenames);
+      AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
+      out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << rust_type << ">(), "
+          << std::to_string(*variable_size) << ");\n";
+    }
+    // Assert the alignment of the enum
+    AIDL_FATAL_IF(alignment == std::nullopt, *parcel);
+    out << "static_assertions::const_assert_eq!(std::mem::align_of::<" << parcel->GetName()
+        << ">(), " << std::to_string(*alignment) << ");\n";
+
+    // Assert the size of the enum, taking into the tag and its padding into account
+    auto union_size = cpp::SizeOfDefinedType(*parcel, typenames);
+    AIDL_FATAL_IF(union_size == std::nullopt, *parcel);
+    out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << parcel->GetName()
+        << ">(), " << std::to_string(*union_size) << ");\n";
+  }
 }
 
-void GenerateParcelDefault(CodeWriter& out, const AidlUnionDecl* parcel) {
+void GenerateParcelDefault(CodeWriter& out, const AidlUnionDecl* parcel,
+                           const AidlTypenames& typenames __attribute__((unused))) {
   out << "impl";
   WriteParams(out, parcel, ": Default");
   out << " Default for r#" << parcel->GetName();
@@ -1252,7 +1385,7 @@ void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
   *code_writer << "#[derive(" << Join(derives, ", ") << ")]\n";
   GenerateParcelBody(*code_writer, parcel, typenames);
   GenerateConstantDeclarations(*code_writer, *parcel, typenames);
-  GenerateParcelDefault(*code_writer, parcel);
+  GenerateParcelDefault(*code_writer, parcel, typenames);
   GenerateParcelableTrait(*code_writer, parcel, typenames);
   GenerateMetadataTrait(*code_writer, parcel);
 }
@@ -1268,6 +1401,11 @@ void GenerateRustEnumDeclaration(CodeWriter* code_writer, const AidlEnumDeclarat
   code_writer->Indent();
 
   GenerateDeprecated(*code_writer, *enum_decl);
+  auto alignment = cpp::AlignmentOf(aidl_backing_type, typenames);
+  AIDL_FATAL_IF(alignment == std::nullopt, *enum_decl);
+  // u64 is aligned to 4 bytes on x86 which may underalign the whole struct if it's the backing type
+  // so we need to set the alignment manually as if u64 were aligned to 8 bytes.
+  *code_writer << "#[repr(C, align(" << std::to_string(*alignment) << "))]\n";
   *code_writer << "r#" << enum_decl->GetName() << " : [" << backing_type << "; "
                << std::to_string(enum_decl->GetEnumerators().size()) << "] {\n";
   code_writer->Indent();
