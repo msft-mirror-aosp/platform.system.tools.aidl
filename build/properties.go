@@ -51,6 +51,7 @@ type ccProperties struct {
 	Product_available         *bool
 	Recovery_available        *bool
 	Host_supported            *bool
+	Cmake_snapshot_supported  *bool
 	Installable               *bool
 	Generated_sources         []string
 	Generated_headers         []string
