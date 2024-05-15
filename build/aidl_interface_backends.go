@@ -163,11 +163,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		productAvailable = nil
 	}
 
-	fullPathSources := make([]string, len(srcs))
-	for i, src := range srcs {
-		fullPathSources[i] = filepath.Join(mctx.ModuleDir(), aidlRoot, src)
-	}
-
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
 		Name: proptools.StringPtr(cppModuleGen + "-generator"),
 	}, &aidlImplementationGeneratorProperties{
@@ -215,13 +210,15 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 				},
 				Include_build_directory: proptools.BoolPtr(false), // b/254682497
 				AidlInterface: struct {
-					Sources []string
-					Lang    string
-					Flags   []string
+					Sources  []string
+					AidlRoot string
+					Lang     string
+					Flags    []string
 				}{
-					Sources: fullPathSources,
-					Lang:    lang,
-					Flags:   aidlFlags,
+					Sources:  srcs,
+					AidlRoot: aidlRoot,
+					Lang:     lang,
+					Flags:    aidlFlags,
 				},
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,

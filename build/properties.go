@@ -74,9 +74,10 @@ type ccProperties struct {
 	Tidy_checks_as_errors     []string
 	Include_build_directory   *bool
 	AidlInterface             struct {
-		Sources []string
-		Lang    string
-		Flags   []string
+		Sources  []string
+		AidlRoot string
+		Lang     string
+		Flags    []string
 	}
 }
 
