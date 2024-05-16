@@ -322,6 +322,10 @@ type aidlInterfaceProperties struct {
 	// Whether the library can be used on host
 	Host_supported *bool
 
+	// Allows this module to be included in CMake release snapshots to be built outside of Android
+	// build system and source tree.
+	Cmake_snapshot_supported *bool
+
 	// Whether tracing should be added to the interface.
 	Gen_trace *bool
 

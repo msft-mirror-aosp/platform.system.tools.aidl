@@ -785,6 +785,9 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
 void GenerateClientHeader(CodeWriter& out, const AidlInterface& interface,
                           const AidlTypenames& typenames, const Options& options) {
   out << "#pragma once\n\n";
+  if (!options.Hash().empty()) {
+    out << "#include <mutex>\n";
+  }
   out << "#include <" << kIBinderHeader << ">\n";
   out << "#include <" << kIInterfaceHeader << ">\n";
   out << "#include <utils/Errors.h>\n";
