@@ -51,6 +51,7 @@ type ccProperties struct {
 	Product_available         *bool
 	Recovery_available        *bool
 	Host_supported            *bool
+	Cmake_snapshot_supported  *bool
 	Installable               *bool
 	Generated_sources         []string
 	Generated_headers         []string
@@ -72,6 +73,12 @@ type ccProperties struct {
 	Tidy_flags                []string
 	Tidy_checks_as_errors     []string
 	Include_build_directory   *bool
+	AidlInterface             struct {
+		Sources  []string
+		AidlRoot string
+		Lang     string
+		Flags    []string
+	}
 }
 
 type javaProperties struct {
