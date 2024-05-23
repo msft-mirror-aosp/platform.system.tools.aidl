@@ -7,6 +7,7 @@
 #![allow(non_upper_case_globals)]
 use binder::declare_binder_enum;
 declare_binder_enum! {
+  #[repr(C, align(4))]
   r#IntEnum : [i32; 4] {
     r#FOO = 1000,
     r#BAR = 2000,

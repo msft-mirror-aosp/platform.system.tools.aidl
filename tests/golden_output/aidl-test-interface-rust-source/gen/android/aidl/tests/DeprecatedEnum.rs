@@ -8,6 +8,7 @@
 use binder::declare_binder_enum;
 declare_binder_enum! {
   #[deprecated = "test"]
+  #[repr(C, align(4))]
   r#DeprecatedEnum : [i32; 3] {
     r#A = 0,
     r#B = 1,

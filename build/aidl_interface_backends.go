@@ -75,6 +75,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 
 	genLog := proptools.Bool(commonProperties.Gen_log)
 	genTrace := i.genTrace(lang)
+	aidlFlags := i.flagsForAidlGenRule(version)
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
@@ -93,7 +94,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Unstable:            i.properties.Unstable,
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
-		Flags:               i.flagsForAidlGenRule(version),
+		Flags:               aidlFlags,
 		UseUnfrozen:         i.useUnfrozen(mctx),
 	},
 	)
@@ -106,9 +107,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	var cpp_std *string
 	var hostSupported *bool
 	addCflags := commonProperties.Cflags
-	targetProp := ccTargetProperties{
-		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
-	}
+	targetProp := ccTargetProperties{}
 
 	if lang == langCpp {
 		importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
@@ -173,12 +172,17 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Imports:           i.getImportsForVersion(version),
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name:                      proptools.StringPtr(cppModuleGen),
+				Name: proptools.StringPtr(cppModuleGen),
+				Enabled: android.CreateSelectOsToBool(map[string]*bool{
+					"":       nil,
+					"darwin": proptools.BoolPtr(false),
+				}),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
 				Recovery_available:        recoveryAvailable,
 				Host_supported:            hostSupported,
+				Cmake_snapshot_supported:  i.properties.Cmake_snapshot_supported,
 				Defaults:                  []string{"aidl-cpp-module-defaults"},
 				Double_loadable:           i.properties.Double_loadable,
 				Generated_sources:         []string{cppSourceGen},
@@ -205,6 +209,17 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
 				},
 				Include_build_directory: proptools.BoolPtr(false), // b/254682497
+				AidlInterface: struct {
+					Sources  []string
+					AidlRoot string
+					Lang     string
+					Flags    []string
+				}{
+					Sources:  srcs,
+					AidlRoot: aidlRoot,
+					Lang:     lang,
+					Flags:    aidlFlags,
+				},
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
@@ -244,9 +259,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	importExportDependencies := []string{}
 	var hostSupported *bool
 	var addCflags []string // not using cpp backend cflags for now
-	targetProp := ccTargetProperties{
-		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
-	}
+	targetProp := ccTargetProperties{}
 
 	importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
 	hostSupported = i.properties.Host_supported
@@ -262,7 +275,11 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	g := aidlImplementationGeneratorProperties{
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name:                      proptools.StringPtr(cppAnalyzerModuleGen),
+				Name: proptools.StringPtr(cppAnalyzerModuleGen),
+				Enabled: android.CreateSelectOsToBool(map[string]*bool{
+					"":       nil,
+					"darwin": proptools.BoolPtr(false),
+				}),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
@@ -401,7 +418,11 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
 	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
-		Name:              proptools.StringPtr(rustModuleGen),
+		Name: proptools.StringPtr(rustModuleGen),
+		Enabled: android.CreateSelectOsToBool(map[string]*bool{
+			"darwin": proptools.BoolPtr(false),
+			"":       nil,
+		}),
 		Crate_name:        rustCrateName,
 		Stem:              proptools.StringPtr("lib" + versionedRustName),
 		Defaults:          []string{"aidl-rust-module-defaults"},
@@ -410,7 +431,6 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Product_available: i.properties.Product_available,
 		Apex_available:    i.properties.Backend.Rust.Apex_available,
 		Min_sdk_version:   i.minSdkVersion(langRust),
-		Target:            rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
 		Rustlibs:          i.properties.Backend.Rust.Additional_rustlibs,
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),

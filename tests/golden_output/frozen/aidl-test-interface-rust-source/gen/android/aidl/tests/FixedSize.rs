@@ -32,6 +32,7 @@ impl binder::binder_impl::ParcelableMetadata for r#FixedSize {
 }
 pub mod r#FixedParcelable {
   #[derive(Debug)]
+  #[repr(C, align(8))]
   pub struct r#FixedParcelable {
     pub r#booleanValue: bool,
     pub r#byteValue: i8,
@@ -47,6 +48,34 @@ pub mod r#FixedParcelable {
     pub r#parcelableArray: [crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_15_EmptyParcelable; 3],
     pub r#unionArray: [crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion; 4],
   }
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#booleanValue), 0);
+  static_assertions::const_assert_eq!(std::mem::size_of::<bool>(), 1);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#byteValue), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#charValue), 2);
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#intValue), 4);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#longValue), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#floatValue), 16);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#intArray), 20);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[i32; 3]>(), 12);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#multiDimensionLongArray), 32);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[[i64; 2]; 3]>(), 48);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#doubleValue), 80);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#enumValue), 88);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#parcelableValue), 96);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion>(), 56);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#parcelableArray), 152);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_15_EmptyParcelable; 3]>(), 3);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#unionArray), 160);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion; 4]>(), 224);
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedParcelable>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedParcelable>(), 384);
   impl Default for r#FixedParcelable {
     fn default() -> Self {
       Self {
@@ -136,13 +165,101 @@ pub mod r#FixedParcelable {
     fn get_descriptor() -> &'static str { "android.aidl.tests.FixedSize.FixedParcelable" }
   }
 }
+pub mod r#ExplicitPaddingParcelable {
+  #[derive(Debug)]
+  #[repr(C, align(8))]
+  pub struct r#ExplicitPaddingParcelable {
+    pub r#byteValue: i8,
+    _pad_0: [u8; 7],
+    pub r#longValue: i64,
+    pub r#charValue: u16,
+    _pad_1: [u8; 6],
+    pub r#doubleValue: f64,
+    pub r#intValue: i32,
+    pub r#enumValue: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum,
+  }
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#byteValue), 0);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#longValue), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#charValue), 16);
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#doubleValue), 24);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#intValue), 32);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#enumValue), 40);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
+  static_assertions::const_assert_eq!(std::mem::align_of::<ExplicitPaddingParcelable>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<ExplicitPaddingParcelable>(), 48);
+  impl Default for r#ExplicitPaddingParcelable {
+    fn default() -> Self {
+      Self {
+        r#byteValue: 0,
+        _pad_0: [0; 7],
+        r#longValue: 0,
+        r#charValue: '\0' as u16,
+        _pad_1: [0; 6],
+        r#doubleValue: 0.000000f64,
+        r#intValue: 0,
+        r#enumValue: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum::FOO,
+      }
+    }
+  }
+  impl binder::Parcelable for r#ExplicitPaddingParcelable {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+      parcel.sized_write(|subparcel| {
+        subparcel.write(&self.r#byteValue)?;
+        subparcel.write(&self.r#longValue)?;
+        subparcel.write(&self.r#charValue)?;
+        subparcel.write(&self.r#doubleValue)?;
+        subparcel.write(&self.r#intValue)?;
+        subparcel.write(&self.r#enumValue)?;
+        Ok(())
+      })
+    }
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+      parcel.sized_read(|subparcel| {
+        if subparcel.has_more_data() {
+          self.r#byteValue = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#longValue = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#charValue = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#doubleValue = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#intValue = subparcel.read()?;
+        }
+        if subparcel.has_more_data() {
+          self.r#enumValue = subparcel.read()?;
+        }
+        Ok(())
+      })
+    }
+  }
+  binder::impl_serialize_for_parcelable!(r#ExplicitPaddingParcelable);
+  binder::impl_deserialize_for_parcelable!(r#ExplicitPaddingParcelable);
+  impl binder::binder_impl::ParcelableMetadata for r#ExplicitPaddingParcelable {
+    fn get_descriptor() -> &'static str { "android.aidl.tests.FixedSize.ExplicitPaddingParcelable" }
+  }
+}
 pub mod r#EmptyParcelable {
   #[derive(Debug)]
+  #[repr(C, align(1))]
   pub struct r#EmptyParcelable {
+    _unused: u8,
   }
+  static_assertions::const_assert_eq!(std::mem::align_of::<EmptyParcelable>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<EmptyParcelable>(), 1);
   impl Default for r#EmptyParcelable {
     fn default() -> Self {
       Self {
+        _unused: 0,
       }
     }
   }
@@ -166,6 +283,7 @@ pub mod r#EmptyParcelable {
 }
 pub mod r#FixedUnion {
   #[derive(Debug)]
+  #[repr(C, u64, align(8))]
   pub enum r#FixedUnion {
     BooleanValue(bool),
     ByteValue(i8),
@@ -178,6 +296,18 @@ pub mod r#FixedUnion {
     DoubleValue(f64),
     EnumValue(crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum),
   }
+  static_assertions::const_assert_eq!(std::mem::size_of::<bool>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[i32; 3]>(), 12);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[[i64; 2]; 3]>(), 48);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnion>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnion>(), 56);
   impl Default for r#FixedUnion {
     fn default() -> Self {
       Self::BooleanValue(false)
@@ -296,6 +426,7 @@ pub mod r#FixedUnion {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
+      #[repr(C, align(1))]
       r#Tag : [i8; 10] {
         r#booleanValue = 0,
         r#byteValue = 1,
@@ -313,9 +444,13 @@ pub mod r#FixedUnion {
 }
 pub mod r#FixedUnionNoPadding {
   #[derive(Debug)]
+  #[repr(C, u8, align(1))]
   pub enum r#FixedUnionNoPadding {
     ByteValue(i8),
   }
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionNoPadding>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionNoPadding>(), 2);
   impl Default for r#FixedUnionNoPadding {
     fn default() -> Self {
       Self::ByteValue(0)
@@ -353,6 +488,7 @@ pub mod r#FixedUnionNoPadding {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
+      #[repr(C, align(1))]
       r#Tag : [i8; 1] {
         r#byteValue = 0,
       }
@@ -361,9 +497,13 @@ pub mod r#FixedUnionNoPadding {
 }
 pub mod r#FixedUnionSmallPadding {
   #[derive(Debug)]
+  #[repr(C, u16, align(2))]
   pub enum r#FixedUnionSmallPadding {
     CharValue(u16),
   }
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionSmallPadding>(), 2);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionSmallPadding>(), 4);
   impl Default for r#FixedUnionSmallPadding {
     fn default() -> Self {
       Self::CharValue('\0' as u16)
@@ -401,6 +541,7 @@ pub mod r#FixedUnionSmallPadding {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
+      #[repr(C, align(1))]
       r#Tag : [i8; 1] {
         r#charValue = 0,
       }
@@ -409,9 +550,13 @@ pub mod r#FixedUnionSmallPadding {
 }
 pub mod r#FixedUnionLongPadding {
   #[derive(Debug)]
+  #[repr(C, u64, align(8))]
   pub enum r#FixedUnionLongPadding {
     LongValue(i64),
   }
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionLongPadding>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionLongPadding>(), 16);
   impl Default for r#FixedUnionLongPadding {
     fn default() -> Self {
       Self::LongValue(0)
@@ -449,6 +594,7 @@ pub mod r#FixedUnionLongPadding {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
+      #[repr(C, align(1))]
       r#Tag : [i8; 1] {
         r#longValue = 0,
       }
@@ -458,6 +604,7 @@ pub mod r#FixedUnionLongPadding {
 pub(crate) mod mangled {
  pub use super::r#FixedSize as _7_android_4_aidl_5_tests_9_FixedSize;
  pub use super::r#FixedParcelable::r#FixedParcelable as _7_android_4_aidl_5_tests_9_FixedSize_15_FixedParcelable;
+ pub use super::r#ExplicitPaddingParcelable::r#ExplicitPaddingParcelable as _7_android_4_aidl_5_tests_9_FixedSize_25_ExplicitPaddingParcelable;
  pub use super::r#EmptyParcelable::r#EmptyParcelable as _7_android_4_aidl_5_tests_9_FixedSize_15_EmptyParcelable;
  pub use super::r#FixedUnion::r#FixedUnion as _7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion;
  pub use super::r#FixedUnion::r#Tag::r#Tag as _7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion_3_Tag;
