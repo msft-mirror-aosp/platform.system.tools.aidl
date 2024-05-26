@@ -1266,9 +1266,9 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
     cpp::GenerateDeprecated(out, *variable);
     out << " " << variable->GetName();
     if (defined_type.IsFixedSize()) {
-      int alignment = cpp::AlignmentOf(type, types);
-      if (alignment > 0) {
-        out << " __attribute__((aligned (" << std::to_string(alignment) << ")))";
+      auto alignment = cpp::AlignmentOf(type, types);
+      if (alignment) {
+        out << " __attribute__((aligned (" << std::to_string(*alignment) << ")))";
       }
     }
     if (variable->GetDefaultValue()) {
@@ -1307,6 +1307,40 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
 
   out.Dedent();
   out << "};\n";
+
+  if (defined_type.IsFixedSize()) {
+    size_t variable_offset = 0;
+    for (const auto& variable : defined_type.GetFields()) {
+      const auto& var_type = variable->GetType();
+      // Assert the offset of each field within the struct
+      auto alignment = cpp::AlignmentOf(var_type, types);
+      AIDL_FATAL_IF(alignment == std::nullopt, var_type);
+      variable_offset = cpp::AlignTo(variable_offset, *alignment);
+      out << "static_assert(offsetof(" << defined_type.GetName() << ", " << variable->GetName()
+          << ") == " << std::to_string(variable_offset) << ");\n";
+
+      // Assert the size of each field
+      std::string cpp_type = NdkNameOf(types, var_type, StorageMode::STACK);
+      auto variable_size = cpp::SizeOf(var_type, types);
+      AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
+      out << "static_assert(sizeof(" << cpp_type << ") == " << std::to_string(*variable_size)
+          << ");\n";
+
+      variable_offset += *variable_size;
+    }
+    auto parcelable_alignment = cpp::AlignmentOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(parcelable_alignment == std::nullopt, defined_type);
+    // Assert the alignment of the struct. Since we asserted the field offsets, this also ensures
+    // fields have the right alignment
+    out << "static_assert(alignof(" << defined_type.GetName()
+        << ") == " << std::to_string(*parcelable_alignment) << ");\n";
+
+    auto parcelable_size = cpp::SizeOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(parcelable_size == std::nullopt, defined_type);
+    // Assert the size of the struct
+    out << "static_assert(sizeof(" << defined_type.GetName()
+        << ") == " << std::to_string(*parcelable_size) << ");\n";
+  }
 }
 
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
@@ -1447,6 +1481,26 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   uw.PrivateFields(out);
   out.Dedent();
   out << "};\n";
+  if (defined_type.IsFixedSize()) {
+    auto alignment = cpp::AlignmentOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(alignment == std::nullopt, defined_type);
+    for (const auto& variable : defined_type.GetFields()) {
+      // Assert the size of each union variant
+      const auto& var_type = variable->GetType();
+      std::string cpp_type = NdkNameOf(types, var_type, StorageMode::STACK);
+      auto variable_size = cpp::SizeOf(var_type, types);
+      AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
+      out << "static_assert(sizeof(" << cpp_type << ") == " << std::to_string(*variable_size)
+          << ");\n";
+    }
+    // Assert the alignment of the tagged union
+    out << "static_assert(alignof(" << clazz << ") == " << std::to_string(*alignment) << ");\n";
+
+    // Assert the size of the tagged union, taking the tag and its padding into account
+    auto union_size = cpp::SizeOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(union_size == std::nullopt, defined_type);
+    out << "static_assert(sizeof(" << clazz << ") == " << std::to_string(*union_size) << ");\n";
+  }
 }
 
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,

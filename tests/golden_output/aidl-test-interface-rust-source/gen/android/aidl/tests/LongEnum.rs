@@ -7,6 +7,7 @@
 #![allow(non_upper_case_globals)]
 use binder::declare_binder_enum;
 declare_binder_enum! {
+  #[repr(C, align(8))]
   r#LongEnum : [i64; 3] {
     r#FOO = 100000000000,
     r#BAR = 200000000000,
