@@ -585,9 +585,6 @@ func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDown
 			p.Shared_libs = append(p.Shared_libs, imports...)
 			p.Export_shared_lib_headers = append(p.Export_shared_lib_headers, imports...)
 		}
-		module := ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
-		// AIDL-generated CC modules can't be used across system/vendor boundary. So marking it
-		// as MustUseVendorVariant. See build/soong/cc/config/vndk.go
-		module.(*cc.Module).Properties.MustUseVendorVariant = true
+		ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
 	}
 }
