@@ -66,12 +66,12 @@ use std::os::fd::{FromRawFd, OwnedFd};
 use std::sync::{Arc, Mutex};
 
 fn get_test_service() -> binder::Strong<dyn ITestService::ITestService> {
-    binder::get_interface(<BpTestService as ITestService::ITestService>::get_descriptor())
+    binder::wait_for_interface(<BpTestService as ITestService::ITestService>::get_descriptor())
         .expect("did not get binder service")
 }
 
 fn get_test_trunk_stable_service() -> binder::Strong<dyn ITrunkStableTest> {
-    binder::get_interface(<BpTrunkStableTest as ITrunkStableTest>::get_descriptor())
+    binder::wait_for_interface(<BpTrunkStableTest as ITrunkStableTest>::get_descriptor())
         .expect("did not get binder service")
 }
 
@@ -417,10 +417,8 @@ fn test_parcel_file_descriptor_array() {
     let service = get_test_service();
 
     let (read_fd, write_fd) = build_pipe();
-    let input = vec![
-        binder::ParcelFileDescriptor::new(read_fd),
-        binder::ParcelFileDescriptor::new(write_fd),
-    ];
+    let input =
+        [binder::ParcelFileDescriptor::new(read_fd), binder::ParcelFileDescriptor::new(write_fd)];
 
     let mut repeated = vec![];
 
@@ -924,9 +922,10 @@ fn test_default_impl() {
 
 #[test]
 fn test_versioned_interface_version() {
-    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
-        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
+        <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     let version = service.getInterfaceVersion();
     assert_eq!(version, Ok(1));
@@ -934,9 +933,10 @@ fn test_versioned_interface_version() {
 
 #[test]
 fn test_versioned_interface_hash() {
-    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
-        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
+        <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     let hash = service.getInterfaceHash();
     assert_eq!(hash.as_ref().map(String::as_str), Ok("9e7be1859820c59d9d55dd133e71a3687b5d2e5b"));
@@ -944,18 +944,20 @@ fn test_versioned_interface_hash() {
 
 #[test]
 fn test_versioned_known_union_field_is_ok() {
-    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
-        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
+        <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     assert_eq!(service.acceptUnionAndReturnString(&BazUnion::IntNum(42)), Ok(String::from("42")));
 }
 
 #[test]
 fn test_versioned_unknown_union_field_triggers_error() {
-    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
-        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
+        <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     let ret = service.acceptUnionAndReturnString(&BazUnion::LongNum(42));
     assert!(ret.is_err());
@@ -973,9 +975,10 @@ fn test_versioned_unknown_union_field_triggers_error() {
 
 #[test]
 fn test_array_of_parcelable_with_new_field() {
-    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
-        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
+        <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     let foos = [Default::default(), Default::default(), Default::default()];
     let ret = service.returnsLengthOfFooArray(&foos);
@@ -984,9 +987,10 @@ fn test_array_of_parcelable_with_new_field() {
 
 #[test]
 fn test_read_data_correctly_after_parcelable_with_new_field() {
-    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
-        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
+        <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     let in_foo = Default::default();
     let mut inout_foo = Foo { intDefault42: 0 };
@@ -999,9 +1003,10 @@ fn test_read_data_correctly_after_parcelable_with_new_field() {
 
 #[test]
 fn test_calling_v2_api_triggers_error() {
-    let service: binder::Strong<dyn IFooInterface::IFooInterface> =
-        binder::get_interface(<BpFooInterface as IFooInterface::IFooInterface>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
+        <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     let ret = service.newApi();
 
@@ -1086,7 +1091,7 @@ impl INestedService::ICallback::ICallback for Callback {
 
 #[test]
 fn test_nested_type() {
-    let service: binder::Strong<dyn INestedService::INestedService> = binder::get_interface(
+    let service: binder::Strong<dyn INestedService::INestedService> = binder::wait_for_interface(
         <INestedService::BpNestedService as INestedService::INestedService>::get_descriptor(),
     )
     .expect("did not get binder service");
@@ -1253,9 +1258,10 @@ macro_rules! test_repeat_fixed_size_array_2d_binder {
 #[test]
 fn test_fixed_size_array_over_binder() {
     let test_service = get_test_service();
-    let service: binder::Strong<dyn IRepeatFixedSizeArray> =
-        binder::get_interface(<BpRepeatFixedSizeArray as IRepeatFixedSizeArray>::get_descriptor())
-            .expect("did not get binder service");
+    let service: binder::Strong<dyn IRepeatFixedSizeArray> = binder::wait_for_interface(
+        <BpRepeatFixedSizeArray as IRepeatFixedSizeArray>::get_descriptor(),
+    )
+    .expect("did not get binder service");
 
     test_repeat_fixed_size_array!(service, RepeatBytes, [1u8, 2u8, 3u8]);
     test_repeat_fixed_size_array!(service, RepeatInts, [1i32, 2i32, 3i32]);

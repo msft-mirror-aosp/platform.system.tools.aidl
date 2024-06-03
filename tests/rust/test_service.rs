@@ -427,7 +427,7 @@ impl ITestService::ITestService for TestService {
         ep2: &mut ExtendableParcelable,
     ) -> binder::Result<()> {
         ep2.a = ep.a;
-        ep2.b = ep.b.clone();
+        ep2.b.clone_from(&ep.b);
 
         let my_ext = ep.ext.get_parcelable::<MyExt>()?;
         if let Some(my_ext) = my_ext {
