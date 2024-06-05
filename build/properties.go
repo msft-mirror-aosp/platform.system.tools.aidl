@@ -14,16 +14,16 @@
 
 package aidl
 
+import (
+	"github.com/google/blueprint/proptools"
+)
+
 type nameProperties struct {
 	Name *string
 }
 
 type hostProperties struct {
 	Cflags []string
-}
-
-type darwinProperties struct {
-	Enabled *bool
 }
 
 type imageProperties struct {
@@ -35,18 +35,14 @@ type imageProperties struct {
 
 type ccTargetProperties struct {
 	Host     hostProperties
-	Darwin   darwinProperties
 	Platform imageProperties
 	Vendor   imageProperties
 	Product  imageProperties
 }
 
-type rustTargetProperties struct {
-	Darwin darwinProperties
-}
-
 type ccProperties struct {
 	Name                      *string
+	Enabled                   proptools.Configurable[bool]
 	Owner                     *string
 	Defaults                  []string
 	Double_loadable           *bool
@@ -55,6 +51,7 @@ type ccProperties struct {
 	Product_available         *bool
 	Recovery_available        *bool
 	Host_supported            *bool
+	Cmake_snapshot_supported  *bool
 	Installable               *bool
 	Generated_sources         []string
 	Generated_headers         []string
@@ -67,6 +64,7 @@ type ccProperties struct {
 	Stl                       *string
 	Cpp_std                   *string
 	Cflags                    []string
+	Ldflags                   []string
 	Stem                      *string
 	Apex_available            []string
 	Min_sdk_version           *string
@@ -75,6 +73,12 @@ type ccProperties struct {
 	Tidy_flags                []string
 	Tidy_checks_as_errors     []string
 	Include_build_directory   *bool
+	AidlInterface             struct {
+		Sources  []string
+		AidlRoot string
+		Lang     string
+		Flags    []string
+	}
 }
 
 type javaProperties struct {
@@ -83,7 +87,6 @@ type javaProperties struct {
 	Defaults        []string
 	Installable     *bool
 	Sdk_version     *string
-	Platform_apis   *bool
 	Srcs            []string
 	Static_libs     []string
 	Apex_available  []string
@@ -92,6 +95,7 @@ type javaProperties struct {
 
 type rustProperties struct {
 	Name              *string
+	Enabled           proptools.Configurable[bool]
 	Crate_name        string
 	Owner             *string
 	Defaults          []string
@@ -101,16 +105,8 @@ type rustProperties struct {
 	Srcs              []string
 	Rustlibs          []string
 	Stem              *string
-	Target            rustTargetProperties
 	Apex_available    []string
 	Min_sdk_version   *string
-}
-
-type Bazel_module struct {
-	Bp2build_available *bool
-}
-type bazelProperties struct {
-	*Bazel_module
 }
 
 type phonyProperties struct {

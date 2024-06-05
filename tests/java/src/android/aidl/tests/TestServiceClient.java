@@ -19,6 +19,7 @@ package android.aidl.tests;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -90,6 +91,13 @@ public class TestServiceClient {
     }
 
     @Test
+    public void testBinderIdentity() throws RemoteException {
+        IBinder binder = ServiceManager.waitForService(ITestService.class.getName());
+
+        assertEquals(binder, service.asBinder());
+    }
+
+    @Test
     public void testOneway() throws RemoteException {
       service.TestOneway();
     }
@@ -120,14 +128,9 @@ public class TestServiceClient {
 
     @Test
     public void testConstRepeat() throws RemoteException {
-        int query[] = {ITestService.TEST_CONSTANT,
-                       ITestService.TEST_CONSTANT2,
-                       ITestService.TEST_CONSTANT3,
-                       ITestService.TEST_CONSTANT4,
-                       ITestService.TEST_CONSTANT5,
-                       ITestService.TEST_CONSTANT6,
-                       ITestService.TEST_CONSTANT7,
-                       ITestService.TEST_CONSTANT8};
+        int query[] = {ITestService.CONSTANT, ITestService.CONSTANT2, ITestService.CONSTANT3,
+            ITestService.CONSTANT4, ITestService.CONSTANT5, ITestService.CONSTANT6,
+            ITestService.CONSTANT7, ITestService.CONSTANT8};
         for (int i = 0; i < query.length; i++) {
             assertThat(service.RepeatInt(query[i]), is(query[i]));
         }
@@ -135,10 +138,10 @@ public class TestServiceClient {
 
     @Test
     public void testConstFloatRepeat() throws RemoteException {
-        float query[] = {ITestService.FLOAT_TEST_CONSTANT, ITestService.FLOAT_TEST_CONSTANT2,
-            ITestService.FLOAT_TEST_CONSTANT3, ITestService.FLOAT_TEST_CONSTANT4,
-            ITestService.FLOAT_TEST_CONSTANT5, ITestService.FLOAT_TEST_CONSTANT6,
-            ITestService.FLOAT_TEST_CONSTANT7};
+        float query[] = {ITestService.FLOAT_CONSTANT, ITestService.FLOAT_CONSTANT2,
+            ITestService.FLOAT_CONSTANT3, ITestService.FLOAT_CONSTANT4,
+            ITestService.FLOAT_CONSTANT5, ITestService.FLOAT_CONSTANT6,
+            ITestService.FLOAT_CONSTANT7};
         for (int i = 0; i < query.length; i++) {
             assertThat(service.RepeatFloat(query[i]), is(query[i]));
         }
@@ -146,10 +149,10 @@ public class TestServiceClient {
 
     @Test
     public void testConstDoubleRepeat() throws RemoteException {
-        double query[] = {ITestService.DOUBLE_TEST_CONSTANT, ITestService.DOUBLE_TEST_CONSTANT2,
-            ITestService.DOUBLE_TEST_CONSTANT3, ITestService.DOUBLE_TEST_CONSTANT4,
-            ITestService.DOUBLE_TEST_CONSTANT5, ITestService.DOUBLE_TEST_CONSTANT6,
-            ITestService.DOUBLE_TEST_CONSTANT7};
+        double query[] = {ITestService.DOUBLE_CONSTANT, ITestService.DOUBLE_CONSTANT2,
+            ITestService.DOUBLE_CONSTANT3, ITestService.DOUBLE_CONSTANT4,
+            ITestService.DOUBLE_CONSTANT5, ITestService.DOUBLE_CONSTANT6,
+            ITestService.DOUBLE_CONSTANT7};
         for (int i = 0; i < query.length; i++) {
             assertThat(service.RepeatDouble(query[i]), is(query[i]));
         }
@@ -194,9 +197,7 @@ public class TestServiceClient {
     @Test
     public void testStringListRepeat() throws RemoteException {
         List<String> queries = Arrays.asList(
-                "not empty", "", "\0",
-                ITestService.STRING_TEST_CONSTANT,
-                ITestService.STRING_TEST_CONSTANT2);
+            "not empty", "", "\0", ITestService.STRING_CONSTANT, ITestService.STRING_CONSTANT2);
         for (String query : queries) {
             assertThat(service.RepeatString(query), is(query));
         }
@@ -392,30 +393,26 @@ public class TestServiceClient {
 
     @Test
     public void testRepeatParcelable() throws RemoteException {
-        assumeTrue(cpp_java_tests != null);
-
-        SimpleParcelable input = new SimpleParcelable("foo", 42);
-        SimpleParcelable out_param = new SimpleParcelable();
-        SimpleParcelable returned = cpp_java_tests.RepeatSimpleParcelable(input, out_param);
-        assertThat(out_param, is(input));
-        assertThat(returned, is(input));
+      SimpleParcelable input = new SimpleParcelable("foo", 42);
+      SimpleParcelable out_param = new SimpleParcelable();
+      SimpleParcelable returned = service.RepeatSimpleParcelable(input, out_param);
+      assertThat(out_param, is(input));
+      assertThat(returned, is(input));
     }
 
     @Test
     public void testReverseParcelable() throws RemoteException {
-        assumeTrue(cpp_java_tests != null);
-
-        SimpleParcelable[] input = new SimpleParcelable[3];
-        input[0] = new SimpleParcelable("a", 1);
-        input[1] = new SimpleParcelable("b", 2);
-        input[2] = new SimpleParcelable("c", 3);
-        SimpleParcelable[] repeated = new SimpleParcelable[3];
-        SimpleParcelable[] reversed = cpp_java_tests.ReverseSimpleParcelables(input, repeated);
-        assertThat(repeated, is(input));
-        assertThat(reversed.length, is(input.length));
-        for (int i = 0, k = input.length - 1; i < input.length; ++i, --k) {
+      SimpleParcelable[] input = new SimpleParcelable[3];
+      input[0] = new SimpleParcelable("a", 1);
+      input[1] = new SimpleParcelable("b", 2);
+      input[2] = new SimpleParcelable("c", 3);
+      SimpleParcelable[] repeated = new SimpleParcelable[3];
+      SimpleParcelable[] reversed = service.ReverseSimpleParcelables(input, repeated);
+      assertThat(repeated, is(input));
+      assertThat(reversed.length, is(input.length));
+      for (int i = 0, k = input.length - 1; i < input.length; ++i, --k) {
             assertThat(reversed[k], is(input[i]));
-        }
+      }
     }
 
     @Test
@@ -782,7 +779,7 @@ public class TestServiceClient {
         assertThat(p.u.getNs(), is(new int[] {1, 2, 3}));
         assertThat(p.shouldBeConstS1.getS(), is(Union.S1));
 
-        final String expected = "android.aidl.tests.StructuredParcelable{"
+        final String expected = "StructuredParcelable{"
             + "shouldContainThreeFs: [17, 17, 17], "
             + "f: 17, "
             + "shouldBeJerry: Jerry, "
@@ -816,12 +813,12 @@ public class TestServiceClient {
             + "int64_max: 9223372036854775807, "
             + "hexInt32_neg_1: -1, "
             + "ibinder: null, "
-            + "empty: android.aidl.tests.StructuredParcelable.Empty{}, "
+            + "empty: Empty{}, "
             + "int8_1: [1, 1, 1, 1, 1], "
             + "int32_1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
             + "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, "
-            + "1, 1, 1, 1], "
-            + "int64_1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "
+            + "1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "
+            + "int64_1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "
             + "hexInt32_pos_1: 1, "
             + "hexInt64_pos_1: 1, "
             + "const_exprs_1: 1, "
@@ -837,8 +834,8 @@ public class TestServiceClient {
             + "addString1: hello world!, "
             + "addString2: The quick brown fox jumps over the lazy dog., "
             + "shouldSetBit0AndBit2: 5, "
-            + "u: android.aidl.tests.Union.ns([1, 2, 3]), "
-            + "shouldBeConstS1: android.aidl.tests.Union.s(a string constant in union), "
+            + "u: Union.ns([1, 2, 3]), "
+            + "shouldBeConstS1: Union.s(a string constant in union), "
             + "defaultWithFoo: FOO"
             + "}";
         assertThat(p.toString(), is(expected));
@@ -898,7 +895,7 @@ public class TestServiceClient {
         p.parcelableGeneric = gen;
         p.unionValue = null; // for testing even though it is not @nullable in .aidl
 
-        final String expected = "android.aidl.tests.ParcelableForToString{"
+        final String expected = "ParcelableForToString{"
             + "intValue: 10, "
             + "intArray: [20, 30], "
             + "longValue: 100, "
@@ -914,15 +911,15 @@ public class TestServiceClient {
             + "stringValue: this is a string, "
             + "stringArray: [hello, world], "
             + "stringList: [alice, bob], "
-            + "parcelableValue: android.aidl.tests.OtherParcelableForToString{field: other}, "
+            + "parcelableValue: OtherParcelableForToString{field: other}, "
             + "parcelableArray: ["
-            + "android.aidl.tests.OtherParcelableForToString{field: other}, "
-            + "android.aidl.tests.OtherParcelableForToString{field: other}], "
+            + "OtherParcelableForToString{field: other}, "
+            + "OtherParcelableForToString{field: other}], "
             + "enumValue: FOO, "
             + "enumArray: [FOO, BAR], "
             + "nullArray: null, "
             + "nullList: null, "
-            + "parcelableGeneric: android.aidl.tests.GenericStructuredParcelable{a: 1, b: 2}, "
+            + "parcelableGeneric: GenericStructuredParcelable{a: 1, b: 2}, "
             + "unionValue: null"
             + "}";
 

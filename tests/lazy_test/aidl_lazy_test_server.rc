@@ -5,3 +5,10 @@ service aidl_lazy_test /system_ext/bin/aidl_lazy_test_server
     group system
     oneshot
     disabled
+
+service aidl_lazy_test_quit /system_ext/bin/aidl_lazy_test_server quit
+    interface aidl aidl_lazy_test_quit
+    user system
+    group system
+    oneshot
+    disabled

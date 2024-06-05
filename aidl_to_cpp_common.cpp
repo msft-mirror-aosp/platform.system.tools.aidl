@@ -56,6 +56,9 @@ bool HasDeprecatedField(const AidlParcelable& parcelable) {
 }
 
 string ClassName(const AidlDefinedType& defined_type, ClassNames type) {
+  if (type == ClassNames::MAYBE_INTERFACE && defined_type.AsInterface()) {
+    type = ClassNames::INTERFACE;
+  }
   string base_name = defined_type.GetName();
   if (base_name.length() >= 2 && base_name[0] == 'I' && isupper(base_name[1])) {
     base_name = base_name.substr(1);
@@ -235,7 +238,7 @@ const string GenLogAfterExecute(const string className, const AidlInterface& int
 string GetQualifiedName(const AidlDefinedType& type, ClassNames class_names) {
   string q_name = ClassName(type, class_names);
   for (auto parent = type.GetParentType(); parent; parent = parent->GetParentType()) {
-    q_name = parent->GetName() + "::" + q_name;
+    q_name = ClassName(*parent, ClassNames::MAYBE_INTERFACE) + "::" + q_name;
   }
   return q_name;
 }
@@ -350,7 +353,7 @@ void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable
     auto name = parcelable.GetName();
     auto max_tag = parcelable.GetFields().back()->GetName();
     auto min_tag = parcelable.GetFields().front()->GetName();
-    auto tmpl = R"--(static int _cmp(const {name}& _lhs, const {name}& _rhs) {{
+    constexpr auto tmpl = R"--(static int _cmp(const {name}& _lhs, const {name}& _rhs) {{
   return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<{max_tag}>(_lhs, _rhs);
 }}
 template <Tag _Tag>
@@ -396,43 +399,61 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
   };
 
   string lhs = comparable("");
-  string rhs = comparable("rhs.");
-  for (const auto& op : operators) {
+  string rhs = comparable("_rhs.");
+
+  // Delegate < and == to the fields.
+  for (const auto& op : {"==", "<"}) {
     out << "inline bool operator" << op << "(const " << parcelable.GetName() << "&"
-        << (is_empty ? "" : " rhs") << ") const {\n"
+        << (is_empty ? "" : " _rhs") << ") const {\n"
         << "  return " << lhs << " " << op << " " << rhs << ";\n"
         << "}\n";
   }
+  // Delegate other ops to < and == for *this, which lets a custom parcelable
+  // to be used with structured parcelables without implementation all operations.
+  out << fmt::format(R"--(inline bool operator!=(const {name}& _rhs) const {{
+  return !(*this == _rhs);
+}}
+inline bool operator>(const {name}& _rhs) const {{
+  return _rhs < *this;
+}}
+inline bool operator>=(const {name}& _rhs) const {{
+  return !(*this < _rhs);
+}}
+inline bool operator<=(const {name}& _rhs) const {{
+  return !(_rhs < *this);
+}}
+)--",
+                     fmt::arg("name", parcelable.GetName()));
   out << "\n";
 }
 
 // Output may look like:
 // inline std::string toString() const {
-//   std::ostringstream os;
-//   os << "MyData{";
-//   os << "field1: " << field1;
-//   os << ", field2: " << v.field2;
+//   std::ostringstream _aidl_os;
+//   _aidl_os << "MyData{";
+//   _aidl_os << "field1: " << field1;
+//   _aidl_os << ", field2: " << v.field2;
 //   ...
-//   os << "}";
-//   return os.str();
+//   _aidl_os << "}";
+//   return _aidl_os.str();
 // }
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable) {
   out << "inline std::string toString() const {\n";
   out.Indent();
-  out << "std::ostringstream os;\n";
-  out << "os << \"" << parcelable.GetName() << "{\";\n";
+  out << "std::ostringstream _aidl_os;\n";
+  out << "_aidl_os << \"" << parcelable.GetName() << "{\";\n";
   bool first = true;
   for (const auto& f : parcelable.GetFields()) {
     if (first) {
-      out << "os << \"";
+      out << "_aidl_os << \"";
       first = false;
     } else {
-      out << "os << \", ";
+      out << "_aidl_os << \", ";
     }
     out << f->GetName() << ": \" << ::android::internal::ToString(" << f->GetName() << ");\n";
   }
-  out << "os << \"}\";\n";
-  out << "return os.str();\n";
+  out << "_aidl_os << \"}\";\n";
+  out << "return _aidl_os.str();\n";
   out.Dedent();
   out << "}\n";
 }
@@ -476,7 +497,7 @@ std::string GetDeprecatedAttribute(const AidlCommentable& type) {
   return "";
 }
 
-size_t AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
+std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
   static map<string, size_t> alignment = {
       {"boolean", 1}, {"byte", 1}, {"char", 2}, {"double", 8},
       {"float", 4},   {"int", 4},  {"long", 8},
@@ -484,10 +505,120 @@ size_t AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames
 
   string name = type.GetName();
   if (auto enum_decl = typenames.GetEnumDeclaration(type); enum_decl) {
+    AIDL_FATAL_IF(type.IsArray() && !type.IsFixedSizeArray(), type);
     name = enum_decl->GetBackingType().GetName();
   }
-  // default to 0 for parcelable types
-  return alignment[name];
+  auto it = alignment.find(name);
+  if (it != alignment.end()) {
+    return it->second;
+  }
+  const AidlDefinedType* defined_type = type.GetDefinedType();
+  AIDL_FATAL_IF(defined_type == nullptr, type);
+  return AlignmentOfDefinedType(*defined_type, typenames);
+}
+
+std::optional<size_t> AlignmentOfDefinedType(const AidlDefinedType& defined_type,
+                                             const AidlTypenames& typenames) {
+  if (!defined_type.IsFixedSize()) {
+    return std::nullopt;
+  }
+  // Overall alignment is the maximum alignment of all fields
+  size_t align = 1;
+  for (const auto& variable : defined_type.GetFields()) {
+    auto field_alignment = cpp::AlignmentOf(variable->GetType(), typenames);
+    AIDL_FATAL_IF(field_alignment == std::nullopt, defined_type);
+    if (*field_alignment > align) {
+      align = *field_alignment;
+    }
+  }
+  return align;
+}
+
+std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
+  static map<string, size_t> sizes = {
+      {"boolean", 1}, {"byte", 1}, {"char", 2}, {"double", 8},
+      {"float", 4},   {"int", 4},  {"long", 8},
+  };
+  string name = type.GetName();
+  if (auto enum_decl = typenames.GetEnumDeclaration(type); enum_decl) {
+    name = enum_decl->GetBackingType().GetName();
+  }
+  // If it's an array of a basic type, take its dimensions into account for the size
+  size_t dims = 1;
+  if (type.IsFixedSizeArray()) {
+    AIDL_FATAL_IF(type.IsGeneric(), type);
+    const ArrayType& array = type.GetArray();
+    auto dimensions = std::get<FixedSizeArray>(array).GetDimensionInts();
+    for (auto dim : dimensions) {
+      dims *= dim;
+    }
+  }
+  auto it = sizes.find(name);
+  if (it != sizes.end()) {
+    size_t size = it->second;
+    return size * dims;
+  }
+  const AidlDefinedType* defined_type = type.GetDefinedType();
+  AIDL_FATAL_IF(defined_type == nullptr, type);
+  auto defined_type_size = SizeOfDefinedType(*defined_type, typenames);
+  if (defined_type_size) {
+    return *defined_type_size * dims;
+  }
+  return std::nullopt;
+}
+
+size_t AlignTo(size_t val, size_t align) {
+  return (val + (align - 1)) & ~(align - 1);
+}
+
+std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
+                                        const AidlTypenames& typenames) {
+  if (!defined_type.IsFixedSize()) {
+    return std::nullopt;
+  }
+  if (auto union_decl = defined_type.AsUnionDeclaration(); union_decl) {
+    // If it's a union find the size of the largest field
+    size_t size = 0;
+    for (const auto& variable : union_decl->GetFields()) {
+      const auto& var_type = variable->GetType();
+      auto field_size = cpp::SizeOf(var_type, typenames);
+      AIDL_FATAL_IF(field_size == std::nullopt, var_type);
+      if (*field_size > size) {
+        size = *field_size;
+      }
+    }
+    // union tag size is 1 byte plus padding based on overall alignment
+    auto align = cpp::AlignmentOfDefinedType(defined_type, typenames);
+    AIDL_FATAL_IF(align == std::nullopt, defined_type);
+    size_t tag_size = AlignTo(1, *align);
+    // Size of the union is largest field size plus its padding and the tag size
+    return AlignTo(size, *align) + tag_size;
+  }
+
+  // If it's not a union add the sizes of all fields and padding
+  size_t res = 0;
+  for (const auto& variable : defined_type.GetFields()) {
+    // add padding for the previous field based off of the alignment of the current field
+    const auto& var_type = variable->GetType();
+    auto alignment = cpp::AlignmentOf(var_type, typenames);
+    AIDL_FATAL_IF(alignment == std::nullopt, var_type);
+    res = AlignTo(res, *alignment);
+
+    // add the size of the current field itself
+    auto var_size = cpp::SizeOf(var_type, typenames);
+    AIDL_FATAL_IF(var_size == std::nullopt, var_type);
+    res += *var_size;
+  }
+  // add padding for the last field based off of the alignment of the overall struct
+  auto parcelable_alignment = cpp::AlignmentOfDefinedType(defined_type, typenames);
+  AIDL_FATAL_IF(parcelable_alignment == std::nullopt, defined_type);
+  res = AlignTo(res, *parcelable_alignment);
+
+  // structs with no members are 1-byte in C++
+  if (res == 0) {
+    return 1;
+  }
+  return res;
 }
 
 std::set<std::string> UnionWriter::GetHeaders(const AidlUnionDecl& decl) {
@@ -536,9 +667,9 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
       const auto& fn = f->GetName();
       out << name_of(f->GetType(), typenames) << " " << fn;
       if (decl.IsFixedSize()) {
-        int alignment = AlignmentOf(f->GetType(), typenames);
-        if (alignment > 0) {
-          out << " __attribute__((aligned (" << std::to_string(alignment) << ")))";
+        auto alignment = AlignmentOf(f->GetType(), typenames);
+        if (alignment) {
+          out << " __attribute__((aligned (" << std::to_string(*alignment) << ")))";
         }
       }
       if (fn == default_name) {
@@ -573,7 +704,7 @@ void UnionWriter::PublicFields(CodeWriter& out) const {
       field_types.push_back(name_of(f->GetType(), typenames));
     }
     auto typelist = Join(field_types, ", ");
-    auto tmpl = R"--(
+    constexpr auto tmpl = R"--(
 template <Tag _Tag>
 using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<{typelist}>>::type;
 template <Tag _Tag, typename _Type>
@@ -609,7 +740,7 @@ void set(_Type&& _arg) {{
     const auto& default_value = name_of(first_field->GetType(), typenames) + "(" +
                                 first_field->ValueString(decorator) + ")";
 
-    auto tmpl = R"--(
+    constexpr auto tmpl = R"--(
 template<typename _Tp>
 static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, {name}>;
 
@@ -683,6 +814,9 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
   for (const auto& variable : decl.GetFields()) {
     out << fmt::format("case {}: {{\n", variable->GetName());
     out.Indent();
+    if (variable->IsNew()) {
+      out << fmt::format("if (true) return {};\n", ctx.status_bad);
+    }
     const auto& type = variable->GetType();
     read_var(value, type);
     out << fmt::format("if constexpr (std::is_trivially_copyable_v<{}>) {{\n",
@@ -724,7 +858,11 @@ void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx)
       out << "#pragma clang diagnostic push\n";
       out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
     }
-    out << fmt::format("case {}: return ", variable->GetName());
+    if (variable->IsNew()) {
+      out << fmt::format("case {}: return true ? {} : ", variable->GetName(), ctx.status_bad);
+    } else {
+      out << fmt::format("case {}: return ", variable->GetName());
+    }
     ctx.write_func(out, "get<" + variable->GetName() + ">()", variable->GetType());
     out << ";\n";
     if (variable->IsDeprecated()) {

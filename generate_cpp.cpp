@@ -30,8 +30,10 @@
 #include <android-base/strings.h>
 
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_cpp.h"
 
+#include "aidl_typenames.h"
 #include "logging.h"
 #include "os.h"
 
@@ -74,7 +76,6 @@ const char kStatusHeader[] = "binder/Status.h";
 const char kString16Header[] = "utils/String16.h";
 const char kTraceHeader[] = "binder/Trace.h";
 const char kStrongPointerHeader[] = "utils/StrongPointer.h";
-const char kAndroidBaseMacrosHeader[] = "android-base/macros.h";
 
 void GenerateBreakOnStatusNotOk(CodeWriter& out) {
   out.Write("if (((%s) != (%s))) {\n", kAndroidStatusVarName, kAndroidStatusOk);
@@ -200,6 +201,13 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
     out << GenLogBeforeExecute(bp_name, method, false /* isServer */, false /* isNdk */);
   }
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    out << "if (true) {\n";
+    out.Write("  %s = ::android::UNKNOWN_TRANSACTION;\n", kAndroidStatusVarName);
+    out << "} else {\n";
+    out.Indent();
+  }
+
   // Add the name of the interface we're hoping to call.
   out.Write("%s = %s.writeInterfaceToken(getInterfaceDescriptor());\n", kAndroidStatusVarName,
             kDataVarName);
@@ -248,7 +256,11 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
   if (method.GetType().GetName() != "void") {
     arg_names.emplace_back(kReturnVarName);
   }
-  out.Write("if (UNLIKELY(%s == ::android::UNKNOWN_TRANSACTION && %s::getDefaultImpl())) {\n",
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+    out.Dedent();
+    out << "}\n";
+  }
+  out.Write("if (%s == ::android::UNKNOWN_TRANSACTION && %s::getDefaultImpl()) [[unlikely]] {\n",
             kAndroidStatusVarName, i_name.c_str());
   out.Write("   return %s::getDefaultImpl()->%s(%s);\n", i_name.c_str(), method.GetName().c_str(),
             Join(arg_names, ", ").c_str());
@@ -365,7 +377,7 @@ void GenerateClientSource(CodeWriter& out, const AidlInterface& interface,
   vector<string> include_list = {
       HeaderFile(interface, ClassNames::CLIENT, false),
       HeaderFile(interface, ClassNames::SERVER, false),  // for TRANSACTION_* consts
-      kParcelHeader, kAndroidBaseMacrosHeader};
+      kParcelHeader};
   if (options.GenLog()) {
     include_list.emplace_back("chrono");
     include_list.emplace_back("functional");
@@ -452,6 +464,12 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
                                const AidlMethod& method, const AidlTypenames& typenames,
                                const Options& options) {
   const string bn_name = GetQualifiedName(interface, ClassNames::SERVER);
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+    out << "if (true) {\n";
+    out << "  _aidl_ret_status = ::android::UNKNOWN_TRANSACTION;\n";
+    out << "  break;\n";
+    out << "}\n";
+  }
 
   // Declare all the parameters now.  In the common case, we expect no errors
   // in serialization.
@@ -557,13 +575,13 @@ void GenerateServerMetaTransaction(CodeWriter& out, const AidlInterface& interfa
   string iface = ClassName(interface, ClassNames::INTERFACE);
   if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
     out << "_aidl_data.checkInterface(this);\n"
-        << "_aidl_reply->writeNoException();\n"
-        << "_aidl_reply->writeInt32(" << iface << "::VERSION);\n";
+        << "_aidl_reply->writeNoException();\n";
+    out << "_aidl_reply->writeInt32(" << iface << "::VERSION);\n";
   }
   if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
     out << "_aidl_data.checkInterface(this);\n"
-        << "_aidl_reply->writeNoException();\n"
-        << "_aidl_reply->writeUtf8AsUtf16(" << iface << "::HASH);\n";
+        << "_aidl_reply->writeNoException();\n";
+    out << "_aidl_reply->writeUtf8AsUtf16(" << iface << "::HASH);\n";
   }
 }
 
@@ -702,8 +720,8 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlInterface& interface,
 
   if (auto parent = interface.GetParentType(); parent) {
     out << fmt::format("DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_NESTED_INTERFACE({}, {}, \"{}\")\n",
-                       GetQualifiedName(*parent), ClassName(interface, ClassNames::BASE),
-                       interface.GetDescriptor());
+                       GetQualifiedName(*parent, ClassNames::MAYBE_INTERFACE),
+                       ClassName(interface, ClassNames::BASE), interface.GetDescriptor());
   } else {
     out << fmt::format("DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE({}, \"{}\")\n",
                        ClassName(interface, ClassNames::BASE), interface.GetDescriptor());
@@ -720,7 +738,7 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
   const string bp_name = ClassName(interface, ClassNames::CLIENT);
   const string iface = ClassName(interface, ClassNames::INTERFACE);
 
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << bp_name << " : public ::android::BpInterface<" << iface << "> {\n";
   out << "public:\n";
@@ -767,6 +785,9 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
 void GenerateClientHeader(CodeWriter& out, const AidlInterface& interface,
                           const AidlTypenames& typenames, const Options& options) {
   out << "#pragma once\n\n";
+  if (!options.Hash().empty()) {
+    out << "#include <mutex>\n";
+  }
   out << "#include <" << kIBinderHeader << ">\n";
   out << "#include <" << kIInterfaceHeader << ">\n";
   out << "#include <utils/Errors.h>\n";
@@ -822,7 +843,7 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
   const string bn_name = ClassName(interface, ClassNames::SERVER);
   const string iface = ClassName(interface, ClassNames::INTERFACE);
 
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << bn_name << " : public "
       << "::android::BnInterface<" << iface << "> {\n";
@@ -851,7 +872,7 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << "};  // class " << bn_name << "\n\n";
 
   std::string d_name = ClassName(interface, ClassNames::DELEGATOR_IMPL);
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << d_name << " : public " << bn_name << " {\n";
   out << "public:\n";
@@ -1004,8 +1025,8 @@ void GenerateNestedTypeDecls(CodeWriter& out, const AidlDefinedType& type,
 void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
                                 const AidlTypenames& typenames, const Options& options) {
   const string i_name = ClassName(interface, ClassNames::INTERFACE);
-  out << "class " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << ";\n\n";
-  out << "class";
+  out << "class LIBBINDER_EXPORTED " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << ";\n\n";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << i_name << " : public ::android::IInterface {\n";
   out << "public:\n";
@@ -1013,10 +1034,21 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << "typedef " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << " DefaultDelegator;\n";
   out << "DECLARE_META_INTERFACE(" << ClassName(interface, ClassNames::BASE) << ")\n";
   if (options.Version() > 0) {
-    out << "const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const int32_t VERSION = true ? "
+          << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
+          << ";\n";
+    } else {
+      out << "static inline const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
+    }
   }
   if (!options.Hash().empty()) {
-    out << "const std::string HASH = \"" << options.Hash() << "\";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const std::string HASH = true ? \"" << options.PreviousHash()
+          << "\" : \"" << options.Hash() << "\";\n";
+    } else {
+      out << "static inline const std::string HASH = \"" << options.Hash() << "\";\n";
+    }
   }
   GenerateNestedTypeDecls(out, interface, typenames, options);
   GenerateConstantDeclarations(out, interface, typenames);
@@ -1038,7 +1070,7 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
 
   // Implement the default impl class.
   const string default_impl = ClassName(interface, ClassNames::DEFAULT_IMPL);
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << default_impl << " : public " << i_name << " {\n";
   out << "public:\n";
@@ -1104,10 +1136,18 @@ void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& par
     out << "  _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out << "if (false) {\n";
+      out.Indent();
+    }
     out << "_aidl_ret_status = _aidl_parcel->" << method << "(" << arg << ");\n";
     out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+      out.Dedent();
+      out << "}\n";
+    }
   }
   out << "_aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);\n";
   out << "return _aidl_ret_status;\n";
@@ -1116,19 +1156,27 @@ void GenerateReadFromParcel(CodeWriter& out, const AidlStructuredParcelable& par
 void GenerateWriteToParcel(CodeWriter& out, const AidlStructuredParcelable& parcel,
                            const AidlTypenames& typenames) {
   out << "::android::status_t _aidl_ret_status = ::android::OK;\n";
-  out << "auto _aidl_start_pos = " << kParcelVarName << "->dataPosition();\n";
+  out << "size_t _aidl_start_pos = " << kParcelVarName << "->dataPosition();\n";
   out << kParcelVarName << "->writeInt32(0);\n";
   for (const auto& variable : parcel.GetFields()) {
     string method = ParcelWriteMethodOf(variable->GetType(), typenames);
     string arg = ParcelWriteCastOf(variable->GetType(), typenames, variable->GetName());
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out << "if (false) {\n";
+      out.Indent();
+    }
     out << "_aidl_ret_status = " << kParcelVarName << "->" << method << "(" << arg << ");\n";
     out << "if (((_aidl_ret_status) != (::android::OK))) {\n";
     out << "  return _aidl_ret_status;\n";
     out << "}\n";
+    if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+      out.Dedent();
+      out << "}\n";
+    }
   }
-  out << "auto _aidl_end_pos = " << kParcelVarName << "->dataPosition();\n";
+  out << "size_t _aidl_end_pos = " << kParcelVarName << "->dataPosition();\n";
   out << kParcelVarName << "->setDataPosition(_aidl_start_pos);\n";
-  out << kParcelVarName << "->writeInt32(_aidl_end_pos - _aidl_start_pos);\n";
+  out << kParcelVarName << "->writeInt32(static_cast<int32_t>(_aidl_end_pos - _aidl_start_pos));\n";
   out << kParcelVarName << "->setDataPosition(_aidl_end_pos);\n";
   out << "return _aidl_ret_status;\n";
 }
@@ -1207,7 +1255,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
 
   ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcel));
   out << TemplateDecl(parcel);
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, parcel);
   out << " " << clazz << " : public ::android::Parcelable {\n";
   out << "public:\n";
@@ -1520,11 +1568,14 @@ bool GenerateCpp(const string& output_file, const Options& options, const AidlTy
     return false;
   }
 
-  using GenFn = void (*)(CodeWriter & out, const AidlDefinedType& defined_type,
+  using GenFn = void (*)(CodeWriter& out, const AidlDefinedType& defined_type,
                          const AidlTypenames& typenames, const Options& options);
   // Wrap Generate* function to handle CodeWriter for a file.
   auto gen = [&](auto file, GenFn fn) {
     unique_ptr<CodeWriter> writer(io_delegate.GetCodeWriter(file));
+
+    GenerateAutoGenHeader(*writer, options);
+
     fn(*writer, defined_type, typenames, options);
     AIDL_FATAL_IF(!writer->Close(), defined_type) << "I/O Error!";
     return true;

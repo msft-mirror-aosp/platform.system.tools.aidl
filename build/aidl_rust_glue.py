@@ -71,10 +71,9 @@ def main(output, root, inputs, imports):
         node.files.append((in_name, inp))
 
   with open(output, "w") as lib_rs_file:
-    # Enable custom attributes for #![rustfmt::skip]
-    lib_rs_file.write("#![feature(custom_inner_attributes)]\n")
     lib_rs_file.write("#![allow(non_snake_case)]\n")
     lib_rs_file.write("#![allow(missing_docs)]\n")
+    lib_rs_file.write("#[deprecated(note = \"Please access via libbinder_rs binder::\")]\n")
     lib_rs_file.write("pub use binder;\n")
 
     lib_rs_file.write("pub mod aidl {\n")
@@ -88,7 +87,8 @@ def main(output, root, inputs, imports):
     lib_rs_file.write("}\n")
 
 def execute():
-  parser = argparse.ArgumentParser(description='Generate the top-level lib.rs.')
+  parser = argparse.ArgumentParser(description='Generate the top-level lib.rs.',
+                                   fromfile_prefix_chars='@')
   parser.add_argument('output', help='Path to output .rs file')
   parser.add_argument('root', help='Common ancestor of all input files')
   parser.add_argument('inputs', nargs='+', help='Input .rs files')

@@ -75,6 +75,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 
 	genLog := proptools.Bool(commonProperties.Gen_log)
 	genTrace := i.genTrace(lang)
+	aidlFlags := i.flagsForAidlGenRule(version)
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
@@ -93,8 +94,10 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Unstable:            i.properties.Unstable,
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
-		Flags:               i.flagsForAidlGenRule(version),
-	})
+		Flags:               aidlFlags,
+		UseUnfrozen:         i.useUnfrozen(mctx),
+	},
+	)
 
 	importExportDependencies := []string{}
 	sharedLibDependency := commonProperties.Additional_shared_libraries
@@ -104,9 +107,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	var cpp_std *string
 	var hostSupported *bool
 	addCflags := commonProperties.Cflags
-	targetProp := ccTargetProperties{
-		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
-	}
+	targetProp := ccTargetProperties{}
 
 	if lang == langCpp {
 		importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
@@ -171,12 +172,17 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Imports:           i.getImportsForVersion(version),
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name:                      proptools.StringPtr(cppModuleGen),
+				Name: proptools.StringPtr(cppModuleGen),
+				Enabled: android.CreateSelectOsToBool(map[string]*bool{
+					"":       nil,
+					"darwin": proptools.BoolPtr(false),
+				}),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
 				Recovery_available:        recoveryAvailable,
 				Host_supported:            hostSupported,
+				Cmake_snapshot_supported:  i.properties.Cmake_snapshot_supported,
 				Defaults:                  []string{"aidl-cpp-module-defaults"},
 				Double_loadable:           i.properties.Double_loadable,
 				Generated_sources:         []string{cppSourceGen},
@@ -189,6 +195,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 				Stl:                       stl,
 				Cpp_std:                   cpp_std,
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
+				Ldflags:                   commonProperties.Ldflags,
 				Apex_available:            commonProperties.Apex_available,
 				Min_sdk_version:           i.minSdkVersion(lang),
 				Target:                    targetProp,
@@ -202,19 +209,20 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
 				},
 				Include_build_directory: proptools.BoolPtr(false), // b/254682497
+				AidlInterface: struct {
+					Sources  []string
+					AidlRoot string
+					Lang     string
+					Flags    []string
+				}{
+					Sources:  srcs,
+					AidlRoot: aidlRoot,
+					Lang:     lang,
+					Flags:    aidlFlags,
+				},
 			}, &i.properties.VndkProperties,
 			&commonProperties.VndkProperties,
 			&overrideVndkProperties,
-			// the logic to create implementation libraries has been reimplemented
-			// in a Bazel macro, so these libraries should not be converted with
-			// bp2build
-			// TODO(b/237810289) perhaps do something different here so that we aren't
-			// also disabling these modules in mixed builds
-			&bazelProperties{
-				&Bazel_module{
-					Bp2build_available: proptools.BoolPtr(false),
-				},
-			},
 		},
 	})
 
@@ -245,14 +253,13 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	importExportDependencies := []string{}
 	var hostSupported *bool
 	var addCflags []string // not using cpp backend cflags for now
-	targetProp := ccTargetProperties{
-		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
-	}
+	targetProp := ccTargetProperties{}
 
 	importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
 	hostSupported = i.properties.Host_supported
@@ -263,10 +270,16 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	recoveryAvailable := i.properties.Recovery_available
 	productAvailable = nil
 
+	commonProperties := &i.properties.Backend.Cpp.CommonNativeBackendProperties
+
 	g := aidlImplementationGeneratorProperties{
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name:                      proptools.StringPtr(cppAnalyzerModuleGen),
+				Name: proptools.StringPtr(cppAnalyzerModuleGen),
+				Enabled: android.CreateSelectOsToBool(map[string]*bool{
+					"":       nil,
+					"darwin": proptools.BoolPtr(false),
+				}),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
@@ -278,10 +291,11 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 				Generated_sources:         []string{cppAnalyzerSourceGen},
 				Generated_headers:         []string{cppAnalyzerSourceGen},
 				Export_generated_headers:  []string{cppAnalyzerSourceGen},
-				Shared_libs:               append(importExportDependencies, i.versionedName(version)+"-"+langCpp),
+				Shared_libs:               append(append(importExportDependencies, i.versionedName(version)+"-"+langCpp), commonProperties.Additional_shared_libraries...),
 				Static_libs:               []string{"aidl-analyzer-main"},
 				Export_shared_lib_headers: importExportDependencies,
 				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
+				Ldflags:                   commonProperties.Ldflags,
 				Min_sdk_version:           i.minSdkVersion(langCpp),
 				Target:                    targetProp,
 				Tidy:                      proptools.BoolPtr(true),
@@ -293,12 +307,6 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 					"-clang-analyzer-deadcode.DeadStores",       // b/253079031
 					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
-				},
-			},
-			// TODO(b/237810289) disable converting -cpp-analyzer module in bp2build
-			&bazelProperties{
-				&Bazel_module{
-					Bp2build_available: proptools.BoolPtr(false),
 				},
 			},
 		},
@@ -348,6 +356,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
@@ -363,22 +372,12 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 				Installable:     proptools.BoolPtr(true),
 				Defaults:        []string{"aidl-java-module-defaults"},
 				Sdk_version:     sdkVersion,
-				Platform_apis:   i.properties.Backend.Java.Platform_apis,
 				Srcs:            []string{":" + javaSourceGen},
 				Apex_available:  i.properties.Backend.Java.Apex_available,
 				Min_sdk_version: i.minSdkVersion(langJava),
+				Static_libs:     i.properties.Backend.Java.Additional_libs,
 			},
 			&i.properties.Backend.Java.LintProperties,
-			// the logic to create implementation libraries has been reimplemented
-			// in a Bazel macro, so these libraries should not be converted with
-			// bp2build
-			// TODO(b/237810289) perhaps do something different here so that we aren't
-			// also disabling these modules in mixed builds
-			&bazelProperties{
-				&Bazel_module{
-					Bp2build_available: proptools.BoolPtr(false),
-				},
-			},
 		},
 	})
 
@@ -412,13 +411,18 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
+		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
 	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
-		Name:              proptools.StringPtr(rustModuleGen),
+		Name: proptools.StringPtr(rustModuleGen),
+		Enabled: android.CreateSelectOsToBool(map[string]*bool{
+			"darwin": proptools.BoolPtr(false),
+			"":       nil,
+		}),
 		Crate_name:        rustCrateName,
 		Stem:              proptools.StringPtr("lib" + versionedRustName),
 		Defaults:          []string{"aidl-rust-module-defaults"},
@@ -427,7 +431,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Product_available: i.properties.Product_available,
 		Apex_available:    i.properties.Backend.Rust.Apex_available,
 		Min_sdk_version:   i.minSdkVersion(langRust),
-		Target:            rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
+		Rustlibs:          i.properties.Backend.Rust.Additional_rustlibs,
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),
 	}, &aidlRustSourceProviderProperties{
@@ -483,10 +487,11 @@ func (i *aidlInterface) versionForInitVersionCompat(version string) string {
 }
 
 func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
-	flags = append(flags, i.properties.Flags...)
-	// For ToT, turn on "-Weverything" (enable all warnings)
-	if version == i.nextVersion() {
+	// For the latest unfrozen version of an interface we turn on all warnings and use
+	// all flags supplied by the 'flags' field in the aidl_interface module
+	if version == i.nextVersion() && !i.isFrozen() {
 		flags = append(flags, "-Weverything -Wno-missing-permission-annotation")
+		flags = append(flags, i.properties.Flags...)
 	}
 	return
 }
@@ -572,7 +577,7 @@ func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDown
 	imports := wrap("", getImportsWithVersion(ctx, g.properties.AidlInterfaceName, g.properties.Version), "-"+g.properties.Lang)
 	if g.properties.Lang == langJava {
 		if p, ok := g.properties.ModuleProperties[0].(*javaProperties); ok {
-			p.Static_libs = imports
+			p.Static_libs = append(p.Static_libs, imports...)
 		}
 		ctx.CreateModule(wrapLibraryFactory(java.LibraryFactory), g.properties.ModuleProperties...)
 	} else {
@@ -580,9 +585,6 @@ func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDown
 			p.Shared_libs = append(p.Shared_libs, imports...)
 			p.Export_shared_lib_headers = append(p.Export_shared_lib_headers, imports...)
 		}
-		module := ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
-		// AIDL-generated CC modules can't be used across system/vendor boundary. So marking it
-		// as MustUseVendorVariant. See build/soong/cc/config/vndk.go
-		module.(*cc.Module).Properties.MustUseVendorVariant = true
+		ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
 	}
 }

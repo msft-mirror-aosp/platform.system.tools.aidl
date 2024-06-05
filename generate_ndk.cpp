@@ -18,6 +18,7 @@
 
 #include "aidl.h"
 #include "aidl_language.h"
+#include "aidl_to_common.h"
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_ndk.h"
 #include "logging.h"
@@ -104,6 +105,9 @@ void GenerateNdk(const string& output_file, const Options& options, const AidlTy
   // Wrap Generate* function to handle CodeWriter for a file.
   auto gen = [&](auto file, GenFn fn) {
     unique_ptr<CodeWriter> writer(io_delegate.GetCodeWriter(file));
+
+    GenerateAutoGenHeader(*writer, options);
+
     fn(*writer, types, defined_type, options);
     AIDL_FATAL_IF(!writer->Close(), defined_type) << "I/O Error!";
   };
@@ -512,6 +516,14 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
         << "::client\");\n";
   }
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
+      method.IsUserDefined()) {
+    out << "if (true) {\n";
+    out << "  _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;\n";
+    out << "  goto _aidl_error;\n";
+    out << "}\n";
+  }
+
   out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
   if (defined_type.IsSensitiveData()) {
     out << "AParcel_markSensitive(_aidl_in.get());\n";
@@ -615,6 +627,10 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     out.Write("#error Permission checks not implemented for the ndk backend\n");
   }
 
+  if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ) &&
+      method.IsUserDefined()) {
+    out << "if (true) break;\n";
+  }
   for (const auto& arg : method.GetArguments()) {
     out << NdkNameOf(types, arg->GetType(), StorageMode::STACK) << " " << cpp::BuildVarName(*arg)
         << ";\n";
@@ -800,7 +816,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
       out.Dedent();
       out << "}\n";
     }
-    if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
+    if (method->GetName() == kGetInterfaceHash && (!options.Hash().empty())) {
       out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
       out << "*_aidl_return = " << iface << "::" << kHash << ";\n";
@@ -829,7 +845,27 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
       << "::fromBinder(const ::ndk::SpAIBinder& binder) {\n";
   out.Indent();
   out << "if (!AIBinder_associateClass(binder.get(), " << GlobalClassVarName(defined_type)
-      << ")) { return nullptr; }\n";
+      << ")) {\n";
+  out.Indent();
+  // since NDK users don't use weak symbol support, we don't check builtin available. We could
+  // optionally check it if __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__ is defined, but this would
+  // also mean that app developers relying on this behavior would be missing test parity, and if
+  // local transactions aren't supported, due to missing the descriptor API, they will need to
+  // work around it a different way, so it's best to check based on __ANDROID_API__
+  out << "#if __ANDROID_API__ >= 31\n";
+  out << "const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());\n";
+  out << "if (originalClass == nullptr) return nullptr;\n";
+  out << "if (0 == strcmp(AIBinder_Class_getDescriptor(originalClass), descriptor)) {\n";
+  out.Indent();
+  // parcel transactions in process, e.g. NDK<->Rust (okay..)
+  out << "return ::ndk::SharedRefBase::make<" << GetQualifiedName(defined_type, ClassNames::CLIENT)
+      << ">(binder);\n";
+  out.Dedent();
+  out << "}\n";
+  out << "#endif\n";
+  out << "return nullptr;\n";
+  out.Dedent();
+  out << "}\n";
   out << "std::shared_ptr<::ndk::ICInterface> interface = "
          "::ndk::ICInterface::asInterface(binder.get());\n";
   out << "if (interface) {\n";
@@ -1125,11 +1161,22 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   GenerateNestedTypeDecls(out, types, defined_type, options);
   GenerateConstantDeclarations(out, types, defined_type);
   if (options.Version() > 0) {
-    out << "static const int32_t " << kVersion << " = " << std::to_string(options.Version())
-        << ";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const int32_t " << kVersion << " = true ? "
+          << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
+          << ";\n";
+    } else {
+      out << "static inline const int32_t " << kVersion << " = "
+          << std::to_string(options.Version()) << ";\n";
+    }
   }
   if (!options.Hash().empty()) {
-    out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
+    if (options.IsLatestUnfrozenVersion()) {
+      out << "static inline const std::string " << kHash << " = true ? \"" << options.PreviousHash()
+          << "\" : \"" << options.Hash() << "\";\n";
+    } else {
+      out << "static inline const std::string " << kHash << " = \"" << options.Hash() << "\";\n";
+    }
   }
   for (const auto& method : defined_type.GetMethods()) {
     if (!method->IsUserDefined()) {
@@ -1219,9 +1266,9 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
     cpp::GenerateDeprecated(out, *variable);
     out << " " << variable->GetName();
     if (defined_type.IsFixedSize()) {
-      int alignment = cpp::AlignmentOf(type, types);
-      if (alignment > 0) {
-        out << " __attribute__((aligned (" << std::to_string(alignment) << ")))";
+      auto alignment = cpp::AlignmentOf(type, types);
+      if (alignment) {
+        out << " __attribute__((aligned (" << std::to_string(*alignment) << ")))";
       }
     }
     if (variable->GetDefaultValue()) {
@@ -1260,6 +1307,40 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
 
   out.Dedent();
   out << "};\n";
+
+  if (defined_type.IsFixedSize()) {
+    size_t variable_offset = 0;
+    for (const auto& variable : defined_type.GetFields()) {
+      const auto& var_type = variable->GetType();
+      // Assert the offset of each field within the struct
+      auto alignment = cpp::AlignmentOf(var_type, types);
+      AIDL_FATAL_IF(alignment == std::nullopt, var_type);
+      variable_offset = cpp::AlignTo(variable_offset, *alignment);
+      out << "static_assert(offsetof(" << defined_type.GetName() << ", " << variable->GetName()
+          << ") == " << std::to_string(variable_offset) << ");\n";
+
+      // Assert the size of each field
+      std::string cpp_type = NdkNameOf(types, var_type, StorageMode::STACK);
+      auto variable_size = cpp::SizeOf(var_type, types);
+      AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
+      out << "static_assert(sizeof(" << cpp_type << ") == " << std::to_string(*variable_size)
+          << ");\n";
+
+      variable_offset += *variable_size;
+    }
+    auto parcelable_alignment = cpp::AlignmentOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(parcelable_alignment == std::nullopt, defined_type);
+    // Assert the alignment of the struct. Since we asserted the field offsets, this also ensures
+    // fields have the right alignment
+    out << "static_assert(alignof(" << defined_type.GetName()
+        << ") == " << std::to_string(*parcelable_alignment) << ");\n";
+
+    auto parcelable_size = cpp::SizeOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(parcelable_size == std::nullopt, defined_type);
+    // Assert the size of the struct
+    out << "static_assert(sizeof(" << defined_type.GetName()
+        << ") == " << std::to_string(*parcelable_size) << ");\n";
+  }
 }
 
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
@@ -1295,6 +1376,11 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     out << "if (_aidl_parcelable_size < 4) return STATUS_BAD_VALUE;\n";
     out << "if (_aidl_start_pos > INT32_MAX - _aidl_parcelable_size) return STATUS_BAD_VALUE;\n";
     for (const auto& variable : defined_type.GetFields()) {
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+        out << "if (false) {\n";
+        out.Indent();
+      }
+
       out << "if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= "
              "_aidl_parcelable_size) "
              "{\n"
@@ -1306,6 +1392,10 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
           {out, types, variable->GetType(), "_aidl_parcel", "&" + variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::READ)) {
+        out.Dedent();
+        out << "}\n";
+      }
     }
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);\n"
         << "return _aidl_ret_status;\n";
@@ -1322,10 +1412,18 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     StatusCheckReturn(out);
 
     for (const auto& variable : defined_type.GetFields()) {
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+        out << "if (false) {\n";
+        out.Indent();
+      }
       out << "_aidl_ret_status = ";
       WriteToParcelFor({out, types, variable->GetType(), "_aidl_parcel", variable->GetName()});
       out << ";\n";
       StatusCheckReturn(out);
+      if (variable->IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
+        out.Dedent();
+        out << "}\n";
+      }
     }
     out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";
@@ -1383,6 +1481,26 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   uw.PrivateFields(out);
   out.Dedent();
   out << "};\n";
+  if (defined_type.IsFixedSize()) {
+    auto alignment = cpp::AlignmentOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(alignment == std::nullopt, defined_type);
+    for (const auto& variable : defined_type.GetFields()) {
+      // Assert the size of each union variant
+      const auto& var_type = variable->GetType();
+      std::string cpp_type = NdkNameOf(types, var_type, StorageMode::STACK);
+      auto variable_size = cpp::SizeOf(var_type, types);
+      AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
+      out << "static_assert(sizeof(" << cpp_type << ") == " << std::to_string(*variable_size)
+          << ");\n";
+    }
+    // Assert the alignment of the tagged union
+    out << "static_assert(alignof(" << clazz << ") == " << std::to_string(*alignment) << ");\n";
+
+    // Assert the size of the tagged union, taking the tag and its padding into account
+    auto union_size = cpp::SizeOfDefinedType(defined_type, types);
+    AIDL_FATAL_IF(union_size == std::nullopt, defined_type);
+    out << "static_assert(sizeof(" << clazz << ") == " << std::to_string(*union_size) << ");\n";
+  }
 }
 
 void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,

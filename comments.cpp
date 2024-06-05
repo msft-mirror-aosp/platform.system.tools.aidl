@@ -171,42 +171,25 @@ Comment::Comment(const std::string& body) : body(body) {
   }
 }
 
-// Returns the immediate block comment from the list of comments.
-// Only the last/block comment can have the tag.
-//
-//   /* @hide */
-//   int x;
-//
-// But tags in line or distant comments don't count. In the following,
-// the variable 'x' is not hidden.
-//
-//    // @hide
-//    int x;
-//
-//    /* @hide */
-//    /* this is the immemediate comment to 'x' */
-//    int x;
-//
-static std::optional<Comment> GetValidComment(const Comments& comments) {
-  if (!comments.empty() && comments.back().type == Comment::Type::BLOCK) {
-    return comments.back();
-  }
-  return std::nullopt;
-}
-
 // Sees if comments have the @hide tag.
 // Example: /** @hide */
 bool HasHideInComments(const Comments& comments) {
-  const auto valid_comment = GetValidComment(comments);
-  return valid_comment && std::regex_search(valid_comment->body, kTagHideRegex);
+  for (const Comment& comment : comments) {
+    if (comment.type != Comment::Type::BLOCK) continue;
+    if (!std::regex_search(comment.body, kTagHideRegex)) continue;
+    return true;
+  }
+  return false;
 }
 
 // Finds the @deprecated tag in comments and returns it with optional note which
 // follows the tag.
 // Example: /** @deprecated reason */
 std::optional<Deprecated> FindDeprecated(const Comments& comments) {
-  if (const auto valid_comment = GetValidComment(comments); valid_comment) {
-    for (const auto& [name, description] : BlockTags(comments.back())) {
+  for (const Comment& comment : comments) {
+    if (comment.type != Comment::Type::BLOCK) continue;
+
+    for (const auto& [name, description] : BlockTags(comment)) {
       // take the first @deprecated
       if (kTagDeprecated == name) {
         return Deprecated{description};

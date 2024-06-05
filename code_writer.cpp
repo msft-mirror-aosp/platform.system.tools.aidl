@@ -24,8 +24,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/stringprintf.h>
-
 namespace android {
 namespace aidl {
 
@@ -42,23 +40,17 @@ std::string CodeWriter::ApplyIndent(const std::string& str) {
   return output;
 }
 
-bool CodeWriter::Write(const char* format, ...) {
-  va_list ap;
-  va_start(ap, format);
-  std::string formatted;
-  android::base::StringAppendV(&formatted, format, ap);
-  va_end(ap);
-
+bool CodeWriter::WriteString(const std::string& str) {
   // extract lines. empty line is preserved.
   std::vector<std::string> lines;
   size_t pos = 0;
-  while (pos < formatted.size()) {
-    size_t line_end = formatted.find('\n', pos);
+  while (pos < str.size()) {
+    size_t line_end = str.find('\n', pos);
     if (line_end != std::string::npos) {
-      lines.push_back(formatted.substr(pos, (line_end - pos) + 1));
+      lines.push_back(str.substr(pos, (line_end - pos) + 1));
       pos = line_end + 1;
     } else {
-      lines.push_back(formatted.substr(pos));
+      lines.push_back(str.substr(pos));
       break;
     }
   }

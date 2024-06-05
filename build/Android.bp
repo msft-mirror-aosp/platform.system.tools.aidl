@@ -28,7 +28,7 @@ bootstrap_go_package {
         "blueprint",
         "soong",
         "soong-android",
-        "soong-bp2build",
+        "soong-aidl-library",
         "soong-cc",
         "soong-genrule",
         "soong-phony",
@@ -41,15 +41,14 @@ bootstrap_go_package {
         "aidl_api.go",
         "aidl_gen_rule.go",
         "aidl_interface_backends.go",
+
         "aidl_interface_defaults.go",
-        "aidl_interface_headers.go",
         "aidl_interface_metadata_singleton.go",
         "aidl_rust_source_provider.go",
         "aidl_utils.go",
     ],
     testSrcs: [
         "aidl_test.go",
-        "aidl_interface_bp2build_test.go",
     ],
     pluginFor: ["soong_build"],
 }
@@ -134,6 +133,7 @@ aidl_interface {
         ndk: {
             sdk_version: "29",
             cflags: ["-U__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__"],
+            ldflags: ["-Wl,-z,max-page-size=65536"],
         },
     },
 }
@@ -227,6 +227,7 @@ aidl_interface {
     local_include_dir: "tests_vintf",
     srcs: ["tests_vintf/vintf/IFoo.aidl"],
     stability: "vintf",
+    vendor_available: true,
     backend: {
         rust: {
             enabled: true,
@@ -386,6 +387,36 @@ aidl_interface {
     srcs: [
         "tests_6/test6/Bar.aidl",
         "tests_6/test6/Foo.aidl",
+    ],
+}
+
+aidl_interface {
+    name: "tests-unfrozen-vendor",
+    owner: "google",
+    local_include_dir: "tests_unfrozen_vendor",
+    srcs: ["tests_unfrozen_vendor/vendor/IFoo.aidl"],
+    vendor_available: true,
+    backend: {
+        rust: {
+            enabled: true,
+        },
+    },
+    frozen: false,
+    always_use_unfrozen: true,
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+
+}
+
+cc_library {
+    name: "build_test_aidl_always_use_unfrozen",
+    srcs: ["test_unfrozen_iface.cpp"],
+    shared_libs: [
+        "tests-unfrozen-vendor-V2-cpp",
     ],
 }
 

@@ -15,6 +15,7 @@
 package aidl
 
 import (
+	"android/soong/aidl_library"
 	"android/soong/android"
 	"reflect"
 
@@ -31,7 +32,7 @@ import (
 var (
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{
 		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
-			`${aidlCmd} --dumpapi --structured ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
+			`${aidlCmd} --dumpapi ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
 			`${aidlHashGen} ${outDir} ${latestVersion} ${hashFile}`,
 		CommandDeps: []string{"${aidlCmd}", "${aidlHashGen}"},
 	}, "optionalFlags", "imports", "outDir", "hashFile", "latestVersion")
@@ -55,6 +56,7 @@ type aidlApiProperties struct {
 	Srcs      []string `android:"path"`
 	AidlRoot  string   // base directory for the input aidl file
 	Stability *string
+	Unstable  *bool
 	Imports   []string
 	Headers   []string
 	Versions  []string
@@ -148,6 +150,9 @@ func (m *aidlApi) createApiDumpFromSource(ctx android.ModuleContext) apiDump {
 	hashFile = android.PathForModuleOut(ctx, "dump", ".hash")
 
 	var optionalFlags []string
+	if !proptools.Bool(m.properties.Unstable) {
+		optionalFlags = append(optionalFlags, "--structured")
+	}
 	if m.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *m.properties.Stability)
 	}
@@ -387,13 +392,13 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			deps.implicits = append(deps.implicits, api.checkHashTimestamps.Paths()...)
 			deps.implicits = append(deps.implicits, api.hasDevelopment)
 		case interfaceHeadersDepTag:
-			headerInfo, ok := ctx.OtherModuleProvider(dep, AidlInterfaceHeadersProvider).(AidlInterfaceHeadersInfo)
+			aidlLibraryInfo, ok := android.OtherModuleProvider(ctx, dep, aidl_library.AidlLibraryProvider)
 			if !ok {
-				ctx.PropertyErrorf("headers", "module %v does not provide AidlInterfaceHeadersInfo", dep.Name())
+				ctx.PropertyErrorf("headers", "module %v does not provide AidlLibraryInfo", dep.Name())
 				return
 			}
-			deps.implicits = append(deps.implicits, headerInfo.Srcs...)
-			deps.imports = append(deps.imports, headerInfo.IncludeDir)
+			deps.implicits = append(deps.implicits, aidlLibraryInfo.Hdrs.ToList()...)
+			deps.imports = append(deps.imports, android.Paths(aidlLibraryInfo.IncludeDirs.ToList()).Strings()...)
 		}
 	})
 	return deps
@@ -449,10 +454,6 @@ func (m *aidlApi) checkEquality(ctx android.ModuleContext, oldDump apiDump, newD
 		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality_frozen.txt")
 	} else {
 		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality.txt")
-	}
-	sdkIsFinal := !ctx.Config().DefaultAppTargetSdk(ctx).IsPreview()
-	if sdkIsFinal {
-		messageFile = android.PathForSource(ctx, "system/tools/aidl/build/message_check_equality_release.txt")
 	}
 	formattedMessageFile := android.PathForModuleOut(ctx, "message_check_equality.txt")
 	rb := android.NewRuleBuilder(pctx, ctx)
@@ -561,8 +562,18 @@ func (m *aidlApi) checkForDevelopment(ctx android.ModuleContext, latestVersionDu
 				hasDevCommand.
 					Text(fmt.Sprintf("2> /dev/null && %s && exit -1 || echo $? >", msg)).Output(hasDevPath)
 			} else {
-				hasDevCommand.
-					Text("2> /dev/null; echo $? >").Output(hasDevPath)
+				// if is explicitly frozen
+				if m.isFrozen() {
+					// Throw an error if checkapi returns WITH differences
+					msg := fmt.Sprintf("echo \"Interface %s can not be marked \\`frozen: true\\` because there are changes "+
+						"between the current version and the last frozen version.\"", m.properties.BaseName)
+					hasDevCommand.
+						Text(fmt.Sprintf("2> /dev/null || ( %s && exit -1) && echo 0 >", msg)).Output(hasDevPath)
+				} else {
+					hasDevCommand.
+						Text("2> /dev/null; echo $? >").Output(hasDevPath)
+				}
+
 			}
 		} else {
 			// We know there are different imports which means has_development must be true
@@ -705,6 +716,7 @@ func addApiModule(mctx android.DefaultableHookContext, i *aidlInterface) string 
 		Srcs:      srcs,
 		AidlRoot:  aidlRoot,
 		Stability: i.properties.Stability,
+		Unstable:  i.properties.Unstable,
 		Imports:   i.properties.Imports,
 		Headers:   i.properties.Headers,
 		Versions:  i.getVersions(),
@@ -724,7 +736,7 @@ func versionForHashGen(ver string) string {
 }
 
 func init() {
-	android.RegisterSingletonType("aidl-freeze-api", freezeApiSingletonFactory)
+	android.RegisterParallelSingletonType("aidl-freeze-api", freezeApiSingletonFactory)
 }
 
 func freezeApiSingletonFactory() android.Singleton {
@@ -736,7 +748,7 @@ type freezeApiSingleton struct{}
 func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) {
 	var files android.Paths
 	ctx.VisitAllModules(func(module android.Module) {
-		if !module.Enabled() {
+		if !module.Enabled(ctx) {
 			return
 		}
 		if m, ok := module.(*aidlApi); ok {

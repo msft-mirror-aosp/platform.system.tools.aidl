@@ -33,22 +33,31 @@ extern char kTransactionLogStruct[];
 
 // These roughly correspond to the various class names in the C++ hierarchy:
 enum class ClassNames {
-  BASE,            // Foo (not a real class, but useful in some circumstances).
-  CLIENT,          // BpFoo
-  SERVER,          // BnFoo
-  INTERFACE,       // IFoo
-  DEFAULT_IMPL,    // IFooDefault
-  RAW,             // (as shown in the file)
-  DELEGATOR_IMPL,  // IFooDelegator
+  BASE,             // Foo (not a real class, but useful in some circumstances).
+  CLIENT,           // BpFoo
+  SERVER,           // BnFoo
+  INTERFACE,        // IFoo
+  DEFAULT_IMPL,     // IFooDefault
+  RAW,              // (as shown in the file)
+  DELEGATOR_IMPL,   // IFooDelegator
+  MAYBE_INTERFACE,  // == INTERFACE for AidlInterface, == RAW for other types
 };
 
 string ClassName(const AidlDefinedType& defined_type, ClassNames type);
 
-// Return the alignment of known types and enum backing types.
-// If the alignment is unknown, or it is a FizedSize parcelable with its
-// own guaranteed alignment(so it does not need to be specified), 0 will be
-// returned.
-size_t AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames);
+// Returns the alignment of known types and enum backing types or nullopt for
+// non-FixedSize parcelables.
+std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames);
+std::optional<size_t> AlignmentOfDefinedType(const AidlDefinedType& defined_type,
+                                             const AidlTypenames& typenames);
+
+size_t AlignTo(size_t val, size_t align);
+
+// Return the size of known types and enum backing types or nullopt for
+// non-FixedSize parcelables.
+std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames);
+std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
+                                        const AidlTypenames& typenames);
 
 // Generate the relative path to a header file.  If |use_os_sep| we'll use the
 // operating system specific path separator rather than C++'s expected '/' when
