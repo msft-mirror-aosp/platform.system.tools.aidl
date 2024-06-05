@@ -357,7 +357,6 @@ cc_library {
     ],
 }
 
-
 rust_library {
     name: "libsimple_parcelable_rust",
     crate_name: "simple_parcelable",
@@ -747,6 +746,7 @@ java_test {
         "tests/java/src/android/aidl/tests/ExtensionTests.java",
         "tests/java/src/android/aidl/tests/NullableTests.java",
         "tests/java/src/android/aidl/tests/VintfTests.java",
+        "tests/java/src/android/aidl/tests/ServiceManagerNativeTests.java",
     ],
     data: [
         ":cts-dalvik-device-test-runner",

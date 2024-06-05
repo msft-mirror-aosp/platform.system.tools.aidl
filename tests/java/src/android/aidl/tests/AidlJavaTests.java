@@ -12,7 +12,8 @@ public class AidlJavaTests {
         Result result = junit.run(ExtensionTests.class, GenericTests.class,
             JavaOnlyImmutableAnnotationTests.class, MapTests.class, NullableTests.class,
             TestServiceClient.class, TestVersionedInterface.class, UnionTests.class,
-            VintfTests.class, BuiltInTests.class, DelegatorTests.class, TrunkStableTests.class);
+            VintfTests.class, BuiltInTests.class, DelegatorTests.class, TrunkStableTests.class,
+            ServiceManagerNativeTests.class);
 
         System.out.println(result.wasSuccessful() ? "TEST SUCCESS" : "TEST FAILURE");
     }
