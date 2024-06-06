@@ -738,7 +738,7 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
   const string bp_name = ClassName(interface, ClassNames::CLIENT);
   const string iface = ClassName(interface, ClassNames::INTERFACE);
 
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << bp_name << " : public ::android::BpInterface<" << iface << "> {\n";
   out << "public:\n";
@@ -843,7 +843,7 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
   const string bn_name = ClassName(interface, ClassNames::SERVER);
   const string iface = ClassName(interface, ClassNames::INTERFACE);
 
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << bn_name << " : public "
       << "::android::BnInterface<" << iface << "> {\n";
@@ -872,7 +872,7 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << "};  // class " << bn_name << "\n\n";
 
   std::string d_name = ClassName(interface, ClassNames::DELEGATOR_IMPL);
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << d_name << " : public " << bn_name << " {\n";
   out << "public:\n";
@@ -1025,8 +1025,8 @@ void GenerateNestedTypeDecls(CodeWriter& out, const AidlDefinedType& type,
 void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
                                 const AidlTypenames& typenames, const Options& options) {
   const string i_name = ClassName(interface, ClassNames::INTERFACE);
-  out << "class " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << ";\n\n";
-  out << "class";
+  out << "class LIBBINDER_EXPORTED " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << ";\n\n";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << i_name << " : public ::android::IInterface {\n";
   out << "public:\n";
@@ -1070,7 +1070,7 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
 
   // Implement the default impl class.
   const string default_impl = ClassName(interface, ClassNames::DEFAULT_IMPL);
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, interface);
   out << " " << default_impl << " : public " << i_name << " {\n";
   out << "public:\n";
@@ -1255,7 +1255,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
 
   ClangDiagnosticIgnoreDeprecated guard(out, HasDeprecatedField(parcel));
   out << TemplateDecl(parcel);
-  out << "class";
+  out << "class LIBBINDER_EXPORTED";
   GenerateDeprecated(out, parcel);
   out << " " << clazz << " : public ::android::Parcelable {\n";
   out << "public:\n";
