@@ -53,19 +53,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		return ""
 	}
 
-	var overrideVndkProperties cc.VndkProperties
-
-	if !i.isModuleForVndk(version) {
-		// We only want the VNDK to include the latest interface. For interfaces in
-		// development, they will be frozen, so we put their latest version in the
-		// VNDK. For interfaces which are already frozen, we put their latest version
-		// in the VNDK, and when that version is frozen, the version in the VNDK can
-		// be updated. Otherwise, we remove this library from the VNDK, to avoid adding
-		// multiple versions of the same library to the VNDK.
-		overrideVndkProperties.Vndk.Enabled = proptools.BoolPtr(false)
-		overrideVndkProperties.Vndk.Support_system_process = proptools.BoolPtr(false)
-	}
-
 	var commonProperties *CommonNativeBackendProperties
 	if lang == langCpp {
 		commonProperties = &i.properties.Backend.Cpp.CommonNativeBackendProperties
@@ -155,9 +142,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		// It may be the case in the future that we will want to enable this (if some generic
 		// helper should be used by both libbinder vendor things using /dev/vndbinder as well
 		// as those things using /dev/binder + libbinder_ndk to talk to stable interfaces).
-		if "vintf" == proptools.String(i.properties.Stability) {
-			overrideVndkProperties.Vndk.Private = proptools.BoolPtr(true)
-		}
+
 		// As libbinder is not available for the product processes, we must not create
 		// product variant for the aidl_interface
 		productAvailable = nil
@@ -220,9 +205,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 					Lang:     lang,
 					Flags:    aidlFlags,
 				},
-			}, &i.properties.VndkProperties,
-			&commonProperties.VndkProperties,
-			&overrideVndkProperties,
+			},
 		},
 	})
 
@@ -494,23 +477,6 @@ func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
 		flags = append(flags, i.properties.Flags...)
 	}
 	return
-}
-
-func (i *aidlInterface) isModuleForVndk(version string) bool {
-	if i.properties.Vndk_use_version != nil {
-		if !i.hasVersion() && version != *i.properties.Vndk_use_version {
-			panic("unrecognized vndk_use_version")
-		}
-		// Will be exactly one of the version numbers
-		return version == *i.properties.Vndk_use_version
-	}
-
-	// For an interface with no versions, this is the ToT interface.
-	if !i.hasVersion() {
-		return version == i.nextVersion()
-	}
-
-	return version == i.latestVersion()
 }
 
 // importing aidl_interface's version  | imported aidl_interface | imported aidl_interface's version
