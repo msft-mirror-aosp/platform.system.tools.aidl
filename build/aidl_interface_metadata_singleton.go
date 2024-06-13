@@ -17,7 +17,6 @@ package aidl
 import (
 	"android/soong/android"
 
-	"fmt"
 	"strings"
 
 	"github.com/google/blueprint"
@@ -68,11 +67,7 @@ func aidlInterfacesMetadataSingletonFactory() android.Module {
 
 type aidlInterfacesMetadataSingleton struct {
 	android.ModuleBase
-
-	metadataPath android.WritablePath
 }
-
-var _ android.OutputFileProducer = (*aidlInterfacesMetadataSingleton)(nil)
 
 func (m *aidlInterfacesMetadataSingleton) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	if m.Name() != aidlMetadataSingletonName {
@@ -163,22 +158,16 @@ func (m *aidlInterfacesMetadataSingleton) GenerateAndroidBuildActions(ctx androi
 		})
 	}
 
-	m.metadataPath = android.PathForModuleOut(ctx, "aidl_metadata.json")
+	output := android.PathForModuleOut(ctx, "aidl_metadata.json")
 
 	ctx.Build(pctx, android.BuildParams{
 		Rule:   joinJsonObjectsToArrayRule,
 		Inputs: metadataOutputs,
-		Output: m.metadataPath,
+		Output: output,
 		Args: map[string]string{
 			"files": strings.Join(metadataOutputs.Strings(), " "),
 		},
 	})
-}
 
-func (m *aidlInterfacesMetadataSingleton) OutputFiles(tag string) (android.Paths, error) {
-	if tag != "" {
-		return nil, fmt.Errorf("unsupported tag %q", tag)
-	}
-
-	return android.Paths{m.metadataPath}, nil
+	ctx.SetOutputFiles(android.Paths{output}, "")
 }
