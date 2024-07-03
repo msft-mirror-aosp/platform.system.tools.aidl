@@ -13,7 +13,7 @@ declare_binder_interface! {
     native: BnNamedCallback(on_transact),
     proxy: BpNamedCallback {
     },
-    async: INamedCallbackAsync,
+    async: INamedCallbackAsync(try_into_local_async),
   }
 }
 pub trait INamedCallback: binder::Interface + Send {
@@ -24,6 +24,9 @@ pub trait INamedCallback: binder::Interface + Send {
   }
   fn setDefaultImpl(d: INamedCallbackDefaultRef) -> INamedCallbackDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+  }
+  fn try_as_async_server(&self) -> Option<&(dyn INamedCallbackAsyncServer + Send + Sync)> {
+    None
   }
 }
 pub trait INamedCallbackAsync<P>: binder::Interface + Send {
@@ -58,9 +61,28 @@ impl BnNamedCallback {
       fn r#GetName(&self) -> binder::Result<String> {
         self._rt.block_on(self._inner.r#GetName())
       }
+      fn try_as_async_server(&self) -> Option<&(dyn INamedCallbackAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn INamedCallbackAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnNamedCallback>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> INamedCallbackAsync<P> for Wrapper {
+      fn r#GetName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetName())
+      }
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn INamedCallbackAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait INamedCallbackDefault: Send + Sync {

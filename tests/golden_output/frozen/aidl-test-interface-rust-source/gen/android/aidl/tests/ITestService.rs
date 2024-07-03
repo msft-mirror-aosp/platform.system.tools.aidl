@@ -13,7 +13,7 @@ declare_binder_interface! {
     native: BnTestService(on_transact),
     proxy: BpTestService {
     },
-    async: ITestServiceAsync,
+    async: ITestServiceAsync(try_into_local_async),
   }
 }
 pub trait ITestService: binder::Interface + Send {
@@ -95,13 +95,16 @@ pub trait ITestService: binder::Interface + Send {
   fn setDefaultImpl(d: ITestServiceDefaultRef) -> ITestServiceDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
+  fn try_as_async_server(&self) -> Option<&(dyn ITestServiceAsyncServer + Send + Sync)> {
+    None
+  }
 }
 pub trait ITestServiceAsync<P>: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService" }
   fn r#UnimplementedMethod<'a>(&'a self, _arg_arg: i32) -> binder::BoxFuture<'a, binder::Result<i32>>;
   #[deprecated = "to make sure we have something in system/tools/aidl which does a compile check of deprecated and make sure this is reflected in goldens"]
   fn r#Deprecated<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>>;
-  fn r#TestOneway(&self) -> std::future::Ready<binder::Result<()>>;
+  fn r#TestOneway<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>>;
   fn r#RepeatBoolean<'a>(&'a self, _arg_token: bool) -> binder::BoxFuture<'a, binder::Result<bool>>;
   fn r#RepeatByte<'a>(&'a self, _arg_token: i8) -> binder::BoxFuture<'a, binder::Result<i8>>;
   fn r#RepeatChar<'a>(&'a self, _arg_token: u16) -> binder::BoxFuture<'a, binder::Result<u16>>;
@@ -475,9 +478,235 @@ impl BnTestService {
       fn r#GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
         self._rt.block_on(self._inner.r#GetCircular(_arg_cp))
       }
+      fn try_as_async_server(&self) -> Option<&(dyn ITestServiceAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn ITestServiceAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnTestService>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for Wrapper {
+      fn r#UnimplementedMethod<'a>(&'a self, _arg_arg: i32) -> binder::BoxFuture<'a, binder::Result<i32>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#UnimplementedMethod(_arg_arg))
+      }
+      fn r#Deprecated<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#Deprecated())
+      }
+      fn r#TestOneway<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#TestOneway())
+      }
+      fn r#RepeatBoolean<'a>(&'a self, _arg_token: bool) -> binder::BoxFuture<'a, binder::Result<bool>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatBoolean(_arg_token))
+      }
+      fn r#RepeatByte<'a>(&'a self, _arg_token: i8) -> binder::BoxFuture<'a, binder::Result<i8>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatByte(_arg_token))
+      }
+      fn r#RepeatChar<'a>(&'a self, _arg_token: u16) -> binder::BoxFuture<'a, binder::Result<u16>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatChar(_arg_token))
+      }
+      fn r#RepeatInt<'a>(&'a self, _arg_token: i32) -> binder::BoxFuture<'a, binder::Result<i32>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatInt(_arg_token))
+      }
+      fn r#RepeatLong<'a>(&'a self, _arg_token: i64) -> binder::BoxFuture<'a, binder::Result<i64>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatLong(_arg_token))
+      }
+      fn r#RepeatFloat<'a>(&'a self, _arg_token: f32) -> binder::BoxFuture<'a, binder::Result<f32>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatFloat(_arg_token))
+      }
+      fn r#RepeatDouble<'a>(&'a self, _arg_token: f64) -> binder::BoxFuture<'a, binder::Result<f64>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatDouble(_arg_token))
+      }
+      fn r#RepeatString<'a>(&'a self, _arg_token: &'a str) -> binder::BoxFuture<'a, binder::Result<String>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatString(_arg_token))
+      }
+      fn r#RepeatByteEnum<'a>(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatByteEnum(_arg_token))
+      }
+      fn r#RepeatIntEnum<'a>(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatIntEnum(_arg_token))
+      }
+      fn r#RepeatLongEnum<'a>(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatLongEnum(_arg_token))
+      }
+      fn r#ReverseBoolean<'a>(&'a self, _arg_input: &'a [bool], _arg_repeated: &'a mut Vec<bool>) -> binder::BoxFuture<'a, binder::Result<Vec<bool>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseBoolean(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseByte<'a>(&'a self, _arg_input: &'a [u8], _arg_repeated: &'a mut Vec<u8>) -> binder::BoxFuture<'a, binder::Result<Vec<u8>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseByte(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseChar<'a>(&'a self, _arg_input: &'a [u16], _arg_repeated: &'a mut Vec<u16>) -> binder::BoxFuture<'a, binder::Result<Vec<u16>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseChar(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseInt<'a>(&'a self, _arg_input: &'a [i32], _arg_repeated: &'a mut Vec<i32>) -> binder::BoxFuture<'a, binder::Result<Vec<i32>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseInt(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseLong<'a>(&'a self, _arg_input: &'a [i64], _arg_repeated: &'a mut Vec<i64>) -> binder::BoxFuture<'a, binder::Result<Vec<i64>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseLong(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseFloat<'a>(&'a self, _arg_input: &'a [f32], _arg_repeated: &'a mut Vec<f32>) -> binder::BoxFuture<'a, binder::Result<Vec<f32>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseFloat(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseDouble<'a>(&'a self, _arg_input: &'a [f64], _arg_repeated: &'a mut Vec<f64>) -> binder::BoxFuture<'a, binder::Result<Vec<f64>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseDouble(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseString<'a>(&'a self, _arg_input: &'a [String], _arg_repeated: &'a mut Vec<String>) -> binder::BoxFuture<'a, binder::Result<Vec<String>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseString(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseByteEnum<'a>(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum], _arg_repeated: &'a mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>) -> binder::BoxFuture<'a, binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseByteEnum(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseIntEnum<'a>(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum], _arg_repeated: &'a mut Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>) -> binder::BoxFuture<'a, binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseIntEnum(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseLongEnum<'a>(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum], _arg_repeated: &'a mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>) -> binder::BoxFuture<'a, binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseLongEnum(_arg_input, _arg_repeated))
+      }
+      fn r#GetOtherTestService<'a>(&'a self, _arg_name: &'a str) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetOtherTestService(_arg_name))
+      }
+      fn r#SetOtherTestService<'a>(&'a self, _arg_name: &'a str, _arg_service: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>) -> binder::BoxFuture<'a, binder::Result<bool>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#SetOtherTestService(_arg_name, _arg_service))
+      }
+      fn r#VerifyName<'a>(&'a self, _arg_service: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>, _arg_name: &'a str) -> binder::BoxFuture<'a, binder::Result<bool>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#VerifyName(_arg_service, _arg_name))
+      }
+      fn r#GetInterfaceArray<'a>(&'a self, _arg_names: &'a [String]) -> binder::BoxFuture<'a, binder::Result<Vec<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetInterfaceArray(_arg_names))
+      }
+      fn r#VerifyNamesWithInterfaceArray<'a>(&'a self, _arg_services: &'a [binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>], _arg_names: &'a [String]) -> binder::BoxFuture<'a, binder::Result<bool>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#VerifyNamesWithInterfaceArray(_arg_services, _arg_names))
+      }
+      fn r#GetNullableInterfaceArray<'a>(&'a self, _arg_names: Option<&'a [Option<String>]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetNullableInterfaceArray(_arg_names))
+      }
+      fn r#VerifyNamesWithNullableInterfaceArray<'a>(&'a self, _arg_services: Option<&'a [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&'a [Option<String>]>) -> binder::BoxFuture<'a, binder::Result<bool>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#VerifyNamesWithNullableInterfaceArray(_arg_services, _arg_names))
+      }
+      fn r#GetInterfaceList<'a>(&'a self, _arg_names: Option<&'a [Option<String>]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetInterfaceList(_arg_names))
+      }
+      fn r#VerifyNamesWithInterfaceList<'a>(&'a self, _arg_services: Option<&'a [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&'a [Option<String>]>) -> binder::BoxFuture<'a, binder::Result<bool>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#VerifyNamesWithInterfaceList(_arg_services, _arg_names))
+      }
+      fn r#ReverseStringList<'a>(&'a self, _arg_input: &'a [String], _arg_repeated: &'a mut Vec<String>) -> binder::BoxFuture<'a, binder::Result<Vec<String>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseStringList(_arg_input, _arg_repeated))
+      }
+      fn r#RepeatParcelFileDescriptor<'a>(&'a self, _arg_read: &'a binder::ParcelFileDescriptor) -> binder::BoxFuture<'a, binder::Result<binder::ParcelFileDescriptor>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatParcelFileDescriptor(_arg_read))
+      }
+      fn r#ReverseParcelFileDescriptorArray<'a>(&'a self, _arg_input: &'a [binder::ParcelFileDescriptor], _arg_repeated: &'a mut Vec<Option<binder::ParcelFileDescriptor>>) -> binder::BoxFuture<'a, binder::Result<Vec<binder::ParcelFileDescriptor>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseParcelFileDescriptorArray(_arg_input, _arg_repeated))
+      }
+      fn r#ThrowServiceException<'a>(&'a self, _arg_code: i32) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ThrowServiceException(_arg_code))
+      }
+      fn r#RepeatNullableIntArray<'a>(&'a self, _arg_input: Option<&'a [i32]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<i32>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableIntArray(_arg_input))
+      }
+      fn r#RepeatNullableByteEnumArray<'a>(&'a self, _arg_input: Option<&'a [crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableByteEnumArray(_arg_input))
+      }
+      fn r#RepeatNullableIntEnumArray<'a>(&'a self, _arg_input: Option<&'a [crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableIntEnumArray(_arg_input))
+      }
+      fn r#RepeatNullableLongEnumArray<'a>(&'a self, _arg_input: Option<&'a [crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableLongEnumArray(_arg_input))
+      }
+      fn r#RepeatNullableString<'a>(&'a self, _arg_input: Option<&'a str>) -> binder::BoxFuture<'a, binder::Result<Option<String>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableString(_arg_input))
+      }
+      fn r#RepeatNullableStringList<'a>(&'a self, _arg_input: Option<&'a [Option<String>]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<String>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableStringList(_arg_input))
+      }
+      fn r#RepeatNullableParcelable<'a>(&'a self, _arg_input: Option<&'a crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>) -> binder::BoxFuture<'a, binder::Result<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableParcelable(_arg_input))
+      }
+      fn r#RepeatNullableParcelableArray<'a>(&'a self, _arg_input: Option<&'a [Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableParcelableArray(_arg_input))
+      }
+      fn r#RepeatNullableParcelableList<'a>(&'a self, _arg_input: Option<&'a [Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableParcelableList(_arg_input))
+      }
+      fn r#TakesAnIBinder<'a>(&'a self, _arg_input: &'a binder::SpIBinder) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#TakesAnIBinder(_arg_input))
+      }
+      fn r#TakesANullableIBinder<'a>(&'a self, _arg_input: Option<&'a binder::SpIBinder>) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#TakesANullableIBinder(_arg_input))
+      }
+      fn r#TakesAnIBinderList<'a>(&'a self, _arg_input: &'a [binder::SpIBinder]) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#TakesAnIBinderList(_arg_input))
+      }
+      fn r#TakesANullableIBinderList<'a>(&'a self, _arg_input: Option<&'a [Option<binder::SpIBinder>]>) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#TakesANullableIBinderList(_arg_input))
+      }
+      fn r#RepeatUtf8CppString<'a>(&'a self, _arg_token: &'a str) -> binder::BoxFuture<'a, binder::Result<String>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatUtf8CppString(_arg_token))
+      }
+      fn r#RepeatNullableUtf8CppString<'a>(&'a self, _arg_token: Option<&'a str>) -> binder::BoxFuture<'a, binder::Result<Option<String>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatNullableUtf8CppString(_arg_token))
+      }
+      fn r#ReverseUtf8CppString<'a>(&'a self, _arg_input: &'a [String], _arg_repeated: &'a mut Vec<String>) -> binder::BoxFuture<'a, binder::Result<Vec<String>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseUtf8CppString(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseNullableUtf8CppString<'a>(&'a self, _arg_input: Option<&'a [Option<String>]>, _arg_repeated: &'a mut Option<Vec<Option<String>>>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<String>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseNullableUtf8CppString(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseUtf8CppStringList<'a>(&'a self, _arg_input: Option<&'a [Option<String>]>, _arg_repeated: &'a mut Option<Vec<Option<String>>>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<String>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseUtf8CppStringList(_arg_input, _arg_repeated))
+      }
+      fn r#GetCallback<'a>(&'a self, _arg_return_null: bool) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetCallback(_arg_return_null))
+      }
+      fn r#FillOutStructuredParcelable<'a>(&'a self, _arg_parcel: &'a mut crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#FillOutStructuredParcelable(_arg_parcel))
+      }
+      fn r#RepeatExtendableParcelable<'a>(&'a self, _arg_ep: &'a crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _arg_ep2: &'a mut crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatExtendableParcelable(_arg_ep, _arg_ep2))
+      }
+      fn r#ReverseList<'a>(&'a self, _arg_list: &'a crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseList(_arg_list))
+      }
+      fn r#ReverseIBinderArray<'a>(&'a self, _arg_input: &'a [binder::SpIBinder], _arg_repeated: &'a mut Vec<Option<binder::SpIBinder>>) -> binder::BoxFuture<'a, binder::Result<Vec<binder::SpIBinder>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseIBinderArray(_arg_input, _arg_repeated))
+      }
+      fn r#ReverseNullableIBinderArray<'a>(&'a self, _arg_input: Option<&'a [Option<binder::SpIBinder>]>, _arg_repeated: &'a mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<binder::SpIBinder>>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseNullableIBinderArray(_arg_input, _arg_repeated))
+      }
+      fn r#RepeatSimpleParcelable<'a>(&'a self, _arg_input: &'a simple_parcelable::SimpleParcelable, _arg_repeat: &'a mut simple_parcelable::SimpleParcelable) -> binder::BoxFuture<'a, binder::Result<simple_parcelable::SimpleParcelable>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RepeatSimpleParcelable(_arg_input, _arg_repeat))
+      }
+      fn r#ReverseSimpleParcelables<'a>(&'a self, _arg_input: &'a [simple_parcelable::SimpleParcelable], _arg_repeated: &'a mut Vec<simple_parcelable::SimpleParcelable>) -> binder::BoxFuture<'a, binder::Result<Vec<simple_parcelable::SimpleParcelable>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ReverseSimpleParcelables(_arg_input, _arg_repeated))
+      }
+      fn r#GetOldNameInterface<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetOldNameInterface())
+      }
+      fn r#GetNewNameInterface<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetNewNameInterface())
+      }
+      fn r#GetUnionTags<'a>(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::BoxFuture<'a, binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetUnionTags(_arg_input))
+      }
+      fn r#GetCppJavaTests<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::SpIBinder>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetCppJavaTests())
+      }
+      fn r#getBackendType<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#getBackendType())
+      }
+      fn r#GetCircular<'a>(&'a self, _arg_cp: &'a mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetCircular(_arg_cp))
+      }
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn ITestServiceAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait ITestServiceDefault: Send + Sync {
@@ -2524,13 +2753,18 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
       }
     )
   }
-  fn r#TestOneway(&self) -> std::future::Ready<binder::Result<()>> {
+  fn r#TestOneway<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
     let _aidl_data = match self.build_parcel_TestOneway() {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return std::future::ready(Err(err)),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
-    let _aidl_reply = self.binder.submit_transact(transactions::r#TestOneway, _aidl_data, binder::binder_impl::FLAG_ONEWAY | binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL);
-    std::future::ready(self.read_response_TestOneway(_aidl_reply))
+    let binder = self.binder.clone();
+    P::spawn(
+      move || binder.submit_transact(transactions::r#TestOneway, _aidl_data, binder::binder_impl::FLAG_ONEWAY | binder::binder_impl::FLAG_CLEAR_BUF | binder::binder_impl::FLAG_PRIVATE_LOCAL),
+      move |_aidl_reply| async move {
+        self.read_response_TestOneway(_aidl_reply)
+      }
+    )
   }
   fn r#RepeatBoolean<'a>(&'a self, _arg_token: bool) -> binder::BoxFuture<'a, binder::Result<bool>> {
     let _aidl_data = match self.build_parcel_RepeatBoolean(_arg_token) {
@@ -4542,7 +4776,7 @@ pub mod r#CompilerChecks {
         native: BnFoo(on_transact),
         proxy: BpFoo {
         },
-        async: IFooAsync,
+        async: IFooAsync(try_into_local_async),
       }
     }
     pub trait IFoo: binder::Interface + Send {
@@ -4552,6 +4786,9 @@ pub mod r#CompilerChecks {
       }
       fn setDefaultImpl(d: IFooDefaultRef) -> IFooDefaultRef where Self: Sized {
         std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+      }
+      fn try_as_async_server(&self) -> Option<&(dyn IFooAsyncServer + Send + Sync)> {
+        None
       }
     }
     pub trait IFooAsync<P>: binder::Interface + Send {
@@ -4581,9 +4818,25 @@ pub mod r#CompilerChecks {
           T: IFooAsyncServer + Send + Sync + 'static,
           R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
         {
+          fn try_as_async_server(&self) -> Option<&(dyn IFooAsyncServer + Send + Sync)> {
+            Some(&self._inner)
+          }
         }
         let wrapped = Wrapper { _inner: inner, _rt: rt };
         Self::new_binder(wrapped, features)
+      }
+      pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IFooAsync<P>>> {
+        struct Wrapper {
+          _native: binder::binder_impl::Binder<BnFoo>
+        }
+        impl binder::Interface for Wrapper {}
+        impl<P: binder::BinderAsyncPool> IFooAsync<P> for Wrapper {
+        }
+        if _native.try_as_async_server().is_some() {
+          Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IFooAsync<P>>))
+        } else {
+          None
+        }
       }
     }
     pub trait IFooDefault: Send + Sync {
@@ -4711,7 +4964,7 @@ pub mod r#CompilerChecks {
         native: BnNoPrefixInterface(on_transact),
         proxy: BpNoPrefixInterface {
         },
-        async: INoPrefixInterfaceAsync,
+        async: INoPrefixInterfaceAsync(try_into_local_async),
       }
     }
     pub trait INoPrefixInterface: binder::Interface + Send {
@@ -4722,6 +4975,9 @@ pub mod r#CompilerChecks {
       }
       fn setDefaultImpl(d: INoPrefixInterfaceDefaultRef) -> INoPrefixInterfaceDefaultRef where Self: Sized {
         std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+      }
+      fn try_as_async_server(&self) -> Option<&(dyn INoPrefixInterfaceAsyncServer + Send + Sync)> {
+        None
       }
     }
     pub trait INoPrefixInterfaceAsync<P>: binder::Interface + Send {
@@ -4756,9 +5012,28 @@ pub mod r#CompilerChecks {
           fn r#foo(&self) -> binder::Result<()> {
             self._rt.block_on(self._inner.r#foo())
           }
+          fn try_as_async_server(&self) -> Option<&(dyn INoPrefixInterfaceAsyncServer + Send + Sync)> {
+            Some(&self._inner)
+          }
         }
         let wrapped = Wrapper { _inner: inner, _rt: rt };
         Self::new_binder(wrapped, features)
+      }
+      pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn INoPrefixInterfaceAsync<P>>> {
+        struct Wrapper {
+          _native: binder::binder_impl::Binder<BnNoPrefixInterface>
+        }
+        impl binder::Interface for Wrapper {}
+        impl<P: binder::BinderAsyncPool> INoPrefixInterfaceAsync<P> for Wrapper {
+          fn r#foo<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+            Box::pin(self._native.try_as_async_server().unwrap().r#foo())
+          }
+        }
+        if _native.try_as_async_server().is_some() {
+          Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn INoPrefixInterfaceAsync<P>>))
+        } else {
+          None
+        }
       }
     }
     pub trait INoPrefixInterfaceDefault: Send + Sync {
@@ -4866,7 +5141,7 @@ pub mod r#CompilerChecks {
           native: BnNestedNoPrefixInterface(on_transact),
           proxy: BpNestedNoPrefixInterface {
           },
-          async: INestedNoPrefixInterfaceAsync,
+          async: INestedNoPrefixInterfaceAsync(try_into_local_async),
         }
       }
       pub trait INestedNoPrefixInterface: binder::Interface + Send {
@@ -4877,6 +5152,9 @@ pub mod r#CompilerChecks {
         }
         fn setDefaultImpl(d: INestedNoPrefixInterfaceDefaultRef) -> INestedNoPrefixInterfaceDefaultRef where Self: Sized {
           std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+        }
+        fn try_as_async_server(&self) -> Option<&(dyn INestedNoPrefixInterfaceAsyncServer + Send + Sync)> {
+          None
         }
       }
       pub trait INestedNoPrefixInterfaceAsync<P>: binder::Interface + Send {
@@ -4911,9 +5189,28 @@ pub mod r#CompilerChecks {
             fn r#foo(&self) -> binder::Result<()> {
               self._rt.block_on(self._inner.r#foo())
             }
+            fn try_as_async_server(&self) -> Option<&(dyn INestedNoPrefixInterfaceAsyncServer + Send + Sync)> {
+              Some(&self._inner)
+            }
           }
           let wrapped = Wrapper { _inner: inner, _rt: rt };
           Self::new_binder(wrapped, features)
+        }
+        pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn INestedNoPrefixInterfaceAsync<P>>> {
+          struct Wrapper {
+            _native: binder::binder_impl::Binder<BnNestedNoPrefixInterface>
+          }
+          impl binder::Interface for Wrapper {}
+          impl<P: binder::BinderAsyncPool> INestedNoPrefixInterfaceAsync<P> for Wrapper {
+            fn r#foo<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+              Box::pin(self._native.try_as_async_server().unwrap().r#foo())
+            }
+          }
+          if _native.try_as_async_server().is_some() {
+            Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn INestedNoPrefixInterfaceAsync<P>>))
+          } else {
+            None
+          }
         }
       }
       pub trait INestedNoPrefixInterfaceDefault: Send + Sync {
