@@ -13,7 +13,7 @@ declare_binder_interface! {
     native: BnCircular(on_transact),
     proxy: BpCircular {
     },
-    async: ICircularAsync,
+    async: ICircularAsync(try_into_local_async),
   }
 }
 pub trait ICircular: binder::Interface + Send {
@@ -24,6 +24,9 @@ pub trait ICircular: binder::Interface + Send {
   }
   fn setDefaultImpl(d: ICircularDefaultRef) -> ICircularDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+  }
+  fn try_as_async_server(&self) -> Option<&(dyn ICircularAsyncServer + Send + Sync)> {
+    None
   }
 }
 pub trait ICircularAsync<P>: binder::Interface + Send {
@@ -58,9 +61,28 @@ impl BnCircular {
       fn r#GetTestService(&self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
         self._rt.block_on(self._inner.r#GetTestService())
       }
+      fn try_as_async_server(&self) -> Option<&(dyn ICircularAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn ICircularAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnCircular>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> ICircularAsync<P> for Wrapper {
+      fn r#GetTestService<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#GetTestService())
+      }
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn ICircularAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait ICircularDefault: Send + Sync {
