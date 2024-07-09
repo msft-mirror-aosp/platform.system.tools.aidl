@@ -314,7 +314,7 @@ aidl_interface {
 
 cc_test_library {
     name: "client-using-test-piece-3",
-    srcs: ["client-using-test-piece-3.cpp"],
+    srcs: ["client-using-test-piece-3/client-using-test-piece-3.cpp"],
     shared_libs: ["test-piece-3-V2-cpp"],
 }
 
@@ -414,7 +414,7 @@ aidl_interface {
 
 cc_library {
     name: "build_test_aidl_always_use_unfrozen",
-    srcs: ["test_unfrozen_iface.cpp"],
+    srcs: ["test_unfrozen_iface/test_unfrozen_iface.cpp"],
     shared_libs: [
         "tests-unfrozen-vendor-V2-cpp",
     ],
