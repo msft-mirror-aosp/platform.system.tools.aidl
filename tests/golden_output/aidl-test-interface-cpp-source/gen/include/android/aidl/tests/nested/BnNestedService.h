@@ -15,7 +15,7 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace nested {
-class BnNestedService : public ::android::BnInterface<INestedService> {
+class LIBBINDER_EXPORTED BnNestedService : public ::android::BnInterface<INestedService> {
 public:
   static constexpr uint32_t TRANSACTION_flipStatus = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_flipStatusWithCallback = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
@@ -23,7 +23,7 @@ public:
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnNestedService
 
-class INestedServiceDelegator : public BnNestedService {
+class LIBBINDER_EXPORTED INestedServiceDelegator : public BnNestedService {
 public:
   explicit INestedServiceDelegator(const ::android::sp<INestedService> &impl) : _aidl_delegate(impl) {}
 
