@@ -23,9 +23,9 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
-class IFooInterfaceDelegator;
+class LIBBINDER_EXPORTED IFooInterfaceDelegator;
 
-class IFooInterface : public ::android::IInterface {
+class LIBBINDER_EXPORTED IFooInterface : public ::android::IInterface {
 public:
   typedef IFooInterfaceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(FooInterface)
@@ -40,7 +40,7 @@ public:
   virtual std::string getInterfaceHash() = 0;
 };  // class IFooInterface
 
-class IFooInterfaceDefault : public IFooInterface {
+class LIBBINDER_EXPORTED IFooInterfaceDefault : public IFooInterface {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

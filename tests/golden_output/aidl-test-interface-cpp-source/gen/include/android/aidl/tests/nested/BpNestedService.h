@@ -13,7 +13,7 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace nested {
-class BpNestedService : public ::android::BpInterface<INestedService> {
+class LIBBINDER_EXPORTED BpNestedService : public ::android::BpInterface<INestedService> {
 public:
   explicit BpNestedService(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpNestedService() = default;

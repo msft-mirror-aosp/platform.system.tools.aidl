@@ -17,7 +17,7 @@
 namespace android {
 namespace aidl {
 namespace loggable {
-class Data : public ::android::Parcelable {
+class LIBBINDER_EXPORTED Data : public ::android::Parcelable {
 public:
   int32_t num = 0;
   ::std::string str;

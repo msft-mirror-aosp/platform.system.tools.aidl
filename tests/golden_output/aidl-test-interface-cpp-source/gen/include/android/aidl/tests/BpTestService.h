@@ -12,7 +12,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BpTestService : public ::android::BpInterface<ITestService> {
+class LIBBINDER_EXPORTED BpTestService : public ::android::BpInterface<ITestService> {
 public:
   explicit BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpTestService() = default;

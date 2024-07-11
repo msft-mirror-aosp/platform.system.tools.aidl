@@ -13,7 +13,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BnCppJavaTests : public ::android::BnInterface<ICppJavaTests> {
+class LIBBINDER_EXPORTED BnCppJavaTests : public ::android::BnInterface<ICppJavaTests> {
 public:
   static constexpr uint32_t TRANSACTION_RepeatBadParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_RepeatGenericParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
@@ -27,7 +27,7 @@ public:
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnCppJavaTests
 
-class ICppJavaTestsDelegator : public BnCppJavaTests {
+class LIBBINDER_EXPORTED ICppJavaTestsDelegator : public BnCppJavaTests {
 public:
   explicit ICppJavaTestsDelegator(const ::android::sp<ICppJavaTests> &impl) : _aidl_delegate(impl) {}
 

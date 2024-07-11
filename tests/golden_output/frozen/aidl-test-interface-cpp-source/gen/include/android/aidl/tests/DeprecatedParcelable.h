@@ -13,7 +13,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class __attribute__((deprecated("test"))) DeprecatedParcelable : public ::android::Parcelable {
+class LIBBINDER_EXPORTED __attribute__((deprecated("test"))) DeprecatedParcelable : public ::android::Parcelable {
 public:
   inline bool operator==(const DeprecatedParcelable&) const {
     return std::tie() == std::tie();

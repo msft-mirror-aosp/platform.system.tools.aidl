@@ -60,13 +60,13 @@ class ExtendableParcelable;
 namespace android {
 namespace aidl {
 namespace tests {
-class ITestServiceDelegator;
+class LIBBINDER_EXPORTED ITestServiceDelegator;
 
-class ITestService : public ::android::IInterface {
+class LIBBINDER_EXPORTED ITestService : public ::android::IInterface {
 public:
   typedef ITestServiceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TestService)
-  class Empty : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED Empty : public ::android::Parcelable {
   public:
     inline bool operator==(const Empty&) const {
       return std::tie() == std::tie();
@@ -100,34 +100,34 @@ public:
       return _aidl_os.str();
     }
   };  // class Empty
-  class CompilerChecks : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED CompilerChecks : public ::android::Parcelable {
   public:
-    class IFooDelegator;
+    class LIBBINDER_EXPORTED IFooDelegator;
 
-    class IFoo : public ::android::IInterface {
+    class LIBBINDER_EXPORTED IFoo : public ::android::IInterface {
     public:
       typedef IFooDelegator DefaultDelegator;
       DECLARE_META_INTERFACE(Foo)
     };  // class IFoo
 
-    class IFooDefault : public IFoo {
+    class LIBBINDER_EXPORTED IFooDefault : public IFoo {
     public:
       ::android::IBinder* onAsBinder() override {
         return nullptr;
       }
     };  // class IFooDefault
-    class BpFoo : public ::android::BpInterface<IFoo> {
+    class LIBBINDER_EXPORTED BpFoo : public ::android::BpInterface<IFoo> {
     public:
       explicit BpFoo(const ::android::sp<::android::IBinder>& _aidl_impl);
       virtual ~BpFoo() = default;
     };  // class BpFoo
-    class BnFoo : public ::android::BnInterface<IFoo> {
+    class LIBBINDER_EXPORTED BnFoo : public ::android::BnInterface<IFoo> {
     public:
       explicit BnFoo();
       ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
     };  // class BnFoo
 
-    class IFooDelegator : public BnFoo {
+    class LIBBINDER_EXPORTED IFooDelegator : public BnFoo {
     public:
       explicit IFooDelegator(const ::android::sp<IFoo> &impl) : _aidl_delegate(impl) {}
 
@@ -137,7 +137,7 @@ public:
     };  // class IFooDelegator
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    class HasDeprecated : public ::android::Parcelable {
+    class LIBBINDER_EXPORTED HasDeprecated : public ::android::Parcelable {
     public:
       int32_t __attribute__((deprecated("field"))) deprecated = 0;
       inline bool operator==(const HasDeprecated& _rhs) const {
@@ -174,7 +174,7 @@ public:
       }
     };  // class HasDeprecated
     #pragma clang diagnostic pop
-    class UsingHasDeprecated : public ::android::Parcelable {
+    class LIBBINDER_EXPORTED UsingHasDeprecated : public ::android::Parcelable {
     public:
       enum class Tag : int32_t {
         n = 0,
@@ -267,13 +267,13 @@ public:
     private:
       std::variant<int32_t, ::android::aidl::tests::ITestService::CompilerChecks::HasDeprecated> _value;
     };  // class UsingHasDeprecated
-    class INoPrefixInterfaceDelegator;
+    class LIBBINDER_EXPORTED INoPrefixInterfaceDelegator;
 
-    class INoPrefixInterface : public ::android::IInterface {
+    class LIBBINDER_EXPORTED INoPrefixInterface : public ::android::IInterface {
     public:
       typedef INoPrefixInterfaceDelegator DefaultDelegator;
       DECLARE_META_INTERFACE(NoPrefixInterface)
-      class Nested : public ::android::Parcelable {
+      class LIBBINDER_EXPORTED Nested : public ::android::Parcelable {
       public:
         inline bool operator==(const Nested&) const {
           return std::tie() == std::tie();
@@ -307,16 +307,16 @@ public:
           return _aidl_os.str();
         }
       };  // class Nested
-      class INestedNoPrefixInterfaceDelegator;
+      class LIBBINDER_EXPORTED INestedNoPrefixInterfaceDelegator;
 
-      class INestedNoPrefixInterface : public ::android::IInterface {
+      class LIBBINDER_EXPORTED INestedNoPrefixInterface : public ::android::IInterface {
       public:
         typedef INestedNoPrefixInterfaceDelegator DefaultDelegator;
         DECLARE_META_INTERFACE(NestedNoPrefixInterface)
         virtual ::android::binder::Status foo() = 0;
       };  // class INestedNoPrefixInterface
 
-      class INestedNoPrefixInterfaceDefault : public INestedNoPrefixInterface {
+      class LIBBINDER_EXPORTED INestedNoPrefixInterfaceDefault : public INestedNoPrefixInterface {
       public:
         ::android::IBinder* onAsBinder() override {
           return nullptr;
@@ -325,20 +325,20 @@ public:
           return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
         }
       };  // class INestedNoPrefixInterfaceDefault
-      class BpNestedNoPrefixInterface : public ::android::BpInterface<INestedNoPrefixInterface> {
+      class LIBBINDER_EXPORTED BpNestedNoPrefixInterface : public ::android::BpInterface<INestedNoPrefixInterface> {
       public:
         explicit BpNestedNoPrefixInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
         virtual ~BpNestedNoPrefixInterface() = default;
         ::android::binder::Status foo() override;
       };  // class BpNestedNoPrefixInterface
-      class BnNestedNoPrefixInterface : public ::android::BnInterface<INestedNoPrefixInterface> {
+      class LIBBINDER_EXPORTED BnNestedNoPrefixInterface : public ::android::BnInterface<INestedNoPrefixInterface> {
       public:
         static constexpr uint32_t TRANSACTION_foo = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
         explicit BnNestedNoPrefixInterface();
         ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
       };  // class BnNestedNoPrefixInterface
 
-      class INestedNoPrefixInterfaceDelegator : public BnNestedNoPrefixInterface {
+      class LIBBINDER_EXPORTED INestedNoPrefixInterfaceDelegator : public BnNestedNoPrefixInterface {
       public:
         explicit INestedNoPrefixInterfaceDelegator(const ::android::sp<INestedNoPrefixInterface> &impl) : _aidl_delegate(impl) {}
 
@@ -352,7 +352,7 @@ public:
       virtual ::android::binder::Status foo() = 0;
     };  // class INoPrefixInterface
 
-    class INoPrefixInterfaceDefault : public INoPrefixInterface {
+    class LIBBINDER_EXPORTED INoPrefixInterfaceDefault : public INoPrefixInterface {
     public:
       ::android::IBinder* onAsBinder() override {
         return nullptr;
@@ -361,20 +361,20 @@ public:
         return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
       }
     };  // class INoPrefixInterfaceDefault
-    class BpNoPrefixInterface : public ::android::BpInterface<INoPrefixInterface> {
+    class LIBBINDER_EXPORTED BpNoPrefixInterface : public ::android::BpInterface<INoPrefixInterface> {
     public:
       explicit BpNoPrefixInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
       virtual ~BpNoPrefixInterface() = default;
       ::android::binder::Status foo() override;
     };  // class BpNoPrefixInterface
-    class BnNoPrefixInterface : public ::android::BnInterface<INoPrefixInterface> {
+    class LIBBINDER_EXPORTED BnNoPrefixInterface : public ::android::BnInterface<INoPrefixInterface> {
     public:
       static constexpr uint32_t TRANSACTION_foo = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
       explicit BnNoPrefixInterface();
       ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
     };  // class BnNoPrefixInterface
 
-    class INoPrefixInterfaceDelegator : public BnNoPrefixInterface {
+    class LIBBINDER_EXPORTED INoPrefixInterfaceDelegator : public BnNoPrefixInterface {
     public:
       explicit INoPrefixInterfaceDelegator(const ::android::sp<INoPrefixInterface> &impl) : _aidl_delegate(impl) {}
 
@@ -615,7 +615,7 @@ public:
   virtual ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) = 0;
 };  // class ITestService
 
-class ITestServiceDefault : public ITestService {
+class LIBBINDER_EXPORTED ITestServiceDefault : public ITestService {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

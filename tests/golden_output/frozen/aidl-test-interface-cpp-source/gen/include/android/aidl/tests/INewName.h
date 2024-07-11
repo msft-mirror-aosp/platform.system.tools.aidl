@@ -14,16 +14,16 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class INewNameDelegator;
+class LIBBINDER_EXPORTED INewNameDelegator;
 
-class INewName : public ::android::IInterface {
+class LIBBINDER_EXPORTED INewName : public ::android::IInterface {
 public:
   typedef INewNameDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(NewName)
   virtual ::android::binder::Status RealName(::android::String16* _aidl_return) = 0;
 };  // class INewName
 
-class INewNameDefault : public INewName {
+class LIBBINDER_EXPORTED INewNameDefault : public INewName {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

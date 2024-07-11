@@ -33,34 +33,34 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class ArrayOfInterfaces : public ::android::Parcelable {
+class LIBBINDER_EXPORTED ArrayOfInterfaces : public ::android::Parcelable {
 public:
-  class IEmptyInterfaceDelegator;
+  class LIBBINDER_EXPORTED IEmptyInterfaceDelegator;
 
-  class IEmptyInterface : public ::android::IInterface {
+  class LIBBINDER_EXPORTED IEmptyInterface : public ::android::IInterface {
   public:
     typedef IEmptyInterfaceDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(EmptyInterface)
   };  // class IEmptyInterface
 
-  class IEmptyInterfaceDefault : public IEmptyInterface {
+  class LIBBINDER_EXPORTED IEmptyInterfaceDefault : public IEmptyInterface {
   public:
     ::android::IBinder* onAsBinder() override {
       return nullptr;
     }
   };  // class IEmptyInterfaceDefault
-  class BpEmptyInterface : public ::android::BpInterface<IEmptyInterface> {
+  class LIBBINDER_EXPORTED BpEmptyInterface : public ::android::BpInterface<IEmptyInterface> {
   public:
     explicit BpEmptyInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
     virtual ~BpEmptyInterface() = default;
   };  // class BpEmptyInterface
-  class BnEmptyInterface : public ::android::BnInterface<IEmptyInterface> {
+  class LIBBINDER_EXPORTED BnEmptyInterface : public ::android::BnInterface<IEmptyInterface> {
   public:
     explicit BnEmptyInterface();
     ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
   };  // class BnEmptyInterface
 
-  class IEmptyInterfaceDelegator : public BnEmptyInterface {
+  class LIBBINDER_EXPORTED IEmptyInterfaceDelegator : public BnEmptyInterface {
   public:
     explicit IEmptyInterfaceDelegator(const ::android::sp<IEmptyInterface> &impl) : _aidl_delegate(impl) {}
 
@@ -68,16 +68,16 @@ public:
   private:
     ::android::sp<IEmptyInterface> _aidl_delegate;
   };  // class IEmptyInterfaceDelegator
-  class IMyInterfaceDelegator;
+  class LIBBINDER_EXPORTED IMyInterfaceDelegator;
 
-  class IMyInterface : public ::android::IInterface {
+  class LIBBINDER_EXPORTED IMyInterface : public ::android::IInterface {
   public:
     typedef IMyInterfaceDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(MyInterface)
     virtual ::android::binder::Status methodWithInterfaces(const ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& iface, const ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& nullable_iface, const ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>& iface_array_in, ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* iface_array_out, ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* iface_array_inout, const ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>& nullable_iface_array_in, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* nullable_iface_array_out, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* nullable_iface_array_inout, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* _aidl_return) = 0;
   };  // class IMyInterface
 
-  class IMyInterfaceDefault : public IMyInterface {
+  class LIBBINDER_EXPORTED IMyInterfaceDefault : public IMyInterface {
   public:
     ::android::IBinder* onAsBinder() override {
       return nullptr;
@@ -86,20 +86,20 @@ public:
       return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
     }
   };  // class IMyInterfaceDefault
-  class BpMyInterface : public ::android::BpInterface<IMyInterface> {
+  class LIBBINDER_EXPORTED BpMyInterface : public ::android::BpInterface<IMyInterface> {
   public:
     explicit BpMyInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
     virtual ~BpMyInterface() = default;
     ::android::binder::Status methodWithInterfaces(const ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& iface, const ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& nullable_iface, const ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>& iface_array_in, ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* iface_array_out, ::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* iface_array_inout, const ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>& nullable_iface_array_in, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* nullable_iface_array_out, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* nullable_iface_array_inout, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* _aidl_return) override;
   };  // class BpMyInterface
-  class BnMyInterface : public ::android::BnInterface<IMyInterface> {
+  class LIBBINDER_EXPORTED BnMyInterface : public ::android::BnInterface<IMyInterface> {
   public:
     static constexpr uint32_t TRANSACTION_methodWithInterfaces = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
     explicit BnMyInterface();
     ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
   };  // class BnMyInterface
 
-  class IMyInterfaceDelegator : public BnMyInterface {
+  class LIBBINDER_EXPORTED IMyInterfaceDelegator : public BnMyInterface {
   public:
     explicit IMyInterfaceDelegator(const ::android::sp<IMyInterface> &impl) : _aidl_delegate(impl) {}
 
@@ -118,7 +118,7 @@ public:
   private:
     ::android::sp<IMyInterface> _aidl_delegate;
   };  // class IMyInterfaceDelegator
-  class MyParcelable : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED MyParcelable : public ::android::Parcelable {
   public:
     ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface> iface;
     ::android::sp<::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface> nullable_iface;
@@ -160,7 +160,7 @@ public:
       return _aidl_os.str();
     }
   };  // class MyParcelable
-  class MyUnion : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED MyUnion : public ::android::Parcelable {
   public:
     enum class Tag : int32_t {
       iface = 0,

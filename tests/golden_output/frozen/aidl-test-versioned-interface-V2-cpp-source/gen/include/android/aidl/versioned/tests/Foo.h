@@ -15,7 +15,7 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
-class Foo : public ::android::Parcelable {
+class LIBBINDER_EXPORTED Foo : public ::android::Parcelable {
 public:
   int32_t intDefault42 = 42;
   inline bool operator==(const Foo& _rhs) const {

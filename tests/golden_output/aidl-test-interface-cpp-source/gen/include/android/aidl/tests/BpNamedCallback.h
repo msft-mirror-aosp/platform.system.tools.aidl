@@ -12,7 +12,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BpNamedCallback : public ::android::BpInterface<INamedCallback> {
+class LIBBINDER_EXPORTED BpNamedCallback : public ::android::BpInterface<INamedCallback> {
 public:
   explicit BpNamedCallback(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpNamedCallback() = default;

@@ -13,14 +13,14 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BnOldName : public ::android::BnInterface<IOldName> {
+class LIBBINDER_EXPORTED BnOldName : public ::android::BnInterface<IOldName> {
 public:
   static constexpr uint32_t TRANSACTION_RealName = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   explicit BnOldName();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnOldName
 
-class IOldNameDelegator : public BnOldName {
+class LIBBINDER_EXPORTED IOldNameDelegator : public BnOldName {
 public:
   explicit IOldNameDelegator(const ::android::sp<IOldName> &impl) : _aidl_delegate(impl) {}
 

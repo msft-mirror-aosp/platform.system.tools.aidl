@@ -15,7 +15,7 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace extension {
-class MyExtLike : public ::android::Parcelable {
+class LIBBINDER_EXPORTED MyExtLike : public ::android::Parcelable {
 public:
   int32_t a = 0;
   ::android::String16 b;

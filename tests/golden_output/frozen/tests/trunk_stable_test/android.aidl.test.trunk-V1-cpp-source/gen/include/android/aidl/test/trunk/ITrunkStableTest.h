@@ -33,15 +33,15 @@ namespace android {
 namespace aidl {
 namespace test {
 namespace trunk {
-class ITrunkStableTestDelegator;
+class LIBBINDER_EXPORTED ITrunkStableTestDelegator;
 
-class ITrunkStableTest : public ::android::IInterface {
+class LIBBINDER_EXPORTED ITrunkStableTest : public ::android::IInterface {
 public:
   typedef ITrunkStableTestDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TrunkStableTest)
   static inline const int32_t VERSION = 1;
   static inline const std::string HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
-  class MyParcelable : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED MyParcelable : public ::android::Parcelable {
   public:
     int32_t a = 0;
     int32_t b = 0;
@@ -84,7 +84,7 @@ public:
     ONE = 1,
     TWO = 2,
   };
-  class MyUnion : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED MyUnion : public ::android::Parcelable {
   public:
     enum class Tag : int32_t {
       a = 0,
@@ -177,9 +177,9 @@ public:
   private:
     std::variant<int32_t, int32_t> _value;
   };  // class MyUnion
-  class IMyCallbackDelegator;
+  class LIBBINDER_EXPORTED IMyCallbackDelegator;
 
-  class IMyCallback : public ::android::IInterface {
+  class LIBBINDER_EXPORTED IMyCallback : public ::android::IInterface {
   public:
     typedef IMyCallbackDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(MyCallback)
@@ -192,7 +192,7 @@ public:
     virtual std::string getInterfaceHash() = 0;
   };  // class IMyCallback
 
-  class IMyCallbackDefault : public IMyCallback {
+  class LIBBINDER_EXPORTED IMyCallbackDefault : public IMyCallback {
   public:
     ::android::IBinder* onAsBinder() override {
       return nullptr;
@@ -213,7 +213,7 @@ public:
       return "";
     }
   };  // class IMyCallbackDefault
-  class BpMyCallback : public ::android::BpInterface<IMyCallback> {
+  class LIBBINDER_EXPORTED BpMyCallback : public ::android::BpInterface<IMyCallback> {
   public:
     explicit BpMyCallback(const ::android::sp<::android::IBinder>& _aidl_impl);
     virtual ~BpMyCallback() = default;
@@ -242,7 +242,7 @@ public:
     std::string cached_hash_ = "-1";
     std::mutex cached_hash_mutex_;
   };  // class BpMyCallback
-  class BnMyCallback : public ::android::BnInterface<IMyCallback> {
+  class LIBBINDER_EXPORTED BnMyCallback : public ::android::BnInterface<IMyCallback> {
   public:
     static constexpr uint32_t TRANSACTION_repeatParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
     static constexpr uint32_t TRANSACTION_repeatEnum = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
@@ -270,7 +270,7 @@ public:
     static std::function<void(const TransactionLog&)> logFunc;
   };  // class BnMyCallback
 
-  class IMyCallbackDelegator : public BnMyCallback {
+  class LIBBINDER_EXPORTED IMyCallbackDelegator : public BnMyCallback {
   public:
     explicit IMyCallbackDelegator(const ::android::sp<IMyCallback> &impl) : _aidl_delegate(impl) {}
 
@@ -303,7 +303,7 @@ public:
   virtual std::string getInterfaceHash() = 0;
 };  // class ITrunkStableTest
 
-class ITrunkStableTestDefault : public ITrunkStableTest {
+class LIBBINDER_EXPORTED ITrunkStableTestDefault : public ITrunkStableTest {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

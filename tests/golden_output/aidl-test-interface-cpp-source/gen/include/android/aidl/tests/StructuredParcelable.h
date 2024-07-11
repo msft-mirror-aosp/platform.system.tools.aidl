@@ -24,9 +24,9 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class StructuredParcelable : public ::android::Parcelable {
+class LIBBINDER_EXPORTED StructuredParcelable : public ::android::Parcelable {
 public:
-  class Empty : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED Empty : public ::android::Parcelable {
   public:
     inline bool operator==(const Empty&) const {
       return std::tie() == std::tie();

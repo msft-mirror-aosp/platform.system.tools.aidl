@@ -19,7 +19,7 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace nested {
-class ParcelableWithNested : public ::android::Parcelable {
+class LIBBINDER_EXPORTED ParcelableWithNested : public ::android::Parcelable {
 public:
   enum class Status : int8_t {
     OK = 0,

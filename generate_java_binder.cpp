@@ -609,7 +609,10 @@ static void GenerateStubCode(const AidlMethod& method, bool oneway,
           // dynamic array should be created with a passed length.
           string var_length = v->name + "_length";
           (*writer) << "int " << var_length << " = data.readInt();\n";
-          (*writer) << "if (" << var_length << " < 0) {\n";
+          // if impossibly large array requested, return false
+          (*writer) << "if (" << var_length << " > 1000000) {\n";
+          (*writer) << "  return false;\n";
+          (*writer) << "} else if (" << var_length << " < 0) {\n";
           (*writer) << "  " << v->name << " = null;\n";
           (*writer) << "} else {\n";
           (*writer) << "  " << v->name << " = new " << java_type << "[" << var_length << "];\n";

@@ -174,7 +174,9 @@ public interface ICppJavaTests extends android.os.IInterface
           _arg0 = data.createTypedArray(android.os.PersistableBundle.CREATOR);
           android.os.PersistableBundle[] _arg1;
           int _arg1_length = data.readInt();
-          if (_arg1_length < 0) {
+          if (_arg1_length > 1000000) {
+            return false;
+          } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
             _arg1 = new android.os.PersistableBundle[_arg1_length];
@@ -228,7 +230,9 @@ public interface ICppJavaTests extends android.os.IInterface
           _arg0 = data.createRawFileDescriptorArray();
           java.io.FileDescriptor[] _arg1;
           int _arg1_length = data.readInt();
-          if (_arg1_length < 0) {
+          if (_arg1_length > 1000000) {
+            return false;
+          } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
             _arg1 = new java.io.FileDescriptor[_arg1_length];

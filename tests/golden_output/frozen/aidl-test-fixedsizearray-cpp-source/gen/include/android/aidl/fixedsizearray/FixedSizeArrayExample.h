@@ -25,9 +25,9 @@
 namespace android {
 namespace aidl {
 namespace fixedsizearray {
-class FixedSizeArrayExample : public ::android::Parcelable {
+class LIBBINDER_EXPORTED FixedSizeArrayExample : public ::android::Parcelable {
 public:
-  class IntParcelable : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED IntParcelable : public ::android::Parcelable {
   public:
     int32_t value = 0;
     inline bool operator==(const IntParcelable& _rhs) const {
@@ -63,9 +63,9 @@ public:
       return _aidl_os.str();
     }
   };  // class IntParcelable
-  class IRepeatFixedSizeArrayDelegator;
+  class LIBBINDER_EXPORTED IRepeatFixedSizeArrayDelegator;
 
-  class IRepeatFixedSizeArray : public ::android::IInterface {
+  class LIBBINDER_EXPORTED IRepeatFixedSizeArray : public ::android::IInterface {
   public:
     typedef IRepeatFixedSizeArrayDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(RepeatFixedSizeArray)
@@ -79,7 +79,7 @@ public:
     virtual ::android::binder::Status Repeat2dParcelables(const std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>& input, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* repeated, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* _aidl_return) = 0;
   };  // class IRepeatFixedSizeArray
 
-  class IRepeatFixedSizeArrayDefault : public IRepeatFixedSizeArray {
+  class LIBBINDER_EXPORTED IRepeatFixedSizeArrayDefault : public IRepeatFixedSizeArray {
   public:
     ::android::IBinder* onAsBinder() override {
       return nullptr;
@@ -109,7 +109,7 @@ public:
       return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
     }
   };  // class IRepeatFixedSizeArrayDefault
-  class BpRepeatFixedSizeArray : public ::android::BpInterface<IRepeatFixedSizeArray> {
+  class LIBBINDER_EXPORTED BpRepeatFixedSizeArray : public ::android::BpInterface<IRepeatFixedSizeArray> {
   public:
     explicit BpRepeatFixedSizeArray(const ::android::sp<::android::IBinder>& _aidl_impl);
     virtual ~BpRepeatFixedSizeArray() = default;
@@ -122,7 +122,7 @@ public:
     ::android::binder::Status Repeat2dBinders(const std::array<std::array<::android::sp<::android::IBinder>, 3>, 2>& input, std::array<std::array<::android::sp<::android::IBinder>, 3>, 2>* repeated, std::array<std::array<::android::sp<::android::IBinder>, 3>, 2>* _aidl_return) override;
     ::android::binder::Status Repeat2dParcelables(const std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>& input, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* repeated, std::array<std::array<::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* _aidl_return) override;
   };  // class BpRepeatFixedSizeArray
-  class BnRepeatFixedSizeArray : public ::android::BnInterface<IRepeatFixedSizeArray> {
+  class LIBBINDER_EXPORTED BnRepeatFixedSizeArray : public ::android::BnInterface<IRepeatFixedSizeArray> {
   public:
     static constexpr uint32_t TRANSACTION_RepeatBytes = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
     static constexpr uint32_t TRANSACTION_RepeatInts = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
@@ -136,7 +136,7 @@ public:
     ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
   };  // class BnRepeatFixedSizeArray
 
-  class IRepeatFixedSizeArrayDelegator : public BnRepeatFixedSizeArray {
+  class LIBBINDER_EXPORTED IRepeatFixedSizeArrayDelegator : public BnRepeatFixedSizeArray {
   public:
     explicit IRepeatFixedSizeArrayDelegator(const ::android::sp<IRepeatFixedSizeArray> &impl) : _aidl_delegate(impl) {}
 
@@ -177,32 +177,32 @@ public:
   enum class LongEnum : int64_t {
     A = 0L,
   };
-  class IEmptyInterfaceDelegator;
+  class LIBBINDER_EXPORTED IEmptyInterfaceDelegator;
 
-  class IEmptyInterface : public ::android::IInterface {
+  class LIBBINDER_EXPORTED IEmptyInterface : public ::android::IInterface {
   public:
     typedef IEmptyInterfaceDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(EmptyInterface)
   };  // class IEmptyInterface
 
-  class IEmptyInterfaceDefault : public IEmptyInterface {
+  class LIBBINDER_EXPORTED IEmptyInterfaceDefault : public IEmptyInterface {
   public:
     ::android::IBinder* onAsBinder() override {
       return nullptr;
     }
   };  // class IEmptyInterfaceDefault
-  class BpEmptyInterface : public ::android::BpInterface<IEmptyInterface> {
+  class LIBBINDER_EXPORTED BpEmptyInterface : public ::android::BpInterface<IEmptyInterface> {
   public:
     explicit BpEmptyInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
     virtual ~BpEmptyInterface() = default;
   };  // class BpEmptyInterface
-  class BnEmptyInterface : public ::android::BnInterface<IEmptyInterface> {
+  class LIBBINDER_EXPORTED BnEmptyInterface : public ::android::BnInterface<IEmptyInterface> {
   public:
     explicit BnEmptyInterface();
     ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
   };  // class BnEmptyInterface
 
-  class IEmptyInterfaceDelegator : public BnEmptyInterface {
+  class LIBBINDER_EXPORTED IEmptyInterfaceDelegator : public BnEmptyInterface {
   public:
     explicit IEmptyInterfaceDelegator(const ::android::sp<IEmptyInterface> &impl) : _aidl_delegate(impl) {}
 

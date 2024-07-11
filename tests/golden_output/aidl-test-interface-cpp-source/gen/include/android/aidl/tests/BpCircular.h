@@ -12,7 +12,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BpCircular : public ::android::BpInterface<ICircular> {
+class LIBBINDER_EXPORTED BpCircular : public ::android::BpInterface<ICircular> {
 public:
   explicit BpCircular(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpCircular() = default;

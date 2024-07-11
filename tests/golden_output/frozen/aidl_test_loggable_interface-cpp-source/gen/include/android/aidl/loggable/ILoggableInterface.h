@@ -25,22 +25,22 @@ class Data;
 namespace android {
 namespace aidl {
 namespace loggable {
-class ILoggableInterfaceDelegator;
+class LIBBINDER_EXPORTED ILoggableInterfaceDelegator;
 
-class ILoggableInterface : public ::android::IInterface {
+class LIBBINDER_EXPORTED ILoggableInterface : public ::android::IInterface {
 public:
   typedef ILoggableInterfaceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(LoggableInterface)
-  class ISubDelegator;
+  class LIBBINDER_EXPORTED ISubDelegator;
 
-  class ISub : public ::android::IInterface {
+  class LIBBINDER_EXPORTED ISub : public ::android::IInterface {
   public:
     typedef ISubDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(Sub)
     virtual ::android::binder::Status Log(int32_t value) = 0;
   };  // class ISub
 
-  class ISubDefault : public ISub {
+  class LIBBINDER_EXPORTED ISubDefault : public ISub {
   public:
     ::android::IBinder* onAsBinder() override {
       return nullptr;
@@ -49,7 +49,7 @@ public:
       return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
     }
   };  // class ISubDefault
-  class BpSub : public ::android::BpInterface<ISub> {
+  class LIBBINDER_EXPORTED BpSub : public ::android::BpInterface<ISub> {
   public:
     explicit BpSub(const ::android::sp<::android::IBinder>& _aidl_impl);
     virtual ~BpSub() = default;
@@ -70,7 +70,7 @@ public:
     };
     static std::function<void(const TransactionLog&)> logFunc;
   };  // class BpSub
-  class BnSub : public ::android::BnInterface<ISub> {
+  class LIBBINDER_EXPORTED BnSub : public ::android::BnInterface<ISub> {
   public:
     static constexpr uint32_t TRANSACTION_Log = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
     explicit BnSub();
@@ -92,7 +92,7 @@ public:
     static std::function<void(const TransactionLog&)> logFunc;
   };  // class BnSub
 
-  class ISubDelegator : public BnSub {
+  class LIBBINDER_EXPORTED ISubDelegator : public BnSub {
   public:
     explicit ISubDelegator(const ::android::sp<ISub> &impl) : _aidl_delegate(impl) {}
 
@@ -106,7 +106,7 @@ public:
   virtual ::android::binder::Status LogThis(bool boolValue, ::std::vector<bool>* boolArray, int8_t byteValue, ::std::vector<uint8_t>* byteArray, char16_t charValue, ::std::vector<char16_t>* charArray, int32_t intValue, ::std::vector<int32_t>* intArray, int64_t longValue, ::std::vector<int64_t>* longArray, float floatValue, ::std::vector<float>* floatArray, double doubleValue, ::std::vector<double>* doubleArray, const ::android::String16& stringValue, ::std::vector<::android::String16>* stringArray, ::std::vector<::android::String16>* listValue, const ::android::aidl::loggable::Data& dataValue, const ::android::sp<::android::IBinder>& binderValue, ::std::optional<::android::os::ParcelFileDescriptor>* pfdValue, ::std::vector<::android::os::ParcelFileDescriptor>* pfdArray, ::std::vector<::android::String16>* _aidl_return) = 0;
 };  // class ILoggableInterface
 
-class ILoggableInterfaceDefault : public ILoggableInterface {
+class LIBBINDER_EXPORTED ILoggableInterfaceDefault : public ILoggableInterface {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

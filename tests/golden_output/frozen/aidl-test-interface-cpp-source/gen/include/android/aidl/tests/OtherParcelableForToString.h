@@ -13,7 +13,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class OtherParcelableForToString : public ::android::Parcelable {
+class LIBBINDER_EXPORTED OtherParcelableForToString : public ::android::Parcelable {
 public:
   ::android::String16 field;
   inline bool operator==(const OtherParcelableForToString& _rhs) const {

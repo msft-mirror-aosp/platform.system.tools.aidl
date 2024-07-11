@@ -29,7 +29,7 @@ namespace tests {
 namespace unions {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-class EnumUnion : public ::android::Parcelable {
+class LIBBINDER_EXPORTED EnumUnion : public ::android::Parcelable {
 public:
   enum class Tag : int32_t {
     intEnum = 0,

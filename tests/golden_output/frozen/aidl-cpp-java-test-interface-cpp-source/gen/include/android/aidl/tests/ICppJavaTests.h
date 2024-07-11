@@ -27,9 +27,9 @@ class StructuredParcelable;
 namespace android {
 namespace aidl {
 namespace tests {
-class ICppJavaTestsDelegator;
+class LIBBINDER_EXPORTED ICppJavaTestsDelegator;
 
-class ICppJavaTests : public ::android::IInterface {
+class LIBBINDER_EXPORTED ICppJavaTests : public ::android::IInterface {
 public:
   typedef ICppJavaTestsDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(CppJavaTests)
@@ -43,7 +43,7 @@ public:
   virtual ::android::binder::Status ReverseFileDescriptorArray(const ::std::vector<::android::base::unique_fd>& input, ::std::vector<::android::base::unique_fd>* repeated, ::std::vector<::android::base::unique_fd>* _aidl_return) = 0;
 };  // class ICppJavaTests
 
-class ICppJavaTestsDefault : public ICppJavaTests {
+class LIBBINDER_EXPORTED ICppJavaTestsDefault : public ICppJavaTests {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

@@ -18,7 +18,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BnTestService : public ::android::BnInterface<ITestService> {
+class LIBBINDER_EXPORTED BnTestService : public ::android::BnInterface<ITestService> {
 public:
   static constexpr uint32_t TRANSACTION_UnimplementedMethod = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_Deprecated = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
@@ -94,7 +94,7 @@ public:
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnTestService
 
-class ITestServiceDelegator : public BnTestService {
+class LIBBINDER_EXPORTED ITestServiceDelegator : public BnTestService {
 public:
   explicit ITestServiceDelegator(const ::android::sp<ITestService> &impl) : _aidl_delegate(impl) {}
 

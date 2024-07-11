@@ -24,13 +24,13 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace nested {
-class INestedServiceDelegator;
+class LIBBINDER_EXPORTED INestedServiceDelegator;
 
-class INestedService : public ::android::IInterface {
+class LIBBINDER_EXPORTED INestedService : public ::android::IInterface {
 public:
   typedef INestedServiceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(NestedService)
-  class Result : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED Result : public ::android::Parcelable {
   public:
     ::android::aidl::tests::nested::ParcelableWithNested::Status status = ::android::aidl::tests::nested::ParcelableWithNested::Status::OK;
     inline bool operator==(const Result& _rhs) const {
@@ -66,16 +66,16 @@ public:
       return _aidl_os.str();
     }
   };  // class Result
-  class ICallbackDelegator;
+  class LIBBINDER_EXPORTED ICallbackDelegator;
 
-  class ICallback : public ::android::IInterface {
+  class LIBBINDER_EXPORTED ICallback : public ::android::IInterface {
   public:
     typedef ICallbackDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(Callback)
     virtual ::android::binder::Status done(::android::aidl::tests::nested::ParcelableWithNested::Status status) = 0;
   };  // class ICallback
 
-  class ICallbackDefault : public ICallback {
+  class LIBBINDER_EXPORTED ICallbackDefault : public ICallback {
   public:
     ::android::IBinder* onAsBinder() override {
       return nullptr;
@@ -84,20 +84,20 @@ public:
       return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
     }
   };  // class ICallbackDefault
-  class BpCallback : public ::android::BpInterface<ICallback> {
+  class LIBBINDER_EXPORTED BpCallback : public ::android::BpInterface<ICallback> {
   public:
     explicit BpCallback(const ::android::sp<::android::IBinder>& _aidl_impl);
     virtual ~BpCallback() = default;
     ::android::binder::Status done(::android::aidl::tests::nested::ParcelableWithNested::Status status) override;
   };  // class BpCallback
-  class BnCallback : public ::android::BnInterface<ICallback> {
+  class LIBBINDER_EXPORTED BnCallback : public ::android::BnInterface<ICallback> {
   public:
     static constexpr uint32_t TRANSACTION_done = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
     explicit BnCallback();
     ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
   };  // class BnCallback
 
-  class ICallbackDelegator : public BnCallback {
+  class LIBBINDER_EXPORTED ICallbackDelegator : public BnCallback {
   public:
     explicit ICallbackDelegator(const ::android::sp<ICallback> &impl) : _aidl_delegate(impl) {}
 
@@ -112,7 +112,7 @@ public:
   virtual ::android::binder::Status flipStatusWithCallback(::android::aidl::tests::nested::ParcelableWithNested::Status status, const ::android::sp<::android::aidl::tests::nested::INestedService::ICallback>& cb) = 0;
 };  // class INestedService
 
-class INestedServiceDefault : public INestedService {
+class LIBBINDER_EXPORTED INestedServiceDefault : public INestedService {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

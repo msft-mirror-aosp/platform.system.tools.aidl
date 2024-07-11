@@ -12,7 +12,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BpCppJavaTests : public ::android::BpInterface<ICppJavaTests> {
+class LIBBINDER_EXPORTED BpCppJavaTests : public ::android::BpInterface<ICppJavaTests> {
 public:
   explicit BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpCppJavaTests() = default;

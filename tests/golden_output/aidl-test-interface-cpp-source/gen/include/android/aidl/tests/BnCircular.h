@@ -14,14 +14,14 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BnCircular : public ::android::BnInterface<ICircular> {
+class LIBBINDER_EXPORTED BnCircular : public ::android::BnInterface<ICircular> {
 public:
   static constexpr uint32_t TRANSACTION_GetTestService = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   explicit BnCircular();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnCircular
 
-class ICircularDelegator : public BnCircular {
+class LIBBINDER_EXPORTED ICircularDelegator : public BnCircular {
 public:
   explicit ICircularDelegator(const ::android::sp<ICircular> &impl) : _aidl_delegate(impl) {}
 
