@@ -12,7 +12,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class BpOldName : public ::android::BpInterface<IOldName> {
+class LIBBINDER_EXPORTED BpOldName : public ::android::BpInterface<IOldName> {
 public:
   explicit BpOldName(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpOldName() = default;
