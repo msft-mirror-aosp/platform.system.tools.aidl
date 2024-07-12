@@ -175,7 +175,7 @@ public interface ICppJavaTests extends android.os.IInterface
           android.os.PersistableBundle[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -231,7 +231,7 @@ public interface ICppJavaTests extends android.os.IInterface
           java.io.FileDescriptor[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
