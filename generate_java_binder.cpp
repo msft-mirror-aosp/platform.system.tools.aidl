@@ -611,7 +611,8 @@ static void GenerateStubCode(const AidlMethod& method, bool oneway,
           (*writer) << "int " << var_length << " = data.readInt();\n";
           // if impossibly large array requested, return false
           (*writer) << "if (" << var_length << " > 1000000) {\n";
-          (*writer) << "  return false;\n";
+          (*writer) << "  throw new android.os.BadParcelableException(\"Array too large: \" + "
+                    << var_length << ");\n";
           (*writer) << "} else if (" << var_length << " < 0) {\n";
           (*writer) << "  " << v->name << " = null;\n";
           (*writer) << "} else {\n";
