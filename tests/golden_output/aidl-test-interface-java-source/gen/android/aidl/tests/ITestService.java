@@ -1104,7 +1104,7 @@ public interface ITestService extends android.os.IInterface
           boolean[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1124,7 +1124,7 @@ public interface ITestService extends android.os.IInterface
           byte[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1144,7 +1144,7 @@ public interface ITestService extends android.os.IInterface
           char[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1164,7 +1164,7 @@ public interface ITestService extends android.os.IInterface
           int[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1184,7 +1184,7 @@ public interface ITestService extends android.os.IInterface
           long[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1204,7 +1204,7 @@ public interface ITestService extends android.os.IInterface
           float[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1224,7 +1224,7 @@ public interface ITestService extends android.os.IInterface
           double[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1244,7 +1244,7 @@ public interface ITestService extends android.os.IInterface
           java.lang.String[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1264,7 +1264,7 @@ public interface ITestService extends android.os.IInterface
           byte[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1284,7 +1284,7 @@ public interface ITestService extends android.os.IInterface
           int[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1304,7 +1304,7 @@ public interface ITestService extends android.os.IInterface
           long[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1447,7 +1447,7 @@ public interface ITestService extends android.os.IInterface
           android.os.ParcelFileDescriptor[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1622,7 +1622,7 @@ public interface ITestService extends android.os.IInterface
           java.lang.String[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1642,7 +1642,7 @@ public interface ITestService extends android.os.IInterface
           java.lang.String[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1717,7 +1717,7 @@ public interface ITestService extends android.os.IInterface
           android.os.IBinder[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1737,7 +1737,7 @@ public interface ITestService extends android.os.IInterface
           android.os.IBinder[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {
@@ -1770,7 +1770,7 @@ public interface ITestService extends android.os.IInterface
           android.aidl.tests.SimpleParcelable[] _arg1;
           int _arg1_length = data.readInt();
           if (_arg1_length > 1000000) {
-            return false;
+            throw new android.os.BadParcelableException("Array too large: " + _arg1_length);
           } else if (_arg1_length < 0) {
             _arg1 = null;
           } else {

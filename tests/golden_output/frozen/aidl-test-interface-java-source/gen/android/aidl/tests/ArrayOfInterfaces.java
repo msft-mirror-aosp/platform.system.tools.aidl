@@ -223,7 +223,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
             android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] _arg3;
             int _arg3_length = data.readInt();
             if (_arg3_length > 1000000) {
-              return false;
+              throw new android.os.BadParcelableException("Array too large: " + _arg3_length);
             } else if (_arg3_length < 0) {
               _arg3 = null;
             } else {
@@ -236,7 +236,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
             android.aidl.tests.ArrayOfInterfaces.IEmptyInterface[] _arg6;
             int _arg6_length = data.readInt();
             if (_arg6_length > 1000000) {
-              return false;
+              throw new android.os.BadParcelableException("Array too large: " + _arg6_length);
             } else if (_arg6_length < 0) {
               _arg6 = null;
             } else {
