@@ -25,7 +25,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class UnionWithFd : public ::android::Parcelable {
+class LIBBINDER_EXPORTED UnionWithFd : public ::android::Parcelable {
 public:
   enum class Tag : int32_t {
     num = 0,
