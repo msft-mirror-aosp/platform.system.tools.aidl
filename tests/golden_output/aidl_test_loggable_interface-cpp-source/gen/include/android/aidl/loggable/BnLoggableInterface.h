@@ -16,7 +16,7 @@
 namespace android {
 namespace aidl {
 namespace loggable {
-class BnLoggableInterface : public ::android::BnInterface<ILoggableInterface> {
+class LIBBINDER_EXPORTED BnLoggableInterface : public ::android::BnInterface<ILoggableInterface> {
 public:
   static constexpr uint32_t TRANSACTION_LogThis = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   explicit BnLoggableInterface();
@@ -38,7 +38,7 @@ public:
   static std::function<void(const TransactionLog&)> logFunc;
 };  // class BnLoggableInterface
 
-class ILoggableInterfaceDelegator : public BnLoggableInterface {
+class LIBBINDER_EXPORTED ILoggableInterfaceDelegator : public BnLoggableInterface {
 public:
   explicit ILoggableInterfaceDelegator(const ::android::sp<ILoggableInterface> &impl) : _aidl_delegate(impl) {}
 

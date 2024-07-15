@@ -12,7 +12,7 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class __attribute__((deprecated("test"))) BpDeprecated : public ::android::BpInterface<IDeprecated> {
+class LIBBINDER_EXPORTED __attribute__((deprecated("test"))) BpDeprecated : public ::android::BpInterface<IDeprecated> {
 public:
   explicit BpDeprecated(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpDeprecated() = default;
