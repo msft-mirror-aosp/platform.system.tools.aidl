@@ -354,6 +354,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 	}
 
 	timestampFile := android.PathForModuleOut(ctx, "update_or_freeze_api_"+version+".timestamp")
+	rb.SetPhonyOutput()
 	// explicitly don't touch timestamp, so that the command can be run repeatedly
 	rb.Command().Text("true").ImplicitOutput(timestampFile)
 
