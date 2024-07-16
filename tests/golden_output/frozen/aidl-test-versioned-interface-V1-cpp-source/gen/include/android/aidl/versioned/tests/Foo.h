@@ -14,7 +14,7 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
-class Foo : public ::android::Parcelable {
+class LIBBINDER_EXPORTED Foo : public ::android::Parcelable {
 public:
   inline bool operator==(const Foo&) const {
     return std::tie() == std::tie();

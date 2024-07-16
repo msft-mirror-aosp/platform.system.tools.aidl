@@ -14,7 +14,7 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
-class BnFooInterface : public ::android::BnInterface<IFooInterface> {
+class LIBBINDER_EXPORTED BnFooInterface : public ::android::BnInterface<IFooInterface> {
 public:
   static constexpr uint32_t TRANSACTION_originalApi = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_acceptUnionAndReturnString = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
@@ -28,7 +28,7 @@ public:
   std::string getInterfaceHash();
 };  // class BnFooInterface
 
-class IFooInterfaceDelegator : public BnFooInterface {
+class LIBBINDER_EXPORTED IFooInterfaceDelegator : public BnFooInterface {
 public:
   explicit IFooInterfaceDelegator(const ::android::sp<IFooInterface> &impl) : _aidl_delegate(impl) {}
 

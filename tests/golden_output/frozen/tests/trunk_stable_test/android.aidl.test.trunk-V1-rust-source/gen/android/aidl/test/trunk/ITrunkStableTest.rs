@@ -15,7 +15,7 @@ declare_binder_interface! {
       cached_version: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1),
       cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
     },
-    async: ITrunkStableTestAsync,
+    async: ITrunkStableTestAsync(try_into_local_async),
   }
 }
 pub trait ITrunkStableTest: binder::Interface + Send {
@@ -35,6 +35,9 @@ pub trait ITrunkStableTest: binder::Interface + Send {
   }
   fn setDefaultImpl(d: ITrunkStableTestDefaultRef) -> ITrunkStableTestDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+  }
+  fn try_as_async_server(&self) -> Option<&(dyn ITrunkStableTestAsyncServer + Send + Sync)> {
+    None
   }
 }
 pub trait ITrunkStableTestAsync<P>: binder::Interface + Send {
@@ -90,9 +93,37 @@ impl BnTrunkStableTest {
       fn r#callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
         self._rt.block_on(self._inner.r#callMyCallback(_arg_cb))
       }
+      fn try_as_async_server(&self) -> Option<&(dyn ITrunkStableTestAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn ITrunkStableTestAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnTrunkStableTest>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for Wrapper {
+      fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#repeatParcelable(_arg_input))
+      }
+      fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#repeatEnum(_arg_input))
+      }
+      fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#repeatUnion(_arg_input))
+      }
+      fn r#callMyCallback<'a>(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#callMyCallback(_arg_cb))
+      }
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn ITrunkStableTestAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait ITrunkStableTestDefault: Send + Sync {
@@ -548,7 +579,7 @@ pub mod r#IMyCallback {
         cached_version: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1),
         cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
       },
-      async: IMyCallbackAsync,
+      async: IMyCallbackAsync(try_into_local_async),
     }
   }
   pub trait IMyCallback: binder::Interface + Send {
@@ -567,6 +598,9 @@ pub mod r#IMyCallback {
     }
     fn setDefaultImpl(d: IMyCallbackDefaultRef) -> IMyCallbackDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+    }
+    fn try_as_async_server(&self) -> Option<&(dyn IMyCallbackAsyncServer + Send + Sync)> {
+      None
     }
   }
   pub trait IMyCallbackAsync<P>: binder::Interface + Send {
@@ -617,9 +651,34 @@ pub mod r#IMyCallback {
         fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
           self._rt.block_on(self._inner.r#repeatUnion(_arg_input))
         }
+        fn try_as_async_server(&self) -> Option<&(dyn IMyCallbackAsyncServer + Send + Sync)> {
+          Some(&self._inner)
+        }
       }
       let wrapped = Wrapper { _inner: inner, _rt: rt };
       Self::new_binder(wrapped, features)
+    }
+    pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IMyCallbackAsync<P>>> {
+      struct Wrapper {
+        _native: binder::binder_impl::Binder<BnMyCallback>
+      }
+      impl binder::Interface for Wrapper {}
+      impl<P: binder::BinderAsyncPool> IMyCallbackAsync<P> for Wrapper {
+        fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#repeatParcelable(_arg_input))
+        }
+        fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#repeatEnum(_arg_input))
+        }
+        fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#repeatUnion(_arg_input))
+        }
+      }
+      if _native.try_as_async_server().is_some() {
+        Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IMyCallbackAsync<P>>))
+      } else {
+        None
+      }
     }
   }
   pub trait IMyCallbackDefault: Send + Sync {
