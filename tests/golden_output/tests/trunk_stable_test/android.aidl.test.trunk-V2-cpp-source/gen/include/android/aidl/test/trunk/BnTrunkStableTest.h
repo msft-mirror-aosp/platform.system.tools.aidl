@@ -17,7 +17,7 @@ namespace android {
 namespace aidl {
 namespace test {
 namespace trunk {
-class BnTrunkStableTest : public ::android::BnInterface<ITrunkStableTest> {
+class LIBBINDER_EXPORTED BnTrunkStableTest : public ::android::BnInterface<ITrunkStableTest> {
 public:
   static constexpr uint32_t TRANSACTION_repeatParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_repeatEnum = ::android::IBinder::FIRST_CALL_TRANSACTION + 1;
@@ -47,7 +47,7 @@ public:
   static std::function<void(const TransactionLog&)> logFunc;
 };  // class BnTrunkStableTest
 
-class ITrunkStableTestDelegator : public BnTrunkStableTest {
+class LIBBINDER_EXPORTED ITrunkStableTestDelegator : public BnTrunkStableTest {
 public:
   explicit ITrunkStableTestDelegator(const ::android::sp<ITrunkStableTest> &impl) : _aidl_delegate(impl) {}
 

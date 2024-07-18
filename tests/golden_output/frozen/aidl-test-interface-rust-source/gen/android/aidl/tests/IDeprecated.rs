@@ -13,7 +13,7 @@ declare_binder_interface! {
     native: BnDeprecated(on_transact),
     proxy: BpDeprecated {
     },
-    async: IDeprecatedAsync,
+    async: IDeprecatedAsync(try_into_local_async),
   }
 }
 #[deprecated = "test"]
@@ -24,6 +24,9 @@ pub trait IDeprecated: binder::Interface + Send {
   }
   fn setDefaultImpl(d: IDeprecatedDefaultRef) -> IDeprecatedDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+  }
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IDeprecatedAsyncServer + Send + Sync)> {
+    None
   }
 }
 #[deprecated = "test"]
@@ -55,9 +58,25 @@ impl BnDeprecated {
       T: IDeprecatedAsyncServer + Send + Sync + 'static,
       R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
     {
+      fn try_as_async_server(&self) -> Option<&(dyn IDeprecatedAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IDeprecatedAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnDeprecated>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> IDeprecatedAsync<P> for Wrapper {
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IDeprecatedAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait IDeprecatedDefault: Send + Sync {
