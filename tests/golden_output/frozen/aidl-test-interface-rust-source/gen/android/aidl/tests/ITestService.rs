@@ -95,7 +95,7 @@ pub trait ITestService: binder::Interface + Send {
   fn setDefaultImpl(d: ITestServiceDefaultRef) -> ITestServiceDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn ITestServiceAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ITestServiceAsyncServer + Send + Sync)> {
     None
   }
 }
@@ -4787,7 +4787,7 @@ pub mod r#CompilerChecks {
       fn setDefaultImpl(d: IFooDefaultRef) -> IFooDefaultRef where Self: Sized {
         std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
       }
-      fn try_as_async_server(&self) -> Option<&(dyn IFooAsyncServer + Send + Sync)> {
+      fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IFooAsyncServer + Send + Sync)> {
         None
       }
     }
@@ -4976,7 +4976,7 @@ pub mod r#CompilerChecks {
       fn setDefaultImpl(d: INoPrefixInterfaceDefaultRef) -> INoPrefixInterfaceDefaultRef where Self: Sized {
         std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
       }
-      fn try_as_async_server(&self) -> Option<&(dyn INoPrefixInterfaceAsyncServer + Send + Sync)> {
+      fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INoPrefixInterfaceAsyncServer + Send + Sync)> {
         None
       }
     }
@@ -5153,7 +5153,7 @@ pub mod r#CompilerChecks {
         fn setDefaultImpl(d: INestedNoPrefixInterfaceDefaultRef) -> INestedNoPrefixInterfaceDefaultRef where Self: Sized {
           std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
         }
-        fn try_as_async_server(&self) -> Option<&(dyn INestedNoPrefixInterfaceAsyncServer + Send + Sync)> {
+        fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INestedNoPrefixInterfaceAsyncServer + Send + Sync)> {
           None
         }
       }
