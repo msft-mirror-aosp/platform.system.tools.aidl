@@ -26,7 +26,7 @@ pub trait INestedService: binder::Interface + Send {
   fn setDefaultImpl(d: INestedServiceDefaultRef) -> INestedServiceDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn INestedServiceAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INestedServiceAsyncServer + Send + Sync)> {
     None
   }
 }
@@ -273,7 +273,7 @@ pub mod r#ICallback {
     fn setDefaultImpl(d: ICallbackDefaultRef) -> ICallbackDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
     }
-    fn try_as_async_server(&self) -> Option<&(dyn ICallbackAsyncServer + Send + Sync)> {
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ICallbackAsyncServer + Send + Sync)> {
       None
     }
   }
