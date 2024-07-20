@@ -37,7 +37,7 @@ pub trait ITrunkStableTest: binder::Interface + Send {
   fn setDefaultImpl(d: ITrunkStableTestDefaultRef) -> ITrunkStableTestDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn ITrunkStableTestAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ITrunkStableTestAsyncServer + Send + Sync)> {
     None
   }
 }
@@ -703,7 +703,7 @@ pub mod r#IMyCallback {
     fn setDefaultImpl(d: IMyCallbackDefaultRef) -> IMyCallbackDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
     }
-    fn try_as_async_server(&self) -> Option<&(dyn IMyCallbackAsyncServer + Send + Sync)> {
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IMyCallbackAsyncServer + Send + Sync)> {
       None
     }
   }

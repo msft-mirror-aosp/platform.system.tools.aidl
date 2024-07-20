@@ -51,7 +51,7 @@ pub mod r#IEmptyInterface {
     fn setDefaultImpl(d: IEmptyInterfaceDefaultRef) -> IEmptyInterfaceDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
     }
-    fn try_as_async_server(&self) -> Option<&(dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
       None
     }
   }
@@ -145,7 +145,7 @@ pub mod r#IMyInterface {
     fn setDefaultImpl(d: IMyInterfaceDefaultRef) -> IMyInterfaceDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
     }
-    fn try_as_async_server(&self) -> Option<&(dyn IMyInterfaceAsyncServer + Send + Sync)> {
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IMyInterfaceAsyncServer + Send + Sync)> {
       None
     }
   }

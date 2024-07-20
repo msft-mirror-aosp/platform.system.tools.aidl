@@ -25,7 +25,7 @@ pub trait IDeprecated: binder::Interface + Send {
   fn setDefaultImpl(d: IDeprecatedDefaultRef) -> IDeprecatedDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn IDeprecatedAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IDeprecatedAsyncServer + Send + Sync)> {
     None
   }
 }

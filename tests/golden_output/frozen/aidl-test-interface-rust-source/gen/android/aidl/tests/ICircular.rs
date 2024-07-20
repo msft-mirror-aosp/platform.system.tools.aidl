@@ -25,7 +25,7 @@ pub trait ICircular: binder::Interface + Send {
   fn setDefaultImpl(d: ICircularDefaultRef) -> ICircularDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn ICircularAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ICircularAsyncServer + Send + Sync)> {
     None
   }
 }

@@ -36,7 +36,7 @@ pub trait IFooInterface: binder::Interface + Send {
   fn setDefaultImpl(d: IFooInterfaceDefaultRef) -> IFooInterfaceDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn IFooInterfaceAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IFooInterfaceAsyncServer + Send + Sync)> {
     None
   }
 }

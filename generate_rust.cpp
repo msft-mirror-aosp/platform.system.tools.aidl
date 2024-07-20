@@ -684,8 +684,8 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
                << " -> " << default_ref_name << " where Self: Sized {\n";
   *code_writer << "  std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)\n";
   *code_writer << "}\n";
-  *code_writer << "fn try_as_async_server(&self) -> Option<&(dyn " << trait_name_async_server
-               << " + Send + Sync)> {\n";
+  *code_writer << "fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn "
+               << trait_name_async_server << " + Send + Sync)> {\n";
   *code_writer << "  None\n";
   *code_writer << "}\n";
   code_writer->Dedent();

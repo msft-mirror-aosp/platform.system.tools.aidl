@@ -389,7 +389,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn setDefaultImpl(d: IRepeatFixedSizeArrayDefaultRef) -> IRepeatFixedSizeArrayDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
     }
-    fn try_as_async_server(&self) -> Option<&(dyn IRepeatFixedSizeArrayAsyncServer + Send + Sync)> {
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IRepeatFixedSizeArrayAsyncServer + Send + Sync)> {
       None
     }
   }
@@ -1050,7 +1050,7 @@ pub mod r#IEmptyInterface {
     fn setDefaultImpl(d: IEmptyInterfaceDefaultRef) -> IEmptyInterfaceDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
     }
-    fn try_as_async_server(&self) -> Option<&(dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
       None
     }
   }

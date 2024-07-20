@@ -25,7 +25,7 @@ pub trait INewName: binder::Interface + Send {
   fn setDefaultImpl(d: INewNameDefaultRef) -> INewNameDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn INewNameAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INewNameAsyncServer + Send + Sync)> {
     None
   }
 }
