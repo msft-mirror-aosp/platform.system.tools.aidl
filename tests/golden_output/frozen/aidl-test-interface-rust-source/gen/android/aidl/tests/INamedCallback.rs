@@ -25,7 +25,7 @@ pub trait INamedCallback: binder::Interface + Send {
   fn setDefaultImpl(d: INamedCallbackDefaultRef) -> INamedCallbackDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
   }
-  fn try_as_async_server(&self) -> Option<&(dyn INamedCallbackAsyncServer + Send + Sync)> {
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INamedCallbackAsyncServer + Send + Sync)> {
     None
   }
 }
