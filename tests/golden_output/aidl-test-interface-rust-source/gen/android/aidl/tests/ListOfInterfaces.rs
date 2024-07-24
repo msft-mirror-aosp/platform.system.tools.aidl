@@ -40,7 +40,7 @@ pub mod r#IEmptyInterface {
       native: BnEmptyInterface(on_transact),
       proxy: BpEmptyInterface {
       },
-      async: IEmptyInterfaceAsync,
+      async: IEmptyInterfaceAsync(try_into_local_async),
     }
   }
   pub trait IEmptyInterface: binder::Interface + Send {
@@ -50,6 +50,9 @@ pub mod r#IEmptyInterface {
     }
     fn setDefaultImpl(d: IEmptyInterfaceDefaultRef) -> IEmptyInterfaceDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+    }
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
+      None
     }
   }
   pub trait IEmptyInterfaceAsync<P>: binder::Interface + Send {
@@ -79,9 +82,25 @@ pub mod r#IEmptyInterface {
         T: IEmptyInterfaceAsyncServer + Send + Sync + 'static,
         R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
       {
+        fn try_as_async_server(&self) -> Option<&(dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
+          Some(&self._inner)
+        }
       }
       let wrapped = Wrapper { _inner: inner, _rt: rt };
       Self::new_binder(wrapped, features)
+    }
+    pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IEmptyInterfaceAsync<P>>> {
+      struct Wrapper {
+        _native: binder::binder_impl::Binder<BnEmptyInterface>
+      }
+      impl binder::Interface for Wrapper {}
+      impl<P: binder::BinderAsyncPool> IEmptyInterfaceAsync<P> for Wrapper {
+      }
+      if _native.try_as_async_server().is_some() {
+        Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IEmptyInterfaceAsync<P>>))
+      } else {
+        None
+      }
     }
   }
   pub trait IEmptyInterfaceDefault: Send + Sync {
@@ -114,7 +133,7 @@ pub mod r#IMyInterface {
       native: BnMyInterface(on_transact),
       proxy: BpMyInterface {
       },
-      async: IMyInterfaceAsync,
+      async: IMyInterfaceAsync(try_into_local_async),
     }
   }
   pub trait IMyInterface: binder::Interface + Send {
@@ -125,6 +144,9 @@ pub mod r#IMyInterface {
     }
     fn setDefaultImpl(d: IMyInterfaceDefaultRef) -> IMyInterfaceDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+    }
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IMyInterfaceAsyncServer + Send + Sync)> {
+      None
     }
   }
   pub trait IMyInterfaceAsync<P>: binder::Interface + Send {
@@ -159,9 +181,28 @@ pub mod r#IMyInterface {
         fn r#methodWithInterfaces(&self, _arg_iface: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>, _arg_nullable_iface: Option<&binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>, _arg_iface_list_in: &[binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>], _arg_iface_list_out: &mut Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>, _arg_iface_list_inout: &mut Vec<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>, _arg_nullable_iface_list_in: Option<&[Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>]>, _arg_nullable_iface_list_out: &mut Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>, _arg_nullable_iface_list_inout: &mut Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>> {
           self._rt.block_on(self._inner.r#methodWithInterfaces(_arg_iface, _arg_nullable_iface, _arg_iface_list_in, _arg_iface_list_out, _arg_iface_list_inout, _arg_nullable_iface_list_in, _arg_nullable_iface_list_out, _arg_nullable_iface_list_inout))
         }
+        fn try_as_async_server(&self) -> Option<&(dyn IMyInterfaceAsyncServer + Send + Sync)> {
+          Some(&self._inner)
+        }
       }
       let wrapped = Wrapper { _inner: inner, _rt: rt };
       Self::new_binder(wrapped, features)
+    }
+    pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IMyInterfaceAsync<P>>> {
+      struct Wrapper {
+        _native: binder::binder_impl::Binder<BnMyInterface>
+      }
+      impl binder::Interface for Wrapper {}
+      impl<P: binder::BinderAsyncPool> IMyInterfaceAsync<P> for Wrapper {
+        fn r#methodWithInterfaces<'a>(&'a self, _arg_iface: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>, _arg_nullable_iface: Option<&'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>, _arg_iface_list_in: &'a [binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>], _arg_iface_list_out: &'a mut Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>, _arg_iface_list_inout: &'a mut Vec<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>, _arg_nullable_iface_list_in: Option<&'a [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>]>, _arg_nullable_iface_list_out: &'a mut Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>, _arg_nullable_iface_list_inout: &'a mut Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>) -> binder::BoxFuture<'a, binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#methodWithInterfaces(_arg_iface, _arg_nullable_iface, _arg_iface_list_in, _arg_iface_list_out, _arg_iface_list_inout, _arg_nullable_iface_list_in, _arg_nullable_iface_list_out, _arg_nullable_iface_list_inout))
+        }
+      }
+      if _native.try_as_async_server().is_some() {
+        Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IMyInterfaceAsync<P>>))
+      } else {
+        None
+      }
     }
   }
   pub trait IMyInterfaceDefault: Send + Sync {
@@ -382,6 +423,7 @@ pub mod r#MyUnion {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
+      #[repr(C, align(4))]
       r#Tag : [i32; 4] {
         r#iface = 0,
         r#nullable_iface = 1,

@@ -7,6 +7,7 @@
 #![allow(non_upper_case_globals)]
 use binder::declare_binder_enum;
 declare_binder_enum! {
+  #[repr(C, align(4))]
   r#ConstantExpressionEnum : [i32; 10] {
     r#decInt32_1 = 1,
     r#decInt32_2 = 1,

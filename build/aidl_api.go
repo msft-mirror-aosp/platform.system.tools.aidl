@@ -354,6 +354,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 	}
 
 	timestampFile := android.PathForModuleOut(ctx, "update_or_freeze_api_"+version+".timestamp")
+	rb.SetPhonyOutput()
 	// explicitly don't touch timestamp, so that the command can be run repeatedly
 	rb.Command().Text("true").ImplicitOutput(timestampFile)
 
@@ -748,7 +749,7 @@ type freezeApiSingleton struct{}
 func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) {
 	var files android.Paths
 	ctx.VisitAllModules(func(module android.Module) {
-		if !module.Enabled() {
+		if !module.Enabled(ctx) {
 			return
 		}
 		if m, ok := module.(*aidlApi); ok {

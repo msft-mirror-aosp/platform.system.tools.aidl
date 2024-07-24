@@ -53,19 +53,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		return ""
 	}
 
-	var overrideVndkProperties cc.VndkProperties
-
-	if !i.isModuleForVndk(version) {
-		// We only want the VNDK to include the latest interface. For interfaces in
-		// development, they will be frozen, so we put their latest version in the
-		// VNDK. For interfaces which are already frozen, we put their latest version
-		// in the VNDK, and when that version is frozen, the version in the VNDK can
-		// be updated. Otherwise, we remove this library from the VNDK, to avoid adding
-		// multiple versions of the same library to the VNDK.
-		overrideVndkProperties.Vndk.Enabled = proptools.BoolPtr(false)
-		overrideVndkProperties.Vndk.Support_system_process = proptools.BoolPtr(false)
-	}
-
 	var commonProperties *CommonNativeBackendProperties
 	if lang == langCpp {
 		commonProperties = &i.properties.Backend.Cpp.CommonNativeBackendProperties
@@ -75,6 +62,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 
 	genLog := proptools.Bool(commonProperties.Gen_log)
 	genTrace := i.genTrace(lang)
+	aidlFlags := i.flagsForAidlGenRule(version)
 
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
@@ -93,7 +81,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Unstable:            i.properties.Unstable,
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
-		Flags:               i.flagsForAidlGenRule(version),
+		Flags:               aidlFlags,
 		UseUnfrozen:         i.useUnfrozen(mctx),
 	},
 	)
@@ -106,9 +94,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	var cpp_std *string
 	var hostSupported *bool
 	addCflags := commonProperties.Cflags
-	targetProp := ccTargetProperties{
-		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
-	}
+	targetProp := ccTargetProperties{}
 
 	if lang == langCpp {
 		importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
@@ -156,9 +142,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		// It may be the case in the future that we will want to enable this (if some generic
 		// helper should be used by both libbinder vendor things using /dev/vndbinder as well
 		// as those things using /dev/binder + libbinder_ndk to talk to stable interfaces).
-		if "vintf" == proptools.String(i.properties.Stability) {
-			overrideVndkProperties.Vndk.Private = proptools.BoolPtr(true)
-		}
+
 		// As libbinder is not available for the product processes, we must not create
 		// product variant for the aidl_interface
 		productAvailable = nil
@@ -173,12 +157,17 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Imports:           i.getImportsForVersion(version),
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name:                      proptools.StringPtr(cppModuleGen),
+				Name: proptools.StringPtr(cppModuleGen),
+				Enabled: android.CreateSelectOsToBool(map[string]*bool{
+					"":       nil,
+					"darwin": proptools.BoolPtr(false),
+				}),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
 				Recovery_available:        recoveryAvailable,
 				Host_supported:            hostSupported,
+				Cmake_snapshot_supported:  i.properties.Cmake_snapshot_supported,
 				Defaults:                  []string{"aidl-cpp-module-defaults"},
 				Double_loadable:           i.properties.Double_loadable,
 				Generated_sources:         []string{cppSourceGen},
@@ -205,9 +194,18 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 					"-clang-analyzer-optin.performance.Padding", // b/253079031
 				},
 				Include_build_directory: proptools.BoolPtr(false), // b/254682497
-			}, &i.properties.VndkProperties,
-			&commonProperties.VndkProperties,
-			&overrideVndkProperties,
+				AidlInterface: struct {
+					Sources  []string
+					AidlRoot string
+					Lang     string
+					Flags    []string
+				}{
+					Sources:  srcs,
+					AidlRoot: aidlRoot,
+					Lang:     lang,
+					Flags:    aidlFlags,
+				},
+			},
 		},
 	})
 
@@ -244,9 +242,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	importExportDependencies := []string{}
 	var hostSupported *bool
 	var addCflags []string // not using cpp backend cflags for now
-	targetProp := ccTargetProperties{
-		Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)},
-	}
+	targetProp := ccTargetProperties{}
 
 	importExportDependencies = append(importExportDependencies, "libbinder", "libutils")
 	hostSupported = i.properties.Host_supported
@@ -262,7 +258,11 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 	g := aidlImplementationGeneratorProperties{
 		ModuleProperties: []interface{}{
 			&ccProperties{
-				Name:                      proptools.StringPtr(cppAnalyzerModuleGen),
+				Name: proptools.StringPtr(cppAnalyzerModuleGen),
+				Enabled: android.CreateSelectOsToBool(map[string]*bool{
+					"":       nil,
+					"darwin": proptools.BoolPtr(false),
+				}),
 				Vendor_available:          vendorAvailable,
 				Odm_available:             odmAvailable,
 				Product_available:         productAvailable,
@@ -401,7 +401,11 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
 	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
-		Name:              proptools.StringPtr(rustModuleGen),
+		Name: proptools.StringPtr(rustModuleGen),
+		Enabled: android.CreateSelectOsToBool(map[string]*bool{
+			"darwin": proptools.BoolPtr(false),
+			"":       nil,
+		}),
 		Crate_name:        rustCrateName,
 		Stem:              proptools.StringPtr("lib" + versionedRustName),
 		Defaults:          []string{"aidl-rust-module-defaults"},
@@ -410,7 +414,6 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Product_available: i.properties.Product_available,
 		Apex_available:    i.properties.Backend.Rust.Apex_available,
 		Min_sdk_version:   i.minSdkVersion(langRust),
-		Target:            rustTargetProperties{Darwin: darwinProperties{Enabled: proptools.BoolPtr(false)}},
 		Rustlibs:          i.properties.Backend.Rust.Additional_rustlibs,
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),
@@ -474,23 +477,6 @@ func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
 		flags = append(flags, i.properties.Flags...)
 	}
 	return
-}
-
-func (i *aidlInterface) isModuleForVndk(version string) bool {
-	if i.properties.Vndk_use_version != nil {
-		if !i.hasVersion() && version != *i.properties.Vndk_use_version {
-			panic("unrecognized vndk_use_version")
-		}
-		// Will be exactly one of the version numbers
-		return version == *i.properties.Vndk_use_version
-	}
-
-	// For an interface with no versions, this is the ToT interface.
-	if !i.hasVersion() {
-		return version == i.nextVersion()
-	}
-
-	return version == i.latestVersion()
 }
 
 // importing aidl_interface's version  | imported aidl_interface | imported aidl_interface's version
@@ -565,9 +551,6 @@ func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDown
 			p.Shared_libs = append(p.Shared_libs, imports...)
 			p.Export_shared_lib_headers = append(p.Export_shared_lib_headers, imports...)
 		}
-		module := ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
-		// AIDL-generated CC modules can't be used across system/vendor boundary. So marking it
-		// as MustUseVendorVariant. See build/soong/cc/config/vndk.go
-		module.(*cc.Module).Properties.MustUseVendorVariant = true
+		ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
 	}
 }

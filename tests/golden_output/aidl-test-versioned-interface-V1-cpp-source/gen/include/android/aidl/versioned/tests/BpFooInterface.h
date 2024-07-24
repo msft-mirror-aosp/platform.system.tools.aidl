@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include <mutex>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <utils/Errors.h>
@@ -13,7 +14,7 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
-class BpFooInterface : public ::android::BpInterface<IFooInterface> {
+class LIBBINDER_EXPORTED BpFooInterface : public ::android::BpInterface<IFooInterface> {
 public:
   explicit BpFooInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpFooInterface() = default;

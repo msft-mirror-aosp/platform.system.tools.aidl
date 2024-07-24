@@ -155,6 +155,11 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			crate_name: "binder",
 			srcs: [""],
 		}
+		rust_library {
+			name: "libstatic_assertions",
+			crate_name: "static_assertions",
+			srcs: [""],
+		}
 		rust_proc_macro {
 			name: "libasync_trait",
 			crate_name: "async_trait",
@@ -1136,14 +1141,7 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 	var ctx *android.TestContext
 	assertOutput := func(moduleName, variant, outputFilename string) {
 		t.Helper()
-		producer, ok := ctx.ModuleForTests(moduleName, variant).Module().(android.OutputFileProducer)
-		if !ok {
-			t.Errorf("%s(%s): should be OutputFileProducer.", moduleName, variant)
-		}
-		paths, err := producer.OutputFiles("")
-		if err != nil {
-			t.Errorf("%s(%s): failed to get OutputFiles: %v", moduleName, variant, err)
-		}
+		paths := ctx.ModuleForTests(moduleName, variant).OutputFiles(t, "")
 		if len(paths) != 1 || paths[0].Base() != outputFilename {
 			t.Errorf("%s(%s): expected output %q, but got %v", moduleName, variant, outputFilename, paths)
 		}

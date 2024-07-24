@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include <mutex>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <utils/Errors.h>
@@ -15,7 +16,7 @@ namespace android {
 namespace aidl {
 namespace test {
 namespace trunk {
-class BpTrunkStableTest : public ::android::BpInterface<ITrunkStableTest> {
+class LIBBINDER_EXPORTED BpTrunkStableTest : public ::android::BpInterface<ITrunkStableTest> {
 public:
   explicit BpTrunkStableTest(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpTrunkStableTest() = default;
