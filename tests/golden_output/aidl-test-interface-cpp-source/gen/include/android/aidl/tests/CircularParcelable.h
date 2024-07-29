@@ -18,7 +18,7 @@ class ITestService;
 namespace android {
 namespace aidl {
 namespace tests {
-class CircularParcelable : public ::android::Parcelable {
+class LIBBINDER_EXPORTED CircularParcelable : public ::android::Parcelable {
 public:
   ::android::sp<::android::aidl::tests::ITestService> testService;
   inline bool operator==(const CircularParcelable& _rhs) const {
