@@ -311,6 +311,7 @@ cc_library_headers {
     name: "libandroid_aidltrace",
     host_supported: true,
     vendor_available: true,
+    product_available: true,
     export_include_dirs: ["trace"],
     apex_available: [
         "//apex_available:platform",
