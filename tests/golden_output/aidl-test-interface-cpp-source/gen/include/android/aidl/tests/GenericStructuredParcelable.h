@@ -15,7 +15,7 @@ namespace android {
 namespace aidl {
 namespace tests {
 template <typename T, typename U, typename B>
-class GenericStructuredParcelable : public ::android::Parcelable {
+class LIBBINDER_EXPORTED GenericStructuredParcelable : public ::android::Parcelable {
 public:
   int32_t a = 0;
   int32_t b = 0;
