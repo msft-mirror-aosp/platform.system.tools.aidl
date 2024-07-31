@@ -19,13 +19,13 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace nested {
-class DeeplyNested : public ::android::Parcelable {
+class LIBBINDER_EXPORTED DeeplyNested : public ::android::Parcelable {
 public:
-  class B : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED B : public ::android::Parcelable {
   public:
-    class C : public ::android::Parcelable {
+    class LIBBINDER_EXPORTED C : public ::android::Parcelable {
     public:
-      class D : public ::android::Parcelable {
+      class LIBBINDER_EXPORTED D : public ::android::Parcelable {
       public:
         enum class E : int8_t {
           OK = 0,
@@ -126,7 +126,7 @@ public:
       return _aidl_os.str();
     }
   };  // class B
-  class A : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED A : public ::android::Parcelable {
   public:
     ::android::aidl::tests::nested::DeeplyNested::B::C::D::E e = ::android::aidl::tests::nested::DeeplyNested::B::C::D::E::OK;
     inline bool operator==(const A& _rhs) const {
