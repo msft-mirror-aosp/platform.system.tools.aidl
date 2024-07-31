@@ -370,7 +370,7 @@ pub mod r#IRepeatFixedSizeArray {
       native: BnRepeatFixedSizeArray(on_transact),
       proxy: BpRepeatFixedSizeArray {
       },
-      async: IRepeatFixedSizeArrayAsync,
+      async: IRepeatFixedSizeArrayAsync(try_into_local_async),
     }
   }
   pub trait IRepeatFixedSizeArray: binder::Interface + Send {
@@ -388,6 +388,9 @@ pub mod r#IRepeatFixedSizeArray {
     }
     fn setDefaultImpl(d: IRepeatFixedSizeArrayDefaultRef) -> IRepeatFixedSizeArrayDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+    }
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IRepeatFixedSizeArrayAsyncServer + Send + Sync)> {
+      None
     }
   }
   pub trait IRepeatFixedSizeArrayAsync<P>: binder::Interface + Send {
@@ -457,9 +460,49 @@ pub mod r#IRepeatFixedSizeArray {
         fn r#Repeat2dParcelables(&self, _arg_input: &[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]> {
           self._rt.block_on(self._inner.r#Repeat2dParcelables(_arg_input, _arg_repeated))
         }
+        fn try_as_async_server(&self) -> Option<&(dyn IRepeatFixedSizeArrayAsyncServer + Send + Sync)> {
+          Some(&self._inner)
+        }
       }
       let wrapped = Wrapper { _inner: inner, _rt: rt };
       Self::new_binder(wrapped, features)
+    }
+    pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IRepeatFixedSizeArrayAsync<P>>> {
+      struct Wrapper {
+        _native: binder::binder_impl::Binder<BnRepeatFixedSizeArray>
+      }
+      impl binder::Interface for Wrapper {}
+      impl<P: binder::BinderAsyncPool> IRepeatFixedSizeArrayAsync<P> for Wrapper {
+        fn r#RepeatBytes<'a>(&'a self, _arg_input: &'a [u8; 3], _arg_repeated: &'a mut [u8; 3]) -> binder::BoxFuture<'a, binder::Result<[u8; 3]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#RepeatBytes(_arg_input, _arg_repeated))
+        }
+        fn r#RepeatInts<'a>(&'a self, _arg_input: &'a [i32; 3], _arg_repeated: &'a mut [i32; 3]) -> binder::BoxFuture<'a, binder::Result<[i32; 3]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#RepeatInts(_arg_input, _arg_repeated))
+        }
+        fn r#RepeatBinders<'a>(&'a self, _arg_input: &'a [binder::SpIBinder; 3], _arg_repeated: &'a mut [Option<binder::SpIBinder>; 3]) -> binder::BoxFuture<'a, binder::Result<[binder::SpIBinder; 3]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#RepeatBinders(_arg_input, _arg_repeated))
+        }
+        fn r#RepeatParcelables<'a>(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _arg_repeated: &'a mut [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]) -> binder::BoxFuture<'a, binder::Result<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#RepeatParcelables(_arg_input, _arg_repeated))
+        }
+        fn r#Repeat2dBytes<'a>(&'a self, _arg_input: &'a [[u8; 3]; 2], _arg_repeated: &'a mut [[u8; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[u8; 3]; 2]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#Repeat2dBytes(_arg_input, _arg_repeated))
+        }
+        fn r#Repeat2dInts<'a>(&'a self, _arg_input: &'a [[i32; 3]; 2], _arg_repeated: &'a mut [[i32; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[i32; 3]; 2]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#Repeat2dInts(_arg_input, _arg_repeated))
+        }
+        fn r#Repeat2dBinders<'a>(&'a self, _arg_input: &'a [[binder::SpIBinder; 3]; 2], _arg_repeated: &'a mut [[Option<binder::SpIBinder>; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[binder::SpIBinder; 3]; 2]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#Repeat2dBinders(_arg_input, _arg_repeated))
+        }
+        fn r#Repeat2dParcelables<'a>(&'a self, _arg_input: &'a [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &'a mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#Repeat2dParcelables(_arg_input, _arg_repeated))
+        }
+      }
+      if _native.try_as_async_server().is_some() {
+        Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IRepeatFixedSizeArrayAsync<P>>))
+      } else {
+        None
+      }
     }
   }
   pub trait IRepeatFixedSizeArrayDefault: Send + Sync {
@@ -996,7 +1039,7 @@ pub mod r#IEmptyInterface {
       native: BnEmptyInterface(on_transact),
       proxy: BpEmptyInterface {
       },
-      async: IEmptyInterfaceAsync,
+      async: IEmptyInterfaceAsync(try_into_local_async),
     }
   }
   pub trait IEmptyInterface: binder::Interface + Send {
@@ -1006,6 +1049,9 @@ pub mod r#IEmptyInterface {
     }
     fn setDefaultImpl(d: IEmptyInterfaceDefaultRef) -> IEmptyInterfaceDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+    }
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
+      None
     }
   }
   pub trait IEmptyInterfaceAsync<P>: binder::Interface + Send {
@@ -1035,9 +1081,25 @@ pub mod r#IEmptyInterface {
         T: IEmptyInterfaceAsyncServer + Send + Sync + 'static,
         R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
       {
+        fn try_as_async_server(&self) -> Option<&(dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
+          Some(&self._inner)
+        }
       }
       let wrapped = Wrapper { _inner: inner, _rt: rt };
       Self::new_binder(wrapped, features)
+    }
+    pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IEmptyInterfaceAsync<P>>> {
+      struct Wrapper {
+        _native: binder::binder_impl::Binder<BnEmptyInterface>
+      }
+      impl binder::Interface for Wrapper {}
+      impl<P: binder::BinderAsyncPool> IEmptyInterfaceAsync<P> for Wrapper {
+      }
+      if _native.try_as_async_server().is_some() {
+        Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IEmptyInterfaceAsync<P>>))
+      } else {
+        None
+      }
     }
   }
   pub trait IEmptyInterfaceDefault: Send + Sync {
