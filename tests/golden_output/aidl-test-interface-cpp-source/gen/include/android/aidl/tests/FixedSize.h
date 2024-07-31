@@ -27,9 +27,9 @@
 namespace android {
 namespace aidl {
 namespace tests {
-class FixedSize : public ::android::Parcelable {
+class LIBBINDER_EXPORTED FixedSize : public ::android::Parcelable {
 public:
-  class FixedUnion : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED FixedUnion : public ::android::Parcelable {
   public:
     enum class Tag : int8_t {
       booleanValue = 0,
@@ -157,7 +157,7 @@ public:
       ::android::aidl::tests::LongEnum enumValue __attribute__((aligned (8)));
     } _value;
   };  // class FixedUnion
-  class EmptyParcelable : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED EmptyParcelable : public ::android::Parcelable {
   public:
     inline bool operator==(const EmptyParcelable&) const {
       return std::tie() == std::tie();
@@ -191,7 +191,7 @@ public:
       return _aidl_os.str();
     }
   };  // class EmptyParcelable
-  class FixedParcelable : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED FixedParcelable : public ::android::Parcelable {
   public:
     bool booleanValue = false;
     int8_t byteValue = 0;
@@ -251,7 +251,7 @@ public:
       return _aidl_os.str();
     }
   };  // class FixedParcelable
-  class ExplicitPaddingParcelable : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED ExplicitPaddingParcelable : public ::android::Parcelable {
   public:
     int8_t byteValue = 0;
     int64_t longValue = 0L;
@@ -297,7 +297,7 @@ public:
       return _aidl_os.str();
     }
   };  // class ExplicitPaddingParcelable
-  class FixedUnionNoPadding : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED FixedUnionNoPadding : public ::android::Parcelable {
   public:
     enum class Tag : int8_t {
       byteValue = 0,
@@ -389,7 +389,7 @@ public:
       int8_t byteValue __attribute__((aligned (1))) = int8_t(0);
     } _value;
   };  // class FixedUnionNoPadding
-  class FixedUnionSmallPadding : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED FixedUnionSmallPadding : public ::android::Parcelable {
   public:
     enum class Tag : int8_t {
       charValue = 0,
@@ -481,7 +481,7 @@ public:
       char16_t charValue __attribute__((aligned (2))) = char16_t('\0');
     } _value;
   };  // class FixedUnionSmallPadding
-  class FixedUnionLongPadding : public ::android::Parcelable {
+  class LIBBINDER_EXPORTED FixedUnionLongPadding : public ::android::Parcelable {
   public:
     enum class Tag : int8_t {
       longValue = 0,
