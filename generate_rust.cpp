@@ -638,7 +638,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   }
   code_writer->Dedent();
   *code_writer << "},\n";
-  *code_writer << "async: " << trait_name_async << ",\n";
+  *code_writer << "async: " << trait_name_async << "(try_into_local_async),\n";
   if (iface->IsVintfStability()) {
     *code_writer << "stability: binder::binder_impl::Stability::Vintf,\n";
   }
@@ -684,6 +684,10 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
                << " -> " << default_ref_name << " where Self: Sized {\n";
   *code_writer << "  std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)\n";
   *code_writer << "}\n";
+  *code_writer << "fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn "
+               << trait_name_async_server << " + Send + Sync)> {\n";
+  *code_writer << "  None\n";
+  *code_writer << "}\n";
   code_writer->Dedent();
   *code_writer << "}\n";
 
@@ -698,13 +702,11 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
     // Generate the method
     GenerateDeprecated(*code_writer, *method);
 
-    MethodKind kind = method->IsOneway() ? MethodKind::READY_FUTURE : MethodKind::BOXED_FUTURE;
-
     if (method->IsUserDefined()) {
-      *code_writer << BuildMethod(*method, typenames, kind) << ";\n";
+      *code_writer << BuildMethod(*method, typenames, MethodKind::BOXED_FUTURE) << ";\n";
     } else {
       // Generate default implementations for meta methods
-      *code_writer << BuildMethod(*method, typenames, kind) << " {\n";
+      *code_writer << BuildMethod(*method, typenames, MethodKind::BOXED_FUTURE) << " {\n";
       code_writer->Indent();
       if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
         *code_writer << "Box::pin(async move { Ok(VERSION) })\n";
@@ -796,6 +798,12 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
       *code_writer << "}\n";
     }
   }
+  *code_writer << "fn try_as_async_server(&self) -> Option<&(dyn " << trait_name_async_server
+               << " + Send + Sync)> {\n";
+  code_writer->Indent();
+  *code_writer << "Some(&self._inner)\n";
+  code_writer->Dedent();
+  *code_writer << "}\n";
   code_writer->Dedent();
   *code_writer << "}\n";
 
@@ -804,6 +812,53 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
 
   code_writer->Dedent();
   *code_writer << "}\n";
+
+  // Emit a method for accessing the underlying async implementation of a local server.
+  *code_writer << "pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: "
+                  "binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn "
+               << trait_name_async << "<P>>> {\n";
+  code_writer->Indent();
+
+  *code_writer << "struct Wrapper {\n";
+  code_writer->Indent();
+  *code_writer << "_native: binder::binder_impl::Binder<" << server_name << ">\n";
+  code_writer->Dedent();
+  *code_writer << "}\n";
+  *code_writer << "impl binder::Interface for Wrapper {}\n";
+  *code_writer << "impl<P: binder::BinderAsyncPool> " << trait_name_async << "<P> for Wrapper {\n";
+  code_writer->Indent();
+  for (const auto& method : iface->GetMethods()) {
+    // Generate the method
+    if (method->IsUserDefined()) {
+      string args = "";
+      for (const std::unique_ptr<AidlArgument>& arg : method->GetArguments()) {
+        if (!args.empty()) {
+          args += ", ";
+        }
+        args += kArgumentPrefix;
+        args += arg->GetName();
+      }
+
+      *code_writer << BuildMethod(*method, typenames, MethodKind::BOXED_FUTURE) << " {\n";
+      code_writer->Indent();
+      *code_writer << "Box::pin(self._native.try_as_async_server().unwrap().r#" << method->GetName()
+                   << "(" << args << "))\n";
+      code_writer->Dedent();
+      *code_writer << "}\n";
+    }
+  }
+  code_writer->Dedent();
+  *code_writer << "}\n";
+  *code_writer << "if _native.try_as_async_server().is_some() {\n";
+  *code_writer << "  Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn "
+               << trait_name_async << "<P>>))\n";
+  *code_writer << "} else {\n";
+  *code_writer << "  None\n";
+  *code_writer << "}\n";
+
+  code_writer->Dedent();
+  *code_writer << "}\n";
+
   code_writer->Dedent();
   *code_writer << "}\n";
 
@@ -896,8 +951,8 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
                << client_name << " {\n";
   code_writer->Indent();
   for (const auto& method : iface->GetMethods()) {
-    MethodKind kind = method->IsOneway() ? MethodKind::READY_FUTURE : MethodKind::BOXED_FUTURE;
-    GenerateClientMethod(*code_writer, *iface, *method, typenames, options, kind);
+    GenerateClientMethod(*code_writer, *iface, *method, typenames, options,
+                         MethodKind::BOXED_FUTURE);
   }
   code_writer->Dedent();
   *code_writer << "}\n";

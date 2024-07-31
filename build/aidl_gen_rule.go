@@ -71,6 +71,11 @@ var (
 		Restat:      true,
 		Description: "AIDL Rust ${in}",
 	}, "imports", "nextImports", "outDir", "optionalFlags")
+
+	aidlPhonyRule = pctx.StaticRule("aidlPhonyRule", blueprint.RuleParams{
+		Command:     `touch ${out}`,
+		Description: "create ${out}",
+	})
 )
 
 type aidlGenProperties struct {
@@ -163,7 +168,7 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 
 	// This is to trigger genrule alone
 	ctx.Build(pctx, android.BuildParams{
-		Rule:   android.Phony,
+		Rule:   aidlPhonyRule,
 		Output: android.PathForModuleOut(ctx, "timestamp"), // $out/timestamp
 		Inputs: g.genOutputs.Paths(),
 	})
