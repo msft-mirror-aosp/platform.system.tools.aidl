@@ -18,16 +18,16 @@ class ITestService;
 namespace android {
 namespace aidl {
 namespace tests {
-class ICircularDelegator;
+class LIBBINDER_EXPORTED ICircularDelegator;
 
-class ICircular : public ::android::IInterface {
+class LIBBINDER_EXPORTED ICircular : public ::android::IInterface {
 public:
   typedef ICircularDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(Circular)
   virtual ::android::binder::Status GetTestService(::android::sp<::android::aidl::tests::ITestService>* _aidl_return) = 0;
 };  // class ICircular
 
-class ICircularDefault : public ICircular {
+class LIBBINDER_EXPORTED ICircularDefault : public ICircular {
 public:
   ::android::IBinder* onAsBinder() override {
     return nullptr;

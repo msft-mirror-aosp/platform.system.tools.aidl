@@ -25,7 +25,7 @@ namespace android {
 namespace aidl {
 namespace versioned {
 namespace tests {
-class BazUnion : public ::android::Parcelable {
+class LIBBINDER_EXPORTED BazUnion : public ::android::Parcelable {
 public:
   enum class Tag : int32_t {
     intNum = 0,
