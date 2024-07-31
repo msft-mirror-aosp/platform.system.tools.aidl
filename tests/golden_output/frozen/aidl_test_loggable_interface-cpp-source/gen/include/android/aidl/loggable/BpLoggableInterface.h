@@ -14,7 +14,7 @@
 namespace android {
 namespace aidl {
 namespace loggable {
-class BpLoggableInterface : public ::android::BpInterface<ILoggableInterface> {
+class LIBBINDER_EXPORTED BpLoggableInterface : public ::android::BpInterface<ILoggableInterface> {
 public:
   explicit BpLoggableInterface(const ::android::sp<::android::IBinder>& _aidl_impl);
   virtual ~BpLoggableInterface() = default;

@@ -19,7 +19,7 @@ class RecursiveList;
 namespace android {
 namespace aidl {
 namespace tests {
-class RecursiveList : public ::android::Parcelable {
+class LIBBINDER_EXPORTED RecursiveList : public ::android::Parcelable {
 public:
   int32_t value = 0;
   ::std::unique_ptr<::android::aidl::tests::RecursiveList> next;
