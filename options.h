@@ -179,6 +179,8 @@ class Options final {
 
   bool GenTransactionNames() const { return gen_transaction_names_; }
 
+  bool GenMockall() const { return gen_mockall_; }
+
   bool DependencyFileNinja() const { return dependency_file_ninja_; }
 
   const string& PreviousApiDir() const { return previous_api_dir_; }
@@ -249,6 +251,7 @@ class Options final {
   bool gen_rpc_ = false;
   bool gen_traces_ = false;
   bool gen_transaction_names_ = false;
+  bool gen_mockall_ = false;
   bool dependency_file_ninja_ = false;
   string previous_api_dir_;
   bool structured_ = false;
