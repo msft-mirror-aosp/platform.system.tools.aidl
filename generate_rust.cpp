@@ -649,6 +649,9 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
 
   // Emit the trait.
   GenerateDeprecated(*code_writer, *iface);
+  if (options.GenMockall()) {
+    *code_writer << "#[mockall::automock]\n";
+  }
   *code_writer << "pub trait " << trait_name << ": binder::Interface + Send {\n";
   code_writer->Indent();
   *code_writer << "fn get_descriptor() -> &'static str where Self: Sized { \""
@@ -690,6 +693,11 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer << "}\n";
   code_writer->Dedent();
   *code_writer << "}\n";
+
+  // Emit the Interface implementation for the mock, if needed.
+  if (options.GenMockall()) {
+    *code_writer << "impl binder::Interface for Mock" << trait_name << " {}\n";
+  }
 
   // Emit the async trait.
   GenerateDeprecated(*code_writer, *iface);

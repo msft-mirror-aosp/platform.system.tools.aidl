@@ -92,6 +92,7 @@ type aidlGenProperties struct {
 	Version             string
 	GenRpc              bool
 	GenTrace            bool
+	GenMockall          bool
 	Unstable            *bool
 	NotFrozen           bool
 	RequireFrozenReason string
@@ -226,6 +227,9 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	}
 	if g.properties.GenTrace {
 		optionalFlags = append(optionalFlags, "-t")
+	}
+	if g.properties.GenMockall {
+		optionalFlags = append(optionalFlags, "--mockall")
 	}
 	if g.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *g.properties.Stability)
