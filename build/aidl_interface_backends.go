@@ -395,6 +395,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
 		UseUnfrozen:         i.useUnfrozen(mctx),
+		GenMockall:          proptools.Bool(i.properties.Backend.Rust.Gen_mockall),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))
