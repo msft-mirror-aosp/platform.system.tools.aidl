@@ -424,6 +424,9 @@ type aidlInterfaceProperties struct {
 
 			// Rustlibs needed for unstructured parcelables.
 			Additional_rustlibs []string
+
+			// Generate mockall mocks of AIDL interfaces.
+			Gen_mockall *bool
 		}
 	}
 
