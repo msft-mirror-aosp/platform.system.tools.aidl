@@ -311,6 +311,7 @@ cc_library_headers {
     name: "libandroid_aidltrace",
     host_supported: true,
     vendor_available: true,
+    product_available: true,
     export_include_dirs: ["trace"],
     apex_available: [
         "//apex_available:platform",
@@ -356,7 +357,6 @@ cc_library {
         "libbinder_ndk",
     ],
 }
-
 
 rust_library {
     name: "libsimple_parcelable_rust",
@@ -747,6 +747,7 @@ java_test {
         "tests/java/src/android/aidl/tests/ExtensionTests.java",
         "tests/java/src/android/aidl/tests/NullableTests.java",
         "tests/java/src/android/aidl/tests/VintfTests.java",
+        "tests/java/src/android/aidl/tests/ServiceManagerNativeTests.java",
     ],
     data: [
         ":cts-dalvik-device-test-runner",

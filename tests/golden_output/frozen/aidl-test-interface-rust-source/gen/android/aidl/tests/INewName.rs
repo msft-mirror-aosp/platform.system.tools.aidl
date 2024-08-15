@@ -13,7 +13,7 @@ declare_binder_interface! {
     native: BnNewName(on_transact),
     proxy: BpNewName {
     },
-    async: INewNameAsync,
+    async: INewNameAsync(try_into_local_async),
   }
 }
 pub trait INewName: binder::Interface + Send {
@@ -24,6 +24,9 @@ pub trait INewName: binder::Interface + Send {
   }
   fn setDefaultImpl(d: INewNameDefaultRef) -> INewNameDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+  }
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INewNameAsyncServer + Send + Sync)> {
+    None
   }
 }
 pub trait INewNameAsync<P>: binder::Interface + Send {
@@ -58,9 +61,28 @@ impl BnNewName {
       fn r#RealName(&self) -> binder::Result<String> {
         self._rt.block_on(self._inner.r#RealName())
       }
+      fn try_as_async_server(&self) -> Option<&(dyn INewNameAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn INewNameAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnNewName>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> INewNameAsync<P> for Wrapper {
+      fn r#RealName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#RealName())
+      }
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn INewNameAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait INewNameDefault: Send + Sync {

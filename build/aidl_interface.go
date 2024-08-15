@@ -280,9 +280,6 @@ type CommonNativeBackendProperties struct {
 	// about the transactions.
 	// Default: false
 	Gen_log *bool
-
-	// VNDK properties for corresponding backend.
-	cc.VndkProperties
 }
 
 type DumpApiProperties struct {
@@ -291,19 +288,6 @@ type DumpApiProperties struct {
 }
 
 type aidlInterfaceProperties struct {
-	// Vndk properties for C++/NDK libraries only (preferred to use backend-specific settings)
-	cc.VndkProperties
-
-	// How to interpret VNDK options. We only want one library in the VNDK (not multiple
-	// versions, since this would be a waste of space/unclear, and ultimately we want all
-	// code in a given release to be updated to use a specific version). By default, this
-	// puts either the latest stable version of the library or, if there is no stable
-	// version, the unstable version of the library in the VNDK. When using this field,
-	// explicitly set it to one of the values in the 'versions' field to put that version
-	// in the VNDK or set it to the next version (1 higher than this) to mean the version
-	// that will be frozen in the next update.
-	Vndk_use_version *string
-
 	// Whether the library can be installed on the vendor image.
 	Vendor_available *bool
 
@@ -440,6 +424,9 @@ type aidlInterfaceProperties struct {
 
 			// Rustlibs needed for unstructured parcelables.
 			Additional_rustlibs []string
+
+			// Generate mockall mocks of AIDL interfaces.
+			Gen_mockall *bool
 		}
 	}
 
@@ -820,20 +807,6 @@ func (i *aidlInterface) checkVersions(mctx android.DefaultableHookContext) {
 		mctx.PropertyErrorf("versions", "should be sorted, but is %v", i.getVersions())
 	}
 }
-func (i *aidlInterface) checkVndkUseVersion(mctx android.DefaultableHookContext) {
-	if i.properties.Vndk_use_version == nil {
-		return
-	}
-	if *i.properties.Vndk_use_version == i.nextVersion() {
-		return
-	}
-	for _, ver := range i.getVersions() {
-		if *i.properties.Vndk_use_version == ver {
-			return
-		}
-	}
-	mctx.PropertyErrorf("vndk_use_version", "Specified version %q does not exist", *i.properties.Vndk_use_version)
-}
 
 func (i *aidlInterface) checkFlags(mctx android.DefaultableHookContext) {
 	for _, flag := range i.properties.Flags {
@@ -945,7 +918,6 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 
 	i.checkStability(mctx)
 	i.checkVersions(mctx)
-	i.checkVndkUseVersion(mctx)
 	i.checkGenTrace(mctx)
 	i.checkFlags(mctx)
 
@@ -984,19 +956,6 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 	// surface error early, main check is via checkUnstableModuleMutator
 	if requireFrozenVersion && !i.hasVersion() {
 		mctx.PropertyErrorf("versions", "must be set (need to be frozen) because: %q", requireFrozenReason)
-	}
-
-	vndkEnabled := proptools.Bool(i.properties.VndkProperties.Vndk.Enabled) ||
-		proptools.Bool(i.properties.Backend.Cpp.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled) ||
-		proptools.Bool(i.properties.Backend.Ndk.CommonNativeBackendProperties.VndkProperties.Vndk.Enabled)
-
-	if vndkEnabled && !proptools.Bool(i.properties.Unstable) {
-		if i.properties.Frozen == nil {
-			mctx.PropertyErrorf("frozen", "true or false must be specified when the VNDK is enabled on a versioned interface (not `unstable: true`)")
-		}
-		if !proptools.Bool(i.properties.Frozen) && i.properties.Vndk_use_version == nil {
-			mctx.PropertyErrorf("vndk_use_version", "must be specified if interface is unfrozen (or specify 'frozen: false')")
-		}
 	}
 
 	versions := i.getVersions()
