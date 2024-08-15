@@ -26,7 +26,7 @@ class StructuredParcelable;
 namespace android {
 namespace aidl {
 namespace tests {
-class ParcelableForToString : public ::android::Parcelable {
+class LIBBINDER_EXPORTED ParcelableForToString : public ::android::Parcelable {
 public:
   int32_t intValue = 0;
   ::std::vector<int32_t> intArray;
