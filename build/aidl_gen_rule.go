@@ -71,6 +71,11 @@ var (
 		Restat:      true,
 		Description: "AIDL Rust ${in}",
 	}, "imports", "nextImports", "outDir", "optionalFlags")
+
+	aidlPhonyRule = pctx.StaticRule("aidlPhonyRule", blueprint.RuleParams{
+		Command:     `touch ${out}`,
+		Description: "create ${out}",
+	})
 )
 
 type aidlGenProperties struct {
@@ -87,6 +92,7 @@ type aidlGenProperties struct {
 	Version             string
 	GenRpc              bool
 	GenTrace            bool
+	GenMockall          bool
 	Unstable            *bool
 	NotFrozen           bool
 	RequireFrozenReason string
@@ -163,7 +169,7 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 
 	// This is to trigger genrule alone
 	ctx.Build(pctx, android.BuildParams{
-		Rule:   android.Phony,
+		Rule:   aidlPhonyRule,
 		Output: android.PathForModuleOut(ctx, "timestamp"), // $out/timestamp
 		Inputs: g.genOutputs.Paths(),
 	})
@@ -221,6 +227,9 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	}
 	if g.properties.GenTrace {
 		optionalFlags = append(optionalFlags, "-t")
+	}
+	if g.properties.GenMockall {
+		optionalFlags = append(optionalFlags, "--mockall")
 	}
 	if g.properties.Stability != nil {
 		optionalFlags = append(optionalFlags, "--stability", *g.properties.Stability)

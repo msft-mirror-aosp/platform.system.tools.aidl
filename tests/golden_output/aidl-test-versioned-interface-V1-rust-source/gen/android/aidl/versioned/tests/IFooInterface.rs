@@ -15,7 +15,7 @@ declare_binder_interface! {
       cached_version: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1),
       cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
     },
-    async: IFooInterfaceAsync,
+    async: IFooInterfaceAsync(try_into_local_async),
   }
 }
 pub trait IFooInterface: binder::Interface + Send {
@@ -35,6 +35,9 @@ pub trait IFooInterface: binder::Interface + Send {
   }
   fn setDefaultImpl(d: IFooInterfaceDefaultRef) -> IFooInterfaceDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+  }
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IFooInterfaceAsyncServer + Send + Sync)> {
+    None
   }
 }
 pub trait IFooInterfaceAsync<P>: binder::Interface + Send {
@@ -90,9 +93,37 @@ impl BnFooInterface {
       fn r#returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
         self._rt.block_on(self._inner.r#returnsLengthOfFooArray(_arg_foos))
       }
+      fn try_as_async_server(&self) -> Option<&(dyn IFooInterfaceAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn IFooInterfaceAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnFooInterface>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for Wrapper {
+      fn r#originalApi<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#originalApi())
+      }
+      fn r#acceptUnionAndReturnString<'a>(&'a self, _arg_u: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::BoxFuture<'a, binder::Result<String>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#acceptUnionAndReturnString(_arg_u))
+      }
+      fn r#ignoreParcelablesAndRepeatInt<'a>(&'a self, _arg_inFoo: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::BoxFuture<'a, binder::Result<i32>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value))
+      }
+      fn r#returnsLengthOfFooArray<'a>(&'a self, _arg_foos: &'a [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::BoxFuture<'a, binder::Result<i32>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#returnsLengthOfFooArray(_arg_foos))
+      }
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn IFooInterfaceAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait IFooInterfaceDefault: Send + Sync {
