@@ -13,7 +13,7 @@ declare_binder_interface! {
     native: BnNestedService(on_transact),
     proxy: BpNestedService {
     },
-    async: INestedServiceAsync,
+    async: INestedServiceAsync(try_into_local_async),
   }
 }
 pub trait INestedService: binder::Interface + Send {
@@ -25,6 +25,9 @@ pub trait INestedService: binder::Interface + Send {
   }
   fn setDefaultImpl(d: INestedServiceDefaultRef) -> INestedServiceDefaultRef where Self: Sized {
     std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+  }
+  fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INestedServiceAsyncServer + Send + Sync)> {
+    None
   }
 }
 pub trait INestedServiceAsync<P>: binder::Interface + Send {
@@ -64,9 +67,31 @@ impl BnNestedService {
       fn r#flipStatusWithCallback(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>) -> binder::Result<()> {
         self._rt.block_on(self._inner.r#flipStatusWithCallback(_arg_status, _arg_cb))
       }
+      fn try_as_async_server(&self) -> Option<&(dyn INestedServiceAsyncServer + Send + Sync)> {
+        Some(&self._inner)
+      }
     }
     let wrapped = Wrapper { _inner: inner, _rt: rt };
     Self::new_binder(wrapped, features)
+  }
+  pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn INestedServiceAsync<P>>> {
+    struct Wrapper {
+      _native: binder::binder_impl::Binder<BnNestedService>
+    }
+    impl binder::Interface for Wrapper {}
+    impl<P: binder::BinderAsyncPool> INestedServiceAsync<P> for Wrapper {
+      fn r#flipStatus<'a>(&'a self, _arg_p: &'a crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#flipStatus(_arg_p))
+      }
+      fn r#flipStatusWithCallback<'a>(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
+        Box::pin(self._native.try_as_async_server().unwrap().r#flipStatusWithCallback(_arg_status, _arg_cb))
+      }
+    }
+    if _native.try_as_async_server().is_some() {
+      Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn INestedServiceAsync<P>>))
+    } else {
+      None
+    }
   }
 }
 pub trait INestedServiceDefault: Send + Sync {
@@ -236,7 +261,7 @@ pub mod r#ICallback {
       native: BnCallback(on_transact),
       proxy: BpCallback {
       },
-      async: ICallbackAsync,
+      async: ICallbackAsync(try_into_local_async),
     }
   }
   pub trait ICallback: binder::Interface + Send {
@@ -247,6 +272,9 @@ pub mod r#ICallback {
     }
     fn setDefaultImpl(d: ICallbackDefaultRef) -> ICallbackDefaultRef where Self: Sized {
       std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
+    }
+    fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ICallbackAsyncServer + Send + Sync)> {
+      None
     }
   }
   pub trait ICallbackAsync<P>: binder::Interface + Send {
@@ -281,9 +309,28 @@ pub mod r#ICallback {
         fn r#done(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::Result<()> {
           self._rt.block_on(self._inner.r#done(_arg_status))
         }
+        fn try_as_async_server(&self) -> Option<&(dyn ICallbackAsyncServer + Send + Sync)> {
+          Some(&self._inner)
+        }
       }
       let wrapped = Wrapper { _inner: inner, _rt: rt };
       Self::new_binder(wrapped, features)
+    }
+    pub fn try_into_local_async<P: binder::BinderAsyncPool + 'static>(_native: binder::binder_impl::Binder<Self>) -> Option<binder::Strong<dyn ICallbackAsync<P>>> {
+      struct Wrapper {
+        _native: binder::binder_impl::Binder<BnCallback>
+      }
+      impl binder::Interface for Wrapper {}
+      impl<P: binder::BinderAsyncPool> ICallbackAsync<P> for Wrapper {
+        fn r#done<'a>(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::BoxFuture<'a, binder::Result<()>> {
+          Box::pin(self._native.try_as_async_server().unwrap().r#done(_arg_status))
+        }
+      }
+      if _native.try_as_async_server().is_some() {
+        Some(binder::Strong::new(Box::new(Wrapper { _native }) as Box<dyn ICallbackAsync<P>>))
+      } else {
+        None
+      }
     }
   }
   pub trait ICallbackDefault: Send + Sync {

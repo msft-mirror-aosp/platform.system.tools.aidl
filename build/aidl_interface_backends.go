@@ -359,6 +359,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 				Apex_available:  i.properties.Backend.Java.Apex_available,
 				Min_sdk_version: i.minSdkVersion(langJava),
 				Static_libs:     i.properties.Backend.Java.Additional_libs,
+				Is_stubs_module: proptools.BoolPtr(true),
 			},
 			&i.properties.Backend.Java.LintProperties,
 		},
@@ -395,6 +396,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
 		UseUnfrozen:         i.useUnfrozen(mctx),
+		GenMockall:          proptools.Bool(i.properties.Backend.Rust.Gen_mockall),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))
