@@ -91,6 +91,7 @@ type javaProperties struct {
 	Static_libs     []string
 	Apex_available  []string
 	Min_sdk_version *string
+	Is_stubs_module *bool
 }
 
 type rustProperties struct {
