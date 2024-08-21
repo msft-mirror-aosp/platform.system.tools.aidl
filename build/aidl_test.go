@@ -1141,7 +1141,7 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 	var ctx *android.TestContext
 	assertOutput := func(moduleName, variant, outputFilename string) {
 		t.Helper()
-		paths := ctx.ModuleForTests(moduleName, variant).OutputFiles(t, "")
+		paths := ctx.ModuleForTests(moduleName, variant).OutputFiles(ctx, t, "")
 		if len(paths) != 1 || paths[0].Base() != outputFilename {
 			t.Errorf("%s(%s): expected output %q, but got %v", moduleName, variant, outputFilename, paths)
 		}
