@@ -125,13 +125,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 				versions: ["29"],
 			}
 		}
-		cc_library_headers {
-			name: "libbinder_headers_platform_shared",
-			host_supported: true,
-			vendor_available: true,
-			recovery_available: true,
-			sdk_version: "29",
-		}
 		ndk_library {
 			name: "libbinder_ndk",
 			symbol_file: "libbinder_ndk.map.txt",
