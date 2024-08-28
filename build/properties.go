@@ -60,6 +60,7 @@ type ccProperties struct {
 	Export_shared_lib_headers []string
 	Export_generated_headers  []string
 	Header_libs               []string
+	Export_header_lib_headers []string
 	Sdk_version               *string
 	Stl                       *string
 	Cpp_std                   *string
