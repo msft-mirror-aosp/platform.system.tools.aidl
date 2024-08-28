@@ -88,7 +88,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 
 	importExportDependencies := []string{}
 	sharedLibDependency := commonProperties.Additional_shared_libraries
-	headerLibs := []string{}
+	var headerLibs []string
 	var sdkVersion *string
 	var stl *string
 	var cpp_std *string
@@ -107,11 +107,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		nonAppProps := imageProperties{
 			Cflags: []string{"-DBINDER_STABILITY_SUPPORT"},
 		}
-
-		// Explicitly add them because they are missing from the NDK, though
-		// the platform variant of libbinder_ndk uses them
-		headerLibs = append(headerLibs, "libbinder_headers_platform_shared")
-
 		if genTrace {
 			sharedLibDependency = append(sharedLibDependency, "libandroid")
 			nonAppProps.Exclude_shared_libs = []string{"libandroid"}
@@ -180,7 +175,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 				Export_generated_headers:  []string{cppSourceGen},
 				Shared_libs:               append(importExportDependencies, sharedLibDependency...),
 				Header_libs:               headerLibs,
-				Export_header_lib_headers: headerLibs,
 				Export_shared_lib_headers: importExportDependencies,
 				Sdk_version:               sdkVersion,
 				Stl:                       stl,
