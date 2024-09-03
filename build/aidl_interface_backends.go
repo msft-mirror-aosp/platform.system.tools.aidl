@@ -107,12 +107,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		nonAppProps := imageProperties{
 			Cflags: []string{"-DBINDER_STABILITY_SUPPORT"},
 		}
-		if genTrace {
-			sharedLibDependency = append(sharedLibDependency, "libandroid")
-			nonAppProps.Exclude_shared_libs = []string{"libandroid"}
-			nonAppProps.Header_libs = []string{"libandroid_aidltrace"}
-			nonAppProps.Shared_libs = []string{"libcutils"}
-		}
 		targetProp.Platform = nonAppProps
 		targetProp.Vendor = nonAppProps
 		targetProp.Product = nonAppProps
