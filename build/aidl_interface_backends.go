@@ -107,12 +107,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		nonAppProps := imageProperties{
 			Cflags: []string{"-DBINDER_STABILITY_SUPPORT"},
 		}
-		if genTrace {
-			sharedLibDependency = append(sharedLibDependency, "libandroid")
-			nonAppProps.Exclude_shared_libs = []string{"libandroid"}
-			nonAppProps.Header_libs = []string{"libandroid_aidltrace"}
-			nonAppProps.Shared_libs = []string{"libcutils"}
-		}
 		targetProp.Platform = nonAppProps
 		targetProp.Vendor = nonAppProps
 		targetProp.Product = nonAppProps
@@ -359,6 +353,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 				Apex_available:  i.properties.Backend.Java.Apex_available,
 				Min_sdk_version: i.minSdkVersion(langJava),
 				Static_libs:     i.properties.Backend.Java.Additional_libs,
+				Is_stubs_module: proptools.BoolPtr(true),
 			},
 			&i.properties.Backend.Java.LintProperties,
 		},
@@ -395,6 +390,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
 		UseUnfrozen:         i.useUnfrozen(mctx),
+		GenMockall:          proptools.Bool(i.properties.Backend.Rust.Gen_mockall),
 	})
 
 	versionedRustName := fixRustName(i.versionedName(version))

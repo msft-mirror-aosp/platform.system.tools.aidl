@@ -115,6 +115,8 @@ string Options::GetUsage() const {
        << "          Generate dependency file in a format ninja understands." << endl
        << "  --rpc" << endl
        << "          (for Java) whether to generate support for RPC transactions." << endl
+       << "  --mockall" << endl
+       << "          (for Rust) whether to generate mockall mocks of AIDL interfaces." << endl
        << "  --structured" << endl
        << "          Whether this interface is defined exclusively in AIDL." << endl
        << "          It is therefore a candidate for stabilization." << endl
@@ -320,6 +322,7 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         {"header_out", required_argument, 0, 'h'},
         {"ninja", no_argument, 0, 'n'},
         {"rpc", no_argument, 0, 'r'},
+        {"mockall", no_argument, 0, 'M'},
         {"stability", required_argument, 0, 'Y'},
         {"omit_invocation", no_argument, 0, 'O'},
         {"min_sdk_version", required_argument, 0, 'm'},
@@ -448,6 +451,9 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
         break;
       case 'r':
         gen_rpc_ = true;
+        break;
+      case 'M':
+        gen_mockall_ = true;
         break;
       case 't':
         gen_traces_ = true;
