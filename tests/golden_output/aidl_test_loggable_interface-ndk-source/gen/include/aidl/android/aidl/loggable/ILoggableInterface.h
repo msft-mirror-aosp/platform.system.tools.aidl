@@ -14,7 +14,6 @@
 #include <vector>
 #include <android/binder_ibinder.h>
 #include <android/binder_interface_utils.h>
-#include <android/trace.h>
 #include <aidl/android/aidl/loggable/Data.h>
 #ifdef BINDER_STABILITY_SUPPORT
 #include <android/binder_stability.h>

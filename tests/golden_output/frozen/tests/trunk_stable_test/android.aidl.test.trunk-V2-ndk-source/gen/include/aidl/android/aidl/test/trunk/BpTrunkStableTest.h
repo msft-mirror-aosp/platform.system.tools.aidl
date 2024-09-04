@@ -10,7 +10,6 @@
 #include <functional>
 #include <chrono>
 #include <sstream>
-#include <android/trace.h>
 
 namespace aidl {
 namespace android {
