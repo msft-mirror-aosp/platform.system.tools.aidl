@@ -557,6 +557,10 @@ func (i *aidlInterface) genTrace(lang string) bool {
 		}
 	case langNdk, langNdkPlatform:
 		ver = i.properties.Backend.Ndk.Gen_trace
+		if ver == nil {
+			// Enable tracing for all ndk backends by default
+			ver = proptools.BoolPtr(true)
+		}
 	case langRust: // unsupported b/236880829
 		ver = i.properties.Backend.Rust.Gen_trace
 	case langCppAnalyzer:
