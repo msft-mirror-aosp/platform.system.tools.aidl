@@ -9,13 +9,6 @@
 #include <aidl/android/aidl/loggable/BnLoggableInterface.h>
 #include <aidl/android/aidl/loggable/BpLoggableInterface.h>
 
-namespace {
-struct ScopedTrace {
-  inline explicit ScopedTrace(const char* name) { ATrace_beginSection(name); }
-  inline ~ScopedTrace() { ATrace_endSection(); }
-};
-}  // namespace
-
 namespace aidl {
 namespace android {
 namespace aidl {
@@ -50,7 +43,6 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_onTransact
       std::vector<::ndk::ScopedFileDescriptor> in_pfdArray;
       std::vector<std::string> _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ILoggableInterface::LogThis::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_boolValue);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -249,7 +241,6 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
     _transaction_log.input_args.emplace_back("in_pfdArray", ::android::internal::ToString(*in_pfdArray));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ILoggableInterface::LogThis::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -490,7 +481,6 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTra
     case (FIRST_CALL_TRANSACTION + 0 /*Log*/): {
       int32_t in_value;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ISub::Log::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_value);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -541,7 +531,6 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
     _transaction_log.input_args.emplace_back("in_value", ::android::internal::ToString(in_value));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ISub::Log::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
