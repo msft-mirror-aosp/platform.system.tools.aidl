@@ -9,13 +9,6 @@
 #include <aidl/android/aidl/test/trunk/BnTrunkStableTest.h>
 #include <aidl/android/aidl/test/trunk/BpTrunkStableTest.h>
 
-namespace {
-struct ScopedTrace {
-  inline explicit ScopedTrace(const char* name) { ATrace_beginSection(name); }
-  inline ~ScopedTrace() { ATrace_endSection(); }
-};
-}  // namespace
-
 namespace aidl {
 namespace android {
 namespace aidl {
@@ -31,7 +24,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::repeatParcelable::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -69,7 +61,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::repeatEnum::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -107,7 +98,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::repeatUnion::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -144,7 +134,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
     case (FIRST_CALL_TRANSACTION + 3 /*callMyCallback*/): {
       std::shared_ptr<::aidl::android::aidl::test::trunk::ITrunkStableTest::IMyCallback> in_cb;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::callMyCallback::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_cb);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -177,7 +166,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
     case (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/): {
       int32_t _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::getInterfaceVersion::server");
       BnTrunkStableTest::TransactionLog _transaction_log;
       if (BnTrunkStableTest::logFunc != nullptr) {
       }
@@ -210,7 +198,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
     case (FIRST_CALL_TRANSACTION + 16777213 /*getInterfaceHash*/): {
       std::string _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::getInterfaceHash::server");
       BnTrunkStableTest::TransactionLog _transaction_log;
       if (BnTrunkStableTest::logFunc != nullptr) {
       }
@@ -261,7 +248,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::repeatParcelable::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -321,7 +307,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::repeatEnum::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -381,7 +366,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::repeatUnion::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -441,7 +425,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_cb", ::android::internal::ToString(in_cb));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::callMyCallback::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -501,7 +484,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   if (BpTrunkStableTest::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::getInterfaceVersion::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -564,7 +546,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   if (BpTrunkStableTest::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ITrunkStableTest::getInterfaceHash::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -840,7 +821,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::repeatParcelable::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -878,7 +858,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::repeatEnum::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -916,7 +895,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::repeatUnion::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_input);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -953,7 +931,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
     case (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/): {
       int32_t _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::getInterfaceVersion::server");
       ITrunkStableTest::BnMyCallback::TransactionLog _transaction_log;
       if (ITrunkStableTest::BnMyCallback::logFunc != nullptr) {
       }
@@ -986,7 +963,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
     case (FIRST_CALL_TRANSACTION + 16777213 /*getInterfaceHash*/): {
       std::string _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::getInterfaceHash::server");
       ITrunkStableTest::BnMyCallback::TransactionLog _transaction_log;
       if (ITrunkStableTest::BnMyCallback::logFunc != nullptr) {
       }
@@ -1037,7 +1013,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::repeatParcelable::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1097,7 +1072,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::repeatEnum::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1157,7 +1131,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::repeatUnion::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1221,7 +1194,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::getInterfaceVersion::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1284,7 +1256,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::IMyCallback::getInterfaceHash::client");
   _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
