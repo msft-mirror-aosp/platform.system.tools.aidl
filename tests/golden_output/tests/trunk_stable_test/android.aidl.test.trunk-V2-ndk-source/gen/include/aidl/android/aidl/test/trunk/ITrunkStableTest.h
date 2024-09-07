@@ -22,7 +22,6 @@
 #include <android/binder_interface_utils.h>
 #include <android/binder_parcelable_utils.h>
 #include <android/binder_to_string.h>
-#include <android/trace.h>
 #include <aidl/android/aidl/test/trunk/ITrunkStableTest.h>
 #ifdef BINDER_STABILITY_SUPPORT
 #include <android/binder_stability.h>
