@@ -20,7 +20,7 @@ namespace android {
 namespace aidl {
 namespace tests {
 namespace extension {
-class MyExt2 : public ::android::Parcelable {
+class LIBBINDER_EXPORTED MyExt2 : public ::android::Parcelable {
 public:
   int32_t a = 0;
   ::android::aidl::tests::extension::MyExt b;
