@@ -503,7 +503,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     out << "}\n";
   }
 
-  out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
+  out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), "
+         "_aidl_in.getR());\n";
   if (defined_type.IsSensitiveData()) {
     out << "AParcel_markSensitive(_aidl_in.get());\n";
   }
@@ -526,7 +527,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   }
   out << "_aidl_ret_status = AIBinder_transact(\n";
   out.Indent();
-  out << "asBinder().get(),\n";
+  out << "asBinderReference().get(),\n";
   out << MethodId(method) << ",\n";
   out << "_aidl_in.getR(),\n";
   out << "_aidl_out.getR(),\n";
@@ -537,7 +538,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << (flags.empty() ? "0" : base::Join(flags, " | ")) << "\n";
 
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
-  out << "| FLAG_PRIVATE_LOCAL\n";
+  out << "| static_cast<int>(FLAG_PRIVATE_LOCAL)\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
   out << ");\n";
   out.Dedent();
