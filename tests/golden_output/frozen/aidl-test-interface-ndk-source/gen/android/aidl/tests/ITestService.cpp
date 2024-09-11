@@ -1416,7 +1416,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1454,7 +1454,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1489,7 +1489,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_ONEWAY | FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1523,7 +1523,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1564,7 +1564,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1605,7 +1605,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1646,7 +1646,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1687,7 +1687,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1728,7 +1728,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1769,7 +1769,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1810,7 +1810,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1851,7 +1851,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1892,7 +1892,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1933,7 +1933,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -1977,7 +1977,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2024,7 +2024,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2071,7 +2071,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2118,7 +2118,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2165,7 +2165,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2212,7 +2212,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2259,7 +2259,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2306,7 +2306,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2353,7 +2353,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2400,7 +2400,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2447,7 +2447,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2491,7 +2491,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2535,7 +2535,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2579,7 +2579,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2620,7 +2620,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2664,7 +2664,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2705,7 +2705,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2749,7 +2749,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2790,7 +2790,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2834,7 +2834,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2875,7 +2875,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2919,7 +2919,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -2963,7 +2963,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3007,7 +3007,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3045,7 +3045,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3086,7 +3086,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3127,7 +3127,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3168,7 +3168,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3209,7 +3209,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3250,7 +3250,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3291,7 +3291,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3332,7 +3332,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3373,7 +3373,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3414,7 +3414,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3452,7 +3452,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3490,7 +3490,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3528,7 +3528,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3566,7 +3566,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3607,7 +3607,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3651,7 +3651,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3698,7 +3698,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3742,7 +3742,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3786,7 +3786,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3827,7 +3827,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3868,7 +3868,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3909,7 +3909,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -3953,7 +3953,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4000,7 +4000,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4044,7 +4044,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4091,7 +4091,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4132,7 +4132,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4170,7 +4170,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4211,7 +4211,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4249,7 +4249,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4287,7 +4287,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -4325,7 +4325,7 @@ BpTestService::~BpTestService() {}
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
@@ -5249,7 +5249,7 @@ ITestService::CompilerChecks::BpNoPrefixInterface::~BpNoPrefixInterface() {}
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INoPrefixInterface::getDefaultImpl()) {
@@ -5421,7 +5421,7 @@ ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::~Bp
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INestedNoPrefixInterface::getDefaultImpl()) {
