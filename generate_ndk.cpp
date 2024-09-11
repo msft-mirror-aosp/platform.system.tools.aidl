@@ -537,7 +537,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << (flags.empty() ? "0" : base::Join(flags, " | ")) << "\n";
 
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
-  out << "| FLAG_PRIVATE_LOCAL\n";
+  out << "| static_cast<int>(FLAG_PRIVATE_LOCAL)\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
   out << ");\n";
   out.Dedent();
