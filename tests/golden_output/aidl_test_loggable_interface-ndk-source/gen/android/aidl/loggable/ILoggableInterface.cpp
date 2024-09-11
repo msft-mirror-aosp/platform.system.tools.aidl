@@ -314,7 +314,7 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ILoggableInterface::getDefaultImpl()) {
@@ -544,7 +544,7 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ISub::getDefaultImpl()) {
