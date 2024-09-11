@@ -1402,7 +1402,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1410,7 +1410,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*UnimplementedMethod*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1443,12 +1443,12 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 1 /*Deprecated*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1478,12 +1478,12 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 2 /*TestOneway*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1509,7 +1509,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1517,7 +1517,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 3 /*RepeatBoolean*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1550,7 +1550,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1558,7 +1558,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 4 /*RepeatByte*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1591,7 +1591,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1599,7 +1599,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 5 /*RepeatChar*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1632,7 +1632,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1640,7 +1640,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 6 /*RepeatInt*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1673,7 +1673,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1681,7 +1681,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 7 /*RepeatLong*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1714,7 +1714,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1722,7 +1722,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 8 /*RepeatFloat*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1755,7 +1755,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1763,7 +1763,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 9 /*RepeatDouble*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1796,7 +1796,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1804,7 +1804,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 10 /*RepeatString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1837,7 +1837,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1845,7 +1845,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 11 /*RepeatByteEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1878,7 +1878,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1886,7 +1886,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 12 /*RepeatIntEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1919,7 +1919,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1927,7 +1927,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 13 /*RepeatLongEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -1960,7 +1960,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -1971,7 +1971,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 14 /*ReverseBoolean*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2007,7 +2007,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2018,7 +2018,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 15 /*ReverseByte*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2054,7 +2054,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2065,7 +2065,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16 /*ReverseChar*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2101,7 +2101,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2112,7 +2112,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 17 /*ReverseInt*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2148,7 +2148,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2159,7 +2159,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 18 /*ReverseLong*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2195,7 +2195,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2206,7 +2206,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 19 /*ReverseFloat*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2242,7 +2242,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2253,7 +2253,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 20 /*ReverseDouble*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2289,7 +2289,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2300,7 +2300,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 21 /*ReverseString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2336,7 +2336,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2347,7 +2347,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 22 /*ReverseByteEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2383,7 +2383,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2394,7 +2394,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 23 /*ReverseIntEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2430,7 +2430,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2441,7 +2441,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 24 /*ReverseLongEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2477,7 +2477,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2485,7 +2485,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 25 /*GetOtherTestService*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2518,7 +2518,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2529,7 +2529,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 26 /*SetOtherTestService*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2562,7 +2562,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2573,7 +2573,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 27 /*VerifyName*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2606,7 +2606,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2614,7 +2614,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 28 /*GetInterfaceArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2647,7 +2647,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2658,7 +2658,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 29 /*VerifyNamesWithInterfaceArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2691,7 +2691,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2699,7 +2699,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 30 /*GetNullableInterfaceArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2732,7 +2732,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2743,7 +2743,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 31 /*VerifyNamesWithNullableInterfaceArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2776,7 +2776,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2784,7 +2784,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 32 /*GetInterfaceList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2817,7 +2817,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2828,7 +2828,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 33 /*VerifyNamesWithInterfaceList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2861,7 +2861,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2869,7 +2869,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 34 /*ReverseStringList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2905,7 +2905,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2913,7 +2913,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 35 /*RepeatParcelFileDescriptor*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2946,7 +2946,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -2957,7 +2957,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 36 /*ReverseParcelFileDescriptorArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -2993,7 +2993,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3001,7 +3001,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 37 /*ThrowServiceException*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3031,7 +3031,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3039,7 +3039,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 38 /*RepeatNullableIntArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3072,7 +3072,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3080,7 +3080,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 39 /*RepeatNullableByteEnumArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3113,7 +3113,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3121,7 +3121,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 40 /*RepeatNullableIntEnumArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3154,7 +3154,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3162,7 +3162,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 41 /*RepeatNullableLongEnumArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3195,7 +3195,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3203,7 +3203,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 42 /*RepeatNullableString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3236,7 +3236,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3244,7 +3244,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 43 /*RepeatNullableStringList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3277,7 +3277,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3285,7 +3285,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 44 /*RepeatNullableParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3318,7 +3318,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3326,7 +3326,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 45 /*RepeatNullableParcelableArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3359,7 +3359,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3367,7 +3367,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 46 /*RepeatNullableParcelableList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3400,7 +3400,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3408,7 +3408,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 47 /*TakesAnIBinder*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3438,7 +3438,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3446,7 +3446,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 48 /*TakesANullableIBinder*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3476,7 +3476,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3484,7 +3484,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 49 /*TakesAnIBinderList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3514,7 +3514,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3522,7 +3522,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 50 /*TakesANullableIBinderList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3552,7 +3552,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3560,7 +3560,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 51 /*RepeatUtf8CppString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3593,7 +3593,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3601,7 +3601,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 52 /*RepeatNullableUtf8CppString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3634,7 +3634,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3645,7 +3645,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 53 /*ReverseUtf8CppString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3681,7 +3681,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3692,7 +3692,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 54 /*ReverseNullableUtf8CppString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3728,7 +3728,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3736,7 +3736,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 55 /*ReverseUtf8CppStringList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3772,7 +3772,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3780,7 +3780,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 56 /*GetCallback*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3813,7 +3813,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3821,7 +3821,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 57 /*FillOutStructuredParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3854,7 +3854,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3862,7 +3862,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 58 /*RepeatExtendableParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3895,7 +3895,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3903,7 +3903,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 59 /*ReverseList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3936,7 +3936,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3947,7 +3947,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 60 /*ReverseIBinderArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -3983,7 +3983,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -3994,7 +3994,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 61 /*ReverseNullableIBinderArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4030,7 +4030,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -4038,7 +4038,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 62 /*RepeatSimpleParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4074,7 +4074,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -4085,7 +4085,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 63 /*ReverseSimpleParcelables*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4121,12 +4121,12 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 64 /*GetOldNameInterface*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4159,12 +4159,12 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 65 /*GetNewNameInterface*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4197,7 +4197,7 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -4205,7 +4205,7 @@ BpTestService::~BpTestService() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 66 /*GetUnionTags*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4238,12 +4238,12 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 67 /*GetCppJavaTests*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4276,12 +4276,12 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 68 /*getBackendType*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -4314,12 +4314,12 @@ BpTestService::~BpTestService() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   AParcel_markSensitive(_aidl_in.get());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 69 /*GetCircular*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -5239,11 +5239,11 @@ ITestService::CompilerChecks::BpNoPrefixInterface::~BpNoPrefixInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*foo*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -5411,11 +5411,11 @@ ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::~Bp
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*foo*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
