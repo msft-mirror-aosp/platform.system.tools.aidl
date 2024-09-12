@@ -241,7 +241,7 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
     _transaction_log.input_args.emplace_back("in_pfdArray", ::android::internal::ToString(*in_pfdArray));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_boolValue);
@@ -308,7 +308,7 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*LogThis*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
@@ -531,14 +531,14 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
     _transaction_log.input_args.emplace_back("in_value", ::android::internal::ToString(in_value));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_value);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*Log*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
