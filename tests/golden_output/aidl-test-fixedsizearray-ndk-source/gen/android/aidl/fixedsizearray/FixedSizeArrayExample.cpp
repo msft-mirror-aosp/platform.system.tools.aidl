@@ -792,20 +792,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*RepeatBytes*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
@@ -835,20 +835,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 1 /*RepeatInts*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
@@ -878,20 +878,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 2 /*RepeatBinders*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
@@ -921,20 +921,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 3 /*RepeatParcelables*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
@@ -964,20 +964,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 4 /*Repeat2dBytes*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
@@ -1007,20 +1007,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 5 /*Repeat2dInts*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
@@ -1050,20 +1050,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 6 /*Repeat2dBinders*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
@@ -1093,20 +1093,20 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 7 /*Repeat2dParcelables*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
