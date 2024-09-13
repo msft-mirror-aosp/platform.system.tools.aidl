@@ -297,9 +297,6 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
       // So we need includes for client/server class as well.
       if (interface.GetParentType()) {
         includes.insert("android/binder_ibinder.h");
-        if (options.GenTraces()) {
-          includes.insert("android/trace.h");
-        }
       }
     }
 
@@ -405,19 +402,6 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
     out << "#include <" << inc << ">\n";
   }
   out << "\n";
-
-  // Emit additional definition for gen_traces
-  if (v.has_interface && options.GenTraces()) {
-    out << "namespace {\n";
-    out << "struct ScopedTrace {\n";
-    out.Indent();
-    out << "inline explicit ScopedTrace(const char* name) { ATrace_beginSection(name); }\n";
-    out << "inline ~ScopedTrace() { ATrace_endSection(); }\n";
-    out.Dedent();
-    out << "};\n";
-    out << "}  // namespace\n";
-    out << "\n";
-  }
 }
 
 static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& types,
@@ -510,11 +494,6 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   if (options.GenLog()) {
     out << cpp::GenLogBeforeExecute(q_name, method, false /* isServer */, true /* isNdk */);
   }
-  if (options.GenTraces()) {
-    out << "ScopedTrace _aidl_trace(\"AIDL::" << to_string(options.TargetLanguage())
-        << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
-        << "::client\");\n";
-  }
 
   if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
       method.IsUserDefined()) {
@@ -524,7 +503,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     out << "}\n";
   }
 
-  out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
+  out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), "
+         "_aidl_in.getR());\n";
   if (defined_type.IsSensitiveData()) {
     out << "AParcel_markSensitive(_aidl_in.get());\n";
   }
@@ -547,7 +527,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   }
   out << "_aidl_ret_status = AIBinder_transact(\n";
   out.Indent();
-  out << "asBinder().get(),\n";
+  out << "asBinderReference().get(),\n";
   out << MethodId(method) << ",\n";
   out << "_aidl_in.getR(),\n";
   out << "_aidl_out.getR(),\n";
@@ -558,7 +538,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << (flags.empty() ? "0" : base::Join(flags, " | ")) << "\n";
 
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
-  out << "| FLAG_PRIVATE_LOCAL\n";
+  out << "| static_cast<int>(FLAG_PRIVATE_LOCAL)\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
   out << ");\n";
   out.Dedent();
@@ -639,11 +619,6 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     out << NdkNameOf(types, method.GetType(), StorageMode::STACK) << " _aidl_return;\n";
   }
   out << "\n";
-  if (options.GenTraces()) {
-    out << "ScopedTrace _aidl_trace(\"AIDL::" << to_string(options.TargetLanguage())
-        << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
-        << "::server\");\n";
-  }
 
   for (const auto& arg : method.GetArguments()) {
     const std::string var_name = cpp::BuildVarName(*arg);
@@ -1017,9 +992,6 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
-  }
-  if (options.GenTraces()) {
-    out << "#include <android/trace.h>\n";
   }
   out << "\n";
   EnterNdkNamespace(out, defined_type);
