@@ -151,17 +151,17 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*originalApi*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -185,20 +185,20 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_u);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 1 /*acceptUnionAndReturnString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -225,7 +225,7 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_inFoo);
@@ -238,13 +238,13 @@ BpFooInterface::~BpFooInterface() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 2 /*ignoreParcelablesAndRepeatInt*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -277,20 +277,20 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_foos);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 3 /*returnsLengthOfFooArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -317,17 +317,17 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 4 /*newApi*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -356,17 +356,17 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -400,17 +400,17 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777213 /*getInterfaceHash*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {

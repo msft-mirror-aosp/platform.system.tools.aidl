@@ -285,20 +285,20 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*repeatParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
@@ -344,20 +344,20 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 1 /*repeatEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
@@ -403,20 +403,20 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 2 /*repeatUnion*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
@@ -462,20 +462,20 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_cb", ::android::internal::ToString(in_cb));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_cb);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 3 /*callMyCallback*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
@@ -517,20 +517,20 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 4 /*repeatOtherParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
@@ -580,17 +580,17 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   if (BpTrunkStableTest::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
@@ -642,17 +642,17 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   if (BpTrunkStableTest::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777213 /*getInterfaceHash*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
@@ -1172,20 +1172,20 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*repeatParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
@@ -1231,20 +1231,20 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 1 /*repeatEnum*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
@@ -1290,20 +1290,20 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 2 /*repeatUnion*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
@@ -1349,20 +1349,20 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_input);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 3 /*repeatOtherParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
@@ -1412,17 +1412,17 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
@@ -1474,17 +1474,17 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777213 /*getInterfaceHash*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
