@@ -64,14 +64,14 @@ func init() {
 func registerPreArchMutators(ctx android.RegisterMutatorsContext) {
 	ctx.BottomUp("addInterfaceDeps", addInterfaceDeps).Parallel()
 	ctx.BottomUp("checkImports", checkImports).Parallel()
-	ctx.TopDown("createAidlInterface", createAidlInterfaceMutator).Parallel()
+	ctx.BottomUp("createAidlInterface", createAidlInterfaceMutator).Parallel()
 }
 
 func registerPostDepsMutators(ctx android.RegisterMutatorsContext) {
 	ctx.BottomUp("checkAidlGeneratedModules", checkAidlGeneratedModules).Parallel()
 }
 
-func createAidlInterfaceMutator(mctx android.TopDownMutatorContext) {
+func createAidlInterfaceMutator(mctx android.BottomUpMutatorContext) {
 	if g, ok := mctx.Module().(*aidlImplementationGenerator); ok {
 		g.GenerateImplementation(mctx)
 	}
