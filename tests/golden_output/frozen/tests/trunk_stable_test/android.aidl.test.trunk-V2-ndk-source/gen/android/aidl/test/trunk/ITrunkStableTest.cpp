@@ -269,8 +269,7 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_code_to_function[] = { "repeatParcelable","repeatEnum","repeatUnion","callMyCallback","repeatOtherParcelable",};
-static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact, _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_code_to_function, 5);
+static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact);
 
 BpTrunkStableTest::BpTrunkStableTest(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpTrunkStableTest::~BpTrunkStableTest() {}
@@ -1167,8 +1166,7 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_code_to_function[] = { "repeatParcelable","repeatEnum","repeatUnion","repeatOtherParcelable",};
-static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::IMyCallback::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_onTransact, _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_code_to_function, 4);
+static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::IMyCallback::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_onTransact);
 
 ITrunkStableTest::BpMyCallback::BpMyCallback(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITrunkStableTest::BpMyCallback::~BpMyCallback() {}

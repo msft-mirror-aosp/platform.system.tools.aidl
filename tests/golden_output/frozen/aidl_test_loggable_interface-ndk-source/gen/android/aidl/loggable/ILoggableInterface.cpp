@@ -204,8 +204,7 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_onTransact
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_code_to_function[] = { "LogThis",};
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_code_to_function, 1);
+static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact);
 
 BpLoggableInterface::BpLoggableInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpLoggableInterface::~BpLoggableInterface() {}
@@ -515,8 +514,7 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTra
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_code_to_function[] = { "Log",};
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_code_to_function, 1);
+static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact);
 
 ILoggableInterface::BpSub::BpSub(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ILoggableInterface::BpSub::~BpSub() {}
