@@ -535,7 +535,7 @@ func (g *aidlImplementationGenerator) DepsMutator(ctx android.BottomUpMutatorCon
 func (g *aidlImplementationGenerator) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 }
 
-func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDownMutatorContext) {
+func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.BottomUpMutatorContext) {
 	imports := wrap("", getImportsWithVersion(ctx, g.properties.AidlInterfaceName, g.properties.Version), "-"+g.properties.Lang)
 	if g.properties.Lang == langJava {
 		if p, ok := g.properties.ModuleProperties[0].(*javaProperties); ok {
