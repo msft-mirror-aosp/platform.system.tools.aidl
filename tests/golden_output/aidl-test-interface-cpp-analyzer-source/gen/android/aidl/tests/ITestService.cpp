@@ -2353,6 +2353,42 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
     break;
     case ::android::IBinder::FIRST_CALL_TRANSACTION + 59:
     {
+      std::cout << "ITestService.RepeatExtendableParcelableVintf()" << std::endl;
+      _aidl_ret_status = ::android::OK;
+      if (!(_aidl_data.enforceInterface(android::String16("android.aidl.tests.ITestService")))) {
+        _aidl_ret_status = ::android::BAD_TYPE;
+        std::cout << "  Failure: Parcel interface does not match." << std::endl;
+        break;
+      }
+      ::android::aidl::tests::extension::ExtendableParcelable in_ep;
+      ::android::aidl::tests::extension::ExtendableParcelable out_ep2;
+      ::android::binder::Status binderStatus;
+      binderStatus.readFromParcel(_aidl_reply);
+      do { // Single-pass loop to break if argument reading fails
+        _aidl_ret_status = _aidl_data.readParcelable(&in_ep);
+        if (((_aidl_ret_status) != (android::NO_ERROR))) {
+          std::cerr << "Failure: error in reading argument ep from Parcel." << std::endl;
+          break;
+        }
+        _aidl_ret_status = _aidl_data.readParcelable(&out_ep2);
+        if (((_aidl_ret_status) != (android::NO_ERROR))) {
+          std::cerr << "Failure: error in reading argument ep2 from Parcel." << std::endl;
+          break;
+        }
+      } while(false);
+      if (!_aidl_data.enforceNoDataAvail().isOk()) {
+        _aidl_ret_status = android::BAD_VALUE;
+        std::cout << "  Failure: Parcel has too much data." << std::endl;
+        break;
+      }
+      std::cout << "  arguments: " << std::endl;
+      std::cout << "    ep: " << ::android::internal::ToString(in_ep) << std::endl;
+      std::cout << "    ep2: " << ::android::internal::ToString(out_ep2) << std::endl;
+      std::cout << "  return: void" << std::endl;
+    }
+    break;
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 60:
+    {
       std::cout << "ITestService.ReverseList()" << std::endl;
       _aidl_ret_status = ::android::OK;
       if (!(_aidl_data.enforceInterface(android::String16("android.aidl.tests.ITestService")))) {
@@ -2390,7 +2426,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 60:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 61:
     {
       std::cout << "ITestService.ReverseIBinderArray()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2436,7 +2472,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 61:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 62:
     {
       std::cout << "ITestService.ReverseNullableIBinderArray()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2482,7 +2518,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 62:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 63:
     {
       std::cout << "ITestService.RepeatSimpleParcelable()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2528,7 +2564,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 63:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 64:
     {
       std::cout << "ITestService.ReverseSimpleParcelables()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2574,7 +2610,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 64:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 65:
     {
       std::cout << "ITestService.GetOldNameInterface()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2601,7 +2637,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 65:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 66:
     {
       std::cout << "ITestService.GetNewNameInterface()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2628,7 +2664,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 66:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 67:
     {
       std::cout << "ITestService.GetUnionTags()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2667,7 +2703,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 67:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 68:
     {
       std::cout << "ITestService.GetCppJavaTests()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2694,7 +2730,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 68:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 69:
     {
       std::cout << "ITestService.getBackendType()" << std::endl;
       _aidl_ret_status = ::android::OK;
@@ -2721,7 +2757,7 @@ android::status_t analyzeITestService(uint32_t _aidl_code, const android::Parcel
       }
     }
     break;
-    case ::android::IBinder::FIRST_CALL_TRANSACTION + 69:
+    case ::android::IBinder::FIRST_CALL_TRANSACTION + 70:
     {
       std::cout << "ITestService.GetCircular()" << std::endl;
       _aidl_ret_status = ::android::OK;

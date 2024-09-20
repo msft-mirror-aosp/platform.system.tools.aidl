@@ -1179,7 +1179,25 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 59 /*ReverseList*/): {
+    case (FIRST_CALL_TRANSACTION + 59 /*RepeatExtendableParcelableVintf*/): {
+      ::aidl::android::aidl::tests::extension::ExtendableParcelable in_ep;
+      ::aidl::android::aidl::tests::extension::ExtendableParcelable out_ep2;
+
+      _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_ep);
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->RepeatExtendableParcelableVintf(in_ep, &out_ep2);
+      _aidl_ret_status = AParcel_writeStatusHeader(_aidl_out, _aidl_status.get());
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      if (!AStatus_isOk(_aidl_status.get())) break;
+
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, out_ep2);
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      break;
+    }
+    case (FIRST_CALL_TRANSACTION + 60 /*ReverseList*/): {
       ::aidl::android::aidl::tests::RecursiveList in_list;
       ::aidl::android::aidl::tests::RecursiveList _aidl_return;
 
@@ -1197,7 +1215,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 60 /*ReverseIBinderArray*/): {
+    case (FIRST_CALL_TRANSACTION + 61 /*ReverseIBinderArray*/): {
       std::vector<::ndk::SpAIBinder> in_input;
       std::vector<::ndk::SpAIBinder> out_repeated;
       std::vector<::ndk::SpAIBinder> _aidl_return;
@@ -1222,7 +1240,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 61 /*ReverseNullableIBinderArray*/): {
+    case (FIRST_CALL_TRANSACTION + 62 /*ReverseNullableIBinderArray*/): {
       std::optional<std::vector<::ndk::SpAIBinder>> in_input;
       std::optional<std::vector<::ndk::SpAIBinder>> out_repeated;
       std::optional<std::vector<::ndk::SpAIBinder>> _aidl_return;
@@ -1247,7 +1265,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 62 /*RepeatSimpleParcelable*/): {
+    case (FIRST_CALL_TRANSACTION + 63 /*RepeatSimpleParcelable*/): {
       ::aidl::android::aidl::tests::SimpleParcelable in_input;
       ::aidl::android::aidl::tests::SimpleParcelable out_repeat;
       ::aidl::android::aidl::tests::SimpleParcelable _aidl_return;
@@ -1269,7 +1287,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 63 /*ReverseSimpleParcelables*/): {
+    case (FIRST_CALL_TRANSACTION + 64 /*ReverseSimpleParcelables*/): {
       std::vector<::aidl::android::aidl::tests::SimpleParcelable> in_input;
       std::vector<::aidl::android::aidl::tests::SimpleParcelable> out_repeated;
       std::vector<::aidl::android::aidl::tests::SimpleParcelable> _aidl_return;
@@ -1294,7 +1312,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 64 /*GetOldNameInterface*/): {
+    case (FIRST_CALL_TRANSACTION + 65 /*GetOldNameInterface*/): {
       std::shared_ptr<::aidl::android::aidl::tests::IOldName> _aidl_return;
 
       ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetOldNameInterface(&_aidl_return);
@@ -1308,7 +1326,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 65 /*GetNewNameInterface*/): {
+    case (FIRST_CALL_TRANSACTION + 66 /*GetNewNameInterface*/): {
       std::shared_ptr<::aidl::android::aidl::tests::INewName> _aidl_return;
 
       ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetNewNameInterface(&_aidl_return);
@@ -1322,7 +1340,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 66 /*GetUnionTags*/): {
+    case (FIRST_CALL_TRANSACTION + 67 /*GetUnionTags*/): {
       std::vector<::aidl::android::aidl::tests::Union> in_input;
       std::vector<::aidl::android::aidl::tests::Union::Tag> _aidl_return;
 
@@ -1340,7 +1358,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 67 /*GetCppJavaTests*/): {
+    case (FIRST_CALL_TRANSACTION + 68 /*GetCppJavaTests*/): {
       ::ndk::SpAIBinder _aidl_return;
 
       ::ndk::ScopedAStatus _aidl_status = _aidl_impl->GetCppJavaTests(&_aidl_return);
@@ -1354,7 +1372,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 68 /*getBackendType*/): {
+    case (FIRST_CALL_TRANSACTION + 69 /*getBackendType*/): {
       ::aidl::android::aidl::tests::BackendType _aidl_return;
 
       ::ndk::ScopedAStatus _aidl_status = _aidl_impl->getBackendType(&_aidl_return);
@@ -1368,7 +1386,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
-    case (FIRST_CALL_TRANSACTION + 69 /*GetCircular*/): {
+    case (FIRST_CALL_TRANSACTION + 70 /*GetCircular*/): {
       ::aidl::android::aidl::tests::CircularParcelable out_cp;
       std::shared_ptr<::aidl::android::aidl::tests::ICircular> _aidl_return;
 
@@ -1390,8 +1408,8 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_clazz_code_to_function[] = { "UnimplementedMethod","Deprecated","TestOneway","RepeatBoolean","RepeatByte","RepeatChar","RepeatInt","RepeatLong","RepeatFloat","RepeatDouble","RepeatString","RepeatByteEnum","RepeatIntEnum","RepeatLongEnum","ReverseBoolean","ReverseByte","ReverseChar","ReverseInt","ReverseLong","ReverseFloat","ReverseDouble","ReverseString","ReverseByteEnum","ReverseIntEnum","ReverseLongEnum","GetOtherTestService","SetOtherTestService","VerifyName","GetInterfaceArray","VerifyNamesWithInterfaceArray","GetNullableInterfaceArray","VerifyNamesWithNullableInterfaceArray","GetInterfaceList","VerifyNamesWithInterfaceList","ReverseStringList","RepeatParcelFileDescriptor","ReverseParcelFileDescriptorArray","ThrowServiceException","RepeatNullableIntArray","RepeatNullableByteEnumArray","RepeatNullableIntEnumArray","RepeatNullableLongEnumArray","RepeatNullableString","RepeatNullableStringList","RepeatNullableParcelable","RepeatNullableParcelableArray","RepeatNullableParcelableList","TakesAnIBinder","TakesANullableIBinder","TakesAnIBinderList","TakesANullableIBinderList","RepeatUtf8CppString","RepeatNullableUtf8CppString","ReverseUtf8CppString","ReverseNullableUtf8CppString","ReverseUtf8CppStringList","GetCallback","FillOutStructuredParcelable","RepeatExtendableParcelable","ReverseList","ReverseIBinderArray","ReverseNullableIBinderArray","RepeatSimpleParcelable","ReverseSimpleParcelables","GetOldNameInterface","GetNewNameInterface","GetUnionTags","GetCppJavaTests","getBackendType","GetCircular",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_clazz = ::ndk::ICInterface::defineClass(ITestService::descriptor, _aidl_android_aidl_tests_ITestService_onTransact, _g_aidl_android_aidl_tests_ITestService_clazz_code_to_function, 70);
+static const char* _g_aidl_android_aidl_tests_ITestService_clazz_code_to_function[] = { "UnimplementedMethod","Deprecated","TestOneway","RepeatBoolean","RepeatByte","RepeatChar","RepeatInt","RepeatLong","RepeatFloat","RepeatDouble","RepeatString","RepeatByteEnum","RepeatIntEnum","RepeatLongEnum","ReverseBoolean","ReverseByte","ReverseChar","ReverseInt","ReverseLong","ReverseFloat","ReverseDouble","ReverseString","ReverseByteEnum","ReverseIntEnum","ReverseLongEnum","GetOtherTestService","SetOtherTestService","VerifyName","GetInterfaceArray","VerifyNamesWithInterfaceArray","GetNullableInterfaceArray","VerifyNamesWithNullableInterfaceArray","GetInterfaceList","VerifyNamesWithInterfaceList","ReverseStringList","RepeatParcelFileDescriptor","ReverseParcelFileDescriptorArray","ThrowServiceException","RepeatNullableIntArray","RepeatNullableByteEnumArray","RepeatNullableIntEnumArray","RepeatNullableLongEnumArray","RepeatNullableString","RepeatNullableStringList","RepeatNullableParcelable","RepeatNullableParcelableArray","RepeatNullableParcelableList","TakesAnIBinder","TakesANullableIBinder","TakesAnIBinderList","TakesANullableIBinderList","RepeatUtf8CppString","RepeatNullableUtf8CppString","ReverseUtf8CppString","ReverseNullableUtf8CppString","ReverseUtf8CppStringList","GetCallback","FillOutStructuredParcelable","RepeatExtendableParcelable","RepeatExtendableParcelableVintf","ReverseList","ReverseIBinderArray","ReverseNullableIBinderArray","RepeatSimpleParcelable","ReverseSimpleParcelables","GetOldNameInterface","GetNewNameInterface","GetUnionTags","GetCppJavaTests","getBackendType","GetCircular",};
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_clazz = ::ndk::ICInterface::defineClass(ITestService::descriptor, _aidl_android_aidl_tests_ITestService_onTransact, _g_aidl_android_aidl_tests_ITestService_clazz_code_to_function, 71);
 
 #pragma clang diagnostic pop
 BpTestService::BpTestService(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
@@ -3890,6 +3908,47 @@ BpTestService::~BpTestService() {}
   _aidl_status_return:
   return _aidl_status;
 }
+::ndk::ScopedAStatus BpTestService::RepeatExtendableParcelableVintf(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  ::ndk::ScopedAStatus _aidl_status;
+  ::ndk::ScopedAParcel _aidl_in;
+  ::ndk::ScopedAParcel _aidl_out;
+
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
+  AParcel_markSensitive(_aidl_in.get());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_ep);
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AIBinder_transact(
+    asBinderReference().get(),
+    (FIRST_CALL_TRANSACTION + 59 /*RepeatExtendableParcelableVintf*/),
+    _aidl_in.getR(),
+    _aidl_out.getR(),
+    FLAG_CLEAR_BUF
+    #ifdef BINDER_STABILITY_SUPPORT
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
+    #endif  // BINDER_STABILITY_SUPPORT
+    );
+  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
+    _aidl_status = ITestService::getDefaultImpl()->RepeatExtendableParcelableVintf(in_ep, out_ep2);
+    goto _aidl_status_return;
+  }
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), out_ep2);
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_error:
+  _aidl_status.set(AStatus_fromStatus(_aidl_ret_status));
+  _aidl_status_return:
+  return _aidl_status;
+}
 ::ndk::ScopedAStatus BpTestService::ReverseList(const ::aidl::android::aidl::tests::RecursiveList& in_list, ::aidl::android::aidl::tests::RecursiveList* _aidl_return) {
   binder_status_t _aidl_ret_status = STATUS_OK;
   ::ndk::ScopedAStatus _aidl_status;
@@ -3905,7 +3964,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 59 /*ReverseList*/),
+    (FIRST_CALL_TRANSACTION + 60 /*ReverseList*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -3949,7 +4008,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 60 /*ReverseIBinderArray*/),
+    (FIRST_CALL_TRANSACTION + 61 /*ReverseIBinderArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -3996,7 +4055,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 61 /*ReverseNullableIBinderArray*/),
+    (FIRST_CALL_TRANSACTION + 62 /*ReverseNullableIBinderArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4040,7 +4099,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 62 /*RepeatSimpleParcelable*/),
+    (FIRST_CALL_TRANSACTION + 63 /*RepeatSimpleParcelable*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4087,7 +4146,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 63 /*ReverseSimpleParcelables*/),
+    (FIRST_CALL_TRANSACTION + 64 /*ReverseSimpleParcelables*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4128,7 +4187,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 64 /*GetOldNameInterface*/),
+    (FIRST_CALL_TRANSACTION + 65 /*GetOldNameInterface*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4166,7 +4225,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 65 /*GetNewNameInterface*/),
+    (FIRST_CALL_TRANSACTION + 66 /*GetNewNameInterface*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4207,7 +4266,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 66 /*GetUnionTags*/),
+    (FIRST_CALL_TRANSACTION + 67 /*GetUnionTags*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4245,7 +4304,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 67 /*GetCppJavaTests*/),
+    (FIRST_CALL_TRANSACTION + 68 /*GetCppJavaTests*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4283,7 +4342,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 68 /*getBackendType*/),
+    (FIRST_CALL_TRANSACTION + 69 /*getBackendType*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4321,7 +4380,7 @@ BpTestService::~BpTestService() {}
 
   _aidl_ret_status = AIBinder_transact(
     asBinderReference().get(),
-    (FIRST_CALL_TRANSACTION + 69 /*GetCircular*/),
+    (FIRST_CALL_TRANSACTION + 70 /*GetCircular*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     FLAG_CLEAR_BUF
@@ -4703,6 +4762,11 @@ std::shared_ptr<ITestService> ITestService::default_impl = nullptr;
   return _aidl_status;
 }
 ::ndk::ScopedAStatus ITestServiceDefault::RepeatExtendableParcelable(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& /*in_ep*/, ::aidl::android::aidl::tests::extension::ExtendableParcelable* /*out_ep2*/) {
+  ::ndk::ScopedAStatus _aidl_status;
+  _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
+  return _aidl_status;
+}
+::ndk::ScopedAStatus ITestServiceDefault::RepeatExtendableParcelableVintf(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& /*in_ep*/, ::aidl::android::aidl::tests::extension::ExtendableParcelable* /*out_ep2*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
