@@ -340,7 +340,7 @@ func (m *aidlApi) makeApiDumpAsVersion(ctx android.ModuleContext, dump apiDump, 
 		m.migrateAndAppendVersion(ctx, rb, &version, transitive)
 	} else {
 		actionWord = "Updating"
-		if m.isFrozen() {
+		if !m.isExplicitlyUnFrozen() {
 			rb.Command().BuiltTool("bpmodify").
 				Text("-w -m " + m.properties.BaseName).
 				Text("-parameter frozen -set-bool false").
