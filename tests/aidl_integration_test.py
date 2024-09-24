@@ -68,7 +68,7 @@ class ShellResult(object):
 class AdbHost(object):
     """Represents a device connected via ADB."""
 
-    def run(self, command, background=False, ignore_status=False):
+    def run(self, command, background=None, ignore_status=False):
         """Run a command on the device via adb shell.
 
         Args:
@@ -83,7 +83,9 @@ class AdbHost(object):
             subprocess.CalledProcessError on command exit != 0.
         """
         if background:
-            command = '( %s ) </dev/null >/dev/null 2>&1 &' % command
+            # outer redirection to /dev/null required to avoid subprocess.Popen blocking
+            # on the FDs being closed
+            command = '(( %s ) </dev/null 2>&1 | log -t %s &) >/dev/null 2>&1' % (command, background)
         return self.adb('shell %s' % pipes.quote(command),
                         ignore_status=ignore_status)
 
@@ -113,7 +115,7 @@ class NativeServer:
     def cleanup(self):
         self.host.run('killall %s' % self.binary, ignore_status=True)
     def run(self):
-        return self.host.run(self.binary, background=True)
+        return self.host.run(self.binary, background=self.binary)
 
 class NativeClient:
     def cleanup(self):
@@ -166,7 +168,7 @@ class JavaServer:
         return self.host.run('CLASSPATH=/data/framework/aidl_test_java_service.jar '
                              + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
                              ' /data/framework android.aidl.service.TestServiceServer',
-                             background=True)
+                             background=self.name)
 
 class JavaClient:
     def __init__(self, host, bitness):
@@ -214,7 +216,7 @@ class JavaVersionTestServer:
         return self.host.run('CLASSPATH=/data/framework/aidl_test_java_service_sdk%d.jar ' % self.ver
                              + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
                              ' /data/framework android.aidl.sdkversion.service.AidlJavaVersionTestService',
-                             background=True)
+                             background=self.name)
 
 class JavaPermissionClient:
     def __init__(self, host, bitness):
@@ -244,7 +246,7 @@ class JavaPermissionServer:
         return self.host.run('CLASSPATH=/data/framework/aidl_test_java_service_permission.jar '
                              + APP_PROCESS_FOR_PRETTY_BITNESS % pretty_bitness(self.bitness) +
                              ' /data/framework android.aidl.permission.service.PermissionTestService',
-                             background=True)
+                             background=self.name)
 
 def getprop(host, prop):
     return host.run('getprop "%s"' % prop).stdout.strip()
@@ -270,7 +272,7 @@ class RustServer:
     def cleanup(self):
         self.host.run('killall %s' % self.binary, ignore_status=True)
     def run(self):
-        return self.host.run(self.binary, background=True)
+        return self.host.run(self.binary, background=self.name)
 
 class RustAsyncServer:
     def __init__(self, host, bitness):
@@ -280,7 +282,7 @@ class RustAsyncServer:
     def cleanup(self):
         self.host.run('killall %s' % self.binary, ignore_status=True)
     def run(self):
-        return self.host.run(self.binary, background=True)
+        return self.host.run(self.binary, background=self.name)
 
 def supported_bitnesses(host):
     bitnesses = []
