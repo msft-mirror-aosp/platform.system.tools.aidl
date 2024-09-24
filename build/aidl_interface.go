@@ -35,7 +35,6 @@ const (
 	aidlInterfaceSuffix       = "_interface"
 	aidlMetadataSingletonName = "aidl_metadata_json"
 	aidlApiDir                = "aidl_api"
-	aidlApiSuffix             = "-api"
 	langCpp                   = "cpp"
 	langJava                  = "java"
 	langNdk                   = "ndk"
@@ -633,6 +632,10 @@ func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 			return
 		}
 		addImportedInterfaceDeps(mctx, i.properties.Imports)
+		for _, anImport := range i.properties.Imports {
+			name, _ := parseModuleWithVersion(anImport)
+			mctx.AddDependency(i, importApiDep, name+aidlInterfaceSuffix)
+		}
 
 		for _, header := range i.properties.Headers {
 			mctx.AddDependency(i, interfaceHeadersDep, header)
@@ -648,22 +651,12 @@ func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 				break
 			}
 		}
-	case *aidlApi:
-		mctx.AddDependency(i, interfaceDep, i.properties.BaseName+aidlInterfaceSuffix)
-		addImportedInterfaceDeps(mctx, i.properties.Imports)
-		for _, anImport := range i.properties.Imports {
-			name, _ := parseModuleWithVersion(anImport)
-			mctx.AddDependency(i, importApiDep, name+aidlApiSuffix)
-		}
-		for _, header := range i.properties.Headers {
-			mctx.AddDependency(i, interfaceHeadersDep, header)
-		}
 	case *aidlGenRule:
 		mctx.AddDependency(i, interfaceDep, i.properties.BaseName+aidlInterfaceSuffix)
 		addImportedInterfaceDeps(mctx, i.properties.Imports)
 		if !proptools.Bool(i.properties.Unstable) {
 			// for checkapi timestamps
-			mctx.AddDependency(i, apiDep, i.properties.BaseName+aidlApiSuffix)
+			mctx.AddDependency(i, apiDep, i.properties.BaseName+aidlInterfaceSuffix)
 		}
 		for _, header := range i.properties.Headers {
 			mctx.AddDependency(i, interfaceHeadersDep, header)
@@ -836,10 +829,11 @@ func nextVersion(versions []string) string {
 }
 
 func (i *aidlInterface) latestVersion() string {
-	if !i.hasVersion() {
+	versions := i.getVersions()
+	if len(versions) == 0 {
 		return "0"
 	}
-	return i.getVersions()[len(i.getVersions())-1]
+	return versions[len(versions)-1]
 }
 
 func (i *aidlInterface) hasVersion() bool {
@@ -995,8 +989,6 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 			mctx.PropertyErrorf("unstable", "The interface is configured as unstable, "+
 				"but API dumps exist under %q. Unstable interface cannot have dumps.", apiDirRoot)
 		}
-	} else {
-		addApiModule(mctx, i)
 	}
 
 	// Reserve this module name for future use.
@@ -1043,6 +1035,7 @@ func (i *aidlInterface) Name() string {
 }
 
 func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+	i.generateApiBuildActions(ctx)
 	srcs, _ := getPaths(ctx, i.properties.Srcs, i.properties.Local_include_dir)
 	for _, src := range srcs {
 		computedType := strings.TrimSuffix(strings.ReplaceAll(src.Rel(), "/", "."), ".aidl")
