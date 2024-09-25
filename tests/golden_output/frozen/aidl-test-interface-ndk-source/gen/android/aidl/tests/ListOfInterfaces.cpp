@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging/android/aidl/tests/ListOfInterfaces.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ListOfInterfaces.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging/android/aidl/tests/ListOfInterfaces.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ListOfInterfaces.aidl
  */
 #include "aidl/android/aidl/tests/ListOfInterfaces.h"
 
@@ -54,7 +54,8 @@ static binder_status_t _aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IEmptyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_onTransact);
+static const char* _g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz_code_to_function[] = { };
+static AIBinder_Class* _g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IEmptyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_onTransact, _g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz_code_to_function, 0);
 
 ListOfInterfaces::BpEmptyInterface::BpEmptyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ListOfInterfaces::BpEmptyInterface::~BpEmptyInterface() {}
@@ -194,7 +195,8 @@ static binder_status_t _aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_on
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IMyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_onTransact);
+static const char* _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz_code_to_function[] = { "methodWithInterfaces",};
+static AIBinder_Class* _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IMyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_onTransact, _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz_code_to_function, 1);
 
 ListOfInterfaces::BpMyInterface::BpMyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ListOfInterfaces::BpMyInterface::~BpMyInterface() {}
