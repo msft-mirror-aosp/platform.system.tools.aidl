@@ -57,7 +57,7 @@ public class ListOfInterfaces implements android.os.Parcelable
     /** Local-side IPC implementation stub class. */
     public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ListOfInterfaces.IEmptyInterface
     {
-      /** Construct the stub at attach it to the interface. */
+      /** Construct the stub and attach it to the interface. */
       @SuppressWarnings("this-escape")
       public Stub()
       {
@@ -155,7 +155,7 @@ public class ListOfInterfaces implements android.os.Parcelable
     /** Local-side IPC implementation stub class. */
     public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ListOfInterfaces.IMyInterface
     {
-      /** Construct the stub at attach it to the interface. */
+      /** Construct the stub and attach it to the interface. */
       @SuppressWarnings("this-escape")
       public Stub()
       {
