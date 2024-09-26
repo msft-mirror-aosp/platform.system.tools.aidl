@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging/android/aidl/tests/ICircular.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ICircular.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging/android/aidl/tests/ICircular.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ICircular.aidl
  */
 #include "aidl/android/aidl/tests/ICircular.h"
 
@@ -48,7 +48,8 @@ static binder_status_t _aidl_android_aidl_tests_ICircular_onTransact(AIBinder* _
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_tests_ICircular_clazz = ::ndk::ICInterface::defineClass(ICircular::descriptor, _aidl_android_aidl_tests_ICircular_onTransact);
+static const char* _g_aidl_android_aidl_tests_ICircular_clazz_code_to_function[] = { "GetTestService",};
+static AIBinder_Class* _g_aidl_android_aidl_tests_ICircular_clazz = ::ndk::ICInterface::defineClass(ICircular::descriptor, _aidl_android_aidl_tests_ICircular_onTransact, _g_aidl_android_aidl_tests_ICircular_clazz_code_to_function, 1);
 
 BpCircular::BpCircular(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpCircular::~BpCircular() {}
