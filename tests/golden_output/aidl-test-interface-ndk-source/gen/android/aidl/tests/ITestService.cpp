@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
  */
 #include "aidl/android/aidl/tests/ITestService.h"
 
@@ -1390,8 +1390,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_clazz_code_to_function[] = { "UnimplementedMethod","Deprecated","TestOneway","RepeatBoolean","RepeatByte","RepeatChar","RepeatInt","RepeatLong","RepeatFloat","RepeatDouble","RepeatString","RepeatByteEnum","RepeatIntEnum","RepeatLongEnum","ReverseBoolean","ReverseByte","ReverseChar","ReverseInt","ReverseLong","ReverseFloat","ReverseDouble","ReverseString","ReverseByteEnum","ReverseIntEnum","ReverseLongEnum","GetOtherTestService","SetOtherTestService","VerifyName","GetInterfaceArray","VerifyNamesWithInterfaceArray","GetNullableInterfaceArray","VerifyNamesWithNullableInterfaceArray","GetInterfaceList","VerifyNamesWithInterfaceList","ReverseStringList","RepeatParcelFileDescriptor","ReverseParcelFileDescriptorArray","ThrowServiceException","RepeatNullableIntArray","RepeatNullableByteEnumArray","RepeatNullableIntEnumArray","RepeatNullableLongEnumArray","RepeatNullableString","RepeatNullableStringList","RepeatNullableParcelable","RepeatNullableParcelableArray","RepeatNullableParcelableList","TakesAnIBinder","TakesANullableIBinder","TakesAnIBinderList","TakesANullableIBinderList","RepeatUtf8CppString","RepeatNullableUtf8CppString","ReverseUtf8CppString","ReverseNullableUtf8CppString","ReverseUtf8CppStringList","GetCallback","FillOutStructuredParcelable","RepeatExtendableParcelable","ReverseList","ReverseIBinderArray","ReverseNullableIBinderArray","RepeatSimpleParcelable","ReverseSimpleParcelables","GetOldNameInterface","GetNewNameInterface","GetUnionTags","GetCppJavaTests","getBackendType","GetCircular",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_clazz = ::ndk::ICInterface::defineClass(ITestService::descriptor, _aidl_android_aidl_tests_ITestService_onTransact, _g_aidl_android_aidl_tests_ITestService_clazz_code_to_function, 70);
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_clazz = ::ndk::ICInterface::defineClass(ITestService::descriptor, _aidl_android_aidl_tests_ITestService_onTransact);
 
 #pragma clang diagnostic pop
 BpTestService::BpTestService(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
@@ -5035,8 +5034,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz_code_to_function[] = { };
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::IFoo::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact, _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz_code_to_function, 0);
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::IFoo::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact);
 
 ITestService::CompilerChecks::BpFoo::BpFoo(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITestService::CompilerChecks::BpFoo::~BpFoo() {}
@@ -5230,8 +5228,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPr
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz_code_to_function[] = { "foo",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_onTransact, _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz_code_to_function, 1);
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_onTransact);
 
 ITestService::CompilerChecks::BpNoPrefixInterface::BpNoPrefixInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITestService::CompilerChecks::BpNoPrefixInterface::~BpNoPrefixInterface() {}
@@ -5403,8 +5400,7 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPr
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz_code_to_function[] = { "foo",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_onTransact, _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz_code_to_function, 1);
+static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_onTransact);
 
 ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::BpNestedNoPrefixInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::~BpNestedNoPrefixInterface() {}
