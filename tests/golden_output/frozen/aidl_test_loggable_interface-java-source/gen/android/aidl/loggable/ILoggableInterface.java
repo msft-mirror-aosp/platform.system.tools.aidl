@@ -20,7 +20,7 @@ public interface ILoggableInterface extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.loggable.ILoggableInterface
   {
-    /** Construct the stub at attach it to the interface. */
+    /** Construct the stub and attach it to the interface. */
     @SuppressWarnings("this-escape")
     public Stub()
     {
@@ -238,7 +238,7 @@ public interface ILoggableInterface extends android.os.IInterface
     /** Local-side IPC implementation stub class. */
     public static abstract class Stub extends android.os.Binder implements android.aidl.loggable.ILoggableInterface.ISub
     {
-      /** Construct the stub at attach it to the interface. */
+      /** Construct the stub and attach it to the interface. */
       @SuppressWarnings("this-escape")
       public Stub()
       {
