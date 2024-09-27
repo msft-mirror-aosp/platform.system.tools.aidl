@@ -27,6 +27,10 @@ void GenerateAutoGenHeader(CodeWriter& out, const Options& options) {
   out << "/*\n";
   out << " * This file is auto-generated.  DO NOT MODIFY.\n";
   out << " * Using: " << options.RawArgs() << "\n";
+  out << " *\n";
+  out << " * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).\n";
+  out << " * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER\n";
+  out << " * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.\n";
   out << " */\n";
 }
 
