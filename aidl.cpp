@@ -72,31 +72,6 @@ namespace android {
 namespace aidl {
 namespace {
 
-// Copied from android.is.IBinder.[FIRST|LAST]_CALL_TRANSACTION
-const int kFirstCallTransaction = 1;
-const int kLastCallTransaction = 0x00ffffff;
-
-// Following IDs are all offsets from  kFirstCallTransaction
-
-// IDs for meta transactions. Most of the meta transactions are implemented in
-// the framework side (Binder.java or Binder.cpp). But these are the ones that
-// are auto-implemented by the AIDL compiler.
-const int kFirstMetaMethodId = kLastCallTransaction - kFirstCallTransaction;
-const int kGetInterfaceVersionId = kFirstMetaMethodId;
-const int kGetInterfaceHashId = kFirstMetaMethodId - 1;
-// Additional meta transactions implemented by AIDL should use
-// kFirstMetaMethodId -1, -2, ...and so on.
-
-// Reserve 100 IDs for meta methods, which is more than enough. If we don't reserve,
-// in the future, a newly added meta transaction ID will have a chance to
-// collide with the user-defined methods that were added in the past. So,
-// let's prevent users from using IDs in this range from the beginning.
-const int kLastMetaMethodId = kFirstMetaMethodId - 99;
-
-// Range of IDs that is allowed for user-defined methods.
-const int kMinUserSetMethodId = 0;
-const int kMaxUserSetMethodId = kLastMetaMethodId - 1;
-
 bool check_filename(const std::string& filename, const Options& options, const AidlDefinedType& defined_type) {
     const char* p;
     string expected;

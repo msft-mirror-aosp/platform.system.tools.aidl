@@ -366,9 +366,6 @@ func (g *aidlGenRule) GeneratedHeaderDirs() android.Paths {
 	return android.Paths{g.genHeaderDir}
 }
 
-func (g *aidlGenRule) DepsMutator(ctx android.BottomUpMutatorContext) {
-	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
-}
 func aidlGenFactory() android.Module {
 	g := &aidlGenRule{}
 	g.AddProperties(&g.properties)

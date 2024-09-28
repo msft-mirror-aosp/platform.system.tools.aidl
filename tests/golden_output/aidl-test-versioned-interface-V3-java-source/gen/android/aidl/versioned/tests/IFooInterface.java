@@ -87,7 +87,7 @@ public interface IFooInterface extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.versioned.tests.IFooInterface
   {
-    /** Construct the stub at attach it to the interface. */
+    /** Construct the stub and attach it to the interface. */
     @SuppressWarnings("this-escape")
     public Stub()
     {

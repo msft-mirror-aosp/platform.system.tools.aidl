@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-ndk-source/gen/staging/android/aidl/fixedsizearray/FixedSizeArrayExample.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-ndk-source/gen/staging/android/aidl/fixedsizearray/FixedSizeArrayExample.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
  */
 #include "aidl/android/aidl/fixedsizearray/FixedSizeArrayExample.h"
 
@@ -781,7 +781,8 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IRepeatFixedSizeArray::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_onTransact);
+static const char* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_code_to_function[] = { "RepeatBytes","RepeatInts","RepeatBinders","RepeatParcelables","Repeat2dBytes","Repeat2dInts","Repeat2dBinders","Repeat2dParcelables",};
+static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IRepeatFixedSizeArray::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_onTransact, _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_code_to_function, 8);
 
 FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
@@ -1297,7 +1298,8 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IEmptyInterface::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_onTransact);
+static const char* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz_code_to_function[] = { };
+static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IEmptyInterface::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_onTransact, _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz_code_to_function, 0);
 
 FixedSizeArrayExample::BpEmptyInterface::BpEmptyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 FixedSizeArrayExample::BpEmptyInterface::~BpEmptyInterface() {}
