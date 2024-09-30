@@ -209,6 +209,9 @@ public:
   ::ndk::ScopedAStatus RepeatExtendableParcelable(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) override {
     return _impl->RepeatExtendableParcelable(in_ep, out_ep2);
   }
+  ::ndk::ScopedAStatus RepeatExtendableParcelableVintf(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) override {
+    return _impl->RepeatExtendableParcelableVintf(in_ep, out_ep2);
+  }
   ::ndk::ScopedAStatus ReverseList(const ::aidl::android::aidl::tests::RecursiveList& in_list, ::aidl::android::aidl::tests::RecursiveList* _aidl_return) override {
     return _impl->ReverseList(in_list, _aidl_return);
   }
