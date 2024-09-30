@@ -8,18 +8,18 @@
 pub struct r#ExtendableParcelable {
   pub r#a: i32,
   pub r#b: String,
-  pub r#ext: binder::ParcelableHolder,
+  pub r#ext: binder::ParcelableHolder<binder::binder_impl::LocalStabilityType>,
   pub r#c: i64,
-  pub r#ext2: binder::ParcelableHolder,
+  pub r#ext2: binder::ParcelableHolder<binder::binder_impl::LocalStabilityType>,
 }
 impl Default for r#ExtendableParcelable {
   fn default() -> Self {
     Self {
       r#a: 0,
       r#b: Default::default(),
-      r#ext: binder::ParcelableHolder::new(binder::binder_impl::Stability::Local),
+      r#ext: Default::default(),
       r#c: 0,
-      r#ext2: binder::ParcelableHolder::new(binder::binder_impl::Stability::Local),
+      r#ext2: Default::default(),
     }
   }
 }
