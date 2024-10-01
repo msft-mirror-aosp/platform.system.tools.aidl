@@ -80,7 +80,7 @@ std::string RustLifetimeGeneric(Lifetime lifetime);
 //
 // The lifetime argument is used to annotate all references.
 std::string RustNameOf(const AidlTypeSpecifier& aidl, const AidlTypenames& typenames,
-                       StorageMode mode, Lifetime lifetime);
+                       StorageMode mode, Lifetime lifetime, bool is_vintf_stability);
 
 StorageMode ArgumentStorageMode(const AidlArgument& arg, const AidlTypenames& typenames);
 
