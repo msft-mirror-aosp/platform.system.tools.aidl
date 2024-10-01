@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #include "aidl/android/aidl/test/trunk/ITrunkStableTest.h"
 
@@ -269,7 +273,8 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact);
+static const char* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_code_to_function[] = { "repeatParcelable","repeatEnum","repeatUnion","callMyCallback","repeatOtherParcelable",};
+static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact, _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_code_to_function, 5);
 
 BpTrunkStableTest::BpTrunkStableTest(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpTrunkStableTest::~BpTrunkStableTest() {}
@@ -1166,7 +1171,8 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::IMyCallback::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_onTransact);
+static const char* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_code_to_function[] = { "repeatParcelable","repeatEnum","repeatUnion","repeatOtherParcelable",};
+static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::IMyCallback::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_onTransact, _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_code_to_function, 4);
 
 ITrunkStableTest::BpMyCallback::BpMyCallback(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITrunkStableTest::BpMyCallback::~BpMyCallback() {}
