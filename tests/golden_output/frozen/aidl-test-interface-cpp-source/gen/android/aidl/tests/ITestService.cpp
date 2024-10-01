@@ -2433,6 +2433,45 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   return _aidl_status;
 }
 
+::android::binder::Status BpTestService::RepeatExtendableParcelableVintf(const ::android::aidl::tests::extension::ExtendableParcelable& ep, ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
+  ::android::Parcel _aidl_data;
+  _aidl_data.markSensitive();
+  _aidl_data.markForBinder(remoteStrong());
+  ::android::Parcel _aidl_reply;
+  ::android::status_t _aidl_ret_status = ::android::OK;
+  ::android::binder::Status _aidl_status;
+  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatExtendableParcelableVintf::cppClient");
+  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = _aidl_data.writeParcelable(ep);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_RepeatExtendableParcelableVintf, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_CLEAR_BUF);
+  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
+     return ITestService::getDefaultImpl()->RepeatExtendableParcelableVintf(ep, ep2);
+  }
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_ret_status = _aidl_status.readFromParcel(_aidl_reply);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  if (!_aidl_status.isOk()) {
+    return _aidl_status;
+  }
+  _aidl_ret_status = _aidl_reply.readParcelable(ep2);
+  if (((_aidl_ret_status) != (::android::OK))) {
+    goto _aidl_error;
+  }
+  _aidl_error:
+  _aidl_status.setFromStatusT(_aidl_ret_status);
+  return _aidl_status;
+}
+
 ::android::binder::Status BpTestService::ReverseList(const ::android::aidl::tests::RecursiveList& list, ::android::aidl::tests::RecursiveList* _aidl_return) {
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
@@ -4812,6 +4851,37 @@ BnTestService::BnTestService()
       break;
     }
     ::android::binder::Status _aidl_status(RepeatExtendableParcelable(in_ep, &out_ep2));
+    _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (!_aidl_status.isOk()) {
+      break;
+    }
+    _aidl_ret_status = _aidl_reply->writeParcelable(out_ep2);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+  }
+  break;
+  case BnTestService::TRANSACTION_RepeatExtendableParcelableVintf:
+  {
+    ::android::aidl::tests::extension::ExtendableParcelable in_ep;
+    ::android::aidl::tests::extension::ExtendableParcelable out_ep2;
+    if (!(_aidl_data.checkInterface(this))) {
+      _aidl_ret_status = ::android::BAD_TYPE;
+      break;
+    }
+    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatExtendableParcelableVintf::cppServer");
+    _aidl_ret_status = _aidl_data.readParcelable(&in_ep);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      break;
+    }
+    if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
+      _aidl_ret_status = st.writeToParcel(_aidl_reply);
+      break;
+    }
+    ::android::binder::Status _aidl_status(RepeatExtendableParcelableVintf(in_ep, &out_ep2));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
