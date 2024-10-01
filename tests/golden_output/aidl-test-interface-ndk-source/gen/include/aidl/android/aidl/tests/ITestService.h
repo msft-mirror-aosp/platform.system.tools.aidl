@@ -617,17 +617,18 @@ public:
   static constexpr uint32_t TRANSACTION_GetCallback = FIRST_CALL_TRANSACTION + 56;
   static constexpr uint32_t TRANSACTION_FillOutStructuredParcelable = FIRST_CALL_TRANSACTION + 57;
   static constexpr uint32_t TRANSACTION_RepeatExtendableParcelable = FIRST_CALL_TRANSACTION + 58;
-  static constexpr uint32_t TRANSACTION_ReverseList = FIRST_CALL_TRANSACTION + 59;
-  static constexpr uint32_t TRANSACTION_ReverseIBinderArray = FIRST_CALL_TRANSACTION + 60;
-  static constexpr uint32_t TRANSACTION_ReverseNullableIBinderArray = FIRST_CALL_TRANSACTION + 61;
-  static constexpr uint32_t TRANSACTION_RepeatSimpleParcelable = FIRST_CALL_TRANSACTION + 62;
-  static constexpr uint32_t TRANSACTION_ReverseSimpleParcelables = FIRST_CALL_TRANSACTION + 63;
-  static constexpr uint32_t TRANSACTION_GetOldNameInterface = FIRST_CALL_TRANSACTION + 64;
-  static constexpr uint32_t TRANSACTION_GetNewNameInterface = FIRST_CALL_TRANSACTION + 65;
-  static constexpr uint32_t TRANSACTION_GetUnionTags = FIRST_CALL_TRANSACTION + 66;
-  static constexpr uint32_t TRANSACTION_GetCppJavaTests = FIRST_CALL_TRANSACTION + 67;
-  static constexpr uint32_t TRANSACTION_getBackendType = FIRST_CALL_TRANSACTION + 68;
-  static constexpr uint32_t TRANSACTION_GetCircular = FIRST_CALL_TRANSACTION + 69;
+  static constexpr uint32_t TRANSACTION_RepeatExtendableParcelableVintf = FIRST_CALL_TRANSACTION + 59;
+  static constexpr uint32_t TRANSACTION_ReverseList = FIRST_CALL_TRANSACTION + 60;
+  static constexpr uint32_t TRANSACTION_ReverseIBinderArray = FIRST_CALL_TRANSACTION + 61;
+  static constexpr uint32_t TRANSACTION_ReverseNullableIBinderArray = FIRST_CALL_TRANSACTION + 62;
+  static constexpr uint32_t TRANSACTION_RepeatSimpleParcelable = FIRST_CALL_TRANSACTION + 63;
+  static constexpr uint32_t TRANSACTION_ReverseSimpleParcelables = FIRST_CALL_TRANSACTION + 64;
+  static constexpr uint32_t TRANSACTION_GetOldNameInterface = FIRST_CALL_TRANSACTION + 65;
+  static constexpr uint32_t TRANSACTION_GetNewNameInterface = FIRST_CALL_TRANSACTION + 66;
+  static constexpr uint32_t TRANSACTION_GetUnionTags = FIRST_CALL_TRANSACTION + 67;
+  static constexpr uint32_t TRANSACTION_GetCppJavaTests = FIRST_CALL_TRANSACTION + 68;
+  static constexpr uint32_t TRANSACTION_getBackendType = FIRST_CALL_TRANSACTION + 69;
+  static constexpr uint32_t TRANSACTION_GetCircular = FIRST_CALL_TRANSACTION + 70;
 
   static std::shared_ptr<ITestService> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<ITestService>& instance);
@@ -693,6 +694,7 @@ public:
   virtual ::ndk::ScopedAStatus GetCallback(bool in_return_null, std::shared_ptr<::aidl::android::aidl::tests::INamedCallback>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus FillOutStructuredParcelable(::aidl::android::aidl::tests::StructuredParcelable* in_parcel) = 0;
   virtual ::ndk::ScopedAStatus RepeatExtendableParcelable(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) = 0;
+  virtual ::ndk::ScopedAStatus RepeatExtendableParcelableVintf(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) = 0;
   virtual ::ndk::ScopedAStatus ReverseList(const ::aidl::android::aidl::tests::RecursiveList& in_list, ::aidl::android::aidl::tests::RecursiveList* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus ReverseIBinderArray(const std::vector<::ndk::SpAIBinder>& in_input, std::vector<::ndk::SpAIBinder>* out_repeated, std::vector<::ndk::SpAIBinder>* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus ReverseNullableIBinderArray(const std::optional<std::vector<::ndk::SpAIBinder>>& in_input, std::optional<std::vector<::ndk::SpAIBinder>>* out_repeated, std::optional<std::vector<::ndk::SpAIBinder>>* _aidl_return) = 0;
@@ -768,6 +770,7 @@ public:
   ::ndk::ScopedAStatus GetCallback(bool in_return_null, std::shared_ptr<::aidl::android::aidl::tests::INamedCallback>* _aidl_return) override;
   ::ndk::ScopedAStatus FillOutStructuredParcelable(::aidl::android::aidl::tests::StructuredParcelable* in_parcel) override;
   ::ndk::ScopedAStatus RepeatExtendableParcelable(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) override;
+  ::ndk::ScopedAStatus RepeatExtendableParcelableVintf(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) override;
   ::ndk::ScopedAStatus ReverseList(const ::aidl::android::aidl::tests::RecursiveList& in_list, ::aidl::android::aidl::tests::RecursiveList* _aidl_return) override;
   ::ndk::ScopedAStatus ReverseIBinderArray(const std::vector<::ndk::SpAIBinder>& in_input, std::vector<::ndk::SpAIBinder>* out_repeated, std::vector<::ndk::SpAIBinder>* _aidl_return) override;
   ::ndk::ScopedAStatus ReverseNullableIBinderArray(const std::optional<std::vector<::ndk::SpAIBinder>>& in_input, std::optional<std::vector<::ndk::SpAIBinder>>* out_repeated, std::optional<std::vector<::ndk::SpAIBinder>>* _aidl_return) override;
