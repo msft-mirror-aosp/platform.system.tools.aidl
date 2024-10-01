@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #pragma once
 
@@ -208,6 +212,9 @@ public:
   }
   ::ndk::ScopedAStatus RepeatExtendableParcelable(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) override {
     return _impl->RepeatExtendableParcelable(in_ep, out_ep2);
+  }
+  ::ndk::ScopedAStatus RepeatExtendableParcelableVintf(const ::aidl::android::aidl::tests::extension::ExtendableParcelable& in_ep, ::aidl::android::aidl::tests::extension::ExtendableParcelable* out_ep2) override {
+    return _impl->RepeatExtendableParcelableVintf(in_ep, out_ep2);
   }
   ::ndk::ScopedAStatus ReverseList(const ::aidl::android::aidl::tests::RecursiveList& in_list, ::aidl::android::aidl::tests::RecursiveList* _aidl_return) override {
     return _impl->ReverseList(in_list, _aidl_return);
