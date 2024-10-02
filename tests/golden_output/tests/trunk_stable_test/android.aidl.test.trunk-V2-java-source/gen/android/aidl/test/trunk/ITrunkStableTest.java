@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen/android/aidl/test/trunk/ITrunkStableTest.java.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 package android.aidl.test.trunk;
 public interface ITrunkStableTest extends android.os.IInterface
@@ -51,7 +55,7 @@ public interface ITrunkStableTest extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.test.trunk.ITrunkStableTest
   {
-    /** Construct the stub at attach it to the interface. */
+    /** Construct the stub and attach it to the interface. */
     @SuppressWarnings("this-escape")
     public Stub()
     {
@@ -639,7 +643,7 @@ public interface ITrunkStableTest extends android.os.IInterface
     /** Local-side IPC implementation stub class. */
     public static abstract class Stub extends android.os.Binder implements android.aidl.test.trunk.ITrunkStableTest.IMyCallback
     {
-      /** Construct the stub at attach it to the interface. */
+      /** Construct the stub and attach it to the interface. */
       @SuppressWarnings("this-escape")
       public Stub()
       {
