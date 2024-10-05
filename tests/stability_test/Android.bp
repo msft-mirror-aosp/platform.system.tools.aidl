@@ -81,10 +81,10 @@ aidl_interface {
             platform_apis: true,
         },
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         ndk: {
-            enabled: false,
+            enabled: true,
         },
         rust: {
             enabled: true,

@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #pragma once
 
@@ -79,17 +83,18 @@ public:
   static constexpr uint32_t TRANSACTION_GetCallback = ::android::IBinder::FIRST_CALL_TRANSACTION + 56;
   static constexpr uint32_t TRANSACTION_FillOutStructuredParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 57;
   static constexpr uint32_t TRANSACTION_RepeatExtendableParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 58;
-  static constexpr uint32_t TRANSACTION_ReverseList = ::android::IBinder::FIRST_CALL_TRANSACTION + 59;
-  static constexpr uint32_t TRANSACTION_ReverseIBinderArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 60;
-  static constexpr uint32_t TRANSACTION_ReverseNullableIBinderArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 61;
-  static constexpr uint32_t TRANSACTION_RepeatSimpleParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 62;
-  static constexpr uint32_t TRANSACTION_ReverseSimpleParcelables = ::android::IBinder::FIRST_CALL_TRANSACTION + 63;
-  static constexpr uint32_t TRANSACTION_GetOldNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 64;
-  static constexpr uint32_t TRANSACTION_GetNewNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 65;
-  static constexpr uint32_t TRANSACTION_GetUnionTags = ::android::IBinder::FIRST_CALL_TRANSACTION + 66;
-  static constexpr uint32_t TRANSACTION_GetCppJavaTests = ::android::IBinder::FIRST_CALL_TRANSACTION + 67;
-  static constexpr uint32_t TRANSACTION_getBackendType = ::android::IBinder::FIRST_CALL_TRANSACTION + 68;
-  static constexpr uint32_t TRANSACTION_GetCircular = ::android::IBinder::FIRST_CALL_TRANSACTION + 69;
+  static constexpr uint32_t TRANSACTION_RepeatExtendableParcelableVintf = ::android::IBinder::FIRST_CALL_TRANSACTION + 59;
+  static constexpr uint32_t TRANSACTION_ReverseList = ::android::IBinder::FIRST_CALL_TRANSACTION + 60;
+  static constexpr uint32_t TRANSACTION_ReverseIBinderArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 61;
+  static constexpr uint32_t TRANSACTION_ReverseNullableIBinderArray = ::android::IBinder::FIRST_CALL_TRANSACTION + 62;
+  static constexpr uint32_t TRANSACTION_RepeatSimpleParcelable = ::android::IBinder::FIRST_CALL_TRANSACTION + 63;
+  static constexpr uint32_t TRANSACTION_ReverseSimpleParcelables = ::android::IBinder::FIRST_CALL_TRANSACTION + 64;
+  static constexpr uint32_t TRANSACTION_GetOldNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 65;
+  static constexpr uint32_t TRANSACTION_GetNewNameInterface = ::android::IBinder::FIRST_CALL_TRANSACTION + 66;
+  static constexpr uint32_t TRANSACTION_GetUnionTags = ::android::IBinder::FIRST_CALL_TRANSACTION + 67;
+  static constexpr uint32_t TRANSACTION_GetCppJavaTests = ::android::IBinder::FIRST_CALL_TRANSACTION + 68;
+  static constexpr uint32_t TRANSACTION_getBackendType = ::android::IBinder::FIRST_CALL_TRANSACTION + 69;
+  static constexpr uint32_t TRANSACTION_GetCircular = ::android::IBinder::FIRST_CALL_TRANSACTION + 70;
   explicit BnTestService();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
 };  // class BnTestService
@@ -291,6 +296,9 @@ public:
   }
   ::android::binder::Status RepeatExtendableParcelable(const ::android::aidl::tests::extension::ExtendableParcelable& ep, ::android::aidl::tests::extension::ExtendableParcelable* ep2) override {
     return _aidl_delegate->RepeatExtendableParcelable(ep, ep2);
+  }
+  ::android::binder::Status RepeatExtendableParcelableVintf(const ::android::aidl::tests::extension::ExtendableParcelable& ep, ::android::aidl::tests::extension::ExtendableParcelable* ep2) override {
+    return _aidl_delegate->RepeatExtendableParcelableVintf(ep, ep2);
   }
   ::android::binder::Status ReverseList(const ::android::aidl::tests::RecursiveList& list, ::android::aidl::tests::RecursiveList* _aidl_return) override {
     return _aidl_delegate->ReverseList(list, _aidl_return);

@@ -710,6 +710,38 @@ fn test_repeat_extendable_parcelable() {
     assert_eq!(ret_ext.b, ext.b);
 }
 
+#[test]
+fn test_repeat_extendable_parcelable_vintf() {
+    let service = get_test_service();
+
+    let inner_vintf = Arc::new(VintfParcelable { a: 5 });
+
+    let mut vintf_ext = VintfExtendableParcelable::default();
+    vintf_ext.ext.set_parcelable(inner_vintf.clone()).unwrap();
+    let vintf_ext = Arc::new(vintf_ext);
+
+    let mut ep = ExtendableParcelable { a: 1, b: "a".into(), c: 42, ..Default::default() };
+    ep.ext.set_parcelable(Arc::clone(&vintf_ext)).expect("error setting parcelable");
+
+    let mut ep2 = ExtendableParcelable::default();
+    let result = service.RepeatExtendableParcelableVintf(&ep, &mut ep2);
+    assert_eq!(result, Ok(()));
+    assert_eq!(ep2.a, ep.a);
+    assert_eq!(ep2.b, ep.b);
+
+    let ret_ext = ep2
+        .ext
+        .get_parcelable::<VintfExtendableParcelable>()
+        .expect("error getting parcelable")
+        .expect("get_parcelable returned None");
+    let ret_inner = ret_ext
+        .ext
+        .get_parcelable::<VintfParcelable>()
+        .expect("error getting parcelable")
+        .expect("get_parcelable returned None");
+    assert_eq!(ret_inner.a, inner_vintf.a);
+}
+
 macro_rules! test_parcelable_holder_stability {
     ($test:ident, $holder:path, $parcelable:path) => {
         #[test]

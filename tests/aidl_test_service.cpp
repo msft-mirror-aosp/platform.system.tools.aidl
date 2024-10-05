@@ -58,6 +58,7 @@
 #include "android/aidl/tests/Union.h"
 #include "android/aidl/tests/extension/MyExt.h"
 #include "android/aidl/tests/extension/MyExt2.h"
+#include "android/aidl/tests/vintf/VintfExtendableParcelable.h"
 
 #include "android/aidl/tests/nested/BnNestedService.h"
 
@@ -705,6 +706,18 @@ class NativeService : public BnTestService {
     ep2->a = ep.a;
     ep2->b = ep.b;
     std::shared_ptr<android::aidl::tests::extension::MyExt> myExt;
+    ep.ext.getParcelable(&myExt);
+    ep2->ext.setParcelable(myExt);
+
+    return Status::ok();
+  }
+
+  ::android::binder::Status RepeatExtendableParcelableVintf(
+      const ::android::aidl::tests::extension::ExtendableParcelable& ep,
+      ::android::aidl::tests::extension::ExtendableParcelable* ep2) {
+    ep2->a = ep.a;
+    ep2->b = ep.b;
+    std::shared_ptr<android::aidl::tests::vintf::VintfExtendableParcelable> myExt;
     ep.ext.getParcelable(&myExt);
     ep2->ext.setParcelable(myExt);
 

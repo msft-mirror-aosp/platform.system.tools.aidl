@@ -39,6 +39,7 @@ use aidl_test_versioned_interface::aidl::android::aidl::versioned::tests::{
     BazUnion::BazUnion, Foo::Foo, IFooInterface, IFooInterface::BnFooInterface,
     IFooInterface::BpFooInterface,
 };
+use aidl_test_vintf_parcelable::aidl::android::aidl::tests::vintf::VintfExtendableParcelable::VintfExtendableParcelable;
 use android_aidl_test_trunk::aidl::android::aidl::test::trunk::{
     ITrunkStableTest, ITrunkStableTest::BnTrunkStableTest, ITrunkStableTest::BpTrunkStableTest,
     ITrunkStableTest::IMyCallback, ITrunkStableTest::MyEnum::MyEnum,
@@ -477,6 +478,24 @@ impl ITestService::ITestServiceAsyncServer for TestService {
         ep2.b.clone_from(&ep.b);
 
         let my_ext = ep.ext.get_parcelable::<MyExt>()?;
+        if let Some(my_ext) = my_ext {
+            ep2.ext.set_parcelable(my_ext)?;
+        } else {
+            ep2.ext.reset();
+        }
+
+        Ok(())
+    }
+
+    async fn RepeatExtendableParcelableVintf(
+        &self,
+        ep: &ExtendableParcelable,
+        ep2: &mut ExtendableParcelable,
+    ) -> binder::Result<()> {
+        ep2.a = ep.a;
+        ep2.b.clone_from(&ep.b);
+
+        let my_ext = ep.ext.get_parcelable::<VintfExtendableParcelable>()?;
         if let Some(my_ext) = my_ext {
             ep2.ext.set_parcelable(my_ext)?;
         } else {

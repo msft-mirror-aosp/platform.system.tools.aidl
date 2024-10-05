@@ -100,6 +100,31 @@ public class ExtensionTests {
     }
 
     @Test
+    public void testRepeatExtendableParcelableVintf() throws RemoteException {
+      VintfParcelable inner = new VintfParcelable();
+      inner.a = 5;
+
+      VintfExtendableParcelable ext = new VintfExtendableParcelable();
+      ext.ext.setParcelable(inner);
+
+      ExtendableParcelable ep = new ExtendableParcelable();
+      ep.a = 1;
+      ep.b = "a";
+      ep.c = 42L;
+
+      ep.ext.setParcelable(ext);
+
+      ExtendableParcelable ep2 = new ExtendableParcelable();
+      mService.RepeatExtendableParcelableVintf(ep, ep2);
+      assertThat(ep2.a, is(ep.a));
+      assertThat(ep2.b, is(ep.b));
+
+      VintfExtendableParcelable retExt = ep2.ext.getParcelable(VintfExtendableParcelable.class);
+      VintfParcelable retInner = retExt.ext.getParcelable(VintfParcelable.class);
+      assertThat(retInner.a, is(inner.a));
+    }
+
+    @Test
     public void testVintfParcelableHolderCanContainVintfParcelable() {
       vep.ext.setParcelable(vp);
       assertThat(vep.ext.getParcelable(VintfParcelable.class), is(vp));
