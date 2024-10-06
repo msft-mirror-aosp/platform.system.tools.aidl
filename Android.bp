@@ -539,6 +539,7 @@ cc_test {
         "aidl_test_loggable_interface-cpp",
         "aidl-test-fixedsizearray-cpp",
         "android.aidl.test.trunk-V2-cpp",
+        "aidl_test_vintf_parcelable-V1-cpp",
     ],
     srcs: ["tests/aidl_test_service.cpp"],
 }
@@ -559,6 +560,7 @@ cc_test {
         "aidl-test-fixedsizearray-ndk",
         "android.aidl.test.trunk-V2-ndk",
         "libsimpleparcelable_ndk",
+        "aidl_test_vintf_parcelable-V1-ndk",
     ],
     srcs: ["tests/aidl_test_service_ndk.cpp"],
 }
@@ -1038,6 +1040,7 @@ rust_test {
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
         "aidl-test-fixedsizearray-rust",
+        "aidl_test_vintf_parcelable-V1-rust",
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
         "libsimple_parcelable_rust",
@@ -1065,6 +1068,7 @@ rust_test {
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
         "aidl-test-fixedsizearray-rust",
+        "aidl_test_vintf_parcelable-V1-rust",
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
         "libbinder_tokio_rs",
