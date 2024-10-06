@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #pragma once
 
@@ -75,6 +79,7 @@ public:
   ::android::binder::Status GetCallback(bool return_null, ::android::sp<::android::aidl::tests::INamedCallback>* _aidl_return) override;
   ::android::binder::Status FillOutStructuredParcelable(::android::aidl::tests::StructuredParcelable* parcel) override;
   ::android::binder::Status RepeatExtendableParcelable(const ::android::aidl::tests::extension::ExtendableParcelable& ep, ::android::aidl::tests::extension::ExtendableParcelable* ep2) override;
+  ::android::binder::Status RepeatExtendableParcelableVintf(const ::android::aidl::tests::extension::ExtendableParcelable& ep, ::android::aidl::tests::extension::ExtendableParcelable* ep2) override;
   ::android::binder::Status ReverseList(const ::android::aidl::tests::RecursiveList& list, ::android::aidl::tests::RecursiveList* _aidl_return) override;
   ::android::binder::Status ReverseIBinderArray(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* repeated, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) override;
   ::android::binder::Status ReverseNullableIBinderArray(const ::std::optional<::std::vector<::android::sp<::android::IBinder>>>& input, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* repeated, ::std::optional<::std::vector<::android::sp<::android::IBinder>>>* _aidl_return) override;
