@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/staging/android/aidl/loggable/ILoggableInterface.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/loggable/ILoggableInterface.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #include "aidl/android/aidl/loggable/ILoggableInterface.h"
 
@@ -8,13 +12,6 @@
 #include <android/binder_to_string.h>
 #include <aidl/android/aidl/loggable/BnLoggableInterface.h>
 #include <aidl/android/aidl/loggable/BpLoggableInterface.h>
-
-namespace {
-struct ScopedTrace {
-  inline explicit ScopedTrace(const char* name) { ATrace_beginSection(name); }
-  inline ~ScopedTrace() { ATrace_endSection(); }
-};
-}  // namespace
 
 namespace aidl {
 namespace android {
@@ -50,7 +47,6 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_onTransact
       std::vector<::ndk::ScopedFileDescriptor> in_pfdArray;
       std::vector<std::string> _aidl_return;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ILoggableInterface::LogThis::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_boolValue);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -212,7 +208,8 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_onTransact
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact);
+static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_code_to_function[] = { "LogThis",};
+static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_code_to_function, 1);
 
 BpLoggableInterface::BpLoggableInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpLoggableInterface::~BpLoggableInterface() {}
@@ -249,8 +246,7 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
     _transaction_log.input_args.emplace_back("in_pfdArray", ::android::internal::ToString(*in_pfdArray));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ILoggableInterface::LogThis::client");
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_boolValue);
@@ -317,13 +313,13 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*LogThis*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ILoggableInterface::getDefaultImpl()) {
@@ -490,7 +486,6 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTra
     case (FIRST_CALL_TRANSACTION + 0 /*Log*/): {
       int32_t in_value;
 
-      ScopedTrace _aidl_trace("AIDL::ndk::ISub::Log::server");
       _aidl_ret_status = ::ndk::AParcel_readData(_aidl_in, &in_value);
       if (_aidl_ret_status != STATUS_OK) break;
 
@@ -524,7 +519,8 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTra
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact);
+static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_code_to_function[] = { "Log",};
+static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_code_to_function, 1);
 
 ILoggableInterface::BpSub::BpSub(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ILoggableInterface::BpSub::~BpSub() {}
@@ -541,21 +537,20 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
     _transaction_log.input_args.emplace_back("in_value", ::android::internal::ToString(in_value));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  ScopedTrace _aidl_trace("AIDL::ndk::ISub::Log::client");
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_value);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*Log*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ISub::getDefaultImpl()) {

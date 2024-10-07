@@ -186,7 +186,7 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		android.FixtureRegisterWithContext(func(ctx android.RegistrationContext) {
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 			ctx.RegisterModuleType("aidl_interface_defaults", AidlInterfaceDefaultsFactory)
-			ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
+			ctx.RegisterSingletonModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
 			ctx.RegisterModuleType("rust_defaults", func() android.Module {
 				return rust.DefaultsFactory()
 			})
@@ -1141,7 +1141,7 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 	var ctx *android.TestContext
 	assertOutput := func(moduleName, variant, outputFilename string) {
 		t.Helper()
-		paths := ctx.ModuleForTests(moduleName, variant).OutputFiles(t, "")
+		paths := ctx.ModuleForTests(moduleName, variant).OutputFiles(ctx, t, "")
 		if len(paths) != 1 || paths[0].Base() != outputFilename {
 			t.Errorf("%s(%s): expected output %q, but got %v", moduleName, variant, outputFilename, paths)
 		}
@@ -1547,7 +1547,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 
 	// checkapidump rule is to compare "compatibility" between ToT(dump) and "current"
 	{
-		rule := ctx.ModuleForTests("foo-iface-api", "").Output("checkapi_dump.timestamp")
+		rule := ctx.ModuleForTests("foo-iface_interface", "").Output("checkapi_dump.timestamp")
 		android.AssertStringEquals(t, "checkapi(dump == current) imports", "-Iboq", rule.Args["imports"])
 		android.AssertStringDoesContain(t, "checkapi(dump == current) optionalFlags",
 			rule.Args["optionalFlags"],
@@ -1557,7 +1557,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 	// has_development rule runs --checkapi for equality between latest("1")
 	// and ToT
 	{
-		rule := ctx.ModuleForTests("foo-iface-api", "").Output("has_development")
+		rule := ctx.ModuleForTests("foo-iface_interface", "").Output("has_development")
 		android.AssertStringDoesContain(t, "checkapi(dump == latest(1)) should import import's preprocessed",
 			rule.RuleParams.Command,
 			"-pout/soong/.intermediates/bar/bar-iface_interface/2/preprocessed.aidl")
@@ -1745,14 +1745,14 @@ func TestSupportsGenruleAndFilegroup(t *testing.T) {
 
 	// dumpapi
 	{
-		rule := ctx.ModuleForTests("foo-iface-api", "").Rule("aidlDumpApiRule")
+		rule := ctx.ModuleForTests("foo-iface_interface", "").Rule("aidlDumpApiRule")
 		android.AssertPathsRelativeToTopEquals(t, "dumpapi should dump srcs/filegroups/genrules", []string{
 			"foo/src/foo/Foo.aidl",
 			"foo/filegroup/sub/pkg/Bar.aidl",
 			"out/soong/.intermediates/foo/gen1/gen/baz/Baz.aidl",
 		}, rule.Inputs)
 
-		dumpDir := "out/soong/.intermediates/foo/foo-iface-api/dump"
+		dumpDir := "out/soong/.intermediates/foo/foo-iface_interface/dump"
 		android.AssertPathsRelativeToTopEquals(t, "dumpapi should dump with rel paths", []string{
 			dumpDir + "/foo/Foo.aidl",
 			dumpDir + "/pkg/Bar.aidl",
@@ -2215,8 +2215,8 @@ func TestFreezeApiDeps(t *testing.T) {
 
 			ctx, _ := testAidl(t, ``, customizers...)
 			shouldHaveDep := transitive && testcase.bool
-			fooFreezeApiRule := ctx.ModuleForTests("foo-api", "").Output("update_or_freeze_api_3.timestamp")
-			commonFreezeApiOutput := ctx.ModuleForTests("common-api", "").Output("update_or_freeze_api_3.timestamp").Output.String()
+			fooFreezeApiRule := ctx.ModuleForTests("foo_interface", "").Output("update_or_freeze_api_3.timestamp")
+			commonFreezeApiOutput := ctx.ModuleForTests("common_interface", "").Output("update_or_freeze_api_3.timestamp").Output.String()
 			testMethod := android.AssertStringListDoesNotContain
 			if shouldHaveDep {
 				testMethod = android.AssertStringListContains
