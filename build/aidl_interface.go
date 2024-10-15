@@ -945,7 +945,7 @@ func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleCont
 
 	if i.Owner() == "" {
 		if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
-			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owners:'"
+			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owner:'"
 		}
 	} else {
 		// has an OWNER
