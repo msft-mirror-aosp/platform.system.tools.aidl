@@ -31,11 +31,11 @@ binder_status_t DeeplyNested::readFromParcel(const AParcel* _aidl_parcel) {
 }
 binder_status_t DeeplyNested::writeToParcel(AParcel* _aidl_parcel) const {
   binder_status_t _aidl_ret_status;
-  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
@@ -75,14 +75,14 @@ binder_status_t DeeplyNested::A::readFromParcel(const AParcel* _aidl_parcel) {
 }
 binder_status_t DeeplyNested::A::writeToParcel(AParcel* _aidl_parcel) const {
   binder_status_t _aidl_ret_status;
-  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, e);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
@@ -115,11 +115,11 @@ binder_status_t DeeplyNested::B::readFromParcel(const AParcel* _aidl_parcel) {
 }
 binder_status_t DeeplyNested::B::writeToParcel(AParcel* _aidl_parcel) const {
   binder_status_t _aidl_ret_status;
-  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
@@ -152,11 +152,11 @@ binder_status_t DeeplyNested::B::C::readFromParcel(const AParcel* _aidl_parcel) 
 }
 binder_status_t DeeplyNested::B::C::writeToParcel(AParcel* _aidl_parcel) const {
   binder_status_t _aidl_ret_status;
-  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);
@@ -189,11 +189,11 @@ binder_status_t DeeplyNested::B::C::D::readFromParcel(const AParcel* _aidl_parce
 }
 binder_status_t DeeplyNested::B::C::D::writeToParcel(AParcel* _aidl_parcel) const {
   binder_status_t _aidl_ret_status;
-  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);

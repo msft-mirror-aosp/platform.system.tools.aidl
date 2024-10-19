@@ -1424,7 +1424,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     out.Indent();
     out << "binder_status_t _aidl_ret_status;\n";
 
-    out << "size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+    out << "int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
     out << "_aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);\n";
     StatusCheckReturn(out);
 
@@ -1442,7 +1442,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
         out << "}\n";
       }
     }
-    out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+    out << "int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";
     out << "AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);\n";
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);\n";
