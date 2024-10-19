@@ -1113,3 +1113,9 @@ cc_binary {
         "libutils",
     ],
 }
+
+dirgroup {
+    name: "trusty_dirgroup_system_tools_aidl",
+    dirs: ["."],
+    visibility: ["//trusty/vendor/google/aosp/scripts"],
+}
