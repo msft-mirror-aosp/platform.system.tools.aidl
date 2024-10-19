@@ -469,3 +469,9 @@ sh_binary {
     src: "hash_gen.sh",
     host_supported: true,
 }
+
+python_binary_host {
+    name: "aidl_rust_glue",
+    srcs: ["aidl_rust_glue.py"],
+    main: "aidl_rust_glue.py",
+}
