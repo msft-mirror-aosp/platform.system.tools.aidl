@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/staging/android/aidl/loggable/Data.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/loggable/Data.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #include "aidl/android/aidl/loggable/Data.h"
 
@@ -54,7 +58,7 @@ binder_status_t Data::readFromParcel(const AParcel* _aidl_parcel) {
 }
 binder_status_t Data::writeToParcel(AParcel* _aidl_parcel) const {
   binder_status_t _aidl_ret_status;
-  size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);
   _aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
@@ -70,7 +74,7 @@ binder_status_t Data::writeToParcel(AParcel* _aidl_parcel) const {
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, nestedEnum);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
+  int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
   AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);

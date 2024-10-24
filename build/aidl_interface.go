@@ -35,7 +35,6 @@ const (
 	aidlInterfaceSuffix       = "_interface"
 	aidlMetadataSingletonName = "aidl_metadata_json"
 	aidlApiDir                = "aidl_api"
-	aidlApiSuffix             = "-api"
 	langCpp                   = "cpp"
 	langJava                  = "java"
 	langNdk                   = "ndk"
@@ -63,18 +62,12 @@ func init() {
 
 func registerPreArchMutators(ctx android.RegisterMutatorsContext) {
 	ctx.BottomUp("addInterfaceDeps", addInterfaceDeps).Parallel()
+	ctx.BottomUp("addLanguagelibraries", addLanguageLibraries).Parallel()
 	ctx.BottomUp("checkImports", checkImports).Parallel()
-	ctx.TopDown("createAidlInterface", createAidlInterfaceMutator).Parallel()
 }
 
 func registerPostDepsMutators(ctx android.RegisterMutatorsContext) {
 	ctx.BottomUp("checkAidlGeneratedModules", checkAidlGeneratedModules).Parallel()
-}
-
-func createAidlInterfaceMutator(mctx android.TopDownMutatorContext) {
-	if g, ok := mctx.Module().(*aidlImplementationGenerator); ok {
-		g.GenerateImplementation(mctx)
-	}
 }
 
 // A marker struct for AIDL-generated library modules
@@ -242,6 +235,15 @@ func isRelativePath(path string) bool {
 	return filepath.Clean(path) == path && path != ".." &&
 		!strings.HasPrefix(path, "../") && !strings.HasPrefix(path, "/")
 }
+
+type aidlInterfaceInfo struct {
+	Stability     string
+	ComputedTypes []string
+	Versions      []string
+	UseUnfrozen   bool
+}
+
+var aidlInterfaceProvider = blueprint.NewProvider[aidlInterfaceInfo]()
 
 type CommonBackendProperties struct {
 	// Whether to generate code in the corresponding backend.
@@ -557,6 +559,10 @@ func (i *aidlInterface) genTrace(lang string) bool {
 		}
 	case langNdk, langNdkPlatform:
 		ver = i.properties.Backend.Ndk.Gen_trace
+		if ver == nil {
+			// Enable tracing for all ndk backends by default
+			ver = proptools.BoolPtr(true)
+		}
 	case langRust: // unsupported b/236880829
 		ver = i.properties.Backend.Rust.Gen_trace
 	case langCppAnalyzer:
@@ -608,14 +614,10 @@ func addImportedInterfaceDeps(ctx android.BottomUpMutatorContext, imports []stri
 }
 
 // Run custom "Deps" mutator between AIDL modules created at LoadHook stage.
-// We can't use the "DepsMutator" for these dependencies because
-// - We need to create library modules (cc/java/...) before "arch" mutator. Note that cc_library
-//
-//	should be mutated by os/image/arch mutators as well.
-//
-// - When creating library modules, we need to access the original interface and its imported
-//
-//	interfaces to determine which version to use. See aidlInterface.getImportWithVersion.
+// We can't use the "DepsMutator" for these dependencies because we want to add libraries
+// to the language modules (cc/java/...) by appending to their properties, and those properties
+// must be modified before the DepsMutator runs so that the language-specific DepsMutator
+// implementations will add dependencies based on those modified properties.
 func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 	switch i := mctx.Module().(type) {
 	case *aidlInterface:
@@ -633,13 +635,32 @@ func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 			return
 		}
 		addImportedInterfaceDeps(mctx, i.properties.Imports)
+		for _, anImport := range i.properties.Imports {
+			name, _ := parseModuleWithVersion(anImport)
+			mctx.AddDependency(i, importApiDep, name+aidlInterfaceSuffix)
+		}
 
 		for _, header := range i.properties.Headers {
 			mctx.AddDependency(i, interfaceHeadersDep, header)
 		}
-	case *aidlImplementationGenerator:
-		mctx.AddDependency(i, interfaceDep, i.properties.AidlInterfaceName+aidlInterfaceSuffix)
-		addImportedInterfaceDeps(mctx, i.properties.Imports)
+	case *java.Library:
+		for _, props := range i.GetProperties() {
+			if langProps, ok := props.(*aidlLanguageModuleProperties); ok {
+				prop := langProps.Aidl_internal_props
+				mctx.AddDependency(i, interfaceDep, prop.AidlInterfaceName+aidlInterfaceSuffix)
+				addImportedInterfaceDeps(mctx, prop.Imports)
+				break
+			}
+		}
+	case *cc.Module:
+		for _, props := range i.GetProperties() {
+			if langProps, ok := props.(*aidlLanguageModuleProperties); ok {
+				prop := langProps.Aidl_internal_props
+				mctx.AddDependency(i, interfaceDep, prop.AidlInterfaceName+aidlInterfaceSuffix)
+				addImportedInterfaceDeps(mctx, prop.Imports)
+				break
+			}
+		}
 	case *rust.Module:
 		for _, props := range i.GetProperties() {
 			if sp, ok := props.(*aidlRustSourceProviderProperties); ok {
@@ -648,25 +669,54 @@ func addInterfaceDeps(mctx android.BottomUpMutatorContext) {
 				break
 			}
 		}
-	case *aidlApi:
-		mctx.AddDependency(i, interfaceDep, i.properties.BaseName+aidlInterfaceSuffix)
-		addImportedInterfaceDeps(mctx, i.properties.Imports)
-		for _, anImport := range i.properties.Imports {
-			name, _ := parseModuleWithVersion(anImport)
-			mctx.AddDependency(i, importApiDep, name+aidlApiSuffix)
-		}
-		for _, header := range i.properties.Headers {
-			mctx.AddDependency(i, interfaceHeadersDep, header)
-		}
 	case *aidlGenRule:
 		mctx.AddDependency(i, interfaceDep, i.properties.BaseName+aidlInterfaceSuffix)
 		addImportedInterfaceDeps(mctx, i.properties.Imports)
 		if !proptools.Bool(i.properties.Unstable) {
 			// for checkapi timestamps
-			mctx.AddDependency(i, apiDep, i.properties.BaseName+aidlApiSuffix)
+			mctx.AddDependency(i, apiDep, i.properties.BaseName+aidlInterfaceSuffix)
 		}
 		for _, header := range i.properties.Headers {
 			mctx.AddDependency(i, interfaceHeadersDep, header)
+		}
+	}
+}
+
+// Add libraries to the static_libs/shared_libs properties of language specific modules.
+// The libraries to add are determined based off of the aidl interface that the language module
+// was generated by, and the imported aidl interfaces of the origional aidl interface. Thus,
+// this needs to run after addInterfaceDeps() so that it can get information from all those
+// interfaces.
+func addLanguageLibraries(mctx android.BottomUpMutatorContext) {
+	switch i := mctx.Module().(type) {
+	case *java.Library:
+		for _, props := range i.GetProperties() {
+			if langProps, ok := props.(*aidlLanguageModuleProperties); ok {
+				prop := langProps.Aidl_internal_props
+				staticLibs := wrap("", getImportsWithVersion(mctx, prop.AidlInterfaceName, prop.Version), "-"+prop.Lang)
+				err := proptools.AppendMatchingProperties(i.GetProperties(), &java.CommonProperties{
+					Static_libs: proptools.NewSimpleConfigurable(staticLibs),
+				}, nil)
+				if err != nil {
+					mctx.ModuleErrorf("%s", err.Error())
+				}
+				break
+			}
+		}
+	case *cc.Module:
+		for _, props := range i.GetProperties() {
+			if langProps, ok := props.(*aidlLanguageModuleProperties); ok {
+				prop := langProps.Aidl_internal_props
+				imports := wrap("", getImportsWithVersion(mctx, prop.AidlInterfaceName, prop.Version), "-"+prop.Lang)
+				err := proptools.AppendMatchingProperties(i.GetProperties(), &cc.BaseLinkerProperties{
+					Shared_libs:               proptools.NewSimpleConfigurable(imports),
+					Export_shared_lib_headers: imports,
+				}, nil)
+				if err != nil {
+					mctx.ModuleErrorf("%s", err.Error())
+				}
+				break
+			}
 		}
 	}
 }
@@ -836,10 +886,11 @@ func nextVersion(versions []string) string {
 }
 
 func (i *aidlInterface) latestVersion() string {
-	if !i.hasVersion() {
+	versions := i.getVersions()
+	if len(versions) == 0 {
 		return "0"
 	}
-	return i.getVersions()[len(i.getVersions())-1]
+	return versions[len(versions)-1]
 }
 
 func (i *aidlInterface) hasVersion() bool {
@@ -894,7 +945,7 @@ func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleCont
 
 	if i.Owner() == "" {
 		if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
-			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owners:'"
+			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owner:'"
 		}
 	} else {
 		// has an OWNER
@@ -995,8 +1046,6 @@ func aidlInterfaceHook(mctx android.DefaultableHookContext, i *aidlInterface) {
 			mctx.PropertyErrorf("unstable", "The interface is configured as unstable, "+
 				"but API dumps exist under %q. Unstable interface cannot have dumps.", apiDirRoot)
 		}
-	} else {
-		addApiModule(mctx, i)
 	}
 
 	// Reserve this module name for future use.
@@ -1043,6 +1092,7 @@ func (i *aidlInterface) Name() string {
 }
 
 func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+	i.generateApiBuildActions(ctx)
 	srcs, _ := getPaths(ctx, i.properties.Srcs, i.properties.Local_include_dir)
 	for _, src := range srcs {
 		computedType := strings.TrimSuffix(strings.ReplaceAll(src.Rel(), "/", "."), ".aidl")
@@ -1064,6 +1114,13 @@ func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		}
 		i.preprocessed[""] = i.preprocessed[i.nextVersion()]
 	}
+
+	android.SetProvider(ctx, aidlInterfaceProvider, aidlInterfaceInfo{
+		Stability:     proptools.StringDefault(i.properties.Stability, ""),
+		ComputedTypes: i.computedTypes,
+		Versions:      i.getVersions(),
+		UseUnfrozen:   i.useUnfrozen(ctx),
+	})
 }
 
 func (i *aidlInterface) getImportsForVersion(version string) []string {
@@ -1132,10 +1189,6 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	}
 	rb.Build("export_"+name, "export types for "+name)
 	return preprocessed
-}
-
-func (i *aidlInterface) DepsMutator(ctx android.BottomUpMutatorContext) {
-	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
 
 func AidlInterfaceFactory() android.Module {

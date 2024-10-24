@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-permission-java-source/gen/android/aidl/tests/permission/INoPermission.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-permission-java-source/gen -Iframeworks/base/core/java -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/permission/INoPermission.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 package android.aidl.tests.permission;
 public interface INoPermission extends android.os.IInterface
@@ -19,7 +23,7 @@ public interface INoPermission extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.permission.INoPermission
   {
-    /** Construct the stub at attach it to the interface. */
+    /** Construct the stub and attach it to the interface. */
     @SuppressWarnings("this-escape")
     public Stub()
     {
