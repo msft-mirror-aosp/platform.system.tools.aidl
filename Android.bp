@@ -255,7 +255,7 @@ python_test_host {
     main: "tests/aidl_integration_test.py",
     srcs: ["tests/aidl_integration_test.py"],
     test_config: "tests/aidl_integration_test.xml",
-    data: [
+    device_common_data: [
         ":aidl_test_java_client",
         ":aidl_test_java_service",
         ":aidl_test_java_client_sdk1",
