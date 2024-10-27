@@ -255,7 +255,7 @@ python_test_host {
     main: "tests/aidl_integration_test.py",
     srcs: ["tests/aidl_integration_test.py"],
     test_config: "tests/aidl_integration_test.xml",
-    data: [
+    device_common_data: [
         ":aidl_test_java_client",
         ":aidl_test_java_service",
         ":aidl_test_java_client_sdk1",
@@ -578,6 +578,7 @@ cc_test {
         "aidl-test-versioned-interface-V2-cpp",
         "aidl_test_loggable_interface-cpp",
         "aidl-test-fixedsizearray-cpp",
+        "aidl_test_vintf_parcelable-V1-cpp",
         "android.aidl.test.trunk-V2-cpp",
     ],
     product_variables: {
@@ -642,6 +643,7 @@ cc_test {
         "aidl-test-interface-ndk",
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
+        "aidl_test_vintf_parcelable-V1-ndk",
         "android.aidl.test.trunk-V2-ndk",
         "libsimpleparcelable_ndk",
     ],
