@@ -19,6 +19,7 @@
 #include "aidl_typenames.h"
 #include "logging.h"
 
+#include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
@@ -59,6 +60,18 @@ std::string ConstantValueDecoratorInternal(
   const auto& aidl_name = type.GetName();
   if (aidl_name == "char") {
     return value + " as u16";
+  }
+
+  // Rust compiler will not re-interpret negative value into byte
+  if (aidl_name == "byte" && type.IsFromWithinArray()) {
+    AIDL_FATAL_IF(value.empty(), type);
+    if (value[0] == '-') {
+      // TODO: instead of getting raw string here, we should refactor everything to pass in the
+      //   constant value object, so we don't need to re-parse the integer.
+      int8_t parsed;
+      AIDL_FATAL_IF(!android::base::ParseInt<int8_t>(value, &parsed), type);
+      return std::to_string(static_cast<uint8_t>(parsed));
+    }
   }
 
   if (aidl_name == "float") {
