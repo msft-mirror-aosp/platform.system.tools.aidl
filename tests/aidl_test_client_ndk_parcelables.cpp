@@ -27,6 +27,9 @@
 #include <aidl/android/aidl/tests/ITestService.h>
 #include <aidl/android/aidl/tests/RecursiveList.h>
 #include <aidl/android/aidl/tests/Union.h>
+#include <aidl/android/aidl/tests/extension/MyExt.h>
+#include <aidl/android/aidl/tests/vintf/VintfExtendableParcelable.h>
+#include <aidl/android/aidl/tests/vintf/VintfParcelable.h>
 
 using aidl::android::aidl::fixedsizearray::FixedSizeArrayExample;
 using BnRepeatFixedSizeArray =
@@ -43,6 +46,10 @@ using aidl::android::aidl::tests::ITestService;
 using aidl::android::aidl::tests::RecursiveList;
 using aidl::android::aidl::tests::SimpleParcelable;
 using aidl::android::aidl::tests::Union;
+using aidl::android::aidl::tests::extension::ExtendableParcelable;
+using aidl::android::aidl::tests::extension::MyExt;
+using aidl::android::aidl::tests::vintf::VintfExtendableParcelable;
+using aidl::android::aidl::tests::vintf::VintfParcelable;
 using android::OK;
 using ndk::AParcel_readData;
 using ndk::AParcel_writeData;
@@ -113,6 +120,59 @@ TEST_F(AidlTest, ReverseRecursiveList) {
     cur = cur->next.get();
   }
   EXPECT_EQ(nullptr, cur);
+}
+
+TEST_F(AidlTest, RepeatExtendableParcelable) {
+  MyExt ext;
+  ext.a = 42;
+  ext.b = "EXT";
+  ExtendableParcelable ep;
+  ep.a = 1;
+  ep.b = "a";
+  ep.ext.setParcelable(ext);
+
+  ExtendableParcelable ep2;
+  auto status = getService<ITestService>()->RepeatExtendableParcelable(ep, &ep2);
+  ASSERT_TRUE(status.isOk()) << status.getDescription();
+
+  EXPECT_EQ(ep2.a, ep.a);
+  EXPECT_EQ(ep2.b, ep.b);
+
+  std::optional<MyExt> ret_ext;
+  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), OK);
+  ASSERT_TRUE(ret_ext.has_value());
+
+  EXPECT_EQ(ret_ext->a, ext.a);
+  EXPECT_EQ(ret_ext->b, ext.b);
+}
+
+TEST_F(AidlTest, RepeatExtendableParcelableVintf) {
+  VintfParcelable inner;
+  inner.a = 5;
+
+  VintfExtendableParcelable ext;
+  ext.ext.setParcelable(inner);
+
+  ExtendableParcelable ep;
+  ep.a = 1;
+  ep.b = "a";
+  ep.ext.setParcelable(ext);
+
+  ExtendableParcelable ep2;
+  auto status = getService<ITestService>()->RepeatExtendableParcelableVintf(ep, &ep2);
+  ASSERT_TRUE(status.isOk()) << status.getDescription();
+
+  EXPECT_EQ(ep2.a, ep.a);
+  EXPECT_EQ(ep2.b, ep.b);
+
+  std::optional<VintfExtendableParcelable> ret_ext;
+  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), OK);
+  ASSERT_TRUE(ret_ext.has_value());
+
+  std::optional<VintfParcelable> ret_inner;
+  ASSERT_EQ(ret_ext->ext.getParcelable(&ret_inner), OK);
+  ASSERT_TRUE(ret_inner.has_value());
+  EXPECT_EQ(ret_inner->a, inner.a);
 }
 
 TEST_F(AidlTest, GetUnionTags) {
