@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=ndk --structured --version 1 --hash 9e7be1859820c59d9d55dd133e71a3687b5d2e5b --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V1-ndk-source/gen/staging/android/aidl/versioned/tests/IFooInterface.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V1-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V1-ndk-source/gen/staging -Nsystem/tools/aidl/aidl_api/aidl-test-versioned-interface/1 system/tools/aidl/aidl_api/aidl-test-versioned-interface/1/android/aidl/versioned/tests/IFooInterface.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=ndk --structured --version 1 --hash 9e7be1859820c59d9d55dd133e71a3687b5d2e5b -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V1-ndk-source/gen/staging/android/aidl/versioned/tests/IFooInterface.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V1-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-versioned-interface-V1-ndk-source/gen/staging -Nsystem/tools/aidl/aidl_api/aidl-test-versioned-interface/1 system/tools/aidl/aidl_api/aidl-test-versioned-interface/1/android/aidl/versioned/tests/IFooInterface.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #include "aidl/android/aidl/versioned/tests/IFooInterface.h"
 
@@ -130,7 +134,8 @@ static binder_status_t _aidl_android_aidl_versioned_tests_IFooInterface_onTransa
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz = ::ndk::ICInterface::defineClass(IFooInterface::descriptor, _aidl_android_aidl_versioned_tests_IFooInterface_onTransact);
+static const char* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_code_to_function[] = { "originalApi","acceptUnionAndReturnString","ignoreParcelablesAndRepeatInt","returnsLengthOfFooArray",};
+static AIBinder_Class* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz = ::ndk::ICInterface::defineClass(IFooInterface::descriptor, _aidl_android_aidl_versioned_tests_IFooInterface_onTransact, _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_code_to_function, 4);
 
 BpFooInterface::BpFooInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpFooInterface::~BpFooInterface() {}
@@ -141,17 +146,17 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 0 /*originalApi*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -175,20 +180,20 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_u);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 1 /*acceptUnionAndReturnString*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -215,7 +220,7 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_inFoo);
@@ -228,13 +233,13 @@ BpFooInterface::~BpFooInterface() {}
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 2 /*ignoreParcelablesAndRepeatInt*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -267,20 +272,20 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_in.get(), in_foos);
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 3 /*returnsLengthOfFooArray*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -312,17 +317,17 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
@@ -356,17 +361,17 @@ BpFooInterface::~BpFooInterface() {}
   ::ndk::ScopedAParcel _aidl_in;
   ::ndk::ScopedAParcel _aidl_out;
 
-  _aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AIBinder_transact(
-    asBinder().get(),
+    asBinderReference().get(),
     (FIRST_CALL_TRANSACTION + 16777213 /*getInterfaceHash*/),
     _aidl_in.getR(),
     _aidl_out.getR(),
     0
     #ifdef BINDER_STABILITY_SUPPORT
-    | FLAG_PRIVATE_LOCAL
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
   if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {

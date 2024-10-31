@@ -45,6 +45,7 @@ import android.aidl.tests.extension.ExtendableParcelable;
 import android.aidl.tests.extension.MyExt;
 import android.aidl.tests.nested.INestedService;
 import android.aidl.tests.nested.ParcelableWithNested;
+import android.aidl.tests.vintf.VintfExtendableParcelable;
 import android.aidl.versioned.tests.BazUnion;
 import android.aidl.versioned.tests.Foo;
 import android.aidl.versioned.tests.IFooInterface;
@@ -570,6 +571,16 @@ public class TestServiceServer extends ITestService.Stub {
     ep2.b = ep.b;
     // no way to copy currently w/o unparceling
     ep2.ext.setParcelable(ep.ext.getParcelable(MyExt.class));
+    ep2.c = ep.c;
+    ep2.ext2.setParcelable(null);
+  }
+  @Override
+  public void RepeatExtendableParcelableVintf(ExtendableParcelable ep, ExtendableParcelable ep2)
+      throws RemoteException {
+    ep2.a = ep.a;
+    ep2.b = ep.b;
+    // no way to copy currently w/o unparceling
+    ep2.ext.setParcelable(ep.ext.getParcelable(VintfExtendableParcelable.class));
     ep2.c = ep.c;
     ep2.ext2.setParcelable(null);
   }
