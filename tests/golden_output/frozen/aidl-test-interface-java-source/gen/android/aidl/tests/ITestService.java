@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen/android/aidl/tests/ITestService.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 package android.aidl.tests;
 /** interface comment */
@@ -262,7 +266,12 @@ public interface ITestService extends android.os.IInterface
     @Override public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException
     {
     }
+    // Copies `ep` to `ep2`. Contained parcelable must be a `MyExt`.
     @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
+    {
+    }
+    // Copies `ep` to `ep2`. Contained parcelable must be a `VintfExtendableParcelable`.
+    @Override public void RepeatExtendableParcelableVintf(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
     {
     }
     @Override public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException
@@ -579,9 +588,15 @@ public interface ITestService extends android.os.IInterface
     {
       mImpl.FillOutStructuredParcelable(parcel);
     }
+    // Copies `ep` to `ep2`. Contained parcelable must be a `MyExt`.
     @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
     {
       mImpl.RepeatExtendableParcelable(ep,ep2);
+    }
+    // Copies `ep` to `ep2`. Contained parcelable must be a `VintfExtendableParcelable`.
+    @Override public void RepeatExtendableParcelableVintf(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
+    {
+      mImpl.RepeatExtendableParcelableVintf(ep,ep2);
     }
     @Override public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException
     {
@@ -633,7 +648,7 @@ public interface ITestService extends android.os.IInterface
   /** Local-side IPC implementation stub class. */
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService
   {
-    /** Construct the stub at attach it to the interface. */
+    /** Construct the stub and attach it to the interface. */
     @SuppressWarnings("this-escape")
     public Stub()
     {
@@ -898,6 +913,10 @@ public interface ITestService extends android.os.IInterface
         case TRANSACTION_RepeatExtendableParcelable:
         {
           return "RepeatExtendableParcelable";
+        }
+        case TRANSACTION_RepeatExtendableParcelableVintf:
+        {
+          return "RepeatExtendableParcelableVintf";
         }
         case TRANSACTION_ReverseList:
         {
@@ -1696,6 +1715,18 @@ public interface ITestService extends android.os.IInterface
           _arg1 = new android.aidl.tests.extension.ExtendableParcelable();
           data.enforceNoDataAvail();
           this.RepeatExtendableParcelable(_arg0, _arg1);
+          reply.writeNoException();
+          reply.writeTypedObject(_arg1, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+          break;
+        }
+        case TRANSACTION_RepeatExtendableParcelableVintf:
+        {
+          android.aidl.tests.extension.ExtendableParcelable _arg0;
+          _arg0 = data.readTypedObject(android.aidl.tests.extension.ExtendableParcelable.CREATOR);
+          android.aidl.tests.extension.ExtendableParcelable _arg1;
+          _arg1 = new android.aidl.tests.extension.ExtendableParcelable();
+          data.enforceNoDataAvail();
+          this.RepeatExtendableParcelableVintf(_arg0, _arg1);
           reply.writeNoException();
           reply.writeTypedObject(_arg1, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
           break;
@@ -3290,6 +3321,7 @@ public interface ITestService extends android.os.IInterface
           _data.recycle();
         }
       }
+      // Copies `ep` to `ep2`. Contained parcelable must be a `MyExt`.
       @Override public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
@@ -3302,6 +3334,32 @@ public interface ITestService extends android.os.IInterface
           if (!_status) {
             if (getDefaultImpl() != null) {
               getDefaultImpl().RepeatExtendableParcelable(ep, ep2);
+              return;
+            }
+          }
+          _reply.readException();
+          if ((0!=_reply.readInt())) {
+            ep2.readFromParcel(_reply);
+          }
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
+      // Copies `ep` to `ep2`. Contained parcelable must be a `VintfExtendableParcelable`.
+      @Override public void RepeatExtendableParcelableVintf(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
+        _data.markSensitive();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeTypedObject(ep, 0);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatExtendableParcelableVintf, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
+          if (!_status) {
+            if (getDefaultImpl() != null) {
+              getDefaultImpl().RepeatExtendableParcelableVintf(ep, ep2);
               return;
             }
           }
@@ -3648,21 +3706,22 @@ public interface ITestService extends android.os.IInterface
     static final int TRANSACTION_GetCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 56);
     static final int TRANSACTION_FillOutStructuredParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 57);
     static final int TRANSACTION_RepeatExtendableParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 58);
-    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 59);
-    static final int TRANSACTION_ReverseIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 60);
-    static final int TRANSACTION_ReverseNullableIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 61);
-    static final int TRANSACTION_RepeatSimpleParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 62);
-    static final int TRANSACTION_ReverseSimpleParcelables = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
-    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
-    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
-    static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 66);
-    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 67);
-    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 68);
-    static final int TRANSACTION_GetCircular = (android.os.IBinder.FIRST_CALL_TRANSACTION + 69);
+    static final int TRANSACTION_RepeatExtendableParcelableVintf = (android.os.IBinder.FIRST_CALL_TRANSACTION + 59);
+    static final int TRANSACTION_ReverseList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 60);
+    static final int TRANSACTION_ReverseIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 61);
+    static final int TRANSACTION_ReverseNullableIBinderArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 62);
+    static final int TRANSACTION_RepeatSimpleParcelable = (android.os.IBinder.FIRST_CALL_TRANSACTION + 63);
+    static final int TRANSACTION_ReverseSimpleParcelables = (android.os.IBinder.FIRST_CALL_TRANSACTION + 64);
+    static final int TRANSACTION_GetOldNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 65);
+    static final int TRANSACTION_GetNewNameInterface = (android.os.IBinder.FIRST_CALL_TRANSACTION + 66);
+    static final int TRANSACTION_GetUnionTags = (android.os.IBinder.FIRST_CALL_TRANSACTION + 67);
+    static final int TRANSACTION_GetCppJavaTests = (android.os.IBinder.FIRST_CALL_TRANSACTION + 68);
+    static final int TRANSACTION_getBackendType = (android.os.IBinder.FIRST_CALL_TRANSACTION + 69);
+    static final int TRANSACTION_GetCircular = (android.os.IBinder.FIRST_CALL_TRANSACTION + 70);
     /** @hide */
     public int getMaxTransactionId()
     {
-      return 69;
+      return 70;
     }
     public static boolean setDefaultImpl(android.aidl.tests.ITestService impl) {
       // Only one user of this interface can use this function
@@ -3866,7 +3925,10 @@ public interface ITestService extends android.os.IInterface
   // Since this paracelable has clearly defined default values, it would be
   // inefficient to use an IPC to fill it out in practice.
   public void FillOutStructuredParcelable(android.aidl.tests.StructuredParcelable parcel) throws android.os.RemoteException;
+  // Copies `ep` to `ep2`. Contained parcelable must be a `MyExt`.
   public void RepeatExtendableParcelable(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException;
+  // Copies `ep` to `ep2`. Contained parcelable must be a `VintfExtendableParcelable`.
+  public void RepeatExtendableParcelableVintf(android.aidl.tests.extension.ExtendableParcelable ep, android.aidl.tests.extension.ExtendableParcelable ep2) throws android.os.RemoteException;
   public android.aidl.tests.RecursiveList ReverseList(android.aidl.tests.RecursiveList list) throws android.os.RemoteException;
   public android.os.IBinder[] ReverseIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
   public android.os.IBinder[] ReverseNullableIBinderArray(android.os.IBinder[] input, android.os.IBinder[] repeated) throws android.os.RemoteException;
@@ -4098,7 +4160,7 @@ public interface ITestService extends android.os.IInterface
       /** Local-side IPC implementation stub class. */
       public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.Foo
       {
-        /** Construct the stub at attach it to the interface. */
+        /** Construct the stub and attach it to the interface. */
         @SuppressWarnings("this-escape")
         public Stub()
         {
@@ -4383,7 +4445,7 @@ public interface ITestService extends android.os.IInterface
       /** Local-side IPC implementation stub class. */
       public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface
       {
-        /** Construct the stub at attach it to the interface. */
+        /** Construct the stub and attach it to the interface. */
         @SuppressWarnings("this-escape")
         public Stub()
         {
@@ -4551,7 +4613,7 @@ public interface ITestService extends android.os.IInterface
         /** Local-side IPC implementation stub class. */
         public static abstract class Stub extends android.os.Binder implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface
         {
-          /** Construct the stub at attach it to the interface. */
+          /** Construct the stub and attach it to the interface. */
           @SuppressWarnings("this-escape")
           public Stub()
           {

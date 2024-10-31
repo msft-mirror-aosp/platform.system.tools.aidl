@@ -1523,7 +1523,8 @@ bool AidlStructuredParcelable::CheckValid(const AidlTypenames& typenames) const 
 bool AidlTypeSpecifier::LanguageSpecificCheckValid(Options::Language lang) const {
   if (this->GetName() == "FileDescriptor" &&
       (lang == Options::Language::NDK || lang == Options::Language::RUST)) {
-    AIDL_ERROR(this) << "FileDescriptor isn't supported by the " << to_string(lang) << " backend.";
+    AIDL_ERROR(this) << "FileDescriptor isn't supported by the "
+        << to_string(lang) << " backend. Prefer ParcelFileDescriptor.";
     return false;
   }
 
