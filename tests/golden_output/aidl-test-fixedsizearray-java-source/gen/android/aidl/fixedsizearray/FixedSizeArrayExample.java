@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen/android/aidl/fixedsizearray/FixedSizeArrayExample.java.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-fixedsizearray-java-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/fixedsizearray/FixedSizeArrayExample.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 package android.aidl.fixedsizearray;
 public class FixedSizeArrayExample implements android.os.Parcelable
@@ -398,7 +402,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
     /** Local-side IPC implementation stub class. */
     public static abstract class Stub extends android.os.Binder implements android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray
     {
-      /** Construct the stub at attach it to the interface. */
+      /** Construct the stub and attach it to the interface. */
       @SuppressWarnings("this-escape")
       public Stub()
       {
@@ -816,7 +820,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
     /** Local-side IPC implementation stub class. */
     public static abstract class Stub extends android.os.Binder implements android.aidl.fixedsizearray.FixedSizeArrayExample.IEmptyInterface
     {
-      /** Construct the stub at attach it to the interface. */
+      /** Construct the stub and attach it to the interface. */
       @SuppressWarnings("this-escape")
       public Stub()
       {
