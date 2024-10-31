@@ -611,8 +611,8 @@ void AidlTypeSpecifier::ViewAsArrayBase(std::function<void(const AidlTypeSpecifi
   // Declaring array of generic type cannot happen, it is grammar error.
   AIDL_FATAL_IF(IsGeneric(), this);
 
-  bool is_mutated = mutated_;
-  mutated_ = true;
+  bool within_array = is_from_within_array_;
+  is_from_within_array_ = true;
   // mutate the array type to its base by removing a single dimension
   // e.g.) T[] => T, T[N][M] => T[M] (note that, M is removed)
   if (IsFixedSizeArray() && std::get<FixedSizeArray>(*array_).dimensions.size() > 1) {
@@ -627,7 +627,7 @@ void AidlTypeSpecifier::ViewAsArrayBase(std::function<void(const AidlTypeSpecifi
     func(*this);
     array_ = std::move(array_type);
   }
-  mutated_ = is_mutated;
+  is_from_within_array_ = within_array;
 }
 
 bool AidlTypeSpecifier::MakeArray(ArrayType array_type) {
