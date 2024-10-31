@@ -48,7 +48,7 @@ std::string ConstantValueDecoratorInternal(
     if (type.IsDynamicArray()) {
       value = "vec!" + value;
     }
-    if (!type.IsMutated() && type.IsNullable()) {
+    if (!type.IsFromWithinArray() && type.IsNullable()) {
       value = "Some(" + value + ")";
     }
     return value;
