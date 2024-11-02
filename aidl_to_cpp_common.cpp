@@ -899,7 +899,7 @@ std::string CppConstantValueDecorator(
       value = "{" + value + "}";
     }
 
-    if (!type.IsMutated() && type.IsNullable()) {
+    if (!type.IsFromWithinArray() && type.IsNullable()) {
       // For outermost std::optional<>, we need an additional brace pair to initialize its value.
       value = "{" + value + "}";
     }

@@ -267,6 +267,27 @@ binder_status_t StructuredParcelable::readFromParcel(const AParcel* _aidl_parcel
     AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
   }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &int8_t_large);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &int32_t_large);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &int64_t_large);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
+  }
   _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &int8_1);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
@@ -519,6 +540,15 @@ binder_status_t StructuredParcelable::writeToParcel(AParcel* _aidl_parcel) const
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, empty);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, int8_t_large);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, int32_t_large);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, int64_t_large);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, int8_1);

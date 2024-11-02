@@ -78,6 +78,10 @@ parcelable StructuredParcelable {
 
     Empty empty;
 
+    byte[] int8_t_large = {0xFFu8, 0xC0u8};
+    int[] int32_t_large = {0xFFFFFFFFu32, 0xC0000000u32};
+    long[] int64_t_large = {0xFFFFFFFFFFFFFFFFu64, 0xC000000000000000u64};
+
     // Constant expressions that evaluate to 1
     byte[] int8_1 = {
             1,
