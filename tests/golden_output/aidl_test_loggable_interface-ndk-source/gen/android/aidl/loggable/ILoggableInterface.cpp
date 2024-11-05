@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/staging/android/aidl/loggable/ILoggableInterface.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-ndk-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/loggable/ILoggableInterface.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #include "aidl/android/aidl/loggable/ILoggableInterface.h"
 
@@ -204,7 +208,8 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_onTransact
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact);
+static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_code_to_function[] = { "LogThis",};
+static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_code_to_function, 1);
 
 BpLoggableInterface::BpLoggableInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpLoggableInterface::~BpLoggableInterface() {}
@@ -514,7 +519,8 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTra
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact);
+static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_code_to_function[] = { "Log",};
+static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_code_to_function, 1);
 
 ILoggableInterface::BpSub::BpSub(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ILoggableInterface::BpSub::~BpSub() {}

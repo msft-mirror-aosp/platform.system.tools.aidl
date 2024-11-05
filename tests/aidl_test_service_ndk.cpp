@@ -33,6 +33,7 @@
 #include <aidl/android/aidl/tests/extension/MyExt.h>
 #include <aidl/android/aidl/tests/extension/MyExt2.h>
 #include <aidl/android/aidl/tests/nested/BnNestedService.h>
+#include <aidl/android/aidl/tests/vintf/VintfExtendableParcelable.h>
 #include <aidl/android/aidl/versioned/tests/BnFooInterface.h>
 #include <aidl/android/aidl/versioned/tests/IFooInterface.h>
 #include <android/binder_manager.h>
@@ -578,6 +579,23 @@ class NativeService : public BnTestService {
     ep2->a = ep.a;
     ep2->b = ep.b;
     std::optional<aidl::android::aidl::tests::extension::MyExt> myExt;
+    ep.ext.getParcelable(&myExt);
+
+    if (myExt == std::nullopt) {
+      return ScopedAStatus::fromStatus(android::UNKNOWN_ERROR);
+    }
+
+    ep2->ext.setParcelable(*myExt);
+
+    return ScopedAStatus::ok();
+  }
+
+  ScopedAStatus RepeatExtendableParcelableVintf(
+      const ::aidl::android::aidl::tests::extension::ExtendableParcelable& ep,
+      ::aidl::android::aidl::tests::extension::ExtendableParcelable* ep2) {
+    ep2->a = ep.a;
+    ep2->b = ep.b;
+    std::optional<aidl::android::aidl::tests::vintf::VintfExtendableParcelable> myExt;
     ep.ext.getParcelable(&myExt);
 
     if (myExt == std::nullopt) {

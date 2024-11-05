@@ -6,7 +6,6 @@
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +19,8 @@
 #include <android/aidl/tests/extension/MyExt2.h>
 #include <android/aidl/tests/extension/MyExtLike.h>
 #include <android/aidl/tests/unions/EnumUnion.h>
+#include <android/aidl/tests/vintf/VintfExtendableParcelable.h>
+#include <android/aidl/tests/vintf/VintfParcelable.h>
 #include <binder/Binder.h>
 #include "aidl_test_client.h"
 
@@ -48,6 +49,8 @@ using android::aidl::tests::extension::MyExt;
 using android::aidl::tests::extension::MyExt2;
 using android::aidl::tests::extension::MyExtLike;
 using android::aidl::tests::unions::EnumUnion;
+using android::aidl::tests::vintf::VintfExtendableParcelable;
+using android::aidl::tests::vintf::VintfParcelable;
 using IntParcelable = android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable;
 using IRepeatFixedSizeArray =
     android::aidl::fixedsizearray::FixedSizeArrayExample::IRepeatFixedSizeArray;
@@ -114,6 +117,59 @@ TEST_F(AidlTest, ReverseSimpleParcelable) {
 
   std::reverse(reversed.begin(), reversed.end());
   EXPECT_EQ(reversed, original);
+}
+
+TEST_F(AidlTest, RepeatExtendableParcelable) {
+  MyExt ext;
+  ext.a = 42;
+  ext.b = "EXT";
+  ExtendableParcelable ep;
+  ep.a = 1;
+  ep.b = "a";
+  ep.ext.setParcelable(ext);
+
+  ExtendableParcelable ep2;
+  Status status = service->RepeatExtendableParcelable(ep, &ep2);
+  ASSERT_TRUE(status.isOk()) << status.toString8();
+
+  EXPECT_EQ(ep2.a, ep.a);
+  EXPECT_EQ(ep2.b, ep.b);
+
+  std::shared_ptr<MyExt> ret_ext;
+  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), OK);
+  ASSERT_TRUE(ret_ext != nullptr);
+
+  EXPECT_EQ(ret_ext->a, ext.a);
+  EXPECT_EQ(ret_ext->b, ext.b);
+}
+
+TEST_F(AidlTest, RepeatExtendableParcelableVintf) {
+  VintfParcelable inner;
+  inner.a = 5;
+
+  VintfExtendableParcelable ext;
+  ext.ext.setParcelable(inner);
+
+  ExtendableParcelable ep;
+  ep.a = 1;
+  ep.b = "a";
+  ep.ext.setParcelable(ext);
+
+  ExtendableParcelable ep2;
+  Status status = service->RepeatExtendableParcelableVintf(ep, &ep2);
+  ASSERT_TRUE(status.isOk()) << status.toString8();
+
+  EXPECT_EQ(ep2.a, ep.a);
+  EXPECT_EQ(ep2.b, ep.b);
+
+  std::shared_ptr<VintfExtendableParcelable> ret_ext;
+  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), OK);
+  ASSERT_TRUE(ret_ext != nullptr);
+
+  std::shared_ptr<VintfParcelable> ret_inner;
+  ASSERT_EQ(ret_ext->ext.getParcelable(&ret_inner), OK);
+  ASSERT_TRUE(ret_inner != nullptr);
+  EXPECT_EQ(ret_inner->a, inner.a);
 }
 
 TEST_F(AidlTest, ConfirmPersistableBundles) {
