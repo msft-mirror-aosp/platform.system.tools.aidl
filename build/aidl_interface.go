@@ -236,15 +236,6 @@ func isRelativePath(path string) bool {
 		!strings.HasPrefix(path, "../") && !strings.HasPrefix(path, "/")
 }
 
-type aidlInterfaceInfo struct {
-	Stability     string
-	ComputedTypes []string
-	Versions      []string
-	UseUnfrozen   bool
-}
-
-var aidlInterfaceProvider = blueprint.NewProvider[aidlInterfaceInfo]()
-
 type CommonBackendProperties struct {
 	// Whether to generate code in the corresponding backend.
 	// Default:
@@ -945,7 +936,7 @@ func (i *aidlInterface) checkRequireFrozenAndReason(mctx android.EarlyModuleCont
 
 	if i.Owner() == "" {
 		if mctx.Config().IsEnvTrue("AIDL_FROZEN_REL") {
-			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owners:'"
+			return true, "this is a release branch (simulated by setting AIDL_FROZEN_REL) - freeze it or set 'owner:'"
 		}
 	} else {
 		// has an OWNER
@@ -1114,13 +1105,6 @@ func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		}
 		i.preprocessed[""] = i.preprocessed[i.nextVersion()]
 	}
-
-	android.SetProvider(ctx, aidlInterfaceProvider, aidlInterfaceInfo{
-		Stability:     proptools.StringDefault(i.properties.Stability, ""),
-		ComputedTypes: i.computedTypes,
-		Versions:      i.getVersions(),
-		UseUnfrozen:   i.useUnfrozen(ctx),
-	})
 }
 
 func (i *aidlInterface) getImportsForVersion(version string) []string {
@@ -1189,6 +1173,10 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	}
 	rb.Build("export_"+name, "export types for "+name)
 	return preprocessed
+}
+
+func (i *aidlInterface) DepsMutator(ctx android.BottomUpMutatorContext) {
+	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
 }
 
 func AidlInterfaceFactory() android.Module {
