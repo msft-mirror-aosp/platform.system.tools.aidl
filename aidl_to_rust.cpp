@@ -219,26 +219,31 @@ bool UsesOptionInNullableVector(const AidlTypeSpecifier& type, const AidlTypenam
   return true;
 }
 
-std::string RustLifetimeName(Lifetime lifetime) {
+std::string RustLifetimeName(Lifetime lifetime, std::vector<std::string>& lifetimes) {
   switch (lifetime) {
     case Lifetime::NONE:
       return "";
     case Lifetime::A:
+      if (find(lifetimes.begin(), lifetimes.end(), "a") == lifetimes.end()) {
+        lifetimes.push_back("a");
+      }
       return "'a ";
-  }
-}
-
-std::string RustLifetimeGeneric(Lifetime lifetime) {
-  switch (lifetime) {
-    case Lifetime::NONE:
-      return "";
-    case Lifetime::A:
-      return "<'a>";
+    case Lifetime::FRESH:
+      std::string fresh_lifetime = StringPrintf("l%zu", lifetimes.size());
+      lifetimes.push_back(fresh_lifetime);
+      return "'" + fresh_lifetime + " ";
   }
 }
 
 std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
-                       StorageMode mode, Lifetime lifetime, bool is_vintf_stability) {
+                       StorageMode mode, bool is_vintf_stability) {
+  std::vector<std::string> lifetimes;
+  return RustNameOf(type, typenames, mode, Lifetime::NONE, is_vintf_stability, lifetimes);
+}
+
+std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
+                       StorageMode mode, Lifetime lifetime, bool is_vintf_stability,
+                       std::vector<std::string>& lifetimes) {
   std::string rust_name;
   if (type.IsArray() || typenames.IsList(type)) {
     const auto& element_type = type.IsGeneric() ? (*type.GetTypeParameters().at(0)) : type;
@@ -285,7 +290,7 @@ std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typen
   if (mode == StorageMode::IN_ARGUMENT || mode == StorageMode::UNSIZED_ARGUMENT) {
     // If this is a nullable input argument, put the reference inside the option,
     // e.g., `Option<&str>` instead of `&Option<str>`
-    rust_name = "&" + RustLifetimeName(lifetime) + rust_name;
+    rust_name = "&" + RustLifetimeName(lifetime, lifetimes) + rust_name;
   }
 
   if (type.IsNullable() ||
@@ -302,7 +307,7 @@ std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typen
   }
 
   if (mode == StorageMode::OUT_ARGUMENT || mode == StorageMode::INOUT_ARGUMENT) {
-    rust_name = "&" + RustLifetimeName(lifetime) + "mut " + rust_name;
+    rust_name = "&" + RustLifetimeName(lifetime, lifetimes) + "mut " + rust_name;
   }
 
   return rust_name;

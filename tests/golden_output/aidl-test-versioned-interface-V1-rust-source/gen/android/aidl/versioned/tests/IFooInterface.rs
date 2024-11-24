@@ -24,14 +24,14 @@ declare_binder_interface! {
 }
 pub trait IFooInterface: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.versioned.tests.IFooInterface" }
-  fn r#originalApi(&self) -> binder::Result<()>;
-  fn r#acceptUnionAndReturnString(&self, _arg_u: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String>;
-  fn r#ignoreParcelablesAndRepeatInt(&self, _arg_inFoo: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32>;
-  fn r#returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32>;
-  fn r#getInterfaceVersion(&self) -> binder::Result<i32> {
+  fn r#originalApi<'a, >(&'a self) -> binder::Result<()>;
+  fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String>;
+  fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32>;
+  fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32>;
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     Ok(VERSION)
   }
-  fn r#getInterfaceHash(&self) -> binder::Result<String> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     Ok(HASH.into())
   }
   fn getDefaultImpl() -> IFooInterfaceDefaultRef where Self: Sized {
@@ -46,24 +46,24 @@ pub trait IFooInterface: binder::Interface + Send {
 }
 pub trait IFooInterfaceAsync<P>: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.versioned.tests.IFooInterface" }
-  fn r#originalApi<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>>;
-  fn r#acceptUnionAndReturnString<'a>(&'a self, _arg_u: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::BoxFuture<'a, binder::Result<String>>;
-  fn r#ignoreParcelablesAndRepeatInt<'a>(&'a self, _arg_inFoo: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::BoxFuture<'a, binder::Result<i32>>;
-  fn r#returnsLengthOfFooArray<'a>(&'a self, _arg_foos: &'a [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::BoxFuture<'a, binder::Result<i32>>;
-  fn r#getInterfaceVersion<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+  fn r#originalApi<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<()>>;
+  fn r#acceptUnionAndReturnString<'a, >(&'a self, _arg_u: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::BoxFuture<'a, binder::Result<String>>;
+  fn r#ignoreParcelablesAndRepeatInt<'a, >(&'a self, _arg_inFoo: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::BoxFuture<'a, binder::Result<i32>>;
+  fn r#returnsLengthOfFooArray<'a, >(&'a self, _arg_foos: &'a [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::BoxFuture<'a, binder::Result<i32>>;
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
     Box::pin(async move { Ok(VERSION) })
   }
-  fn r#getInterfaceHash<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     Box::pin(async move { Ok(HASH.into()) })
   }
 }
 #[::async_trait::async_trait]
 pub trait IFooInterfaceAsyncServer: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.versioned.tests.IFooInterface" }
-  async fn r#originalApi(&self) -> binder::Result<()>;
-  async fn r#acceptUnionAndReturnString(&self, _arg_u: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String>;
-  async fn r#ignoreParcelablesAndRepeatInt(&self, _arg_inFoo: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32>;
-  async fn r#returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32>;
+  async fn r#originalApi<'a, >(&'a self) -> binder::Result<()>;
+  async fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String>;
+  async fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32>;
+  async fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32>;
 }
 impl BnFooInterface {
   /// Create a new async binder service.
@@ -85,16 +85,16 @@ impl BnFooInterface {
       T: IFooInterfaceAsyncServer + Send + Sync + 'static,
       R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
     {
-      fn r#originalApi(&self) -> binder::Result<()> {
+      fn r#originalApi<'a, >(&'a self) -> binder::Result<()> {
         self._rt.block_on(self._inner.r#originalApi())
       }
-      fn r#acceptUnionAndReturnString(&self, _arg_u: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
+      fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
         self._rt.block_on(self._inner.r#acceptUnionAndReturnString(_arg_u))
       }
-      fn r#ignoreParcelablesAndRepeatInt(&self, _arg_inFoo: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
+      fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
         self._rt.block_on(self._inner.r#ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value))
       }
-      fn r#returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
+      fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
         self._rt.block_on(self._inner.r#returnsLengthOfFooArray(_arg_foos))
       }
       fn try_as_async_server(&self) -> Option<&(dyn IFooInterfaceAsyncServer + Send + Sync)> {
@@ -110,16 +110,16 @@ impl BnFooInterface {
     }
     impl binder::Interface for Wrapper {}
     impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for Wrapper {
-      fn r#originalApi<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+      fn r#originalApi<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#originalApi())
       }
-      fn r#acceptUnionAndReturnString<'a>(&'a self, _arg_u: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::BoxFuture<'a, binder::Result<String>> {
+      fn r#acceptUnionAndReturnString<'a, >(&'a self, _arg_u: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::BoxFuture<'a, binder::Result<String>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#acceptUnionAndReturnString(_arg_u))
       }
-      fn r#ignoreParcelablesAndRepeatInt<'a>(&'a self, _arg_inFoo: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::BoxFuture<'a, binder::Result<i32>> {
+      fn r#ignoreParcelablesAndRepeatInt<'a, >(&'a self, _arg_inFoo: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::BoxFuture<'a, binder::Result<i32>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value))
       }
-      fn r#returnsLengthOfFooArray<'a>(&'a self, _arg_foos: &'a [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::BoxFuture<'a, binder::Result<i32>> {
+      fn r#returnsLengthOfFooArray<'a, >(&'a self, _arg_foos: &'a [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::BoxFuture<'a, binder::Result<i32>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#returnsLengthOfFooArray(_arg_foos))
       }
     }
@@ -131,16 +131,16 @@ impl BnFooInterface {
   }
 }
 pub trait IFooInterfaceDefault: Send + Sync {
-  fn r#originalApi(&self) -> binder::Result<()> {
+  fn r#originalApi<'a, >(&'a self) -> binder::Result<()> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#acceptUnionAndReturnString(&self, _arg_u: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
+  fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#ignoreParcelablesAndRepeatInt(&self, _arg_inFoo: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
+  fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
+  fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
 }
@@ -253,34 +253,34 @@ impl BpFooInterface {
   }
 }
 impl IFooInterface for BpFooInterface {
-  fn r#originalApi(&self) -> binder::Result<()> {
+  fn r#originalApi<'a, >(&'a self) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_originalApi()?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#originalApi, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_originalApi(_aidl_reply)
   }
-  fn r#acceptUnionAndReturnString(&self, _arg_u: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
+  fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_acceptUnionAndReturnString(_arg_u)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#acceptUnionAndReturnString, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_acceptUnionAndReturnString(_arg_u, _aidl_reply)
   }
-  fn r#ignoreParcelablesAndRepeatInt(&self, _arg_inFoo: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
+  fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
     let _aidl_data = self.build_parcel_ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#ignoreParcelablesAndRepeatInt, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value, _aidl_reply)
   }
-  fn r#returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
+  fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
     let _aidl_data = self.build_parcel_returnsLengthOfFooArray(_arg_foos)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#returnsLengthOfFooArray, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_returnsLengthOfFooArray(_arg_foos, _aidl_reply)
   }
-  fn r#getInterfaceVersion(&self) -> binder::Result<i32> {
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
     if _aidl_version != -1 { return Ok(_aidl_version); }
     let _aidl_data = self.build_parcel_getInterfaceVersion()?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_getInterfaceVersion(_aidl_reply)
   }
-  fn r#getInterfaceHash(&self) -> binder::Result<String> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     {
       let _aidl_hash_lock = self.cached_hash.lock().unwrap();
       if let Some(ref _aidl_hash) = *_aidl_hash_lock {
@@ -293,7 +293,7 @@ impl IFooInterface for BpFooInterface {
   }
 }
 impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
-  fn r#originalApi<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
+  fn r#originalApi<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<()>> {
     let _aidl_data = match self.build_parcel_originalApi() {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -306,7 +306,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
       }
     )
   }
-  fn r#acceptUnionAndReturnString<'a>(&'a self, _arg_u: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::BoxFuture<'a, binder::Result<String>> {
+  fn r#acceptUnionAndReturnString<'a, >(&'a self, _arg_u: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::BoxFuture<'a, binder::Result<String>> {
     let _aidl_data = match self.build_parcel_acceptUnionAndReturnString(_arg_u) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -319,7 +319,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
       }
     )
   }
-  fn r#ignoreParcelablesAndRepeatInt<'a>(&'a self, _arg_inFoo: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::BoxFuture<'a, binder::Result<i32>> {
+  fn r#ignoreParcelablesAndRepeatInt<'a, >(&'a self, _arg_inFoo: &'a crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'a mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::BoxFuture<'a, binder::Result<i32>> {
     let _aidl_data = match self.build_parcel_ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -332,7 +332,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
       }
     )
   }
-  fn r#returnsLengthOfFooArray<'a>(&'a self, _arg_foos: &'a [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::BoxFuture<'a, binder::Result<i32>> {
+  fn r#returnsLengthOfFooArray<'a, >(&'a self, _arg_foos: &'a [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::BoxFuture<'a, binder::Result<i32>> {
     let _aidl_data = match self.build_parcel_returnsLengthOfFooArray(_arg_foos) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -345,7 +345,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
       }
     )
   }
-  fn r#getInterfaceVersion<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
     let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
     if _aidl_version != -1 { return Box::pin(std::future::ready(Ok(_aidl_version))); }
     let _aidl_data = match self.build_parcel_getInterfaceVersion() {
@@ -360,7 +360,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
       }
     )
   }
-  fn r#getInterfaceHash<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     {
       let _aidl_hash_lock = self.cached_hash.lock().unwrap();
       if let Some(ref _aidl_hash) = *_aidl_hash_lock {
@@ -381,12 +381,12 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
   }
 }
 impl IFooInterface for binder::binder_impl::Binder<BnFooInterface> {
-  fn r#originalApi(&self) -> binder::Result<()> { self.0.r#originalApi() }
-  fn r#acceptUnionAndReturnString(&self, _arg_u: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> { self.0.r#acceptUnionAndReturnString(_arg_u) }
-  fn r#ignoreParcelablesAndRepeatInt(&self, _arg_inFoo: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> { self.0.r#ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value) }
-  fn r#returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> { self.0.r#returnsLengthOfFooArray(_arg_foos) }
-  fn r#getInterfaceVersion(&self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
-  fn r#getInterfaceHash(&self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
+  fn r#originalApi<'a, >(&'a self) -> binder::Result<()> { self.0.r#originalApi() }
+  fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> { self.0.r#acceptUnionAndReturnString(_arg_u) }
+  fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> { self.0.r#ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value) }
+  fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> { self.0.r#returnsLengthOfFooArray(_arg_foos) }
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
 }
 fn on_transact(_aidl_service: &dyn IFooInterface, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {

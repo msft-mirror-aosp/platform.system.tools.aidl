@@ -22,7 +22,7 @@ declare_binder_interface! {
 }
 pub trait INewName: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.IOldName" }
-  fn r#RealName(&self) -> binder::Result<String>;
+  fn r#RealName<'a, >(&'a self) -> binder::Result<String>;
   fn getDefaultImpl() -> INewNameDefaultRef where Self: Sized {
     DEFAULT_IMPL.lock().unwrap().clone()
   }
@@ -35,12 +35,12 @@ pub trait INewName: binder::Interface + Send {
 }
 pub trait INewNameAsync<P>: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.IOldName" }
-  fn r#RealName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>>;
+  fn r#RealName<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>>;
 }
 #[::async_trait::async_trait]
 pub trait INewNameAsyncServer: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.IOldName" }
-  async fn r#RealName(&self) -> binder::Result<String>;
+  async fn r#RealName<'a, >(&'a self) -> binder::Result<String>;
 }
 impl BnNewName {
   /// Create a new async binder service.
@@ -62,7 +62,7 @@ impl BnNewName {
       T: INewNameAsyncServer + Send + Sync + 'static,
       R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
     {
-      fn r#RealName(&self) -> binder::Result<String> {
+      fn r#RealName<'a, >(&'a self) -> binder::Result<String> {
         self._rt.block_on(self._inner.r#RealName())
       }
       fn try_as_async_server(&self) -> Option<&(dyn INewNameAsyncServer + Send + Sync)> {
@@ -78,7 +78,7 @@ impl BnNewName {
     }
     impl binder::Interface for Wrapper {}
     impl<P: binder::BinderAsyncPool> INewNameAsync<P> for Wrapper {
-      fn r#RealName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+      fn r#RealName<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#RealName())
       }
     }
@@ -90,7 +90,7 @@ impl BnNewName {
   }
 }
 pub trait INewNameDefault: Send + Sync {
-  fn r#RealName(&self) -> binder::Result<String> {
+  fn r#RealName<'a, >(&'a self) -> binder::Result<String> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
 }
@@ -118,14 +118,14 @@ impl BpNewName {
   }
 }
 impl INewName for BpNewName {
-  fn r#RealName(&self) -> binder::Result<String> {
+  fn r#RealName<'a, >(&'a self) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_RealName()?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#RealName, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_RealName(_aidl_reply)
   }
 }
 impl<P: binder::BinderAsyncPool> INewNameAsync<P> for BpNewName {
-  fn r#RealName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+  fn r#RealName<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     let _aidl_data = match self.build_parcel_RealName() {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -140,7 +140,7 @@ impl<P: binder::BinderAsyncPool> INewNameAsync<P> for BpNewName {
   }
 }
 impl INewName for binder::binder_impl::Binder<BnNewName> {
-  fn r#RealName(&self) -> binder::Result<String> { self.0.r#RealName() }
+  fn r#RealName<'a, >(&'a self) -> binder::Result<String> { self.0.r#RealName() }
 }
 fn on_transact(_aidl_service: &dyn INewName, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {

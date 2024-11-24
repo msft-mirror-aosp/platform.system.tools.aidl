@@ -24,15 +24,15 @@ declare_binder_interface! {
 }
 pub trait ITrunkStableTest: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.test.trunk.ITrunkStableTest" }
-  fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
-  fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
-  fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
-  fn r#callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()>;
-  fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
-  fn r#getInterfaceVersion(&self) -> binder::Result<i32> {
+  fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
+  fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
+  fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
+  fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()>;
+  fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     Ok(VERSION)
   }
-  fn r#getInterfaceHash(&self) -> binder::Result<String> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     Ok(HASH.into())
   }
   fn getDefaultImpl() -> ITrunkStableTestDefaultRef where Self: Sized {
@@ -47,26 +47,26 @@ pub trait ITrunkStableTest: binder::Interface + Send {
 }
 pub trait ITrunkStableTestAsync<P>: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.test.trunk.ITrunkStableTest" }
-  fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>>;
-  fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>>;
-  fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>>;
-  fn r#callMyCallback<'a>(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>>;
-  fn r#repeatOtherParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>>;
-  fn r#getInterfaceVersion<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+  fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>>;
+  fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>>;
+  fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>>;
+  fn r#callMyCallback<'a, >(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>>;
+  fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>>;
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
     Box::pin(async move { Ok(VERSION) })
   }
-  fn r#getInterfaceHash<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     Box::pin(async move { Ok(HASH.into()) })
   }
 }
 #[::async_trait::async_trait]
 pub trait ITrunkStableTestAsyncServer: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.test.trunk.ITrunkStableTest" }
-  async fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
-  async fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
-  async fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
-  async fn r#callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()>;
-  async fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
+  async fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
+  async fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
+  async fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
+  async fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()>;
+  async fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
 }
 impl BnTrunkStableTest {
   /// Create a new async binder service.
@@ -88,19 +88,19 @@ impl BnTrunkStableTest {
       T: ITrunkStableTestAsyncServer + Send + Sync + 'static,
       R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
     {
-      fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+      fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
         self._rt.block_on(self._inner.r#repeatParcelable(_arg_input))
       }
-      fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+      fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
         self._rt.block_on(self._inner.r#repeatEnum(_arg_input))
       }
-      fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+      fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
         self._rt.block_on(self._inner.r#repeatUnion(_arg_input))
       }
-      fn r#callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
+      fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
         self._rt.block_on(self._inner.r#callMyCallback(_arg_cb))
       }
-      fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
+      fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
         self._rt.block_on(self._inner.r#repeatOtherParcelable(_arg_input))
       }
       fn try_as_async_server(&self) -> Option<&(dyn ITrunkStableTestAsyncServer + Send + Sync)> {
@@ -116,19 +116,19 @@ impl BnTrunkStableTest {
     }
     impl binder::Interface for Wrapper {}
     impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for Wrapper {
-      fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
+      fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#repeatParcelable(_arg_input))
       }
-      fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
+      fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#repeatEnum(_arg_input))
       }
-      fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
+      fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#repeatUnion(_arg_input))
       }
-      fn r#callMyCallback<'a>(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
+      fn r#callMyCallback<'a, >(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#callMyCallback(_arg_cb))
       }
-      fn r#repeatOtherParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
+      fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#repeatOtherParcelable(_arg_input))
       }
     }
@@ -140,19 +140,19 @@ impl BnTrunkStableTest {
   }
 }
 pub trait ITrunkStableTestDefault: Send + Sync {
-  fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+  fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+  fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+  fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
+  fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
-  fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
+  fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
 }
@@ -280,39 +280,39 @@ impl BpTrunkStableTest {
   }
 }
 impl ITrunkStableTest for BpTrunkStableTest {
-  fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+  fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
     let _aidl_data = self.build_parcel_repeatParcelable(_arg_input)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_repeatParcelable(_arg_input, _aidl_reply)
   }
-  fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+  fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
     let _aidl_data = self.build_parcel_repeatEnum(_arg_input)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#repeatEnum, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_repeatEnum(_arg_input, _aidl_reply)
   }
-  fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+  fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
     let _aidl_data = self.build_parcel_repeatUnion(_arg_input)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#repeatUnion, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_repeatUnion(_arg_input, _aidl_reply)
   }
-  fn r#callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
+  fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_callMyCallback(_arg_cb)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#callMyCallback, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_callMyCallback(_arg_cb, _aidl_reply)
   }
-  fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
+  fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
     let _aidl_data = self.build_parcel_repeatOtherParcelable(_arg_input)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
   }
-  fn r#getInterfaceVersion(&self) -> binder::Result<i32> {
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
     if _aidl_version != -1 { return Ok(_aidl_version); }
     let _aidl_data = self.build_parcel_getInterfaceVersion()?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_getInterfaceVersion(_aidl_reply)
   }
-  fn r#getInterfaceHash(&self) -> binder::Result<String> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     {
       let _aidl_hash_lock = self.cached_hash.lock().unwrap();
       if let Some(ref _aidl_hash) = *_aidl_hash_lock {
@@ -325,7 +325,7 @@ impl ITrunkStableTest for BpTrunkStableTest {
   }
 }
 impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest {
-  fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
+  fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
     let _aidl_data = match self.build_parcel_repeatParcelable(_arg_input) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -338,7 +338,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
       }
     )
   }
-  fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
+  fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
     let _aidl_data = match self.build_parcel_repeatEnum(_arg_input) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -351,7 +351,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
       }
     )
   }
-  fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
+  fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
     let _aidl_data = match self.build_parcel_repeatUnion(_arg_input) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -364,7 +364,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
       }
     )
   }
-  fn r#callMyCallback<'a>(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
+  fn r#callMyCallback<'a, >(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
     let _aidl_data = match self.build_parcel_callMyCallback(_arg_cb) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -377,7 +377,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
       }
     )
   }
-  fn r#repeatOtherParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
+  fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
     let _aidl_data = match self.build_parcel_repeatOtherParcelable(_arg_input) {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -390,7 +390,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
       }
     )
   }
-  fn r#getInterfaceVersion<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
     let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
     if _aidl_version != -1 { return Box::pin(std::future::ready(Ok(_aidl_version))); }
     let _aidl_data = match self.build_parcel_getInterfaceVersion() {
@@ -405,7 +405,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
       }
     )
   }
-  fn r#getInterfaceHash<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     {
       let _aidl_hash_lock = self.cached_hash.lock().unwrap();
       if let Some(ref _aidl_hash) = *_aidl_hash_lock {
@@ -426,13 +426,13 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
   }
 }
 impl ITrunkStableTest for binder::binder_impl::Binder<BnTrunkStableTest> {
-  fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> { self.0.r#repeatParcelable(_arg_input) }
-  fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> { self.0.r#repeatEnum(_arg_input) }
-  fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> { self.0.r#repeatUnion(_arg_input) }
-  fn r#callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> { self.0.r#callMyCallback(_arg_cb) }
-  fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> { self.0.r#repeatOtherParcelable(_arg_input) }
-  fn r#getInterfaceVersion(&self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
-  fn r#getInterfaceHash(&self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
+  fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> { self.0.r#repeatParcelable(_arg_input) }
+  fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> { self.0.r#repeatEnum(_arg_input) }
+  fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> { self.0.r#repeatUnion(_arg_input) }
+  fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> { self.0.r#callMyCallback(_arg_cb) }
+  fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> { self.0.r#repeatOtherParcelable(_arg_input) }
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
 }
 fn on_transact(_aidl_service: &dyn ITrunkStableTest, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {
@@ -667,14 +667,14 @@ pub mod r#IMyCallback {
   }
   pub trait IMyCallback: binder::Interface + Send {
     fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.test.trunk.ITrunkStableTest.IMyCallback" }
-    fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
-    fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
-    fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
-    fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
-    fn r#getInterfaceVersion(&self) -> binder::Result<i32> {
+    fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
+    fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
+    fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
+    fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
+    fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
       Ok(VERSION)
     }
-    fn r#getInterfaceHash(&self) -> binder::Result<String> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
       Ok(HASH.into())
     }
     fn getDefaultImpl() -> IMyCallbackDefaultRef where Self: Sized {
@@ -689,24 +689,24 @@ pub mod r#IMyCallback {
   }
   pub trait IMyCallbackAsync<P>: binder::Interface + Send {
     fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.test.trunk.ITrunkStableTest.IMyCallback" }
-    fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>>;
-    fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>>;
-    fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>>;
-    fn r#repeatOtherParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>>;
-    fn r#getInterfaceVersion<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+    fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>>;
+    fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>>;
+    fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>>;
+    fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>>;
+    fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
       Box::pin(async move { Ok(VERSION) })
     }
-    fn r#getInterfaceHash<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
       Box::pin(async move { Ok(HASH.into()) })
     }
   }
   #[::async_trait::async_trait]
   pub trait IMyCallbackAsyncServer: binder::Interface + Send {
     fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.test.trunk.ITrunkStableTest.IMyCallback" }
-    async fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
-    async fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
-    async fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
-    async fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
+    async fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>;
+    async fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>;
+    async fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>;
+    async fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>;
   }
   impl BnMyCallback {
     /// Create a new async binder service.
@@ -728,16 +728,16 @@ pub mod r#IMyCallback {
         T: IMyCallbackAsyncServer + Send + Sync + 'static,
         R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
       {
-        fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+        fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
           self._rt.block_on(self._inner.r#repeatParcelable(_arg_input))
         }
-        fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+        fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
           self._rt.block_on(self._inner.r#repeatEnum(_arg_input))
         }
-        fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+        fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
           self._rt.block_on(self._inner.r#repeatUnion(_arg_input))
         }
-        fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
+        fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
           self._rt.block_on(self._inner.r#repeatOtherParcelable(_arg_input))
         }
         fn try_as_async_server(&self) -> Option<&(dyn IMyCallbackAsyncServer + Send + Sync)> {
@@ -753,16 +753,16 @@ pub mod r#IMyCallback {
       }
       impl binder::Interface for Wrapper {}
       impl<P: binder::BinderAsyncPool> IMyCallbackAsync<P> for Wrapper {
-        fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
+        fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
           Box::pin(self._native.try_as_async_server().unwrap().r#repeatParcelable(_arg_input))
         }
-        fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
+        fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
           Box::pin(self._native.try_as_async_server().unwrap().r#repeatEnum(_arg_input))
         }
-        fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
+        fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
           Box::pin(self._native.try_as_async_server().unwrap().r#repeatUnion(_arg_input))
         }
-        fn r#repeatOtherParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
+        fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
           Box::pin(self._native.try_as_async_server().unwrap().r#repeatOtherParcelable(_arg_input))
         }
       }
@@ -774,16 +774,16 @@ pub mod r#IMyCallback {
     }
   }
   pub trait IMyCallbackDefault: Send + Sync {
-    fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+    fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
       Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
     }
-    fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+    fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
       Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
     }
-    fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+    fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
       Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
     }
-    fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
+    fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
       Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
     }
   }
@@ -894,34 +894,34 @@ pub mod r#IMyCallback {
     }
   }
   impl IMyCallback for BpMyCallback {
-    fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+    fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
       let _aidl_data = self.build_parcel_repeatParcelable(_arg_input)?;
       let _aidl_reply = self.binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
       self.read_response_repeatParcelable(_arg_input, _aidl_reply)
     }
-    fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+    fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
       let _aidl_data = self.build_parcel_repeatEnum(_arg_input)?;
       let _aidl_reply = self.binder.submit_transact(transactions::r#repeatEnum, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
       self.read_response_repeatEnum(_arg_input, _aidl_reply)
     }
-    fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+    fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
       let _aidl_data = self.build_parcel_repeatUnion(_arg_input)?;
       let _aidl_reply = self.binder.submit_transact(transactions::r#repeatUnion, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
       self.read_response_repeatUnion(_arg_input, _aidl_reply)
     }
-    fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
+    fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
       let _aidl_data = self.build_parcel_repeatOtherParcelable(_arg_input)?;
       let _aidl_reply = self.binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
       self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
     }
-    fn r#getInterfaceVersion(&self) -> binder::Result<i32> {
+    fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
       let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
       if _aidl_version != -1 { return Ok(_aidl_version); }
       let _aidl_data = self.build_parcel_getInterfaceVersion()?;
       let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
       self.read_response_getInterfaceVersion(_aidl_reply)
     }
-    fn r#getInterfaceHash(&self) -> binder::Result<String> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
       {
         let _aidl_hash_lock = self.cached_hash.lock().unwrap();
         if let Some(ref _aidl_hash) = *_aidl_hash_lock {
@@ -934,7 +934,7 @@ pub mod r#IMyCallback {
     }
   }
   impl<P: binder::BinderAsyncPool> IMyCallbackAsync<P> for BpMyCallback {
-    fn r#repeatParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
+    fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
       let _aidl_data = match self.build_parcel_repeatParcelable(_arg_input) {
         Ok(_aidl_data) => _aidl_data,
         Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -947,7 +947,7 @@ pub mod r#IMyCallback {
         }
       )
     }
-    fn r#repeatEnum<'a>(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
+    fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
       let _aidl_data = match self.build_parcel_repeatEnum(_arg_input) {
         Ok(_aidl_data) => _aidl_data,
         Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -960,7 +960,7 @@ pub mod r#IMyCallback {
         }
       )
     }
-    fn r#repeatUnion<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
+    fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
       let _aidl_data = match self.build_parcel_repeatUnion(_arg_input) {
         Ok(_aidl_data) => _aidl_data,
         Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -973,7 +973,7 @@ pub mod r#IMyCallback {
         }
       )
     }
-    fn r#repeatOtherParcelable<'a>(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
+    fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
       let _aidl_data = match self.build_parcel_repeatOtherParcelable(_arg_input) {
         Ok(_aidl_data) => _aidl_data,
         Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -986,7 +986,7 @@ pub mod r#IMyCallback {
         }
       )
     }
-    fn r#getInterfaceVersion<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+    fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
       let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
       if _aidl_version != -1 { return Box::pin(std::future::ready(Ok(_aidl_version))); }
       let _aidl_data = match self.build_parcel_getInterfaceVersion() {
@@ -1001,7 +1001,7 @@ pub mod r#IMyCallback {
         }
       )
     }
-    fn r#getInterfaceHash<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
       {
         let _aidl_hash_lock = self.cached_hash.lock().unwrap();
         if let Some(ref _aidl_hash) = *_aidl_hash_lock {
@@ -1022,12 +1022,12 @@ pub mod r#IMyCallback {
     }
   }
   impl IMyCallback for binder::binder_impl::Binder<BnMyCallback> {
-    fn r#repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> { self.0.r#repeatParcelable(_arg_input) }
-    fn r#repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> { self.0.r#repeatEnum(_arg_input) }
-    fn r#repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> { self.0.r#repeatUnion(_arg_input) }
-    fn r#repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> { self.0.r#repeatOtherParcelable(_arg_input) }
-    fn r#getInterfaceVersion(&self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
-    fn r#getInterfaceHash(&self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
+    fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> { self.0.r#repeatParcelable(_arg_input) }
+    fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> { self.0.r#repeatEnum(_arg_input) }
+    fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> { self.0.r#repeatUnion(_arg_input) }
+    fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> { self.0.r#repeatOtherParcelable(_arg_input) }
+    fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
   }
   fn on_transact(_aidl_service: &dyn IMyCallback, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
     match _aidl_code {
