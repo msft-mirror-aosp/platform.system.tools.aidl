@@ -45,6 +45,7 @@ enum class ReferenceMode {
 enum class Lifetime {
   NONE,
   A,
+  FRESH,
 };
 
 inline bool IsReference(ReferenceMode ref_mode) {
@@ -70,17 +71,23 @@ std::string ArrayDefaultValue(const AidlTypeSpecifier& type);
 
 // Returns "'lifetime_name " including the initial apostrophe and the trailing space.
 // Returns empty string for NONE.
-std::string RustLifetimeName(Lifetime lifetime);
+//
+// Adds the lifetime to `lifetimes` if it is not already present.
+std::string RustLifetimeName(Lifetime lifetime, std::vector<std::string>& lifetimes);
 
-// Returns "<'lifetime_name>" or empty string for NONE.
-std::string RustLifetimeGeneric(Lifetime lifetime);
+// Returns the Rust type signature of the AIDL type spec
+// This includes generic type parameters with array modifiers.
+std::string RustNameOf(const AidlTypeSpecifier& aidl, const AidlTypenames& typenames,
+                       StorageMode mode, bool is_vintf_stability);
 
 // Returns the Rust type signature of the AIDL type spec
 // This includes generic type parameters with array modifiers.
 //
-// The lifetime argument is used to annotate all references.
+// The lifetime argument is used to annotate all references. If a new lifetime is generated then it
+// is added to `lifetimes`.
 std::string RustNameOf(const AidlTypeSpecifier& aidl, const AidlTypenames& typenames,
-                       StorageMode mode, Lifetime lifetime, bool is_vintf_stability);
+                       StorageMode mode, Lifetime lifetime, bool is_vintf_stability,
+                       std::vector<std::string>& lifetimes);
 
 StorageMode ArgumentStorageMode(const AidlArgument& arg, const AidlTypenames& typenames);
 
