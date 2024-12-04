@@ -76,6 +76,7 @@ class CodeWriter {
 };
 
 std::string QuotedEscape(const std::string& str);
+std::string MultilineCommentEscape(const std::string& str);
 
 }  // namespace aidl
 }  // namespace android
