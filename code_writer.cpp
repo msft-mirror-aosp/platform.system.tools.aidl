@@ -17,12 +17,16 @@
 
 #include "logging.h"
 
+#include <android-base/strings.h>
+
 #include <stdarg.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+
+using android::base::StringReplace;
 
 namespace android {
 namespace aidl {
@@ -141,6 +145,13 @@ std::string QuotedEscape(const std::string& str) {
   }
   result += '"';
   return result;
+}
+
+std::string MultilineCommentEscape(const std::string& str) {
+  std::string res;
+  res = StringReplace(str, "\\", "\\\\", true /* all */);
+  res = StringReplace(res, "*/", "* /", true /* all */);
+  return res;
 }
 
 }  // namespace aidl
