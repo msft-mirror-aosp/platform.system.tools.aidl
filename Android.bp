@@ -255,7 +255,7 @@ python_test_host {
     main: "tests/aidl_integration_test.py",
     srcs: ["tests/aidl_integration_test.py"],
     test_config: "tests/aidl_integration_test.xml",
-    data: [
+    device_common_data: [
         ":aidl_test_java_client",
         ":aidl_test_java_service",
         ":aidl_test_java_client_sdk1",
@@ -539,6 +539,7 @@ cc_test {
         "aidl_test_loggable_interface-cpp",
         "aidl-test-fixedsizearray-cpp",
         "android.aidl.test.trunk-V2-cpp",
+        "aidl_test_vintf_parcelable-V1-cpp",
     ],
     srcs: ["tests/aidl_test_service.cpp"],
 }
@@ -559,6 +560,7 @@ cc_test {
         "aidl-test-fixedsizearray-ndk",
         "android.aidl.test.trunk-V2-ndk",
         "libsimpleparcelable_ndk",
+        "aidl_test_vintf_parcelable-V1-ndk",
     ],
     srcs: ["tests/aidl_test_service_ndk.cpp"],
 }
@@ -576,6 +578,7 @@ cc_test {
         "aidl-test-versioned-interface-V2-cpp",
         "aidl_test_loggable_interface-cpp",
         "aidl-test-fixedsizearray-cpp",
+        "aidl_test_vintf_parcelable-V1-cpp",
         "android.aidl.test.trunk-V2-cpp",
     ],
     product_variables: {
@@ -640,6 +643,7 @@ cc_test {
         "aidl-test-interface-ndk",
         "aidl_test_loggable_interface-ndk",
         "aidl-test-fixedsizearray-ndk",
+        "aidl_test_vintf_parcelable-V1-ndk",
         "android.aidl.test.trunk-V2-ndk",
         "libsimpleparcelable_ndk",
     ],
@@ -1038,6 +1042,7 @@ rust_test {
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
         "aidl-test-fixedsizearray-rust",
+        "aidl_test_vintf_parcelable-V1-rust",
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
         "libsimple_parcelable_rust",
@@ -1065,6 +1070,7 @@ rust_test {
         "aidl-test-interface-rust",
         "aidl-test-versioned-interface-V1-rust",
         "aidl-test-fixedsizearray-rust",
+        "aidl_test_vintf_parcelable-V1-rust",
         "android.aidl.test.trunk-V2-rust",
         "liblibc",
         "libbinder_tokio_rs",
@@ -1108,4 +1114,10 @@ cc_binary {
         "libbinder",
         "libutils",
     ],
+}
+
+dirgroup {
+    name: "trusty_dirgroup_system_tools_aidl",
+    dirs: ["."],
+    visibility: ["//trusty/vendor/google/aosp/scripts"],
 }

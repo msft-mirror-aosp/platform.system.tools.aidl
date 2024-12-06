@@ -220,7 +220,11 @@ interface ITestService {
     // inefficient to use an IPC to fill it out in practice.
     void FillOutStructuredParcelable(inout StructuredParcelable parcel);
 
+    // Copies `ep` to `ep2`. Contained parcelable must be a `MyExt`.
     void RepeatExtendableParcelable(in ExtendableParcelable ep, out ExtendableParcelable ep2);
+
+    // Copies `ep` to `ep2`. Contained parcelable must be a `VintfExtendableParcelable`.
+    void RepeatExtendableParcelableVintf(in ExtendableParcelable ep, out ExtendableParcelable ep2);
 
     RecursiveList ReverseList(in RecursiveList list);
 
