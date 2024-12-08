@@ -479,7 +479,7 @@ TEST(OptionsTests, AcceptVCodeNameAsMinSdkVersion) {
   };
   auto options = GetOptions(args);
   EXPECT_TRUE(options->Ok());
-  EXPECT_EQ(10000u, options->GetMinSdkVersion());  // TODO: finalize to version
+  EXPECT_EQ(35u, options->GetMinSdkVersion());
 }
 
 TEST(OptionsTest, DefaultMinSdkVersion) {
