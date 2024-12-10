@@ -44,6 +44,18 @@ TEST(CodeWriterTest, AppendOperatorCascade) {
   EXPECT_EQ(str, "Write this and that");
 }
 
+TEST(CodeWriterTest, MultilineCommentEscapeNoChange) {
+  const std::string example = "this has nothing weird";
+  EXPECT_EQ(example, MultilineCommentEscape(example));
+}
+TEST(CodeWriterTest, MultilineCommentEscapeUnescapesUnicode) {
+  // b/380411222: Windows paths sometimes look like unicode
+  EXPECT_EQ("a\\\\u", MultilineCommentEscape("a\\u"));
+}
+TEST(CodeWriterTest, MultilineCommentEscapePreventsEndOfComment) {
+  EXPECT_EQ("a* /b", MultilineCommentEscape("a*/b"));
+}
+
 TEST(CodeWriterTest, WorksWithNonAscii) {
   // Due to b/174366536(basic_stringbuf implicit-conversion), the following snippet crashes
   //   std::stringstream s;
