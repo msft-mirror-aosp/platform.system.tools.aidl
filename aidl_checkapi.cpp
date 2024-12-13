@@ -82,6 +82,10 @@ static vector<string> get_strict_annotations(const AidlAnnotatable& node) {
   // tools/aidl/build/hash_gen.sh.
   static const set<AidlAnnotation::Type> kIgnoreAnnotations{
       AidlAnnotation::Type::NULLABLE,
+      // Runtime configuration. We don't usually add these to AIDL because
+      // they are not part of the API, but in some cases, it's not possible
+      // to implement features without changes
+      AidlAnnotation::Type::SENSITIVE_DATA,
       // @JavaDerive doesn't affect read/write
       AidlAnnotation::Type::JAVA_DERIVE,
       AidlAnnotation::Type::JAVA_DEFAULT,
