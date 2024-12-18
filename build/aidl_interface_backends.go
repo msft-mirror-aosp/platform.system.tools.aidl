@@ -83,8 +83,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               aidlFlags,
 		UseUnfrozen:         i.useUnfrozen(mctx),
-	},
-	)
+	})
 
 	importExportDependencies := []string{}
 	sharedLibDependency := commonProperties.Additional_shared_libraries
@@ -106,12 +105,6 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		importExportDependencies = append(importExportDependencies, "libbinder_ndk")
 		nonAppProps := imageProperties{
 			Cflags: []string{"-DBINDER_STABILITY_SUPPORT"},
-		}
-		if genTrace {
-			sharedLibDependency = append(sharedLibDependency, "libandroid")
-			nonAppProps.Exclude_shared_libs = []string{"libandroid"}
-			nonAppProps.Header_libs = []string{"libandroid_aidltrace"}
-			nonAppProps.Shared_libs = []string{"libcutils"}
 		}
 		targetProp.Platform = nonAppProps
 		targetProp.Vendor = nonAppProps
@@ -148,64 +141,60 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		productAvailable = nil
 	}
 
-	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
-		Name: proptools.StringPtr(cppModuleGen + "-generator"),
-	}, &aidlImplementationGeneratorProperties{
-		Lang:              lang,
-		AidlInterfaceName: i.ModuleBase.Name(),
-		Version:           version,
-		Imports:           i.getImportsForVersion(version),
-		ModuleProperties: []interface{}{
-			&ccProperties{
-				Name: proptools.StringPtr(cppModuleGen),
-				Enabled: android.CreateSelectOsToBool(map[string]*bool{
-					"":       nil,
-					"darwin": proptools.BoolPtr(false),
-				}),
-				Vendor_available:          vendorAvailable,
-				Odm_available:             odmAvailable,
-				Product_available:         productAvailable,
-				Recovery_available:        recoveryAvailable,
-				Host_supported:            hostSupported,
-				Cmake_snapshot_supported:  i.properties.Cmake_snapshot_supported,
-				Defaults:                  []string{"aidl-cpp-module-defaults"},
-				Double_loadable:           i.properties.Double_loadable,
-				Generated_sources:         []string{cppSourceGen},
-				Generated_headers:         []string{cppSourceGen},
-				Export_generated_headers:  []string{cppSourceGen},
-				Shared_libs:               append(importExportDependencies, sharedLibDependency...),
-				Header_libs:               headerLibs,
-				Export_shared_lib_headers: importExportDependencies,
-				Sdk_version:               sdkVersion,
-				Stl:                       stl,
-				Cpp_std:                   cpp_std,
-				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
-				Ldflags:                   commonProperties.Ldflags,
-				Apex_available:            commonProperties.Apex_available,
-				Min_sdk_version:           i.minSdkVersion(lang),
-				Target:                    targetProp,
-				Tidy:                      proptools.BoolPtr(true),
-				// Do the tidy check only for the generated headers
-				Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-				Tidy_checks_as_errors: []string{
-					"*",
-					"-clang-analyzer-deadcode.DeadStores", // b/253079031
-					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
-					"-clang-analyzer-optin.performance.Padding", // b/253079031
-				},
-				Include_build_directory: proptools.BoolPtr(false), // b/254682497
-				AidlInterface: struct {
-					Sources  []string
-					AidlRoot string
-					Lang     string
-					Flags    []string
-				}{
-					Sources:  srcs,
-					AidlRoot: aidlRoot,
-					Lang:     lang,
-					Flags:    aidlFlags,
-				},
-			},
+	langProps := &aidlLanguageModuleProperties{}
+	langProps.Aidl_internal_props.Lang = lang
+	langProps.Aidl_internal_props.AidlInterfaceName = i.ModuleBase.Name()
+	langProps.Aidl_internal_props.Version = version
+	langProps.Aidl_internal_props.Imports = i.getImportsForVersion(version)
+
+	mctx.CreateModule(wrapLibraryFactory(aidlCcModuleFactory), langProps, &ccProperties{
+		Name: proptools.StringPtr(cppModuleGen),
+		Enabled: android.CreateSelectOsToBool(map[string]*bool{
+			"":       nil,
+			"darwin": proptools.BoolPtr(false),
+		}),
+		Vendor_available:          vendorAvailable,
+		Odm_available:             odmAvailable,
+		Product_available:         productAvailable,
+		Recovery_available:        recoveryAvailable,
+		Host_supported:            hostSupported,
+		Cmake_snapshot_supported:  i.properties.Cmake_snapshot_supported,
+		Defaults:                  []string{"aidl-cpp-module-defaults"},
+		Double_loadable:           i.properties.Double_loadable,
+		Generated_sources:         []string{cppSourceGen},
+		Generated_headers:         []string{cppSourceGen},
+		Export_generated_headers:  []string{cppSourceGen},
+		Shared_libs:               append(importExportDependencies, sharedLibDependency...),
+		Header_libs:               headerLibs,
+		Export_shared_lib_headers: importExportDependencies,
+		Sdk_version:               sdkVersion,
+		Stl:                       stl,
+		Cpp_std:                   cpp_std,
+		Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
+		Ldflags:                   commonProperties.Ldflags,
+		Apex_available:            commonProperties.Apex_available,
+		Min_sdk_version:           i.minSdkVersion(lang),
+		Target:                    targetProp,
+		Tidy:                      proptools.BoolPtr(true),
+		// Do the tidy check only for the generated headers
+		Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
+		Tidy_checks_as_errors: []string{
+			"*",
+			"-clang-analyzer-deadcode.DeadStores", // b/253079031
+			"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
+			"-clang-analyzer-optin.performance.Padding", // b/253079031
+		},
+		Include_build_directory: proptools.BoolPtr(false), // b/254682497
+		AidlInterface: struct {
+			Sources  []string
+			AidlRoot string
+			Lang     string
+			Flags    []string
+		}{
+			Sources:  srcs,
+			AidlRoot: aidlRoot,
+			Lang:     lang,
+			Flags:    aidlFlags,
 		},
 	})
 
@@ -255,47 +244,43 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 
 	commonProperties := &i.properties.Backend.Cpp.CommonNativeBackendProperties
 
-	g := aidlImplementationGeneratorProperties{
-		ModuleProperties: []interface{}{
-			&ccProperties{
-				Name: proptools.StringPtr(cppAnalyzerModuleGen),
-				Enabled: android.CreateSelectOsToBool(map[string]*bool{
-					"":       nil,
-					"darwin": proptools.BoolPtr(false),
-				}),
-				Vendor_available:          vendorAvailable,
-				Odm_available:             odmAvailable,
-				Product_available:         productAvailable,
-				Recovery_available:        recoveryAvailable,
-				Host_supported:            hostSupported,
-				Defaults:                  []string{"aidl-cpp-module-defaults"},
-				Double_loadable:           i.properties.Double_loadable,
-				Installable:               proptools.BoolPtr(true),
-				Generated_sources:         []string{cppAnalyzerSourceGen},
-				Generated_headers:         []string{cppAnalyzerSourceGen},
-				Export_generated_headers:  []string{cppAnalyzerSourceGen},
-				Shared_libs:               append(append(importExportDependencies, i.versionedName(version)+"-"+langCpp), commonProperties.Additional_shared_libraries...),
-				Static_libs:               []string{"aidl-analyzer-main"},
-				Export_shared_lib_headers: importExportDependencies,
-				Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
-				Ldflags:                   commonProperties.Ldflags,
-				Min_sdk_version:           i.minSdkVersion(langCpp),
-				Target:                    targetProp,
-				Tidy:                      proptools.BoolPtr(true),
-				// Do the tidy check only for the generated headers
-				Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-				Tidy_checks_as_errors: []string{
-					"*",
-					"-clang-diagnostic-deprecated-declarations", // b/253081572
-					"-clang-analyzer-deadcode.DeadStores",       // b/253079031
-					"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
-					"-clang-analyzer-optin.performance.Padding", // b/253079031
-				},
-			},
+	props := &ccProperties{
+		Name: proptools.StringPtr(cppAnalyzerModuleGen),
+		Enabled: android.CreateSelectOsToBool(map[string]*bool{
+			"":       nil,
+			"darwin": proptools.BoolPtr(false),
+		}),
+		Vendor_available:          vendorAvailable,
+		Odm_available:             odmAvailable,
+		Product_available:         productAvailable,
+		Recovery_available:        recoveryAvailable,
+		Host_supported:            hostSupported,
+		Defaults:                  []string{"aidl-cpp-module-defaults"},
+		Double_loadable:           i.properties.Double_loadable,
+		Installable:               proptools.BoolPtr(true),
+		Generated_sources:         []string{cppAnalyzerSourceGen},
+		Generated_headers:         []string{cppAnalyzerSourceGen},
+		Export_generated_headers:  []string{cppAnalyzerSourceGen},
+		Shared_libs:               append(append(importExportDependencies, i.versionedName(version)+"-"+langCpp), commonProperties.Additional_shared_libraries...),
+		Static_libs:               []string{"aidl-analyzer-main"},
+		Export_shared_lib_headers: importExportDependencies,
+		Cflags:                    append(addCflags, "-Wextra", "-Wall", "-Werror", "-Wextra-semi"),
+		Ldflags:                   commonProperties.Ldflags,
+		Min_sdk_version:           i.minSdkVersion(langCpp),
+		Target:                    targetProp,
+		Tidy:                      proptools.BoolPtr(true),
+		// Do the tidy check only for the generated headers
+		Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
+		Tidy_checks_as_errors: []string{
+			"*",
+			"-clang-diagnostic-deprecated-declarations", // b/253081572
+			"-clang-analyzer-deadcode.DeadStores",       // b/253079031
+			"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
+			"-clang-analyzer-optin.performance.Padding", // b/253079031
 		},
 	}
 
-	mctx.CreateModule(wrapLibraryFactory(cc.BinaryFactory), g.ModuleProperties...)
+	mctx.CreateModule(wrapLibraryFactory(cc.BinaryFactory), props)
 	return cppAnalyzerModuleGen
 }
 
@@ -342,28 +327,26 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		UseUnfrozen:         i.useUnfrozen(mctx),
 	})
 
-	mctx.CreateModule(aidlImplementationGeneratorFactory, &nameProperties{
-		Name: proptools.StringPtr(javaModuleGen + "-generator"),
-	}, &aidlImplementationGeneratorProperties{
-		Lang:              langJava,
-		AidlInterfaceName: i.ModuleBase.Name(),
-		Version:           version,
-		Imports:           i.getImportsForVersion(version),
-		ModuleProperties: []interface{}{
-			&javaProperties{
-				Name:            proptools.StringPtr(javaModuleGen),
-				Installable:     proptools.BoolPtr(true),
-				Defaults:        []string{"aidl-java-module-defaults"},
-				Sdk_version:     sdkVersion,
-				Srcs:            []string{":" + javaSourceGen},
-				Apex_available:  i.properties.Backend.Java.Apex_available,
-				Min_sdk_version: i.minSdkVersion(langJava),
-				Static_libs:     i.properties.Backend.Java.Additional_libs,
-				Is_stubs_module: proptools.BoolPtr(true),
-			},
-			&i.properties.Backend.Java.LintProperties,
-		},
-	})
+	langProps := &aidlLanguageModuleProperties{}
+	langProps.Aidl_internal_props.Lang = langJava
+	langProps.Aidl_internal_props.AidlInterfaceName = i.ModuleBase.Name()
+	langProps.Aidl_internal_props.Version = version
+	langProps.Aidl_internal_props.Imports = i.getImportsForVersion(version)
+
+	mctx.CreateModule(wrapLibraryFactory(aidlJavaModuleFactory), &javaProperties{
+		Name:            proptools.StringPtr(javaModuleGen),
+		Installable:     proptools.BoolPtr(true),
+		Defaults:        []string{"aidl-java-module-defaults"},
+		Sdk_version:     sdkVersion,
+		Srcs:            []string{":" + javaSourceGen},
+		Apex_available:  i.properties.Backend.Java.Apex_available,
+		Min_sdk_version: i.minSdkVersion(langJava),
+		Static_libs:     i.properties.Backend.Java.Additional_libs,
+		Is_stubs_module: proptools.BoolPtr(true),
+	},
+		&i.properties.Backend.Java.LintProperties,
+		langProps,
+	)
 
 	return javaModuleGen
 }
@@ -503,8 +486,22 @@ func (i *aidlInterface) getImportWithVersion(version string, anImport string, ot
 // Assuming that the context module has deps to its original aidl_interface and imported
 // aidl_interface modules with interfaceDepTag and importInterfaceDepTag, returns the list of
 // imported interfaces with versions.
-func getImportsWithVersion(ctx android.BaseMutatorContext, interfaceName, version string) []string {
-	i := ctx.GetDirectDepWithTag(interfaceName+aidlInterfaceSuffix, interfaceDep).(*aidlInterface)
+func getImportsWithVersion(ctx android.BaseModuleContext, interfaceName, version string) []string {
+	// We're using VisitDirectDepsWithTag instead of GetDirectDepWithTag because GetDirectDepWithTag
+	// has weird behavior: if you're using a ModuleContext, it will find a dep based off the
+	// ModuleBase name, but if you're using a BaseModuleContext, it will find a dep based off of
+	// the outer module's name. We need the behavior to be consistent because we call this method
+	// with both types of contexts.
+	var i *aidlInterface
+	ctx.VisitDirectDepsWithTag(interfaceDep, func(visited android.Module) {
+		if i == nil && visited.Name() == interfaceName+aidlInterfaceSuffix {
+			i = visited.(*aidlInterface)
+		}
+	})
+	if i == nil {
+		ctx.ModuleErrorf("expected to find the aidl interface via an interfaceDep, but did not.")
+		return nil
+	}
 	var imports []string
 	ctx.VisitDirectDeps(func(dep android.Module) {
 		if tag, ok := ctx.OtherModuleDependencyTag(dep).(importInterfaceDepTag); ok {
@@ -515,44 +512,26 @@ func getImportsWithVersion(ctx android.BaseMutatorContext, interfaceName, versio
 	return imports
 }
 
-func aidlImplementationGeneratorFactory() android.Module {
-	g := &aidlImplementationGenerator{}
-	g.AddProperties(&g.properties)
-	android.InitAndroidModule(g)
-	return g
+func aidlCcModuleFactory() android.Module {
+	m := cc.LibraryFactory()
+	m.AddProperties(&aidlLanguageModuleProperties{})
+	return m
 }
 
-type aidlImplementationGenerator struct {
-	android.ModuleBase
-	properties aidlImplementationGeneratorProperties
+func aidlJavaModuleFactory() android.Module {
+	m := java.LibraryFactory()
+	m.AddProperties(&aidlLanguageModuleProperties{})
+	return m
 }
 
-type aidlImplementationGeneratorProperties struct {
-	Lang              string
-	AidlInterfaceName string
-	Version           string
-	Imports           []string
-	ModuleProperties  []interface{}
-}
-
-func (g *aidlImplementationGenerator) DepsMutator(ctx android.BottomUpMutatorContext) {
-}
-
-func (g *aidlImplementationGenerator) GenerateAndroidBuildActions(ctx android.ModuleContext) {
-}
-
-func (g *aidlImplementationGenerator) GenerateImplementation(ctx android.TopDownMutatorContext) {
-	imports := wrap("", getImportsWithVersion(ctx, g.properties.AidlInterfaceName, g.properties.Version), "-"+g.properties.Lang)
-	if g.properties.Lang == langJava {
-		if p, ok := g.properties.ModuleProperties[0].(*javaProperties); ok {
-			p.Static_libs = append(p.Static_libs, imports...)
-		}
-		ctx.CreateModule(wrapLibraryFactory(java.LibraryFactory), g.properties.ModuleProperties...)
-	} else {
-		if p, ok := g.properties.ModuleProperties[0].(*ccProperties); ok {
-			p.Shared_libs = append(p.Shared_libs, imports...)
-			p.Export_shared_lib_headers = append(p.Export_shared_lib_headers, imports...)
-		}
-		ctx.CreateModule(wrapLibraryFactory(cc.LibraryFactory), g.properties.ModuleProperties...)
+type aidlLanguageModuleProperties struct {
+	// Because we add this property struct to regular cc/java modules, move all the props under an
+	// "Aidl_internal_props" struct so we're sure they don't accidentally share the same name as a
+	// core cc/java property.
+	Aidl_internal_props struct {
+		Lang              string
+		AidlInterfaceName string
+		Version           string
+		Imports           []string
 	}
 }

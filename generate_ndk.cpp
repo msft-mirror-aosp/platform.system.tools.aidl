@@ -35,6 +35,8 @@ static constexpr const char* kHash = "hash";
 static constexpr const char* kCachedVersion = "_aidl_cached_version";
 static constexpr const char* kCachedHash = "_aidl_cached_hash";
 static constexpr const char* kCachedHashMutex = "_aidl_cached_hash_mutex";
+static constexpr const char* kFunctionNames = "code_to_function";
+static constexpr size_t kMaxSkip = 10;
 
 namespace internals {
 // 4 outputs for NDK for each type: Header, BpHeader, BnHeader, Source
@@ -297,9 +299,6 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
       // So we need includes for client/server class as well.
       if (interface.GetParentType()) {
         includes.insert("android/binder_ibinder.h");
-        if (options.GenTraces()) {
-          includes.insert("android/trace.h");
-        }
       }
     }
 
@@ -405,19 +404,6 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
     out << "#include <" << inc << ">\n";
   }
   out << "\n";
-
-  // Emit additional definition for gen_traces
-  if (v.has_interface && options.GenTraces()) {
-    out << "namespace {\n";
-    out << "struct ScopedTrace {\n";
-    out.Indent();
-    out << "inline explicit ScopedTrace(const char* name) { ATrace_beginSection(name); }\n";
-    out << "inline ~ScopedTrace() { ATrace_endSection(); }\n";
-    out.Dedent();
-    out << "};\n";
-    out << "}  // namespace\n";
-    out << "\n";
-  }
 }
 
 static void GenerateConstantDeclarations(CodeWriter& out, const AidlTypenames& types,
@@ -510,11 +496,6 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   if (options.GenLog()) {
     out << cpp::GenLogBeforeExecute(q_name, method, false /* isServer */, true /* isNdk */);
   }
-  if (options.GenTraces()) {
-    out << "ScopedTrace _aidl_trace(\"AIDL::" << to_string(options.TargetLanguage())
-        << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
-        << "::client\");\n";
-  }
 
   if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE) &&
       method.IsUserDefined()) {
@@ -524,7 +505,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     out << "}\n";
   }
 
-  out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinder().get(), _aidl_in.getR());\n";
+  out << "_aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), "
+         "_aidl_in.getR());\n";
   if (defined_type.IsSensitiveData()) {
     out << "AParcel_markSensitive(_aidl_in.get());\n";
   }
@@ -547,7 +529,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   }
   out << "_aidl_ret_status = AIBinder_transact(\n";
   out.Indent();
-  out << "asBinder().get(),\n";
+  out << "asBinderReference().get(),\n";
   out << MethodId(method) << ",\n";
   out << "_aidl_in.getR(),\n";
   out << "_aidl_out.getR(),\n";
@@ -558,7 +540,7 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   out << (flags.empty() ? "0" : base::Join(flags, " | ")) << "\n";
 
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
-  out << "| FLAG_PRIVATE_LOCAL\n";
+  out << "| static_cast<int>(FLAG_PRIVATE_LOCAL)\n";
   out << "#endif  // BINDER_STABILITY_SUPPORT\n";
   out << ");\n";
   out.Dedent();
@@ -639,11 +621,6 @@ static void GenerateServerCaseDefinition(CodeWriter& out, const AidlTypenames& t
     out << NdkNameOf(types, method.GetType(), StorageMode::STACK) << " _aidl_return;\n";
   }
   out << "\n";
-  if (options.GenTraces()) {
-    out << "ScopedTrace _aidl_trace(\"AIDL::" << to_string(options.TargetLanguage())
-        << "::" << ClassName(defined_type, ClassNames::INTERFACE) << "::" << method.GetName()
-        << "::server\");\n";
-  }
 
   for (const auto& arg : method.GetArguments()) {
     const std::string var_name = cpp::BuildVarName(*arg);
@@ -708,6 +685,23 @@ static string GlobalClassVarName(const AidlInterface& interface) {
   return "_g_aidl_" + name + "_clazz";
 }
 
+int GetMaxId(const AidlInterface& defined_type) {
+  std::vector<int> ids;
+  for (const auto& method : defined_type.GetMethods()) ids.push_back(method->GetId());
+  std::sort(ids.begin(), ids.end());
+
+  int last_id = -1;
+  size_t total_skipped = 0;
+  for (int id : ids) {
+    if (id > kMaxUserSetMethodId) break;
+    AIDL_FATAL_IF(id <= last_id, defined_type) << id << last_id;
+    total_skipped += last_id == -1 ? 0 : id - last_id - 1;
+    if (total_skipped > kMaxSkip) return last_id;
+    last_id = id;
+  }
+  return last_id;
+}
+
 void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
                          const AidlInterface& defined_type, const Options& options) {
   const std::string i_name = GetQualifiedName(defined_type, ClassNames::INTERFACE);
@@ -748,9 +742,35 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "}\n\n";
 
+  // Find the maxId used for AIDL method. If methods use skipped ids, only support till kMaxSkip.
+  int maxId = GetMaxId(defined_type);
+  int functionCount = maxId + 1;
+  std::string codeToFunction = GlobalClassVarName(defined_type) + "_" + kFunctionNames;
+  out << "static const char* " << codeToFunction << "[] = { ";
+
+  // If tracing is off, don't populate this array. libbinder_ndk will still add traces based on
+  // transaction code
+  vector<std::string> functionNames;
+  if (options.GenTraces() && maxId != -1) {
+    functionNames.resize(functionCount);
+
+    // Assign method names to the proper places in array
+    for (const auto& method : defined_type.GetMethods()) {
+      if (method->GetId() >= functionCount) {
+        continue;
+      }
+      functionNames[method->GetId()] = method->GetName();
+    }
+
+    for (const auto& method : functionNames) {
+      out << "\"" << method << "\",";
+    }
+  }
+  out << "};\n";
   out << "static AIBinder_Class* " << GlobalClassVarName(defined_type)
       << " = ::ndk::ICInterface::defineClass(" << i_name << "::" << kDescriptor << ", "
-      << on_transact << ");\n\n";
+      << on_transact << ", " << codeToFunction << ", " << std::to_string(functionNames.size())
+      << ");\n\n";
   if (deprecated) {
     out << "#pragma clang diagnostic pop\n";
   }
@@ -1017,9 +1037,6 @@ void GenerateClientHeader(CodeWriter& out, const AidlTypenames& types,
     out << "#include <functional>\n";
     out << "#include <chrono>\n";
     out << "#include <sstream>\n";
-  }
-  if (options.GenTraces()) {
-    out << "#include <android/trace.h>\n";
   }
   out << "\n";
   EnterNdkNamespace(out, defined_type);
@@ -1407,7 +1424,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
     out.Indent();
     out << "binder_status_t _aidl_ret_status;\n";
 
-    out << "size_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+    out << "int32_t _aidl_start_pos = AParcel_getDataPosition(_aidl_parcel);\n";
     out << "_aidl_ret_status = AParcel_writeInt32(_aidl_parcel, 0);\n";
     StatusCheckReturn(out);
 
@@ -1425,7 +1442,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
         out << "}\n";
       }
     }
-    out << "size_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
+    out << "int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);\n";
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);\n";
     out << "AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);\n";
     out << "AParcel_setDataPosition(_aidl_parcel, _aidl_end_pos);\n";

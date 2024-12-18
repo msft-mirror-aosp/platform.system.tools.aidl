@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=rust -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-rust-source/gen/android/aidl/tests/ICircular.rs.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-rust-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ICircular.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
@@ -18,7 +22,7 @@ declare_binder_interface! {
 }
 pub trait ICircular: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ICircular" }
-  fn r#GetTestService(&self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>;
+  fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>;
   fn getDefaultImpl() -> ICircularDefaultRef where Self: Sized {
     DEFAULT_IMPL.lock().unwrap().clone()
   }
@@ -31,12 +35,12 @@ pub trait ICircular: binder::Interface + Send {
 }
 pub trait ICircularAsync<P>: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ICircular" }
-  fn r#GetTestService<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>>;
+  fn r#GetTestService<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>>;
 }
 #[::async_trait::async_trait]
 pub trait ICircularAsyncServer: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ICircular" }
-  async fn r#GetTestService(&self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>;
+  async fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>;
 }
 impl BnCircular {
   /// Create a new async binder service.
@@ -58,7 +62,7 @@ impl BnCircular {
       T: ICircularAsyncServer + Send + Sync + 'static,
       R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
     {
-      fn r#GetTestService(&self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
+      fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
         self._rt.block_on(self._inner.r#GetTestService())
       }
       fn try_as_async_server(&self) -> Option<&(dyn ICircularAsyncServer + Send + Sync)> {
@@ -74,7 +78,7 @@ impl BnCircular {
     }
     impl binder::Interface for Wrapper {}
     impl<P: binder::BinderAsyncPool> ICircularAsync<P> for Wrapper {
-      fn r#GetTestService<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>> {
+      fn r#GetTestService<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#GetTestService())
       }
     }
@@ -86,7 +90,7 @@ impl BnCircular {
   }
 }
 pub trait ICircularDefault: Send + Sync {
-  fn r#GetTestService(&self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
+  fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
 }
@@ -114,14 +118,14 @@ impl BpCircular {
   }
 }
 impl ICircular for BpCircular {
-  fn r#GetTestService(&self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
+  fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
     let _aidl_data = self.build_parcel_GetTestService()?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#GetTestService, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
     self.read_response_GetTestService(_aidl_reply)
   }
 }
 impl<P: binder::BinderAsyncPool> ICircularAsync<P> for BpCircular {
-  fn r#GetTestService<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>> {
+  fn r#GetTestService<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>> {
     let _aidl_data = match self.build_parcel_GetTestService() {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -136,7 +140,7 @@ impl<P: binder::BinderAsyncPool> ICircularAsync<P> for BpCircular {
   }
 }
 impl ICircular for binder::binder_impl::Binder<BnCircular> {
-  fn r#GetTestService(&self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> { self.0.r#GetTestService() }
+  fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> { self.0.r#GetTestService() }
 }
 fn on_transact(_aidl_service: &dyn ICircular, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {

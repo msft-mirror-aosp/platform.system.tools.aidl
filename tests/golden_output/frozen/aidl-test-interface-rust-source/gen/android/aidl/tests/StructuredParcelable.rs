@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  * Using: out/host/linux-x86/bin/aidl --lang=rust -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-rust-source/gen/android/aidl/tests/StructuredParcelable.rs.d -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-rust-source/gen -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/StructuredParcelable.aidl
+ *
+ * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
+ * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
+ * AS A BUILD INTERMEDIATE ONLY. THIS IS NOT SOURCE CODE.
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
@@ -40,6 +44,9 @@ pub struct r#StructuredParcelable {
   pub r#hexInt32_neg_1: i32,
   pub r#ibinder: Option<binder::SpIBinder>,
   pub r#empty: crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable_5_Empty,
+  pub r#int8_t_large: Vec<u8>,
+  pub r#int32_t_large: Vec<i32>,
+  pub r#int64_t_large: Vec<i64>,
   pub r#int8_1: Vec<u8>,
   pub r#int32_1: Vec<i32>,
   pub r#int64_1: Vec<i64>,
@@ -102,6 +109,9 @@ impl Default for r#StructuredParcelable {
       r#hexInt32_neg_1: -1,
       r#ibinder: Default::default(),
       r#empty: Default::default(),
+      r#int8_t_large: vec![255, 192],
+      r#int32_t_large: vec![-1, -1073741824],
+      r#int64_t_large: vec![-1, -4611686018427387904],
       r#int8_1: vec![1, 1, 1, 1, 1],
       r#int32_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       r#int64_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -163,6 +173,9 @@ impl binder::Parcelable for r#StructuredParcelable {
       subparcel.write(&self.r#hexInt32_neg_1)?;
       subparcel.write(&self.r#ibinder)?;
       subparcel.write(&self.r#empty)?;
+      subparcel.write(&self.r#int8_t_large)?;
+      subparcel.write(&self.r#int32_t_large)?;
+      subparcel.write(&self.r#int64_t_large)?;
       subparcel.write(&self.r#int8_1)?;
       subparcel.write(&self.r#int32_1)?;
       subparcel.write(&self.r#int64_1)?;
@@ -290,6 +303,15 @@ impl binder::Parcelable for r#StructuredParcelable {
       }
       if subparcel.has_more_data() {
         self.r#empty = subparcel.read()?;
+      }
+      if subparcel.has_more_data() {
+        self.r#int8_t_large = subparcel.read()?;
+      }
+      if subparcel.has_more_data() {
+        self.r#int32_t_large = subparcel.read()?;
+      }
+      if subparcel.has_more_data() {
+        self.r#int64_t_large = subparcel.read()?;
       }
       if subparcel.has_more_data() {
         self.r#int8_1 = subparcel.read()?;
