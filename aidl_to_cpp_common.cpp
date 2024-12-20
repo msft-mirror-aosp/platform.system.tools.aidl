@@ -15,13 +15,12 @@
  */
 #include "aidl_to_cpp_common.h"
 
-#include <android-base/format.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
+#include <format>
 #include <limits>
 #include <set>
-#include <unordered_map>
 
 #include "comments.h"
 #include "logging.h"
@@ -353,12 +352,12 @@ void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable
     auto name = parcelable.GetName();
     auto max_tag = parcelable.GetFields().back()->GetName();
     auto min_tag = parcelable.GetFields().front()->GetName();
-    constexpr auto tmpl = R"--(static int _cmp(const {name}& _lhs, const {name}& _rhs) {{
-  return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<{max_tag}>(_lhs, _rhs);
+    constexpr auto tmpl = R"--(static int _cmp(const {0}& _lhs, const {0}& _rhs) {{
+  return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<{2}>(_lhs, _rhs);
 }}
 template <Tag _Tag>
-static int _cmp_value_at(const {name}& _lhs, const {name}& _rhs) {{
-  if constexpr (_Tag == {min_tag}) {{
+static int _cmp_value_at(const {0}& _lhs, const {0}& _rhs) {{
+  if constexpr (_Tag == {1}) {{
     return _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>());
   }} else {{
     return (_lhs.getTag() == _Tag)
@@ -371,8 +370,7 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
   return (_lhs == _rhs) ? 0 : (_lhs < _rhs) ? -1 : 1;
 }}
 )--";
-    out << fmt::format(tmpl, fmt::arg("name", name), fmt::arg("min_tag", min_tag),
-                       fmt::arg("max_tag", max_tag));
+    out << std::format(tmpl, name, min_tag, max_tag);
     for (const auto& op : operators) {
       out << "inline bool operator" << op << "(const " << name << "&_rhs) const {\n";
       out << "  return _cmp(*this, _rhs) " << op << " 0;\n";
@@ -410,20 +408,20 @@ static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {{
   }
   // Delegate other ops to < and == for *this, which lets a custom parcelable
   // to be used with structured parcelables without implementation all operations.
-  out << fmt::format(R"--(inline bool operator!=(const {name}& _rhs) const {{
+  out << std::format(R"--(inline bool operator!=(const {0}& _rhs) const {{
   return !(*this == _rhs);
 }}
-inline bool operator>(const {name}& _rhs) const {{
+inline bool operator>(const {0}& _rhs) const {{
   return _rhs < *this;
 }}
-inline bool operator>=(const {name}& _rhs) const {{
+inline bool operator>=(const {0}& _rhs) const {{
   return !(*this < _rhs);
 }}
-inline bool operator<=(const {name}& _rhs) const {{
+inline bool operator<=(const {0}& _rhs) const {{
   return !(_rhs < *this);
 }}
 )--",
-                     fmt::arg("name", parcelable.GetName()));
+                     parcelable.GetName());
   out << "\n";
 }
 
@@ -706,10 +704,10 @@ void UnionWriter::PublicFields(CodeWriter& out) const {
     auto typelist = Join(field_types, ", ");
     constexpr auto tmpl = R"--(
 template <Tag _Tag>
-using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<{typelist}>>::type;
+using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<{1}>>::type;
 template <Tag _Tag, typename _Type>
-static {name} make(_Type&& _arg) {{
-  {name} _inst;
+static {0} make(_Type&& _arg) {{
+  {0} _inst;
   _inst.set<_Tag>(std::forward<_Type>(_arg));
   return _inst;
 }}
@@ -732,7 +730,7 @@ void set(_Type&& _arg) {{
   get<_Tag>() = std::forward<_Type>(_arg);
 }}
 )--";
-    out << fmt::format(tmpl, fmt::arg("name", name), fmt::arg("typelist", typelist));
+    out << std::format(tmpl, name, typelist);
   } else {
     AIDL_FATAL_IF(decl.GetFields().empty(), decl) << "Union '" << name << "' is empty.";
     const auto& first_field = decl.GetFields()[0];
@@ -742,27 +740,27 @@ void set(_Type&& _arg) {{
 
     constexpr auto tmpl = R"--(
 template<typename _Tp>
-static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, {name}>;
+static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, {0}>;
 
-{name}() : _value(std::in_place_index<static_cast<size_t>({default_name})>, {default_value}) {{ }}
+{0}() : _value(std::in_place_index<static_cast<size_t>({1})>, {2}) {{ }}
 
 template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
 // NOLINTNEXTLINE(google-explicit-constructor)
-constexpr {name}(_Tp&& _arg)
+constexpr {0}(_Tp&& _arg)
     : _value(std::forward<_Tp>(_arg)) {{}}
 
 template <size_t _Np, typename... _Tp>
-constexpr explicit {name}(std::in_place_index_t<_Np>, _Tp&&... _args)
+constexpr explicit {0}(std::in_place_index_t<_Np>, _Tp&&... _args)
     : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {{}}
 
 template <Tag _tag, typename... _Tp>
-static {name} make(_Tp&&... _args) {{
-  return {name}(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
+static {0} make(_Tp&&... _args) {{
+  return {0}(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
 }}
 
 template <Tag _tag, typename _Tp, typename... _Up>
-static {name} make(std::initializer_list<_Tp> _il, _Up&&... _args) {{
-  return {name}(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
+static {0} make(std::initializer_list<_Tp> _il, _Up&&... _args) {{
+  return {0}(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
 }}
 
 Tag getTag() const {{
@@ -787,8 +785,7 @@ void set(_Tp&&... _args) {{
 }}
 
 )--";
-    out << fmt::format(tmpl, fmt::arg("name", name), fmt::arg("default_name", default_name),
-                       fmt::arg("default_value", default_value));
+    out << std::format(tmpl, name, default_name, default_value);
   }
 }
 
@@ -802,41 +799,41 @@ void UnionWriter::ReadFromParcel(CodeWriter& out, const ParcelWriterContext& ctx
   const string status = "_aidl_ret_status";
 
   auto read_var = [&](const string& var, const AidlTypeSpecifier& type) {
-    out << fmt::format("{} {};\n", name_of(type, typenames), var);
-    out << fmt::format("if (({} = ", status);
+    out << std::format("{} {};\n", name_of(type, typenames), var);
+    out << std::format("if (({} = ", status);
     ctx.read_func(out, var, type);
-    out << fmt::format(") != {}) return {};\n", ctx.status_ok, status);
+    out << std::format(") != {}) return {};\n", ctx.status_ok, status);
   };
 
-  out << fmt::format("{} {};\n", ctx.status_type, status);
+  out << std::format("{} {};\n", ctx.status_type, status);
   read_var(tag, *tag_type);
-  out << fmt::format("switch (static_cast<Tag>({})) {{\n", tag);
+  out << std::format("switch (static_cast<Tag>({})) {{\n", tag);
   for (const auto& variable : decl.GetFields()) {
-    out << fmt::format("case {}: {{\n", variable->GetName());
+    out << std::format("case {}: {{\n", variable->GetName());
     out.Indent();
     if (variable->IsNew()) {
-      out << fmt::format("if (true) return {};\n", ctx.status_bad);
+      out << std::format("if (true) return {};\n", ctx.status_bad);
     }
     const auto& type = variable->GetType();
     read_var(value, type);
-    out << fmt::format("if constexpr (std::is_trivially_copyable_v<{}>) {{\n",
+    out << std::format("if constexpr (std::is_trivially_copyable_v<{}>) {{\n",
                        name_of(type, typenames));
     out.Indent();
-    out << fmt::format("set<{}>({});\n", variable->GetName(), value);
+    out << std::format("set<{}>({});\n", variable->GetName(), value);
     out.Dedent();
     out << "} else {\n";
     out.Indent();
     // Even when the `if constexpr` is false, the compiler runs the tidy check for the
     // next line, which doesn't make sense. Silence the check for the unreachable code.
     out << "// NOLINTNEXTLINE(performance-move-const-arg)\n";
-    out << fmt::format("set<{}>(std::move({}));\n", variable->GetName(), value);
+    out << std::format("set<{}>(std::move({}));\n", variable->GetName(), value);
     out.Dedent();
     out << "}\n";
-    out << fmt::format("return {}; }}\n", ctx.status_ok);
+    out << std::format("return {}; }}\n", ctx.status_ok);
     out.Dedent();
   }
   out << "}\n";
-  out << fmt::format("return {};\n", ctx.status_bad);
+  out << std::format("return {};\n", ctx.status_bad);
 }
 
 void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx) const {
@@ -848,10 +845,10 @@ void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx)
   const string value = "_aidl_value";
   const string status = "_aidl_ret_status";
 
-  out << fmt::format("{} {} = ", ctx.status_type, status);
+  out << std::format("{} {} = ", ctx.status_type, status);
   ctx.write_func(out, "static_cast<int32_t>(getTag())", *tag_type);
   out << ";\n";
-  out << fmt::format("if ({} != {}) return {};\n", status, ctx.status_ok, status);
+  out << std::format("if ({} != {}) return {};\n", status, ctx.status_ok, status);
   out << "switch (getTag()) {\n";
   for (const auto& variable : decl.GetFields()) {
     if (variable->IsDeprecated()) {
@@ -859,9 +856,9 @@ void UnionWriter::WriteToParcel(CodeWriter& out, const ParcelWriterContext& ctx)
       out << "#pragma clang diagnostic ignored \"-Wdeprecated-declarations\"\n";
     }
     if (variable->IsNew()) {
-      out << fmt::format("case {}: return true ? {} : ", variable->GetName(), ctx.status_bad);
+      out << std::format("case {}: return true ? {} : ", variable->GetName(), ctx.status_bad);
     } else {
-      out << fmt::format("case {}: return ", variable->GetName());
+      out << std::format("case {}: return ", variable->GetName());
     }
     ctx.write_func(out, "get<" + variable->GetName() + ">()", variable->GetType());
     out << ";\n";
