@@ -16,11 +16,11 @@
 
 #include "aidl.h"
 
-#include <android-base/format.h>
 #include <android-base/stringprintf.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <format>
 #include <map>
 #include <memory>
 #include <set>
@@ -63,14 +63,14 @@ namespace aidl {
 namespace {
 
 const char kExpectedDepFileContents[] =
-R"(place/for/output/p/IFoo.java : \
+    R"(place/for/output/p/IFoo.java : \
   p/IFoo.aidl
 
 p/IFoo.aidl :
 )";
 
 const char kExpectedNinjaDepFileContents[] =
-R"(place/for/output/p/IFoo.java : \
+    R"(place/for/output/p/IFoo.java : \
   p/IFoo.aidl
 )";
 
@@ -854,8 +854,9 @@ TEST_F(AidlTest, ParsesPreprocessedFileWithWhitespace) {
 
 TEST_P(AidlTest, PreferImportToPreprocessed) {
   io_delegate_.SetFileContents("preprocessed", "interface another.IBar;");
-  io_delegate_.SetFileContents("one/IBar.aidl", "package one; "
-                                                "interface IBar {}");
+  io_delegate_.SetFileContents("one/IBar.aidl",
+                               "package one; "
+                               "interface IBar {}");
   preprocessed_files_.push_back("preprocessed");
   import_paths_.emplace("");
   auto parse_result = Parse("p/IFoo.aidl", "package p; import one.IBar; interface IFoo {}",
@@ -894,10 +895,10 @@ TEST_P(AidlTest, B147918827) {
 }
 
 TEST_F(AidlTest, WritePreprocessedFile) {
-  io_delegate_.SetFileContents("p/Outer.aidl",
-                               "package p; parcelable Outer.Inner;");
-  io_delegate_.SetFileContents("one/IBar.aidl", "package one; import p.Outer;"
-                                                "interface IBar {}");
+  io_delegate_.SetFileContents("p/Outer.aidl", "package p; parcelable Outer.Inner;");
+  io_delegate_.SetFileContents("one/IBar.aidl",
+                               "package one; import p.Outer;"
+                               "interface IBar {}");
 
   vector<string> args{"aidl", "--preprocess", "preprocessed",
                       "-I.",  "p/Outer.aidl", "one/IBar.aidl"};
@@ -1225,8 +1226,7 @@ TEST_P(AidlTest, RequireOuterClass) {
   const string expected_stderr =
       "ERROR: p/IFoo.aidl: Couldn't find import for class Inner. Searched here:\n - ./\nERROR: "
       "p/IFoo.aidl:1.54-60: Failed to resolve 'Inner'\n";
-  io_delegate_.SetFileContents("p/Outer.aidl",
-                               "package p; parcelable Outer.Inner;");
+  io_delegate_.SetFileContents("p/Outer.aidl", "package p; parcelable Outer.Inner;");
   import_paths_.emplace("");
   CaptureStderr();
   EXPECT_EQ(nullptr, Parse("p/IFoo.aidl",
@@ -1795,8 +1795,9 @@ TEST_P(AidlTest, UnderstandsNestedUnstructuredParcelables) {
                                "ndk_header \"ndk/baz/header\" rust_type \"baz::Inner\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
-  const string input = "package p; import p.Outer; interface IFoo"
-                       " { Outer.Inner get(); }";
+  const string input =
+      "package p; import p.Outer; interface IFoo"
+      " { Outer.Inner get(); }";
 
   auto parse_result = Parse(input_path, input, typenames_, GetLanguage());
   EXPECT_NE(nullptr, parse_result);
@@ -2316,9 +2317,8 @@ TEST_F(AidlTest, CppNameOf_GenericType) {
 }
 
 TEST_P(AidlTest, UnderstandsNativeParcelables) {
-  io_delegate_.SetFileContents(
-      "p/Bar.aidl",
-      "package p; parcelable Bar cpp_header \"baz/header\";");
+  io_delegate_.SetFileContents("p/Bar.aidl",
+                               "package p; parcelable Bar cpp_header \"baz/header\";");
   import_paths_.emplace("");
   const string input_path = "p/IFoo.aidl";
   const string input = "package p; import p.Bar; interface IFoo { }";
@@ -2556,8 +2556,8 @@ TEST_F(AidlTest, ApiDump) {
                                "   @nullable String[] c;\n"
                                "}\n");
   io_delegate_.SetFileContents("api.aidl", "");
-  vector<string> args = {"aidl", "--dumpapi", "--out=dump", "--include=.",
-                         "foo/bar/IFoo.aidl", "foo/bar/Data.aidl"};
+  vector<string> args = {"aidl",        "--dumpapi",         "--out=dump",
+                         "--include=.", "foo/bar/IFoo.aidl", "foo/bar/Data.aidl"};
   Options options = Options::From(args);
   bool result = dump_api(options, io_delegate_);
   ASSERT_TRUE(result);
@@ -2598,14 +2598,13 @@ parcelable Data {
 }
 
 TEST_F(AidlTest, ApiDumpWithManualIds) {
-  io_delegate_.SetFileContents(
-      "foo/bar/IFoo.aidl",
-      "package foo.bar;\n"
-      "interface IFoo {\n"
-      "    int foo() = 1;\n"
-      "    int bar() = 2;\n"
-      "    int baz() = 10;\n"
-      "}\n");
+  io_delegate_.SetFileContents("foo/bar/IFoo.aidl",
+                               "package foo.bar;\n"
+                               "interface IFoo {\n"
+                               "    int foo() = 1;\n"
+                               "    int bar() = 2;\n"
+                               "    int baz() = 10;\n"
+                               "}\n");
 
   vector<string> args = {"aidl", "-I . ", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
   Options options = Options::From(args);
@@ -2626,14 +2625,13 @@ TEST_F(AidlTest, ApiDumpWithManualIdsOnlyOnSomeMethods) {
   const string expected_stderr =
       "ERROR: foo/bar/IFoo.aidl:4.8-12: You must either assign id's to all methods or to none of "
       "them.\n";
-  io_delegate_.SetFileContents(
-      "foo/bar/IFoo.aidl",
-      "package foo.bar;\n"
-      "interface IFoo {\n"
-      "    int foo() = 1;\n"
-      "    int bar();\n"
-      "    int baz() = 10;\n"
-      "}\n");
+  io_delegate_.SetFileContents("foo/bar/IFoo.aidl",
+                               "package foo.bar;\n"
+                               "interface IFoo {\n"
+                               "    int foo() = 1;\n"
+                               "    int bar();\n"
+                               "    int baz() = 10;\n"
+                               "}\n");
 
   vector<string> args = {"aidl", "-I . ", "--dumpapi", "-o dump", "foo/bar/IFoo.aidl"};
   Options options = Options::From(args);
@@ -2897,24 +2895,23 @@ TEST_P(AidlTest, FailParseOnEmptyFile) {
 }
 
 TEST_F(AidlTest, MultipleInputFiles) {
-  Options options = Options::From(
-      "aidl --lang=java -o out -I . foo/bar/IFoo.aidl foo/bar/Data.aidl");
+  Options options =
+      Options::From("aidl --lang=java -o out -I . foo/bar/IFoo.aidl foo/bar/Data.aidl");
 
   io_delegate_.SetFileContents(options.InputFiles().at(0),
-      "package foo.bar;\n"
-      "import foo.bar.Data;\n"
-      "interface IFoo { Data getData(); }\n");
+                               "package foo.bar;\n"
+                               "import foo.bar.Data;\n"
+                               "interface IFoo { Data getData(); }\n");
 
   io_delegate_.SetFileContents(options.InputFiles().at(1),
-        "package foo.bar;\n"
-        "import foo.bar.IFoo;\n"
-        "parcelable Data { IFoo foo; }\n");
+                               "package foo.bar;\n"
+                               "import foo.bar.IFoo;\n"
+                               "parcelable Data { IFoo foo; }\n");
 
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
 
   string content;
-  for (const auto file : {
-    "out/foo/bar/IFoo.java", "out/foo/bar/Data.java"}) {
+  for (const auto file : {"out/foo/bar/IFoo.java", "out/foo/bar/Data.java"}) {
     content.clear();
     EXPECT_TRUE(io_delegate_.GetWrittenContents(file, &content));
     EXPECT_FALSE(content.empty());
@@ -2927,23 +2924,22 @@ TEST_F(AidlTest, MultipleInputFilesCpp) {
       "-I . foo/bar/IFoo.aidl foo/bar/Data.aidl");
 
   io_delegate_.SetFileContents(options.InputFiles().at(0),
-      "package foo.bar;\n"
-      "import foo.bar.Data;\n"
-      "interface IFoo { Data getData(); }\n");
+                               "package foo.bar;\n"
+                               "import foo.bar.Data;\n"
+                               "interface IFoo { Data getData(); }\n");
 
   io_delegate_.SetFileContents(options.InputFiles().at(1),
-        "package foo.bar;\n"
-        "import foo.bar.IFoo;\n"
-        "parcelable Data { IFoo foo; }\n");
+                               "package foo.bar;\n"
+                               "import foo.bar.IFoo;\n"
+                               "parcelable Data { IFoo foo; }\n");
 
   EXPECT_TRUE(compile_aidl(options, io_delegate_));
 
   string content;
-  for (const auto file : {
-    "out/foo/bar/IFoo.cpp", "out/foo/bar/Data.cpp",
-    "out/include/foo/bar/IFoo.h", "out/include/foo/bar/Data.h",
-    "out/include/foo/bar/BpFoo.h", "out/include/foo/bar/BpData.h",
-    "out/include/foo/bar/BnFoo.h", "out/include/foo/bar/BnData.h"}) {
+  for (const auto file :
+       {"out/foo/bar/IFoo.cpp", "out/foo/bar/Data.cpp", "out/include/foo/bar/IFoo.h",
+        "out/include/foo/bar/Data.h", "out/include/foo/bar/BpFoo.h", "out/include/foo/bar/BpData.h",
+        "out/include/foo/bar/BnFoo.h", "out/include/foo/bar/BnData.h"}) {
     content.clear();
     EXPECT_TRUE(io_delegate_.GetWrittenContents(file, &content));
     EXPECT_FALSE(content.empty());
@@ -4209,7 +4205,7 @@ TEST_F(AidlTest, UnusedImportDoesNotContributeInclude) {
 TEST_F(AidlTest, BasePathAsImportPath) {
   Options options = Options::From("aidl --lang=java -I some -I other some/dir/pkg/name/IFoo.aidl");
   io_delegate_.SetFileContents("some/dir/pkg/name/IFoo.aidl",
-      "package pkg.name; interface IFoo { void foo(); }");
+                               "package pkg.name; interface IFoo { void foo(); }");
   const string expected_stderr =
       "ERROR: some/dir/pkg/name/IFoo.aidl:1.18-28: directory some/dir/ is not found in any of "
       "the import paths:\n - other/\n - some/\n";
@@ -5856,13 +5852,14 @@ class AidlTypeParamTest
     io.SetFileContents("a/Enum.aidl", "package a; enum Enum { A }");
     io.SetFileContents("a/Union.aidl", "package a; union Union { int a; }");
     io.SetFileContents("a/Foo.aidl", "package a; parcelable Foo { int a; }");
-    std::string decl = fmt::format(fmt::runtime(generic_type_decl), std::get<1>(param).literal);
+    std::string decl =
+        std::vformat(generic_type_decl, std::make_format_args(std::get<1>(param).literal));
     if (nullable) {
       decl = "@nullable " + decl;
     }
     io.SetFileContents("a/Target.aidl", "package a; parcelable Target { " + decl + " f; }");
 
-    const auto options = Options::From(fmt::format(
+    const auto options = Options::From(std::format(
         "aidl -I . --min_sdk_version current --lang={} a/Target.aidl -o out -h out", lang));
     CaptureStderr();
     compile_aidl(options, io);

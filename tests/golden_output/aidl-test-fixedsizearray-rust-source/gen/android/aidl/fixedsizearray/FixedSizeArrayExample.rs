@@ -696,42 +696,42 @@ pub mod r#IRepeatFixedSizeArray {
   impl IRepeatFixedSizeArray for BpRepeatFixedSizeArray {
     fn r#RepeatBytes<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [u8; 3], _arg_repeated: &'l2 mut [u8; 3]) -> binder::Result<[u8; 3]> {
       let _aidl_data = self.build_parcel_RepeatBytes(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatBytes, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatBytes, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_RepeatBytes(_arg_input, _arg_repeated, _aidl_reply)
     }
     fn r#RepeatInts<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [i32; 3], _arg_repeated: &'l2 mut [i32; 3]) -> binder::Result<[i32; 3]> {
       let _aidl_data = self.build_parcel_RepeatInts(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatInts, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatInts, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_RepeatInts(_arg_input, _arg_repeated, _aidl_reply)
     }
     fn r#RepeatBinders<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [binder::SpIBinder; 3], _arg_repeated: &'l2 mut [Option<binder::SpIBinder>; 3]) -> binder::Result<[binder::SpIBinder; 3]> {
       let _aidl_data = self.build_parcel_RepeatBinders(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatBinders, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatBinders, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_RepeatBinders(_arg_input, _arg_repeated, _aidl_reply)
     }
     fn r#RepeatParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _arg_repeated: &'l2 mut [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]) -> binder::Result<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]> {
       let _aidl_data = self.build_parcel_RepeatParcelables(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatParcelables, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatParcelables, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_RepeatParcelables(_arg_input, _arg_repeated, _aidl_reply)
     }
     fn r#Repeat2dBytes<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[u8; 3]; 2], _arg_repeated: &'l2 mut [[u8; 3]; 2]) -> binder::Result<[[u8; 3]; 2]> {
       let _aidl_data = self.build_parcel_Repeat2dBytes(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dBytes, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dBytes, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_Repeat2dBytes(_arg_input, _arg_repeated, _aidl_reply)
     }
     fn r#Repeat2dInts<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[i32; 3]; 2], _arg_repeated: &'l2 mut [[i32; 3]; 2]) -> binder::Result<[[i32; 3]; 2]> {
       let _aidl_data = self.build_parcel_Repeat2dInts(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dInts, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dInts, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_Repeat2dInts(_arg_input, _arg_repeated, _aidl_reply)
     }
     fn r#Repeat2dBinders<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[binder::SpIBinder; 3]; 2], _arg_repeated: &'l2 mut [[Option<binder::SpIBinder>; 3]; 2]) -> binder::Result<[[binder::SpIBinder; 3]; 2]> {
       let _aidl_data = self.build_parcel_Repeat2dBinders(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dBinders, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dBinders, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_Repeat2dBinders(_arg_input, _arg_repeated, _aidl_reply)
     }
     fn r#Repeat2dParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &'l2 mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]> {
       let _aidl_data = self.build_parcel_Repeat2dParcelables(_arg_input, _arg_repeated)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dParcelables, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#Repeat2dParcelables, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
       self.read_response_Repeat2dParcelables(_arg_input, _arg_repeated, _aidl_reply)
     }
   }
@@ -743,7 +743,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#RepeatBytes, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#RepeatBytes, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_RepeatBytes(_arg_input, _arg_repeated, _aidl_reply)
         }
@@ -756,7 +756,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#RepeatInts, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#RepeatInts, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_RepeatInts(_arg_input, _arg_repeated, _aidl_reply)
         }
@@ -769,7 +769,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#RepeatBinders, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#RepeatBinders, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_RepeatBinders(_arg_input, _arg_repeated, _aidl_reply)
         }
@@ -782,7 +782,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#RepeatParcelables, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#RepeatParcelables, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_RepeatParcelables(_arg_input, _arg_repeated, _aidl_reply)
         }
@@ -795,7 +795,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#Repeat2dBytes, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#Repeat2dBytes, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_Repeat2dBytes(_arg_input, _arg_repeated, _aidl_reply)
         }
@@ -808,7 +808,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#Repeat2dInts, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#Repeat2dInts, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_Repeat2dInts(_arg_input, _arg_repeated, _aidl_reply)
         }
@@ -821,7 +821,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#Repeat2dBinders, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#Repeat2dBinders, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_Repeat2dBinders(_arg_input, _arg_repeated, _aidl_reply)
         }
@@ -834,7 +834,7 @@ pub mod r#IRepeatFixedSizeArray {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#Repeat2dParcelables, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#Repeat2dParcelables, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
         move |_aidl_reply| async move {
           self.read_response_Repeat2dParcelables(_arg_input, _arg_repeated, _aidl_reply)
         }

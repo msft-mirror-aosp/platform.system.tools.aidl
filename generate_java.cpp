@@ -21,12 +21,12 @@
 #include <string.h>
 
 #include <algorithm>
+#include <format>
 #include <map>
 #include <memory>
 #include <optional>
 #include <sstream>
 
-#include <android-base/format.h>
 #include <android-base/stringprintf.h>
 
 #include "aidl_to_common.h"
@@ -634,7 +634,7 @@ void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl) {
   for (const auto& enumerator : enum_decl.GetEnumerators()) {
     out << GenerateComments(*enumerator);
     out << GenerateAnnotations(*enumerator);
-    out << fmt::format("public static final {} {} = {};\n", raw_type, enumerator->GetName(),
+    out << std::format("public static final {} {} = {};\n", raw_type, enumerator->GetName(),
                        enumerator->ValueString(backing_type, ConstantValueDecorator));
   }
   if (enum_decl.JavaDerive("toString")) {
@@ -649,7 +649,7 @@ void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl) {
     out << "return " << boxing_type << ".toString(_aidl_v);\n";
     out.Dedent();
     out << "}\n";
-    out << fmt::format(R"(static String arrayToString(Object _aidl_v) {{
+    out << std::format(R"(static String arrayToString(Object _aidl_v) {{
   if (_aidl_v == null) return "null";
   Class<?> _aidl_cls = _aidl_v.getClass();
   if (!_aidl_cls.isArray()) throw new IllegalArgumentException("not an array: " + _aidl_v);
@@ -660,15 +660,15 @@ void GenerateEnumClass(CodeWriter& out, const AidlEnumDeclaration& enum_decl) {
       _aidl_sj.add(arrayToString(java.lang.reflect.Array.get(_aidl_v, _aidl_i)));
     }}
   }} else {{
-    if (_aidl_cls != {raw_type}[].class) throw new IllegalArgumentException("wrong type: " + _aidl_cls);
-    for ({raw_type} e : ({raw_type}[]) _aidl_v) {{
+    if (_aidl_cls != {0}[].class) throw new IllegalArgumentException("wrong type: " + _aidl_cls);
+    for ({0} e : ({0}[]) _aidl_v) {{
       _aidl_sj.add(toString(e));
     }}
   }}
   return _aidl_sj.toString();
 }}
 )",
-                       fmt::arg("raw_type", raw_type));
+                       raw_type);
     out.Dedent();
     out << "}\n";
   }
