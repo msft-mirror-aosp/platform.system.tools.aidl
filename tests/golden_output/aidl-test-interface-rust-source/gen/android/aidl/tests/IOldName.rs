@@ -120,7 +120,7 @@ impl BpOldName {
 impl IOldName for BpOldName {
   fn r#RealName<'a, >(&'a self) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_RealName()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RealName, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RealName, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
     self.read_response_RealName(_aidl_reply)
   }
 }
@@ -132,7 +132,7 @@ impl<P: binder::BinderAsyncPool> IOldNameAsync<P> for BpOldName {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RealName, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+      move || binder.submit_transact(transactions::r#RealName, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
       move |_aidl_reply| async move {
         self.read_response_RealName(_aidl_reply)
       }
