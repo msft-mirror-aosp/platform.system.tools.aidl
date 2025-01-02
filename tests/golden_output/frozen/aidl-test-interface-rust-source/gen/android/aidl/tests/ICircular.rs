@@ -120,7 +120,7 @@ impl BpCircular {
 impl ICircular for BpCircular {
   fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
     let _aidl_data = self.build_parcel_GetTestService()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetTestService, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 });
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetTestService, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
     self.read_response_GetTestService(_aidl_reply)
   }
 }
@@ -132,7 +132,7 @@ impl<P: binder::BinderAsyncPool> ICircularAsync<P> for BpCircular {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetTestService, _aidl_data, if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } else { 0 }),
+      move || binder.submit_transact(transactions::r#GetTestService, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
       move |_aidl_reply| async move {
         self.read_response_GetTestService(_aidl_reply)
       }
