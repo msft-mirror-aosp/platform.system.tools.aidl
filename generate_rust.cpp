@@ -358,8 +358,9 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
   if (method.IsOneway()) flags.push_back("binder::binder_impl::FLAG_ONEWAY");
   if (iface.IsSensitiveData()) flags.push_back("binder::binder_impl::FLAG_CLEAR_BUF");
   flags.push_back(
-      "if cfg!(any(android_vndk, not(android_ndk))) { binder::binder_impl::FLAG_PRIVATE_LOCAL } "
-      "else { 0 "
+      "{"
+      "#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }"
+      "#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }"
       "}");
 
   string transact_flags = flags.empty() ? "0" : Join(flags, " | ");
