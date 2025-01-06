@@ -22,7 +22,7 @@ declare_binder_interface! {
 }
 pub trait INamedCallback: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.INamedCallback" }
-  fn r#GetName(&self) -> binder::Result<String>;
+  fn r#GetName<'a, >(&'a self) -> binder::Result<String>;
   fn getDefaultImpl() -> INamedCallbackDefaultRef where Self: Sized {
     DEFAULT_IMPL.lock().unwrap().clone()
   }
@@ -35,12 +35,12 @@ pub trait INamedCallback: binder::Interface + Send {
 }
 pub trait INamedCallbackAsync<P>: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.INamedCallback" }
-  fn r#GetName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>>;
+  fn r#GetName<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>>;
 }
 #[::async_trait::async_trait]
 pub trait INamedCallbackAsyncServer: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.INamedCallback" }
-  async fn r#GetName(&self) -> binder::Result<String>;
+  async fn r#GetName<'a, >(&'a self) -> binder::Result<String>;
 }
 impl BnNamedCallback {
   /// Create a new async binder service.
@@ -62,7 +62,7 @@ impl BnNamedCallback {
       T: INamedCallbackAsyncServer + Send + Sync + 'static,
       R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
     {
-      fn r#GetName(&self) -> binder::Result<String> {
+      fn r#GetName<'a, >(&'a self) -> binder::Result<String> {
         self._rt.block_on(self._inner.r#GetName())
       }
       fn try_as_async_server(&self) -> Option<&(dyn INamedCallbackAsyncServer + Send + Sync)> {
@@ -78,7 +78,7 @@ impl BnNamedCallback {
     }
     impl binder::Interface for Wrapper {}
     impl<P: binder::BinderAsyncPool> INamedCallbackAsync<P> for Wrapper {
-      fn r#GetName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+      fn r#GetName<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
         Box::pin(self._native.try_as_async_server().unwrap().r#GetName())
       }
     }
@@ -90,7 +90,7 @@ impl BnNamedCallback {
   }
 }
 pub trait INamedCallbackDefault: Send + Sync {
-  fn r#GetName(&self) -> binder::Result<String> {
+  fn r#GetName<'a, >(&'a self) -> binder::Result<String> {
     Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
   }
 }
@@ -118,21 +118,21 @@ impl BpNamedCallback {
   }
 }
 impl INamedCallback for BpNamedCallback {
-  fn r#GetName(&self) -> binder::Result<String> {
+  fn r#GetName<'a, >(&'a self) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_GetName()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetName, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetName, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
     self.read_response_GetName(_aidl_reply)
   }
 }
 impl<P: binder::BinderAsyncPool> INamedCallbackAsync<P> for BpNamedCallback {
-  fn r#GetName<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
+  fn r#GetName<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     let _aidl_data = match self.build_parcel_GetName() {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetName, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+      move || binder.submit_transact(transactions::r#GetName, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
       move |_aidl_reply| async move {
         self.read_response_GetName(_aidl_reply)
       }
@@ -140,7 +140,7 @@ impl<P: binder::BinderAsyncPool> INamedCallbackAsync<P> for BpNamedCallback {
   }
 }
 impl INamedCallback for binder::binder_impl::Binder<BnNamedCallback> {
-  fn r#GetName(&self) -> binder::Result<String> { self.0.r#GetName() }
+  fn r#GetName<'a, >(&'a self) -> binder::Result<String> { self.0.r#GetName() }
 }
 fn on_transact(_aidl_service: &dyn INamedCallback, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {

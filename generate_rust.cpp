@@ -101,11 +101,12 @@ void GenerateMangledAliases(CodeWriter& out, const AidlDefinedType& type) {
 }
 
 string BuildArg(const AidlArgument& arg, const AidlTypenames& typenames, Lifetime lifetime,
-                bool is_vintf_stability) {
+                bool is_vintf_stability, vector<string>& lifetimes) {
   // We pass in parameters that are not primitives by const reference.
   // Arrays get passed in as slices, which is handled in RustNameOf.
   auto arg_mode = ArgumentStorageMode(arg, typenames);
-  auto arg_type = RustNameOf(arg.GetType(), typenames, arg_mode, lifetime, is_vintf_stability);
+  auto arg_type =
+      RustNameOf(arg.GetType(), typenames, arg_mode, lifetime, is_vintf_stability, lifetimes);
   return kArgumentPrefix + arg.GetName() + ": " + arg_type;
 }
 
@@ -125,22 +126,27 @@ enum class MethodKind {
 
 string BuildMethod(const AidlMethod& method, const AidlTypenames& typenames,
                    bool is_vintf_stability, const MethodKind kind = MethodKind::NORMAL) {
-  // We need to mark the arguments with a lifetime only when returning a future that
-  // actually captures the arguments.
-  Lifetime lifetime;
+  // We need to mark the arguments with the same lifetime when returning a future that actually
+  // captures the arguments, or a fresh lifetime otherwise to make automock work.
+  Lifetime arg_lifetime;
   switch (kind) {
     case MethodKind::NORMAL:
     case MethodKind::ASYNC:
     case MethodKind::READY_FUTURE:
-      lifetime = Lifetime::NONE;
+      arg_lifetime = Lifetime::FRESH;
       break;
     case MethodKind::BOXED_FUTURE:
-      lifetime = Lifetime::A;
+      arg_lifetime = Lifetime::A;
       break;
   }
 
-  auto method_type =
-      RustNameOf(method.GetType(), typenames, StorageMode::VALUE, lifetime, is_vintf_stability);
+  // Collect the lifetimes used in all types we generate for this method.
+  vector<string> lifetimes;
+
+  // Always use lifetime `'a` for the `self` parameter, so we can use the same lifetime in the
+  // return value (if any) to match Rust's lifetime elision rules.
+  auto method_type = RustNameOf(method.GetType(), typenames, StorageMode::VALUE, Lifetime::A,
+                                is_vintf_stability, lifetimes);
   auto return_type = string{"binder::Result<"} + method_type + ">";
   auto fn_prefix = string{""};
 
@@ -159,15 +165,19 @@ string BuildMethod(const AidlMethod& method, const AidlTypenames& typenames,
       break;
   }
 
-  string parameters = "&" + RustLifetimeName(lifetime) + "self";
-  string lifetime_str = RustLifetimeGeneric(lifetime);
-
+  string parameters = "&" + RustLifetimeName(Lifetime::A, lifetimes) + "self";
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
     parameters += ", ";
-    parameters += BuildArg(*arg, typenames, lifetime, is_vintf_stability);
+    parameters += BuildArg(*arg, typenames, arg_lifetime, is_vintf_stability, lifetimes);
   }
 
-  return fn_prefix + "fn r#" + method.GetName() + lifetime_str + "(" + parameters + ") -> " +
+  string lifetimes_str = "<";
+  for (const string& lifetime : lifetimes) {
+    lifetimes_str += "'" + lifetime + ", ";
+  }
+  lifetimes_str += ">";
+
+  return fn_prefix + "fn r#" + method.GetName() + lifetimes_str + "(" + parameters + ") -> " +
          return_type;
 }
 
@@ -176,9 +186,10 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
                                  const Options& options, const std::string& default_trait_name,
                                  bool is_vintf_stability) {
   string parameters = "&self";
+  vector<string> lifetimes;
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
     parameters += ", ";
-    parameters += BuildArg(*arg, typenames, Lifetime::NONE, is_vintf_stability);
+    parameters += BuildArg(*arg, typenames, Lifetime::NONE, is_vintf_stability, lifetimes);
   }
 
   // Generate build_parcel helper.
@@ -219,8 +230,8 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
   out << "}\n";
 
   // Generate read_response helper.
-  auto return_type = RustNameOf(method.GetType(), typenames, StorageMode::VALUE, Lifetime::NONE,
-                                is_vintf_stability);
+  auto return_type =
+      RustNameOf(method.GetType(), typenames, StorageMode::VALUE, is_vintf_stability);
   out << "fn read_response_" + method.GetName() + "(" + parameters +
              ", _aidl_reply: std::result::Result<binder::binder_impl::Parcel, "
              "binder::StatusCode>) -> binder::Result<" +
@@ -256,8 +267,8 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
 
     // Return reply value
     if (method.GetType().GetName() != "void") {
-      auto return_type = RustNameOf(method.GetType(), typenames, StorageMode::VALUE, Lifetime::NONE,
-                                    is_vintf_stability);
+      auto return_type =
+          RustNameOf(method.GetType(), typenames, StorageMode::VALUE, is_vintf_stability);
       out << "let _aidl_return: " << return_type << " = _aidl_reply.read()?;\n";
       return_val = "_aidl_return";
 
@@ -346,7 +357,11 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
   vector<string> flags;
   if (method.IsOneway()) flags.push_back("binder::binder_impl::FLAG_ONEWAY");
   if (iface.IsSensitiveData()) flags.push_back("binder::binder_impl::FLAG_CLEAR_BUF");
-  flags.push_back("binder::binder_impl::FLAG_PRIVATE_LOCAL");
+  flags.push_back(
+      "{"
+      "#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }"
+      "#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }"
+      "}");
 
   string transact_flags = flags.empty() ? "0" : Join(flags, " | ");
 
@@ -464,8 +479,7 @@ void GenerateServerTransaction(CodeWriter& out, const AidlInterface& interface,
       // We need a value we can call Default::default() on
       arg_mode = StorageMode::DEFAULT_VALUE;
     }
-    auto arg_type = RustNameOf(arg->GetType(), typenames, arg_mode, Lifetime::NONE,
-                               interface.IsVintfStability());
+    auto arg_type = RustNameOf(arg->GetType(), typenames, arg_mode, interface.IsVintfStability());
 
     string arg_mut = arg->IsOut() ? "mut " : "";
     string arg_init = arg->IsIn() ? "_aidl_data.read()?" : "Default::default()";
@@ -598,7 +612,7 @@ void GenerateConstantDeclarations(CodeWriter& out, const TypeWithConstants& type
     } else if (type.Signature() == "byte" || type.Signature() == "int" ||
                type.Signature() == "long" || type.Signature() == "float" ||
                type.Signature() == "double") {
-      const_type = RustNameOf(type, typenames, StorageMode::VALUE, Lifetime::NONE,
+      const_type = RustNameOf(type, typenames, StorageMode::VALUE,
                               /*is_vintf_stability=*/false);
     } else {
       AIDL_FATAL(value) << "Unrecognized constant type: " << type.Signature();
@@ -1065,7 +1079,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
       GenerateDeprecated(out, *variable);
       const auto& var_type = variable->GetType();
       auto field_type = RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD,
-                                   Lifetime::NONE, parcel->IsVintfStability());
+                                   parcel->IsVintfStability());
       if (parcel->IsFixedSize()) {
         GeneratePaddingField(out, field_type, struct_size, padding_index, "u8");
 
@@ -1099,7 +1113,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
       auto variable_size = cpp::SizeOf(var_type, typenames);
       AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
       std::string rust_type = RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD,
-                                         Lifetime::NONE, parcel->IsVintfStability());
+                                         parcel->IsVintfStability());
       out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << rust_type << ">(), "
           << std::to_string(*variable_size) << ");\n";
 
@@ -1142,7 +1156,7 @@ void GenerateParcelDefault(CodeWriter& out, const AidlStructuredParcelable* parc
       // Generate initializer for padding for previous field if current field is i64 or f64
       if (parcel->IsFixedSize()) {
         auto field_type = RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD,
-                                     Lifetime::NONE, parcel->IsVintfStability());
+                                     parcel->IsVintfStability());
         GeneratePaddingField(out, field_type, struct_size, padding_index, "0");
 
         auto alignment = cpp::AlignmentOf(var_type, typenames);
@@ -1251,7 +1265,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
   for (const auto& variable : parcel->GetFields()) {
     GenerateDeprecated(out, *variable);
     auto field_type = RustNameOf(variable->GetType(), typenames, StorageMode::PARCELABLE_FIELD,
-                                 Lifetime::NONE, parcel->IsVintfStability());
+                                 parcel->IsVintfStability());
     out << variable->GetCapitalizedName() << "(" << field_type << "),\n";
   }
   out.Dedent();
@@ -1260,7 +1274,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
     for (const auto& variable : parcel->GetFields()) {
       const auto& var_type = variable->GetType();
       std::string rust_type = RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD,
-                                         Lifetime::NONE, parcel->IsVintfStability());
+                                         parcel->IsVintfStability());
       // Assert the size of each enum variant's payload
       auto variable_size = cpp::SizeOf(var_type, typenames);
       AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
@@ -1349,7 +1363,7 @@ void GenerateParcelDeserializeBody(CodeWriter& out, const AidlUnionDecl* parcel,
   int tag = 0;
   for (const auto& variable : parcel->GetFields()) {
     auto field_type = RustNameOf(variable->GetType(), typenames, StorageMode::PARCELABLE_FIELD,
-                                 Lifetime::NONE, parcel->IsVintfStability());
+                                 parcel->IsVintfStability());
 
     out << std::to_string(tag++) << " => {\n";
     out.Indent();
@@ -1461,7 +1475,7 @@ void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
 void GenerateRustEnumDeclaration(CodeWriter* code_writer, const AidlEnumDeclaration* enum_decl,
                                  const AidlTypenames& typenames) {
   const auto& aidl_backing_type = enum_decl->GetBackingType();
-  auto backing_type = RustNameOf(aidl_backing_type, typenames, StorageMode::VALUE, Lifetime::NONE,
+  auto backing_type = RustNameOf(aidl_backing_type, typenames, StorageMode::VALUE,
                                  /*is_vintf_stability=*/false);
 
   *code_writer << "#![allow(non_upper_case_globals)]\n";
