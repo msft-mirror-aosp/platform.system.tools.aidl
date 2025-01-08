@@ -151,12 +151,12 @@ impl BpNestedService {
 impl INestedService for BpNestedService {
   fn r#flipStatus<'a, 'l1, >(&'a self, _arg_p: &'l1 crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result> {
     let _aidl_data = self.build_parcel_flipStatus(_arg_p)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#flipStatus, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+    let _aidl_reply = self.binder.submit_transact(transactions::r#flipStatus, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
     self.read_response_flipStatus(_arg_p, _aidl_reply)
   }
   fn r#flipStatusWithCallback<'a, 'l1, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_flipStatusWithCallback(_arg_status, _arg_cb)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#flipStatusWithCallback, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+    let _aidl_reply = self.binder.submit_transact(transactions::r#flipStatusWithCallback, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
     self.read_response_flipStatusWithCallback(_arg_status, _arg_cb, _aidl_reply)
   }
 }
@@ -168,7 +168,7 @@ impl<P: binder::BinderAsyncPool> INestedServiceAsync<P> for BpNestedService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#flipStatus, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+      move || binder.submit_transact(transactions::r#flipStatus, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
       move |_aidl_reply| async move {
         self.read_response_flipStatus(_arg_p, _aidl_reply)
       }
@@ -181,7 +181,7 @@ impl<P: binder::BinderAsyncPool> INestedServiceAsync<P> for BpNestedService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#flipStatusWithCallback, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+      move || binder.submit_transact(transactions::r#flipStatusWithCallback, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
       move |_aidl_reply| async move {
         self.read_response_flipStatusWithCallback(_arg_status, _arg_cb, _aidl_reply)
       }
@@ -368,7 +368,7 @@ pub mod r#ICallback {
   impl ICallback for BpCallback {
     fn r#done<'a, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::Result<()> {
       let _aidl_data = self.build_parcel_done(_arg_status)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#done, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#done, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
       self.read_response_done(_arg_status, _aidl_reply)
     }
   }
@@ -380,7 +380,7 @@ pub mod r#ICallback {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#done, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#done, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
         move |_aidl_reply| async move {
           self.read_response_done(_arg_status, _aidl_reply)
         }
