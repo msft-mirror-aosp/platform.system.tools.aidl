@@ -250,7 +250,7 @@ pub mod r#IMyInterface {
   impl IMyInterface for BpMyInterface {
     fn r#methodWithInterfaces<'a, 'l1, 'l2, 'l3, 'l4, 'l5, 'l6, 'l7, 'l8, >(&'a self, _arg_iface: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>, _arg_nullable_iface: Option<&'l2 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>, _arg_iface_list_in: &'l3 [binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>], _arg_iface_list_out: &'l4 mut Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>, _arg_iface_list_inout: &'l5 mut Vec<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>, _arg_nullable_iface_list_in: Option<&'l6 [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>]>, _arg_nullable_iface_list_out: &'l7 mut Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>, _arg_nullable_iface_list_inout: &'l8 mut Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_16_ListOfInterfaces_15_IEmptyInterface>>>>> {
       let _aidl_data = self.build_parcel_methodWithInterfaces(_arg_iface, _arg_nullable_iface, _arg_iface_list_in, _arg_iface_list_out, _arg_iface_list_inout, _arg_nullable_iface_list_in, _arg_nullable_iface_list_out, _arg_nullable_iface_list_inout)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#methodWithInterfaces, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL);
+      let _aidl_reply = self.binder.submit_transact(transactions::r#methodWithInterfaces, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
       self.read_response_methodWithInterfaces(_arg_iface, _arg_nullable_iface, _arg_iface_list_in, _arg_iface_list_out, _arg_iface_list_inout, _arg_nullable_iface_list_in, _arg_nullable_iface_list_out, _arg_nullable_iface_list_inout, _aidl_reply)
     }
   }
@@ -262,7 +262,7 @@ pub mod r#IMyInterface {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#methodWithInterfaces, _aidl_data, binder::binder_impl::FLAG_PRIVATE_LOCAL),
+        move || binder.submit_transact(transactions::r#methodWithInterfaces, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
         move |_aidl_reply| async move {
           self.read_response_methodWithInterfaces(_arg_iface, _arg_nullable_iface, _arg_iface_list_in, _arg_iface_list_out, _arg_iface_list_inout, _arg_nullable_iface_list_in, _arg_nullable_iface_list_out, _arg_nullable_iface_list_inout, _aidl_reply)
         }
