@@ -11,6 +11,10 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+#[cfg(any(android_vndk, not(android_ndk)))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+#[cfg(not(any(android_vndk, not(android_ndk))))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
 use binder::declare_binder_interface;
 declare_binder_interface! {
   ITrunkStableTest["android.aidl.test.trunk.ITrunkStableTest"] {
@@ -252,29 +256,29 @@ impl BpTrunkStableTest {
 impl ITrunkStableTest for BpTrunkStableTest {
   fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
     let _aidl_data = self.build_parcel_repeatParcelable(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_repeatParcelable(_arg_input, _aidl_reply)
   }
   fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
     let _aidl_data = self.build_parcel_repeatEnum(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#repeatEnum, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#repeatEnum, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_repeatEnum(_arg_input, _aidl_reply)
   }
   fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
     let _aidl_data = self.build_parcel_repeatUnion(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#repeatUnion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#repeatUnion, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_repeatUnion(_arg_input, _aidl_reply)
   }
   fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_callMyCallback(_arg_cb)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#callMyCallback, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#callMyCallback, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_callMyCallback(_arg_cb, _aidl_reply)
   }
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
     if _aidl_version != -1 { return Ok(_aidl_version); }
     let _aidl_data = self.build_parcel_getInterfaceVersion()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_getInterfaceVersion(_aidl_reply)
   }
   fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
@@ -285,7 +289,7 @@ impl ITrunkStableTest for BpTrunkStableTest {
       }
     }
     let _aidl_data = self.build_parcel_getInterfaceHash()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_getInterfaceHash(_aidl_reply)
   }
 }
@@ -297,7 +301,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_repeatParcelable(_arg_input, _aidl_reply)
       }
@@ -310,7 +314,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#repeatEnum, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#repeatEnum, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_repeatEnum(_arg_input, _aidl_reply)
       }
@@ -323,7 +327,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#repeatUnion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#repeatUnion, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_repeatUnion(_arg_input, _aidl_reply)
       }
@@ -336,7 +340,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#callMyCallback, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#callMyCallback, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_callMyCallback(_arg_cb, _aidl_reply)
       }
@@ -351,7 +355,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_getInterfaceVersion(_aidl_reply)
       }
@@ -370,7 +374,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_getInterfaceHash(_aidl_reply)
       }
@@ -575,6 +579,10 @@ pub mod r#IMyCallback {
   #![allow(non_upper_case_globals)]
   #![allow(non_snake_case)]
   #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+  #[cfg(any(android_vndk, not(android_ndk)))]
+  const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+  #[cfg(not(any(android_vndk, not(android_ndk))))]
+  const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
   use binder::declare_binder_interface;
   declare_binder_interface! {
     IMyCallback["android.aidl.test.trunk.ITrunkStableTest.IMyCallback"] {
@@ -787,24 +795,24 @@ pub mod r#IMyCallback {
   impl IMyCallback for BpMyCallback {
     fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
       let _aidl_data = self.build_parcel_repeatParcelable(_arg_input)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, FLAG_PRIVATE_LOCAL);
       self.read_response_repeatParcelable(_arg_input, _aidl_reply)
     }
     fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
       let _aidl_data = self.build_parcel_repeatEnum(_arg_input)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatEnum, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatEnum, _aidl_data, FLAG_PRIVATE_LOCAL);
       self.read_response_repeatEnum(_arg_input, _aidl_reply)
     }
     fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
       let _aidl_data = self.build_parcel_repeatUnion(_arg_input)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatUnion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatUnion, _aidl_data, FLAG_PRIVATE_LOCAL);
       self.read_response_repeatUnion(_arg_input, _aidl_reply)
     }
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
       let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
       if _aidl_version != -1 { return Ok(_aidl_version); }
       let _aidl_data = self.build_parcel_getInterfaceVersion()?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+      let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL);
       self.read_response_getInterfaceVersion(_aidl_reply)
     }
     fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
@@ -815,7 +823,7 @@ pub mod r#IMyCallback {
         }
       }
       let _aidl_data = self.build_parcel_getInterfaceHash()?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+      let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, FLAG_PRIVATE_LOCAL);
       self.read_response_getInterfaceHash(_aidl_reply)
     }
   }
@@ -827,7 +835,7 @@ pub mod r#IMyCallback {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+        move || binder.submit_transact(transactions::r#repeatParcelable, _aidl_data, FLAG_PRIVATE_LOCAL),
         move |_aidl_reply| async move {
           self.read_response_repeatParcelable(_arg_input, _aidl_reply)
         }
@@ -840,7 +848,7 @@ pub mod r#IMyCallback {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#repeatEnum, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+        move || binder.submit_transact(transactions::r#repeatEnum, _aidl_data, FLAG_PRIVATE_LOCAL),
         move |_aidl_reply| async move {
           self.read_response_repeatEnum(_arg_input, _aidl_reply)
         }
@@ -853,7 +861,7 @@ pub mod r#IMyCallback {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#repeatUnion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+        move || binder.submit_transact(transactions::r#repeatUnion, _aidl_data, FLAG_PRIVATE_LOCAL),
         move |_aidl_reply| async move {
           self.read_response_repeatUnion(_arg_input, _aidl_reply)
         }
@@ -868,7 +876,7 @@ pub mod r#IMyCallback {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+        move || binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL),
         move |_aidl_reply| async move {
           self.read_response_getInterfaceVersion(_aidl_reply)
         }
@@ -887,7 +895,7 @@ pub mod r#IMyCallback {
       };
       let binder = self.binder.clone();
       P::spawn(
-        move || binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+        move || binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, FLAG_PRIVATE_LOCAL),
         move |_aidl_reply| async move {
           self.read_response_getInterfaceHash(_aidl_reply)
         }
