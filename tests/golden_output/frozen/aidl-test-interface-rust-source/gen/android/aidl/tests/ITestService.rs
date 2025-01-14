@@ -11,6 +11,10 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+#[cfg(any(android_vndk, not(android_ndk)))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+#[cfg(not(any(android_vndk, not(android_ndk))))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
 use binder::declare_binder_interface;
 declare_binder_interface! {
   ITestService["android.aidl.tests.ITestService"] {
@@ -2412,357 +2416,357 @@ impl BpTestService {
 impl ITestService for BpTestService {
   fn r#UnimplementedMethod<'a, >(&'a self, _arg_arg: i32) -> binder::Result<i32> {
     let _aidl_data = self.build_parcel_UnimplementedMethod(_arg_arg)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#UnimplementedMethod, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#UnimplementedMethod, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_UnimplementedMethod(_arg_arg, _aidl_reply)
   }
   fn r#Deprecated<'a, >(&'a self) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_Deprecated()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#Deprecated, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#Deprecated, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_Deprecated(_aidl_reply)
   }
   fn r#TestOneway<'a, >(&'a self) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_TestOneway()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#TestOneway, _aidl_data, binder::binder_impl::FLAG_ONEWAY | binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#TestOneway, _aidl_data, binder::binder_impl::FLAG_ONEWAY | binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_TestOneway(_aidl_reply)
   }
   fn r#RepeatBoolean<'a, >(&'a self, _arg_token: bool) -> binder::Result<bool> {
     let _aidl_data = self.build_parcel_RepeatBoolean(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatBoolean(_arg_token, _aidl_reply)
   }
   fn r#RepeatByte<'a, >(&'a self, _arg_token: i8) -> binder::Result<i8> {
     let _aidl_data = self.build_parcel_RepeatByte(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatByte(_arg_token, _aidl_reply)
   }
   fn r#RepeatChar<'a, >(&'a self, _arg_token: u16) -> binder::Result<u16> {
     let _aidl_data = self.build_parcel_RepeatChar(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatChar(_arg_token, _aidl_reply)
   }
   fn r#RepeatInt<'a, >(&'a self, _arg_token: i32) -> binder::Result<i32> {
     let _aidl_data = self.build_parcel_RepeatInt(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatInt(_arg_token, _aidl_reply)
   }
   fn r#RepeatLong<'a, >(&'a self, _arg_token: i64) -> binder::Result<i64> {
     let _aidl_data = self.build_parcel_RepeatLong(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatLong(_arg_token, _aidl_reply)
   }
   fn r#RepeatFloat<'a, >(&'a self, _arg_token: f32) -> binder::Result<f32> {
     let _aidl_data = self.build_parcel_RepeatFloat(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatFloat(_arg_token, _aidl_reply)
   }
   fn r#RepeatDouble<'a, >(&'a self, _arg_token: f64) -> binder::Result<f64> {
     let _aidl_data = self.build_parcel_RepeatDouble(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatDouble(_arg_token, _aidl_reply)
   }
   fn r#RepeatString<'a, 'l1, >(&'a self, _arg_token: &'l1 str) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_RepeatString(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatString(_arg_token, _aidl_reply)
   }
   fn r#RepeatByteEnum<'a, >(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum> {
     let _aidl_data = self.build_parcel_RepeatByteEnum(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatByteEnum(_arg_token, _aidl_reply)
   }
   fn r#RepeatIntEnum<'a, >(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum> {
     let _aidl_data = self.build_parcel_RepeatIntEnum(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatIntEnum(_arg_token, _aidl_reply)
   }
   fn r#RepeatLongEnum<'a, >(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum> {
     let _aidl_data = self.build_parcel_RepeatLongEnum(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatLongEnum(_arg_token, _aidl_reply)
   }
   fn r#ReverseBoolean<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [bool], _arg_repeated: &'l2 mut Vec<bool>) -> binder::Result<Vec<bool>> {
     let _aidl_data = self.build_parcel_ReverseBoolean(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseBoolean(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseByte<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [u8], _arg_repeated: &'l2 mut Vec<u8>) -> binder::Result<Vec<u8>> {
     let _aidl_data = self.build_parcel_ReverseByte(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseByte(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseChar<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [u16], _arg_repeated: &'l2 mut Vec<u16>) -> binder::Result<Vec<u16>> {
     let _aidl_data = self.build_parcel_ReverseChar(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseChar(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseInt<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [i32], _arg_repeated: &'l2 mut Vec<i32>) -> binder::Result<Vec<i32>> {
     let _aidl_data = self.build_parcel_ReverseInt(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseInt(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseLong<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [i64], _arg_repeated: &'l2 mut Vec<i64>) -> binder::Result<Vec<i64>> {
     let _aidl_data = self.build_parcel_ReverseLong(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseLong(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseFloat<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [f32], _arg_repeated: &'l2 mut Vec<f32>) -> binder::Result<Vec<f32>> {
     let _aidl_data = self.build_parcel_ReverseFloat(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseFloat(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseDouble<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [f64], _arg_repeated: &'l2 mut Vec<f64>) -> binder::Result<Vec<f64>> {
     let _aidl_data = self.build_parcel_ReverseDouble(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseDouble(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseString<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [String], _arg_repeated: &'l2 mut Vec<String>) -> binder::Result<Vec<String>> {
     let _aidl_data = self.build_parcel_ReverseString(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseString(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseByteEnum<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum], _arg_repeated: &'l2 mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>> {
     let _aidl_data = self.build_parcel_ReverseByteEnum(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseByteEnum(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseIntEnum<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum], _arg_repeated: &'l2 mut Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>> {
     let _aidl_data = self.build_parcel_ReverseIntEnum(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseIntEnum(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseLongEnum<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum], _arg_repeated: &'l2 mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>> {
     let _aidl_data = self.build_parcel_ReverseLongEnum(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseLongEnum(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#GetOtherTestService<'a, 'l1, >(&'a self, _arg_name: &'l1 str) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>> {
     let _aidl_data = self.build_parcel_GetOtherTestService(_arg_name)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetOtherTestService(_arg_name, _aidl_reply)
   }
   fn r#SetOtherTestService<'a, 'l1, 'l2, >(&'a self, _arg_name: &'l1 str, _arg_service: &'l2 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>) -> binder::Result<bool> {
     let _aidl_data = self.build_parcel_SetOtherTestService(_arg_name, _arg_service)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#SetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#SetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_SetOtherTestService(_arg_name, _arg_service, _aidl_reply)
   }
   fn r#VerifyName<'a, 'l1, 'l2, >(&'a self, _arg_service: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>, _arg_name: &'l2 str) -> binder::Result<bool> {
     let _aidl_data = self.build_parcel_VerifyName(_arg_service, _arg_name)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyName, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyName, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_VerifyName(_arg_service, _arg_name, _aidl_reply)
   }
   fn r#GetInterfaceArray<'a, 'l1, >(&'a self, _arg_names: &'l1 [String]) -> binder::Result<Vec<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>> {
     let _aidl_data = self.build_parcel_GetInterfaceArray(_arg_names)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetInterfaceArray(_arg_names, _aidl_reply)
   }
   fn r#VerifyNamesWithInterfaceArray<'a, 'l1, 'l2, >(&'a self, _arg_services: &'l1 [binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>], _arg_names: &'l2 [String]) -> binder::Result<bool> {
     let _aidl_data = self.build_parcel_VerifyNamesWithInterfaceArray(_arg_services, _arg_names)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyNamesWithInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyNamesWithInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_VerifyNamesWithInterfaceArray(_arg_services, _arg_names, _aidl_reply)
   }
   fn r#GetNullableInterfaceArray<'a, 'l1, >(&'a self, _arg_names: Option<&'l1 [Option<String>]>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>> {
     let _aidl_data = self.build_parcel_GetNullableInterfaceArray(_arg_names)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetNullableInterfaceArray(_arg_names, _aidl_reply)
   }
   fn r#VerifyNamesWithNullableInterfaceArray<'a, 'l1, 'l2, >(&'a self, _arg_services: Option<&'l1 [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&'l2 [Option<String>]>) -> binder::Result<bool> {
     let _aidl_data = self.build_parcel_VerifyNamesWithNullableInterfaceArray(_arg_services, _arg_names)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyNamesWithNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyNamesWithNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_VerifyNamesWithNullableInterfaceArray(_arg_services, _arg_names, _aidl_reply)
   }
   fn r#GetInterfaceList<'a, 'l1, >(&'a self, _arg_names: Option<&'l1 [Option<String>]>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>> {
     let _aidl_data = self.build_parcel_GetInterfaceList(_arg_names)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetInterfaceList(_arg_names, _aidl_reply)
   }
   fn r#VerifyNamesWithInterfaceList<'a, 'l1, 'l2, >(&'a self, _arg_services: Option<&'l1 [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&'l2 [Option<String>]>) -> binder::Result<bool> {
     let _aidl_data = self.build_parcel_VerifyNamesWithInterfaceList(_arg_services, _arg_names)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyNamesWithInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#VerifyNamesWithInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_VerifyNamesWithInterfaceList(_arg_services, _arg_names, _aidl_reply)
   }
   fn r#ReverseStringList<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [String], _arg_repeated: &'l2 mut Vec<String>) -> binder::Result<Vec<String>> {
     let _aidl_data = self.build_parcel_ReverseStringList(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseStringList(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#RepeatParcelFileDescriptor<'a, 'l1, >(&'a self, _arg_read: &'l1 binder::ParcelFileDescriptor) -> binder::Result<binder::ParcelFileDescriptor> {
     let _aidl_data = self.build_parcel_RepeatParcelFileDescriptor(_arg_read)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatParcelFileDescriptor, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatParcelFileDescriptor, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatParcelFileDescriptor(_arg_read, _aidl_reply)
   }
   fn r#ReverseParcelFileDescriptorArray<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [binder::ParcelFileDescriptor], _arg_repeated: &'l2 mut Vec<Option<binder::ParcelFileDescriptor>>) -> binder::Result<Vec<binder::ParcelFileDescriptor>> {
     let _aidl_data = self.build_parcel_ReverseParcelFileDescriptorArray(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseParcelFileDescriptorArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseParcelFileDescriptorArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseParcelFileDescriptorArray(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ThrowServiceException<'a, >(&'a self, _arg_code: i32) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_ThrowServiceException(_arg_code)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ThrowServiceException, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ThrowServiceException, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ThrowServiceException(_arg_code, _aidl_reply)
   }
   fn r#RepeatNullableIntArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [i32]>) -> binder::Result<Option<Vec<i32>>> {
     let _aidl_data = self.build_parcel_RepeatNullableIntArray(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableIntArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableIntArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableIntArray(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableByteEnumArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum]>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>>> {
     let _aidl_data = self.build_parcel_RepeatNullableByteEnumArray(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableByteEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableByteEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableByteEnumArray(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableIntEnumArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum]>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>>> {
     let _aidl_data = self.build_parcel_RepeatNullableIntEnumArray(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableIntEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableIntEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableIntEnumArray(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableLongEnumArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum]>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>>> {
     let _aidl_data = self.build_parcel_RepeatNullableLongEnumArray(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableLongEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableLongEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableLongEnumArray(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableString<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 str>) -> binder::Result<Option<String>> {
     let _aidl_data = self.build_parcel_RepeatNullableString(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableString(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableStringList<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<String>]>) -> binder::Result<Option<Vec<Option<String>>>> {
     let _aidl_data = self.build_parcel_RepeatNullableStringList(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableStringList(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableParcelable<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>) -> binder::Result<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>> {
     let _aidl_data = self.build_parcel_RepeatNullableParcelable(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableParcelable(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableParcelableArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>) -> binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>> {
     let _aidl_data = self.build_parcel_RepeatNullableParcelableArray(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableParcelableArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableParcelableArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableParcelableArray(_arg_input, _aidl_reply)
   }
   fn r#RepeatNullableParcelableList<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>) -> binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>> {
     let _aidl_data = self.build_parcel_RepeatNullableParcelableList(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableParcelableList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableParcelableList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableParcelableList(_arg_input, _aidl_reply)
   }
   fn r#TakesAnIBinder<'a, 'l1, >(&'a self, _arg_input: &'l1 binder::SpIBinder) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_TakesAnIBinder(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesAnIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesAnIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_TakesAnIBinder(_arg_input, _aidl_reply)
   }
   fn r#TakesANullableIBinder<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 binder::SpIBinder>) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_TakesANullableIBinder(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesANullableIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesANullableIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_TakesANullableIBinder(_arg_input, _aidl_reply)
   }
   fn r#TakesAnIBinderList<'a, 'l1, >(&'a self, _arg_input: &'l1 [binder::SpIBinder]) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_TakesAnIBinderList(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesAnIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesAnIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_TakesAnIBinderList(_arg_input, _aidl_reply)
   }
   fn r#TakesANullableIBinderList<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<binder::SpIBinder>]>) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_TakesANullableIBinderList(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesANullableIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#TakesANullableIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_TakesANullableIBinderList(_arg_input, _aidl_reply)
   }
   fn r#RepeatUtf8CppString<'a, 'l1, >(&'a self, _arg_token: &'l1 str) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_RepeatUtf8CppString(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatUtf8CppString(_arg_token, _aidl_reply)
   }
   fn r#RepeatNullableUtf8CppString<'a, 'l1, >(&'a self, _arg_token: Option<&'l1 str>) -> binder::Result<Option<String>> {
     let _aidl_data = self.build_parcel_RepeatNullableUtf8CppString(_arg_token)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatNullableUtf8CppString(_arg_token, _aidl_reply)
   }
   fn r#ReverseUtf8CppString<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [String], _arg_repeated: &'l2 mut Vec<String>) -> binder::Result<Vec<String>> {
     let _aidl_data = self.build_parcel_ReverseUtf8CppString(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseUtf8CppString(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseNullableUtf8CppString<'a, 'l1, 'l2, >(&'a self, _arg_input: Option<&'l1 [Option<String>]>, _arg_repeated: &'l2 mut Option<Vec<Option<String>>>) -> binder::Result<Option<Vec<Option<String>>>> {
     let _aidl_data = self.build_parcel_ReverseNullableUtf8CppString(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseNullableUtf8CppString(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseUtf8CppStringList<'a, 'l1, 'l2, >(&'a self, _arg_input: Option<&'l1 [Option<String>]>, _arg_repeated: &'l2 mut Option<Vec<Option<String>>>) -> binder::Result<Option<Vec<Option<String>>>> {
     let _aidl_data = self.build_parcel_ReverseUtf8CppStringList(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseUtf8CppStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseUtf8CppStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseUtf8CppStringList(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#GetCallback<'a, >(&'a self, _arg_return_null: bool) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>> {
     let _aidl_data = self.build_parcel_GetCallback(_arg_return_null)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetCallback, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetCallback, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetCallback(_arg_return_null, _aidl_reply)
   }
   fn r#FillOutStructuredParcelable<'a, 'l1, >(&'a self, _arg_parcel: &'l1 mut crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_FillOutStructuredParcelable(_arg_parcel)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#FillOutStructuredParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#FillOutStructuredParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_FillOutStructuredParcelable(_arg_parcel, _aidl_reply)
   }
   fn r#RepeatExtendableParcelable<'a, 'l1, 'l2, >(&'a self, _arg_ep: &'l1 crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _arg_ep2: &'l2 mut crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_RepeatExtendableParcelable(_arg_ep, _arg_ep2)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatExtendableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatExtendableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatExtendableParcelable(_arg_ep, _arg_ep2, _aidl_reply)
   }
   fn r#RepeatExtendableParcelableVintf<'a, 'l1, 'l2, >(&'a self, _arg_ep: &'l1 crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _arg_ep2: &'l2 mut crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_RepeatExtendableParcelableVintf(_arg_ep, _arg_ep2)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatExtendableParcelableVintf, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatExtendableParcelableVintf, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatExtendableParcelableVintf(_arg_ep, _arg_ep2, _aidl_reply)
   }
   fn r#ReverseList<'a, 'l1, >(&'a self, _arg_list: &'l1 crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList> {
     let _aidl_data = self.build_parcel_ReverseList(_arg_list)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseList(_arg_list, _aidl_reply)
   }
   fn r#ReverseIBinderArray<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [binder::SpIBinder], _arg_repeated: &'l2 mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>> {
     let _aidl_data = self.build_parcel_ReverseIBinderArray(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseIBinderArray(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#ReverseNullableIBinderArray<'a, 'l1, 'l2, >(&'a self, _arg_input: Option<&'l1 [Option<binder::SpIBinder>]>, _arg_repeated: &'l2 mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> {
     let _aidl_data = self.build_parcel_ReverseNullableIBinderArray(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseNullableIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseNullableIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseNullableIBinderArray(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#RepeatSimpleParcelable<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 simple_parcelable::SimpleParcelable, _arg_repeat: &'l2 mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable> {
     let _aidl_data = self.build_parcel_RepeatSimpleParcelable(_arg_input, _arg_repeat)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatSimpleParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#RepeatSimpleParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_RepeatSimpleParcelable(_arg_input, _arg_repeat, _aidl_reply)
   }
   fn r#ReverseSimpleParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [simple_parcelable::SimpleParcelable], _arg_repeated: &'l2 mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
     let _aidl_data = self.build_parcel_ReverseSimpleParcelables(_arg_input, _arg_repeated)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseSimpleParcelables, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ReverseSimpleParcelables, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_ReverseSimpleParcelables(_arg_input, _arg_repeated, _aidl_reply)
   }
   fn r#GetOldNameInterface<'a, >(&'a self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> {
     let _aidl_data = self.build_parcel_GetOldNameInterface()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetOldNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetOldNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetOldNameInterface(_aidl_reply)
   }
   fn r#GetNewNameInterface<'a, >(&'a self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>> {
     let _aidl_data = self.build_parcel_GetNewNameInterface()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetNewNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetNewNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetNewNameInterface(_aidl_reply)
   }
   fn r#GetUnionTags<'a, 'l1, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>> {
     let _aidl_data = self.build_parcel_GetUnionTags(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetUnionTags, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetUnionTags, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetUnionTags(_arg_input, _aidl_reply)
   }
   fn r#GetCppJavaTests<'a, >(&'a self) -> binder::Result<Option<binder::SpIBinder>> {
     let _aidl_data = self.build_parcel_GetCppJavaTests()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetCppJavaTests, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetCppJavaTests, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetCppJavaTests(_aidl_reply)
   }
   fn r#getBackendType<'a, >(&'a self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType> {
     let _aidl_data = self.build_parcel_getBackendType()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#getBackendType, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#getBackendType, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_getBackendType(_aidl_reply)
   }
   fn r#GetCircular<'a, 'l1, >(&'a self, _arg_cp: &'l1 mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
     let _aidl_data = self.build_parcel_GetCircular(_arg_cp)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetCircular, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetCircular, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetCircular(_arg_cp, _aidl_reply)
   }
 }
@@ -2774,7 +2778,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#UnimplementedMethod, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#UnimplementedMethod, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_UnimplementedMethod(_arg_arg, _aidl_reply)
       }
@@ -2787,7 +2791,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#Deprecated, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#Deprecated, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_Deprecated(_aidl_reply)
       }
@@ -2800,7 +2804,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#TestOneway, _aidl_data, binder::binder_impl::FLAG_ONEWAY | binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#TestOneway, _aidl_data, binder::binder_impl::FLAG_ONEWAY | binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_TestOneway(_aidl_reply)
       }
@@ -2813,7 +2817,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatBoolean(_arg_token, _aidl_reply)
       }
@@ -2826,7 +2830,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatByte(_arg_token, _aidl_reply)
       }
@@ -2839,7 +2843,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatChar(_arg_token, _aidl_reply)
       }
@@ -2852,7 +2856,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatInt(_arg_token, _aidl_reply)
       }
@@ -2865,7 +2869,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatLong(_arg_token, _aidl_reply)
       }
@@ -2878,7 +2882,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatFloat(_arg_token, _aidl_reply)
       }
@@ -2891,7 +2895,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatDouble(_arg_token, _aidl_reply)
       }
@@ -2904,7 +2908,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatString(_arg_token, _aidl_reply)
       }
@@ -2917,7 +2921,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatByteEnum(_arg_token, _aidl_reply)
       }
@@ -2930,7 +2934,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatIntEnum(_arg_token, _aidl_reply)
       }
@@ -2943,7 +2947,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatLongEnum(_arg_token, _aidl_reply)
       }
@@ -2956,7 +2960,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseBoolean, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseBoolean(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -2969,7 +2973,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseByte, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseByte(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -2982,7 +2986,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseChar, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseChar(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -2995,7 +2999,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseInt, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseInt(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3008,7 +3012,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseLong, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseLong(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3021,7 +3025,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseFloat, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseFloat(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3034,7 +3038,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseDouble, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseDouble(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3047,7 +3051,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseString(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3060,7 +3064,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseByteEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseByteEnum(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3073,7 +3077,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseIntEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseIntEnum(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3086,7 +3090,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseLongEnum, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseLongEnum(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3099,7 +3103,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetOtherTestService(_arg_name, _aidl_reply)
       }
@@ -3112,7 +3116,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#SetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#SetOtherTestService, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_SetOtherTestService(_arg_name, _arg_service, _aidl_reply)
       }
@@ -3125,7 +3129,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#VerifyName, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#VerifyName, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_VerifyName(_arg_service, _arg_name, _aidl_reply)
       }
@@ -3138,7 +3142,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetInterfaceArray(_arg_names, _aidl_reply)
       }
@@ -3151,7 +3155,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#VerifyNamesWithInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#VerifyNamesWithInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_VerifyNamesWithInterfaceArray(_arg_services, _arg_names, _aidl_reply)
       }
@@ -3164,7 +3168,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetNullableInterfaceArray(_arg_names, _aidl_reply)
       }
@@ -3177,7 +3181,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#VerifyNamesWithNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#VerifyNamesWithNullableInterfaceArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_VerifyNamesWithNullableInterfaceArray(_arg_services, _arg_names, _aidl_reply)
       }
@@ -3190,7 +3194,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetInterfaceList(_arg_names, _aidl_reply)
       }
@@ -3203,7 +3207,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#VerifyNamesWithInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#VerifyNamesWithInterfaceList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_VerifyNamesWithInterfaceList(_arg_services, _arg_names, _aidl_reply)
       }
@@ -3216,7 +3220,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseStringList(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3229,7 +3233,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatParcelFileDescriptor, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatParcelFileDescriptor, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatParcelFileDescriptor(_arg_read, _aidl_reply)
       }
@@ -3242,7 +3246,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseParcelFileDescriptorArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseParcelFileDescriptorArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseParcelFileDescriptorArray(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3255,7 +3259,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ThrowServiceException, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ThrowServiceException, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ThrowServiceException(_arg_code, _aidl_reply)
       }
@@ -3268,7 +3272,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableIntArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableIntArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableIntArray(_arg_input, _aidl_reply)
       }
@@ -3281,7 +3285,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableByteEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableByteEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableByteEnumArray(_arg_input, _aidl_reply)
       }
@@ -3294,7 +3298,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableIntEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableIntEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableIntEnumArray(_arg_input, _aidl_reply)
       }
@@ -3307,7 +3311,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableLongEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableLongEnumArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableLongEnumArray(_arg_input, _aidl_reply)
       }
@@ -3320,7 +3324,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableString(_arg_input, _aidl_reply)
       }
@@ -3333,7 +3337,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableStringList(_arg_input, _aidl_reply)
       }
@@ -3346,7 +3350,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableParcelable(_arg_input, _aidl_reply)
       }
@@ -3359,7 +3363,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableParcelableArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableParcelableArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableParcelableArray(_arg_input, _aidl_reply)
       }
@@ -3372,7 +3376,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableParcelableList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableParcelableList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableParcelableList(_arg_input, _aidl_reply)
       }
@@ -3385,7 +3389,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#TakesAnIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#TakesAnIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_TakesAnIBinder(_arg_input, _aidl_reply)
       }
@@ -3398,7 +3402,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#TakesANullableIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#TakesANullableIBinder, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_TakesANullableIBinder(_arg_input, _aidl_reply)
       }
@@ -3411,7 +3415,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#TakesAnIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#TakesAnIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_TakesAnIBinderList(_arg_input, _aidl_reply)
       }
@@ -3424,7 +3428,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#TakesANullableIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#TakesANullableIBinderList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_TakesANullableIBinderList(_arg_input, _aidl_reply)
       }
@@ -3437,7 +3441,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatUtf8CppString(_arg_token, _aidl_reply)
       }
@@ -3450,7 +3454,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatNullableUtf8CppString(_arg_token, _aidl_reply)
       }
@@ -3463,7 +3467,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseUtf8CppString(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3476,7 +3480,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseNullableUtf8CppString, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseNullableUtf8CppString(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3489,7 +3493,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseUtf8CppStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseUtf8CppStringList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseUtf8CppStringList(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3502,7 +3506,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetCallback, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetCallback, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetCallback(_arg_return_null, _aidl_reply)
       }
@@ -3515,7 +3519,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#FillOutStructuredParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#FillOutStructuredParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_FillOutStructuredParcelable(_arg_parcel, _aidl_reply)
       }
@@ -3528,7 +3532,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatExtendableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatExtendableParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatExtendableParcelable(_arg_ep, _arg_ep2, _aidl_reply)
       }
@@ -3541,7 +3545,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatExtendableParcelableVintf, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatExtendableParcelableVintf, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatExtendableParcelableVintf(_arg_ep, _arg_ep2, _aidl_reply)
       }
@@ -3554,7 +3558,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseList, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseList(_arg_list, _aidl_reply)
       }
@@ -3567,7 +3571,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseIBinderArray(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3580,7 +3584,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseNullableIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseNullableIBinderArray, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseNullableIBinderArray(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3593,7 +3597,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#RepeatSimpleParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#RepeatSimpleParcelable, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_RepeatSimpleParcelable(_arg_input, _arg_repeat, _aidl_reply)
       }
@@ -3606,7 +3610,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ReverseSimpleParcelables, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ReverseSimpleParcelables, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ReverseSimpleParcelables(_arg_input, _arg_repeated, _aidl_reply)
       }
@@ -3619,7 +3623,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetOldNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetOldNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetOldNameInterface(_aidl_reply)
       }
@@ -3632,7 +3636,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetNewNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetNewNameInterface, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetNewNameInterface(_aidl_reply)
       }
@@ -3645,7 +3649,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetUnionTags, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetUnionTags, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetUnionTags(_arg_input, _aidl_reply)
       }
@@ -3658,7 +3662,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetCppJavaTests, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetCppJavaTests, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetCppJavaTests(_aidl_reply)
       }
@@ -3671,7 +3675,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#getBackendType, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#getBackendType, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_getBackendType(_aidl_reply)
       }
@@ -3684,7 +3688,7 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetCircular, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetCircular, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetCircular(_arg_cp, _aidl_reply)
       }
@@ -4837,6 +4841,10 @@ pub mod r#CompilerChecks {
     #![allow(non_upper_case_globals)]
     #![allow(non_snake_case)]
     #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+    #[cfg(any(android_vndk, not(android_ndk)))]
+    const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+    #[cfg(not(any(android_vndk, not(android_ndk))))]
+    const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
     use binder::declare_binder_interface;
     declare_binder_interface! {
       IFoo["android.aidl.tests.ITestService.CompilerChecks.Foo"] {
@@ -5025,6 +5033,10 @@ pub mod r#CompilerChecks {
     #![allow(non_upper_case_globals)]
     #![allow(non_snake_case)]
     #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+    #[cfg(any(android_vndk, not(android_ndk)))]
+    const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+    #[cfg(not(any(android_vndk, not(android_ndk))))]
+    const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
     use binder::declare_binder_interface;
     declare_binder_interface! {
       INoPrefixInterface["android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface"] {
@@ -5133,7 +5145,7 @@ pub mod r#CompilerChecks {
     impl INoPrefixInterface for BpNoPrefixInterface {
       fn r#foo<'a, >(&'a self) -> binder::Result<()> {
         let _aidl_data = self.build_parcel_foo()?;
-        let _aidl_reply = self.binder.submit_transact(transactions::r#foo, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+        let _aidl_reply = self.binder.submit_transact(transactions::r#foo, _aidl_data, FLAG_PRIVATE_LOCAL);
         self.read_response_foo(_aidl_reply)
       }
     }
@@ -5145,7 +5157,7 @@ pub mod r#CompilerChecks {
         };
         let binder = self.binder.clone();
         P::spawn(
-          move || binder.submit_transact(transactions::r#foo, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+          move || binder.submit_transact(transactions::r#foo, _aidl_data, FLAG_PRIVATE_LOCAL),
           move |_aidl_reply| async move {
             self.read_response_foo(_aidl_reply)
           }
@@ -5202,6 +5214,10 @@ pub mod r#CompilerChecks {
       #![allow(non_upper_case_globals)]
       #![allow(non_snake_case)]
       #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+      #[cfg(any(android_vndk, not(android_ndk)))]
+      const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+      #[cfg(not(any(android_vndk, not(android_ndk))))]
+      const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
       use binder::declare_binder_interface;
       declare_binder_interface! {
         INestedNoPrefixInterface["android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface"] {
@@ -5310,7 +5326,7 @@ pub mod r#CompilerChecks {
       impl INestedNoPrefixInterface for BpNestedNoPrefixInterface {
         fn r#foo<'a, >(&'a self) -> binder::Result<()> {
           let _aidl_data = self.build_parcel_foo()?;
-          let _aidl_reply = self.binder.submit_transact(transactions::r#foo, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+          let _aidl_reply = self.binder.submit_transact(transactions::r#foo, _aidl_data, FLAG_PRIVATE_LOCAL);
           self.read_response_foo(_aidl_reply)
         }
       }
@@ -5322,7 +5338,7 @@ pub mod r#CompilerChecks {
           };
           let binder = self.binder.clone();
           P::spawn(
-            move || binder.submit_transact(transactions::r#foo, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+            move || binder.submit_transact(transactions::r#foo, _aidl_data, FLAG_PRIVATE_LOCAL),
             move |_aidl_reply| async move {
               self.read_response_foo(_aidl_reply)
             }

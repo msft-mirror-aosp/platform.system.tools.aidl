@@ -11,6 +11,10 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+#[cfg(any(android_vndk, not(android_ndk)))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+#[cfg(not(any(android_vndk, not(android_ndk))))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
 use binder::declare_binder_interface;
 declare_binder_interface! {
   IDeprecated["android.aidl.tests.IDeprecated"] {
