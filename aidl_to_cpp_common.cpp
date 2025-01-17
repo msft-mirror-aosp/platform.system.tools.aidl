@@ -695,13 +695,13 @@ void UnionWriter::PublicFields(CodeWriter& out) const {
   }
 
   const auto& name = decl.GetName();
+  vector<string> field_types;
+  for (const auto& f : decl.GetFields()) {
+    field_types.push_back(name_of(f->GetType(), typenames));
+  }
+  auto typelist = Join(field_types, ", ");
 
   if (decl.IsFixedSize()) {
-    vector<string> field_types;
-    for (const auto& f : decl.GetFields()) {
-      field_types.push_back(name_of(f->GetType(), typenames));
-    }
-    auto typelist = Join(field_types, ", ");
     constexpr auto tmpl = R"--(
 template <Tag _Tag>
 using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<{1}>>::type;
@@ -744,7 +744,10 @@ static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_r
 
 {0}() : _value(std::in_place_index<static_cast<size_t>({1})>, {2}) {{ }}
 
-template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
+template <typename _Tp, typename = std::enable_if_t<
+    _not_self<_Tp> &&
+    std::is_constructible_v<std::variant<{3}>, _Tp>
+  >>
 // NOLINTNEXTLINE(google-explicit-constructor)
 constexpr {0}(_Tp&& _arg)
     : _value(std::forward<_Tp>(_arg)) {{}}
@@ -785,7 +788,7 @@ void set(_Tp&&... _args) {{
 }}
 
 )--";
-    out << std::format(tmpl, name, default_name, default_value);
+    out << std::format(tmpl, name, default_name, default_value, typelist);
   }
 }
 
