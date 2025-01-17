@@ -281,6 +281,15 @@ type DumpApiProperties struct {
 }
 
 type aidlInterfaceProperties struct {
+	// AIDL generates modules with '(-V[0-9]+)-<backend>' names. To see all possible variants,
+	// try `allmod | grep <name>` where 'name' is the name of your aidl_interface. See
+	// also backend-specific documentation.
+	//
+	// aidl_interface name is recommended to be the package name, for consistency.
+	//
+	// Name must be unique across all modules of all types.
+	Name *string
+
 	// Whether the library can be installed on the vendor image.
 	Vendor_available *bool
 
@@ -368,7 +377,8 @@ type aidlInterfaceProperties struct {
 
 	Backend struct {
 		// Backend of the compiler generating code for Java clients.
-		// When enabled, this creates a target called "<name>-java".
+		// When enabled, this creates a target called "<name>-java"
+		// or, if there are versions, "<name>-V[0-9]+-java".
 		Java struct {
 			CommonBackendProperties
 			// Additional java libraries, for unstructured parcelables
@@ -387,16 +397,16 @@ type aidlInterfaceProperties struct {
 		}
 		// Backend of the compiler generating code for C++ clients using
 		// libbinder (unstable C++ interface)
-		// When enabled, this creates a target called "<name>-cpp".
+		// When enabled, this creates a target called "<name>-cpp"
+		// or, if there are versions, "<name>-V[0-9]+-cpp".
 		Cpp struct {
 			CommonNativeBackendProperties
 		}
 		// Backend of the compiler generating code for C++ clients using libbinder_ndk
 		// (stable C interface to system's libbinder) When enabled, this creates a target
 		// called "<name>-V<ver>-ndk" (for both apps and platform) and
-		// "<name>-V<ver>-ndk_platform" (for platform only).
-		// TODO(b/161456198): remove the ndk_platform backend as the ndk backend can serve
-		// the same purpose.
+		// "<name>-V<ver>-ndk_platform" (for platform only)
+		// or, if there are versions, "<name>-V[0-9]+-ndk...".
 		Ndk struct {
 			CommonNativeBackendProperties
 
@@ -411,7 +421,8 @@ type aidlInterfaceProperties struct {
 			Apps_enabled *bool
 		}
 		// Backend of the compiler generating code for Rust clients.
-		// When enabled, this creates a target called "<name>-rust".
+		// When enabled, this creates a target called "<name>-rust"
+		// or, if there are versions, "<name>-V[0-9]+-rust".
 		Rust struct {
 			CommonBackendProperties
 
