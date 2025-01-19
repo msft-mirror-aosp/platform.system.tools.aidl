@@ -11,6 +11,10 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+#[cfg(any(android_vndk, not(android_ndk)))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+#[cfg(not(any(android_vndk, not(android_ndk))))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
 use binder::declare_binder_interface;
 declare_binder_interface! {
   IFooInterface["android.aidl.versioned.tests.IFooInterface"] {
@@ -255,29 +259,29 @@ impl BpFooInterface {
 impl IFooInterface for BpFooInterface {
   fn r#originalApi<'a, >(&'a self) -> binder::Result<()> {
     let _aidl_data = self.build_parcel_originalApi()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#originalApi, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#originalApi, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_originalApi(_aidl_reply)
   }
   fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_acceptUnionAndReturnString(_arg_u)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#acceptUnionAndReturnString, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#acceptUnionAndReturnString, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_acceptUnionAndReturnString(_arg_u, _aidl_reply)
   }
   fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
     let _aidl_data = self.build_parcel_ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#ignoreParcelablesAndRepeatInt, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#ignoreParcelablesAndRepeatInt, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value, _aidl_reply)
   }
   fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
     let _aidl_data = self.build_parcel_returnsLengthOfFooArray(_arg_foos)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#returnsLengthOfFooArray, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#returnsLengthOfFooArray, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_returnsLengthOfFooArray(_arg_foos, _aidl_reply)
   }
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
     if _aidl_version != -1 { return Ok(_aidl_version); }
     let _aidl_data = self.build_parcel_getInterfaceVersion()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_getInterfaceVersion(_aidl_reply)
   }
   fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
@@ -288,7 +292,7 @@ impl IFooInterface for BpFooInterface {
       }
     }
     let _aidl_data = self.build_parcel_getInterfaceHash()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_getInterfaceHash(_aidl_reply)
   }
 }
@@ -300,7 +304,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#originalApi, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#originalApi, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_originalApi(_aidl_reply)
       }
@@ -313,7 +317,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#acceptUnionAndReturnString, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#acceptUnionAndReturnString, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_acceptUnionAndReturnString(_arg_u, _aidl_reply)
       }
@@ -326,7 +330,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#ignoreParcelablesAndRepeatInt, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#ignoreParcelablesAndRepeatInt, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value, _aidl_reply)
       }
@@ -339,7 +343,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#returnsLengthOfFooArray, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#returnsLengthOfFooArray, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_returnsLengthOfFooArray(_arg_foos, _aidl_reply)
       }
@@ -354,7 +358,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_getInterfaceVersion(_aidl_reply)
       }
@@ -373,7 +377,7 @@ impl<P: binder::BinderAsyncPool> IFooInterfaceAsync<P> for BpFooInterface {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#getInterfaceHash, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_getInterfaceHash(_aidl_reply)
       }
