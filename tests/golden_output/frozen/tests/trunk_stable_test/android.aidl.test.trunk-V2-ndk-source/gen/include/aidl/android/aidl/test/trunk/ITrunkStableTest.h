@@ -248,6 +248,9 @@ public:
     IMyCallback();
     virtual ~IMyCallback();
 
+    // Interface is being downgraded to the last frozen version due to
+    // RELEASE_AIDL_USE_UNFROZEN. See
+    // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
     static inline const int32_t version = true ? 1 : 2;
     static inline const std::string hash = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
     static constexpr uint32_t TRANSACTION_repeatParcelable = FIRST_CALL_TRANSACTION + 0;
@@ -335,6 +338,9 @@ public:
     ::ndk::SpAIBinder createBinder() override;
   private:
   };
+  // Interface is being downgraded to the last frozen version due to
+  // RELEASE_AIDL_USE_UNFROZEN. See
+  // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
   static inline const int32_t version = true ? 1 : 2;
   static inline const std::string hash = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
   static constexpr uint32_t TRANSACTION_repeatParcelable = FIRST_CALL_TRANSACTION + 0;
