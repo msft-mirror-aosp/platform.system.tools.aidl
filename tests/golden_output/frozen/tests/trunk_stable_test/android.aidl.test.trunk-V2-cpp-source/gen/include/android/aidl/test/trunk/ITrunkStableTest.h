@@ -43,6 +43,9 @@ class LIBBINDER_EXPORTED ITrunkStableTest : public ::android::IInterface {
 public:
   typedef ITrunkStableTestDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TrunkStableTest)
+  // Interface is being downgraded to the last frozen version due to
+  // RELEASE_AIDL_USE_UNFROZEN. See
+  // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
   static inline const int32_t VERSION = true ? 1 : 2;
   static inline const std::string HASH = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
   class LIBBINDER_EXPORTED MyParcelable : public ::android::Parcelable {
@@ -234,6 +237,9 @@ public:
   public:
     typedef IMyCallbackDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(MyCallback)
+    // Interface is being downgraded to the last frozen version due to
+    // RELEASE_AIDL_USE_UNFROZEN. See
+    // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
     static inline const int32_t VERSION = true ? 1 : 2;
     static inline const std::string HASH = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
     virtual ::android::binder::Status repeatParcelable(const ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& input, ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) = 0;
