@@ -1033,6 +1033,7 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << "DECLARE_META_INTERFACE(" << ClassName(interface, ClassNames::BASE) << ")\n";
   if (options.Version() > 0) {
     if (options.IsLatestUnfrozenVersion()) {
+      out << kDowngradeComment;
       out << "static inline const int32_t VERSION = true ? "
           << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
           << ";\n";

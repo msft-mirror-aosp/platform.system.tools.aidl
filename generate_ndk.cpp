@@ -1179,6 +1179,7 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   GenerateConstantDeclarations(out, types, defined_type);
   if (options.Version() > 0) {
     if (options.IsLatestUnfrozenVersion()) {
+      out << kDowngradeComment;
       out << "static inline const int32_t " << kVersion << " = true ? "
           << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
           << ";\n";

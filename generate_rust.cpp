@@ -944,6 +944,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   // https://doc.rust-lang.org/reference/items/traits.html#object-safety
   if (options.Version() > 0) {
     if (options.IsLatestUnfrozenVersion()) {
+      *code_writer << kDowngradeComment;
       *code_writer << "pub const VERSION: i32 = if true {"
                    << std::to_string(options.PreviousVersion()) << "} else {"
                    << std::to_string(options.Version()) << "};\n";

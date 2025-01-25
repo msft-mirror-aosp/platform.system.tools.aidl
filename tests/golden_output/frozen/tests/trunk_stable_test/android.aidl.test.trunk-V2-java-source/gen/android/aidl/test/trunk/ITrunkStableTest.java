@@ -16,6 +16,9 @@ public interface ITrunkStableTest extends android.os.IInterface
    * that the remote object is implementing.
    */
   public static final int VERSION = true ? 1 : 2;
+  // Interface is being downgraded to the last frozen version due to
+  // RELEASE_AIDL_USE_UNFROZEN. See
+  // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
   public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
   /** Default implementation for ITrunkStableTest. */
   public static class Default implements android.aidl.test.trunk.ITrunkStableTest
@@ -619,6 +622,9 @@ public interface ITrunkStableTest extends android.os.IInterface
      * that the remote object is implementing.
      */
     public static final int VERSION = true ? 1 : 2;
+    // Interface is being downgraded to the last frozen version due to
+    // RELEASE_AIDL_USE_UNFROZEN. See
+    // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
     public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
     /** Default implementation for IMyCallback. */
     public static class Default implements android.aidl.test.trunk.ITrunkStableTest.IMyCallback

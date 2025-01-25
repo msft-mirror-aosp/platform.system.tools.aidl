@@ -45,7 +45,10 @@ public:
 
   UnionInUnion() : _value(std::in_place_index<static_cast<size_t>(first)>, ::android::aidl::tests::unions::EnumUnion()) { }
 
-  template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
+  template <typename _Tp, typename = std::enable_if_t<
+      _not_self<_Tp> &&
+      std::is_constructible_v<std::variant<::android::aidl::tests::unions::EnumUnion, int32_t>, _Tp>
+    >>
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr UnionInUnion(_Tp&& _arg)
       : _value(std::forward<_Tp>(_arg)) {}
