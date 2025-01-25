@@ -183,7 +183,10 @@ public:
 
     MyUnion() : _value(std::in_place_index<static_cast<size_t>(iface)>, ::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>()) { }
 
-    template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
+    template <typename _Tp, typename = std::enable_if_t<
+        _not_self<_Tp> &&
+        std::is_constructible_v<std::variant<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>, ::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>, ::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>, ::std::optional<::std::vector<::android::sp<::android::aidl::tests::ListOfInterfaces::IEmptyInterface>>>>, _Tp>
+      >>
     // NOLINTNEXTLINE(google-explicit-constructor)
     constexpr MyUnion(_Tp&& _arg)
         : _value(std::forward<_Tp>(_arg)) {}
