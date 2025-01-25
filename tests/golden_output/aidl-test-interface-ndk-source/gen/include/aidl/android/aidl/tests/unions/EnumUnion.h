@@ -60,7 +60,10 @@ public:
 
   EnumUnion() : _value(std::in_place_index<static_cast<size_t>(intEnum)>, ::aidl::android::aidl::tests::IntEnum(::aidl::android::aidl::tests::IntEnum::FOO)) { }
 
-  template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
+  template <typename _Tp, typename = std::enable_if_t<
+      _not_self<_Tp> &&
+      std::is_constructible_v<std::variant<::aidl::android::aidl::tests::IntEnum, ::aidl::android::aidl::tests::LongEnum, int32_t>, _Tp>
+    >>
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr EnumUnion(_Tp&& _arg)
       : _value(std::forward<_Tp>(_arg)) {}
