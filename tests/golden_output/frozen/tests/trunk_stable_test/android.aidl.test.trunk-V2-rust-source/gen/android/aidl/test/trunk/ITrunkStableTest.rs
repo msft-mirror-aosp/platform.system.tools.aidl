@@ -171,6 +171,9 @@ pub mod transactions {
 }
 pub type ITrunkStableTestDefaultRef = Option<std::sync::Arc<dyn ITrunkStableTestDefault>>;
 static DEFAULT_IMPL: std::sync::Mutex<ITrunkStableTestDefaultRef> = std::sync::Mutex::new(None);
+// Interface is being downgraded to the last frozen version due to
+// RELEASE_AIDL_USE_UNFROZEN. See
+// https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
 pub const VERSION: i32 = if true {1} else {2};
 pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
 impl BpTrunkStableTest {
@@ -829,6 +832,9 @@ pub mod r#IMyCallback {
   }
   pub type IMyCallbackDefaultRef = Option<std::sync::Arc<dyn IMyCallbackDefault>>;
   static DEFAULT_IMPL: std::sync::Mutex<IMyCallbackDefaultRef> = std::sync::Mutex::new(None);
+  // Interface is being downgraded to the last frozen version due to
+  // RELEASE_AIDL_USE_UNFROZEN. See
+  // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
   pub const VERSION: i32 = if true {1} else {2};
   pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
   impl BpMyCallback {
