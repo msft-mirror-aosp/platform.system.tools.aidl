@@ -53,7 +53,10 @@ public:
 
   UnionWithFd() : _value(std::in_place_index<static_cast<size_t>(num)>, int32_t(0)) { }
 
-  template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
+  template <typename _Tp, typename = std::enable_if_t<
+      _not_self<_Tp> &&
+      std::is_constructible_v<std::variant<int32_t, ::ndk::ScopedFileDescriptor>, _Tp>
+    >>
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr UnionWithFd(_Tp&& _arg)
       : _value(std::forward<_Tp>(_arg)) {}
