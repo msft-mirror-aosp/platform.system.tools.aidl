@@ -11,6 +11,10 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+#[cfg(any(android_vndk, not(android_ndk)))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
+#[cfg(not(any(android_vndk, not(android_ndk))))]
+const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;
 use binder::declare_binder_interface;
 declare_binder_interface! {
   INamedCallback["android.aidl.tests.INamedCallback"] {
@@ -120,7 +124,7 @@ impl BpNamedCallback {
 impl INamedCallback for BpNamedCallback {
   fn r#GetName<'a, >(&'a self) -> binder::Result<String> {
     let _aidl_data = self.build_parcel_GetName()?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#GetName, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }});
+    let _aidl_reply = self.binder.submit_transact(transactions::r#GetName, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_GetName(_aidl_reply)
   }
 }
@@ -132,7 +136,7 @@ impl<P: binder::BinderAsyncPool> INamedCallbackAsync<P> for BpNamedCallback {
     };
     let binder = self.binder.clone();
     P::spawn(
-      move || binder.submit_transact(transactions::r#GetName, _aidl_data, {#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }}),
+      move || binder.submit_transact(transactions::r#GetName, _aidl_data, FLAG_PRIVATE_LOCAL),
       move |_aidl_reply| async move {
         self.read_response_GetName(_aidl_reply)
       }

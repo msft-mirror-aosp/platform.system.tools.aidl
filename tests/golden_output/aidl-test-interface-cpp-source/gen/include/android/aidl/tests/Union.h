@@ -56,7 +56,10 @@ public:
 
   Union() : _value(std::in_place_index<static_cast<size_t>(ns)>, ::std::vector<int32_t>({})) { }
 
-  template <typename _Tp, typename = std::enable_if_t<_not_self<_Tp>>>
+  template <typename _Tp, typename = std::enable_if_t<
+      _not_self<_Tp> &&
+      std::is_constructible_v<std::variant<::std::vector<int32_t>, int32_t, int32_t, ::std::string, ::android::sp<::android::IBinder>, ::std::vector<::std::string>, ::android::aidl::tests::ByteEnum>, _Tp>
+    >>
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr Union(_Tp&& _arg)
       : _value(std::forward<_Tp>(_arg)) {}

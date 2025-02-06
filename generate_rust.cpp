@@ -357,12 +357,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
   vector<string> flags;
   if (method.IsOneway()) flags.push_back("binder::binder_impl::FLAG_ONEWAY");
   if (iface.IsSensitiveData()) flags.push_back("binder::binder_impl::FLAG_CLEAR_BUF");
-  flags.push_back(
-      "{"
-      "#[cfg(any(android_vndk, not(android_ndk)))] { binder::binder_impl::FLAG_PRIVATE_LOCAL }"
-      "#[cfg(not(any(android_vndk, not(android_ndk))))] { 0 }"
-      "}");
-
+  flags.push_back("FLAG_PRIVATE_LOCAL");
   string transact_flags = flags.empty() ? "0" : Join(flags, " | ");
 
   switch (kind) {
@@ -630,6 +625,11 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer << "#![allow(non_snake_case)]\n";
   // Import IBinderInternal for transact()
   *code_writer << "#[allow(unused_imports)] use binder::binder_impl::IBinderInternal;\n";
+  *code_writer << "#[cfg(any(android_vndk, not(android_ndk)))]\n";
+  *code_writer << "const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = "
+                  "binder::binder_impl::FLAG_PRIVATE_LOCAL;\n";
+  *code_writer << "#[cfg(not(any(android_vndk, not(android_ndk))))]\n";
+  *code_writer << "const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = 0;\n";
 
   auto trait_name = ClassName(*iface, cpp::ClassNames::INTERFACE);
   auto trait_name_async = trait_name + "Async";
@@ -944,6 +944,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   // https://doc.rust-lang.org/reference/items/traits.html#object-safety
   if (options.Version() > 0) {
     if (options.IsLatestUnfrozenVersion()) {
+      *code_writer << kDowngradeComment;
       *code_writer << "pub const VERSION: i32 = if true {"
                    << std::to_string(options.PreviousVersion()) << "} else {"
                    << std::to_string(options.Version()) << "};\n";
