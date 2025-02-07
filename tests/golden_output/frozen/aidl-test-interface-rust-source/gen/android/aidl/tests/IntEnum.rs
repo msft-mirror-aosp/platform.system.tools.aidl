@@ -12,7 +12,10 @@
 use binder::declare_binder_enum;
 declare_binder_enum! {
   #[repr(C, align(4))]
-  r#IntEnum : [i32; 4] {
+  r#IntEnum : [i32; 7] {
+    r#ZERO = 0,
+    r#ONE = 1,
+    r#TWO = 2,
     r#FOO = 1000,
     r#BAR = 2000,
     r#BAZ = 2001,
