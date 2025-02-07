@@ -181,8 +181,9 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
   }
   out.Write("%s.markForBinder(remoteStrong());\n", kDataVarName);
 
-  // Even if we're oneway, the transact method still takes a parcel.
-  out.Write("%s %s;\n", kAndroidParcelLiteral, kReplyVarName);
+  if (!method.IsOneway()) {
+    out.Write("%s %s;\n", kAndroidParcelLiteral, kReplyVarName);
+  }
 
   // Declare the status_t variable we need for error handling.
   out.Write("%s %s = %s;\n", kAndroidStatusLiteral, kAndroidStatusVarName, kAndroidStatusOk);
@@ -237,8 +238,9 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
   if (method.IsOneway()) flags.push_back("::android::IBinder::FLAG_ONEWAY");
   if (interface.IsSensitiveData()) flags.push_back("::android::IBinder::FLAG_CLEAR_BUF");
 
-  out.Write("%s = remote()->transact(%s, %s, &%s, %s);\n", kAndroidStatusVarName,
-            GetTransactionIdFor(bn_name, method).c_str(), kDataVarName, kReplyVarName,
+  out.Write("%s = remote()->transact(%s, %s, %s%s, %s);\n", kAndroidStatusVarName,
+            GetTransactionIdFor(bn_name, method).c_str(), kDataVarName,
+            method.IsOneway() ? "" : "&", method.IsOneway() ? "nullptr" : kReplyVarName,
             flags.empty() ? "0" : Join(flags, " | ").c_str());
 
   // If the method is not implemented in the remote side, try to call the
