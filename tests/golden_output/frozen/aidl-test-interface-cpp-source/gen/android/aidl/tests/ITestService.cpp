@@ -113,7 +113,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_data;
   _aidl_data.markSensitive();
   _aidl_data.markForBinder(remoteStrong());
-  ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
   ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TestOneway::cppClient");
@@ -121,7 +120,7 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
-  _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_TestOneway, _aidl_data, &_aidl_reply, ::android::IBinder::FLAG_ONEWAY | ::android::IBinder::FLAG_CLEAR_BUF);
+  _aidl_ret_status = remote()->transact(BnTestService::TRANSACTION_TestOneway, _aidl_data, nullptr, ::android::IBinder::FLAG_ONEWAY | ::android::IBinder::FLAG_CLEAR_BUF);
   if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) [[unlikely]] {
      return ITestService::getDefaultImpl()->TestOneway();
   }
