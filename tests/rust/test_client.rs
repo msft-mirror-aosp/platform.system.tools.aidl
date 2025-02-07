@@ -181,6 +181,7 @@ test_primitive! {test_primitive_constant12, RepeatInt, ITestService::CONSTANT12}
 test_primitive! {test_primitive_long_constant, RepeatLong, ITestService::LONG_CONSTANT}
 test_primitive! {test_primitive_byte_enum, RepeatByteEnum, ByteEnum::FOO}
 test_primitive! {test_primitive_int_enum, RepeatIntEnum, IntEnum::BAR}
+test_primitive! {test_primitive_int_enum_undefined, RepeatIntEnum, IntEnum(12)}
 test_primitive! {test_primitive_long_enum, RepeatLongEnum, LongEnum::FOO}
 test_primitive! {test_primitive_float_constant, RepeatFloat, ITestService::FLOAT_CONSTANT}
 test_primitive! {test_primitive_float_constant2, RepeatFloat, ITestService::FLOAT_CONSTANT2}
