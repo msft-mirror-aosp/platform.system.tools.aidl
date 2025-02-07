@@ -83,6 +83,19 @@ TEST_F(AidlPrimitiveTest, aInt) {
   DoTest(&ITestService::RepeatInt, int32_t{1 << 30});
 }
 
+TEST_F(AidlPrimitiveTest, IntEnum) {
+  DoTest(&ITestService::RepeatIntEnum, IntEnum::FOO);
+}
+
+TEST_F(AidlPrimitiveTest, IntEnumUndefined) {
+  DoTest(&ITestService::RepeatIntEnum, static_cast<IntEnum>(12));
+}
+
+TEST_F(AidlPrimitiveTest, IntEnumIncorrectBitwiseOp) {
+  DoTest(&ITestService::RepeatIntEnum, static_cast<IntEnum>(static_cast<int32_t>(IntEnum::FOO) |
+                                                            static_cast<int32_t>(IntEnum::BAR)));
+}
+
 TEST_F(AidlPrimitiveTest, aLong) {
   DoTest(&ITestService::RepeatLong, int64_t{1LL << 60});
 }
