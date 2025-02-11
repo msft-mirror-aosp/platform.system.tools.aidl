@@ -1339,6 +1339,7 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   if (!options.Hash().empty() || options.IsLatestUnfrozenVersion()) {
     std::ostringstream code;
     if (options.IsLatestUnfrozenVersion()) {
+      code << kDowngradeComment;
       code << "public static final String HASH = \"" << options.PreviousHash() << "\";\n";
     } else {
       code << "public static final String HASH = \"" << options.Hash() << "\";\n";

@@ -33,6 +33,12 @@ enum class CommunicationSide {
   BOTH = WRITE | READ,
 };
 
+constexpr const char* kDowngradeComment =
+    "// Interface is being downgraded to the last frozen version due to\n"
+    "// RELEASE_AIDL_USE_UNFROZEN. See\n"
+    "// "
+    "https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development\n";
+
 constexpr int kDowngradeCommunicationBitmap = static_cast<int>(CommunicationSide::BOTH);
 
 // This is used when adding the trunk stable downgrade to unfrozen interfaces.
