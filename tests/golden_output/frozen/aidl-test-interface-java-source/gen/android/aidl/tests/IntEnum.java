@@ -8,6 +8,12 @@
  */
 package android.aidl.tests;
 public @interface IntEnum {
+  /**
+   * Reserved: 12 and 2040
+   * We are using 12 and (FOO | BAR) in some tests because
+   * they _are not_ defined in this enum.
+   * Please do not add them here.
+   */
   public static final int FOO = 1000;
   public static final int BAR = 2000;
   public static final int BAZ = 2001;

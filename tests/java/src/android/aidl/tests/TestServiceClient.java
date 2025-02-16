@@ -189,6 +189,18 @@ public class TestServiceClient {
     }
 
     @Test
+    public void testIntEnumRepeatUndefined() throws RemoteException {
+      int query = 12;
+      assertThat(service.RepeatIntEnum(query), is(query));
+    }
+
+    @Test
+    public void testIntEnumRepeatWrongBitwiseOperation() throws RemoteException {
+      int query = IntEnum.FOO | IntEnum.BAR;
+      assertThat(service.RepeatIntEnum(query), is(query));
+    }
+
+    @Test
     public void testLongEnumRepeat() throws RemoteException {
         long query = LongEnum.FOO;
         assertThat(service.RepeatLongEnum(query), is(query));
