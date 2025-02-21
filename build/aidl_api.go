@@ -685,8 +685,9 @@ type freezeApiSingleton struct{}
 func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) {
 	ownersToFreeze := strings.Fields(ctx.Config().Getenv("AIDL_FREEZE_OWNERS"))
 	var files android.Paths
-	ctx.VisitAllModules(func(module android.Module) {
-		if !module.Enabled(ctx) {
+	ctx.VisitAllModuleProxies(func(module android.ModuleProxy) {
+		commonInfo, _ := android.OtherModuleProvider(ctx, module, android.CommonModuleInfoKey)
+		if !commonInfo.Enabled {
 			return
 		}
 		if apiInfo, ok := android.OtherModuleProvider(ctx, module, aidlApiProvider); ok {
@@ -695,9 +696,9 @@ func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) 
 			}
 			var shouldBeFrozen bool
 			if len(ownersToFreeze) > 0 {
-				shouldBeFrozen = android.InList(module.Owner(), ownersToFreeze)
+				shouldBeFrozen = android.InList(commonInfo.Owner, ownersToFreeze)
 			} else {
-				shouldBeFrozen = module.Owner() == ""
+				shouldBeFrozen = commonInfo.Owner == ""
 			}
 			if shouldBeFrozen {
 				files = append(files, apiInfo.FreezeApiTimestamp)
