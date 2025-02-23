@@ -182,6 +182,9 @@ test_primitive! {test_primitive_long_constant, RepeatLong, ITestService::LONG_CO
 test_primitive! {test_primitive_byte_enum, RepeatByteEnum, ByteEnum::FOO}
 test_primitive! {test_primitive_int_enum, RepeatIntEnum, IntEnum::BAR}
 test_primitive! {test_primitive_int_enum_undefined, RepeatIntEnum, IntEnum(12)}
+test_primitive! {test_primitive_int_enum_bitwise_or, RepeatIntEnum, IntEnum::FOO | IntEnum::BAR}
+test_primitive! {test_primitive_int_enum_bitwise_and, RepeatIntEnum, IntEnum::FOO & IntEnum::BAR}
+test_primitive! {test_primitive_int_enum_bitwise_xor, RepeatIntEnum, IntEnum::FOO ^ IntEnum::BAR}
 test_primitive! {test_primitive_long_enum, RepeatLongEnum, LongEnum::FOO}
 test_primitive! {test_primitive_float_constant, RepeatFloat, ITestService::FLOAT_CONSTANT}
 test_primitive! {test_primitive_float_constant2, RepeatFloat, ITestService::FLOAT_CONSTANT2}
@@ -216,6 +219,63 @@ fn test_repeat_string() {
         let result = service.RepeatString(input);
         assert_eq!(result.as_ref(), Ok(input));
     }
+}
+
+#[test]
+fn test_enum_or() {
+    assert_eq!(IntEnum::FOO | IntEnum::BAR, IntEnum(1000 | 2000));
+}
+
+#[test]
+fn test_enum_or_assign() {
+    let mut var = IntEnum(0);
+    var |= IntEnum::FOO;
+    assert_eq!(var, IntEnum::FOO);
+    var |= IntEnum::BAR;
+    assert_eq!(var, IntEnum::FOO | IntEnum::BAR)
+}
+
+#[test]
+fn test_enum_xor() {
+    assert_eq!(IntEnum(0) ^ IntEnum::BAR, IntEnum::BAR);
+
+    let var_both = IntEnum::FOO | IntEnum::BAR;
+    let int_both = 1000 | 2000;
+    assert_eq!(var_both ^ IntEnum::BAR, IntEnum(int_both ^ 2000));
+    assert_eq!(var_both ^ IntEnum::FOO, IntEnum(int_both ^ 1000));
+}
+
+#[test]
+fn test_enum_xor_assign() {
+    let mut var = IntEnum(0);
+    var ^= IntEnum::BAR;
+    assert_eq!(var, IntEnum::BAR);
+
+    var = IntEnum::FOO | IntEnum::BAR;
+    var ^= IntEnum::BAR;
+    assert_eq!(var, IntEnum((1000 | 2000) ^ 2000));
+}
+
+#[test]
+fn test_enum_and() {
+    assert_eq!(IntEnum::FOO & IntEnum::BAR, IntEnum(1000 & 2000));
+
+    let var_both = IntEnum::FOO | IntEnum::BAR;
+    assert_eq!(var_both & IntEnum::BAR, IntEnum::BAR);
+    assert_eq!(var_both & IntEnum::FOO, IntEnum::FOO);
+}
+
+#[test]
+fn test_enum_and_assign() {
+    let mut var = IntEnum(0x7FFFFFFF);
+    var &= IntEnum::FOO;
+    assert_eq!(var, IntEnum::FOO);
+    var &= IntEnum(0);
+    assert_eq!(var, IntEnum(0));
+
+    var = IntEnum(0x7FFFFFFF);
+    var &= IntEnum(0xFF);
+    assert_eq!(var, IntEnum(0xFF));
 }
 
 #[test]
