@@ -686,7 +686,7 @@ func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) 
 	ownersToFreeze := strings.Fields(ctx.Config().Getenv("AIDL_FREEZE_OWNERS"))
 	var files android.Paths
 	ctx.VisitAllModuleProxies(func(module android.ModuleProxy) {
-		commonInfo, _ := android.OtherModuleProvider(ctx, module, android.CommonModuleInfoKey)
+		commonInfo, _ := android.OtherModuleProvider(ctx, module, android.CommonModuleInfoProvider)
 		if !commonInfo.Enabled {
 			return
 		}
