@@ -58,7 +58,10 @@ cc_defaults {
         "-performance-unnecessary-copy-initialization",
         "-performance-unnecessary-value-param",
     ],
-    header_libs: ["libgtest_prod_headers"],
+    header_libs: [
+        "libgtest_prod_headers",
+        "libaidl_transactions",
+    ],
     static_libs: [
         "libbase",
         "libgtest",
@@ -201,6 +204,10 @@ cc_test {
         "liblog",
     ],
 
+    header_libs: [
+        "libaidl_transactions",
+    ],
+
     target: {
         host: {
             sanitize: {
@@ -220,6 +227,10 @@ cc_fuzz {
     dictionary: "tests/aidl_parser_fuzzer.dict",
     corpus: [
         "tests/corpus/*",
+    ],
+
+    header_libs: [
+        "libaidl_transactions",
     ],
 
     fuzz_config: {
@@ -317,6 +328,21 @@ cc_library_headers {
         "//apex_available:platform",
         "//apex_available:anyapex",
     ],
+}
+
+cc_library_headers {
+    name: "libaidl_transactions",
+    host_supported: true,
+    export_include_dirs: ["include"],
+    visibility: [
+       ":__subpackages__",
+       "//frameworks/native/libs/binder/tests:__subpackages__",
+    ],
+    target: {
+        windows: {
+            enabled: true,
+        },
+    },
 }
 
 cc_library {
