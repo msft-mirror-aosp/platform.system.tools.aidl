@@ -191,7 +191,8 @@ static bool are_compatible_interfaces(const AidlInterface& older, const AidlInte
     // has happened.
     const auto new_m = found->second;
 
-    if (old_m->IsOneway() != new_m->IsOneway()) {
+    // Adding oneway is an incompatible change, but removing oneway is not .
+    if (!old_m->IsOneway() && new_m->IsOneway()) {
       AIDL_ERROR(new_m) << "Oneway attribute " << (old_m->IsOneway() ? "removed" : "added") << ": "
                         << older.GetCanonicalName() << "." << old_m->Signature();
       compatible = false;
