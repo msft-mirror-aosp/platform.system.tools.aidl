@@ -3907,6 +3907,22 @@ TEST_F(AidlTestIncompatibleChanges, IncompatibleChangesInNestedType) {
   EXPECT_THAT(GetCapturedStderr(), HasSubstr("Removed or changed method: p.Foo.IBar.foo()"));
 }
 
+TEST_F(AidlTestIncompatibleChanges, IncompatibleTwoWayToOneWay) {
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{ void foo();}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "package p; interface IFoo{ oneway void foo();}");
+
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Oneway attribute added: p.IFoo.foo()"));
+}
+
+TEST_F(AidlTestCompatibleChanges, CompatibleOneWayToTwoWay) {
+  io_delegate_.SetFileContents("old/p/IFoo.aidl", "package p; interface IFoo{ oneway void foo();}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl", "package p; interface IFoo{ void foo();}");
+
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
 TEST_P(AidlTest, RejectNonFixedSizeFromFixedSize) {
   const string expected_stderr =
       "ERROR: Foo.aidl:2.8-10: The @FixedSize parcelable 'Foo' has a non-fixed size field named "
