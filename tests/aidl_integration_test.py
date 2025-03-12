@@ -3,8 +3,8 @@
 from itertools import product
 from time import sleep
 
-import pipes
 import re
+import shlex
 import subprocess
 import sys
 import textwrap
@@ -86,7 +86,7 @@ class AdbHost(object):
             # outer redirection to /dev/null required to avoid subprocess.Popen blocking
             # on the FDs being closed
             command = '(( %s ) </dev/null 2>&1 | log -t %s &) >/dev/null 2>&1' % (command, background)
-        return self.adb('shell %s' % pipes.quote(command),
+        return self.adb('shell %s' % shlex.quote(command),
                         ignore_status=ignore_status)
 
     def adb(self, command, ignore_status=False):
