@@ -167,7 +167,7 @@ class AidlNode {
   static void ClearUnvisitedNodes();
   static const std::vector<AidlLocation>& GetLocationsOfUnvisitedNodes();
   void MarkVisited() const;
-  bool IsUserDefined() const { return !GetLocation().IsInternal(); }
+  bool IsUserDefined() const { return !GetLocation().IsInternal() && !GetLocation().IsDerived(); }
 
  private:
   std::string PrintLine() const;
