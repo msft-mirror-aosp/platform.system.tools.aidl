@@ -8,6 +8,9 @@
  */
 package android.aidl.tests;
 public @interface IntEnum {
+  public static final int ZERO = 0;
+  public static final int ONE = 1;
+  public static final int TWO = 2;
   /**
    * Reserved: 12 and 2040
    * We are using 12 and (FOO | BAR) in some tests because
@@ -22,6 +25,9 @@ public @interface IntEnum {
   public static final int QUX = 2002;
   interface $ {
     static String toString(int _aidl_v) {
+      if (_aidl_v == ZERO) return "ZERO";
+      if (_aidl_v == ONE) return "ONE";
+      if (_aidl_v == TWO) return "TWO";
       if (_aidl_v == FOO) return "FOO";
       if (_aidl_v == BAR) return "BAR";
       if (_aidl_v == BAZ) return "BAZ";
