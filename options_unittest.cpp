@@ -523,5 +523,24 @@ TEST(OptionsTest, RejectRpcOnOldSdkVersion) {
               testing::HasSubstr("RPC code requires minimum SDK version of at least"));
 }
 
+TEST(OptionsTests, PreviousApiDir) {
+  // if this is V1, there is no previous API directory.
+  string expected_error = "--previous_api_dir must not be set for version 1.";
+  CaptureStderr();
+  const char* arg_with_no_out_dir[] = {
+      "aidl",
+      "--lang=java",
+      kCompileCommandIncludePath,
+      "directory/input1.aidl",
+      "--previous_api_dir=/some/dir",
+      "--previous_hash=alskdfjlkasdfj",
+      "--version=1",
+      "--out=out",
+      nullptr,
+  };
+  EXPECT_EQ(false, GetOptions(arg_with_no_out_dir)->Ok());
+  EXPECT_THAT(GetCapturedStderr(), testing::HasSubstr(expected_error));
+}
+
 }  // namespace aidl
 }  // namespace android
