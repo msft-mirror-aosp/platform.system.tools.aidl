@@ -5510,6 +5510,17 @@ TEST_P(AidlTest, UnknownConstReference) {
   EXPECT_EQ(err, GetCapturedStderr());
 }
 
+TEST_P(AidlTest, ConstExpressionArrays) {
+  io_delegate_.SetFileContents("Foo.aidl", " parcelable Foo { int[] field = {} - {1,2}; }");
+  auto options =
+      Options::From("aidl -I . --lang " + to_string(GetLanguage()) + " -o out -h out Foo.aidl");
+  const string err =
+      "ERROR: Foo.aidl:1.32-35: Operation '-' is not supported with array literals\n";
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(err, GetCapturedStderr());
+}
+
 TEST_P(AidlTest, JavaCompatibleBuiltinTypes) {
   string contents = R"(
 import android.os.IBinder;

@@ -944,11 +944,13 @@ public class TestServiceClient {
     @Test
     public void testEnumToString() {
       assertThat(IntEnum.$.toString(IntEnum.FOO), is("FOO"));
-      assertThat(IntEnum.$.toString(0), is("0"));
+      assertThat(IntEnum.$.toString(0), is("ZERO"));
+      // Undefined enumerator falls back to the int
+      assertThat(IntEnum.$.toString(12), is("12"));
       assertThat(IntEnum.$.arrayToString(null), is("null"));
       assertThat(IntEnum.$.arrayToString(new int[] {}), is("[]"));
       assertThat(IntEnum.$.arrayToString(new int[] {IntEnum.FOO, IntEnum.BAR}), is("[FOO, BAR]"));
-      assertThat(IntEnum.$.arrayToString(new int[] {IntEnum.FOO, 0}), is("[FOO, 0]"));
+      assertThat(IntEnum.$.arrayToString(new int[] {IntEnum.FOO, 12}), is("[FOO, 12]"));
       assertThat(IntEnum.$.arrayToString(new int[][] {{IntEnum.FOO, IntEnum.BAR}, {IntEnum.BAZ}}),
           is("[[FOO, BAR], [BAZ]]"));
       assertThrows(IllegalArgumentException.class, () -> IntEnum.$.arrayToString(IntEnum.FOO));

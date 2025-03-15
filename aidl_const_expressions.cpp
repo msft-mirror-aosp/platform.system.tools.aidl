@@ -1140,6 +1140,13 @@ bool AidlBinaryConstExpression::evaluate() const {
     return true;
   }
 
+  if (left_val_->final_type_ == Type::ARRAY) {
+    AIDL_ERROR(this) << "Operation '" << op_ << "' is not supported with array literals";
+    final_type_ = Type::ERROR;
+    is_valid_ = false;
+    return false;
+  }
+
   // CASE: + - *  / % | ^ & < > <= >= == !=
   if (isArithmeticOrBitflip || OP_IS_BIN_COMP) {
     // promoted kind for both operands.
