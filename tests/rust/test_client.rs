@@ -279,6 +279,13 @@ fn test_enum_and_assign() {
 }
 
 #[test]
+fn test_enum_shift() {
+    assert_eq!(IntEnum(1 << IntEnum::ZERO.get()), IntEnum(0b1));
+    assert_eq!(IntEnum(1 << IntEnum::ONE.get()), IntEnum(0b10));
+    assert_eq!(IntEnum(1 << IntEnum::TWO.get()), IntEnum(0b100));
+}
+
+#[test]
 fn test_repeat_parcelable() {
     let service = get_test_service();
     let input = SimpleParcelable { name: "foo".to_string(), number: 42 };
