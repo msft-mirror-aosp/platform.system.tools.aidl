@@ -24,6 +24,9 @@ namespace android {
 namespace aidl {
 namespace tests {
 enum class IntEnum : int32_t {
+  ZERO = 0,
+  ONE = 1,
+  TWO = 2,
   FOO = 1000,
   BAR = 2000,
   BAZ = 2001,
@@ -42,6 +45,12 @@ namespace tests {
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 [[nodiscard]] static inline std::string toString(IntEnum val) {
   switch(val) {
+  case IntEnum::ZERO:
+    return "ZERO";
+  case IntEnum::ONE:
+    return "ONE";
+  case IntEnum::TWO:
+    return "TWO";
   case IntEnum::FOO:
     return "FOO";
   case IntEnum::BAR:
@@ -65,7 +74,10 @@ namespace internal {
 #pragma clang diagnostic ignored "-Wc++17-extensions"
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 template <>
-constexpr inline std::array<aidl::android::aidl::tests::IntEnum, 4> enum_values<aidl::android::aidl::tests::IntEnum> = {
+constexpr inline std::array<aidl::android::aidl::tests::IntEnum, 7> enum_values<aidl::android::aidl::tests::IntEnum> = {
+  aidl::android::aidl::tests::IntEnum::ZERO,
+  aidl::android::aidl::tests::IntEnum::ONE,
+  aidl::android::aidl::tests::IntEnum::TWO,
   aidl::android::aidl::tests::IntEnum::FOO,
   aidl::android::aidl::tests::IntEnum::BAR,
   aidl::android::aidl::tests::IntEnum::BAZ,
