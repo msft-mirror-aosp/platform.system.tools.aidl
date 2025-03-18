@@ -61,7 +61,7 @@ class DiagnosticsContext {
   DiagnosticsContext(DiagnosticMapping mapping) : mapping_({std::move(mapping)}) {}
   AidlErrorLog Report(const AidlLocation& loc, DiagnosticID id,
                       DiagnosticSeverity force_severity = DiagnosticSeverity::DISABLED) {
-    if (loc.IsInternal()) {
+    if (loc.IsDerived() || loc.IsInternal()) {
       return AidlErrorLog(AidlErrorLog::NO_OP, loc);
     }
     const std::string suffix = " [-W" + to_string(id) + "]";
