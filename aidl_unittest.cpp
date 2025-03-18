@@ -3397,6 +3397,22 @@ TEST_F(AidlTestIncompatibleChanges, RemovedType) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
+TEST_F(AidlTestIncompatibleChanges, RemovedTypeNotInternal) {
+  // We create new Tag enums internal to unions and they show up in these logs
+  const string expected_stderr =
+      "ERROR: old/p/Foo.aidl:1.16-20: Removed type: p.Foo\n"
+      "ERROR: (derived from)old/p/Foo.aidl:1.16-20: Removed type: p.Foo.Tag\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "union Foo {"
+                               "  int foo;"
+                               "  int bar;"
+                               "}");
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTestIncompatibleChanges, RemovedMethod) {
   const string expected_stderr =
       "ERROR: old/p/IFoo.aidl:1.61-65: Removed or changed method: p.IFoo.bar(String)\n";
@@ -3552,7 +3568,8 @@ TEST_F(AidlTestIncompatibleChanges, RemovedEnumerator) {
 
 TEST_F(AidlTestIncompatibleChanges, RemovedUnionField) {
   const string expected_stderr =
-      "ERROR: new/p/Union.aidl:1.16-22: Number of fields in p.Union is reduced from 2 to 1.\n";
+      "ERROR: new/p/Union.aidl:1.16-22: Number of fields in p.Union is reduced from 2 to 1.\n"
+      "ERROR: (derived from)new/p/Union.aidl:1.16-22: Removed enumerator from p.Union.Tag: num\n";
   io_delegate_.SetFileContents("old/p/Union.aidl",
                                "package p;"
                                "union Union {"
@@ -5505,6 +5522,17 @@ TEST_P(AidlTest, UnknownConstReference) {
   const string err =
       "ERROR: Foo.aidl:1.30-42: Can't find UNKNOWN_REF in Foo\n"
       "ERROR: Foo.aidl:1.30-42: Unknown reference 'UNKNOWN_REF'\n";
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(err, GetCapturedStderr());
+}
+
+TEST_P(AidlTest, ConstExpressionArrays) {
+  io_delegate_.SetFileContents("Foo.aidl", " parcelable Foo { int[] field = {} - {1,2}; }");
+  auto options =
+      Options::From("aidl -I . --lang " + to_string(GetLanguage()) + " -o out -h out Foo.aidl");
+  const string err =
+      "ERROR: Foo.aidl:1.32-35: Operation '-' is not supported with array literals\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_EQ(err, GetCapturedStderr());

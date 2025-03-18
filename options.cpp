@@ -608,6 +608,10 @@ Options::Options(int argc, const char* const raw_argv[], Options::Language defau
       error_message_ << "--previous_hash must be set if --previous_api_dir is set" << endl;
       return;
     }
+    if (version_ <= 1) {
+      error_message_ << "--previous_api_dir must not be set for version 1." << endl;
+      return;
+    }
   } else {
     if (!previous_hash_.empty()) {
       error_message_ << "--previous_hash must not be set if --previous_api_dir is not set" << endl;

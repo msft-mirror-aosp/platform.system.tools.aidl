@@ -20,6 +20,9 @@ AidlLocation::AidlLocation(const std::string& file, Point begin, Point end, Sour
     : file_(file), begin_(begin), end_(end), source_(source) {}
 
 std::ostream& operator<<(std::ostream& os, const AidlLocation& l) {
+  if (l.source_ == AidlLocation::Source::DERIVED_INTERNAL) {
+    os << "(derived from)";
+  }
   os << l.file_;
   if (l.LocationKnown()) {
     os << ":" << l.begin_.line << "." << l.begin_.column << "-";
@@ -29,4 +32,9 @@ std::ostream& operator<<(std::ostream& os, const AidlLocation& l) {
     os << l.end_.column;
   }
   return os;
+}
+
+std::optional<AidlLocation> AidlLocation::ToDerivedLocation() const {
+  if (source_ != Source::EXTERNAL) return std::nullopt;
+  return AidlLocation(file_, begin_, end_, Source::DERIVED_INTERNAL);
 }
