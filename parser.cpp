@@ -34,10 +34,16 @@ struct UnionTagGenerater : AidlVisitor {
   void Visit(const AidlUnionDecl& decl) override {
     std::vector<std::unique_ptr<AidlEnumerator>> enumerators;
     for (const auto& field : decl.GetFields()) {
-      enumerators.push_back(std::make_unique<AidlEnumerator>(AIDL_LOCATION_HERE, field->GetName(),
-                                                             nullptr, field->GetComments()));
+      auto derived = field->GetLocation().ToDerivedLocation();
+      AIDL_FATAL_IF(!derived, field)
+          << "Failed to get a derived location. Is this not an external type?";
+      enumerators.push_back(std::make_unique<AidlEnumerator>(*derived, field->GetName(), nullptr,
+                                                             field->GetComments()));
     }
-    auto tag_enum = std::make_unique<AidlEnumDeclaration>(AIDL_LOCATION_HERE, "Tag", &enumerators,
+    auto derived = decl.GetLocation().ToDerivedLocation();
+    AIDL_FATAL_IF(!derived, decl)
+        << "Failed to get a derived location. Is this not an external type?";
+    auto tag_enum = std::make_unique<AidlEnumDeclaration>(*derived, "Tag", &enumerators,
                                                           decl.GetPackage(), Comments{});
     // Tag for @FixedSize union is limited to "byte" type so that it can be passed via FMQ with
     // with lower overhead.
