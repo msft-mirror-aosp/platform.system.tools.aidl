@@ -21,7 +21,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/blueprint"
 	"github.com/google/blueprint/proptools"
 
 	"android/soong/aidl_library"
@@ -228,7 +227,7 @@ func assertModulesExists(t *testing.T, ctx *android.TestContext, names ...string
 	if len(missing) > 0 {
 		// find all the modules that do exist
 		allModuleNames := make(map[string]bool)
-		ctx.VisitAllModules(func(m blueprint.Module) {
+		ctx.VisitAllModules(func(m android.Module) {
 			allModuleNames[ctx.ModuleName(m)] = true
 		})
 		t.Errorf("expected modules(%v) not found. all modules: %v", missing, android.SortedKeys(allModuleNames))
@@ -1975,9 +1974,9 @@ func TestUseVersionedPreprocessedWhenImporotedWithVersions(t *testing.T) {
 func FindModule(t *testing.T, ctx *android.TestContext, name, variant, dir string) android.Module {
 	t.Helper()
 	var module android.Module
-	ctx.VisitAllModules(func(m blueprint.Module) {
+	ctx.VisitAllModules(func(m android.Module) {
 		if ctx.ModuleName(m) == name && ctx.ModuleSubDir(m) == variant && ctx.ModuleDir(m) == dir {
-			module = m.(android.Module)
+			module = m
 		}
 	})
 	if module == nil {
