@@ -37,7 +37,7 @@ public interface IProtected extends android.os.IInterface
     /** Default constructor. */
     public Stub() {
       this(android.os.PermissionEnforcer.fromContext(
-         android.app.ActivityThread.currentActivityThread().getSystemContext()));
+         android.app.ActivityThread.currentSystemContext()));
     }
     /**
      * Cast an IBinder object into an android.aidl.tests.permission.platform.IProtected interface,
