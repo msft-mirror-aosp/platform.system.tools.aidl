@@ -15,16 +15,16 @@
 package aidl
 
 import (
-	"android/soong/android"
-	"android/soong/genrule"
-	"strconv"
-
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/google/blueprint"
 	"github.com/google/blueprint/pathtools"
 	"github.com/google/blueprint/proptools"
+
+	"android/soong/android"
+	"android/soong/genrule"
 )
 
 var (
@@ -78,6 +78,15 @@ var (
 	})
 )
 
+type AidlGenruleInfo struct {
+	BaseName string
+	HashFile android.Path
+	OutDir   android.Path
+	Outputs  android.Paths
+}
+
+var AidlGenruleInfoProvider = blueprint.NewProvider[AidlGenruleInfo]()
+
 type aidlGenProperties struct {
 	Srcs                []string `android:"path"`
 	AidlRoot            string   // base directory for the input aidl file
@@ -123,13 +132,16 @@ type aidlGenRule struct {
 var _ android.SourceFileProducer = (*aidlGenRule)(nil)
 var _ genrule.SourceFileGenerator = (*aidlGenRule)(nil)
 
-func (g *aidlGenRule) aidlInterface(ctx android.BaseModuleContext) *aidlInterface {
-	return ctx.GetDirectDepWithTag(g.properties.BaseName, interfaceDep).(*aidlInterface)
+func (g *aidlGenRule) aidlInterface(ctx android.BaseModuleContext) AidlInterfaceInfo {
+	return android.OtherModuleProviderOrDefault(ctx,
+		ctx.GetDirectDepProxyWithTag(g.properties.BaseName, interfaceDep),
+		AidlInterfaceInfoProvider)
 }
 
 func (g *aidlGenRule) getImports(ctx android.ModuleContext) map[string]string {
-	iface := g.aidlInterface(ctx)
-	return iface.getImports(g.properties.Version)
+	ifaceInfo := g.aidlInterface(ctx)
+
+	return ifaceInfo.getImports(g.properties.Version)
 }
 
 func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
@@ -172,6 +184,13 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		Rule:   aidlPhonyRule,
 		Output: android.PathForModuleOut(ctx, "timestamp"), // $out/timestamp
 		Inputs: g.genOutputs.Paths(),
+	})
+
+	android.SetProvider(ctx, AidlGenruleInfoProvider, AidlGenruleInfo{
+		BaseName: g.properties.BaseName,
+		HashFile: g.hashFile,
+		OutDir:   g.genOutDir,
+		Outputs:  g.genOutputs.Paths(),
 	})
 }
 
