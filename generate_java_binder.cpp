@@ -312,7 +312,7 @@ void StubClass::MakeConstructors(const AidlInterface* interfaceType) {
     code << "public Stub() {\n";
     code.Indent();
     code << "this(android.os.PermissionEnforcer.fromContext(\n";
-    code << "   android.app.ActivityThread.currentActivityThread().getSystemContext()));\n";
+    code << "   android.app.ActivityThread.currentSystemContext()));\n";
     code.Dedent();
     code << "}\n";
   }
