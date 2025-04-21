@@ -123,7 +123,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnion");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnion");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -185,7 +185,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.EmptyParcelable");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.EmptyParcelable");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -232,7 +232,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedParcelable");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedParcelable");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -285,7 +285,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.ExplicitPaddingParcelable");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.ExplicitPaddingParcelable");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -373,7 +373,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnionNoPadding");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnionNoPadding");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -465,7 +465,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnionSmallPadding");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnionSmallPadding");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -557,7 +557,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnionLongPadding");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize.FixedUnionLongPadding");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -599,7 +599,7 @@ public:
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
   ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
   static const ::android::String16& getParcelableDescriptor() {
-    static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize");
+    [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.FixedSize");
     return DESCRIPTOR;
   }
   inline std::string toString() const {

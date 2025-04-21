@@ -56,7 +56,7 @@ public:
         ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
         ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
         static const ::android::String16& getParcelableDescriptor() {
-          static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.B.C.D");
+          [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.B.C.D");
           return DESCRIPTOR;
         }
         inline std::string toString() const {
@@ -88,7 +88,7 @@ public:
       ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
       ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
       static const ::android::String16& getParcelableDescriptor() {
-        static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.B.C");
+        [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.B.C");
         return DESCRIPTOR;
       }
       inline std::string toString() const {
@@ -120,7 +120,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.B");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.B");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -155,7 +155,7 @@ public:
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
-      static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.A");
+      [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested.A");
       return DESCRIPTOR;
     }
     inline std::string toString() const {
@@ -188,7 +188,7 @@ public:
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
   ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
   static const ::android::String16& getParcelableDescriptor() {
-    static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested");
+    [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.tests.nested.DeeplyNested");
     return DESCRIPTOR;
   }
   inline std::string toString() const {
