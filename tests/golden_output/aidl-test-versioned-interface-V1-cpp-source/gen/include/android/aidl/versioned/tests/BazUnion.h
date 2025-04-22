@@ -107,7 +107,7 @@ public:
   ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
   ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
   static const ::android::String16& getParcelableDescriptor() {
-    static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.versioned.tests.BazUnion");
+    [[clang::no_destroy]] static const ::android::StaticString16 DESCRIPTOR (u"android.aidl.versioned.tests.BazUnion");
     return DESCRIPTOR;
   }
   inline std::string toString() const {
