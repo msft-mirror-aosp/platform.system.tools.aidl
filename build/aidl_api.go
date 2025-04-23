@@ -15,17 +15,17 @@
 package aidl
 
 import (
-	"android/soong/aidl_library"
-	"android/soong/android"
-	"reflect"
-
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/google/blueprint"
 	"github.com/google/blueprint/proptools"
+
+	"android/soong/aidl_library"
+	"android/soong/android"
 )
 
 var (
@@ -51,7 +51,7 @@ var (
 )
 
 // Like android.OtherModuleProvider(), but will throw an error if the provider was not set
-func expectOtherModuleProvider[K any](ctx android.ModuleContext, module blueprint.Module, provider blueprint.ProviderKey[K]) K {
+func expectOtherModuleProvider[K any](ctx android.BaseModuleContext, module android.ModuleProxy, provider blueprint.ProviderKey[K]) K {
 	result, ok := android.OtherModuleProvider(ctx, module, provider)
 	if !ok {
 		var zero K
@@ -191,21 +191,19 @@ func (m *aidlInterface) migrateAndAppendVersion(
 		versions = append(versions, *version)
 	}
 	for _, v := range versions {
-		importIfaces := make(map[string]*aidlInterface)
-		ctx.VisitDirectDeps(func(dep android.Module) {
+		importIfaces := make(map[string]AidlInterfaceInfo)
+		importApis := make(map[string]aidlApiInfo)
+		ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
 			if _, ok := ctx.OtherModuleDependencyTag(dep).(importInterfaceDepTag); ok {
-				other := dep.(*aidlInterface)
-				importIfaces[other.BaseModuleName()] = other
+				other := expectOtherModuleProvider(ctx, dep, AidlInterfaceInfoProvider)
+				importIfaces[other.Name] = other
+				importApis[other.Name] = expectOtherModuleProvider(ctx, dep, aidlApiProvider)
 			}
 		})
 		imports := make([]string, 0, len(m.getImportsForVersion(v)))
 		needTransitiveFreeze := isFreezingApi && v == *version && transitive
 
 		if needTransitiveFreeze {
-			importApis := make(map[string]aidlApiInfo)
-			for name, intf := range importIfaces {
-				importApis[name] = expectOtherModuleProvider(ctx, intf, aidlApiProvider)
-			}
 			wrapWithDiffCheckIf(hasDevelopment, rb, func(rbc *android.RuleBuilderCommand) {
 				rbc.BuiltTool("bpmodify").
 					Text("-w -m " + m.ModuleBase.Name()).
@@ -216,7 +214,7 @@ func (m *aidlInterface) migrateAndAppendVersion(
 					moduleName, version := parseModuleWithVersion(im)
 
 					// Invoke an imported interface's freeze-api only if it depends on ToT version explicitly or implicitly.
-					if version == importIfaces[moduleName].nextVersion() || !hasVersionSuffix(im) {
+					if version == importIfaces[moduleName].NextVersion || !hasVersionSuffix(im) {
 						rb.Command().Text(fmt.Sprintf(`echo "Call %s-freeze-api because %s depends on %s."`, moduleName, m.ModuleBase.Name(), moduleName))
 						rbc.Implicit(importApis[moduleName].FreezeApiTimestamp)
 					}
@@ -225,8 +223,8 @@ func (m *aidlInterface) migrateAndAppendVersion(
 					} else {
 						rbc.Text("\"" + im + "-V'" + `$(if [ "$(cat `).
 							Input(importApis[im].HasDevelopment).
-							Text(`)" = "1" ]; then echo "` + importIfaces[im].nextVersion() +
-								`"; else echo "` + importIfaces[im].latestVersion() + `"; fi)'", `)
+							Text(`)" = "1" ]; then echo "` + importIfaces[im].NextVersion +
+								`"; else echo "` + importIfaces[im].LatestVersion + `"; fi)'", `)
 					}
 				}
 				rbc.Text("]}' ").
@@ -242,10 +240,10 @@ func (m *aidlInterface) migrateAndAppendVersion(
 				if hasVersionSuffix(im) {
 					imports = append(imports, im)
 				} else {
-					versionSuffix := importIfaces[im].latestVersion()
-					if !importIfaces[im].hasVersion() ||
-						importIfaces[im].isExplicitlyUnFrozen() {
-						versionSuffix = importIfaces[im].nextVersion()
+					versionSuffix := importIfaces[im].LatestVersion
+					if !importIfaces[im].HasVersion ||
+						importIfaces[im].ExplicitlyUnFrozen {
+						versionSuffix = importIfaces[im].NextVersion
 					}
 					imports = append(imports, im+"-V"+versionSuffix)
 				}
@@ -336,19 +334,19 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 	if m, ok := ctx.Module().(*aidlInterface); ok {
 		deps.imports = append(deps.imports, m.properties.Include_dirs...)
 	}
-	ctx.VisitDirectDeps(func(dep android.Module) {
+	ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
 		switch ctx.OtherModuleDependencyTag(dep).(type) {
 		case importInterfaceDepTag:
-			iface := dep.(*aidlInterface)
-			if version, ok := versionedImports[iface.BaseModuleName()]; ok {
-				if iface.preprocessed[version] == nil {
-					ctx.ModuleErrorf("can't import %v's preprocessed(version=%v)", iface.BaseModuleName(), version)
+			iface := expectOtherModuleProvider(ctx, dep, AidlInterfaceInfoProvider)
+			if version, ok := versionedImports[iface.Name]; ok {
+				if iface.Preprocessed[version] == nil {
+					ctx.ModuleErrorf("can't import %v's preprocessed(version=%v)", iface.Name, version)
 				}
-				deps.preprocessed = append(deps.preprocessed, iface.preprocessed[version])
+				deps.preprocessed = append(deps.preprocessed, iface.Preprocessed[version])
 			}
 		case interfaceDepTag:
-			iface := dep.(*aidlInterface)
-			deps.imports = append(deps.imports, iface.properties.Include_dirs...)
+			iface := expectOtherModuleProvider(ctx, dep, AidlInterfaceInfoProvider)
+			deps.imports = append(deps.imports, iface.IncludeDirs...)
 		case apiDepTag:
 			apiInfo := expectOtherModuleProvider(ctx, dep, aidlApiProvider)
 			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date
@@ -457,18 +455,18 @@ func (m *aidlInterface) checkIntegrity(ctx android.ModuleContext, dump apiDump) 
 // map["foo":"3", "bar":1]
 func (m *aidlInterface) getLatestImportVersions(ctx android.ModuleContext) map[string]string {
 	var latest_versions = make(map[string]string)
-	ctx.VisitDirectDeps(func(dep android.Module) {
+	ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
 		switch ctx.OtherModuleDependencyTag(dep).(type) {
 		case apiDepTag:
-			intf := dep.(*aidlInterface)
-			if intf.hasVersion() {
-				if intf.properties.Frozen == nil || intf.isFrozen() {
-					latest_versions[intf.ModuleBase.Name()] = intf.latestVersion()
+			intf := expectOtherModuleProvider(ctx, dep, AidlInterfaceInfoProvider)
+			if intf.HasVersion {
+				if !intf.ExplicitlyUnFrozen {
+					latest_versions[intf.Name] = intf.LatestVersion
 				} else {
-					latest_versions[intf.ModuleBase.Name()] = intf.nextVersion()
+					latest_versions[intf.Name] = intf.NextVersion
 				}
 			} else {
-				latest_versions[intf.ModuleBase.Name()] = "1"
+				latest_versions[intf.Name] = "1"
 			}
 		}
 	})

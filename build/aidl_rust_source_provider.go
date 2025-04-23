@@ -52,10 +52,11 @@ func (sp *aidlRustSourceProvider) GenerateSource(ctx rust.ModuleContext, _ rust.
 	sourceStem := proptools.String(sp.BaseSourceProvider.Properties.Source_stem)
 	topLevelOutputFile := android.PathForModuleOut(ctx, sourceStem+".rs")
 
-	aidlGenModule := ctx.GetDirectDepWithTag(sp.properties.SourceGen, aidlRustSourceTag)
+	aidlGenModule := ctx.GetDirectDepProxyWithTag(sp.properties.SourceGen, aidlRustSourceTag)
 	// Find the gen directory for the source module
-	srcGenDir := aidlGenModule.(*aidlGenRule).genOutDir
-	srcPaths := aidlGenModule.(*aidlGenRule).genOutputs.Paths()
+	genruleInfo := expectOtherModuleProvider(ctx, aidlGenModule, AidlGenruleInfoProvider)
+	srcGenDir := genruleInfo.OutDir
+	srcPaths := genruleInfo.Outputs
 
 	// In Rust, we import our dependency crates into `mangled`:
 	//   use dependency::mangled::*;
