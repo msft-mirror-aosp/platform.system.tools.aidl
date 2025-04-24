@@ -8,7 +8,10 @@
  */
 #include "aidl/android/aidl/test/trunk/ITrunkStableTest.h"
 
+#include <cstdint>
+#include <android/binder_parcel.h>
 #include <android/binder_parcel_utils.h>
+#include <android/binder_status.h>
 #include <android/binder_to_string.h>
 #include <aidl/android/aidl/test/trunk/BnTrunkStableTest.h>
 #include <aidl/android/aidl/test/trunk/BpTrunkStableTest.h>
