@@ -64,7 +64,7 @@ Note: go/android.bp has all of the available Soong modules and their supported
 fields.
 
 ```soong
-// File: `codelab/aidl/Android.bp`
+// File: `system/tools/aidl/codelab/aidl/Android.bp`
 aidl_interface {
   // Package name for the interface. This is used when generating the libraries
   // that the services and clients will depend on.
@@ -96,7 +96,7 @@ aidl_interface {
 Create your first AIDL file.
 
 ```java
-// File: `codelab/aidl/hello/world/IHello.aidl`
+// File: `system/tools/aidl/codelab/aidl/hello/world/IHello.aidl`
 // The package name is recommended to match the `name` in the `aidl_interface`
 package hello.world;
 
@@ -129,23 +129,23 @@ create the library that implements the interface first.
 Create a separate library for the interface implementation so it can be used
 for the service and for the fuzzer.
 
-* See [codelab/service/Android.bp](codelab/service/Android.bp)
+* See [service/Android.bp](service/Android.bp)
 
-* See [codelab/service/hello_service.rs](codelab/service/hello_service.rs)
+* See [service/hello_service.rs](service/hello_service.rs)
 
 #### Service binary
 
 Create the service that registers itself with servicemanager and joins the
 binder threadpool.
 
-* See [codelab/service/Android.bp](codelab/service/Android.bp)
+* See [service/Android.bp](service/Android.bp)
 
-* See [codelab/service/service_main.rs](codelab/service/service_main.rs)
+* See [service/service_main.rs](service/service_main.rs)
 
 An init.rc file is required for the process to be started on a device.
 
 * See
-  [codelab/service/hello-world-service-test.rc](codelab/service/hello-world-service-test.rc)
+  [service/hello-world-service-test.rc](service/hello-world-service-test.rc)
 
 #### Sepolicy for the service
 
@@ -191,9 +191,9 @@ hello.world.IHello/default u:object_r:hello_service:s0
 
 Create the fuzzer and use `fuzz_service` to do all of the hard work!
 
-* See [codelab/service/Android.bp](codelab/service/Android.bp)
+* See [service/Android.bp](service/Android.bp)
 
-* See [codelab/service/service_fuzzer.rs](codelab/service/service_fuzzer.rs)
+* See [service/service_fuzzer.rs](service/service_fuzzer.rs)
 
 Associate the fuzzer with the interface by adding the following to
 `system/sepolicy/build/soong/service_fuzzer_bindings.go`:
