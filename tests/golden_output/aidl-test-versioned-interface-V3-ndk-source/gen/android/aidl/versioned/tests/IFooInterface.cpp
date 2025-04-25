@@ -8,7 +8,10 @@
  */
 #include "aidl/android/aidl/versioned/tests/IFooInterface.h"
 
+#include <cstdint>
+#include <android/binder_parcel.h>
 #include <android/binder_parcel_utils.h>
+#include <android/binder_status.h>
 #include <aidl/android/aidl/versioned/tests/BnFooInterface.h>
 #include <aidl/android/aidl/versioned/tests/BpFooInterface.h>
 

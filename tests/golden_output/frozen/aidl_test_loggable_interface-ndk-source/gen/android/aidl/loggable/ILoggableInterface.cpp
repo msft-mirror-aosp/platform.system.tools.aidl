@@ -8,7 +8,10 @@
  */
 #include "aidl/android/aidl/loggable/ILoggableInterface.h"
 
+#include <cstdint>
+#include <android/binder_parcel.h>
 #include <android/binder_parcel_utils.h>
+#include <android/binder_status.h>
 #include <android/binder_to_string.h>
 #include <aidl/android/aidl/loggable/BnLoggableInterface.h>
 #include <aidl/android/aidl/loggable/BpLoggableInterface.h>

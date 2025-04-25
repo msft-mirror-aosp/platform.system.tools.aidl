@@ -8,7 +8,10 @@
  */
 #include "aidl/android/aidl/tests/CircularParcelable.h"
 
+#include <cstdint>
+#include <android/binder_parcel.h>
 #include <android/binder_parcel_utils.h>
+#include <android/binder_status.h>
 #include <aidl/android/aidl/tests/BnCircular.h>
 #include <aidl/android/aidl/tests/BnNamedCallback.h>
 #include <aidl/android/aidl/tests/BnNewName.h>
