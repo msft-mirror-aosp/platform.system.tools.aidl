@@ -15,16 +15,16 @@
 package aidl
 
 import (
-	"android/soong/android"
-	"android/soong/cc"
-	"android/soong/java"
-	"android/soong/rust"
-
 	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/blueprint/proptools"
+
+	"android/soong/android"
+	"android/soong/cc"
+	"android/soong/java"
+	"android/soong/rust"
 )
 
 func addLibrary(mctx android.DefaultableHookContext, i *aidlInterface, version string, lang string, notFrozen bool, requireFrozenReason string) string {
@@ -464,38 +464,20 @@ func (i *aidlInterface) flagsForAidlGenRule(version string) (flags []string) {
 	return
 }
 
-// importing aidl_interface's version  | imported aidl_interface | imported aidl_interface's version
-// --------------------------------------------------------------------------------------------------
-// whatever                            | unstable                | unstable version
-// ToT version(including unstable)     | whatever                | ToT version(unstable if unstable)
-// otherwise                           | whatever                | the latest stable version
-// In the case that import specifies the version which it wants to use, use that version.
-func (i *aidlInterface) getImportWithVersion(version string, anImport string, other *aidlInterface) string {
-	if hasVersionSuffix(anImport) {
-		return anImport
-	}
-	if proptools.Bool(other.properties.Unstable) {
-		return anImport
-	}
-	if version == i.nextVersion() || !other.hasVersion() {
-		return other.versionedName(other.nextVersion())
-	}
-	return other.versionedName(other.latestVersion())
-}
-
 // Assuming that the context module has deps to its original aidl_interface and imported
 // aidl_interface modules with interfaceDepTag and importInterfaceDepTag, returns the list of
 // imported interfaces with versions.
 func getImportsWithVersion(ctx android.BaseModuleContext, interfaceName, version string) []string {
-	// We're using VisitDirectDepsWithTag instead of GetDirectDepWithTag because GetDirectDepWithTag
+	// We're using VisitDirectDepsProxyWithTag instead of GetDirectDepProxyWithTag because GetDirectDepProxyWithTag
 	// has weird behavior: if you're using a ModuleContext, it will find a dep based off the
 	// ModuleBase name, but if you're using a BaseModuleContext, it will find a dep based off of
 	// the outer module's name. We need the behavior to be consistent because we call this method
 	// with both types of contexts.
-	var i *aidlInterface
-	ctx.VisitDirectDepsWithTag(interfaceDep, func(visited android.Module) {
+	var i *AidlInterfaceImportsInfo
+	ctx.VisitDirectDepsProxyWithTag(interfaceDep, func(visited android.ModuleProxy) {
 		if i == nil && visited.Name() == interfaceName+aidlInterfaceSuffix {
-			i = visited.(*aidlInterface)
+			iface := expectOtherModuleProvider(ctx, visited, AidlInterfaceImportsInfoProvider)
+			i = &iface
 		}
 	})
 	if i == nil {
@@ -503,9 +485,9 @@ func getImportsWithVersion(ctx android.BaseModuleContext, interfaceName, version
 		return nil
 	}
 	var imports []string
-	ctx.VisitDirectDeps(func(dep android.Module) {
+	ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
 		if tag, ok := ctx.OtherModuleDependencyTag(dep).(importInterfaceDepTag); ok {
-			other := dep.(*aidlInterface)
+			other := expectOtherModuleProvider(ctx, dep, AidlInterfaceImportsInfoProvider)
 			imports = append(imports, i.getImportWithVersion(version, tag.anImport, other))
 		}
 	})
