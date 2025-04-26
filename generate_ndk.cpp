@@ -379,7 +379,10 @@ static void GenerateSourceIncludes(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
 
   std::set<std::string, HeaderComp> includes = {self_header};
+  includes.insert("cstdint");
+  includes.insert("android/binder_parcel.h");
   includes.insert("android/binder_parcel_utils.h");
+  includes.insert("android/binder_status.h");
   types.IterateTypes([&](const AidlDefinedType& a_defined_type) {
     if (a_defined_type.AsInterface() != nullptr) {
       includes.insert(NdkHeaderFile(a_defined_type, ClassNames::CLIENT, false /*use_os_sep*/));

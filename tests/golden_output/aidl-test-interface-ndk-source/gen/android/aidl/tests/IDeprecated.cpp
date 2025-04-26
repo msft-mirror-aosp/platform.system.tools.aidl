@@ -8,7 +8,10 @@
  */
 #include "aidl/android/aidl/tests/IDeprecated.h"
 
+#include <cstdint>
+#include <android/binder_parcel.h>
 #include <android/binder_parcel_utils.h>
+#include <android/binder_status.h>
 #include <aidl/android/aidl/tests/BnDeprecated.h>
 #include <aidl/android/aidl/tests/BpDeprecated.h>
 

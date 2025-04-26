@@ -71,7 +71,10 @@ public:
 }  // namespace aidl
 #include "aidl/android/aidl/tests/GenericStructuredParcelable.h"
 
+#include <cstdint>
+#include <android/binder_parcel.h>
 #include <android/binder_parcel_utils.h>
+#include <android/binder_status.h>
 
 namespace aidl {
 namespace android {
