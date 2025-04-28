@@ -48,16 +48,3 @@ TEST_F(AidlTest, unimplementedMethodImpl) {
   ASSERT_EQ(status.exceptionCode(), android::binder::Status::EX_TRANSACTION_FAILED);
   EXPECT_EQ(status.transactionError(), android::UNKNOWN_TRANSACTION);
 }
-
-TEST_F(AidlTest, defaultImpl) {
-  android::sp<ITestService> defImpl = android::sp<Def>::make();
-  auto ret = ITestService::setDefaultImpl(std::move(defImpl));
-  ASSERT_TRUE(ret);
-
-  int32_t returned_value;
-  auto status = service->UnimplementedMethod(kExpectedArgValue, &returned_value);
-  ASSERT_TRUE(status.isOk()) << status;
-  ASSERT_THAT(numCalled, Eq(1));
-  ASSERT_THAT(gotArgument, Eq(kExpectedArgValue));
-  ASSERT_THAT(returned_value, Eq(kExpectedReturnValue));
-}

@@ -55,9 +55,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatParcelable, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
-     return ITrunkStableTest::getDefaultImpl()->repeatParcelable(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -112,9 +109,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatEnum, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
-     return ITrunkStableTest::getDefaultImpl()->repeatEnum(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -169,9 +163,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatUnion, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
-     return ITrunkStableTest::getDefaultImpl()->repeatUnion(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -226,9 +217,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_callMyCallback, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) [[unlikely]] {
-     return ITrunkStableTest::getDefaultImpl()->callMyCallback(cb);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -701,9 +689,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatParcelable, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) [[unlikely]] {
-     return IMyCallback::getDefaultImpl()->repeatParcelable(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -758,9 +743,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatEnum, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) [[unlikely]] {
-     return IMyCallback::getDefaultImpl()->repeatEnum(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -815,9 +797,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatUnion, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) [[unlikely]] {
-     return IMyCallback::getDefaultImpl()->repeatUnion(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }

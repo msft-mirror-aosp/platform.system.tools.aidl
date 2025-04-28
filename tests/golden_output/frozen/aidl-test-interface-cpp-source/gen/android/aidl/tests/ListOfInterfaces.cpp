@@ -150,9 +150,6 @@ ListOfInterfaces::BpMyInterface::BpMyInterface(const ::android::sp<::android::IB
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(ListOfInterfaces::BnMyInterface::TRANSACTION_methodWithInterfaces, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IMyInterface::getDefaultImpl()) [[unlikely]] {
-     return IMyInterface::getDefaultImpl()->methodWithInterfaces(iface, nullable_iface, iface_list_in, iface_list_out, iface_list_inout, nullable_iface_list_in, nullable_iface_list_out, nullable_iface_list_inout, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }

@@ -39,9 +39,6 @@ BpOldName::BpOldName(const ::android::sp<::android::IBinder>& _aidl_impl)
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnOldName::TRANSACTION_RealName, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IOldName::getDefaultImpl()) [[unlikely]] {
-     return IOldName::getDefaultImpl()->RealName(_aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }

@@ -46,9 +46,6 @@ BpNestedService::BpNestedService(const ::android::sp<::android::IBinder>& _aidl_
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnNestedService::TRANSACTION_flipStatus, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedService::getDefaultImpl()) [[unlikely]] {
-     return INestedService::getDefaultImpl()->flipStatus(p, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -88,9 +85,6 @@ BpNestedService::BpNestedService(const ::android::sp<::android::IBinder>& _aidl_
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnNestedService::TRANSACTION_flipStatusWithCallback, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && INestedService::getDefaultImpl()) [[unlikely]] {
-     return INestedService::getDefaultImpl()->flipStatusWithCallback(status, cb);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -291,9 +285,6 @@ INestedService::BpCallback::BpCallback(const ::android::sp<::android::IBinder>& 
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(INestedService::BnCallback::TRANSACTION_done, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICallback::getDefaultImpl()) [[unlikely]] {
-     return ICallback::getDefaultImpl()->done(status);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }

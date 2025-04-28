@@ -43,9 +43,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_RepeatBadParcelable, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->RepeatBadParcelable(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -81,9 +78,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_RepeatGenericParcelable, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->RepeatGenericParcelable(input, repeat, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -123,9 +117,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_RepeatPersistableBundle, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->RepeatPersistableBundle(input, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -165,9 +156,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_ReversePersistableBundles, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->ReversePersistableBundles(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -207,9 +195,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_ReverseUnion, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->ReverseUnion(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -249,9 +234,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_ReverseNamedCallbackList, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->ReverseNamedCallbackList(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -291,9 +273,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_RepeatFileDescriptor, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->RepeatFileDescriptor(std::move(read), _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -333,9 +312,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnCppJavaTests::TRANSACTION_ReverseFileDescriptorArray, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && ICppJavaTests::getDefaultImpl()) [[unlikely]] {
-     return ICppJavaTests::getDefaultImpl()->ReverseFileDescriptorArray(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
