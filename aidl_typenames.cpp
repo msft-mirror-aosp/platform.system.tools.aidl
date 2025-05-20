@@ -16,13 +16,17 @@
 
 #include "aidl_typenames.h"
 #include "aidl_language.h"
+#include "location.h"
 #include "logging.h"
 
-#include <android-base/file.h>
 #include <android-base/strings.h>
 
+#include <algorithm>
+#include <functional>
 #include <map>
 #include <memory>
+#include <new>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -42,32 +46,32 @@ namespace android {
 namespace aidl {
 
 // The built-in AIDL types..
-static const set<string> kBuiltinTypes = {"void",
-                                          "boolean",
-                                          "byte",
-                                          "char",
-                                          "int",
-                                          "long",
-                                          "float",
-                                          "double",
-                                          "String",
-                                          "List",
-                                          "Map",
-                                          "IBinder",
-                                          "FileDescriptor",
-                                          "CharSequence",
-                                          "ParcelFileDescriptor",
-                                          "ParcelableHolder"};
+static const std::set<std::string> kBuiltinTypes = {"void",
+                                                    "boolean",
+                                                    "byte",
+                                                    "char",
+                                                    "int",
+                                                    "long",
+                                                    "float",
+                                                    "double",
+                                                    "String",
+                                                    "List",
+                                                    "Map",
+                                                    "IBinder",
+                                                    "FileDescriptor",
+                                                    "CharSequence",
+                                                    "ParcelFileDescriptor",
+                                                    "ParcelableHolder"};
 
-static const set<string> kPrimitiveTypes = {"void", "boolean", "byte",  "char",
-                                            "int",  "long",    "float", "double"};
+static const std::set<std::string> kPrimitiveTypes = {"void", "boolean", "byte",  "char",
+                                                      "int",  "long",    "float", "double"};
 
 // Note: these types may look wrong because they look like Java
 // types, but they have long been supported from the time when Java
 // was the only target language of this compiler. They are added here for
 // backwards compatibility, but we internally treat them as List and Map,
 // respectively.
-static const map<string, string> kJavaLikeTypeToAidlType = {
+static const std::map<std::string, std::string> kJavaLikeTypeToAidlType = {
     {"java.util.List", "List"},
     {"java.util.Map", "Map"},
     {"android.os.ParcelFileDescriptor", "ParcelFileDescriptor"},
@@ -77,7 +81,7 @@ static const map<string, string> kJavaLikeTypeToAidlType = {
 // in Java and C++. Using these names will eventually cause compilation error,
 // so checking this here is not a must have, but early detection of errors
 // is always better.
-static const set<string> kCppOrJavaReservedWord = {
+static const std::set<std::string> kCppOrJavaReservedWord = {
     "break",  "case",   "catch", "char",     "class",  "continue", "default",
     "do",     "double", "else",  "enum",     "false",  "float",    "for",
     "goto",   "if",     "int",   "long",     "new",    "private",  "protected",
@@ -86,8 +90,8 @@ static const set<string> kCppOrJavaReservedWord = {
 
 static bool HasValidNameComponents(const AidlDefinedType& defined) {
   bool success = true;
-  vector<string> pieces = Split(defined.GetCanonicalName(), ".");
-  for (const string& piece : pieces) {
+  std::vector<std::string> pieces = Split(defined.GetCanonicalName(), ".");
+  for (const std::string& piece : pieces) {
     if (kCppOrJavaReservedWord.find(piece) != kCppOrJavaReservedWord.end()) {
       AIDL_ERROR(defined) << defined.GetCanonicalName() << " is an invalid name because '" << piece
                           << "' is a Java or C++ identifier.";
@@ -103,10 +107,10 @@ static bool HasValidNameComponents(const AidlDefinedType& defined) {
   return success;
 }
 
-bool AidlTypenames::IsIgnorableImport(const string& import) const {
+bool AidlTypenames::IsIgnorableImport(const std::string& import) const {
   if (IsBuiltinTypename(import)) return true;
 
-  static set<string> ignore_import = {
+  static std::set<std::string> ignore_import = {
       "android.os.IInterface",   "android.os.IBinder", "android.os.Parcelable", "android.os.Parcel",
       "android.content.Context", "java.lang.String",   "java.lang.CharSequence"};
   // these known built-in types don't need to be imported
@@ -192,16 +196,16 @@ const AidlDocument& AidlTypenames::MainDocument() const {
   return *(documents_[0]);
 }
 
-bool AidlTypenames::IsBuiltinTypename(const string& type_name) {
+bool AidlTypenames::IsBuiltinTypename(const std::string& type_name) {
   return kBuiltinTypes.find(type_name) != kBuiltinTypes.end() ||
       kJavaLikeTypeToAidlType.find(type_name) != kJavaLikeTypeToAidlType.end();
 }
 
-bool AidlTypenames::IsPrimitiveTypename(const string& type_name) {
+bool AidlTypenames::IsPrimitiveTypename(const std::string& type_name) {
   return kPrimitiveTypes.find(type_name) != kPrimitiveTypes.end();
 }
 
-bool AidlTypenames::IsParcelable(const string& type_name) const {
+bool AidlTypenames::IsParcelable(const std::string& type_name) const {
   if (IsBuiltinTypename(type_name)) {
     return type_name == "ParcelableHolder" || type_name == "ParcelFileDescriptor";
   }
@@ -211,7 +215,7 @@ bool AidlTypenames::IsParcelable(const string& type_name) const {
   return false;
 }
 
-const AidlDefinedType* AidlTypenames::TryGetDefinedType(const string& type_name) const {
+const AidlDefinedType* AidlTypenames::TryGetDefinedType(const std::string& type_name) const {
   auto found_def = defined_types_.find(type_name);
   if (found_def != defined_types_.end()) {
     return found_def->second;
@@ -233,7 +237,7 @@ std::vector<const AidlDefinedType*> AidlTypenames::AllDefinedTypes() const {
   return res;
 }
 
-AidlTypenames::ResolvedTypename AidlTypenames::ResolveTypename(const string& type_name) const {
+AidlTypenames::ResolvedTypename AidlTypenames::ResolveTypename(const std::string& type_name) const {
   if (IsBuiltinTypename(type_name)) {
     auto found = kJavaLikeTypeToAidlType.find(type_name);
     if (found != kJavaLikeTypeToAidlType.end()) {
@@ -250,7 +254,7 @@ AidlTypenames::ResolvedTypename AidlTypenames::ResolveTypename(const string& typ
 }
 
 std::unique_ptr<AidlTypeSpecifier> AidlTypenames::MakeResolvedType(const AidlLocation& location,
-                                                                   const string& name,
+                                                                   const std::string& name,
                                                                    bool is_array) const {
   std::optional<ArrayType> array;
   if (is_array) {
@@ -266,7 +270,7 @@ std::unique_ptr<AidlTypeSpecifier> AidlTypenames::MakeResolvedType(const AidlLoc
 // Only immutable Parcelable, primitive type, and String, and List, Map, array of the types can be
 // immutable.
 bool AidlTypenames::CanBeJavaOnlyImmutable(const AidlTypeSpecifier& type) const {
-  const string& name = type.GetName();
+  const std::string& name = type.GetName();
   if (type.IsGeneric()) {
     if (type.GetName() == "List" || type.GetName() == "Map") {
       const auto& types = type.GetTypeParameters();
@@ -296,7 +300,7 @@ bool AidlTypenames::CanBeJavaOnlyImmutable(const AidlTypeSpecifier& type) const 
 // - primitive types and enum types
 // - fixed-size arrays of FixedSize types
 bool AidlTypenames::CanBeFixedSize(const AidlTypeSpecifier& type) const {
-  const string& name = type.GetName();
+  const std::string& name = type.GetName();
   if (type.IsGeneric() || type.IsNullable()) {
     return false;
   }
@@ -329,7 +333,7 @@ ArgumentAspect AidlTypenames::GetArgumentAspect(const AidlTypeSpecifier& type) c
             {AidlArgument::Direction::IN_DIR, AidlArgument::Direction::OUT_DIR,
              AidlArgument::Direction::INOUT_DIR}};
   }
-  const string& name = type.GetName();
+  const std::string& name = type.GetName();
   if (IsBuiltinTypename(name)) {
     if (name == "List" || name == "Map") {
       return {name,

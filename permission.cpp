@@ -15,12 +15,8 @@
  */
 
 #include "permission.h"
-#include <memory>
 #include <string>
 #include <variant>
-#include <vector>
-
-#include <android-base/strings.h>
 
 namespace android {
 namespace aidl {

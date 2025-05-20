@@ -18,15 +18,18 @@
 #include "aidl_language.h"
 #include "aidl_typenames.h"
 #include "logging.h"
+#include "options.h"
 
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
-#include <functional>
-#include <iostream>
+#include <algorithm>
+#include <cstdint>
 #include <map>
+#include <set>
 #include <string>
+#include <variant>
 #include <vector>
 
 using android::base::Join;
@@ -135,7 +138,7 @@ bool AutoConstructor(const AidlTypeSpecifier& type, const AidlTypenames& typenam
 std::string GetRustName(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
                         StorageMode mode, bool is_vintf_stability) {
   // map from AIDL built-in type name to the corresponding Rust type name
-  static map<string, string> m = {
+  static std::map<std::string, std::string> m = {
       {"void", "()"},
       {"boolean", "bool"},
       {"byte", "i8"},
@@ -148,7 +151,7 @@ std::string GetRustName(const AidlTypeSpecifier& type, const AidlTypenames& type
       {"IBinder", "binder::SpIBinder"},
       {"ParcelFileDescriptor", "binder::ParcelFileDescriptor"},
   };
-  const string& type_name = type.GetName();
+  const std::string& type_name = type.GetName();
   if (m.find(type_name) != m.end()) {
     AIDL_FATAL_IF(!AidlTypenames::IsBuiltinTypename(type_name), type);
     if (type_name == "String" && mode == StorageMode::UNSIZED_ARGUMENT) {

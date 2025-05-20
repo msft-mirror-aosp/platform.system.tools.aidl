@@ -16,31 +16,30 @@
 
 #include "aidl.h"
 
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <algorithm>
-#include <iostream>
-#include <map>
+#include <functional>
 #include <memory>
-
-#ifdef _WIN32
-#include <io.h>
-#include <direct.h>
-#include <sys/stat.h>
-#endif
+#include <new>
+#include <set>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include <android-base/strings.h>
 
 #include "aidl_checkapi.h"
 #include "aidl_dumpapi.h"
 #include "aidl_language.h"
+#include "aidl_to_cpp_common.h"
 #include "aidl_typenames.h"
 #include "check_valid.h"
+#include "code_writer.h"
+#include "diagnostics.h"
 #include "generate_aidl_mappings.h"
 #include "generate_cpp.h"
 #include "generate_cpp_analyzer.h"
@@ -48,6 +47,9 @@
 #include "generate_ndk.h"
 #include "generate_rust.h"
 #include "import_resolver.h"
+#include "include/aidl/transaction_ids.h"
+#include "io_delegate.h"
+#include "location.h"
 #include "logging.h"
 #include "options.h"
 #include "os.h"

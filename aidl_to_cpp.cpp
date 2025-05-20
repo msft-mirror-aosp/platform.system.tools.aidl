@@ -15,15 +15,21 @@
  */
 
 #include "aidl_to_cpp.h"
-#include "aidl_to_cpp_common.h"
 #include "aidl_language.h"
+#include "aidl_to_cpp_common.h"
+#include "aidl_typenames.h"
 #include "logging.h"
 
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
-#include <functional>
+#include <map>
+#include <set>
+#include <sstream>
+#include <string>
 #include <unordered_map>
+#include <variant>
+#include <vector>
 
 using android::base::Join;
 using android::base::Split;
@@ -38,7 +44,7 @@ namespace {
 
 std::string RawParcelMethod(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
                             bool readMethod) {
-  static map<string, string> kBuiltin = {
+  static std::map<std::string, std::string> kBuiltin = {
       {"byte", "Byte"},
       {"boolean", "Bool"},
       {"char", "Char"},
@@ -53,7 +59,7 @@ std::string RawParcelMethod(const AidlTypeSpecifier& type, const AidlTypenames& 
       {"ParcelableHolder", "Parcelable"},
   };
 
-  static map<string, string> kBuiltinVector = {
+  static std::map<std::string, std::string> kBuiltinVector = {
       {"FileDescriptor", "UniqueFileDescriptorVector"},
       {"double", "DoubleVector"},
       {"char", "CharVector"},
@@ -84,7 +90,7 @@ std::string RawParcelMethod(const AidlTypeSpecifier& type, const AidlTypenames& 
   }
 
   if (isVector) {
-    string element_name;
+    std::string element_name;
     if (typenames.IsList(type)) {
       AIDL_FATAL_IF(type.GetTypeParameters().size() != 1, type);
       element_name = type.GetTypeParameters().at(0)->GetName();
@@ -106,7 +112,7 @@ std::string RawParcelMethod(const AidlTypeSpecifier& type, const AidlTypenames& 
     return "ParcelableVector";
   }
 
-  const string& type_name = type.GetName();
+  const std::string& type_name = type.GetName();
   if (kBuiltin.find(type_name) != kBuiltin.end()) {
     AIDL_FATAL_IF(!AidlTypenames::IsBuiltinTypename(type_name), type);
     if (type_name == "IBinder" && nullable && readMethod) {
@@ -162,7 +168,7 @@ std::string WrapIfNullable(const std::string type_str, const AidlTypeSpecifier& 
 
 std::string GetCppName(const AidlTypeSpecifier& raw_type, const AidlTypenames& typenames) {
   // map from AIDL built-in type name to the corresponding Cpp type name
-  static map<string, string> m = {
+  static std::map<std::string, std::string> m = {
       {"boolean", "bool"},
       {"byte", "int8_t"},
       {"char", "char16_t"},
@@ -179,7 +185,7 @@ std::string GetCppName(const AidlTypeSpecifier& raw_type, const AidlTypenames& t
   };
   AIDL_FATAL_IF(typenames.IsList(raw_type) && raw_type.GetTypeParameters().size() != 1, raw_type);
   const auto& type = typenames.IsList(raw_type) ? (*raw_type.GetTypeParameters().at(0)) : raw_type;
-  const string& aidl_name = type.GetName();
+  const std::string& aidl_name = type.GetName();
   if (m.find(aidl_name) != m.end()) {
     AIDL_FATAL_IF(!AidlTypenames::IsBuiltinTypename(aidl_name), raw_type);
     if (aidl_name == "byte" && type.IsArray()) {
@@ -327,7 +333,7 @@ void AddHeaders(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
     return;
   }
 
-  static const std::set<string> need_cstdint{"byte", "int", "long"};
+  static const std::set<std::string> need_cstdint{"byte", "int", "long"};
   if (need_cstdint.find(type.GetName()) != need_cstdint.end()) {
     headers->insert("cstdint");
     return;

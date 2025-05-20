@@ -16,10 +16,7 @@
 
 #include "aidl.h"
 #include "io_delegate.h"
-#include "logging.h"
 #include "options.h"
-
-#include <iostream>
 
 using android::aidl::Options;
 
