@@ -15,11 +15,22 @@
  */
 #include "diagnostics.h"
 
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
 #include <functional>
+#include <map>
+#include <memory>
+#include <set>
 #include <stack>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "aidl_language.h"
 #include "logging.h"
+
+#include <android-base/strings.h>
 
 using std::placeholders::_1;
 

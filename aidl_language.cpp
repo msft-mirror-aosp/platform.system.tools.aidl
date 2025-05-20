@@ -16,28 +16,36 @@
 
 #include "aidl_language.h"
 #include "aidl_typenames.h"
-#include "parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <algorithm>
+#include <cctype>
+#include <cstdint>
+#include <functional>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <new>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <utility>
+#include <variant>
+#include <vector>
 
-#include <android-base/parsedouble.h>
-#include <android-base/parseint.h>
 #include <android-base/result.h>
 #include <android-base/strings.h>
 
-#include "aidl.h"
-#include "aidl_language_y.h"
 #include "comments.h"
+#include "io_delegate.h"
+#include "location.h"
 #include "logging.h"
+#include "options.h"
 #include "permission.h"
 
 #ifdef _WIN32

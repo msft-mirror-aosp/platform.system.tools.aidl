@@ -17,8 +17,11 @@
 #include "ast_java.h"
 #include "code_writer.h"
 
-using std::vector;
-using std::string;
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <variant>
+#include <vector>
 
 template <class... Ts>
 struct overloaded : Ts... {
@@ -70,7 +73,7 @@ void WriteModifiers(CodeWriter* to, int mod, int mask) {
   }
 }
 
-void WriteArgumentList(CodeWriter* to, const vector<std::shared_ptr<Expression>>& arguments) {
+void WriteArgumentList(CodeWriter* to, const std::vector<std::shared_ptr<Expression>>& arguments) {
   size_t N = arguments.size();
   for (size_t i = 0; i < N; i++) {
     arguments[i]->Write(to);
@@ -96,19 +99,19 @@ void Field::Write(CodeWriter* to) const {
   to->Write(";\n");
 }
 
-LiteralExpression::LiteralExpression(const string& v) : value(v) {}
+LiteralExpression::LiteralExpression(const std::string& v) : value(v) {}
 
 void LiteralExpression::Write(CodeWriter* to) const {
   to->Write("%s", this->value.c_str());
 }
 
-StringLiteralExpression::StringLiteralExpression(const string& v) : value(v) {}
+StringLiteralExpression::StringLiteralExpression(const std::string& v) : value(v) {}
 
 void StringLiteralExpression::Write(CodeWriter* to) const {
   to->Write("\"%s\"", this->value.c_str());
 }
 
-Variable::Variable(const string& t, const string& n) : type(t), name(n) {}
+Variable::Variable(const std::string& t, const std::string& n) : type(t), name(n) {}
 
 void Variable::WriteDeclaration(CodeWriter* to) const {
   for (const auto& a : this->annotations) {
@@ -119,10 +122,10 @@ void Variable::WriteDeclaration(CodeWriter* to) const {
 
 void Variable::Write(CodeWriter* to) const { to->Write("%s", name.c_str()); }
 
-FieldVariable::FieldVariable(std::shared_ptr<Expression> o, const string& n)
+FieldVariable::FieldVariable(std::shared_ptr<Expression> o, const std::string& n)
     : receiver(o), name(n) {}
 
-FieldVariable::FieldVariable(const string& c, const string& n) : receiver(c), name(n) {}
+FieldVariable::FieldVariable(const std::string& c, const std::string& n) : receiver(c), name(n) {}
 
 void FieldVariable::Write(CodeWriter* to) const {
   visit(
@@ -167,7 +170,7 @@ void ExpressionStatement::Write(CodeWriter* to) const {
 Assignment::Assignment(std::shared_ptr<Variable> l, std::shared_ptr<Expression> r)
     : lvalue(l), rvalue(r) {}
 
-Assignment::Assignment(std::shared_ptr<Variable> l, std::shared_ptr<Expression> r, string c)
+Assignment::Assignment(std::shared_ptr<Variable> l, std::shared_ptr<Expression> r, std::string c)
     : lvalue(l), rvalue(r), cast(c) {}
 
 void Assignment::Write(CodeWriter* to) const {
@@ -179,20 +182,21 @@ void Assignment::Write(CodeWriter* to) const {
   this->rvalue->Write(to);
 }
 
-MethodCall::MethodCall(const string& n) : name(n) {}
+MethodCall::MethodCall(const std::string& n) : name(n) {}
 
-MethodCall::MethodCall(const string& n, const std::vector<std::shared_ptr<Expression>>& args)
+MethodCall::MethodCall(const std::string& n, const std::vector<std::shared_ptr<Expression>>& args)
     : name(n), arguments(args) {}
 
-MethodCall::MethodCall(std::shared_ptr<Expression> o, const string& n) : receiver(o), name(n) {}
+MethodCall::MethodCall(std::shared_ptr<Expression> o, const std::string& n)
+    : receiver(o), name(n) {}
 
-MethodCall::MethodCall(const std::string& t, const string& n) : receiver(t), name(n) {}
+MethodCall::MethodCall(const std::string& t, const std::string& n) : receiver(t), name(n) {}
 
-MethodCall::MethodCall(std::shared_ptr<Expression> o, const string& n,
+MethodCall::MethodCall(std::shared_ptr<Expression> o, const std::string& n,
                        const std::vector<std::shared_ptr<Expression>>& args)
     : receiver(o), name(n), arguments(args) {}
 
-MethodCall::MethodCall(const std::string& t, const string& n,
+MethodCall::MethodCall(const std::string& t, const std::string& n,
                        const std::vector<std::shared_ptr<Expression>>& args)
     : receiver(t), name(n), arguments(args) {}
 
@@ -209,7 +213,7 @@ void MethodCall::Write(CodeWriter* to) const {
   to->Write(")");
 }
 
-Comparison::Comparison(std::shared_ptr<Expression> l, const string& o,
+Comparison::Comparison(std::shared_ptr<Expression> l, const std::string& o,
                        std::shared_ptr<Expression> r)
     : lvalue(l), op(o), rvalue(r) {}
 
@@ -290,13 +294,15 @@ void FinallyStatement::Write(CodeWriter* to) const {
   this->statements->Write(to);
 }
 
-Case::Case(const string& c) { cases.push_back(c); }
+Case::Case(const std::string& c) {
+  cases.push_back(c);
+}
 
 void Case::Write(CodeWriter* to) const {
   int N = this->cases.size();
   if (N > 0) {
     for (int i = 0; i < N; i++) {
-      string s = this->cases[i];
+      std::string s = this->cases[i];
       if (s.length() != 0) {
         to->Write("case %s:\n", s.c_str());
       } else {
@@ -390,9 +396,9 @@ void Class::Write(CodeWriter* to) const {
     to->Write("interface ");
   }
 
-  string name = this->type;
+  std::string name = this->type;
   size_t pos = name.rfind('.');
-  if (pos != string::npos) {
+  if (pos != std::string::npos) {
     name = name.c_str() + pos + 1;
   }
 

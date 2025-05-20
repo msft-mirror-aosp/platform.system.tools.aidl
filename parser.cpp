@@ -16,10 +16,27 @@
 
 #include "parser.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdio>
+#include <functional>
+#include <map>
+#include <memory>
+#include <new>
 #include <queue>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "aidl_language.h"
 #include "aidl_language_y.h"
+#include "aidl_typenames.h"
+#include "io_delegate.h"
+#include "location.h"
 #include "logging.h"
+
+#include <android-base/strings.h>
 
 void yylex_init(void**);
 void yylex_destroy(void*);

@@ -16,13 +16,23 @@
 
 #include "aidl_language.h"
 #include "aidl_typenames.h"
+#include "location.h"
 #include "logging.h"
 
 #include <stdlib.h>
 #include <algorithm>
+#include <cctype>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <new>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include <android-base/parsedouble.h>
 #include <android-base/parseint.h>

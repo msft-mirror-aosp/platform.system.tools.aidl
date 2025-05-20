@@ -16,7 +16,11 @@
 
 #include "aidl.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -26,7 +30,10 @@
 
 #include "aidl_dumpapi.h"
 #include "aidl_language.h"
-#include "import_resolver.h"
+#include "aidl_typenames.h"
+#include "code_writer.h"
+#include "io_delegate.h"
+#include "location.h"
 #include "logging.h"
 #include "options.h"
 

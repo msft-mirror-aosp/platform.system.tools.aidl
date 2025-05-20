@@ -18,12 +18,27 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
 #include <format>
-#include <limits>
+#include <map>
+#include <memory>
+#include <optional>
 #include <set>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
+#include "aidl_language.h"
+#include "aidl_typenames.h"
+#include "code_writer.h"
 #include "comments.h"
+#include "location.h"
 #include "logging.h"
+#include "options.h"
 #include "os.h"
 
 using ::android::base::Join;

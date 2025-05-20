@@ -16,23 +16,32 @@
 
 #include "io_delegate.h"
 
+#include <cerrno>
 #include <cstring>
 #include <fstream>
-#include <type_traits>
+#include <ios>
+#include <memory>
+#include <new>
+#include <string>
 #include <vector>
 
 #ifdef _WIN32
 #include <direct.h>
+#include <fileapi.h>
+#include <io.h>
+// NOLINTNEXTLINE(misc-include-cleaner)
 #include <windows.h>
+#include <type_traits>
+// NOLINTNEXTLINE(misc-include-cleaner)
 #undef ERROR
 #else
 #include <dirent.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 #endif
 
 #include <android-base/strings.h>
+#include "code_writer.h"
 
 #include "logging.h"
 #include "os.h"
@@ -53,7 +62,8 @@ bool IoDelegate::GetAbsolutePath(const string& path, string* absolute_path) {
 #ifdef _WIN32
 
   char buf[4096];
-  DWORD path_len = GetFullPathName(path.c_str(), sizeof(buf), buf, nullptr);
+  // NOLINTNEXTLINE(misc-include-cleaner)
+  DWORD path_len = GetFullPathNameA(path.c_str(), sizeof(buf), buf, nullptr);
   if (path_len <= 0 || path_len >= sizeof(buf)) {
     AIDL_ERROR(path) << "Failed to GetFullPathName";
     return false;
@@ -97,7 +107,7 @@ unique_ptr<string> IoDelegate::GetFileContents(
   }
   contents.reset(new string);
   in.seekg(0, std::ios::end);
-  ssize_t file_size = in.tellg();
+  std::streamoff file_size = in.tellg();
   contents->resize(file_size + content_suffix.length());
   in.seekg(0, std::ios::beg);
   // Read the file contents into the beginning of the string
@@ -189,6 +199,7 @@ unique_ptr<CodeWriter> IoDelegate::GetCodeWriter(
 static Result<void> add_list_files(const string& dirname, vector<string>* result) {
   AIDL_FATAL_IF(result == nullptr, dirname);
 
+  // NOLINTNEXTLINE(misc-include-cleaner)
   WIN32_FIND_DATA find_data;
   // Look up the first file.
   // See https://stackoverflow.com/a/14841564/112950 for why we use remove_pointer_t
@@ -197,10 +208,13 @@ static Result<void> add_list_files(const string& dirname, vector<string>* result
   // the directory. Otherwise Find{First,Next}File will only return the directory
   // itself and stop.
   const string path(dirname + "\\*");
+  // NOLINTNEXTLINE(misc-include-cleaner)
   std::unique_ptr<std::remove_pointer_t<HANDLE>, decltype(&FindClose)> search_handle(
       FindFirstFile(path.c_str(), &find_data), FindClose);
 
+  // NOLINTNEXTLINE(misc-include-cleaner)
   if (search_handle.get() == INVALID_HANDLE_VALUE) {
+    // NOLINTNEXTLINE(misc-include-cleaner)
     return Error() << "Failed to read directory '" << dirname << "': " << GetLastError();
   }
 
@@ -209,6 +223,7 @@ static Result<void> add_list_files(const string& dirname, vector<string>* result
     const bool skip = !strcmp(find_data.cFileName, ".") || !strcmp(find_data.cFileName, "..");
 
     if (!skip) {
+      // NOLINTNEXTLINE(misc-include-cleaner)
       if (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         if (auto ret = add_list_files(dirname + OS_PATH_SEPARATOR + find_data.cFileName, result);
             !ret.ok()) {
@@ -219,9 +234,12 @@ static Result<void> add_list_files(const string& dirname, vector<string>* result
       }
     }
 
+    // NOLINTNEXTLINE(misc-include-cleaner)
     has_more_files = FindNextFile(search_handle.get(), &find_data);
     if (!has_more_files) {
+      // NOLINTNEXTLINE(misc-include-cleaner)
       const DWORD err = GetLastError();
+      // NOLINTNEXTLINE(misc-include-cleaner)
       if (err != ERROR_NO_MORE_FILES) {
         return Error() << "Failed to read directory entry in '" << dirname << "': " << err;
       }

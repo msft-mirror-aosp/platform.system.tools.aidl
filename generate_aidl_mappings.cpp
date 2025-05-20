@@ -15,9 +15,11 @@
  */
 
 #include "generate_aidl_mappings.h"
+#include "aidl_language.h"
 #include "aidl_to_java.h"
 
 #include <sstream>
+#include <string>
 
 namespace android {
 namespace aidl {

@@ -22,17 +22,30 @@
 
 #include <algorithm>
 #include <format>
+#include <iostream>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
+#include <string>
+#include <vector>
 
-#include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 
+#include "aidl_language.h"
 #include "aidl_to_common.h"
 #include "aidl_to_java.h"
+#include "aidl_typenames.h"
+#include "ast_java.h"
 #include "code_writer.h"
+#include "comments.h"
+#include "io_delegate.h"
+#include "location.h"
 #include "logging.h"
+#include "options.h"
+#include "permission.h"
 
 using ::android::base::EndsWith;
 using ::android::base::Join;

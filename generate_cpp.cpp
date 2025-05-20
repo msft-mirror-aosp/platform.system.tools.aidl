@@ -22,8 +22,10 @@
 #include <cstring>
 #include <format>
 #include <memory>
+#include <new>
 #include <set>
 #include <string>
+#include <vector>
 
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
@@ -31,9 +33,13 @@
 #include "aidl_language.h"
 #include "aidl_to_common.h"
 #include "aidl_to_cpp.h"
+#include "aidl_to_cpp_common.h"
 
 #include "aidl_typenames.h"
+#include "code_writer.h"
+#include "io_delegate.h"
 #include "logging.h"
+#include "options.h"
 
 using android::base::Join;
 using android::base::StringPrintf;
@@ -91,9 +97,9 @@ void GenerateGotoErrorOnBadStatus(CodeWriter& out) {
 //  for_declaration & !type_name_only: int a      // for method decl with type and arg
 //  for_declaration &  type_name_only: int /*a*/  // for method decl with type
 // !for_declaration                  :     a      // for method call with arg (with direction)
-string GenerateArgList(const AidlTypenames& typenames, const AidlMethod& method,
-                       bool for_declaration, bool type_name_only) {
-  vector<string> method_arguments;
+std::string GenerateArgList(const AidlTypenames& typenames, const AidlMethod& method,
+                            bool for_declaration, bool type_name_only) {
+  std::vector<std::string> method_arguments;
   for (const unique_ptr<AidlArgument>& a : method.GetArguments()) {
     string literal;
     // b/144943748: CppNameOf FileDescriptor is unique_fd. Don't pass it by

@@ -16,9 +16,18 @@
 
 #include "preprocess.h"
 
+#include <memory>
+#include <string>
+
 #include <android-base/strings.h>
 
 #include "aidl.h"
+#include "aidl_language.h"
+#include "aidl_typenames.h"
+#include "code_writer.h"
+#include "comments.h"
+#include "io_delegate.h"
+#include "options.h"
 
 using android::base::Join;
 

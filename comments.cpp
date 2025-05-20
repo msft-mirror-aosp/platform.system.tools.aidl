@@ -18,11 +18,17 @@
 #include <android-base/result.h>
 #include <android-base/strings.h>
 
+#include <cctype>
+#include <cstddef>
+#include <iterator>
 #include <optional>
 #include <regex>
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
+#include "location.h"
 #include "logging.h"
 
 using android::base::EndsWith;

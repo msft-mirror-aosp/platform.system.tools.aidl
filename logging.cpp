@@ -16,7 +16,12 @@
 
 #include "logging.h"
 
+#include <cstdlib>
+#include <iostream>
+#include <string>
+
 #include "aidl_language.h"
+#include "location.h"
 
 bool AidlErrorLog::sHadError = false;
 
@@ -39,10 +44,10 @@ AidlErrorLog::AidlErrorLog(Severity severity, const std::string& filename)
 AidlErrorLog::~AidlErrorLog() {
   if (severity_ == NO_OP) return;
   (*os_) << suffix_ << std::endl;
-  if (severity_ == FATAL) abort();
+  if (severity_ == FATAL) std::abort();
   if (location_.IsInternal()) {
     (*os_) << "Logging an internal location should not happen. Offending location: " << location_
            << std::endl;
-    abort();
+    std::abort();
   }
 }
