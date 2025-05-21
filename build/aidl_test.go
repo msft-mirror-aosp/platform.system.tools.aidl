@@ -152,11 +152,13 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 		rust_library {
 			name: "libbinder_rs",
 			crate_name: "binder",
+			recovery_available: true,
 			srcs: [""],
 		}
 		rust_library {
 			name: "libstatic_assertions",
 			crate_name: "static_assertions",
+			recovery_available: true,
 			srcs: [""],
 		}
 		rust_proc_macro {
@@ -1476,6 +1478,7 @@ func TestRecoveryAvailable(t *testing.T) {
 	`)
 	ctx.ModuleForTests(t, "myiface-V1-ndk", "android_recovery_arm64_armv8-a_shared")
 	ctx.ModuleForTests(t, "myiface-V1-cpp", "android_recovery_arm64_armv8-a_shared")
+	ctx.ModuleForTests(t, "myiface-V1-rust", "android_recovery_arm64_armv8-a_dylib")
 }
 
 func TestRustDuplicateNames(t *testing.T) {
