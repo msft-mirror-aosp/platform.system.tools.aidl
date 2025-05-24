@@ -18,8 +18,18 @@
 
 #include <android-base/strings.h>
 
+#include <cstddef>
+#include <memory>
+#include <string>
+
 #include "aidl.h"
+#include "aidl_language.h"
+#include "aidl_typenames.h"
+#include "comments.h"
+#include "io_delegate.h"
+#include "location.h"
 #include "logging.h"
+#include "options.h"
 #include "os.h"
 
 using android::base::EndsWith;

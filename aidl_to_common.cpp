@@ -15,6 +15,8 @@
  */
 
 #include "aidl_to_common.h"
+#include "code_writer.h"
+#include "options.h"
 
 namespace android {
 namespace aidl {

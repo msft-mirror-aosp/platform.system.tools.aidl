@@ -23,7 +23,24 @@
 #include "aidl_to_ndk.h"
 #include "logging.h"
 
+#include "aidl_typenames.h"
+#include "code_writer.h"
+#include "io_delegate.h"
+#include "options.h"
+
+#include <aidl/transaction_ids.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <tuple>
+#include <vector>
 
 namespace android {
 namespace aidl {

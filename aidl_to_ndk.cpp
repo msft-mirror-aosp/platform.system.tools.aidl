@@ -15,6 +15,8 @@
 #include "aidl_to_ndk.h"
 #include "aidl_language.h"
 #include "aidl_to_cpp_common.h"
+#include "aidl_typenames.h"
+#include "location.h"
 #include "logging.h"
 #include "os.h"
 
@@ -22,6 +24,11 @@
 #include <android-base/strings.h>
 
 #include <functional>
+#include <iterator>
+#include <map>
+#include <string>
+#include <variant>
+#include <vector>
 
 using ::android::base::Join;
 using ::android::base::Split;

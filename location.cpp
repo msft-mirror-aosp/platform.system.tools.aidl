@@ -15,6 +15,9 @@
  */
 
 #include "location.h"
+#include <optional>
+#include <ostream>
+#include <string>
 
 AidlLocation::AidlLocation(const std::string& file, Point begin, Point end, Source source)
     : file_(file), begin_(begin), end_(end), source_(source) {}

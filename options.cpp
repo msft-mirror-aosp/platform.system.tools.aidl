@@ -20,16 +20,21 @@
 #include <android-base/parseint.h>
 #include <android-base/result.h>
 #include <android-base/strings.h>
+
 #include <getopt.h>
 #include <stdlib.h>
-#include <unistd.h>
 
-#include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "aidl_language.h"
+#include "diagnostics.h"
+#include "location.h"
 #include "logging.h"
 #include "os.h"
 

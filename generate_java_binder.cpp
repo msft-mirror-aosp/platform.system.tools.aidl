@@ -22,17 +22,23 @@
 #include "ast_java.h"
 #include "code_writer.h"
 #include "generate_java.h"
+#include "location.h"
 #include "logging.h"
 #include "options.h"
-#include "parser.h"
+#include "permission.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <algorithm>
+#include <cstdint>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string>
 #include <unordered_set>
-#include <utility>
+#include <variant>
 #include <vector>
 
 #include <android-base/stringprintf.h>

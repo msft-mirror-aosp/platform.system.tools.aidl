@@ -17,14 +17,17 @@
 #include "aidl_to_java.h"
 #include "aidl_language.h"
 #include "aidl_typenames.h"
+#include "code_writer.h"
+#include "location.h"
 #include "logging.h"
+#include "options.h"
 
 #include <android-base/strings.h>
 
 #include <functional>
-#include <iostream>
 #include <map>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace android {

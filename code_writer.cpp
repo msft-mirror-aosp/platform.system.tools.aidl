@@ -18,6 +18,11 @@
 #include "logging.h"
 
 #include <android-base/strings.h>
+#include <cstddef>
+#include <memory>
+#include <new>
+#include <string>
+#include <utility>
 
 #include <stdarg.h>
 #include <fstream>

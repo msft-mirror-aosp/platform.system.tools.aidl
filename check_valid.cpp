@@ -15,8 +15,13 @@
  */
 
 #include "check_valid.h"
-#include "aidl.h"
+#include "aidl_language.h"
+#include "logging.h"
+#include "options.h"
 
+#include <functional>
+#include <set>
+#include <utility>
 #include <vector>
 
 namespace android {

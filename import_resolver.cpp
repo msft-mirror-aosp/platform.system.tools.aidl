@@ -15,32 +15,23 @@
  */
 
 #include "import_resolver.h"
-#include "aidl_language.h"
+#include "io_delegate.h"
 #include "logging.h"
-
-#include <algorithm>
-
-#include <android-base/file.h>
-#include <android-base/strings.h>
-#include <unistd.h>
-
-#ifdef _WIN32
-#include <io.h>
-#endif
-
 #include "os.h"
 
-using std::set;
-using std::string;
-using std::vector;
+#include <android-base/strings.h>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace android {
 namespace aidl {
 
-ImportResolver::ImportResolver(const IoDelegate& io_delegate, const string& input_file_name,
-                               const set<string>& import_paths)
+ImportResolver::ImportResolver(const IoDelegate& io_delegate, const std::string& input_file_name,
+                               const std::set<std::string>& import_paths)
     : io_delegate_(io_delegate), input_file_name_(input_file_name) {
-  for (string path : import_paths) {
+  for (std::string path : import_paths) {
     if (path.empty()) {
       path = ".";
     }
@@ -51,10 +42,10 @@ ImportResolver::ImportResolver(const IoDelegate& io_delegate, const string& inpu
   }
 }
 
-string ImportResolver::FindImportFile(const string& canonical_name) const {
+std::string ImportResolver::FindImportFile(const std::string& canonical_name) const {
   auto parts = base::Split(canonical_name, ".");
   while (!parts.empty()) {
-    string relative_path = base::Join(parts, OS_PATH_SEPARATOR) + ".aidl";
+    std::string relative_path = base::Join(parts, OS_PATH_SEPARATOR) + ".aidl";
     auto candidates = ScanImportPaths(relative_path);
     if (candidates.size() == 0) {
       // remove the last part & keep searching
@@ -76,9 +67,9 @@ string ImportResolver::FindImportFile(const string& canonical_name) const {
   return "";
 }
 
-set<string> ImportResolver::ScanImportPaths(const string& relative_path) const {
+std::set<std::string> ImportResolver::ScanImportPaths(const std::string& relative_path) const {
   // Look for that relative path at each of our import roots.
-  set<string> found;
+  std::set<std::string> found;
   for (const auto& path : import_paths_) {
     if (io_delegate_.FileIsReadable(path + relative_path)) {
       found.emplace(path + relative_path);

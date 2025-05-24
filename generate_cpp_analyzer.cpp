@@ -16,13 +16,18 @@
 
 #include "generate_cpp_analyzer.h"
 
-#include <string>
-#include "aidl.h"
 #include "aidl_language.h"
 #include "aidl_to_common.h"
 #include "aidl_to_cpp.h"
+#include "aidl_to_cpp_common.h"
+#include "aidl_typenames.h"
 #include "code_writer.h"
+#include "io_delegate.h"
 #include "logging.h"
+#include "options.h"
+
+#include <string>
+#include <vector>
 
 using std::string;
 using std::unique_ptr;

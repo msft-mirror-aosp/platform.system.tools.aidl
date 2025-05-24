@@ -16,22 +16,28 @@
 
 #include "generate_rust.h"
 
-#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <map>
 #include <memory>
+#include <optional>
+#include <set>
 #include <sstream>
+#include <string>
+#include <vector>
 
+#include "aidl_language.h"
 #include "aidl_to_common.h"
 #include "aidl_to_cpp_common.h"
 #include "aidl_to_rust.h"
+#include "aidl_typenames.h"
 #include "code_writer.h"
 #include "comments.h"
+#include "io_delegate.h"
 #include "logging.h"
+#include "options.h"
 
 using android::base::Join;
 using android::base::Split;
@@ -62,7 +68,7 @@ struct MangledAliasVisitor : AidlVisitor {
   }
   // Return a mangled name for a type (including AIDL package)
   template <typename T>
-  string Mangled(const T& type) const {
+  std::string Mangled(const T& type) const {
     ostringstream alias;
     for (const auto& component : Split(type.GetCanonicalName(), ".")) {
       alias << "_" << component.size() << "_" << component;
@@ -100,8 +106,8 @@ void GenerateMangledAliases(CodeWriter& out, const AidlDefinedType& type) {
   out << "}\n";
 }
 
-string BuildArg(const AidlArgument& arg, const AidlTypenames& typenames, Lifetime lifetime,
-                bool is_vintf_stability, vector<string>& lifetimes) {
+std::string BuildArg(const AidlArgument& arg, const AidlTypenames& typenames, Lifetime lifetime,
+                     bool is_vintf_stability, std::vector<std::string>& lifetimes) {
   // We pass in parameters that are not primitives by const reference.
   // Arrays get passed in as slices, which is handled in RustNameOf.
   auto arg_mode = ArgumentStorageMode(arg, typenames);
