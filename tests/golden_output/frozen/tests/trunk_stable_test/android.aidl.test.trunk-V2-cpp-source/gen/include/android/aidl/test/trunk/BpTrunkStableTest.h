@@ -8,7 +8,7 @@
  */
 #pragma once
 
-#include <mutex>
+#include <binder/RpcThreads.h>
 #include <binder/IBinder.h>
 #include <binder/IInterface.h>
 #include <utils/Errors.h>
@@ -49,7 +49,7 @@ public:
 private:
   int32_t cached_version_ = -1;
   std::string cached_hash_ = "-1";
-  std::mutex cached_hash_mutex_;
+  ::android::RpcMutex cached_hash_mutex_;
 };  // class BpTrunkStableTest
 }  // namespace trunk
 }  // namespace test

@@ -276,7 +276,7 @@ int32_t BpTrunkStableTest::getInterfaceVersion() {
 
 
 std::string BpTrunkStableTest::getInterfaceHash() {
-  std::lock_guard<std::mutex> lockGuard(cached_hash_mutex_);
+  ::android::RpcMutexLockGuard lockGuard(cached_hash_mutex_);
   if (cached_hash_ == "-1") {
     ::android::Parcel data;
     ::android::Parcel reply;
@@ -870,7 +870,7 @@ int32_t ITrunkStableTest::BpMyCallback::getInterfaceVersion() {
 
 
 std::string ITrunkStableTest::BpMyCallback::getInterfaceHash() {
-  std::lock_guard<std::mutex> lockGuard(cached_hash_mutex_);
+  ::android::RpcMutexLockGuard lockGuard(cached_hash_mutex_);
   if (cached_hash_ == "-1") {
     ::android::Parcel data;
     ::android::Parcel reply;

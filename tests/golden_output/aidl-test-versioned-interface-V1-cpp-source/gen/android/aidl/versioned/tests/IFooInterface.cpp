@@ -209,7 +209,7 @@ int32_t BpFooInterface::getInterfaceVersion() {
 
 
 std::string BpFooInterface::getInterfaceHash() {
-  std::lock_guard<std::mutex> lockGuard(cached_hash_mutex_);
+  ::android::RpcMutexLockGuard lockGuard(cached_hash_mutex_);
   if (cached_hash_ == "-1") {
     ::android::Parcel data;
     ::android::Parcel reply;
