@@ -1305,8 +1305,7 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz_code_to_function[] = { };
-static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IEmptyInterface::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_onTransact, _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz_code_to_function, 0);
+static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IEmptyInterface::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_onTransact, nullptr, 0);
 
 FixedSizeArrayExample::BpEmptyInterface::BpEmptyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 FixedSizeArrayExample::BpEmptyInterface::~BpEmptyInterface() {}

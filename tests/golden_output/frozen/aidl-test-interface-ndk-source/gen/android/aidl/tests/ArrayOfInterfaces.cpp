@@ -61,8 +61,7 @@ static binder_status_t _aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterfac
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_clazz_code_to_function[] = { };
-static AIBinder_Class* _g_aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(ArrayOfInterfaces::IEmptyInterface::descriptor, _aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_onTransact, _g_aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_clazz_code_to_function, 0);
+static AIBinder_Class* _g_aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(ArrayOfInterfaces::IEmptyInterface::descriptor, _aidl_android_aidl_tests_ArrayOfInterfaces_IEmptyInterface_onTransact, nullptr, 0);
 
 ArrayOfInterfaces::BpEmptyInterface::BpEmptyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ArrayOfInterfaces::BpEmptyInterface::~BpEmptyInterface() {}
