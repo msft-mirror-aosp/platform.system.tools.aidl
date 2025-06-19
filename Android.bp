@@ -335,14 +335,15 @@ cc_library_headers {
     host_supported: true,
     export_include_dirs: ["include"],
     visibility: [
-       ":__subpackages__",
-       "//frameworks/native/libs/binder/tests:__subpackages__",
+        ":__subpackages__",
+        "//frameworks/native/libs/binder/tests:__subpackages__",
     ],
     target: {
         windows: {
             enabled: true,
         },
     },
+    vendor_available: true,
 }
 
 cc_library {
