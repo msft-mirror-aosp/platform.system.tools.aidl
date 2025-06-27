@@ -765,9 +765,6 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
   // Find the maxId used for AIDL method. If methods use skipped ids, only support till kMaxSkip.
   int maxId = GetMaxId(defined_type);
   int functionCount = maxId + 1;
-  std::string codeToFunction = GlobalClassVarName(defined_type) + "_" + kFunctionNames;
-  out << "static const char* " << codeToFunction << "[] = { ";
-
   // If tracing is off, don't populate this array. libbinder_ndk will still add traces based on
   // transaction code
   vector<std::string> functionNames;
@@ -781,12 +778,21 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
       }
       functionNames[method->GetId()] = method->GetName();
     }
+  }
 
+  std::string codeToFunction;
+  // Function name array is empty, pass nullptr to avoid zero sized symbols
+  if (functionNames.size() == 0) {
+    codeToFunction = "nullptr";
+  } else {
+    codeToFunction = GlobalClassVarName(defined_type) + "_" + kFunctionNames;
+    out << "static const char* " << codeToFunction << "[] = { ";
     for (const auto& method : functionNames) {
       out << "\"" << method << "\",";
     }
+    out << "};\n";
   }
-  out << "};\n";
+
   out << "static AIBinder_Class* " << GlobalClassVarName(defined_type)
       << " = ::ndk::ICInterface::defineClass(" << i_name << "::" << kDescriptor << ", "
       << on_transact << ", " << codeToFunction << ", " << std::to_string(functionNames.size())
