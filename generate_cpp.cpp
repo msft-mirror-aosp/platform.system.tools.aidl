@@ -75,6 +75,7 @@ const char kIBinderHeader[] = "binder/IBinder.h";
 const char kIInterfaceHeader[] = "binder/IInterface.h";
 const char kBinderDelegateHeader[] = "binder/Delegate.h";
 const char kParcelHeader[] = "binder/Parcel.h";
+const char kRpcThreadsHeader[] = "binder/RpcThreads.h";
 const char kStabilityHeader[] = "binder/Stability.h";
 const char kStatusHeader[] = "binder/Status.h";
 const char kString16Header[] = "utils/String16.h";
@@ -356,7 +357,7 @@ void GenerateClientMetaTransaction(CodeWriter& out, const AidlInterface& interfa
   }
   if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
     out << "std::string " << bp_name << "::" << kGetInterfaceHash << "() {\n"
-        << "  std::lock_guard<std::mutex> lockGuard(cached_hash_mutex_);\n"
+        << "  ::android::RpcMutexLockGuard lockGuard(cached_hash_mutex_);\n"
         << "  if (cached_hash_ == \"-1\") {\n"
         << "    ::android::Parcel data;\n"
         << "    ::android::Parcel reply;\n"
@@ -780,7 +781,7 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
     }
     if (!options.Hash().empty()) {
       out << "std::string cached_hash_ = \"-1\";\n";
-      out << "std::mutex cached_hash_mutex_;\n";
+      out << "::android::RpcMutex cached_hash_mutex_;\n";
     }
     out.Dedent();
   }
@@ -792,7 +793,7 @@ void GenerateClientHeader(CodeWriter& out, const AidlInterface& interface,
                           const AidlTypenames& typenames, const Options& options) {
   out << "#pragma once\n\n";
   if (!options.Hash().empty()) {
-    out << "#include <mutex>\n";
+    out << "#include <" << kRpcThreadsHeader << ">\n";
   }
   out << "#include <" << kIBinderHeader << ">\n";
   out << "#include <" << kIInterfaceHeader << ">\n";
@@ -1395,6 +1396,9 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlDefinedType& defined_type
         if (options.GenLog()) {
           includes.insert("functional");                  // std::function for logFunc
           includes.insert("android/binder_to_string.h");  // Generic ToString helper
+        }
+        if (!options.Hash().empty()) {
+          includes.insert(kRpcThreadsHeader);
         }
       }
     }
