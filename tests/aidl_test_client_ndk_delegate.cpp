@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <android-base/logging.h>
 #include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
 #include <binder/ProcessState.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <aidl/android/aidl/tests/BnTestService.h>
-#include <android-base/logging.h>
+#include "aidl/android/aidl/tests/BnTestService.h"
 
-using aidl::android::aidl::tests::BackendType;
-using aidl::android::aidl::tests::ITestService;
-using aidl::android::aidl::tests::ITestServiceDelegator;
+namespace {
 
-static constexpr int8_t kCustomByte = 8;
+using ::aidl::android::aidl::tests::ITestService;
+using ::aidl::android::aidl::tests::ITestServiceDelegator;
+
+constexpr int8_t kCustomByte = 8;
 
 static_assert(std::is_same<ITestService::DefaultDelegator, ITestServiceDelegator>::value);
 
@@ -35,46 +37,49 @@ struct CustomDelegator : public ITestServiceDelegator {
   CustomDelegator(std::shared_ptr<ITestService>& impl) : ITestServiceDelegator(impl) {}
 
   // Change RepeatByte to always return the same byte.
-  ndk::ScopedAStatus RepeatByte(int8_t /* token */, int8_t* _aidl_return) override {
-    *_aidl_return = kCustomByte;
+  ndk::ScopedAStatus RepeatByte(int8_t /* token */, int8_t* aidl_return) override {
+    *aidl_return = kCustomByte;
     return ndk::ScopedAStatus::ok();
   }
 };
 
-struct AidlDelegatorTest : testing::Test {
-  template <typename T>
-  std::shared_ptr<T> getService() {
-    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    android::ProcessState::self()->startThreadPool();
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
-    return T::fromBinder(binder);
-  }
-  void SetUp() override { service = getService<ITestService>(); }
-  std::shared_ptr<ITestService> service;
+template <typename T>
+std::shared_ptr<T> getService() {
+  android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+  android::ProcessState::self()->startThreadPool();
+  ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
+  return T::fromBinder(binder);
+}
+
+class AidlNdkDelegateTest : public ::testing::Test {
+ protected:
+  std::shared_ptr<ITestService> service = getService<ITestService>();
 };
 
-TEST_F(AidlDelegatorTest, SimpleDelegator) {
+TEST_F(AidlNdkDelegateTest, SimpleDelegator) {
   auto delegator = ndk::SharedRefBase::make<ITestServiceDelegator>(service);
-  int8_t returned_value;
+  int8_t returned_value = 0;
   auto status = delegator->RepeatByte(12, &returned_value);
   ASSERT_TRUE(status.isOk()) << status.getMessage();
-  EXPECT_EQ(12, returned_value);
+  EXPECT_EQ(returned_value, 12);
 }
 
-TEST_F(AidlDelegatorTest, CustomDelegator) {
+TEST_F(AidlNdkDelegateTest, CustomDelegator) {
   auto delegator = ndk::SharedRefBase::make<CustomDelegator>(service);
-  int8_t returned_value;
+  int8_t returned_value = 0;
   auto status = delegator->RepeatByte(12, &returned_value);
   ASSERT_TRUE(status.isOk()) << status.getMessage();
-  EXPECT_EQ(kCustomByte, returned_value);
+  EXPECT_EQ(returned_value, kCustomByte);
 }
 
-TEST_F(AidlDelegatorTest, SendDelegator) {
+TEST_F(AidlNdkDelegateTest, SendDelegator) {
   auto delegator = ndk::SharedRefBase::make<ITestServiceDelegator>(service);
   auto fromAsBinder = ITestServiceDelegator::fromBinder(delegator->asBinder());
   // Make sure the delegator works after asBinder -> fromBinder conversions
   int8_t returned_value = 0;
   auto status = fromAsBinder->RepeatByte(12, &returned_value);
   ASSERT_TRUE(status.isOk()) << status.getDescription();
-  EXPECT_EQ(12, returned_value);
+  EXPECT_EQ(returned_value, 12);
 }
+
+}  // namespace

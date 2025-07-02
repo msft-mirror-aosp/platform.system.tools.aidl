@@ -45,7 +45,7 @@ std::shared_ptr<T> getService() {
   return T::fromBinder(binder);
 }
 
-TEST(AidlLoggableTest, LogThis) {
+TEST(AidlNdkLoggableInterfaceTest, LogThis) {
   std::shared_ptr<ITestService> service = getService<ITestService>();
   ASSERT_NE(nullptr, service.get());
 

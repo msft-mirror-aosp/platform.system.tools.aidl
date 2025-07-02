@@ -21,17 +21,33 @@
 #include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
 #include <binder/ProcessState.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <aidl/android/aidl/fixedsizearray/FixedSizeArrayExample.h>
-#include <aidl/android/aidl/tests/ITestService.h>
-#include <aidl/android/aidl/tests/RecursiveList.h>
-#include <aidl/android/aidl/tests/Union.h>
-#include <aidl/android/aidl/tests/extension/MyExt.h>
-#include <aidl/android/aidl/tests/vintf/VintfExtendableParcelable.h>
-#include <aidl/android/aidl/tests/vintf/VintfParcelable.h>
+#include "aidl/android/aidl/fixedsizearray/FixedSizeArrayExample.h"
+#include "aidl/android/aidl/tests/ITestService.h"
+#include "aidl/android/aidl/tests/RecursiveList.h"
+#include "aidl/android/aidl/tests/Union.h"
+#include "aidl/android/aidl/tests/extension/MyExt.h"
+#include "aidl/android/aidl/tests/vintf/VintfExtendableParcelable.h"
+#include "aidl/android/aidl/tests/vintf/VintfParcelable.h"
 
-using aidl::android::aidl::fixedsizearray::FixedSizeArrayExample;
+namespace {
+
+using ::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample;
+using ::aidl::android::aidl::tests::BackendType;
+using ::aidl::android::aidl::tests::ITestService;
+using ::aidl::android::aidl::tests::RecursiveList;
+using ::aidl::android::aidl::tests::SimpleParcelable;
+using ::aidl::android::aidl::tests::Union;
+using ::aidl::android::aidl::tests::extension::ExtendableParcelable;
+using ::aidl::android::aidl::tests::extension::MyExt;
+using ::aidl::android::aidl::tests::vintf::VintfExtendableParcelable;
+using ::aidl::android::aidl::tests::vintf::VintfParcelable;
+using ::ndk::AParcel_readData;
+using ::ndk::AParcel_writeData;
+using ::testing::ElementsAre;
+
 using BnRepeatFixedSizeArray =
     aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::BnRepeatFixedSizeArray;
 using BpRepeatFixedSizeArray =
@@ -41,35 +57,18 @@ using IRepeatFixedSizeArray =
     aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IRepeatFixedSizeArray;
 using BnEmptyInterface =
     aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::BnEmptyInterface;
-using aidl::android::aidl::tests::BackendType;
-using aidl::android::aidl::tests::ITestService;
-using aidl::android::aidl::tests::RecursiveList;
-using aidl::android::aidl::tests::SimpleParcelable;
-using aidl::android::aidl::tests::Union;
-using aidl::android::aidl::tests::extension::ExtendableParcelable;
-using aidl::android::aidl::tests::extension::MyExt;
-using aidl::android::aidl::tests::vintf::VintfExtendableParcelable;
-using aidl::android::aidl::tests::vintf::VintfParcelable;
-using android::OK;
-using ndk::AParcel_readData;
-using ndk::AParcel_writeData;
-using ndk::ScopedAStatus;
-using ndk::SharedRefBase;
-using ndk::SpAIBinder;
 
-struct AidlTest : testing::Test {
-  template <typename T>
-  std::shared_ptr<T> getService() {
-    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    android::ProcessState::self()->startThreadPool();
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
-    return T::fromBinder(binder);
-  }
-};
+template <typename T>
+std::shared_ptr<T> getService() {
+  android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+  android::ProcessState::self()->startThreadPool();
+  ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
+  return T::fromBinder(binder);
+}
 
 // TODO(b/196454897): copy more tests from aidl_test_client
 
-TEST_F(AidlTest, RepeatSimpleParcelable) {
+TEST(AidlNdkParcelablesTest, RepeatSimpleParcelable) {
   SimpleParcelable input("foo", 42);
   SimpleParcelable out_param, returned;
   auto status = getService<ITestService>()->RepeatSimpleParcelable(input, &out_param, &returned);
@@ -78,7 +77,7 @@ TEST_F(AidlTest, RepeatSimpleParcelable) {
   EXPECT_EQ(input, returned) << input.toString() << " " << returned.toString();
 }
 
-TEST_F(AidlTest, ReverseSimpleParcelable) {
+TEST(AidlNdkParcelablesTest, ReverseSimpleParcelable) {
   BackendType backend;
   auto status = getService<ITestService>()->getBackendType(&backend);
   ASSERT_TRUE(status.isOk());
@@ -99,7 +98,7 @@ TEST_F(AidlTest, ReverseSimpleParcelable) {
   EXPECT_EQ(reversed, original);
 }
 
-TEST_F(AidlTest, ReverseRecursiveList) {
+TEST(AidlNdkParcelablesTest, ReverseRecursiveList) {
   std::unique_ptr<RecursiveList> head;
   for (int i = 0; i < 10; i++) {
     auto node = std::make_unique<RecursiveList>();
@@ -122,7 +121,7 @@ TEST_F(AidlTest, ReverseRecursiveList) {
   EXPECT_EQ(nullptr, cur);
 }
 
-TEST_F(AidlTest, RepeatExtendableParcelable) {
+TEST(AidlNdkParcelablesTest, RepeatExtendableParcelable) {
   MyExt ext;
   ext.a = 42;
   ext.b = "EXT";
@@ -139,14 +138,14 @@ TEST_F(AidlTest, RepeatExtendableParcelable) {
   EXPECT_EQ(ep2.b, ep.b);
 
   std::optional<MyExt> ret_ext;
-  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), OK);
+  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), android::OK);
   ASSERT_TRUE(ret_ext.has_value());
 
   EXPECT_EQ(ret_ext->a, ext.a);
   EXPECT_EQ(ret_ext->b, ext.b);
 }
 
-TEST_F(AidlTest, RepeatExtendableParcelableVintf) {
+TEST(AidlNdkParcelablesTest, RepeatExtendableParcelableVintf) {
   VintfParcelable inner;
   inner.a = 5;
 
@@ -166,16 +165,16 @@ TEST_F(AidlTest, RepeatExtendableParcelableVintf) {
   EXPECT_EQ(ep2.b, ep.b);
 
   std::optional<VintfExtendableParcelable> ret_ext;
-  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), OK);
+  ASSERT_EQ(ep2.ext.getParcelable(&ret_ext), android::OK);
   ASSERT_TRUE(ret_ext.has_value());
 
   std::optional<VintfParcelable> ret_inner;
-  ASSERT_EQ(ret_ext->ext.getParcelable(&ret_inner), OK);
+  ASSERT_EQ(ret_ext->ext.getParcelable(&ret_inner), android::OK);
   ASSERT_TRUE(ret_inner.has_value());
   EXPECT_EQ(ret_inner->a, inner.a);
 }
 
-TEST_F(AidlTest, GetUnionTags) {
+TEST(AidlNdkParcelablesTest, GetUnionTags) {
   std::vector<Union> unions;
   std::vector<Union::Tag> tags;
   // test empty
@@ -190,8 +189,8 @@ TEST_F(AidlTest, GetUnionTags) {
   EXPECT_EQ(tags, (std::vector<Union::Tag>{Union::n, Union::ns}));
 }
 
-TEST_F(AidlTest, FixedSizeArray) {
-  auto parcel = AParcel_create();
+TEST(AidlNdkParcelablesTest, FixedSizeArray) {
+  AParcel* parcel = AParcel_create();
 
   FixedSizeArrayExample p;
   p.byteMatrix[0][0] = 0;
@@ -202,19 +201,19 @@ TEST_F(AidlTest, FixedSizeArray) {
   p.floatMatrix[0][1] = 1.f;
   p.floatMatrix[1][0] = 2.f;
   p.floatMatrix[1][1] = 3.f;
-  EXPECT_EQ(OK, p.writeToParcel(parcel));
+  EXPECT_EQ(p.writeToParcel(parcel), android::OK);
 
   AParcel_setDataPosition(parcel, 0);
 
   FixedSizeArrayExample q;
-  EXPECT_EQ(OK, q.readFromParcel(parcel));
+  EXPECT_EQ(q.readFromParcel(parcel), android::OK);
   EXPECT_EQ(p, q);
 
   AParcel_delete(parcel);
 }
 
-TEST_F(AidlTest, FixedSizeArrayWithValuesAtNullableFields) {
-  auto parcel = AParcel_create();
+TEST(AidlNdkParcelablesTest, FixedSizeArrayWithValuesAtNullableFields) {
+  AParcel* parcel = AParcel_create();
 
   FixedSizeArrayExample p;
   p.boolNullableArray = std::array<bool, 2>{true, false};
@@ -228,35 +227,35 @@ TEST_F(AidlTest, FixedSizeArrayWithValuesAtNullableFields) {
   p.stringNullableMatrix.emplace();
   p.stringNullableMatrix->at(0) = std::array<std::optional<std::string>, 2>{"hello", "world"};
 
-  EXPECT_EQ(OK, p.writeToParcel(parcel));
+  EXPECT_EQ(p.writeToParcel(parcel), android::OK);
 
   AParcel_setDataPosition(parcel, 0);
 
   FixedSizeArrayExample q;
-  EXPECT_EQ(OK, q.readFromParcel(parcel));
-  EXPECT_EQ(p, q);
+  EXPECT_EQ(q.readFromParcel(parcel), android::OK);
+  EXPECT_EQ(q, p);
 
   AParcel_delete(parcel);
 }
 
-TEST_F(AidlTest, FixedSizeArrayOfBytesShouldBePacked) {
-  auto parcel = AParcel_create();
+TEST(AidlNdkParcelablesTest, FixedSizeArrayOfBytesShouldBePacked) {
+  AParcel* parcel = AParcel_create();
 
   std::array<std::array<uint8_t, 3>, 2> byte_array;
   byte_array[0] = {1, 2, 3};
   byte_array[1] = {4, 5, 6};
-  EXPECT_EQ(OK, AParcel_writeData(parcel, byte_array));
+  EXPECT_EQ(AParcel_writeData(parcel, byte_array), android::OK);
 
   AParcel_setDataPosition(parcel, 0);
 
   int32_t len;
-  EXPECT_EQ(OK, AParcel_readData(parcel, &len));
+  EXPECT_EQ(AParcel_readData(parcel, &len), android::OK);
   EXPECT_EQ(2, len);
   std::vector<uint8_t> byte_vector;
-  EXPECT_EQ(OK, AParcel_readData(parcel, &byte_vector));
-  EXPECT_EQ(byte_vector, (std::vector<uint8_t>{1, 2, 3}));
-  EXPECT_EQ(OK, AParcel_readData(parcel, &byte_vector));
-  EXPECT_EQ(byte_vector, (std::vector<uint8_t>{4, 5, 6}));
+  EXPECT_EQ(AParcel_readData(parcel, &byte_vector), android::OK);
+  EXPECT_THAT(byte_vector, ElementsAre(1, 2, 3));
+  EXPECT_EQ(AParcel_readData(parcel, &byte_vector), android::OK);
+  EXPECT_THAT(byte_vector, ElementsAre(4, 5, 6));
 
   AParcel_delete(parcel);
 }
@@ -282,18 +281,18 @@ std::array<std::array<T, 3>, 2> Make2dArray(std::initializer_list<T> values) {
   return arr;
 }
 
-TEST_F(AidlTest, FixedSizeArrayOverBinder) {
+TEST(AidlNdkParcelablesTest, FixedSizeArrayOverBinder) {
   auto service = getService<IRepeatFixedSizeArray>();
 
   CheckRepeat(service, &IRepeatFixedSizeArray::RepeatBytes, (std::array<uint8_t, 3>{1, 2, 3}));
 
   CheckRepeat(service, &IRepeatFixedSizeArray::RepeatInts, (std::array<int32_t, 3>{1, 2, 3}));
 
-  auto binder1 = SharedRefBase::make<BnEmptyInterface>()->asBinder();
-  auto binder2 = SharedRefBase::make<BnEmptyInterface>()->asBinder();
-  auto binder3 = SharedRefBase::make<BnEmptyInterface>()->asBinder();
+  auto binder1 = ndk::SharedRefBase::make<BnEmptyInterface>()->asBinder();
+  auto binder2 = ndk::SharedRefBase::make<BnEmptyInterface>()->asBinder();
+  auto binder3 = ndk::SharedRefBase::make<BnEmptyInterface>()->asBinder();
   CheckRepeat(service, &IRepeatFixedSizeArray::RepeatBinders,
-              (std::array<SpAIBinder, 3>{binder1, binder2, binder3}));
+              (std::array<ndk::SpAIBinder, 3>{binder1, binder2, binder3}));
 
   IntParcelable p1, p2, p3;
   p1.value = 1;
@@ -308,8 +307,10 @@ TEST_F(AidlTest, FixedSizeArrayOverBinder) {
 
   // Not-nullable
   CheckRepeat(service, &IRepeatFixedSizeArray::Repeat2dBinders,
-              Make2dArray<SpAIBinder>({binder1, binder2, binder3, binder1, binder2, binder3}));
+              Make2dArray<ndk::SpAIBinder>({binder1, binder2, binder3, binder1, binder2, binder3}));
 
   CheckRepeat(service, &IRepeatFixedSizeArray::Repeat2dParcelables,
               Make2dArray<IntParcelable>({p1, p2, p3}));
 }
+
+}  // namespace

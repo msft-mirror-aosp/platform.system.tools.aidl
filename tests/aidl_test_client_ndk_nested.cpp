@@ -22,32 +22,32 @@
 #include <gtest/gtest.h>
 #include <utils/String16.h>
 
-#include <aidl/android/aidl/tests/nested/INestedService.h>
-#include <aidl/android/aidl/tests/nested/ParcelableWithNested.h>
-
+#include <memory>
 #include <optional>
+#include <vector>
 
-using aidl::android::aidl::tests::nested::INestedService;
-using aidl::android::aidl::tests::nested::ParcelableWithNested;
-using NestedResult = aidl::android::aidl::tests::nested::INestedService::Result;
-using NestedStatus = aidl::android::aidl::tests::nested::ParcelableWithNested::Status;
-using std::optional;
-using std::shared_ptr;
-using std::vector;
-using testing::Eq;
-using testing::Optional;
+#include "aidl/android/aidl/tests/nested/INestedService.h"
+#include "aidl/android/aidl/tests/nested/ParcelableWithNested.h"
 
-struct AidlTest : testing::Test {
-  template <typename T>
-  std::shared_ptr<T> getService() {
-    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    android::ProcessState::self()->startThreadPool();
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
-    return T::fromBinder(binder);
-  }
-};
+namespace {
 
-TEST_F(AidlTest, NestedService) {
+using ::aidl::android::aidl::tests::nested::INestedService;
+using ::aidl::android::aidl::tests::nested::ParcelableWithNested;
+using ::testing::ElementsAre;
+using ::testing::Optional;
+
+using NestedResult = ::aidl::android::aidl::tests::nested::INestedService::Result;
+using NestedStatus = ::aidl::android::aidl::tests::nested::ParcelableWithNested::Status;
+
+template <typename T>
+std::shared_ptr<T> getService() {
+  android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+  android::ProcessState::self()->startThreadPool();
+  ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
+  return T::fromBinder(binder);
+}
+
+TEST(AidlNdkNestedTest, NestedService) {
   auto nestedService = getService<INestedService>();
   ASSERT_NE(nullptr, nestedService);
 
@@ -61,7 +61,7 @@ TEST_F(AidlTest, NestedService) {
 
   // NOT_OK -> OK with callback (nested interface)
   struct Callback : INestedService::BnCallback {
-    optional<ParcelableWithNested::Status> result;
+    std::optional<ParcelableWithNested::Status> result;
     ndk::ScopedAStatus done(ParcelableWithNested::Status st) override {
       result = st;
       return ndk::ScopedAStatus::ok();
@@ -73,10 +73,12 @@ TEST_F(AidlTest, NestedService) {
   EXPECT_THAT(cb->result, Optional(NestedStatus::OK));
 
   // android::enum_ranges<>
-  vector<NestedStatus> values{ndk::enum_range<NestedStatus>().begin(),
-                              ndk::enum_range<NestedStatus>().end()};
-  EXPECT_EQ(values, vector<NestedStatus>({NestedStatus::OK, NestedStatus::NOT_OK}));
+  std::vector<NestedStatus> values{ndk::enum_range<NestedStatus>().begin(),
+                                   ndk::enum_range<NestedStatus>().end()};
+  EXPECT_THAT(values, ElementsAre(NestedStatus::OK, NestedStatus::NOT_OK));
 
   // toString()
   EXPECT_EQ(toString(NestedStatus::NOT_OK), "NOT_OK");
 }
+
+}  // namespace
