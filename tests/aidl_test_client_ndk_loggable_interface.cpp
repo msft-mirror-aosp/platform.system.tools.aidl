@@ -26,30 +26,26 @@
 #include <aidl/android/aidl/tests/BackendType.h>
 #include <aidl/android/aidl/tests/ITestService.h>
 
-using aidl::android::aidl::loggable::BpLoggableInterface;
-using aidl::android::aidl::loggable::Data;
-using aidl::android::aidl::loggable::Enum;
-using aidl::android::aidl::loggable::ILoggableInterface;
-using aidl::android::aidl::tests::BackendType;
-using aidl::android::aidl::tests::ITestService;
-using std::optional;
-using std::pair;
-using std::shared_ptr;
-using std::string;
-using std::vector;
-using testing::Eq;
+namespace {
 
-struct AidlTest : testing::Test {
-  template <typename T>
-  std::shared_ptr<T> getService() {
-    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    android::ProcessState::self()->startThreadPool();
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
-    return T::fromBinder(binder);
-  }
-};
+using ::aidl::android::aidl::loggable::BpLoggableInterface;
+using ::aidl::android::aidl::loggable::Data;
+using ::aidl::android::aidl::loggable::Enum;
+using ::aidl::android::aidl::loggable::ILoggableInterface;
+using ::aidl::android::aidl::tests::BackendType;
+using ::aidl::android::aidl::tests::ITestService;
+using ::testing::ElementsAre;
+using ::testing::Pair;
 
-TEST_F(AidlTest, LoggableInterface) {
+template <typename T>
+std::shared_ptr<T> getService() {
+  android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+  android::ProcessState::self()->startThreadPool();
+  ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
+  return T::fromBinder(binder);
+}
+
+TEST(AidlLoggableTest, LogThis) {
   std::shared_ptr<ITestService> service = getService<ITestService>();
   ASSERT_NE(nullptr, service.get());
 
@@ -58,29 +54,29 @@ TEST_F(AidlTest, LoggableInterface) {
   EXPECT_TRUE(status.isOk()) << status.getDescription();
   if (backendType != BackendType::CPP) GTEST_SKIP();
 
-  shared_ptr<ILoggableInterface> loggable = getService<ILoggableInterface>();
+  std::shared_ptr<ILoggableInterface> loggable = getService<ILoggableInterface>();
   ASSERT_NE(nullptr, loggable.get());
 
   BpLoggableInterface::TransactionLog log;
   BpLoggableInterface::logFunc = [&](const BpLoggableInterface::TransactionLog& tx) { log = tx; };
 
   bool boolValue = true;
-  vector<bool> boolArray{false, true};
+  std::vector<bool> boolArray = {false, true};
   int8_t byteValue = 41;
-  vector<uint8_t> byteArray{42, 43};
-  char16_t charValue = 'x';
-  vector<char16_t> charArray{'a', 'b', 'c'};
-  int32_t intValue{44};
-  vector<int32_t> intArray{45, 46};
+  std::vector<uint8_t> byteArray = {42, 43};
+  char16_t charValue = 120;
+  std::vector<char16_t> charArray = {97, 98, 99};
+  int32_t intValue = 44;
+  std::vector<int32_t> intArray = {45, 46};
   int64_t longValue = 47;
-  vector<int64_t> longArray{48, 49};
-  float floatValue{50};
-  vector<float> floatArray{51, 52};
-  double doubleValue{52};
-  vector<double> doubleArray{53, 54};
-  string stringValue("def");
-  vector<string> stringArray{string("ghi"), string("jkl")};
-  vector<string> listValue{string("mno")};
+  std::vector<int64_t> longArray = {48, 49};
+  float floatValue = 50;
+  std::vector<float> floatArray = {51, 52};
+  double doubleValue = 52;
+  std::vector<double> doubleArray = {53, 54};
+  std::string stringValue = "def";
+  std::vector<std::string> stringArray = {{"ghi"}, {"jkl"}};
+  std::vector<std::string> listValue = {{"mno"}};
   Data dataValue;
   dataValue.num = 42;
   dataValue.str = "abc";
@@ -88,58 +84,61 @@ TEST_F(AidlTest, LoggableInterface) {
   dataValue.nestedEnum = Enum::FOO;
   ndk::SpAIBinder binderValue;
   ndk::ScopedFileDescriptor pfdValue;
-  vector<ndk::ScopedFileDescriptor> pfdArray;
-  vector<string> _aidl_return;
+  std::vector<ndk::ScopedFileDescriptor> pfdArray;
+  std::vector<std::string> aidl_return;
   status = loggable->LogThis(boolValue, &boolArray, byteValue, &byteArray, charValue, &charArray,
                              intValue, &intArray, longValue, &longArray, floatValue, &floatArray,
                              doubleValue, &doubleArray, stringValue, &stringArray, &listValue,
-                             dataValue, binderValue, &pfdValue, &pfdArray, &_aidl_return);
+                             dataValue, binderValue, &pfdValue, &pfdArray, &aidl_return);
   EXPECT_TRUE(status.isOk());
-  EXPECT_EQ(vector<string>{string("loggable")}, _aidl_return);
+  EXPECT_THAT(aidl_return, ElementsAre("loggable"));
 
   // check the captured log
-  EXPECT_EQ("[loggable]", log.result);
-  EXPECT_EQ("android.aidl.loggable.ILoggableInterface", log.interface_name);
-  EXPECT_EQ("LogThis", log.method_name);
-  EXPECT_EQ(0, log.exception_code);
-  EXPECT_EQ("", log.exception_message);
-  EXPECT_EQ(0, log.transaction_error);
-  EXPECT_EQ(0, log.service_specific_error_code);
-  EXPECT_THAT(log.input_args,
-              Eq(vector<pair<string, string>>{
-                  {"in_boolValue", "true"},
-                  {"in_boolArray", "[false, true]"},
-                  {"in_byteValue", "41"},
-                  {"in_byteArray", "[42, 43]"},
-                  {"in_charValue", "x"},
-                  {"in_charArray", "[a, b, c]"},
-                  {"in_intValue", "44"},
-                  {"in_intArray", "[45, 46]"},
-                  {"in_longValue", "47"},
-                  {"in_longArray", "[48, 49]"},
-                  {"in_floatValue", "50.000000"},
-                  {"in_floatArray", "[51.000000, 52.000000]"},
-                  {"in_doubleValue", "52.000000"},
-                  {"in_doubleArray", "[53.000000, 54.000000]"},
-                  {"in_stringValue", "def"},
-                  {"in_stringArray", "[ghi, jkl]"},
-                  {"in_listValue", "[mno]"},
-                  {"in_dataValue",
-                   "Data{num: 42, str: abc, nestedUnion: Union{str: def}, nestedEnum: FOO}"},
-                  {"in_binderValue", "binder:0x0"},
-                  {"in_pfdValue", "fd:-1"},
-                  {"in_pfdArray", "[]"},
-              }));
-  EXPECT_THAT(log.output_args,
-              Eq(vector<pair<string, string>>{{"in_boolArray", "[false, true]"},
-                                              {"in_byteArray", "[42, 43]"},
-                                              {"in_charArray", "[a, b, c]"},
-                                              {"in_intArray", "[45, 46]"},
-                                              {"in_longArray", "[48, 49]"},
-                                              {"in_floatArray", "[51.000000, 52.000000]"},
-                                              {"in_doubleArray", "[53.000000, 54.000000]"},
-                                              {"in_stringArray", "[ghi, jkl]"},
-                                              {"in_listValue", "[mno]"},
-                                              {"in_pfdValue", "fd:-1"},
-                                              {"in_pfdArray", "[]"}}));
+  EXPECT_EQ(log.result, "[loggable]");
+  EXPECT_EQ(log.interface_name, "android.aidl.loggable.ILoggableInterface");
+  EXPECT_EQ(log.method_name, "LogThis");
+  EXPECT_EQ(log.exception_code, 0);
+  EXPECT_EQ(log.exception_message, "");
+  EXPECT_EQ(log.transaction_error, 0);
+  EXPECT_EQ(log.service_specific_error_code, 0);
+  // clang-format off
+  EXPECT_THAT(
+      log.input_args,
+      ElementsAre(
+          Pair("in_boolValue", "true"),
+          Pair("in_boolArray", "[false, true]"),
+          Pair("in_byteValue", "41"),
+          Pair("in_byteArray", "[42, 43]"),
+          Pair("in_charValue", "120"),
+          Pair("in_charArray", "[97, 98, 99]"),
+          Pair("in_intValue", "44"),
+          Pair("in_intArray", "[45, 46]"),
+          Pair("in_longValue", "47"),
+          Pair("in_longArray", "[48, 49]"),
+          Pair("in_floatValue", "50.000000"),
+          Pair("in_floatArray", "[51.000000, 52.000000]"),
+          Pair("in_doubleValue", "52.000000"),
+          Pair("in_doubleArray", "[53.000000, 54.000000]"),
+          Pair("in_stringValue", "def"),
+          Pair("in_stringArray", "[ghi, jkl]"),
+          Pair("in_listValue", "[mno]"),
+          Pair("in_dataValue",
+               "Data{num: 42, str: abc, nestedUnion: Union{str: def}, nestedEnum: FOO}"),
+          Pair("in_binderValue", "binder:0x0"),
+          Pair("in_pfdValue", "fd:-1"),
+          Pair("in_pfdArray", "[]")));
+  EXPECT_THAT(log.output_args, ElementsAre(Pair("in_boolArray", "[false, true]"),
+                                           Pair("in_byteArray", "[42, 43]"),
+                                           Pair("in_charArray", "[97, 98, 99]"),
+                                           Pair("in_intArray", "[45, 46]"),
+                                           Pair("in_longArray", "[48, 49]"),
+                                           Pair("in_floatArray", "[51.000000, 52.000000]"),
+                                           Pair("in_doubleArray", "[53.000000, 54.000000]"),
+                                           Pair("in_stringArray", "[ghi, jkl]"),
+                                           Pair("in_listValue", "[mno]"),
+                                           Pair("in_pfdValue", "fd:-1"),
+                                           Pair("in_pfdArray", "[]")));
+  // clang-format on
 }
+
+}  // namespace
