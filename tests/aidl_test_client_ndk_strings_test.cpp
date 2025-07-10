@@ -20,137 +20,132 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <aidl/android/aidl/tests/ITestService.h>
+#include "aidl/android/aidl/tests/ITestService.h"
+#include "gtest/gtest.h"
 
-using aidl::android::aidl::tests::BackendType;
-using aidl::android::aidl::tests::ITestService;
-using testing::Eq;
+namespace {
 
-struct AidlTest : testing::Test {
-  template <typename T>
-  std::shared_ptr<T> getService() {
-    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    android::ProcessState::self()->startThreadPool();
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
-    return T::fromBinder(binder);
-  }
+using ::aidl::android::aidl::tests::BackendType;
+using ::aidl::android::aidl::tests::ITestService;
+using ::testing::ContainerEq;
+using ::testing::Optional;
+using ::testing::Values;
+
+template <typename T>
+std::shared_ptr<T> getService() {
+  android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+  android::ProcessState::self()->startThreadPool();
+  ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
+  return T::fromBinder(binder);
+}
+
+class AidlNdkStringsTest : public ::testing::Test {
+ protected:
   void SetUp() override {
-    service = getService<ITestService>();
-    auto status = service->getBackendType(&backend);
+    service_ = getService<ITestService>();
+    auto status = service_->getBackendType(&backend_type_);
     ASSERT_TRUE(status.isOk()) << status.getDescription();
   }
-  std::shared_ptr<ITestService> service;
-  BackendType backend;
+  std::shared_ptr<ITestService> service_;
+  BackendType backend_type_;
 };
 
-TEST_F(AidlTest, repeatUtf8String) {
-  const std::vector<std::string> utf8_inputs = {
-      std::string("Deliver us from evil."),
-      std::string(),
-      std::string("\0\0", 2),
-      // Similarly, the utf8 encodings of the small letter yee and euro sign.
-      std::string("\xF0\x90\x90\xB7\xE2\x82\xAC"),
-      ITestService::STRING_CONSTANT_UTF8,
-  };
+const std::string_view kUtf8Inputs[] = {
+    "Deliver us from evil.",
+    "",
+    std::string_view("\0\0", 2),
+    // The utf8 encodings of the small letter yee and euro sign.
+    "\xF0\x90\x90\xB7\xE2\x82\xAC",
+    ITestService::STRING_CONSTANT_UTF8,
+};
 
-  for (const auto& input : utf8_inputs) {
+TEST_F(AidlNdkStringsTest, RepeatUtf8String) {
+  for (const auto& input : kUtf8Inputs) {
     std::string reply;
-    auto status = service->RepeatUtf8CppString(input, &reply);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_THAT(reply, Eq(input));
-  }
-
-  std::optional<std::string> reply;
-  auto status = service->RepeatNullableUtf8CppString(std::nullopt, &reply);
-  ASSERT_TRUE(status.isOk());
-  ASSERT_FALSE(reply.has_value());
-
-  for (const auto& input : utf8_inputs) {
-    std::optional<std::string> reply;
-    auto status = service->RepeatNullableUtf8CppString(input, &reply);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_TRUE(reply.has_value());
-    ASSERT_THAT(*reply, Eq(input));
+    auto status = service_->RepeatUtf8CppString(std::string(input), &reply);
+    EXPECT_TRUE(status.isOk());
+    EXPECT_EQ(reply, input);
   }
 }
 
-TEST_F(AidlTest, reverseUtf8StringArray) {
+TEST_F(AidlNdkStringsTest, RepeatNullableUtf8String) {
+  for (const auto& input : kUtf8Inputs) {
+    std::optional<std::string> reply;
+    auto status = service_->RepeatNullableUtf8CppString(std::string(input), &reply);
+    EXPECT_TRUE(status.isOk());
+    EXPECT_THAT(reply, Optional(input));
+  }
+}
+
+TEST_F(AidlNdkStringsTest, RepeatNullableUtf8StringEmpty) {
+  std::optional<std::string> reply;
+  auto status = service_->RepeatNullableUtf8CppString(std::nullopt, &reply);
+  EXPECT_TRUE(status.isOk());
+  EXPECT_EQ(reply, std::nullopt);
+}
+
+TEST_F(AidlNdkStringsTest, ReverseUtf8StringArray) {
   std::vector<std::string> input = {"a", "", "\xc3\xb8"};
-  decltype(input) repeated;
-  if (backend == BackendType::JAVA) {
+  std::vector<std::string> repeated;
+  if (backend_type_ == BackendType::JAVA) {
     repeated = decltype(input)(input.size());
   }
-  decltype(input) reversed;
+  std::vector<std::string> reversed;
 
-  auto status = service->ReverseUtf8CppString(input, &repeated, &reversed);
+  auto status = service_->ReverseUtf8CppString(input, &repeated, &reversed);
   ASSERT_TRUE(status.isOk()) << status.getDescription();
-  ASSERT_THAT(repeated, Eq(input));
+  EXPECT_THAT(repeated, ContainerEq(input));
 
-  decltype(input) reversed_input(input);
-  std::reverse(reversed_input.begin(), reversed_input.end());
-  ASSERT_THAT(reversed, Eq(reversed_input));
+  std::vector<std::string> reversed_input{input.crbegin(), input.crend()};
+  EXPECT_THAT(reversed, ContainerEq(reversed_input));
 }
 
-struct AidlStringArrayTest : public AidlTest {
-  void DoTest(::ndk::ScopedAStatus (ITestService::*func)(
-      const std::optional<std::vector<std::optional<std::string>>>&,
-      std::optional<std::vector<std::optional<std::string>>>*,
-      std::optional<std::vector<std::optional<std::string>>>*)) {
-    std::optional<std::vector<std::optional<std::string>>> input;
-    decltype(input) repeated;
-    decltype(input) reversed;
+using StringMethodPtr = decltype(&ITestService::ReverseNullableUtf8CppString);
+using OptStringVector = std::optional<std::vector<std::optional<std::string>>>;
 
-    auto status = (*service.*func)(input, &repeated, &reversed);
-    ASSERT_TRUE(status.isOk()) << status.getDescription();
+struct AidlNdkStringArrayTest : public AidlNdkStringsTest,
+                                public ::testing::WithParamInterface<StringMethodPtr> {};
 
-    if (func == &ITestService::ReverseUtf8CppStringList && backend == BackendType::JAVA) {
-      // Java cannot clear the input variable to return a null value. It can
-      // only ever fill out a list.
-      ASSERT_TRUE(repeated.has_value());
-    } else {
-      ASSERT_FALSE(repeated.has_value());
-    }
+TEST_P(AidlNdkStringArrayTest, RepeatEmpty) {
+  OptStringVector input, repeated, reversed;
 
-    ASSERT_FALSE(reversed.has_value());
+  auto status = (*service_.*GetParam())(input, &repeated, &reversed);
+  ASSERT_TRUE(status.isOk()) << status.getDescription();
 
-    input = std::vector<std::optional<std::string>>();
-    input->push_back("Deliver us from evil.");
-    input->push_back(std::nullopt);
-    input->push_back("\xF0\x90\x90\xB7\xE2\x82\xAC");
-
-    // usable size needs to be initialized for Java
-    repeated = std::vector<std::optional<std::string>>(input->size());
-
-    status = (*service.*func)(input, &repeated, &reversed);
-    ASSERT_TRUE(status.isOk()) << status.getDescription();
-    ASSERT_TRUE(reversed.has_value());
-    ASSERT_TRUE(repeated.has_value());
-    ASSERT_THAT(reversed->size(), Eq(input->size()));
-    ASSERT_THAT(repeated->size(), Eq(input->size()));
-
-    for (size_t i = 0; i < input->size(); i++) {
-      auto input_str = (*input)[i];
-      auto repeated_str = (*repeated)[i];
-      auto reversed_str = (*reversed)[(reversed->size() - 1) - i];
-      if (!input_str) {
-        ASSERT_FALSE(repeated_str.has_value());
-        ASSERT_FALSE(reversed_str.has_value());
-        // 3 nullptrs to strings.  No need to compare values.
-        continue;
-      }
-      ASSERT_TRUE(repeated_str.has_value());
-      ASSERT_TRUE(reversed_str.has_value());
-
-      ASSERT_THAT(*repeated_str, Eq(*input_str));
-      ASSERT_THAT(*reversed_str, Eq(*input_str));
-    }
+  if (GetParam() == &ITestService::ReverseUtf8CppStringList && backend_type_ == BackendType::JAVA) {
+    // Java cannot clear the input variable to return a null value. It can
+    // only ever fill out a list.
+    EXPECT_TRUE(repeated.has_value());
+  } else {
+    EXPECT_FALSE(repeated.has_value());
   }
-};
-
-TEST_F(AidlStringArrayTest, nullableList) {
-  DoTest(&ITestService::ReverseUtf8CppStringList);
+  EXPECT_FALSE(reversed.has_value());
 }
 
-TEST_F(AidlStringArrayTest, nullableArray) {
-  DoTest(&ITestService::ReverseNullableUtf8CppString);
+TEST_P(AidlNdkStringArrayTest, RepeatNonempty) {
+  OptStringVector input;
+  OptStringVector repeated;
+  OptStringVector reversed;
+  input.emplace();
+  input->push_back("Deliver us from evil.");
+  input->push_back(std::nullopt);
+  input->push_back("\xF0\x90\x90\xB7\xE2\x82\xAC");
+
+  // usable size needs to be initialized for Java
+  repeated.emplace(input->size());
+
+  auto status = (*service_.*GetParam())(input, &repeated, &reversed);
+  ASSERT_TRUE(status.isOk()) << status.getDescription();
+
+  EXPECT_THAT(repeated, Optional(ContainerEq(*input)));
+  EXPECT_TRUE(repeated.has_value());
+  OptStringVector reversed_input;
+  reversed_input.emplace(input->crbegin(), input->crend());
+  EXPECT_THAT(reversed, Optional(ContainerEq(*reversed_input)));
 }
+
+INSTANTIATE_TEST_SUITE_P(Methods, AidlNdkStringArrayTest,
+                         Values(&ITestService::ReverseUtf8CppStringList,
+                                &ITestService::ReverseNullableUtf8CppString));
+
+}  // namespace

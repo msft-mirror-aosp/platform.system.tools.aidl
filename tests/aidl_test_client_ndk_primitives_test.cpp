@@ -20,23 +20,23 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <aidl/android/aidl/tests/ITestService.h>
+#include "aidl/android/aidl/tests/ITestService.h"
 
-using aidl::android::aidl::tests::INamedCallback;
-using aidl::android::aidl::tests::ITestService;
-using testing::Eq;
+namespace {
 
-struct AidlTest : testing::Test {
-  template <typename T>
-  std::shared_ptr<T> getService() {
-    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    android::ProcessState::self()->startThreadPool();
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
-    return T::fromBinder(binder);
-  }
-};
+using ::aidl::android::aidl::tests::INamedCallback;
+using ::aidl::android::aidl::tests::ITestService;
+using ::testing::Eq;
 
-TEST_F(AidlTest, InterfaceExchange) {
+template <typename T>
+std::shared_ptr<T> getService() {
+  android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+  android::ProcessState::self()->startThreadPool();
+  ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
+  return T::fromBinder(binder);
+}
+
+TEST(AidlNdkPrimitivesTest, InterfaceExchange) {
   auto service = getService<ITestService>();
   std::vector<std::string> names = {"Larry", "Curly", "Moe"};
 
@@ -100,3 +100,5 @@ TEST_F(AidlTest, InterfaceExchange) {
     }
   }
 }
+
+}  // namespace

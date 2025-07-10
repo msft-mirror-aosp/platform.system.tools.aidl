@@ -20,108 +20,121 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <aidl/android/aidl/tests/ITestService.h>
+#include "aidl/android/aidl/tests/ITestService.h"
+#include "gmock/gmock.h"
 
-using aidl::android::aidl::tests::BackendType;
-using aidl::android::aidl::tests::INamedCallback;
-using aidl::android::aidl::tests::ITestService;
-using testing::Eq;
+namespace {
 
-struct AidlTest : testing::Test {
-  template <typename T>
-  std::shared_ptr<T> getService() {
-    android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    android::ProcessState::self()->startThreadPool();
-    ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
-    return T::fromBinder(binder);
-  }
+using ::aidl::android::aidl::tests::BackendType;
+using ::aidl::android::aidl::tests::INamedCallback;
+using ::aidl::android::aidl::tests::ITestService;
+using ::testing::Eq;
+using ::testing::IsEmpty;
+using ::testing::Optional;
+
+using TestServiceVector = std::vector<std::optional<ITestService::Empty>>;
+
+template <typename T>
+std::shared_ptr<T> getService() {
+  android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+  android::ProcessState::self()->startThreadPool();
+  ndk::SpAIBinder binder = ndk::SpAIBinder(AServiceManager_waitForService(T::descriptor));
+  return T::fromBinder(binder);
+}
+
+class AidlNdkNullablesTest : public ::testing::Test {
+ protected:
   void SetUp() override {
-    service = getService<ITestService>();
-    auto status = service->getBackendType(&backend);
+    service_ = getService<ITestService>();
+    auto status = service_->getBackendType(&backend_type_);
     ASSERT_TRUE(status.isOk()) << status.getDescription();
   }
-  std::shared_ptr<ITestService> service;
-  BackendType backend;
 
-  template <typename T>
-  void DoTest(ndk::ScopedAStatus (ITestService::*func)(const std::optional<T>&, std::optional<T>*),
-              std::optional<T> input) {
-    std::optional<T> output;
-    auto status = (*service.*func)(input, &output);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_TRUE(output.has_value());
-    ASSERT_THAT(*output, Eq(*input));
-
-    input.reset();
-    status = (*service.*func)(input, &output);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_FALSE(output.has_value());
-  }
+  std::shared_ptr<ITestService> service_;
+  BackendType backend_type_;
 };
 
-TEST_F(AidlTest, parcelableArray) {
-  std::vector<std::optional<ITestService::Empty>> input;
-  input.push_back(ITestService::Empty());
-  input.push_back(std::nullopt);
-  DoTest(&ITestService::RepeatNullableParcelableArray, std::make_optional(input));
+TEST_F(AidlNdkNullablesTest, ParcelableArray) {
+  TestServiceVector input = {ITestService::Empty(), std::nullopt};
+  std::optional<TestServiceVector> output;
+  ndk::ScopedAStatus status = service_->RepeatNullableParcelableArray(input, &output);
+  ASSERT_TRUE(status.isOk());
+  EXPECT_THAT(output, Optional(Eq(input)));
 }
 
-TEST_F(AidlTest, parcelableList) {
-  std::vector<std::optional<ITestService::Empty>> input;
-  input.push_back(ITestService::Empty());
-  input.push_back(std::nullopt);
-  DoTest(&ITestService::RepeatNullableParcelableList, std::make_optional(input));
+TEST_F(AidlNdkNullablesTest, ParcelableArrayEmpty) {
+  TestServiceVector input = {};
+  std::optional<TestServiceVector> output;
+  ndk::ScopedAStatus status = service_->RepeatNullableParcelableArray(input, &output);
+  ASSERT_TRUE(status.isOk());
+  EXPECT_THAT(output, Optional(IsEmpty()));
 }
 
-TEST_F(AidlTest, nullBinder) {
-  auto status = service->TakesAnIBinder(nullptr);
+TEST_F(AidlNdkNullablesTest, ParcelableList) {
+  TestServiceVector input = {ITestService::Empty(), std::nullopt};
+  std::optional<TestServiceVector> output;
+  ndk::ScopedAStatus status = service_->RepeatNullableParcelableList(input, &output);
+  ASSERT_TRUE(status.isOk());
+  EXPECT_THAT(output, Optional(Eq(input)));
+}
+
+TEST_F(AidlNdkNullablesTest, ParcelableListEmpty) {
+  TestServiceVector input = {};
+  std::optional<TestServiceVector> output;
+  ndk::ScopedAStatus status = service_->RepeatNullableParcelableList(input, &output);
+  ASSERT_TRUE(status.isOk());
+  EXPECT_THAT(output, Optional(IsEmpty()));
+}
+
+TEST_F(AidlNdkNullablesTest, NullBinder) {
+  auto status = service_->TakesAnIBinder(nullptr);
   ASSERT_THAT(status.getStatus(), Eq(STATUS_UNEXPECTED_NULL)) << status.getDescription();
   // Note that NDK backend checks null before transaction while C++ backends doesn't.
 }
 
-TEST_F(AidlTest, binderListWithNull) {
-  std::vector<ndk::SpAIBinder> input{service->asBinder(), nullptr};
-  auto status = service->TakesAnIBinderList(input);
+TEST_F(AidlNdkNullablesTest, BinderListWithNull) {
+  std::vector<ndk::SpAIBinder> input{service_->asBinder(), nullptr};
+  auto status = service_->TakesAnIBinderList(input);
   ASSERT_THAT(status.getStatus(), Eq(STATUS_UNEXPECTED_NULL));
   // Note that NDK backend checks null before transaction while C++ backends doesn't.
 }
 
-TEST_F(AidlTest, nonNullBinder) {
-  auto status = service->TakesAnIBinder(service->asBinder());
+TEST_F(AidlNdkNullablesTest, NonNullBinder) {
+  auto status = service_->TakesAnIBinder(service_->asBinder());
   ASSERT_TRUE(status.isOk());
 }
 
-TEST_F(AidlTest, binderListWithoutNull) {
-  std::vector<ndk::SpAIBinder> input{service->asBinder()};
-  auto status = service->TakesAnIBinderList(input);
+TEST_F(AidlNdkNullablesTest, BinderListWithoutNull) {
+  std::vector<ndk::SpAIBinder> input{service_->asBinder()};
+  auto status = service_->TakesAnIBinderList(input);
   ASSERT_TRUE(status.isOk());
 }
 
-TEST_F(AidlTest, nullBinderToAnnotatedMethod) {
-  auto status = service->TakesANullableIBinder(nullptr);
+TEST_F(AidlNdkNullablesTest, NullBinderToAnnotatedMethod) {
+  auto status = service_->TakesANullableIBinder(nullptr);
   ASSERT_TRUE(status.isOk());
 }
 
-TEST_F(AidlTest, binderListWithNullToAnnotatedMethod) {
-  std::vector<ndk::SpAIBinder> input{service->asBinder(), nullptr};
-  auto status = service->TakesANullableIBinderList(input);
+TEST_F(AidlNdkNullablesTest, BinderListWithNullToAnnotatedMethod) {
+  std::vector<ndk::SpAIBinder> input{service_->asBinder(), nullptr};
+  auto status = service_->TakesANullableIBinderList(input);
   ASSERT_TRUE(status.isOk());
 }
 
-TEST_F(AidlTest, binderArray) {
+TEST_F(AidlNdkNullablesTest, BinderArray) {
   std::vector<ndk::SpAIBinder> repeated;
-  if (backend == BackendType::JAVA) {
+  if (backend_type_ == BackendType::JAVA) {
     // Java can only modify out-argument arrays in-place
     repeated.resize(2);
   }
   // get INamedCallback for "SpAIBinder" object
   std::shared_ptr<INamedCallback> callback;
-  auto status = service->GetCallback(false, &callback);
+  auto status = service_->GetCallback(false, &callback);
   ASSERT_TRUE(status.isOk()) << status.getDescription();
 
   std::vector<ndk::SpAIBinder> reversed;
-  std::vector<ndk::SpAIBinder> input{service->asBinder(), callback->asBinder()};
-  status = service->ReverseIBinderArray(input, &repeated, &reversed);
+  std::vector<ndk::SpAIBinder> input{service_->asBinder(), callback->asBinder()};
+  status = service_->ReverseIBinderArray(input, &repeated, &reversed);
   ASSERT_TRUE(status.isOk()) << status.getDescription();
 
   EXPECT_THAT(input, Eq(repeated));
@@ -129,17 +142,17 @@ TEST_F(AidlTest, binderArray) {
   EXPECT_THAT(input, Eq(reversed));
 }
 
-TEST_F(AidlTest, nullableBinderArray) {
+TEST_F(AidlNdkNullablesTest, NullableBinderArray) {
   std::optional<std::vector<ndk::SpAIBinder>> repeated;
-  if (backend == BackendType::JAVA) {
+  if (backend_type_ == BackendType::JAVA) {
     // Java can only modify out-argument arrays in-place
-    repeated = std::vector<ndk::SpAIBinder>(2);
+    repeated.emplace(2, ndk::SpAIBinder());
   }
 
   std::optional<std::vector<ndk::SpAIBinder>> reversed;
   std::optional<std::vector<ndk::SpAIBinder>> input =
-      std::vector<ndk::SpAIBinder>{service->asBinder(), service->asBinder()};
-  auto status = service->ReverseNullableIBinderArray(input, &repeated, &reversed);
+      std::vector<ndk::SpAIBinder>{service_->asBinder(), service_->asBinder()};
+  auto status = service_->ReverseNullableIBinderArray(input, &repeated, &reversed);
   ASSERT_TRUE(status.isOk()) << status.getDescription();
 
   EXPECT_THAT(input, Eq(repeated));
@@ -147,3 +160,5 @@ TEST_F(AidlTest, nullableBinderArray) {
   std::reverse(std::begin(*reversed), std::end(*reversed));
   EXPECT_THAT(input, Eq(reversed));
 }
+
+}  // namespace

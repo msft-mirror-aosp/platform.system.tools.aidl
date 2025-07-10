@@ -21,39 +21,42 @@
 #include <binder/ProcessState.h>
 #include <gtest/gtest.h>
 
+namespace {
+
 #ifdef AIDL_USE_UNFROZEN
 constexpr bool kUseUnfrozen = true;
 #else
 constexpr bool kUseUnfrozen = false;
 #endif
 
-using aidl::android::aidl::test::trunk::ITrunkStableTest;
-using ndk::ScopedAStatus;
+using ::aidl::android::aidl::test::trunk::ITrunkStableTest;
+using ::ndk::ScopedAStatus;
+
 using MyParcelable = aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable;
 using MyOtherParcelable = aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable;
 using MyEnum = aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum;
 using MyUnion = aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion;
 
-class TrunkInterfaceTest : public testing::Test {
+class AidlNdkTrunkStableTest : public testing::Test {
  public:
   void SetUp() override {
     android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
     android::ProcessState::self()->startThreadPool();
     ndk::SpAIBinder binder =
         ndk::SpAIBinder(AServiceManager_waitForService(ITrunkStableTest::descriptor));
-    service = ITrunkStableTest::fromBinder(binder);
-    ASSERT_NE(nullptr, service);
+    service_ = ITrunkStableTest::fromBinder(binder);
+    ASSERT_NE(nullptr, service_);
   }
 
-  std::shared_ptr<ITrunkStableTest> service;
+  std::shared_ptr<ITrunkStableTest> service_;
 };
 
-TEST_F(TrunkInterfaceTest, getInterfaceVersion) {
+TEST_F(AidlNdkTrunkStableTest, GetInterfaceVersion) {
   // TODO(b/292539129) this should be done with an annotation instead of ifdefs
   // We have to match on a single char with #if, even though it is
   // really "enabled"/"disabled"
   int32_t ver = 0;
-  auto status = service->getInterfaceVersion(&ver);
+  auto status = service_->getInterfaceVersion(&ver);
   ASSERT_TRUE(status.isOk());
   if (kUseUnfrozen) {
     EXPECT_EQ(2, ver);
@@ -66,10 +69,10 @@ TEST_F(TrunkInterfaceTest, getInterfaceVersion) {
   }
 }
 
-TEST_F(TrunkInterfaceTest, getInterfaceHash) {
+TEST_F(AidlNdkTrunkStableTest, GetInterfaceHash) {
   std::string hash;
   std::string localHash;
-  auto status = service->getInterfaceHash(&hash);
+  auto status = service_->getInterfaceHash(&hash);
   ASSERT_TRUE(status.isOk());
   if (kUseUnfrozen) {
     EXPECT_EQ("notfrozen", hash);
@@ -83,13 +86,13 @@ TEST_F(TrunkInterfaceTest, getInterfaceHash) {
 }
 
 // `c` is a new field that isn't read from the reply parcel
-TEST_F(TrunkInterfaceTest, repeatParcelable) {
+TEST_F(AidlNdkTrunkStableTest, RepeatParcelable) {
   MyParcelable in, out;
   in.a = 14;
   in.b = 15;
   in.c = 16;
 
-  auto status = service->repeatParcelable(in, &out);
+  auto status = service_->repeatParcelable(in, &out);
   ASSERT_TRUE(status.isOk()) << status;
   if (kUseUnfrozen) {
     EXPECT_EQ(in.a, out.a);
@@ -104,44 +107,38 @@ TEST_F(TrunkInterfaceTest, repeatParcelable) {
 }
 
 // repeatOtherParcelable is a new API that isn't implemented
-TEST_F(TrunkInterfaceTest, repeatOtherParcelable) {
+TEST_F(AidlNdkTrunkStableTest, RepeatOtherParcelable) {
   MyOtherParcelable in, out;
   in.a = 14;
   in.b = 15;
 
-  auto status = service->repeatOtherParcelable(in, &out);
+  auto status = service_->repeatOtherParcelable(in, &out);
   if (kUseUnfrozen) {
     ASSERT_TRUE(status.isOk()) << status;
     EXPECT_EQ(in.a, out.a);
     EXPECT_EQ(in.b, out.b);
   } else {
     EXPECT_FALSE(status.isOk()) << status;
-    EXPECT_EQ(STATUS_UNKNOWN_TRANSACTION, status.getStatus()) << status;
+    EXPECT_EQ(status.getStatus(), STATUS_UNKNOWN_TRANSACTION) << status;
   }
 }
 
 // enums aren't handled differently.
-TEST_F(TrunkInterfaceTest, repeatEnum) {
+TEST_F(AidlNdkTrunkStableTest, RepeatEnum) {
   MyEnum in = MyEnum::THREE;
   MyEnum out = MyEnum::ZERO;
 
-  auto status = service->repeatEnum(in, &out);
+  auto status = service_->repeatEnum(in, &out);
   ASSERT_TRUE(status.isOk()) << status;
   EXPECT_EQ(in, out);
 }
 
 // `c` is a new field that causes a failure if used
-// `b` is from V1 and will cause no failure
-TEST_F(TrunkInterfaceTest, repeatUnion) {
-  MyUnion in_ok = MyUnion::make<MyUnion::b>(13);
+TEST_F(AidlNdkTrunkStableTest, RepeatUnionNewField) {
   MyUnion in_test = MyUnion::make<MyUnion::c>(12);
   MyUnion out;
-
-  auto status = service->repeatUnion(in_ok, &out);
+  auto status = service_->repeatUnion(in_test, &out);
   ASSERT_TRUE(status.isOk()) << status;
-  EXPECT_EQ(in_ok, out);
-
-  status = service->repeatUnion(in_test, &out);
   if (kUseUnfrozen) {
     ASSERT_TRUE(status.isOk()) << status;
     EXPECT_EQ(in_test, out);
@@ -149,6 +146,16 @@ TEST_F(TrunkInterfaceTest, repeatUnion) {
     ASSERT_FALSE(status.isOk()) << status;
     EXPECT_NE(in_test, out);
   }
+}
+
+// `b` is from V1 and will cause no failure
+TEST_F(AidlNdkTrunkStableTest, RepeatUnionOldField) {
+  MyUnion in_ok = MyUnion::make<MyUnion::b>(13);
+  MyUnion out;
+
+  auto status = service_->repeatUnion(in_ok, &out);
+  ASSERT_TRUE(status.isOk()) << status;
+  EXPECT_EQ(in_ok, out);
 }
 
 class MyCallback : public ITrunkStableTest::BnMyCallback {
@@ -186,10 +193,10 @@ class MyCallback : public ITrunkStableTest::BnMyCallback {
 };
 
 // repeatOtherParcelable is new in V2, so it won't be called
-TEST_F(TrunkInterfaceTest, callMyCallback) {
+TEST_F(AidlNdkTrunkStableTest, CallMyCallback) {
   std::shared_ptr<MyCallback> cb = ndk::SharedRefBase::make<MyCallback>();
 
-  auto status = service->callMyCallback(cb);
+  auto status = service_->callMyCallback(cb);
   ASSERT_TRUE(status.isOk()) << status;
   if (kUseUnfrozen) {
     EXPECT_TRUE(cb->repeatParcelableCalled);
@@ -203,3 +210,5 @@ TEST_F(TrunkInterfaceTest, callMyCallback) {
     EXPECT_FALSE(cb->repeatOtherParcelableCalled);
   }
 }
+
+}  // namespace
