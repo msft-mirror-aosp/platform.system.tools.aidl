@@ -144,7 +144,7 @@ fn main() -> Result<()> {
                 .unwrap();
             let wasted_bytes: u64 =
                 instances.iter().filter(|x| *x != preferred_instance).map(|x| x.size).sum();
-            println!("Found redundant AIDL instances for {:?}", group_key);
+            println!("Found redundant AIDL instances for {group_key:?}");
             for instance in instances.iter() {
                 println!(
                     "\t{}\t({:.2} KiB){}",

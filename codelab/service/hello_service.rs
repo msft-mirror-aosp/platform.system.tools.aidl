@@ -31,7 +31,7 @@ impl Interface for Hello {}
 
 impl IHello for Hello {
     fn LogMessage(&self, msg: &str) -> Result<()> {
-        info!("{}", msg);
+        info!("{msg}");
         Ok(())
     }
     fn getMessage(&self) -> Result<String> {
