@@ -926,7 +926,7 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
       }
       out << " {\n";
       out.Indent();
-      for (const auto binder : inBinders) {
+      for (const auto& binder : inBinders) {
         wrapDelegate(out, binder.first, binder.second, true);
       }
       if (outBinders.empty()) {
