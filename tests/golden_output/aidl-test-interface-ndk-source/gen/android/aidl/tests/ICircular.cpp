@@ -55,8 +55,10 @@ static binder_status_t _aidl_android_aidl_tests_ICircular_onTransact(AIBinder* _
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ICircular_clazz_code_to_function[] = { "GetTestService",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ICircular_clazz = ::ndk::ICInterface::defineClass(ICircular::descriptor, _aidl_android_aidl_tests_ICircular_onTransact, _g_aidl_android_aidl_tests_ICircular_clazz_code_to_function, 1);
+static const char* _g_aidl_android_aidl_tests_ICircular_clazz_names[] = {
+  "GetTestService",
+};
+static AIBinder_Class* _g_aidl_android_aidl_tests_ICircular_clazz = ::ndk::ICInterface::defineClass(ICircular::descriptor, _aidl_android_aidl_tests_ICircular_onTransact, _g_aidl_android_aidl_tests_ICircular_clazz_names, 1);
 
 BpCircular::BpCircular(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpCircular::~BpCircular() {}

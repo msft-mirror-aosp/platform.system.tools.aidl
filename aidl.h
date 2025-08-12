@@ -76,6 +76,8 @@ const char kPreamble[] =
 const string kGetInterfaceVersion("getInterfaceVersion");
 const string kGetInterfaceHash("getInterfaceHash");
 
+static constexpr const char* kFunctionNames = "names";
+
 namespace internals {
 
 AidlError load_and_validate_aidl(const std::string& input_file_name, const Options& options,

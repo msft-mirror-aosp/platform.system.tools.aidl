@@ -66,8 +66,11 @@ static binder_status_t _aidl_android_aidl_tests_nested_INestedService_onTransact
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_nested_INestedService_clazz_code_to_function[] = { "flipStatus","flipStatusWithCallback",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_nested_INestedService_clazz = ::ndk::ICInterface::defineClass(INestedService::descriptor, _aidl_android_aidl_tests_nested_INestedService_onTransact, _g_aidl_android_aidl_tests_nested_INestedService_clazz_code_to_function, 2);
+static const char* _g_aidl_android_aidl_tests_nested_INestedService_clazz_names[] = {
+  "flipStatus",
+  "flipStatusWithCallback",
+};
+static AIBinder_Class* _g_aidl_android_aidl_tests_nested_INestedService_clazz = ::ndk::ICInterface::defineClass(INestedService::descriptor, _aidl_android_aidl_tests_nested_INestedService_onTransact, _g_aidl_android_aidl_tests_nested_INestedService_clazz_names, 2);
 
 BpNestedService::BpNestedService(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpNestedService::~BpNestedService() {}
@@ -308,8 +311,10 @@ static binder_status_t _aidl_android_aidl_tests_nested_INestedService_ICallback_
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_code_to_function[] = { "done",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz = ::ndk::ICInterface::defineClass(INestedService::ICallback::descriptor, _aidl_android_aidl_tests_nested_INestedService_ICallback_onTransact, _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_code_to_function, 1);
+static const char* _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_names[] = {
+  "done",
+};
+static AIBinder_Class* _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz = ::ndk::ICInterface::defineClass(INestedService::ICallback::descriptor, _aidl_android_aidl_tests_nested_INestedService_ICallback_onTransact, _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_names, 1);
 
 INestedService::BpCallback::BpCallback(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 INestedService::BpCallback::~BpCallback() {}

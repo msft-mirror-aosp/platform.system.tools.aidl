@@ -17,6 +17,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "aidl_language.h"
 #include "code_writer.h"
@@ -51,6 +52,9 @@ bool ShouldForceDowngradeFor(CommunicationSide e);
 // currently relies on all backends having the same comment style, but we
 // could take a comment type argument in the future
 void GenerateAutoGenHeader(CodeWriter& out, const Options& options);
+
+// Get function names from given aidl interface.
+std::vector<std::string> GetFunctionNames(const AidlInterface& defined_type);
 
 }  // namespace aidl
 }  // namespace android

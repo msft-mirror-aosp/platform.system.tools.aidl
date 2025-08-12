@@ -788,8 +788,17 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_code_to_function[] = { "RepeatBytes","RepeatInts","RepeatBinders","RepeatParcelables","Repeat2dBytes","Repeat2dInts","Repeat2dBinders","Repeat2dParcelables",};
-static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IRepeatFixedSizeArray::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_onTransact, _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_code_to_function, 8);
+static const char* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_names[] = {
+  "RepeatBytes",
+  "RepeatInts",
+  "RepeatBinders",
+  "RepeatParcelables",
+  "Repeat2dBytes",
+  "Repeat2dInts",
+  "Repeat2dBinders",
+  "Repeat2dParcelables",
+};
+static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IRepeatFixedSizeArray::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_onTransact, _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_names, 8);
 
 FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
