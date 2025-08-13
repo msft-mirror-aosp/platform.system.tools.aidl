@@ -372,6 +372,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Stability:           i.properties.Stability,
 		Min_sdk_version:     i.minSdkVersion(langRust),
 		Lang:                langRust,
+		GenTrace:            i.genTrace(langRust),
 		BaseName:            i.ModuleBase.Name(),
 		Version:             i.versionForInitVersionCompat(version),
 		Unstable:            i.properties.Unstable,
