@@ -107,7 +107,7 @@ type aidlGenProperties struct {
 	RequireFrozenReason string
 	Visibility          []string
 	Flags               []string
-	UseUnfrozen         bool
+	Always_use_unfrozen proptools.Configurable[bool]
 }
 
 type aidlGenRule struct {
@@ -264,7 +264,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	// If this is an unfrozen version of a previously frozen interface, we want (1) the location
 	// of the previously frozen source and (2) the previously frozen hash so the generated
 	// library can behave like both versions at run time.
-	if !g.properties.UseUnfrozen && previousVersion != "" &&
+	if !useUnfrozen(ctx, &g.properties.Always_use_unfrozen) && previousVersion != "" &&
 		!proptools.Bool(g.properties.Unstable) && g.hashFile == nil {
 		apiDirPath := android.ExistentPathForSource(ctx, previousApiDir)
 		if apiDirPath.Valid() {
