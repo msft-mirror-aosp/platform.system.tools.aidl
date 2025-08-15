@@ -416,7 +416,7 @@ type aidlInterfaceProperties struct {
 	//
 	// Note: this will not work for AOSP android.* interfaces because they
 	// will not be available in the compatibility matrix.
-	Always_use_unfrozen *bool
+	Always_use_unfrozen proptools.Configurable[bool] `android:"replace_instead_of_append"`
 
 	// List of aidl_interface modules that this uses. If one of your AIDL interfaces uses an
 	// interface or parcelable from another aidl_interface, you should put its name here.
@@ -580,7 +580,7 @@ func (i *aidlInterface) shouldGenerateRustBackend() bool {
 	return proptools.BoolDefault(i.properties.Backend.Rust.Enabled, true)
 }
 
-func (i *aidlInterface) useUnfrozen(ctx android.EarlyModuleContext) bool {
+func useUnfrozen(ctx android.ModuleContext, always_use_unfrozen *proptools.Configurable[bool]) bool {
 	var use_unfrozen bool
 
 	unfrozen_override := ctx.Config().Getenv("AIDL_USE_UNFROZEN_OVERRIDE")
@@ -598,7 +598,7 @@ func (i *aidlInterface) useUnfrozen(ctx android.EarlyModuleContext) bool {
 
 	// could check this earlier and return, but make sure we always verify
 	// environmental variables
-	if proptools.Bool(i.properties.Always_use_unfrozen) {
+	if always_use_unfrozen.GetOrDefault(ctx, false) {
 		use_unfrozen = true
 	}
 
@@ -1212,7 +1212,7 @@ func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		AidlInterfaceImportsInfo: importsInfo,
 		Stability:                proptools.StringDefault(i.properties.Stability, ""),
 		ComputedTypes:            i.computedTypes,
-		UseUnfrozen:              i.useUnfrozen(ctx),
+		UseUnfrozen:              useUnfrozen(ctx, &i.properties.Always_use_unfrozen),
 		Preprocessed:             i.preprocessed,
 		IncludeDirs:              i.properties.Include_dirs,
 	})
