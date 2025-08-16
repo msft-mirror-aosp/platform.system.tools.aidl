@@ -82,7 +82,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               aidlFlags,
-		UseUnfrozen:         i.useUnfrozen(mctx),
+		Always_use_unfrozen: i.properties.Always_use_unfrozen.Clone(),
 	})
 
 	importExportDependencies := []string{}
@@ -225,7 +225,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
-		UseUnfrozen:         i.useUnfrozen(mctx),
+		Always_use_unfrozen: i.properties.Always_use_unfrozen.Clone(),
 	})
 
 	importExportDependencies := []string{}
@@ -324,7 +324,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
-		UseUnfrozen:         i.useUnfrozen(mctx),
+		Always_use_unfrozen: i.properties.Always_use_unfrozen.Clone(),
 	})
 
 	langProps := &aidlLanguageModuleProperties{}
@@ -379,7 +379,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		NotFrozen:           notFrozen,
 		RequireFrozenReason: requireFrozenReason,
 		Flags:               i.flagsForAidlGenRule(version),
-		UseUnfrozen:         i.useUnfrozen(mctx),
+		Always_use_unfrozen: i.properties.Always_use_unfrozen.Clone(),
 		GenMockall:          proptools.Bool(i.properties.Backend.Rust.Gen_mockall),
 	})
 

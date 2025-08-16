@@ -43,8 +43,10 @@ static binder_status_t _aidl_android_aidl_tests_IOldName_onTransact(AIBinder* _a
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_IOldName_clazz_code_to_function[] = { "RealName",};
-static AIBinder_Class* _g_aidl_android_aidl_tests_IOldName_clazz = ::ndk::ICInterface::defineClass(IOldName::descriptor, _aidl_android_aidl_tests_IOldName_onTransact, _g_aidl_android_aidl_tests_IOldName_clazz_code_to_function, 1);
+static const char* _g_aidl_android_aidl_tests_IOldName_clazz_names[] = {
+  "RealName",
+};
+static AIBinder_Class* _g_aidl_android_aidl_tests_IOldName_clazz = ::ndk::ICInterface::defineClass(IOldName::descriptor, _aidl_android_aidl_tests_IOldName_onTransact, _g_aidl_android_aidl_tests_IOldName_clazz_names, 1);
 
 BpOldName::BpOldName(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpOldName::~BpOldName() {}

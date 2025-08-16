@@ -147,8 +147,14 @@ static binder_status_t _aidl_android_aidl_versioned_tests_IFooInterface_onTransa
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_code_to_function[] = { "originalApi","acceptUnionAndReturnString","ignoreParcelablesAndRepeatInt","returnsLengthOfFooArray","newApi",};
-static AIBinder_Class* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz = ::ndk::ICInterface::defineClass(IFooInterface::descriptor, _aidl_android_aidl_versioned_tests_IFooInterface_onTransact, _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_code_to_function, 5);
+static const char* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_names[] = {
+  "originalApi",
+  "acceptUnionAndReturnString",
+  "ignoreParcelablesAndRepeatInt",
+  "returnsLengthOfFooArray",
+  "newApi",
+};
+static AIBinder_Class* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz = ::ndk::ICInterface::defineClass(IFooInterface::descriptor, _aidl_android_aidl_versioned_tests_IFooInterface_onTransact, _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_names, 5);
 
 BpFooInterface::BpFooInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpFooInterface::~BpFooInterface() {}
