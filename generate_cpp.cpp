@@ -682,6 +682,35 @@ void GenerateServerSource(CodeWriter& out, const AidlInterface& interface,
   const string bn_name = ClassName(interface, ClassNames::SERVER);
   const string q_name = GetQualifiedName(interface, ClassNames::SERVER);
 
+  // If tracing is off, don't populate this array.
+  vector<std::string> functionNames;
+  if (options.GenTraces()) {
+    functionNames = GetFunctionNames(interface);
+  }
+
+  std::string transactionCodeData;
+  if (functionNames.empty()) {
+    transactionCodeData = "nullptr";
+  } else {
+    std::string codeToFunction = ClassName(interface, ClassNames::INTERFACE) + "_" + kFunctionNames;
+    out << "static const char* " << codeToFunction << "[] = {\n";
+    out.Indent();
+    for (const auto& method : functionNames) {
+      out << "\"" << method << "\",\n";
+    }
+    out.Dedent();
+    out << "};\n\n";
+
+    transactionCodeData = ClassName(interface, ClassNames::INTERFACE) + "_" + kTransactionData;
+    out << "alignas(16) static const ::android::TransactionCodeData " << transactionCodeData
+        << " = {\n";
+    out.Indent();
+    out << ".names = " << codeToFunction << ",\n";
+    out << ".count = " << std::to_string(functionNames.size()) << ",\n";
+    out.Dedent();
+    out << "};\n\n";
+  }
+
   EnterNamespace(out, interface);
   out << "\n";
 
@@ -693,6 +722,11 @@ void GenerateServerSource(CodeWriter& out, const AidlInterface& interface,
     out << "::android::internal::Stability::markVintf(this);\n";
   } else {
     out << "::android::internal::Stability::markCompilationUnit(this);\n";
+  }
+
+  if (transactionCodeData != "nullptr") {
+    transactionCodeData = "&" + transactionCodeData;
+    out << "::android::BBinder::setTransactionCodeMap(" << transactionCodeData << ");\n";
   }
   out.Dedent();
   out << "}\n";
