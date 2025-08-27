@@ -22,6 +22,9 @@ declare_binder_interface! {
     proxy: BpNamedCallback {
     },
     async: INamedCallbackAsync(try_into_local_async),
+    functionNames : [
+      c"GetName",
+    ],
   }
 }
 pub trait INamedCallback: binder::Interface + Send {

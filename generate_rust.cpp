@@ -643,6 +643,13 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   auto client_name = ClassName(*iface, cpp::ClassNames::CLIENT);
   auto server_name = ClassName(*iface, cpp::ClassNames::SERVER);
   *code_writer << "use binder::declare_binder_interface;\n";
+
+  // Generate function names array which will be used to convert the transaction to function names
+  vector<std::string> functionNames;
+  if (options.GenTraces()) {
+    functionNames = GetFunctionNames(*iface);
+  }
+
   *code_writer << "declare_binder_interface! {\n";
   code_writer->Indent();
   *code_writer << trait_name << "[\"" << iface->GetDescriptor() << "\"] {\n";
@@ -668,6 +675,18 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   if (iface->IsVintfStability()) {
     *code_writer << "stability: binder::binder_impl::Stability::Vintf,\n";
   }
+
+  // declare_binder_interface can select a variant based on the parameters provided
+  if (!functionNames.empty()) {
+    *code_writer << "functionNames : [\n";
+    code_writer->Indent();
+    for (const auto& method : functionNames) {
+      *code_writer << "c\"" << method << "\",\n";
+    }
+    code_writer->Dedent();
+    *code_writer << "],\n";
+  }
+
   code_writer->Dedent();
   *code_writer << "}\n";
   code_writer->Dedent();
