@@ -48,6 +48,8 @@ using std::set;
 using std::string;
 using std::vector;
 
+using ParameterizableType = AidlParameterizable<std::unique_ptr<AidlTypeParam>>;
+
 static std::string Dump(const AidlDefinedType& type) {
   string code;
   CodeWriterPtr out = CodeWriter::ForString(&code);
@@ -123,14 +125,73 @@ static bool have_compatible_annotations(const AidlAnnotatable& older,
                                         const AidlAnnotatable& newer) {
   vector<string> olderAnnotations = get_strict_annotations(older);
   vector<string> newerAnnotations = get_strict_annotations(newer);
+
+  const std::string kFixedSizeStr = "@FixedSize";
+  auto isFixed = [&kFixedSizeStr](const std::string& s) { return s == kFixedSizeStr; };
+  const bool isOlderFixedSize = std::erase_if(olderAnnotations, isFixed) > 0;
+  const bool isNewerFixedSize = std::erase_if(newerAnnotations, isFixed) > 0;
+
+  bool isCompatible = true;
+  if (isOlderFixedSize && !isNewerFixedSize) {
+    AIDL_ERROR(newer) << "Removing @FixedSize is not allowed.";
+    isCompatible = false;
+  }
+
   sort(olderAnnotations.begin(), olderAnnotations.end());
   sort(newerAnnotations.begin(), newerAnnotations.end());
   if (olderAnnotations != newerAnnotations) {
     const string from = older.ToString().empty() ? "(empty)" : older.ToString();
     const string to = newer.ToString().empty() ? "(empty)" : newer.ToString();
     AIDL_ERROR(newer) << "Changed annotations: " << from << " to " << to;
+    isCompatible = false;
+  }
+  return isCompatible;
+}
+
+static bool have_compatible_type_parameters(const ParameterizableType& older_p,
+                                            const ParameterizableType& newer_p) {
+  const auto& newer_type = static_cast<const AidlDefinedType&>(newer_p.AsAidlNode());
+
+  if (older_p.IsGeneric()) {
+    if (!newer_p.IsGeneric()) {
+      AIDL_ERROR(newer_type) << "Type " << newer_type.GetCanonicalName()
+                             << " is no longer generic.";
+      return false;
+    }
+
+    const auto& older_params = older_p.GetTypeParameters();
+    const auto& newer_params = newer_p.GetTypeParameters();
+
+    if (older_params.size() != newer_params.size()) {
+      AIDL_ERROR(newer_type) << "Number of type parameters for " << newer_type.GetCanonicalName()
+                             << " changed from " << older_params.size() << " to "
+                             << newer_params.size() << ".";
+      return false;
+    }
+
+    bool compatible = true;
+    for (size_t i = 0; i < older_params.size(); ++i) {
+      const auto& old_param = older_params[i];
+      const auto& new_param = newer_params[i];
+
+      if (old_param->GetName() != new_param->GetName()) {
+        AIDL_ERROR(newer_type) << "Type parameter name changed from '" << old_param->GetName()
+                               << "' to '" << new_param->GetName()
+                               << "'. This is an incompatible change.";
+        compatible = false;
+      }
+
+      if (!have_compatible_annotations(*old_param, *new_param)) {
+        compatible = false;
+      }
+    }
+    return compatible;
+
+  } else if (newer_p.IsGeneric()) {
+    AIDL_ERROR(newer_type) << "Type " << newer_type.GetCanonicalName() << " has become generic.";
     return false;
   }
+
   return true;
 }
 
@@ -242,8 +303,8 @@ static bool EvaluatesToZero(const AidlEnumDeclaration& enum_decl, const AidlCons
   return value->ValueString(enum_decl.GetBackingType(), AidlConstantValueDecorator) == "0";
 }
 
-static bool are_compatible_parcelables(const AidlDefinedType& older, const AidlTypenames&,
-                                       const AidlDefinedType& newer,
+static bool are_compatible_parcelables(const AidlParcelable& older, const AidlTypenames&,
+                                       const AidlParcelable& newer,
                                        const AidlTypenames& new_types) {
   const auto& old_fields = older.GetFields();
   const auto& new_fields = newer.GetFields();
@@ -363,6 +424,8 @@ static bool are_compatible_parcelables(const AidlDefinedType& older, const AidlT
   }
 
   compatible = are_compatible_constants(older, newer) && compatible;
+
+  compatible &= have_compatible_type_parameters(older, newer);
 
   return compatible;
 }

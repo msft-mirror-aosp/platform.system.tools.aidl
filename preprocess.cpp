@@ -53,7 +53,11 @@ struct PreprocessVisitor : AidlVisitor {
       out << type << " " << dt.GetCanonicalName();
     }
     if (auto generic_type = dt.AsParameterizable(); generic_type && generic_type->IsGeneric()) {
-      out << "<" << Join(generic_type->GetTypeParameters(), ", ") << ">";
+      std::vector<std::string> param_names;
+      for (const auto& p : generic_type->GetTypeParameters()) {
+        param_names.push_back(p->ToString());
+      }
+      out << "<" << Join(param_names, ", ") << ">";
     }
   }
   void DumpMembers(const AidlDefinedType& dt) {

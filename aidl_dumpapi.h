@@ -45,6 +45,7 @@ struct DumpVisitor : AidlVisitor {
   void Visit(const AidlConstantReference& r) override;
   void Visit(const AidlBinaryConstExpression& b) override;
   void Visit(const AidlUnaryConstExpression& u) override;
+  void Visit(const AidlTypeParam& p) override;
 };
 
 bool dump_api(const Options& options, const IoDelegate& io_delegate);

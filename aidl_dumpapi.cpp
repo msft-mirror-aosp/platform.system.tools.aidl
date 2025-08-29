@@ -66,7 +66,15 @@ void DumpVisitor::DumpType(const AidlDefinedType& dt, const string& type) {
   DumpAnnotations(dt);
   out << type << " " << dt.GetName();
   if (auto generic_type = dt.AsParameterizable(); generic_type && generic_type->IsGeneric()) {
-    out << "<" << Join(generic_type->GetTypeParameters(), ", ") << ">";
+    out << "<";
+    const auto& params = generic_type->GetTypeParameters();
+    for (size_t i = 0; i < params.size(); ++i) {
+      if (i > 0) {
+        out << ", ";
+      }
+      params[i]->DispatchVisit(*this);
+    }
+    out << ">";
   }
 
   if (dt.AsUnstructuredParcelable()) {
@@ -162,6 +170,10 @@ void DumpVisitor::Visit(const AidlStructuredParcelable& t) {
 
 void DumpVisitor::Visit(const AidlUnionDecl& t) {
   DumpType(t, "union");
+}
+
+void DumpVisitor::Visit(const AidlTypeParam& p) {
+  out << p.ToString();
 }
 
 void DumpVisitor::Visit(const AidlEnumDeclaration& t) {

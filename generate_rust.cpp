@@ -1019,26 +1019,34 @@ std::set<std::string> FreeParams(const AidlStructuredParcelable* parcel) {
   if (!parcel->IsGeneric()) {
     return std::set<std::string>();
   }
-  auto typeParams = parcel->GetTypeParameters();
-  std::set<std::string> unusedParams(typeParams.begin(), typeParams.end());
+  const auto& typeParams = parcel->GetTypeParameters();
+  std::set<std::string> unusedParams;
+  for (const auto& param : typeParams) {
+    unusedParams.insert(param->GetName());
+  }
   for (const auto& variable : parcel->GetFields()) {
     RemoveUsed(&unusedParams, variable->GetType());
   }
   return unusedParams;
 }
 
-void WriteParams(CodeWriter& out, const AidlParameterizable<std::string>* parcel,
+void WriteParams(CodeWriter& out, const AidlParameterizable<std::unique_ptr<AidlTypeParam>>* parcel,
                  std::string extra) {
-  if (parcel->IsGeneric()) {
-    out << "<";
-    for (const auto& param : parcel->GetTypeParameters()) {
-      out << param << extra << ",";
-    }
-    out << ">";
+  AIDL_FATAL_IF(!parcel, AIDL_LOCATION_HERE) << "parcel must not be null";
+  if (!parcel->IsGeneric()) {
+    return;
   }
+  out << "<";
+  std::vector<std::string> params;
+  for (const auto& param : parcel->GetTypeParameters()) {
+    params.push_back(param->GetName() + extra);
+  }
+  out << Join(params, ", ");
+  out << ">";
 }
 
-void WriteParams(CodeWriter& out, const AidlParameterizable<std::string>* parcel) {
+void WriteParams(CodeWriter& out,
+                 const AidlParameterizable<std::unique_ptr<AidlTypeParam>>* parcel) {
   WriteParams(out, parcel, "");
 }
 
