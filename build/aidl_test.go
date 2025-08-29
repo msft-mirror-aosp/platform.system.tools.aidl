@@ -2218,14 +2218,14 @@ func TestFreezeApiDeps(t *testing.T) {
 
 			ctx, _ := testAidl(t, ``, customizers...)
 			shouldHaveDep := transitive && testcase.bool
-			fooFreezeApiRule := ctx.ModuleForTests(t, "foo_interface", "").Output("update_or_freeze_api_3.timestamp")
-			commonFreezeApiOutput := ctx.ModuleForTests(t, "common_interface", "").Output("update_or_freeze_api_3.timestamp").Output.String()
+			fooFreezeApiRule := ctx.ModuleForTests(t, "foo_interface", "").Output("update_or_freeze_api_3.sh")
+			commonFreezeApiOutput := ctx.ModuleForTests(t, "common_interface", "").Output("update_or_freeze_api_3.sh").Output.String()
 			testMethod := android.AssertStringListDoesNotContain
 			if shouldHaveDep {
 				testMethod = android.AssertStringListContains
 			}
 			testMethod(t, "Only if AIDL_TRANSITIVE_FREEZE is set and an aidl_interface depends on an another aidl_interface's ToT version, an imported aidl_interface should be frozen as well.",
-				fooFreezeApiRule.Implicits.Strings(), commonFreezeApiOutput)
+				fooFreezeApiRule.Validations.Strings(), commonFreezeApiOutput)
 		}
 	}
 }
