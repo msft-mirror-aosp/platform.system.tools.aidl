@@ -41,6 +41,11 @@
 " android.os.ParcelFileDescriptor "
 " ParcelableHolder "
 " > "
+" T "
+" U "
+" <T> "
+" <T, U> "
+" Generic< "
 
 # annotations
 " @nullable "
