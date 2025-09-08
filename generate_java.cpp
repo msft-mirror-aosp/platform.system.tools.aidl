@@ -336,7 +336,11 @@ std::unique_ptr<android::aidl::java::Class> GenerateParcelableClass(
   }
 
   if (parcel->IsGeneric()) {
-    parcel_class->type += "<" + base::Join(parcel->GetTypeParameters(), ",") + ">";
+    std::vector<std::string> param_names;
+    for (const auto& p : parcel->GetTypeParameters()) {
+      param_names.push_back(p->GetName());
+    }
+    parcel_class->type += "<" + base::Join(param_names, ",") + ">";
   }
 
   for (const auto& variable : parcel->GetFields()) {

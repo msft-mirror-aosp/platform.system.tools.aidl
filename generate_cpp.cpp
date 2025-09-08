@@ -1309,7 +1309,11 @@ void GenerateParcelSource(CodeWriter& out, const T& parcel, const AidlTypenames&
                           const Options&) {
   string q_name = GetQualifiedName(parcel);
   if (parcel.IsGeneric()) {
-    q_name += "<" + Join(parcel.GetTypeParameters(), ",") + ">";
+    std::vector<std::string> param_names;
+    for (const auto& p : parcel.GetTypeParameters()) {
+      param_names.push_back(p->GetName());
+    }
+    q_name += "<" + Join(param_names, ", ") + ">";
   }
 
   out << "#include <" << CppHeaderForType(parcel) << ">\n\n";

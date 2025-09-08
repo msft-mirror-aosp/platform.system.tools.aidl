@@ -66,7 +66,7 @@ namespace android {
 namespace aidl {
 namespace tests {
 template <typename T, typename U, typename B>
-::android::status_t GenericStructuredParcelable<T,U,B>::readFromParcel(const ::android::Parcel* _aidl_parcel) {
+::android::status_t GenericStructuredParcelable<T, U, B>::readFromParcel(const ::android::Parcel* _aidl_parcel) {
   ::android::status_t _aidl_ret_status = ::android::OK;
   size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   int32_t _aidl_parcelable_raw_size = 0;
@@ -97,7 +97,7 @@ template <typename T, typename U, typename B>
   return _aidl_ret_status;
 }
 template <typename T, typename U, typename B>
-::android::status_t GenericStructuredParcelable<T,U,B>::writeToParcel(::android::Parcel* _aidl_parcel) const {
+::android::status_t GenericStructuredParcelable<T, U, B>::writeToParcel(::android::Parcel* _aidl_parcel) const {
   ::android::status_t _aidl_ret_status = ::android::OK;
   size_t _aidl_start_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->writeInt32(0);

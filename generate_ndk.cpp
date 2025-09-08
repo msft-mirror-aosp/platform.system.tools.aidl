@@ -1363,7 +1363,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   if (defined_type.IsGeneric()) {
     std::vector<std::string> template_params;
     for (const auto& parameter : defined_type.GetTypeParameters()) {
-      template_params.push_back(parameter);
+      template_params.push_back(parameter->GetName());
     }
     clazz += base::StringPrintf("<%s>", base::Join(template_params, ", ").c_str());
   }
@@ -1523,7 +1523,7 @@ void GenerateParcelSource(CodeWriter& out, const AidlTypenames& types,
   if (defined_type.IsGeneric()) {
     std::vector<std::string> template_params;
     for (const auto& parameter : defined_type.GetTypeParameters()) {
-      template_params.push_back(parameter);
+      template_params.push_back(parameter->GetName());
     }
     clazz += base::StringPrintf("<%s>", base::Join(template_params, ", ").c_str());
   }

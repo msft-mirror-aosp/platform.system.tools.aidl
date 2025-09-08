@@ -352,7 +352,7 @@ std::string TemplateDecl(const AidlParcelable& defined_type) {
   if (defined_type.IsGeneric()) {
     std::vector<std::string> template_params;
     for (const auto& parameter : defined_type.GetTypeParameters()) {
-      template_params.push_back(parameter);
+      template_params.push_back(parameter->GetName());
     }
     decl = base::StringPrintf("template <typename %s>\n",
                               base::Join(template_params, ", typename ").c_str());
