@@ -866,10 +866,10 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
                      kAndroidStatusLiteral, kCodeVarName, kAndroidParcelLiteral, kDataVarName,
                      kAndroidParcelLiteral, kReplyVarName, kFlagsVarName);
   if (options.Version() > 0) {
-    out << "int32_t " << kGetInterfaceVersion << "();\n";
+    out << "int32_t " << kGetInterfaceVersion << "() override;\n";
   }
   if (!options.Hash().empty()) {
-    out << "std::string " << kGetInterfaceHash << "();\n";
+    out << "std::string " << kGetInterfaceHash << "() override;\n";
   }
   if (options.GenLog()) {
     out << kTransactionLogStruct;
