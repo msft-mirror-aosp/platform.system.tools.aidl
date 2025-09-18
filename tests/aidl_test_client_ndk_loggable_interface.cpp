@@ -34,6 +34,7 @@ using ::aidl::android::aidl::loggable::Enum;
 using ::aidl::android::aidl::loggable::ILoggableInterface;
 using ::aidl::android::aidl::tests::BackendType;
 using ::aidl::android::aidl::tests::ITestService;
+using ::testing::AnyOf;
 using ::testing::ElementsAre;
 using ::testing::Pair;
 
@@ -124,7 +125,7 @@ TEST(AidlNdkLoggableInterfaceTest, LogThis) {
           Pair("in_listValue", "[mno]"),
           Pair("in_dataValue",
                "Data{num: 42, str: abc, nestedUnion: Union{str: def}, nestedEnum: FOO}"),
-          Pair("in_binderValue", "binder:0x0"),
+          Pair("in_binderValue", AnyOf("binder:0x0", "binder:0")),
           Pair("in_pfdValue", "fd:-1"),
           Pair("in_pfdArray", "[]")));
   EXPECT_THAT(log.output_args, ElementsAre(Pair("in_boolArray", "[false, true]"),
