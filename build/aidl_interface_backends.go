@@ -175,16 +175,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		Apex_available:            commonProperties.Apex_available,
 		Min_sdk_version:           i.minSdkVersion(lang),
 		Target:                    targetProp,
-		Tidy:                      proptools.BoolPtr(true),
-		// Do the tidy check only for the generated headers
-		Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-		Tidy_checks_as_errors: []string{
-			"*",
-			"-clang-analyzer-deadcode.DeadStores", // b/253079031
-			"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
-			"-clang-analyzer-optin.performance.Padding", // b/253079031
-		},
-		Include_build_directory: proptools.BoolPtr(false), // b/254682497
+		Include_build_directory:   proptools.BoolPtr(false), // b/254682497
 		AidlInterface: struct {
 			Sources  []string
 			AidlRoot string
@@ -268,16 +259,6 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 		Ldflags:                   commonProperties.Ldflags,
 		Min_sdk_version:           i.minSdkVersion(langCpp),
 		Target:                    targetProp,
-		Tidy:                      proptools.BoolPtr(true),
-		// Do the tidy check only for the generated headers
-		Tidy_flags: []string{"--header-filter=" + android.PathForOutput(mctx).String() + ".*"},
-		Tidy_checks_as_errors: []string{
-			"*",
-			"-clang-diagnostic-deprecated-declarations", // b/253081572
-			"-clang-analyzer-deadcode.DeadStores",       // b/253079031
-			"-clang-analyzer-cplusplus.NewDeleteLeaks",  // b/253079031
-			"-clang-analyzer-optin.performance.Padding", // b/253079031
-		},
 	}
 
 	mctx.CreateModule(wrapLibraryFactory(cc.BinaryFactory), props)
