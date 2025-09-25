@@ -1062,22 +1062,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
-static const char* IRepeatFixedSizeArray_names[] = {
-  "RepeatBytes",
-  "RepeatInts",
-  "RepeatBinders",
-  "RepeatParcelables",
-  "Repeat2dBytes",
-  "Repeat2dInts",
-  "Repeat2dBinders",
-  "Repeat2dParcelables",
-};
-
-alignas(16) static const ::android::TransactionCodeData IRepeatFixedSizeArray_data = {
-  .names = IRepeatFixedSizeArray_names,
-  .count = 8,
-};
-
 namespace android {
 namespace aidl {
 namespace fixedsizearray {
@@ -1085,7 +1069,6 @@ namespace fixedsizearray {
 FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray()
 {
   ::android::internal::Stability::markCompilationUnit(this);
-  ::android::BBinder::setTransactionCodeMap(&IRepeatFixedSizeArray_data);
 }
 
 ::android::status_t FixedSizeArrayExample::BnRepeatFixedSizeArray::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

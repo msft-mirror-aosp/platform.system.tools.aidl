@@ -68,15 +68,6 @@ BpCircular::BpCircular(const ::android::sp<::android::IBinder>& _aidl_impl)
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
-static const char* ICircular_names[] = {
-  "GetTestService",
-};
-
-alignas(16) static const ::android::TransactionCodeData ICircular_data = {
-  .names = ICircular_names,
-  .count = 1,
-};
-
 namespace android {
 namespace aidl {
 namespace tests {
@@ -84,7 +75,6 @@ namespace tests {
 BnCircular::BnCircular()
 {
   ::android::internal::Stability::markCompilationUnit(this);
-  ::android::BBinder::setTransactionCodeMap(&ICircular_data);
 }
 
 ::android::status_t BnCircular::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
