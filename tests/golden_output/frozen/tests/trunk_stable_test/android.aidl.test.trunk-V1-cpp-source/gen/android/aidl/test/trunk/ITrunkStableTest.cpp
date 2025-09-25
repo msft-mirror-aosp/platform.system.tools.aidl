@@ -303,6 +303,18 @@ std::string BpTrunkStableTest::getInterfaceHash() {
 #include <chrono>
 #include <functional>
 
+static const char* ITrunkStableTest_names[] = {
+  "repeatParcelable",
+  "repeatEnum",
+  "repeatUnion",
+  "callMyCallback",
+};
+
+alignas(16) static const ::android::TransactionCodeData ITrunkStableTest_data = {
+  .names = ITrunkStableTest_names,
+  .count = 4,
+};
+
 namespace android {
 namespace aidl {
 namespace test {
@@ -311,6 +323,7 @@ namespace trunk {
 BnTrunkStableTest::BnTrunkStableTest()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&ITrunkStableTest_data);
 }
 
 ::android::status_t BnTrunkStableTest::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
@@ -897,6 +910,17 @@ std::string ITrunkStableTest::BpMyCallback::getInterfaceHash() {
 #include <chrono>
 #include <functional>
 
+static const char* IMyCallback_names[] = {
+  "repeatParcelable",
+  "repeatEnum",
+  "repeatUnion",
+};
+
+alignas(16) static const ::android::TransactionCodeData IMyCallback_data = {
+  .names = IMyCallback_names,
+  .count = 3,
+};
+
 namespace android {
 namespace aidl {
 namespace test {
@@ -905,6 +929,7 @@ namespace trunk {
 ITrunkStableTest::BnMyCallback::BnMyCallback()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&IMyCallback_data);
 }
 
 ::android::status_t ITrunkStableTest::BnMyCallback::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

@@ -195,6 +195,15 @@ ListOfInterfaces::BpMyInterface::BpMyInterface(const ::android::sp<::android::IB
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
+static const char* IMyInterface_names[] = {
+  "methodWithInterfaces",
+};
+
+alignas(16) static const ::android::TransactionCodeData IMyInterface_data = {
+  .names = IMyInterface_names,
+  .count = 1,
+};
+
 namespace android {
 namespace aidl {
 namespace tests {
@@ -202,6 +211,7 @@ namespace tests {
 ListOfInterfaces::BnMyInterface::BnMyInterface()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&IMyInterface_data);
 }
 
 ::android::status_t ListOfInterfaces::BnMyInterface::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
