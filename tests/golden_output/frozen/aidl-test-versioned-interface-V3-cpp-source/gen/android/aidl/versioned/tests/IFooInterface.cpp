@@ -264,19 +264,6 @@ std::string BpFooInterface::getInterfaceHash() {
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
-static const char* IFooInterface_names[] = {
-  "originalApi",
-  "acceptUnionAndReturnString",
-  "ignoreParcelablesAndRepeatInt",
-  "returnsLengthOfFooArray",
-  "newApi",
-};
-
-alignas(16) static const ::android::TransactionCodeData IFooInterface_data = {
-  .names = IFooInterface_names,
-  .count = 5,
-};
-
 namespace android {
 namespace aidl {
 namespace versioned {
@@ -285,7 +272,6 @@ namespace tests {
 BnFooInterface::BnFooInterface()
 {
   ::android::internal::Stability::markCompilationUnit(this);
-  ::android::BBinder::setTransactionCodeMap(&IFooInterface_data);
 }
 
 ::android::status_t BnFooInterface::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

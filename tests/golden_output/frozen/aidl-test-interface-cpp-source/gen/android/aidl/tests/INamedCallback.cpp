@@ -68,15 +68,6 @@ BpNamedCallback::BpNamedCallback(const ::android::sp<::android::IBinder>& _aidl_
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
-static const char* INamedCallback_names[] = {
-  "GetName",
-};
-
-alignas(16) static const ::android::TransactionCodeData INamedCallback_data = {
-  .names = INamedCallback_names,
-  .count = 1,
-};
-
 namespace android {
 namespace aidl {
 namespace tests {
@@ -84,7 +75,6 @@ namespace tests {
 BnNamedCallback::BnNamedCallback()
 {
   ::android::internal::Stability::markCompilationUnit(this);
-  ::android::BBinder::setTransactionCodeMap(&INamedCallback_data);
 }
 
 ::android::status_t BnNamedCallback::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

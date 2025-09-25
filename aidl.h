@@ -77,7 +77,6 @@ const string kGetInterfaceVersion("getInterfaceVersion");
 const string kGetInterfaceHash("getInterfaceHash");
 
 static constexpr const char* kFunctionNames = "names";
-static constexpr const char* kTransactionData = "data";
 
 namespace internals {
 

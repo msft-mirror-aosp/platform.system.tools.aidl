@@ -366,22 +366,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
-static const char* ICppJavaTests_names[] = {
-  "RepeatBadParcelable",
-  "RepeatGenericParcelable",
-  "RepeatPersistableBundle",
-  "ReversePersistableBundles",
-  "ReverseUnion",
-  "ReverseNamedCallbackList",
-  "RepeatFileDescriptor",
-  "ReverseFileDescriptorArray",
-};
-
-alignas(16) static const ::android::TransactionCodeData ICppJavaTests_data = {
-  .names = ICppJavaTests_names,
-  .count = 8,
-};
-
 namespace android {
 namespace aidl {
 namespace tests {
@@ -389,7 +373,6 @@ namespace tests {
 BnCppJavaTests::BnCppJavaTests()
 {
   ::android::internal::Stability::markCompilationUnit(this);
-  ::android::BBinder::setTransactionCodeMap(&ICppJavaTests_data);
 }
 
 ::android::status_t BnCppJavaTests::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

@@ -68,15 +68,6 @@ BpNewName::BpNewName(const ::android::sp<::android::IBinder>& _aidl_impl)
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
-static const char* INewName_names[] = {
-  "RealName",
-};
-
-alignas(16) static const ::android::TransactionCodeData INewName_data = {
-  .names = INewName_names,
-  .count = 1,
-};
-
 namespace android {
 namespace aidl {
 namespace tests {
@@ -84,7 +75,6 @@ namespace tests {
 BnNewName::BnNewName()
 {
   ::android::internal::Stability::markCompilationUnit(this);
-  ::android::BBinder::setTransactionCodeMap(&INewName_data);
 }
 
 ::android::status_t BnNewName::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
