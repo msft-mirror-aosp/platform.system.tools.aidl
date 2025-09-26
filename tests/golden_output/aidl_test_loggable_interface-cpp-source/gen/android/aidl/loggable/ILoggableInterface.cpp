@@ -252,6 +252,15 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
 #include <chrono>
 #include <functional>
 
+static const char* ILoggableInterface_names[] = {
+  "LogThis",
+};
+
+alignas(16) static const ::android::TransactionCodeData ILoggableInterface_data = {
+  .names = ILoggableInterface_names,
+  .count = 1,
+};
+
 namespace android {
 namespace aidl {
 namespace loggable {
@@ -259,6 +268,7 @@ namespace loggable {
 BnLoggableInterface::BnLoggableInterface()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&ILoggableInterface_data);
 }
 
 ::android::status_t BnLoggableInterface::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
@@ -591,6 +601,15 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
 #include <chrono>
 #include <functional>
 
+static const char* ISub_names[] = {
+  "Log",
+};
+
+alignas(16) static const ::android::TransactionCodeData ISub_data = {
+  .names = ISub_names,
+  .count = 1,
+};
+
 namespace android {
 namespace aidl {
 namespace loggable {
@@ -598,6 +617,7 @@ namespace loggable {
 ILoggableInterface::BnSub::BnSub()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&ISub_data);
 }
 
 ::android::status_t ILoggableInterface::BnSub::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

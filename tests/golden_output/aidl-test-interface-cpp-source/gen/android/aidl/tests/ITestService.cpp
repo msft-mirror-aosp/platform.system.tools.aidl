@@ -2923,6 +2923,85 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
+static const char* ITestService_names[] = {
+  "UnimplementedMethod",
+  "Deprecated",
+  "TestOneway",
+  "RepeatBoolean",
+  "RepeatByte",
+  "RepeatChar",
+  "RepeatInt",
+  "RepeatLong",
+  "RepeatFloat",
+  "RepeatDouble",
+  "RepeatString",
+  "RepeatByteEnum",
+  "RepeatIntEnum",
+  "RepeatLongEnum",
+  "ReverseBoolean",
+  "ReverseByte",
+  "ReverseChar",
+  "ReverseInt",
+  "ReverseLong",
+  "ReverseFloat",
+  "ReverseDouble",
+  "ReverseString",
+  "ReverseByteEnum",
+  "ReverseIntEnum",
+  "ReverseLongEnum",
+  "GetOtherTestService",
+  "SetOtherTestService",
+  "VerifyName",
+  "GetInterfaceArray",
+  "VerifyNamesWithInterfaceArray",
+  "GetNullableInterfaceArray",
+  "VerifyNamesWithNullableInterfaceArray",
+  "GetInterfaceList",
+  "VerifyNamesWithInterfaceList",
+  "ReverseStringList",
+  "RepeatParcelFileDescriptor",
+  "ReverseParcelFileDescriptorArray",
+  "ThrowServiceException",
+  "RepeatNullableIntArray",
+  "RepeatNullableByteEnumArray",
+  "RepeatNullableIntEnumArray",
+  "RepeatNullableLongEnumArray",
+  "RepeatNullableString",
+  "RepeatNullableStringList",
+  "RepeatNullableParcelable",
+  "RepeatNullableParcelableArray",
+  "RepeatNullableParcelableList",
+  "TakesAnIBinder",
+  "TakesANullableIBinder",
+  "TakesAnIBinderList",
+  "TakesANullableIBinderList",
+  "RepeatUtf8CppString",
+  "RepeatNullableUtf8CppString",
+  "ReverseUtf8CppString",
+  "ReverseNullableUtf8CppString",
+  "ReverseUtf8CppStringList",
+  "GetCallback",
+  "FillOutStructuredParcelable",
+  "RepeatExtendableParcelable",
+  "RepeatExtendableParcelableVintf",
+  "ReverseList",
+  "ReverseIBinderArray",
+  "ReverseNullableIBinderArray",
+  "RepeatSimpleParcelable",
+  "ReverseSimpleParcelables",
+  "GetOldNameInterface",
+  "GetNewNameInterface",
+  "GetUnionTags",
+  "GetCppJavaTests",
+  "getBackendType",
+  "GetCircular",
+};
+
+alignas(16) static const ::android::TransactionCodeData ITestService_data = {
+  .names = ITestService_names,
+  .count = 71,
+};
+
 namespace android {
 namespace aidl {
 namespace tests {
@@ -2930,6 +3009,7 @@ namespace tests {
 BnTestService::BnTestService()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&ITestService_data);
 }
 
 #pragma clang diagnostic push
@@ -5737,6 +5817,15 @@ ITestService::CompilerChecks::BpNoPrefixInterface::BpNoPrefixInterface(const ::a
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
+static const char* INoPrefixInterface_names[] = {
+  "foo",
+};
+
+alignas(16) static const ::android::TransactionCodeData INoPrefixInterface_data = {
+  .names = INoPrefixInterface_names,
+  .count = 1,
+};
+
 namespace android {
 namespace aidl {
 namespace tests {
@@ -5744,6 +5833,7 @@ namespace tests {
 ITestService::CompilerChecks::BnNoPrefixInterface::BnNoPrefixInterface()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&INoPrefixInterface_data);
 }
 
 ::android::status_t ITestService::CompilerChecks::BnNoPrefixInterface::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
@@ -5871,6 +5961,15 @@ ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::BpN
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
+static const char* INestedNoPrefixInterface_names[] = {
+  "foo",
+};
+
+alignas(16) static const ::android::TransactionCodeData INestedNoPrefixInterface_data = {
+  .names = INestedNoPrefixInterface_names,
+  .count = 1,
+};
+
 namespace android {
 namespace aidl {
 namespace tests {
@@ -5878,6 +5977,7 @@ namespace tests {
 ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::BnNestedNoPrefixInterface()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&INestedNoPrefixInterface_data);
 }
 
 ::android::status_t ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
