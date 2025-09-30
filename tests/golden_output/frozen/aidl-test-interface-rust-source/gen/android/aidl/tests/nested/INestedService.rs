@@ -22,10 +22,6 @@ declare_binder_interface! {
     proxy: BpNestedService {
     },
     async: INestedServiceAsync(try_into_local_async),
-    functionNames : [
-      c"flipStatus",
-      c"flipStatusWithCallback",
-    ],
   }
 }
 pub trait INestedService: binder::Interface + Send {
@@ -278,9 +274,6 @@ pub mod r#ICallback {
       proxy: BpCallback {
       },
       async: ICallbackAsync(try_into_local_async),
-      functionNames : [
-        c"done",
-      ],
     }
   }
   pub trait ICallback: binder::Interface + Send {

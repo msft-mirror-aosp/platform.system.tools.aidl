@@ -24,12 +24,6 @@ declare_binder_interface! {
       cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
     },
     async: IFooInterfaceAsync(try_into_local_async),
-    functionNames : [
-      c"originalApi",
-      c"acceptUnionAndReturnString",
-      c"ignoreParcelablesAndRepeatInt",
-      c"returnsLengthOfFooArray",
-    ],
   }
 }
 pub trait IFooInterface: binder::Interface + Send {
