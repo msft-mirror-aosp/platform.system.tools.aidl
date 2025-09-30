@@ -146,6 +146,9 @@ pub mod r#IMyInterface {
       proxy: BpMyInterface {
       },
       async: IMyInterfaceAsync(try_into_local_async),
+      functionNames : [
+        c"methodWithInterfaces",
+      ],
     }
   }
   pub trait IMyInterface: binder::Interface + Send {

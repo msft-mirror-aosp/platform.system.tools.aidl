@@ -22,6 +22,9 @@ declare_binder_interface! {
     proxy: BpCircular {
     },
     async: ICircularAsync(try_into_local_async),
+    functionNames : [
+      c"GetTestService",
+    ],
   }
 }
 pub trait ICircular: binder::Interface + Send {
