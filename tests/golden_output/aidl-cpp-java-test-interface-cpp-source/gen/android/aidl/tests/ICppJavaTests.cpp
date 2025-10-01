@@ -378,6 +378,8 @@ static const char* ICppJavaTests_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData ICppJavaTests_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = ICppJavaTests_names,
   .count = 8,
 };

@@ -1074,6 +1074,8 @@ static const char* IRepeatFixedSizeArray_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData IRepeatFixedSizeArray_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = IRepeatFixedSizeArray_names,
   .count = 8,
 };

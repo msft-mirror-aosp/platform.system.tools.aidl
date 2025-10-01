@@ -2998,6 +2998,8 @@ static const char* ITestService_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData ITestService_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = ITestService_names,
   .count = 71,
 };
@@ -5822,6 +5824,8 @@ static const char* INoPrefixInterface_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData INoPrefixInterface_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = INoPrefixInterface_names,
   .count = 1,
 };
@@ -5966,6 +5970,8 @@ static const char* INestedNoPrefixInterface_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData INestedNoPrefixInterface_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = INestedNoPrefixInterface_names,
   .count = 1,
 };

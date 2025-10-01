@@ -73,6 +73,8 @@ static const char* IOldName_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData IOldName_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = IOldName_names,
   .count = 1,
 };

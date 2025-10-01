@@ -200,6 +200,8 @@ static const char* IMyInterface_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData IMyInterface_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = IMyInterface_names,
   .count = 1,
 };

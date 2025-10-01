@@ -311,6 +311,8 @@ static const char* ITrunkStableTest_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData ITrunkStableTest_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = ITrunkStableTest_names,
   .count = 4,
 };
@@ -917,6 +919,8 @@ static const char* IMyCallback_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData IMyCallback_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = IMyCallback_names,
   .count = 3,
 };

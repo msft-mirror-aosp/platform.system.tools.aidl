@@ -73,6 +73,8 @@ static const char* INamedCallback_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData INamedCallback_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = INamedCallback_names,
   .count = 1,
 };

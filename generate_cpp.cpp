@@ -705,6 +705,8 @@ void GenerateServerSource(CodeWriter& out, const AidlInterface& interface,
     out << "alignas(16) static const ::android::TransactionCodeData " << transactionCodeData
         << " = {\n";
     out.Indent();
+    out << ".totalSize = sizeof(::android::TransactionCodeData),\n";
+    out << ".backendType = \"cpp\",\n";
     out << ".names = " << codeToFunction << ",\n";
     out << ".count = " << std::to_string(functionNames.size()) << ",\n";
     out.Dedent();

@@ -257,6 +257,8 @@ static const char* ILoggableInterface_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData ILoggableInterface_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = ILoggableInterface_names,
   .count = 1,
 };
@@ -606,6 +608,8 @@ static const char* ISub_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData ISub_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = ISub_names,
   .count = 1,
 };

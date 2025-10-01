@@ -242,6 +242,8 @@ static const char* IFooInterface_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData IFooInterface_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = IFooInterface_names,
   .count = 4,
 };

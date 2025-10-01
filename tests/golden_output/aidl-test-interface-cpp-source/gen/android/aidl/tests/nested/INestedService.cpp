@@ -120,6 +120,8 @@ static const char* INestedService_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData INestedService_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = INestedService_names,
   .count = 2,
 };
@@ -333,6 +335,8 @@ static const char* ICallback_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData ICallback_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = ICallback_names,
   .count = 1,
 };

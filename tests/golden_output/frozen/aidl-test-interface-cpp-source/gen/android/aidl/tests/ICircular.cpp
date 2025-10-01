@@ -73,6 +73,8 @@ static const char* ICircular_names[] = {
 };
 
 alignas(16) static const ::android::TransactionCodeData ICircular_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
   .names = ICircular_names,
   .count = 1,
 };
