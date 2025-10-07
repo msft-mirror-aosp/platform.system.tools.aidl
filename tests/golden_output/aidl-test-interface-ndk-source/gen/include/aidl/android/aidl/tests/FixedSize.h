@@ -157,6 +157,7 @@ public:
     }
   private:
     Tag _tag = booleanValue;
+    uint8_t _zero_pad[7] __attribute__((unused)) = {};
     union _value_t {
       _value_t() {}
       ~_value_t() {}
@@ -559,6 +560,7 @@ public:
     }
   private:
     Tag _tag = charValue;
+    uint8_t _zero_pad[1] __attribute__((unused)) = {};
     union _value_t {
       _value_t() {}
       ~_value_t() {}
@@ -656,6 +658,7 @@ public:
     }
   private:
     Tag _tag = longValue;
+    uint8_t _zero_pad[7] __attribute__((unused)) = {};
     union _value_t {
       _value_t() {}
       ~_value_t() {}
