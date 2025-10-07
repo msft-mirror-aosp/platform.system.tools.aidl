@@ -147,14 +147,17 @@ static binder_status_t _aidl_android_aidl_versioned_tests_IFooInterface_onTransa
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_names[] = {
-  "originalApi",
-  "acceptUnionAndReturnString",
-  "ignoreParcelablesAndRepeatInt",
-  "returnsLengthOfFooArray",
-  "newApi",
-};
-static AIBinder_Class* _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz = ::ndk::ICInterface::defineClass(IFooInterface::descriptor, _aidl_android_aidl_versioned_tests_IFooInterface_onTransact, _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_names, 5);
+static AIBinder_Class* get_g_aidl_android_aidl_versioned_tests_IFooInterface_clazz() {
+  static const char* get_g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_names[] = {
+    "originalApi",
+    "acceptUnionAndReturnString",
+    "ignoreParcelablesAndRepeatInt",
+    "returnsLengthOfFooArray",
+    "newApi",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(IFooInterface::descriptor, _aidl_android_aidl_versioned_tests_IFooInterface_onTransact, get_g_aidl_android_aidl_versioned_tests_IFooInterface_clazz_names, 5);
+  return clazz;
+}
 
 BpFooInterface::BpFooInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpFooInterface::~BpFooInterface() {}
@@ -450,7 +453,7 @@ BpFooInterface::~BpFooInterface() {}
 BnFooInterface::BnFooInterface() {}
 BnFooInterface::~BnFooInterface() {}
 ::ndk::SpAIBinder BnFooInterface::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_versioned_tests_IFooInterface_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_versioned_tests_IFooInterface_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -471,7 +474,7 @@ IFooInterface::~IFooInterface() {}
 
 
 std::shared_ptr<IFooInterface> IFooInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_versioned_tests_IFooInterface_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_versioned_tests_IFooInterface_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

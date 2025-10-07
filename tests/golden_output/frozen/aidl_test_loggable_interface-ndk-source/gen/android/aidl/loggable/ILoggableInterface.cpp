@@ -211,10 +211,13 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_onTransact
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_names[] = {
-  "LogThis",
-};
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_loggable_ILoggableInterface_clazz() {
+  static const char* get_g_aidl_android_aidl_loggable_ILoggableInterface_clazz_names[] = {
+    "LogThis",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_onTransact, get_g_aidl_android_aidl_loggable_ILoggableInterface_clazz_names, 1);
+  return clazz;
+}
 
 BpLoggableInterface::BpLoggableInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpLoggableInterface::~BpLoggableInterface() {}
@@ -408,7 +411,7 @@ BnLoggableInterface::BnLoggableInterface() {}
 BnLoggableInterface::~BnLoggableInterface() {}
 std::function<void(const BnLoggableInterface::TransactionLog&)> BnLoggableInterface::logFunc;
 ::ndk::SpAIBinder BnLoggableInterface::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_loggable_ILoggableInterface_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_loggable_ILoggableInterface_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -421,7 +424,7 @@ ILoggableInterface::~ILoggableInterface() {}
 
 
 std::shared_ptr<ILoggableInterface> ILoggableInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_loggable_ILoggableInterface_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_loggable_ILoggableInterface_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -524,10 +527,13 @@ static binder_status_t _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTra
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_names[] = {
-  "Log",
-};
-static AIBinder_Class* _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact, _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz() {
+  static const char* get_g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_names[] = {
+    "Log",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ILoggableInterface::ISub::descriptor, _aidl_android_aidl_loggable_ILoggableInterface_ISub_onTransact, get_g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz_names, 1);
+  return clazz;
+}
 
 ILoggableInterface::BpSub::BpSub(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ILoggableInterface::BpSub::~BpSub() {}
@@ -593,7 +599,7 @@ ILoggableInterface::BnSub::BnSub() {}
 ILoggableInterface::BnSub::~BnSub() {}
 std::function<void(const ILoggableInterface::BnSub::TransactionLog&)> ILoggableInterface::BnSub::logFunc;
 ::ndk::SpAIBinder ILoggableInterface::BnSub::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -606,7 +612,7 @@ ILoggableInterface::ISub::~ISub() {}
 
 
 std::shared_ptr<ILoggableInterface::ISub> ILoggableInterface::ISub::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_loggable_ILoggableInterface_ISub_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

@@ -697,10 +697,10 @@ static string OnTransactFuncName(const AidlInterface& interface) {
   return "_aidl_" + name + "_onTransact";
 }
 
-static string GlobalClassVarName(const AidlInterface& interface) {
+static string GlobalClassVarGetterName(const AidlInterface& interface) {
   string name = interface.GetCanonicalName();
   std::replace(name.begin(), name.end(), '.', '_');
-  return "_g_aidl_" + name + "_clazz";
+  return "get_g_aidl_" + name + "_clazz";
 }
 
 void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
@@ -748,12 +748,15 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
     functionNames = GetFunctionNames(defined_type);
   }
 
+  out << "static AIBinder_Class* " << GlobalClassVarGetterName(defined_type) << "() {\n";
+  out.Indent();
+
   std::string codeToFunction;
   // Function name array is empty, pass nullptr to avoid zero sized symbols
   if (functionNames.size() == 0) {
     codeToFunction = "nullptr";
   } else {
-    codeToFunction = GlobalClassVarName(defined_type) + "_" + kFunctionNames;
+    codeToFunction = GlobalClassVarGetterName(defined_type) + "_" + kFunctionNames;
     out << "static const char* " << codeToFunction << "[] = {\n";
     out.Indent();
     for (const auto& method : functionNames) {
@@ -763,10 +766,12 @@ void GenerateClassSource(CodeWriter& out, const AidlTypenames& types,
     out << "};\n";
   }
 
-  out << "static AIBinder_Class* " << GlobalClassVarName(defined_type)
-      << " = ::ndk::ICInterface::defineClass(" << i_name << "::" << kDescriptor << ", "
-      << on_transact << ", " << codeToFunction << ", " << std::to_string(functionNames.size())
-      << ");\n\n";
+  out << "static AIBinder_Class* clazz" << " = ::ndk::ICInterface::defineClass(" << i_name
+      << "::" << kDescriptor << ", " << on_transact << ", " << codeToFunction << ", "
+      << std::to_string(functionNames.size()) << ");\n";
+  out << "return clazz;\n";
+  out.Dedent();
+  out << "}\n\n";
   if (deprecated) {
     out << "#pragma clang diagnostic pop\n";
   }
@@ -804,8 +809,8 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
   }
   out << "::ndk::SpAIBinder " << q_name << "::createBinder() {\n";
   out.Indent();
-  out << "AIBinder* binder = AIBinder_new(" << GlobalClassVarName(defined_type)
-      << ", static_cast<void*>(this));\n";
+  out << "AIBinder* binder = AIBinder_new(" << GlobalClassVarGetterName(defined_type)
+      << "(), static_cast<void*>(this));\n";
 
   out << "#ifdef BINDER_STABILITY_SUPPORT\n";
   if (defined_type.IsVintfStability()) {
@@ -860,8 +865,8 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out << "std::shared_ptr<" << q_name << "> " << q_name
       << "::fromBinder(const ::ndk::SpAIBinder& binder) {\n";
   out.Indent();
-  out << "if (!AIBinder_associateClass(binder.get(), " << GlobalClassVarName(defined_type)
-      << ")) {\n";
+  out << "if (!AIBinder_associateClass(binder.get(), " << GlobalClassVarGetterName(defined_type)
+      << "())) {\n";
   out.Indent();
   // since NDK users don't use weak symbol support, we don't check builtin available. We could
   // optionally check it if __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__ is defined, but this would

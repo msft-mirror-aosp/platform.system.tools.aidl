@@ -43,10 +43,13 @@ static binder_status_t _aidl_android_aidl_tests_INamedCallback_onTransact(AIBind
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_INamedCallback_clazz_names[] = {
-  "GetName",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_INamedCallback_clazz = ::ndk::ICInterface::defineClass(INamedCallback::descriptor, _aidl_android_aidl_tests_INamedCallback_onTransact, _g_aidl_android_aidl_tests_INamedCallback_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_INamedCallback_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_INamedCallback_clazz_names[] = {
+    "GetName",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(INamedCallback::descriptor, _aidl_android_aidl_tests_INamedCallback_onTransact, get_g_aidl_android_aidl_tests_INamedCallback_clazz_names, 1);
+  return clazz;
+}
 
 BpNamedCallback::BpNamedCallback(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpNamedCallback::~BpNamedCallback() {}
@@ -92,7 +95,7 @@ BpNamedCallback::~BpNamedCallback() {}
 BnNamedCallback::BnNamedCallback() {}
 BnNamedCallback::~BnNamedCallback() {}
 ::ndk::SpAIBinder BnNamedCallback::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_INamedCallback_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_INamedCallback_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -105,7 +108,7 @@ INamedCallback::~INamedCallback() {}
 
 
 std::shared_ptr<INamedCallback> INamedCallback::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_INamedCallback_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_INamedCallback_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
