@@ -671,7 +671,15 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
     const auto& default_value = name_of(first_field->GetType(), typenames) + "(" +
                                 first_field->ValueString(decorator) + ")";
 
+    auto alignment = AlignmentOfDefinedType(decl, typenames);
+
     out << "Tag _tag = " << default_name << ";\n";
+    if (alignment && *alignment > 1) {
+      // Ensure that padding between the tag and payload is always constructed
+      // with zeroes.
+      out << "uint8_t _zero_pad[" << std::to_string(*alignment - 1)
+          << "] __attribute__((unused)) = {};\n";
+    }
     out << "union _value_t {\n";
     out.Indent();
     out << "_value_t() {}\n";
