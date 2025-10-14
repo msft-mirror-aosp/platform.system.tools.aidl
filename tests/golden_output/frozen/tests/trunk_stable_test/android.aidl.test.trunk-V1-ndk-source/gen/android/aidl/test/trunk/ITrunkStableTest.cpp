@@ -238,13 +238,16 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_names[] = {
-  "repeatParcelable",
-  "repeatEnum",
-  "repeatUnion",
-  "callMyCallback",
-};
-static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact, _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_names, 4);
+static AIBinder_Class* get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz() {
+  static const char* get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_names[] = {
+    "repeatParcelable",
+    "repeatEnum",
+    "repeatUnion",
+    "callMyCallback",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact, get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz_names, 4);
+  return clazz;
+}
 
 BpTrunkStableTest::BpTrunkStableTest(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpTrunkStableTest::~BpTrunkStableTest() {}
@@ -610,7 +613,7 @@ BnTrunkStableTest::BnTrunkStableTest() {}
 BnTrunkStableTest::~BnTrunkStableTest() {}
 std::function<void(const BnTrunkStableTest::TransactionLog&)> BnTrunkStableTest::logFunc;
 ::ndk::SpAIBinder BnTrunkStableTest::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -631,7 +634,7 @@ ITrunkStableTest::~ITrunkStableTest() {}
 
 
 std::shared_ptr<ITrunkStableTest> ITrunkStableTest::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -1009,12 +1012,15 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_names[] = {
-  "repeatParcelable",
-  "repeatEnum",
-  "repeatUnion",
-};
-static AIBinder_Class* _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::IMyCallback::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_onTransact, _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_names, 3);
+static AIBinder_Class* get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz() {
+  static const char* get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_names[] = {
+    "repeatParcelable",
+    "repeatEnum",
+    "repeatUnion",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ITrunkStableTest::IMyCallback::descriptor, _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_onTransact, get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz_names, 3);
+  return clazz;
+}
 
 ITrunkStableTest::BpMyCallback::BpMyCallback(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITrunkStableTest::BpMyCallback::~BpMyCallback() {}
@@ -1325,7 +1331,7 @@ ITrunkStableTest::BnMyCallback::BnMyCallback() {}
 ITrunkStableTest::BnMyCallback::~BnMyCallback() {}
 std::function<void(const ITrunkStableTest::BnMyCallback::TransactionLog&)> ITrunkStableTest::BnMyCallback::logFunc;
 ::ndk::SpAIBinder ITrunkStableTest::BnMyCallback::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -1346,7 +1352,7 @@ ITrunkStableTest::IMyCallback::~IMyCallback() {}
 
 
 std::shared_ptr<ITrunkStableTest::IMyCallback> ITrunkStableTest::IMyCallback::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallback_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

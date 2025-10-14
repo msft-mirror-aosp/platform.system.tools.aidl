@@ -61,7 +61,10 @@ static binder_status_t _aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IEmptyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_onTransact, nullptr, 0);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz() {
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IEmptyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_onTransact, nullptr, 0);
+  return clazz;
+}
 
 ListOfInterfaces::BpEmptyInterface::BpEmptyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ListOfInterfaces::BpEmptyInterface::~BpEmptyInterface() {}
@@ -70,7 +73,7 @@ ListOfInterfaces::BpEmptyInterface::~BpEmptyInterface() {}
 ListOfInterfaces::BnEmptyInterface::BnEmptyInterface() {}
 ListOfInterfaces::BnEmptyInterface::~BnEmptyInterface() {}
 ::ndk::SpAIBinder ListOfInterfaces::BnEmptyInterface::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -83,7 +86,7 @@ ListOfInterfaces::IEmptyInterface::~IEmptyInterface() {}
 
 
 std::shared_ptr<ListOfInterfaces::IEmptyInterface> ListOfInterfaces::IEmptyInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_ListOfInterfaces_IEmptyInterface_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -201,10 +204,13 @@ static binder_status_t _aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_on
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz_names[] = {
-  "methodWithInterfaces",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IMyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_onTransact, _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz_names[] = {
+    "methodWithInterfaces",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ListOfInterfaces::IMyInterface::descriptor, _aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_onTransact, get_g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz_names, 1);
+  return clazz;
+}
 
 ListOfInterfaces::BpMyInterface::BpMyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ListOfInterfaces::BpMyInterface::~BpMyInterface() {}
@@ -280,7 +286,7 @@ ListOfInterfaces::BpMyInterface::~BpMyInterface() {}
 ListOfInterfaces::BnMyInterface::BnMyInterface() {}
 ListOfInterfaces::BnMyInterface::~BnMyInterface() {}
 ::ndk::SpAIBinder ListOfInterfaces::BnMyInterface::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -293,7 +299,7 @@ ListOfInterfaces::IMyInterface::~IMyInterface() {}
 
 
 std::shared_ptr<ListOfInterfaces::IMyInterface> ListOfInterfaces::IMyInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_ListOfInterfaces_IMyInterface_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
