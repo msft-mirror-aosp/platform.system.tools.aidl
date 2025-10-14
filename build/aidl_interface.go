@@ -32,6 +32,8 @@ import (
 	"android/soong/rust"
 )
 
+//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+
 const (
 	aidlInterfaceSuffix       = "_interface"
 	aidlMetadataSingletonName = "aidl_metadata_json"
@@ -237,6 +239,7 @@ func isRelativePath(path string) bool {
 		!strings.HasPrefix(path, "../") && !strings.HasPrefix(path, "/")
 }
 
+// @auto-generate: gob
 type AidlInterfaceInfo struct {
 	AidlInterfaceImportsInfo
 	Stability     string
@@ -248,6 +251,7 @@ type AidlInterfaceInfo struct {
 
 var AidlInterfaceInfoProvider = blueprint.NewProvider[AidlInterfaceInfo]()
 
+// @auto-generate: gob
 type AidlInterfaceImportsInfo struct {
 	Name                      string
 	Imports                   map[string][]string

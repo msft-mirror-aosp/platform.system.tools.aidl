@@ -26,6 +26,7 @@ bootstrap_go_package {
     pkgPath: "android/soong/aidl",
     deps: [
         "blueprint",
+        "blueprint-gobtools",
         "blueprint-pathtools",
         "blueprint-proptools",
         "soong",
@@ -41,6 +42,7 @@ bootstrap_go_package {
         "aidl_interface.go",
         "properties.go",
         "aidl_api.go",
+        "aidl_enc.go",
         "aidl_gen_rule.go",
         "aidl_interface_backends.go",
 
