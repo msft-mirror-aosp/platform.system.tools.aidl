@@ -29,6 +29,8 @@ import (
 	"android/soong/android"
 )
 
+//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+
 var (
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{
 		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
@@ -62,6 +64,7 @@ func expectOtherModuleProvider[K any](ctx android.BaseModuleContext, module andr
 	return result
 }
 
+// @auto-generate: gob
 type aidlApiInfo struct {
 	// Name of the module used in the name-update-api phony
 	Name string
