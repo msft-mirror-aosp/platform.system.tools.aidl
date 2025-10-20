@@ -250,28 +250,10 @@ void GenerateClientTransaction(CodeWriter& out, const AidlTypenames& typenames,
             method.IsOneway() ? "" : "&", method.IsOneway() ? "nullptr" : kReplyVarName,
             flags.empty() ? "0" : Join(flags, " | ").c_str());
 
-  // If the method is not implemented in the remote side, try to call the
-  // default implementation, if provided.
-  vector<string> arg_names;
-  for (const auto& a : method.GetArguments()) {
-    if (IsNonCopyableType(a->GetType(), typenames)) {
-      arg_names.emplace_back(StringPrintf("std::move(%s)", a->GetName().c_str()));
-    } else {
-      arg_names.emplace_back(a->GetName());
-    }
-  }
-  if (method.GetType().GetName() != "void") {
-    arg_names.emplace_back(kReturnVarName);
-  }
   if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
     out.Dedent();
     out << "}\n";
   }
-  out.Write("if (%s == ::android::UNKNOWN_TRANSACTION && %s::getDefaultImpl()) [[unlikely]] {\n",
-            kAndroidStatusVarName, i_name.c_str());
-  out.Write("   return %s::getDefaultImpl()->%s(%s);\n", i_name.c_str(), method.GetName().c_str(),
-            Join(arg_names, ", ").c_str());
-  out.Write("}\n");
   GenerateGotoErrorOnBadStatus(out);
 
   if (!method.IsOneway()) {

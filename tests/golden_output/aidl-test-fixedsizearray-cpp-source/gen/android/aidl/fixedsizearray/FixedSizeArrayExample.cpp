@@ -735,9 +735,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_RepeatBytes, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->RepeatBytes(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -777,9 +774,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_RepeatInts, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->RepeatInts(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -819,9 +813,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_RepeatBinders, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->RepeatBinders(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -861,9 +852,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_RepeatParcelables, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->RepeatParcelables(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -903,9 +891,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_Repeat2dBytes, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dBytes(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -945,9 +930,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_Repeat2dInts, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dInts(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -987,9 +969,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_Repeat2dBinders, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dBinders(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -1029,9 +1008,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::an
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(FixedSizeArrayExample::BnRepeatFixedSizeArray::TRANSACTION_Repeat2dParcelables, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) [[unlikely]] {
-     return IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dParcelables(input, repeated, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }

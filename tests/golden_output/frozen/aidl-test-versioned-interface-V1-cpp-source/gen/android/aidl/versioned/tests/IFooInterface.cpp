@@ -42,9 +42,6 @@ BpFooInterface::BpFooInterface(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnFooInterface::TRANSACTION_originalApi, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) [[unlikely]] {
-     return IFooInterface::getDefaultImpl()->originalApi();
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -76,9 +73,6 @@ BpFooInterface::BpFooInterface(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnFooInterface::TRANSACTION_acceptUnionAndReturnString, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) [[unlikely]] {
-     return IFooInterface::getDefaultImpl()->acceptUnionAndReturnString(u, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -122,9 +116,6 @@ BpFooInterface::BpFooInterface(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnFooInterface::TRANSACTION_ignoreParcelablesAndRepeatInt, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) [[unlikely]] {
-     return IFooInterface::getDefaultImpl()->ignoreParcelablesAndRepeatInt(inFoo, inoutFoo, outFoo, value, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -168,9 +159,6 @@ BpFooInterface::BpFooInterface(const ::android::sp<::android::IBinder>& _aidl_im
     goto _aidl_error;
   }
   _aidl_ret_status = remote()->transact(BnFooInterface::TRANSACTION_returnsLengthOfFooArray, _aidl_data, &_aidl_reply, 0);
-  if (_aidl_ret_status == ::android::UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) [[unlikely]] {
-     return IFooInterface::getDefaultImpl()->returnsLengthOfFooArray(foos, _aidl_return);
-  }
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
