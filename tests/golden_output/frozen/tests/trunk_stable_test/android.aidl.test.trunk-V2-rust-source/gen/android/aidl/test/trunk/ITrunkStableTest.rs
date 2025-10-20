@@ -24,6 +24,13 @@ declare_binder_interface! {
       cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
     },
     async: ITrunkStableTestAsync(try_into_local_async),
+    functionNames : [
+      c"repeatParcelable",
+      c"repeatEnum",
+      c"repeatUnion",
+      c"callMyCallback",
+      c"repeatOtherParcelable",
+    ],
   }
 }
 pub trait ITrunkStableTest: binder::Interface + Send {
@@ -698,6 +705,12 @@ pub mod r#IMyCallback {
         cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
       },
       async: IMyCallbackAsync(try_into_local_async),
+      functionNames : [
+        c"repeatParcelable",
+        c"repeatEnum",
+        c"repeatUnion",
+        c"repeatOtherParcelable",
+      ],
     }
   }
   pub trait IMyCallback: binder::Interface + Send {

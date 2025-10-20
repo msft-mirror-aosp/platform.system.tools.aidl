@@ -788,17 +788,20 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_names[] = {
-  "RepeatBytes",
-  "RepeatInts",
-  "RepeatBinders",
-  "RepeatParcelables",
-  "Repeat2dBytes",
-  "Repeat2dInts",
-  "Repeat2dBinders",
-  "Repeat2dParcelables",
-};
-static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IRepeatFixedSizeArray::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_onTransact, _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_names, 8);
+static AIBinder_Class* get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz() {
+  static const char* get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_names[] = {
+    "RepeatBytes",
+    "RepeatInts",
+    "RepeatBinders",
+    "RepeatParcelables",
+    "Repeat2dBytes",
+    "Repeat2dInts",
+    "Repeat2dBinders",
+    "Repeat2dParcelables",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IRepeatFixedSizeArray::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_onTransact, get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz_names, 8);
+  return clazz;
+}
 
 FixedSizeArrayExample::BpRepeatFixedSizeArray::BpRepeatFixedSizeArray(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
@@ -1151,7 +1154,7 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
 FixedSizeArrayExample::BnRepeatFixedSizeArray::BnRepeatFixedSizeArray() {}
 FixedSizeArrayExample::BnRepeatFixedSizeArray::~BnRepeatFixedSizeArray() {}
 ::ndk::SpAIBinder FixedSizeArrayExample::BnRepeatFixedSizeArray::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -1164,7 +1167,7 @@ FixedSizeArrayExample::IRepeatFixedSizeArray::~IRepeatFixedSizeArray() {}
 
 
 std::shared_ptr<FixedSizeArrayExample::IRepeatFixedSizeArray> FixedSizeArrayExample::IRepeatFixedSizeArray::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IRepeatFixedSizeArray_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -1314,7 +1317,10 @@ static binder_status_t _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_I
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IEmptyInterface::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_onTransact, nullptr, 0);
+static AIBinder_Class* get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz() {
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(FixedSizeArrayExample::IEmptyInterface::descriptor, _aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_onTransact, nullptr, 0);
+  return clazz;
+}
 
 FixedSizeArrayExample::BpEmptyInterface::BpEmptyInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 FixedSizeArrayExample::BpEmptyInterface::~BpEmptyInterface() {}
@@ -1323,7 +1329,7 @@ FixedSizeArrayExample::BpEmptyInterface::~BpEmptyInterface() {}
 FixedSizeArrayExample::BnEmptyInterface::BnEmptyInterface() {}
 FixedSizeArrayExample::BnEmptyInterface::~BnEmptyInterface() {}
 ::ndk::SpAIBinder FixedSizeArrayExample::BnEmptyInterface::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -1336,7 +1342,7 @@ FixedSizeArrayExample::IEmptyInterface::~IEmptyInterface() {}
 
 
 std::shared_ptr<FixedSizeArrayExample::IEmptyInterface> FixedSizeArrayExample::IEmptyInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_fixedsizearray_FixedSizeArrayExample_IEmptyInterface_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

@@ -322,6 +322,19 @@ bool ValidateAnnotationContext(const AidlDocument& doc) {
         }
       }
     }
+    void CheckTypeParameters(
+        const AidlParameterizable<std::unique_ptr<AidlTypeParam>>& type_params) {
+      if (!type_params.IsGeneric()) {
+        return;
+      }
+      for (const auto& param : type_params.GetTypeParameters()) {
+        for (const auto& annotation : param->GetAnnotations()) {
+          if (!annotation->CheckContext(AidlAnnotation::CONTEXT_TYPE_PARAM)) {
+            success = false;
+          }
+        }
+      }
+    }
     void Visit(const AidlInterface& m) override {
       Check(m, AidlAnnotation::CONTEXT_TYPE_INTERFACE);
     }
@@ -330,11 +343,15 @@ bool ValidateAnnotationContext(const AidlDocument& doc) {
     }
     void Visit(const AidlStructuredParcelable& m) override {
       Check(m, AidlAnnotation::CONTEXT_TYPE_STRUCTURED_PARCELABLE);
+      CheckTypeParameters(m);
     }
     void Visit(const AidlEnumDeclaration& m) override {
       Check(m, AidlAnnotation::CONTEXT_TYPE_ENUM);
     }
-    void Visit(const AidlUnionDecl& m) override { Check(m, AidlAnnotation::CONTEXT_TYPE_UNION); }
+    void Visit(const AidlUnionDecl& m) override {
+      Check(m, AidlAnnotation::CONTEXT_TYPE_UNION);
+      CheckTypeParameters(m);
+    }
     void Visit(const AidlMethod& m) override {
       Check(m.GetType(), AidlAnnotation::CONTEXT_TYPE_SPECIFIER | AidlAnnotation::CONTEXT_METHOD);
       for (const auto& arg : m.GetArguments()) {

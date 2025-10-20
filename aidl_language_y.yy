@@ -90,7 +90,8 @@ AidlLocation loc(const yy::parser::location_type& l) {
     std::vector<std::unique_ptr<AidlMember>>* members;
     AidlDefinedType* declaration;
     std::vector<std::unique_ptr<AidlTypeSpecifier>>* type_args;
-    std::vector<std::string>* type_params;
+    AidlTypeParam* type_parameter;
+    std::vector<std::unique_ptr<AidlTypeParam>>* type_parameter_list;
     std::vector<std::unique_ptr<AidlDefinedType>>* declarations;
     AidlUnstructuredHeaders* unstructured_headers;
 }
@@ -156,7 +157,7 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<declaration> union_decl
 %type<members> parcelable_members interface_members
 %type<variable> variable_decl
-%type<type_params> optional_type_params
+%type<type_parameter_list> optional_type_params
 %type<method> method_decl
 %type<constant> constant_decl
 %type<enumerator> enumerator
@@ -172,7 +173,8 @@ AidlLocation loc(const yy::parser::location_type& l) {
 %type<arg> arg
 %type<direction> direction
 %type<type_args> type_args
-%type<type_params> type_params
+%type<type_parameter> type_parameter
+%type<type_parameter_list> type_parameter_list
 %type<const_expr> const_expr
 %type<constant_value_list> constant_value_list
 %type<constant_value_list> constant_value_non_empty_list
@@ -289,23 +291,27 @@ unannotated_decl
  | union_decl
  ;
 
-type_params
- : identifier {
-    $$ = new std::vector<std::string>();
-    $$->emplace_back($1->GetText());
-    delete $1;
+type_parameter
+    : annotation_list identifier
+        { $$ = new AidlTypeParam(loc(@2), $2->GetText(), std::move(*$1)); delete $1; delete $2; }
+
+type_parameter_list
+ : type_parameter {
+    $$ = new std::vector<std::unique_ptr<AidlTypeParam>>();
+    $$->emplace_back($1);
   }
- | type_params ',' identifier {
-    $1->emplace_back($3->GetText());
+ | type_parameter_list ',' type_parameter {
+    $1->emplace_back($3);
     $$ = $1;
-    delete $3;
-  };
+  }
+;
 
 optional_type_params
  : /* none */ { $$ = nullptr; }
- | '<' type_params '>' {
-   $$ = $2;
- };
+ | '<' type_parameter_list '>' {
+     $$ = $2;
+   }
+ ;
 
 optional_unstructured_headers
  : /* none */ { $$ = new AidlUnstructuredHeaders; }

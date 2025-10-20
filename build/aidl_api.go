@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -27,6 +28,8 @@ import (
 	"android/soong/aidl_library"
 	"android/soong/android"
 )
+
+//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
 
 var (
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{
@@ -61,7 +64,11 @@ func expectOtherModuleProvider[K any](ctx android.BaseModuleContext, module andr
 	return result
 }
 
+// @auto-generate: gob
 type aidlApiInfo struct {
+	// Name of the module used in the name-update-api phony
+	Name string
+
 	// If unstable is true, there will be no exported api for this aidl interface.
 	// All other fields of this provider will be nil, and none of the api build rules will be
 	// generated.
@@ -73,8 +80,13 @@ type aidlApiInfo struct {
 	// for triggering check that files have not been modified
 	CheckHashTimestamps android.Paths
 
-	// for triggering freezing API as the new version
-	FreezeApiTimestamp android.Path
+	// Shell script that will update the API when run. Run by soong_ui to keep the source tree
+	// read-only during the build.
+	UpdateApiScript android.Path
+
+	// Shell script that will freeze the API as the new version. Run by soong_ui to keep the source
+	// tree read-only during the build.
+	FreezeApiScript android.Path
 
 	// for checking for active development on unfrozen version
 	HasDevelopment android.Path
@@ -210,13 +222,20 @@ func (m *aidlInterface) migrateAndAppendVersion(
 					Text("-parameter versions_with_info -add-literal '").
 					Text(fmt.Sprintf(`{version: "%s", imports: [`, v))
 
+				transitiveFreezeFile := android.PathForOutput(ctx, "aidl_transitive_freeze_apis.txt")
+
 				for _, im := range m.getImportsForVersion(v) {
 					moduleName, version := parseModuleWithVersion(im)
 
 					// Invoke an imported interface's freeze-api only if it depends on ToT version explicitly or implicitly.
 					if version == importIfaces[moduleName].NextVersion || !hasVersionSuffix(im) {
 						rb.Command().Text(fmt.Sprintf(`echo "Call %s-freeze-api because %s depends on %s."`, moduleName, m.ModuleBase.Name(), moduleName))
-						rbc.Implicit(importApis[moduleName].FreezeApiTimestamp)
+						// Write the desired freeze script to aidl_transitive_freeze_apis.txt so
+						// that soong_ui will run it as well. We can't run it directly here because
+						// the same module may be a transitive dep of multiple other modules, and
+						// the freeze scripts don't work correctly if run multiple times.
+						rb.Command().Text(fmt.Sprintf(`echo "%s" >> %s`, importApis[moduleName].FreezeApiScript, transitiveFreezeFile))
+						rb.Command().Implicit(importApis[moduleName].FreezeApiScript)
 					}
 					if hasVersionSuffix(im) {
 						rbc.Text(fmt.Sprintf(`"%s",`, im))
@@ -278,9 +297,7 @@ func (m *aidlInterface) makeApiDumpAsVersion(
 	targetDir := filepath.Join(moduleDir, m.apiDir(), version)
 	rb := android.NewRuleBuilder(pctx, ctx)
 	transitive := ctx.Config().IsEnvTrue("AIDL_TRANSITIVE_FREEZE")
-	var actionWord string
 	if creatingNewVersion {
-		actionWord = "Making"
 		// We are asked to create a new version. But before doing that, check if the given
 		// dump is the same as the latest version. If so, don't create a new version,
 		// otherwise we will be unnecessarily creating many versions.
@@ -297,7 +314,6 @@ func (m *aidlInterface) makeApiDumpAsVersion(
 		})
 		m.migrateAndAppendVersion(ctx, hasDevelopment, rb, &version, transitive)
 	} else {
-		actionWord = "Updating"
 		if !m.isExplicitlyUnFrozen() {
 			rb.Command().BuiltTool("bpmodify").
 				Text("-w -m " + m.ModuleBase.Name()).
@@ -311,13 +327,23 @@ func (m *aidlInterface) makeApiDumpAsVersion(
 		m.migrateAndAppendVersion(ctx, hasDevelopment, rb, nil, false)
 	}
 
-	timestampFile := android.PathForModuleOut(ctx, "update_or_freeze_api_"+version+".timestamp")
-	rb.SetPhonyOutput()
-	// explicitly don't touch timestamp, so that the command can be run repeatedly
-	rb.Command().Text("true").ImplicitOutput(timestampFile)
+	// This rulebuilder would modify the source tree. Because we want the source tree to be
+	// read-only during the build, instead write it out to a file. soong_ui will run this script
+	// after the build completes.
+	var script strings.Builder
+	script.WriteString("#!/usr/bin/env bash\nset -euo pipefail\n\n")
+	for _, c := range rb.Commands() {
+		script.WriteString(c)
+		script.WriteString("\n")
+	}
 
-	rb.Build("dump_aidl_api_"+m.ModuleBase.Name()+"_"+version, actionWord+" AIDL API dump version "+version+" for "+m.ModuleBase.Name()+" (see "+targetDir+")")
-	return timestampFile
+	// Make sure to build the deps so they're available when soong_ui runs the script
+	scriptDeps := slices.Concat(rb.Tools(), rb.Inputs())
+
+	scriptFile := android.PathForModuleOut(ctx, "update_or_freeze_api_"+version+".sh")
+	android.WriteExecutableFileRuleVerbatim(ctx, scriptFile, script.String(), scriptDeps...)
+
+	return scriptFile
 }
 
 type deps struct {
@@ -639,13 +665,11 @@ func (m *aidlInterface) generateApiBuildActions(ctx android.ModuleContext) {
 	hasDevelopment := m.checkForDevelopment(ctx, latestVersionDump, totApiDump)
 
 	// API dump from source is updated to the 'current' version. Triggered by `m <name>-update-api`
-	updateApiTimestamp := m.makeApiDumpAsVersion(ctx, hasDevelopment, totApiDump, currentVersion)
-	ctx.Phony(m.ModuleBase.Name()+"-update-api", updateApiTimestamp)
+	updateApiScript := m.makeApiDumpAsVersion(ctx, hasDevelopment, totApiDump, currentVersion)
 
 	// API dump from source is frozen as the next stable version. Triggered by `m <name>-freeze-api`
 	nextVersion := m.nextVersion()
-	freezeApiTimestamp := m.makeApiDumpAsVersion(ctx, hasDevelopment, totApiDump, nextVersion)
-	ctx.Phony(m.ModuleBase.Name()+"-freeze-api", freezeApiTimestamp)
+	freezeApiScript := m.makeApiDumpAsVersion(ctx, hasDevelopment, totApiDump, nextVersion)
 
 	nextApiDir := filepath.Join(ctx.ModuleDir(), m.apiDir(), nextVersion)
 	if android.ExistentPathForSource(ctx, nextApiDir).Valid() {
@@ -653,10 +677,12 @@ func (m *aidlInterface) generateApiBuildActions(ctx android.ModuleContext) {
 	}
 
 	android.SetProvider(ctx, aidlApiProvider, aidlApiInfo{
+		Name:                m.ModuleBase.Name(),
 		Unstable:            false,
 		CheckApiTimestamps:  checkApiTimestamps,
 		CheckHashTimestamps: checkHashTimestamps,
-		FreezeApiTimestamp:  freezeApiTimestamp,
+		UpdateApiScript:     updateApiScript,
+		FreezeApiScript:     freezeApiScript,
 		HasDevelopment:      hasDevelopment,
 	})
 }
@@ -681,6 +707,11 @@ func freezeApiSingletonFactory() android.Singleton {
 type freezeApiSingleton struct{}
 
 func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) {
+	var updateApiFileBuilder strings.Builder
+	// The aidl_update_api.txt file is read by soong_ui to know which update/freeze scripts to run.
+	// soong_ui runs those scripts because they modify the source tree, and the source tree should
+	// be read-only during the build.
+	updateApiFile := android.PathForOutput(ctx, "aidl_update_api.txt")
 	ownersToFreeze := strings.Fields(ctx.Config().Getenv("AIDL_FREEZE_OWNERS"))
 	var files android.Paths
 	ctx.VisitAllModuleProxies(func(module android.ModuleProxy) {
@@ -699,9 +730,28 @@ func (f *freezeApiSingleton) GenerateBuildActions(ctx android.SingletonContext) 
 				shouldBeFrozen = commonInfo.Owner == ""
 			}
 			if shouldBeFrozen {
-				files = append(files, apiInfo.FreezeApiTimestamp)
+				files = append(files, apiInfo.FreezeApiScript)
 			}
+
+			updateApiFileBuilder.WriteString(apiInfo.Name)
+			updateApiFileBuilder.WriteString("\n")
+			if shouldBeFrozen {
+				updateApiFileBuilder.WriteString("true\n")
+			} else {
+				updateApiFileBuilder.WriteString("false\n")
+			}
+			updateApiFileBuilder.WriteString(apiInfo.UpdateApiScript.String())
+			updateApiFileBuilder.WriteString("\n")
+			updateApiFileBuilder.WriteString(apiInfo.FreezeApiScript.String())
+			updateApiFileBuilder.WriteString("\n")
+
+			ctx.Phony(apiInfo.Name+"-update-api", apiInfo.UpdateApiScript, updateApiFile)
+			ctx.Phony(apiInfo.Name+"-freeze-api", apiInfo.FreezeApiScript, updateApiFile)
 		}
 	})
+
 	ctx.Phony("aidl-freeze-api", files...)
+	ctx.Phony("aidl-freeze-api", updateApiFile)
+
+	android.WriteFileRuleVerbatim(ctx, updateApiFile, updateApiFileBuilder.String())
 }

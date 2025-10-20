@@ -138,7 +138,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        {{"heap", kBooleanType}}},
       {AidlAnnotation::Type::UTF8_IN_CPP, "utf8InCpp", CONTEXT_TYPE_SPECIFIER, {}},
       {AidlAnnotation::Type::SENSITIVE_DATA, "SensitiveData", CONTEXT_TYPE_INTERFACE, {}},
-      {AidlAnnotation::Type::VINTF_STABILITY, "VintfStability", CONTEXT_TYPE, {}},
+      {AidlAnnotation::Type::VINTF_STABILITY,
+       "VintfStability",
+       CONTEXT_TYPE | CONTEXT_TYPE_PARAM,
+       {}},
       {AidlAnnotation::Type::UNSUPPORTED_APP_USAGE,
        "UnsupportedAppUsage",
        CONTEXT_TYPE | CONTEXT_MEMBER,
@@ -185,7 +188,7 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        {{"value", kStringArrayType, /* required= */ true}}},
       {AidlAnnotation::Type::FIXED_SIZE,
        "FixedSize",
-       CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION,
+       CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION | CONTEXT_TYPE_PARAM,
        {}},
       {AidlAnnotation::Type::DESCRIPTOR,
        "Descriptor",
@@ -374,6 +377,7 @@ bool AidlAnnotation::CheckContext(TargetContext context) const {
       {CONTEXT_FIELD, "field"},
       {CONTEXT_METHOD, "method"},
       {CONTEXT_TYPE_SPECIFIER, "type"},
+      {CONTEXT_TYPE_PARAM, "type parameter"},
   };
   vector<string> available;
   for (const auto& [context, name] : context_name_map) {
@@ -384,6 +388,23 @@ bool AidlAnnotation::CheckContext(TargetContext context) const {
   AIDL_ERROR(this) << "@" << GetName()
                    << " is not available. It can only annotate: " << Join(available, ", ") << ".";
   return false;
+}
+
+std::string AidlTypeParam::ToString() const {
+  string ret = GetName();
+  string annotations = AidlAnnotatable::ToString();
+  if (!annotations.empty()) {
+    ret = annotations + " " + ret;
+  }
+  return ret;
+}
+
+void AidlTypeParam::TraverseChildren(std::function<void(const AidlNode&)> traverse) const {
+  AidlAnnotatable::TraverseChildren(traverse);
+}
+
+void AidlTypeParam::DispatchVisit(AidlVisitor& v) const {
+  v.Visit(*this);
 }
 
 std::map<std::string, std::string> AidlAnnotation::AnnotationParams(
@@ -787,11 +808,42 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
         }
       }
     } else if (is_user_defined_generic_type) {
-      const size_t allowed = parameterizable->GetTypeParameters().size();
-      if (num_params != allowed) {
-        AIDL_ERROR(this) << type_name << " must have " << allowed << " type parameters, but got "
-                         << num_params;
+      const auto& type_params = parameterizable->GetTypeParameters();
+      if (num_params != type_params.size()) {
+        AIDL_ERROR(this) << type_name << " must have " << type_params.size()
+                         << " type parameters, but got " << num_params;
         return false;
+      }
+      const auto& type_args = GetTypeParameters();
+
+      for (size_t i = 0; i < type_params.size(); ++i) {
+        const auto& type_param = type_params[i];
+        const auto& type_arg = type_args[i];
+
+        for (const auto& required_annotation : type_param->GetAnnotations()) {
+          bool satisfied = false;
+
+          switch (required_annotation->GetType()) {
+            case AidlAnnotation::Type::FIXED_SIZE:
+              satisfied = typenames.CanBeFixedSize(*type_arg);
+              break;
+            case AidlAnnotation::Type::VINTF_STABILITY:
+              satisfied = (type_arg->GetDefinedType() != nullptr &&
+                           type_arg->GetDefinedType()->IsVintfStability());
+              break;
+            default:
+              // An unknown requirement can't be satisfied.
+              satisfied = false;
+              break;
+          }
+
+          if (!satisfied) {
+            AIDL_ERROR(type_arg) << "Type '" << type_arg->GetName() << "' used as type parameter '"
+                                 << type_param->GetName() << "' must be annotated with @"
+                                 << required_annotation->GetName() << ".";
+            return false;
+          }
+        }
       }
     } else {
       AIDL_ERROR(this) << type_name << " is not a generic type.";
@@ -1447,10 +1499,10 @@ const AidlDocument& AidlDefinedType::GetDocument() const {
 AidlParcelable::AidlParcelable(const AidlLocation& location, const std::string& name,
                                const std::string& package, const Comments& comments,
                                const AidlUnstructuredHeaders& headers,
-                               std::vector<std::string>* type_params,
+                               std::vector<std::unique_ptr<AidlTypeParam>>* type_params,
                                std::vector<std::unique_ptr<AidlMember>>* members)
     : AidlDefinedType(location, name, comments, package, members),
-      AidlParameterizable<std::string>(type_params),
+      AidlParameterizable<std::unique_ptr<AidlTypeParam>>(type_params),
       headers_(headers) {
   // Strip off quotation marks if we actually have headers.
   if (headers_.cpp.length() >= 2) {
@@ -1482,11 +1534,27 @@ bool AidlParameterizable<std::string>::CheckValid() const {
   return true;
 }
 
+template <>
+bool AidlParameterizable<std::unique_ptr<AidlTypeParam>>::CheckValid() const {
+  if (!IsGeneric()) {
+    return true;
+  }
+  std::unordered_set<std::string> names;
+  for (const auto& param : GetTypeParameters()) {
+    if (names.count(param->GetName()) > 0) {
+      AIDL_ERROR(param) << "Type parameter '" << param->GetName() << "' is repeated.";
+      return false;
+    }
+    names.insert(param->GetName());
+  }
+  return true;
+}
+
 bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
   if (!AidlDefinedType::CheckValid(typenames)) {
     return false;
   }
-  if (!AidlParameterizable<std::string>::CheckValid()) {
+  if (!AidlParameterizable<std::unique_ptr<AidlTypeParam>>::CheckValid()) {
     return false;
   }
 
@@ -1506,7 +1574,7 @@ bool AidlParcelable::CheckValid(const AidlTypenames& typenames) const {
 
 AidlStructuredParcelable::AidlStructuredParcelable(
     const AidlLocation& location, const std::string& name, const std::string& package,
-    const Comments& comments, std::vector<std::string>* type_params,
+    const Comments& comments, std::vector<std::unique_ptr<AidlTypeParam>>* type_params,
     std::vector<std::unique_ptr<AidlMember>>* members)
     : AidlParcelable(location, name, package, comments, {} /*headers*/, type_params, members) {}
 
@@ -1666,7 +1734,7 @@ bool AidlEnumDeclaration::CheckValid(const AidlTypenames& typenames) const {
 
 AidlUnionDecl::AidlUnionDecl(const AidlLocation& location, const std::string& name,
                              const std::string& package, const Comments& comments,
-                             std::vector<std::string>* type_params,
+                             std::vector<std::unique_ptr<AidlTypeParam>>* type_params,
                              std::vector<std::unique_ptr<AidlMember>>* members)
     : AidlParcelable(location, name, package, comments, {} /*headers*/, type_params, members) {}
 

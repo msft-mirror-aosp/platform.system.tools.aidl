@@ -643,6 +643,13 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   auto client_name = ClassName(*iface, cpp::ClassNames::CLIENT);
   auto server_name = ClassName(*iface, cpp::ClassNames::SERVER);
   *code_writer << "use binder::declare_binder_interface;\n";
+
+  // Generate function names array which will be used to convert the transaction to function names
+  vector<std::string> functionNames;
+  if (options.GenTraces()) {
+    functionNames = GetFunctionNames(*iface);
+  }
+
   *code_writer << "declare_binder_interface! {\n";
   code_writer->Indent();
   *code_writer << trait_name << "[\"" << iface->GetDescriptor() << "\"] {\n";
@@ -668,6 +675,18 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   if (iface->IsVintfStability()) {
     *code_writer << "stability: binder::binder_impl::Stability::Vintf,\n";
   }
+
+  // declare_binder_interface can select a variant based on the parameters provided
+  if (!functionNames.empty()) {
+    *code_writer << "functionNames : [\n";
+    code_writer->Indent();
+    for (const auto& method : functionNames) {
+      *code_writer << "c\"" << method << "\",\n";
+    }
+    code_writer->Dedent();
+    *code_writer << "],\n";
+  }
+
   code_writer->Dedent();
   *code_writer << "}\n";
   code_writer->Dedent();
@@ -1019,26 +1038,34 @@ std::set<std::string> FreeParams(const AidlStructuredParcelable* parcel) {
   if (!parcel->IsGeneric()) {
     return std::set<std::string>();
   }
-  auto typeParams = parcel->GetTypeParameters();
-  std::set<std::string> unusedParams(typeParams.begin(), typeParams.end());
+  const auto& typeParams = parcel->GetTypeParameters();
+  std::set<std::string> unusedParams;
+  for (const auto& param : typeParams) {
+    unusedParams.insert(param->GetName());
+  }
   for (const auto& variable : parcel->GetFields()) {
     RemoveUsed(&unusedParams, variable->GetType());
   }
   return unusedParams;
 }
 
-void WriteParams(CodeWriter& out, const AidlParameterizable<std::string>* parcel,
+void WriteParams(CodeWriter& out, const AidlParameterizable<std::unique_ptr<AidlTypeParam>>* parcel,
                  std::string extra) {
-  if (parcel->IsGeneric()) {
-    out << "<";
-    for (const auto& param : parcel->GetTypeParameters()) {
-      out << param << extra << ",";
-    }
-    out << ">";
+  AIDL_FATAL_IF(!parcel, AIDL_LOCATION_HERE) << "parcel must not be null";
+  if (!parcel->IsGeneric()) {
+    return;
   }
+  out << "<";
+  std::vector<std::string> params;
+  for (const auto& param : parcel->GetTypeParameters()) {
+    params.push_back(param->GetName() + extra);
+  }
+  out << Join(params, ", ");
+  out << ">";
 }
 
-void WriteParams(CodeWriter& out, const AidlParameterizable<std::string>* parcel) {
+void WriteParams(CodeWriter& out,
+                 const AidlParameterizable<std::unique_ptr<AidlTypeParam>>* parcel) {
   WriteParams(out, parcel, "");
 }
 
@@ -1278,6 +1305,23 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
   out.Dedent();
   out << "}\n";
   if (parcel->IsFixedSize()) {
+    out << "impl";
+    WriteParams(out, parcel);
+    out << " r#" << parcel->GetName();
+    WriteParams(out, parcel);
+    out << " {\n";
+    out.Indent();
+    out << "#[inline(always)]\n";
+    out << "pub const fn tag(&self) -> Tag::Tag {\n";
+    out.Indent();
+    out << "// SAFETY: The first byte of a union is the tag.\n";
+    out << "// All bitpatterns are valid for `Tag`.\n";
+    out << "unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }\n";
+    out.Dedent();
+    out << "}\n";
+    out.Dedent();
+    out << "}\n";
+
     for (const auto& variable : parcel->GetFields()) {
       const auto& var_type = variable->GetType();
       std::string rust_type = RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD,
@@ -1287,6 +1331,13 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
       AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
       out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << rust_type << ">(), "
           << std::to_string(*variable_size) << ");\n";
+    }
+    for (const auto& variable : parcel->GetFields()) {
+      // Assert that the tag is the right tag.
+      out << "static_assertions::const_assert_eq!(" << parcel->GetName()
+          << "::" << variable->GetCapitalizedName()
+          << "(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#"
+          << variable->GetName() << ".get());\n";
     }
     // Assert the alignment of the enum
     AIDL_FATAL_IF(alignment == std::nullopt, *parcel);

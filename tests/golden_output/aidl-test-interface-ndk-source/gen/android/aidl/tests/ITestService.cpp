@@ -1415,80 +1415,83 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_clazz_names[] = {
-  "UnimplementedMethod",
-  "Deprecated",
-  "TestOneway",
-  "RepeatBoolean",
-  "RepeatByte",
-  "RepeatChar",
-  "RepeatInt",
-  "RepeatLong",
-  "RepeatFloat",
-  "RepeatDouble",
-  "RepeatString",
-  "RepeatByteEnum",
-  "RepeatIntEnum",
-  "RepeatLongEnum",
-  "ReverseBoolean",
-  "ReverseByte",
-  "ReverseChar",
-  "ReverseInt",
-  "ReverseLong",
-  "ReverseFloat",
-  "ReverseDouble",
-  "ReverseString",
-  "ReverseByteEnum",
-  "ReverseIntEnum",
-  "ReverseLongEnum",
-  "GetOtherTestService",
-  "SetOtherTestService",
-  "VerifyName",
-  "GetInterfaceArray",
-  "VerifyNamesWithInterfaceArray",
-  "GetNullableInterfaceArray",
-  "VerifyNamesWithNullableInterfaceArray",
-  "GetInterfaceList",
-  "VerifyNamesWithInterfaceList",
-  "ReverseStringList",
-  "RepeatParcelFileDescriptor",
-  "ReverseParcelFileDescriptorArray",
-  "ThrowServiceException",
-  "RepeatNullableIntArray",
-  "RepeatNullableByteEnumArray",
-  "RepeatNullableIntEnumArray",
-  "RepeatNullableLongEnumArray",
-  "RepeatNullableString",
-  "RepeatNullableStringList",
-  "RepeatNullableParcelable",
-  "RepeatNullableParcelableArray",
-  "RepeatNullableParcelableList",
-  "TakesAnIBinder",
-  "TakesANullableIBinder",
-  "TakesAnIBinderList",
-  "TakesANullableIBinderList",
-  "RepeatUtf8CppString",
-  "RepeatNullableUtf8CppString",
-  "ReverseUtf8CppString",
-  "ReverseNullableUtf8CppString",
-  "ReverseUtf8CppStringList",
-  "GetCallback",
-  "FillOutStructuredParcelable",
-  "RepeatExtendableParcelable",
-  "RepeatExtendableParcelableVintf",
-  "ReverseList",
-  "ReverseIBinderArray",
-  "ReverseNullableIBinderArray",
-  "RepeatSimpleParcelable",
-  "ReverseSimpleParcelables",
-  "GetOldNameInterface",
-  "GetNewNameInterface",
-  "GetUnionTags",
-  "GetCppJavaTests",
-  "getBackendType",
-  "GetCircular",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_clazz = ::ndk::ICInterface::defineClass(ITestService::descriptor, _aidl_android_aidl_tests_ITestService_onTransact, _g_aidl_android_aidl_tests_ITestService_clazz_names, 71);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_ITestService_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_ITestService_clazz_names[] = {
+    "UnimplementedMethod",
+    "Deprecated",
+    "TestOneway",
+    "RepeatBoolean",
+    "RepeatByte",
+    "RepeatChar",
+    "RepeatInt",
+    "RepeatLong",
+    "RepeatFloat",
+    "RepeatDouble",
+    "RepeatString",
+    "RepeatByteEnum",
+    "RepeatIntEnum",
+    "RepeatLongEnum",
+    "ReverseBoolean",
+    "ReverseByte",
+    "ReverseChar",
+    "ReverseInt",
+    "ReverseLong",
+    "ReverseFloat",
+    "ReverseDouble",
+    "ReverseString",
+    "ReverseByteEnum",
+    "ReverseIntEnum",
+    "ReverseLongEnum",
+    "GetOtherTestService",
+    "SetOtherTestService",
+    "VerifyName",
+    "GetInterfaceArray",
+    "VerifyNamesWithInterfaceArray",
+    "GetNullableInterfaceArray",
+    "VerifyNamesWithNullableInterfaceArray",
+    "GetInterfaceList",
+    "VerifyNamesWithInterfaceList",
+    "ReverseStringList",
+    "RepeatParcelFileDescriptor",
+    "ReverseParcelFileDescriptorArray",
+    "ThrowServiceException",
+    "RepeatNullableIntArray",
+    "RepeatNullableByteEnumArray",
+    "RepeatNullableIntEnumArray",
+    "RepeatNullableLongEnumArray",
+    "RepeatNullableString",
+    "RepeatNullableStringList",
+    "RepeatNullableParcelable",
+    "RepeatNullableParcelableArray",
+    "RepeatNullableParcelableList",
+    "TakesAnIBinder",
+    "TakesANullableIBinder",
+    "TakesAnIBinderList",
+    "TakesANullableIBinderList",
+    "RepeatUtf8CppString",
+    "RepeatNullableUtf8CppString",
+    "ReverseUtf8CppString",
+    "ReverseNullableUtf8CppString",
+    "ReverseUtf8CppStringList",
+    "GetCallback",
+    "FillOutStructuredParcelable",
+    "RepeatExtendableParcelable",
+    "RepeatExtendableParcelableVintf",
+    "ReverseList",
+    "ReverseIBinderArray",
+    "ReverseNullableIBinderArray",
+    "RepeatSimpleParcelable",
+    "ReverseSimpleParcelables",
+    "GetOldNameInterface",
+    "GetNewNameInterface",
+    "GetUnionTags",
+    "GetCppJavaTests",
+    "getBackendType",
+    "GetCircular",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ITestService::descriptor, _aidl_android_aidl_tests_ITestService_onTransact, get_g_aidl_android_aidl_tests_ITestService_clazz_names, 71);
+  return clazz;
+}
 
 #pragma clang diagnostic pop
 BpTestService::BpTestService(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
@@ -4492,7 +4495,7 @@ BpTestService::~BpTestService() {}
 BnTestService::BnTestService() {}
 BnTestService::~BnTestService() {}
 ::ndk::SpAIBinder BnTestService::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_ITestService_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -4508,7 +4511,7 @@ const char* ITestService::STRING_CONSTANT2 = "bar";
 const char* ITestService::STRING_CONSTANT_UTF8 = "baz";
 
 std::shared_ptr<ITestService> ITestService::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_ITestService_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -5178,7 +5181,10 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::IFoo::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact, nullptr, 0);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz() {
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::IFoo::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_onTransact, nullptr, 0);
+  return clazz;
+}
 
 ITestService::CompilerChecks::BpFoo::BpFoo(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITestService::CompilerChecks::BpFoo::~BpFoo() {}
@@ -5187,7 +5193,7 @@ ITestService::CompilerChecks::BpFoo::~BpFoo() {}
 ITestService::CompilerChecks::BnFoo::BnFoo() {}
 ITestService::CompilerChecks::BnFoo::~BnFoo() {}
 ::ndk::SpAIBinder ITestService::CompilerChecks::BnFoo::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -5200,7 +5206,7 @@ ITestService::CompilerChecks::IFoo::~IFoo() {}
 
 
 std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks::IFoo::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_Foo_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -5372,10 +5378,13 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPr
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz_names[] = {
-  "foo",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_onTransact, _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz_names[] = {
+    "foo",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_onTransact, get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz_names, 1);
+  return clazz;
+}
 
 ITestService::CompilerChecks::BpNoPrefixInterface::BpNoPrefixInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITestService::CompilerChecks::BpNoPrefixInterface::~BpNoPrefixInterface() {}
@@ -5418,7 +5427,7 @@ ITestService::CompilerChecks::BpNoPrefixInterface::~BpNoPrefixInterface() {}
 ITestService::CompilerChecks::BnNoPrefixInterface::BnNoPrefixInterface() {}
 ITestService::CompilerChecks::BnNoPrefixInterface::~BnNoPrefixInterface() {}
 ::ndk::SpAIBinder ITestService::CompilerChecks::BnNoPrefixInterface::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -5431,7 +5440,7 @@ ITestService::CompilerChecks::INoPrefixInterface::~INoPrefixInterface() {}
 
 
 std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -5547,10 +5556,13 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPr
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz_names[] = {
-  "foo",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_onTransact, _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz_names[] = {
+    "foo",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::descriptor, _aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_onTransact, get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz_names, 1);
+  return clazz;
+}
 
 ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::BpNestedNoPrefixInterface(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::~BpNestedNoPrefixInterface() {}
@@ -5593,7 +5605,7 @@ ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::~Bp
 ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::BnNestedNoPrefixInterface() {}
 ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::~BnNestedNoPrefixInterface() {}
 ::ndk::SpAIBinder ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -5606,7 +5618,7 @@ ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::~INe
 
 
 std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_ITestService_CompilerChecks_NoPrefixInterface_NestedNoPrefixInterface_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

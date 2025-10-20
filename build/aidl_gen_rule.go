@@ -27,6 +27,8 @@ import (
 	"android/soong/genrule"
 )
 
+//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+
 var (
 	aidlDirPrepareRule = pctx.StaticRule("aidlDirPrepareRule", blueprint.RuleParams{
 		Command:     `mkdir -p "${outDir}" && touch ${out} # ${in}`,
@@ -78,6 +80,7 @@ var (
 	})
 )
 
+// @auto-generate: gob
 type AidlGenruleInfo struct {
 	BaseName string
 	HashFile android.Path

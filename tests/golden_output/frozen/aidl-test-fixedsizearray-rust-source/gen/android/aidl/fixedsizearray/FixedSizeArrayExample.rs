@@ -379,6 +379,16 @@ pub mod r#IRepeatFixedSizeArray {
       proxy: BpRepeatFixedSizeArray {
       },
       async: IRepeatFixedSizeArrayAsync(try_into_local_async),
+      functionNames : [
+        c"RepeatBytes",
+        c"RepeatInts",
+        c"RepeatBinders",
+        c"RepeatParcelables",
+        c"Repeat2dBytes",
+        c"Repeat2dInts",
+        c"Repeat2dBinders",
+        c"Repeat2dParcelables",
+      ],
     }
   }
   pub trait IRepeatFixedSizeArray: binder::Interface + Send {

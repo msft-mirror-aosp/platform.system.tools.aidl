@@ -114,6 +114,18 @@ BpNestedService::BpNestedService(const ::android::sp<::android::IBinder>& _aidl_
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
+static const char* INestedService_names[] = {
+  "flipStatus",
+  "flipStatusWithCallback",
+};
+
+alignas(16) static const ::android::TransactionCodeData INestedService_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
+  .names = INestedService_names,
+  .count = 2,
+};
+
 namespace android {
 namespace aidl {
 namespace tests {
@@ -122,6 +134,7 @@ namespace nested {
 BnNestedService::BnNestedService()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&INestedService_data);
 }
 
 ::android::status_t BnNestedService::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {
@@ -317,6 +330,17 @@ INestedService::BpCallback::BpCallback(const ::android::sp<::android::IBinder>& 
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
+static const char* ICallback_names[] = {
+  "done",
+};
+
+alignas(16) static const ::android::TransactionCodeData ICallback_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
+  .names = ICallback_names,
+  .count = 1,
+};
+
 namespace android {
 namespace aidl {
 namespace tests {
@@ -325,6 +349,7 @@ namespace nested {
 INestedService::BnCallback::BnCallback()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&ICallback_data);
 }
 
 ::android::status_t INestedService::BnCallback::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

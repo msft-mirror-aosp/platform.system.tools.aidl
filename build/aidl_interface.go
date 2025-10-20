@@ -32,6 +32,8 @@ import (
 	"android/soong/rust"
 )
 
+//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+
 const (
 	aidlInterfaceSuffix       = "_interface"
 	aidlMetadataSingletonName = "aidl_metadata_json"
@@ -145,7 +147,7 @@ func reportUsingNotFrozenError(ctx android.BaseModuleContext, notFrozen []string
 func reportMultipleVersionError(ctx android.BaseModuleContext, violators []string) {
 	sort.Strings(violators)
 	ctx.ModuleErrorf("depends on multiple versions of the same aidl_interface: %s", strings.Join(violators, ", "))
-	ctx.WalkDeps(func(child android.Module, parent android.Module) bool {
+	ctx.WalkDepsProxy(func(child android.ModuleProxy, parent android.ModuleProxy) bool {
 		if android.InList(child.Name(), violators) {
 			ctx.ModuleErrorf("Dependency path: %s", ctx.GetPathString(true))
 			return false
@@ -237,6 +239,7 @@ func isRelativePath(path string) bool {
 		!strings.HasPrefix(path, "../") && !strings.HasPrefix(path, "/")
 }
 
+// @auto-generate: gob
 type AidlInterfaceInfo struct {
 	AidlInterfaceImportsInfo
 	Stability     string
@@ -248,6 +251,7 @@ type AidlInterfaceInfo struct {
 
 var AidlInterfaceInfoProvider = blueprint.NewProvider[AidlInterfaceInfo]()
 
+// @auto-generate: gob
 type AidlInterfaceImportsInfo struct {
 	Name                      string
 	Imports                   map[string][]string

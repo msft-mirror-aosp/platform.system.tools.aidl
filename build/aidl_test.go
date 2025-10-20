@@ -188,9 +188,6 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			ctx.RegisterModuleType("aidl_interface", AidlInterfaceFactory)
 			ctx.RegisterModuleType("aidl_interface_defaults", AidlInterfaceDefaultsFactory)
 			ctx.RegisterModuleType("aidl_interfaces_metadata", aidlInterfacesMetadataSingletonFactory)
-			ctx.RegisterModuleType("rust_defaults", func() android.Module {
-				return rust.DefaultsFactory()
-			})
 			ctx.RegisterModuleType("aidl_library", aidl_library.AidlLibraryFactory)
 
 			ctx.PreArchMutators(registerPreArchMutators)
@@ -255,6 +252,7 @@ func assertListContains(t *testing.T, actual []string, expected string) {
 
 // Vintf module must have versions in release version
 func TestVintfWithoutVersionInRelease(t *testing.T) {
+	t.Parallel()
 	vintfWithoutVersionBp := `
 	aidl_interface {
 		name: "foo",
@@ -280,6 +278,7 @@ func TestVintfWithoutVersionInRelease(t *testing.T) {
 
 // Check if using unstable version in release cause an error.
 func TestUnstableVersionUsageInRelease(t *testing.T) {
+	t.Parallel()
 	unstableVersionUsageInJavaBp := `
 	aidl_interface {
 		name: "foo",
@@ -326,6 +325,7 @@ func TestUnstableVersionUsageInRelease(t *testing.T) {
 }
 
 func TestUsingUnstableVersionIndirectlyInRelease(t *testing.T) {
+	t.Parallel()
 	unstableVersionUsageInJavaBp := `
 	aidl_interface {
 		name: "xxx",
@@ -356,6 +356,7 @@ func TestUsingUnstableVersionIndirectlyInRelease(t *testing.T) {
 }
 
 func TestFrozenTrueSimple(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "foo",
@@ -374,6 +375,7 @@ func TestFrozenTrueSimple(t *testing.T) {
 }
 
 func TestFrozenWithNoVersions(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "foo",
@@ -392,6 +394,7 @@ func TestFrozenWithNoVersions(t *testing.T) {
 }
 
 func TestFrozenImportingFrozen(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -419,6 +422,7 @@ func TestFrozenImportingFrozen(t *testing.T) {
 }
 
 func TestFrozenImportingVersionUnfrozen(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -446,6 +450,7 @@ func TestFrozenImportingVersionUnfrozen(t *testing.T) {
 }
 
 func TestFrozenImportingUnfrozenWithFrozen(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -474,6 +479,7 @@ func TestFrozenImportingUnfrozenWithFrozen(t *testing.T) {
 }
 
 func TestFrozenImportingUnfrozen(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -506,6 +512,7 @@ func TestFrozenImportingUnfrozen(t *testing.T) {
 // This is allowed to keep legacy behavior. It could be prevented directly after API-freeze
 // if all frozen interfaces are explicitly marked `frozen: true,`.
 func TestFrozenImportingUnSpecified(t *testing.T) {
+	t.Parallel()
 	frozenTrueSimple := `
 	aidl_interface {
 		name: "xxx",
@@ -533,6 +540,7 @@ func TestFrozenImportingUnSpecified(t *testing.T) {
 
 // Keeping legacy behavior if "frozen" is not specified
 func TestImportingNewLegacy(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -563,6 +571,7 @@ func TestImportingNewLegacy(t *testing.T) {
 // need a new version without the "frozen" attribute. So we keep the
 // legacy behavior and assume "foo" is still importing the old version.
 func TestFrozenImportingNewLegacy(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -591,6 +600,7 @@ func TestFrozenImportingNewLegacy(t *testing.T) {
 }
 
 func TestFrozenImportingNewImplicit(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -621,6 +631,7 @@ func TestFrozenImportingNewImplicit(t *testing.T) {
 }
 
 func TestImportingOwned(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -649,6 +660,7 @@ func TestImportingOwned(t *testing.T) {
 }
 
 func TestImportingOwnedBothOwned(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -677,6 +689,7 @@ func TestImportingOwnedBothOwned(t *testing.T) {
 }
 
 func TestFrozenImportingNewExplicit(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -707,6 +720,7 @@ func TestFrozenImportingNewExplicit(t *testing.T) {
 }
 
 func TestNonFrozenImportingNewImplicit(t *testing.T) {
+	t.Parallel()
 	frozenTest := `
 	aidl_interface {
 		name: "xxx",
@@ -737,6 +751,7 @@ func TestNonFrozenImportingNewImplicit(t *testing.T) {
 
 // The module which has never been frozen and is not "unstable" is not allowed in release version.
 func TestNonVersionedModuleUsageInRelease(t *testing.T) {
+	t.Parallel()
 	nonVersionedModuleUsageInJavaBp := `
 	aidl_interface {
 		name: "foo",
@@ -776,6 +791,7 @@ func TestNonVersionedModuleUsageInRelease(t *testing.T) {
 }
 
 func TestNonVersionedModuleOwnedByTestUsageInRelease(t *testing.T) {
+	t.Parallel()
 	nonVersionedModuleUsageInJavaBp := `
 	aidl_interface {
 		name: "foo",
@@ -797,6 +813,7 @@ func TestNonVersionedModuleOwnedByTestUsageInRelease(t *testing.T) {
 }
 
 func TestNonVersionedModuleOwnedByOtherUsageInRelease(t *testing.T) {
+	t.Parallel()
 	nonVersionedModuleUsageInJavaBp := `
 	aidl_interface {
 		name: "foo",
@@ -817,6 +834,7 @@ func TestNonVersionedModuleOwnedByOtherUsageInRelease(t *testing.T) {
 }
 
 func TestImportInRelease(t *testing.T) {
+	t.Parallel()
 	importInRelease := `
 	aidl_interface {
 		name: "foo",
@@ -848,6 +866,7 @@ func TestImportInRelease(t *testing.T) {
 }
 
 func TestUnstableVersionedModuleUsageInRelease(t *testing.T) {
+	t.Parallel()
 	nonVersionedModuleUsageInJavaBp := `
 	aidl_interface {
 		name: "foo",
@@ -875,6 +894,7 @@ func TestUnstableVersionedModuleUsageInRelease(t *testing.T) {
 }
 
 func TestUnstableVersionedModuleOwnedByTestUsageInRelease(t *testing.T) {
+	t.Parallel()
 	nonVersionedModuleUsageInJavaBp := `
 	aidl_interface {
 		name: "foo",
@@ -901,6 +921,7 @@ func TestUnstableVersionedModuleOwnedByTestUsageInRelease(t *testing.T) {
 }
 
 func TestFrozenModuleUsageInAllEnvs(t *testing.T) {
+	t.Parallel()
 	bp := `
 	aidl_interface {
 		name: "foo",
@@ -927,6 +948,7 @@ func TestFrozenModuleUsageInAllEnvs(t *testing.T) {
 }
 
 func TestUnstableVersionedModuleOwnedByOtherUsageInRelease(t *testing.T) {
+	t.Parallel()
 	nonVersionedModuleUsageInJavaBp := `
 	aidl_interface {
 		name: "foo",
@@ -952,6 +974,7 @@ func TestUnstableVersionedModuleOwnedByOtherUsageInRelease(t *testing.T) {
 }
 
 func TestUnstableModules(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, `module "foo_interface": stability: must be empty when "unstable" is true`, `
 		aidl_interface {
 			name: "foo",
@@ -1005,6 +1028,7 @@ func TestUnstableModules(t *testing.T) {
 }
 
 func TestCreatesModulesWithNoVersions(t *testing.T) {
+	t.Parallel()
 	ctx, _ := testAidl(t, `
 		aidl_interface {
 			name: "foo",
@@ -1023,6 +1047,7 @@ func TestCreatesModulesWithNoVersions(t *testing.T) {
 }
 
 func TestCreatesModulesWithFrozenVersions(t *testing.T) {
+	t.Parallel()
 	// Each version should be under aidl_api/<name>/<ver>
 	testAidlError(t, `No sources for a previous version in aidl_api/foo/1. Was a version manually added to .bp file?`, `
 		aidl_interface {
@@ -1069,6 +1094,7 @@ func TestCreatesModulesWithFrozenVersions(t *testing.T) {
 }
 
 func TestErrorsWithUnsortedVersions(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, `versions: should be sorted`, `
 		aidl_interface {
 			name: "foo",
@@ -1089,6 +1115,7 @@ func TestErrorsWithUnsortedVersions(t *testing.T) {
 }
 
 func TestErrorsWithDuplicateVersions(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, `versions: duplicate`, `
 		aidl_interface {
 			name: "foo",
@@ -1104,6 +1131,7 @@ func TestErrorsWithDuplicateVersions(t *testing.T) {
 }
 
 func TestErrorsWithNonPositiveVersions(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, `versions: should be > 0`, `
 		aidl_interface {
 			name: "foo",
@@ -1119,6 +1147,7 @@ func TestErrorsWithNonPositiveVersions(t *testing.T) {
 }
 
 func TestErrorsWithNonIntegerVersions(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, `versions: "first" is not an integer`, `
 		aidl_interface {
 			name: "foo",
@@ -1139,6 +1168,7 @@ const (
 )
 
 func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
+	t.Parallel()
 	var ctx *android.TestContext
 	assertOutput := func(moduleName, variant, outputFilename string) {
 		t.Helper()
@@ -1210,6 +1240,7 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 }
 
 func TestImports(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, `Import does not exist:`, `
 		aidl_interface {
 			name: "foo",
@@ -1336,6 +1367,7 @@ func TestImports(t *testing.T) {
 }
 
 func TestDuplicatedVersions(t *testing.T) {
+	t.Parallel()
 	// foo depends on myiface-V2-ndk via direct dep and also on
 	// myiface-V1-ndk via indirect dep. This should be prohibited.
 	testAidlError(t, `depends on multiple versions of the same aidl_interface: myiface-V1-.*, myiface-V2-.*`, `
@@ -1469,6 +1501,7 @@ func TestDuplicatedVersions(t *testing.T) {
 }
 
 func TestRecoveryAvailable(t *testing.T) {
+	t.Parallel()
 	ctx, _ := testAidl(t, `
 		aidl_interface {
 			name: "myiface",
@@ -1482,6 +1515,7 @@ func TestRecoveryAvailable(t *testing.T) {
 }
 
 func TestRustDuplicateNames(t *testing.T) {
+	t.Parallel()
 	testAidl(t, `
 		aidl_interface {
 			name: "myiface",
@@ -1496,6 +1530,7 @@ func TestRustDuplicateNames(t *testing.T) {
 }
 
 func TestAidlImportFlagsForImportedModules(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
 			aidl_interface {
@@ -1586,6 +1621,7 @@ func TestAidlImportFlagsForImportedModules(t *testing.T) {
 }
 
 func TestAidlPreprocess(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
 			aidl_interface {
@@ -1627,6 +1663,7 @@ func TestAidlPreprocess(t *testing.T) {
 }
 
 func TestAidlImportFlagsForUnstable(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
 			aidl_interface {
@@ -1668,6 +1705,7 @@ func TestAidlImportFlagsForUnstable(t *testing.T) {
 }
 
 func TestSupportsGenruleAndFilegroup(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
 			aidl_interface {
@@ -1772,6 +1810,7 @@ func TestSupportsGenruleAndFilegroup(t *testing.T) {
 }
 
 func TestAidlFlags(t *testing.T) {
+	t.Parallel()
 	ctx, _ := testAidl(t, `
 		aidl_interface {
 			name: "myiface",
@@ -1797,6 +1836,7 @@ func TestAidlFlags(t *testing.T) {
 }
 
 func TestAidlModuleJavaSdkVersionDeterminesMinSdkVersion(t *testing.T) {
+	t.Parallel()
 	ctx, _ := testAidl(t, `
 		aidl_interface {
 			name: "myiface",
@@ -1813,6 +1853,7 @@ func TestAidlModuleJavaSdkVersionDeterminesMinSdkVersion(t *testing.T) {
 }
 
 func TestAidlModuleNameContainsVersion(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, "aidl_interface should not have '-V<number> suffix", `
 		aidl_interface {
 			name: "myiface-V2",
@@ -1829,6 +1870,7 @@ func TestAidlModuleNameContainsVersion(t *testing.T) {
 }
 
 func TestExplicitAidlModuleImport(t *testing.T) {
+	t.Parallel()
 	for _, importVersion := range []string{"V1", "V2"} {
 
 		ctx, _ := testAidl(t, `
@@ -1891,6 +1933,7 @@ func TestExplicitAidlModuleImport(t *testing.T) {
 }
 
 func TestUseVersionedPreprocessedWhenImporotedWithVersions(t *testing.T) {
+	t.Parallel()
 	ctx, _ := testAidl(t, `
 		aidl_interface {
 			name: "unstable-foo",
@@ -1991,6 +2034,7 @@ func FindModule(t *testing.T, ctx *android.TestContext, name, variant, dir strin
 }
 
 func TestDuplicateInterfacesWithTheSameNameInDifferentSoongNamespaces(t *testing.T) {
+	t.Parallel()
 	ctx, _ := testAidl(t, ``, withFiles(map[string][]byte{
 		"common/Android.bp": []byte(`
 		  aidl_interface {
@@ -2035,6 +2079,7 @@ func TestDuplicateInterfacesWithTheSameNameInDifferentSoongNamespaces(t *testing
 }
 
 func TestUnstableChecksForAidlInterfacesInDifferentNamespaces(t *testing.T) {
+	t.Parallel()
 	files := withFiles(map[string][]byte{
 		"vendor/a/Android.bp": []byte(`
 			soong_namespace {}
@@ -2080,6 +2125,7 @@ func TestUnstableChecksForAidlInterfacesInDifferentNamespaces(t *testing.T) {
 }
 
 func TestVersionsWithInfoAndVersions(t *testing.T) {
+	t.Parallel()
 	conflictingFields := `
 	aidl_interface {
 		name: "foo",
@@ -2103,6 +2149,7 @@ func TestVersionsWithInfoAndVersions(t *testing.T) {
 }
 
 func TestVersionsWithInfo(t *testing.T) {
+	t.Parallel()
 	ctx, _ := testAidl(t, ``, withFiles(map[string][]byte{
 		"common/Android.bp": []byte(`
 		  aidl_interface {
@@ -2143,6 +2190,7 @@ func TestVersionsWithInfo(t *testing.T) {
 }
 
 func TestVersionsWithInfoImport(t *testing.T) {
+	t.Parallel()
 	testAidlError(t, "imports in versions_with_info must specify its version", ``, withFiles(map[string][]byte{
 		"common/Android.bp": []byte(`
 		  aidl_interface {
@@ -2174,6 +2222,7 @@ func TestVersionsWithInfoImport(t *testing.T) {
 }
 
 func TestFreezeApiDeps(t *testing.T) {
+	t.Parallel()
 	for _, transitive := range []bool{true, false} {
 		for _, testcase := range []struct {
 			string
@@ -2218,19 +2267,20 @@ func TestFreezeApiDeps(t *testing.T) {
 
 			ctx, _ := testAidl(t, ``, customizers...)
 			shouldHaveDep := transitive && testcase.bool
-			fooFreezeApiRule := ctx.ModuleForTests(t, "foo_interface", "").Output("update_or_freeze_api_3.timestamp")
-			commonFreezeApiOutput := ctx.ModuleForTests(t, "common_interface", "").Output("update_or_freeze_api_3.timestamp").Output.String()
+			fooFreezeApiRule := ctx.ModuleForTests(t, "foo_interface", "").Output("update_or_freeze_api_3.sh")
+			commonFreezeApiOutput := ctx.ModuleForTests(t, "common_interface", "").Output("update_or_freeze_api_3.sh").Output.String()
 			testMethod := android.AssertStringListDoesNotContain
 			if shouldHaveDep {
 				testMethod = android.AssertStringListContains
 			}
 			testMethod(t, "Only if AIDL_TRANSITIVE_FREEZE is set and an aidl_interface depends on an another aidl_interface's ToT version, an imported aidl_interface should be frozen as well.",
-				fooFreezeApiRule.Implicits.Strings(), commonFreezeApiOutput)
+				fooFreezeApiRule.Validations.Strings(), commonFreezeApiOutput)
 		}
 	}
 }
 
 func TestAidlNoUnfrozen(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
 			aidl_interface {
@@ -2279,6 +2329,7 @@ func TestAidlNoUnfrozen(t *testing.T) {
 }
 
 func TestAidlUsingUnfrozen(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
 			aidl_interface {
@@ -2313,6 +2364,7 @@ func TestAidlUsingUnfrozen(t *testing.T) {
 }
 
 func TestAidlUseUnfrozenOverrideFalse(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
                         aidl_interface {
@@ -2333,6 +2385,7 @@ func TestAidlUseUnfrozenOverrideFalse(t *testing.T) {
 }
 
 func TestAidlUseUnfrozenOverrideTrue(t *testing.T) {
+	t.Parallel()
 	customizer := withFiles(map[string][]byte{
 		"foo/Android.bp": []byte(`
                         aidl_interface {

@@ -1886,6 +1886,108 @@ TEST_F(AidlTest, DefinedTypeKnowsItsParentScope) {
   EXPECT_EQ(main_document, &ifoo_type.defined_type->GetDocument());
 }
 
+TEST_P(AidlTest, AnnotatedTypeParameterSuccess) {
+  io_delegate_.SetFileContents("p/Generic.aidl", "package p; parcelable Generic<@FixedSize T> {}");
+  io_delegate_.SetFileContents("p/Fixed.aidl", "package p; @FixedSize parcelable Fixed {}");
+  import_paths_.emplace("");
+
+  // Test with a user defined fixed-size parcelable
+  AidlTypenames typenames1;
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse("p/Test1.aidl",
+                           "package p; import p.Generic; import p.Fixed;"
+                           "parcelable Test1 { Generic<Fixed> g; }",
+                           typenames1, GetLanguage()));
+  EXPECT_EQ("", GetCapturedStderr());
+
+  // Test with a built-in fixed-size primitive
+  AidlTypenames typenames2;
+  CaptureStderr();
+  EXPECT_NE(nullptr, Parse("p/Test2.aidl",
+                           "package p; import p.Generic;"
+                           "parcelable Test2 { Generic<int> g; }",
+                           typenames2, GetLanguage()));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
+TEST_P(AidlTest, AnnotatedTypeParameterFailure) {
+  io_delegate_.SetFileContents("p/Generic.aidl", "package p; parcelable Generic<@FixedSize T> {}");
+  io_delegate_.SetFileContents("p/NonFixed.aidl", "package p; parcelable NonFixed { String s; }");
+  import_paths_.emplace("");
+
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/Test.aidl",
+                           "package p; import p.Generic; import p.NonFixed;"
+                           "parcelable Test { Generic<NonFixed> g; }",
+                           typenames_, GetLanguage()));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Type 'p.NonFixed' used as type parameter 'T' must be annotated with "
+                        "@FixedSize."));
+}
+
+TEST_P(AidlTest, MultipleAnnotationsOnTypeParameter) {
+  io_delegate_.SetFileContents(
+      "p/Generic.aidl",
+      "package p; @VintfStability parcelable Generic<@FixedSize @VintfStability T> {}");
+  io_delegate_.SetFileContents("p/Compliant.aidl",
+                               "package p; @FixedSize @VintfStability parcelable Compliant {}");
+  io_delegate_.SetFileContents("p/OnlyFixed.aidl", "package p; @FixedSize parcelable OnlyFixed {}");
+  import_paths_.emplace("");
+
+  // Success case
+  AidlTypenames typenames1;
+  CaptureStderr();
+  EXPECT_NE(nullptr,
+            Parse("p/Test1.aidl",
+                  "package p; import p.Generic; import p.Compliant;"
+                  "@VintfStability parcelable Test1 { Generic<Compliant> g; }",
+                  typenames1, GetLanguage(), nullptr, {"--structured", "--stability=vintf"}));
+  EXPECT_EQ("", GetCapturedStderr());
+
+  // Failure case (missing @VintfStability)
+  AidlTypenames typenames2;
+  CaptureStderr();
+  EXPECT_EQ(nullptr,
+            Parse("p/Test2.aidl",
+                  "package p; import p.Generic; import p.OnlyFixed;"
+                  "@VintfStability parcelable Test2 { Generic<OnlyFixed> g; }",
+                  typenames2, GetLanguage(), nullptr, {"--structured", "--stability=vintf"}));
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Type 'p.OnlyFixed' used as type parameter 'T' must be annotated with "
+                        "@VintfStability."));
+}
+
+TEST_F(AidlTest, ApiDumpWithAnnotatedTypeParameters) {
+  io_delegate_.SetFileContents("foo/bar/Generic.aidl",
+                               "package foo.bar;\n"
+                               "parcelable Generic<@FixedSize T, @VintfStability U> {}\n");
+
+  vector<string> args = {"aidl", "--dumpapi", "-I . ", "-o dump", "foo/bar/Generic.aidl"};
+  Options options = Options::From(args);
+  CaptureStderr();
+  EXPECT_TRUE(dump_api(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+
+  string actual;
+  EXPECT_TRUE(io_delegate_.GetWrittenContents("dump/foo/bar/Generic.aidl", &actual));
+  EXPECT_EQ(string(kPreamble).append("package foo.bar;\n"
+                                     "parcelable Generic<@FixedSize T, @VintfStability U> {\n"
+                                     "}\n"),
+            actual);
+}
+
+TEST_F(AidlTest, RejectInvalidAnnotationOnTypeParameter) {
+  io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<@nullable T> {}");
+  Options options = Options::From("aidl Foo.aidl -I . --lang=cpp -o out -h out");
+
+  const string expected_stderr =
+      "ERROR: Foo.aidl:1.16-25: @nullable is not available. It can only annotate: type.\n";
+
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
+}
+
 TEST_F(AidlTest, UnderstandsNestedTypesViaFullyQualifiedName) {
   io_delegate_.SetFileContents("p/IOuter.aidl",
                                "package p;\n"
@@ -2813,8 +2915,7 @@ TEST_F(AidlTest, UserDefinedUnstructuredGenericParcelableType) {
   io_delegate_.SetFileContents("p/Bar.aidl", "package p; parcelable Bar<T, T>;");
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(optionsForParcelable, io_delegate_));
-  EXPECT_EQ("ERROR: p/Bar.aidl:1.22-26: Every type parameter should be unique.\n",
-            GetCapturedStderr());
+  EXPECT_EQ("ERROR: p/Bar.aidl:1.29-31: Type parameter 'T' is repeated.\n", GetCapturedStderr());
 
   Options options = Options::From("aidl -I . p/IFoo.aidl");
   io_delegate_.SetFileContents("p/Bar.aidl", "package p; parcelable Bar;");
@@ -3785,9 +3886,7 @@ TEST_F(AidlTestIncompatibleChanges, ChangedAnnatationParams) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_F(AidlTestIncompatibleChanges, AddedParcelableAnnotation) {
-  const string expected_stderr =
-      "ERROR: new/p/Foo.aidl:1.32-36: Changed annotations: (empty) to @FixedSize\n";
+TEST_F(AidlTestIncompatibleChanges, AddedFixedSizeAnnotation) {
   io_delegate_.SetFileContents("old/p/Foo.aidl",
                                "package p;"
                                "parcelable Foo {"
@@ -3796,6 +3895,22 @@ TEST_F(AidlTestIncompatibleChanges, AddedParcelableAnnotation) {
   io_delegate_.SetFileContents("new/p/Foo.aidl",
                                "package p;"
                                "@FixedSize parcelable Foo {"
+                               "  int A;"
+                               "}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
+TEST_F(AidlTestIncompatibleChanges, RemovedFixedSizeAnnotation) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.21-25: Removing @FixedSize is not allowed.\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "@FixedSize parcelable Foo {"
+                               "  int A;"
+                               "}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "parcelable Foo {"
                                "  int A;"
                                "}");
   CaptureStderr();
@@ -3803,19 +3918,27 @@ TEST_F(AidlTestIncompatibleChanges, AddedParcelableAnnotation) {
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
-TEST_F(AidlTestIncompatibleChanges, RemovedParcelableAnnotation) {
-  const string expected_stderr =
-      "ERROR: new/p/Foo.aidl:1.21-25: Changed annotations: @FixedSize to (empty)\n";
+TEST_F(AidlTestIncompatibleChanges, AddedAnnotationToTypeParameter) {
   io_delegate_.SetFileContents("old/p/Foo.aidl",
                                "package p;"
-                               "@FixedSize parcelable Foo {"
-                               "  int A;"
-                               "}");
+                               "parcelable Foo<T> {}");
   io_delegate_.SetFileContents("new/p/Foo.aidl",
                                "package p;"
-                               "parcelable Foo {"
-                               "  int A;"
-                               "}");
+                               "parcelable Foo<@FixedSize T> {}");
+  CaptureStderr();
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
+}
+
+TEST_F(AidlTestIncompatibleChanges, RemovedAnnotationFromTypeParameter) {
+  const string expected_stderr =
+      "ERROR: new/p/Foo.aidl:1.26-27: Removing @FixedSize is not allowed.\n";
+  io_delegate_.SetFileContents("old/p/Foo.aidl",
+                               "package p;"
+                               "parcelable Foo<@FixedSize T> {}");
+  io_delegate_.SetFileContents("new/p/Foo.aidl",
+                               "package p;"
+                               "parcelable Foo<T> {}");
   CaptureStderr();
   EXPECT_FALSE(::android::aidl::check_api(options_, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());
@@ -4862,7 +4985,7 @@ TEST_F(AidlTest, GenericStructuredParcelableWithStringConstants_Cpp) {
   string code;
   EXPECT_TRUE(io_delegate_.GetWrittenContents("out/Foo.h", &code));
   EXPECT_THAT(code, testing::HasSubstr(R"--(template <typename T, typename U>
-const ::android::String16& Foo<T,U>::s() {
+const ::android::String16& Foo<T, U>::s() {
   static const ::android::String16 value(::android::String16(""));
   return value;
 })--"));
@@ -5111,8 +5234,7 @@ TEST_F(GenericAidlTest, ImportGenericParameterTypesNDK) {
 TEST_P(AidlTest, RejectGenericStructuredParcelabelRepeatedParam) {
   io_delegate_.SetFileContents("Foo.aidl", "parcelable Foo<T,T> { int a; int A; }");
   Options options = Options::From("aidl Foo.aidl -I . --lang=" + to_string(GetLanguage()));
-  const string expected_stderr =
-      "ERROR: Foo.aidl:1.11-15: Every type parameter should be unique.\n";
+  const string expected_stderr = "ERROR: Foo.aidl:1.18-19: Type parameter 'T' is repeated.\n";
   CaptureStderr();
   EXPECT_FALSE(compile_aidl(options, io_delegate_));
   EXPECT_EQ(expected_stderr, GetCapturedStderr());

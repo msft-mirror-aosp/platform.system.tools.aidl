@@ -68,6 +68,17 @@ BpOldName::BpOldName(const ::android::sp<::android::IBinder>& _aidl_impl)
 #include <binder/Parcel.h>
 #include <binder/Stability.h>
 
+static const char* IOldName_names[] = {
+  "RealName",
+};
+
+alignas(16) static const ::android::TransactionCodeData IOldName_data = {
+  .totalSize = sizeof(::android::TransactionCodeData),
+  .backendType = "cpp",
+  .names = IOldName_names,
+  .count = 1,
+};
+
 namespace android {
 namespace aidl {
 namespace tests {
@@ -75,6 +86,7 @@ namespace tests {
 BnOldName::BnOldName()
 {
   ::android::internal::Stability::markCompilationUnit(this);
+  ::android::BBinder::setTransactionCodeMap(&IOldName_data);
 }
 
 ::android::status_t BnOldName::onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) {

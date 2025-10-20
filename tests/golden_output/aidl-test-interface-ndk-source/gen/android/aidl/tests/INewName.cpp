@@ -43,10 +43,13 @@ static binder_status_t _aidl_android_aidl_tests_INewName_onTransact(AIBinder* _a
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_INewName_clazz_names[] = {
-  "RealName",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_INewName_clazz = ::ndk::ICInterface::defineClass(INewName::descriptor, _aidl_android_aidl_tests_INewName_onTransact, _g_aidl_android_aidl_tests_INewName_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_INewName_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_INewName_clazz_names[] = {
+    "RealName",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(INewName::descriptor, _aidl_android_aidl_tests_INewName_onTransact, get_g_aidl_android_aidl_tests_INewName_clazz_names, 1);
+  return clazz;
+}
 
 BpNewName::BpNewName(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpNewName::~BpNewName() {}
@@ -92,7 +95,7 @@ BpNewName::~BpNewName() {}
 BnNewName::BnNewName() {}
 BnNewName::~BnNewName() {}
 ::ndk::SpAIBinder BnNewName::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_INewName_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_INewName_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -105,7 +108,7 @@ INewName::~INewName() {}
 
 
 std::shared_ptr<INewName> INewName::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_INewName_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_INewName_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

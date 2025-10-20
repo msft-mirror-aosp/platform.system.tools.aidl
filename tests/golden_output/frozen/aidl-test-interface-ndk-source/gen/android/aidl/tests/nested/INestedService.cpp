@@ -66,11 +66,14 @@ static binder_status_t _aidl_android_aidl_tests_nested_INestedService_onTransact
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_nested_INestedService_clazz_names[] = {
-  "flipStatus",
-  "flipStatusWithCallback",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_nested_INestedService_clazz = ::ndk::ICInterface::defineClass(INestedService::descriptor, _aidl_android_aidl_tests_nested_INestedService_onTransact, _g_aidl_android_aidl_tests_nested_INestedService_clazz_names, 2);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_nested_INestedService_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_nested_INestedService_clazz_names[] = {
+    "flipStatus",
+    "flipStatusWithCallback",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(INestedService::descriptor, _aidl_android_aidl_tests_nested_INestedService_onTransact, get_g_aidl_android_aidl_tests_nested_INestedService_clazz_names, 2);
+  return clazz;
+}
 
 BpNestedService::BpNestedService(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 BpNestedService::~BpNestedService() {}
@@ -159,7 +162,7 @@ BpNestedService::~BpNestedService() {}
 BnNestedService::BnNestedService() {}
 BnNestedService::~BnNestedService() {}
 ::ndk::SpAIBinder BnNestedService::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_nested_INestedService_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_nested_INestedService_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -172,7 +175,7 @@ INestedService::~INestedService() {}
 
 
 std::shared_ptr<INestedService> INestedService::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_nested_INestedService_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_nested_INestedService_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;
@@ -311,10 +314,13 @@ static binder_status_t _aidl_android_aidl_tests_nested_INestedService_ICallback_
   return _aidl_ret_status;
 }
 
-static const char* _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_names[] = {
-  "done",
-};
-static AIBinder_Class* _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz = ::ndk::ICInterface::defineClass(INestedService::ICallback::descriptor, _aidl_android_aidl_tests_nested_INestedService_ICallback_onTransact, _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_names, 1);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz() {
+  static const char* get_g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_names[] = {
+    "done",
+  };
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(INestedService::ICallback::descriptor, _aidl_android_aidl_tests_nested_INestedService_ICallback_onTransact, get_g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz_names, 1);
+  return clazz;
+}
 
 INestedService::BpCallback::BpCallback(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
 INestedService::BpCallback::~BpCallback() {}
@@ -360,7 +366,7 @@ INestedService::BpCallback::~BpCallback() {}
 INestedService::BnCallback::BnCallback() {}
 INestedService::BnCallback::~BnCallback() {}
 ::ndk::SpAIBinder INestedService::BnCallback::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -373,7 +379,7 @@ INestedService::ICallback::~ICallback() {}
 
 
 std::shared_ptr<INestedService::ICallback> INestedService::ICallback::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_nested_INestedService_ICallback_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

@@ -30,7 +30,10 @@ static binder_status_t _aidl_android_aidl_tests_IDeprecated_onTransact(AIBinder*
   return _aidl_ret_status;
 }
 
-static AIBinder_Class* _g_aidl_android_aidl_tests_IDeprecated_clazz = ::ndk::ICInterface::defineClass(IDeprecated::descriptor, _aidl_android_aidl_tests_IDeprecated_onTransact, nullptr, 0);
+static AIBinder_Class* get_g_aidl_android_aidl_tests_IDeprecated_clazz() {
+  static AIBinder_Class* clazz = ::ndk::ICInterface::defineClass(IDeprecated::descriptor, _aidl_android_aidl_tests_IDeprecated_onTransact, nullptr, 0);
+  return clazz;
+}
 
 #pragma clang diagnostic pop
 BpDeprecated::BpDeprecated(const ::ndk::SpAIBinder& binder) : BpCInterface(binder) {}
@@ -40,7 +43,7 @@ BpDeprecated::~BpDeprecated() {}
 BnDeprecated::BnDeprecated() {}
 BnDeprecated::~BnDeprecated() {}
 ::ndk::SpAIBinder BnDeprecated::createBinder() {
-  AIBinder* binder = AIBinder_new(_g_aidl_android_aidl_tests_IDeprecated_clazz, static_cast<void*>(this));
+  AIBinder* binder = AIBinder_new(get_g_aidl_android_aidl_tests_IDeprecated_clazz(), static_cast<void*>(this));
   #ifdef BINDER_STABILITY_SUPPORT
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
@@ -53,7 +56,7 @@ IDeprecated::~IDeprecated() {}
 
 
 std::shared_ptr<IDeprecated> IDeprecated::fromBinder(const ::ndk::SpAIBinder& binder) {
-  if (!AIBinder_associateClass(binder.get(), _g_aidl_android_aidl_tests_IDeprecated_clazz)) {
+  if (!AIBinder_associateClass(binder.get(), get_g_aidl_android_aidl_tests_IDeprecated_clazz())) {
     #if __ANDROID_API__ >= 31
     const AIBinder_Class* originalClass = AIBinder_getClass(binder.get());
     if (originalClass == nullptr) return nullptr;

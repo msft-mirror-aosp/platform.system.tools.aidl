@@ -22,6 +22,9 @@ declare_binder_interface! {
     proxy: BpOldName {
     },
     async: IOldNameAsync(try_into_local_async),
+    functionNames : [
+      c"RealName",
+    ],
   }
 }
 pub trait IOldName: binder::Interface + Send {

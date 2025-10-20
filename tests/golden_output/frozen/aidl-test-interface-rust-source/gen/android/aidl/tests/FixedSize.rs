@@ -300,6 +300,14 @@ pub mod r#FixedUnion {
     DoubleValue(f64),
     EnumValue(crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum),
   }
+  impl r#FixedUnion {
+    #[inline(always)]
+    pub const fn tag(&self) -> Tag::Tag {
+      // SAFETY: The first byte of a union is the tag.
+      // All bitpatterns are valid for `Tag`.
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
+    }
+  }
   static_assertions::const_assert_eq!(std::mem::size_of::<bool>(), 1);
   static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
   static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
@@ -310,6 +318,16 @@ pub mod r#FixedUnion {
   static_assertions::const_assert_eq!(std::mem::size_of::<[[i64; 2]; 3]>(), 48);
   static_assertions::const_assert_eq!(std::mem::size_of::<f64>(), 8);
   static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
+  static_assertions::const_assert_eq!(FixedUnion::BooleanValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#booleanValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::ByteValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#byteValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::CharValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#charValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::IntValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#intValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::LongValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#longValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::FloatValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#floatValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::IntArray(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#intArray.get());
+  static_assertions::const_assert_eq!(FixedUnion::MultiDimensionLongArray(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#multiDimensionLongArray.get());
+  static_assertions::const_assert_eq!(FixedUnion::DoubleValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#doubleValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::EnumValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#enumValue.get());
   static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnion>(), 8);
   static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnion>(), 56);
   impl Default for r#FixedUnion {
@@ -452,7 +470,16 @@ pub mod r#FixedUnionNoPadding {
   pub enum r#FixedUnionNoPadding {
     ByteValue(i8),
   }
+  impl r#FixedUnionNoPadding {
+    #[inline(always)]
+    pub const fn tag(&self) -> Tag::Tag {
+      // SAFETY: The first byte of a union is the tag.
+      // All bitpatterns are valid for `Tag`.
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
+    }
+  }
   static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(FixedUnionNoPadding::ByteValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#byteValue.get());
   static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionNoPadding>(), 1);
   static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionNoPadding>(), 2);
   impl Default for r#FixedUnionNoPadding {
@@ -505,7 +532,16 @@ pub mod r#FixedUnionSmallPadding {
   pub enum r#FixedUnionSmallPadding {
     CharValue(u16),
   }
+  impl r#FixedUnionSmallPadding {
+    #[inline(always)]
+    pub const fn tag(&self) -> Tag::Tag {
+      // SAFETY: The first byte of a union is the tag.
+      // All bitpatterns are valid for `Tag`.
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
+    }
+  }
   static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(FixedUnionSmallPadding::CharValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#charValue.get());
   static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionSmallPadding>(), 2);
   static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionSmallPadding>(), 4);
   impl Default for r#FixedUnionSmallPadding {
@@ -558,7 +594,16 @@ pub mod r#FixedUnionLongPadding {
   pub enum r#FixedUnionLongPadding {
     LongValue(i64),
   }
+  impl r#FixedUnionLongPadding {
+    #[inline(always)]
+    pub const fn tag(&self) -> Tag::Tag {
+      // SAFETY: The first byte of a union is the tag.
+      // All bitpatterns are valid for `Tag`.
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
+    }
+  }
   static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(FixedUnionLongPadding::LongValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#longValue.get());
   static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionLongPadding>(), 8);
   static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionLongPadding>(), 16);
   impl Default for r#FixedUnionLongPadding {

@@ -682,6 +682,37 @@ void GenerateServerSource(CodeWriter& out, const AidlInterface& interface,
   const string bn_name = ClassName(interface, ClassNames::SERVER);
   const string q_name = GetQualifiedName(interface, ClassNames::SERVER);
 
+  // If tracing is off, don't populate this array.
+  vector<std::string> functionNames;
+  if (options.GenTraces()) {
+    functionNames = GetFunctionNames(interface);
+  }
+
+  std::string transactionCodeData;
+  if (functionNames.empty()) {
+    transactionCodeData = "nullptr";
+  } else {
+    std::string codeToFunction = ClassName(interface, ClassNames::INTERFACE) + "_" + kFunctionNames;
+    out << "static const char* " << codeToFunction << "[] = {\n";
+    out.Indent();
+    for (const auto& method : functionNames) {
+      out << "\"" << method << "\",\n";
+    }
+    out.Dedent();
+    out << "};\n\n";
+
+    transactionCodeData = ClassName(interface, ClassNames::INTERFACE) + "_" + kTransactionData;
+    out << "alignas(16) static const ::android::TransactionCodeData " << transactionCodeData
+        << " = {\n";
+    out.Indent();
+    out << ".totalSize = sizeof(::android::TransactionCodeData),\n";
+    out << ".backendType = \"cpp\",\n";
+    out << ".names = " << codeToFunction << ",\n";
+    out << ".count = " << std::to_string(functionNames.size()) << ",\n";
+    out.Dedent();
+    out << "};\n\n";
+  }
+
   EnterNamespace(out, interface);
   out << "\n";
 
@@ -693,6 +724,11 @@ void GenerateServerSource(CodeWriter& out, const AidlInterface& interface,
     out << "::android::internal::Stability::markVintf(this);\n";
   } else {
     out << "::android::internal::Stability::markCompilationUnit(this);\n";
+  }
+
+  if (transactionCodeData != "nullptr") {
+    transactionCodeData = "&" + transactionCodeData;
+    out << "::android::BBinder::setTransactionCodeMap(" << transactionCodeData << ");\n";
   }
   out.Dedent();
   out << "}\n";
@@ -866,10 +902,10 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
                      kAndroidStatusLiteral, kCodeVarName, kAndroidParcelLiteral, kDataVarName,
                      kAndroidParcelLiteral, kReplyVarName, kFlagsVarName);
   if (options.Version() > 0) {
-    out << "int32_t " << kGetInterfaceVersion << "();\n";
+    out << "int32_t " << kGetInterfaceVersion << "() override;\n";
   }
   if (!options.Hash().empty()) {
-    out << "std::string " << kGetInterfaceHash << "();\n";
+    out << "std::string " << kGetInterfaceHash << "() override;\n";
   }
   if (options.GenLog()) {
     out << kTransactionLogStruct;
@@ -1309,7 +1345,11 @@ void GenerateParcelSource(CodeWriter& out, const T& parcel, const AidlTypenames&
                           const Options&) {
   string q_name = GetQualifiedName(parcel);
   if (parcel.IsGeneric()) {
-    q_name += "<" + Join(parcel.GetTypeParameters(), ",") + ">";
+    std::vector<std::string> param_names;
+    for (const auto& p : parcel.GetTypeParameters()) {
+      param_names.push_back(p->GetName());
+    }
+    q_name += "<" + Join(param_names, ", ") + ">";
   }
 
   out << "#include <" << CppHeaderForType(parcel) << ">\n\n";

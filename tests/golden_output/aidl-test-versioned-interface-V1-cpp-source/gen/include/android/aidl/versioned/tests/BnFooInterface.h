@@ -28,8 +28,8 @@ public:
   static constexpr uint32_t TRANSACTION_getInterfaceHash = ::android::IBinder::FIRST_CALL_TRANSACTION + 16777213;
   explicit BnFooInterface();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
-  int32_t getInterfaceVersion();
-  std::string getInterfaceHash();
+  int32_t getInterfaceVersion() override;
+  std::string getInterfaceHash() override;
 };  // class BnFooInterface
 
 class LIBBINDER_EXPORTED IFooInterfaceDelegator : public BnFooInterface {
