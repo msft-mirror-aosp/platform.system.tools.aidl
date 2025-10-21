@@ -92,11 +92,7 @@ public:
     static std::shared_ptr<ICallback> fromBinder(const ::ndk::SpAIBinder& binder);
     static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<ICallback>& instance);
     static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<ICallback>* instance);
-    static bool setDefaultImpl(const std::shared_ptr<ICallback>& impl);
-    static const std::shared_ptr<ICallback>& getDefaultImpl();
     virtual ::ndk::ScopedAStatus done(::aidl::android::aidl::tests::nested::ParcelableWithNested::Status in_status) = 0;
-  private:
-    static std::shared_ptr<ICallback> default_impl;
   };
   class ICallbackDefault : public ICallback {
   public:
@@ -125,12 +121,8 @@ public:
   static std::shared_ptr<INestedService> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<INestedService>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<INestedService>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<INestedService>& impl);
-  static const std::shared_ptr<INestedService>& getDefaultImpl();
   virtual ::ndk::ScopedAStatus flipStatus(const ::aidl::android::aidl::tests::nested::ParcelableWithNested& in_p, ::aidl::android::aidl::tests::nested::INestedService::Result* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus flipStatusWithCallback(::aidl::android::aidl::tests::nested::ParcelableWithNested::Status in_status, const std::shared_ptr<::aidl::android::aidl::tests::nested::INestedService::ICallback>& in_cb) = 0;
-private:
-  static std::shared_ptr<INestedService> default_impl;
 };
 class INestedServiceDefault : public INestedService {
 public:

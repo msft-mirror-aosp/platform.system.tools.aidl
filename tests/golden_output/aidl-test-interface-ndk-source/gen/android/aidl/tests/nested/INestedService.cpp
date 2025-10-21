@@ -100,10 +100,6 @@ BpNestedService::~BpNestedService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INestedService::getDefaultImpl()) {
-    _aidl_status = INestedService::getDefaultImpl()->flipStatus(in_p, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -143,10 +139,6 @@ BpNestedService::~BpNestedService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INestedService::getDefaultImpl()) {
-    _aidl_status = INestedService::getDefaultImpl()->flipStatusWithCallback(in_status, in_cb);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -202,21 +194,6 @@ binder_status_t INestedService::readFromParcel(const AParcel* parcel, std::share
   *instance = INestedService::fromBinder(binder);
   return STATUS_OK;
 }
-bool INestedService::setDefaultImpl(const std::shared_ptr<INestedService>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!INestedService::default_impl);
-  if (impl) {
-    INestedService::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<INestedService>& INestedService::getDefaultImpl() {
-  return INestedService::default_impl;
-}
-std::shared_ptr<INestedService> INestedService::default_impl = nullptr;
 ::ndk::ScopedAStatus INestedServiceDefault::flipStatus(const ::aidl::android::aidl::tests::nested::ParcelableWithNested& /*in_p*/, ::aidl::android::aidl::tests::nested::INestedService::Result* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
@@ -347,10 +324,6 @@ INestedService::BpCallback::~BpCallback() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ICallback::getDefaultImpl()) {
-    _aidl_status = ICallback::getDefaultImpl()->done(in_status);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -406,21 +379,6 @@ binder_status_t INestedService::ICallback::readFromParcel(const AParcel* parcel,
   *instance = ICallback::fromBinder(binder);
   return STATUS_OK;
 }
-bool INestedService::ICallback::setDefaultImpl(const std::shared_ptr<ICallback>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!ICallback::default_impl);
-  if (impl) {
-    ICallback::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<INestedService::ICallback>& INestedService::ICallback::getDefaultImpl() {
-  return ICallback::default_impl;
-}
-std::shared_ptr<INestedService::ICallback> INestedService::ICallback::default_impl = nullptr;
 ::ndk::ScopedAStatus INestedService::ICallbackDefault::done(::aidl::android::aidl::tests::nested::ParcelableWithNested::Status /*in_status*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

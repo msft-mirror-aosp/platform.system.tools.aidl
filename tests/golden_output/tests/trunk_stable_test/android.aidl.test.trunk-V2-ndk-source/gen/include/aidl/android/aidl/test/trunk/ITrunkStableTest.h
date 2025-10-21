@@ -258,16 +258,12 @@ public:
     static std::shared_ptr<IMyCallback> fromBinder(const ::ndk::SpAIBinder& binder);
     static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IMyCallback>& instance);
     static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IMyCallback>* instance);
-    static bool setDefaultImpl(const std::shared_ptr<IMyCallback>& impl);
-    static const std::shared_ptr<IMyCallback>& getDefaultImpl();
     virtual ::ndk::ScopedAStatus repeatParcelable(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus repeatEnum(::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus repeatUnion(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion& in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus repeatOtherParcelable(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable& in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus getInterfaceVersion(int32_t* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus getInterfaceHash(std::string* _aidl_return) = 0;
-  private:
-    static std::shared_ptr<IMyCallback> default_impl;
   };
   class IMyCallbackDefault : public IMyCallback {
   public:
@@ -346,8 +342,6 @@ public:
   static std::shared_ptr<ITrunkStableTest> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<ITrunkStableTest>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<ITrunkStableTest>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<ITrunkStableTest>& impl);
-  static const std::shared_ptr<ITrunkStableTest>& getDefaultImpl();
   virtual ::ndk::ScopedAStatus repeatParcelable(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus repeatEnum(::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyEnum* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus repeatUnion(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion& in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyUnion* _aidl_return) = 0;
@@ -355,8 +349,6 @@ public:
   virtual ::ndk::ScopedAStatus repeatOtherParcelable(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable& in_input, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getInterfaceVersion(int32_t* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getInterfaceHash(std::string* _aidl_return) = 0;
-private:
-  static std::shared_ptr<ITrunkStableTest> default_impl;
 };
 class ITrunkStableTestDefault : public ITrunkStableTest {
 public:

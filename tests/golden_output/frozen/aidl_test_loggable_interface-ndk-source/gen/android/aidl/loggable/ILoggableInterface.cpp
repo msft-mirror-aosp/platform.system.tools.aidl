@@ -330,10 +330,6 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ILoggableInterface::getDefaultImpl()) {
-    _aidl_status = ILoggableInterface::getDefaultImpl()->LogThis(in_boolValue, in_boolArray, in_byteValue, in_byteArray, in_charValue, in_charArray, in_intValue, in_intArray, in_longValue, in_longArray, in_floatValue, in_floatArray, in_doubleValue, in_doubleArray, in_stringValue, in_stringArray, in_listValue, in_dataValue, in_binderValue, in_pfdValue, in_pfdArray, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -451,21 +447,6 @@ binder_status_t ILoggableInterface::readFromParcel(const AParcel* parcel, std::s
   *instance = ILoggableInterface::fromBinder(binder);
   return STATUS_OK;
 }
-bool ILoggableInterface::setDefaultImpl(const std::shared_ptr<ILoggableInterface>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!ILoggableInterface::default_impl);
-  if (impl) {
-    ILoggableInterface::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ILoggableInterface>& ILoggableInterface::getDefaultImpl() {
-  return ILoggableInterface::default_impl;
-}
-std::shared_ptr<ILoggableInterface> ILoggableInterface::default_impl = nullptr;
 ::ndk::ScopedAStatus ILoggableInterfaceDefault::LogThis(bool /*in_boolValue*/, std::vector<bool>* /*in_boolArray*/, int8_t /*in_byteValue*/, std::vector<uint8_t>* /*in_byteArray*/, char16_t /*in_charValue*/, std::vector<char16_t>* /*in_charArray*/, int32_t /*in_intValue*/, std::vector<int32_t>* /*in_intArray*/, int64_t /*in_longValue*/, std::vector<int64_t>* /*in_longArray*/, float /*in_floatValue*/, std::vector<float>* /*in_floatArray*/, double /*in_doubleValue*/, std::vector<double>* /*in_doubleArray*/, const std::string& /*in_stringValue*/, std::vector<std::string>* /*in_stringArray*/, std::vector<std::string>* /*in_listValue*/, const ::aidl::android::aidl::loggable::Data& /*in_dataValue*/, const ::ndk::SpAIBinder& /*in_binderValue*/, ::ndk::ScopedFileDescriptor* /*in_pfdValue*/, std::vector<::ndk::ScopedFileDescriptor>* /*in_pfdArray*/, std::vector<std::string>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
@@ -566,10 +547,6 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ISub::getDefaultImpl()) {
-    _aidl_status = ISub::getDefaultImpl()->Log(in_value);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -639,21 +616,6 @@ binder_status_t ILoggableInterface::ISub::readFromParcel(const AParcel* parcel, 
   *instance = ISub::fromBinder(binder);
   return STATUS_OK;
 }
-bool ILoggableInterface::ISub::setDefaultImpl(const std::shared_ptr<ISub>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!ISub::default_impl);
-  if (impl) {
-    ISub::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ILoggableInterface::ISub>& ILoggableInterface::ISub::getDefaultImpl() {
-  return ISub::default_impl;
-}
-std::shared_ptr<ILoggableInterface::ISub> ILoggableInterface::ISub::default_impl = nullptr;
 ::ndk::ScopedAStatus ILoggableInterface::ISubDefault::Log(int32_t /*in_value*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

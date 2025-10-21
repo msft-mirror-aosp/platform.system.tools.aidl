@@ -83,21 +83,6 @@ binder_status_t IDeprecated::readFromParcel(const AParcel* parcel, std::shared_p
   *instance = IDeprecated::fromBinder(binder);
   return STATUS_OK;
 }
-bool IDeprecated::setDefaultImpl(const std::shared_ptr<IDeprecated>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IDeprecated::default_impl);
-  if (impl) {
-    IDeprecated::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<IDeprecated>& IDeprecated::getDefaultImpl() {
-  return IDeprecated::default_impl;
-}
-std::shared_ptr<IDeprecated> IDeprecated::default_impl = nullptr;
 ::ndk::SpAIBinder IDeprecatedDefault::asBinder() {
   return ::ndk::SpAIBinder();
 }

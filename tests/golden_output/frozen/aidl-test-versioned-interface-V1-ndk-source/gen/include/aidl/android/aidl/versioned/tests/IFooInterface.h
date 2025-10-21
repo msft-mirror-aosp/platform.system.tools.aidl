@@ -47,16 +47,12 @@ public:
   static std::shared_ptr<IFooInterface> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IFooInterface>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IFooInterface>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<IFooInterface>& impl);
-  static const std::shared_ptr<IFooInterface>& getDefaultImpl();
   virtual ::ndk::ScopedAStatus originalApi() = 0;
   virtual ::ndk::ScopedAStatus acceptUnionAndReturnString(const ::aidl::android::aidl::versioned::tests::BazUnion& in_u, std::string* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus ignoreParcelablesAndRepeatInt(const ::aidl::android::aidl::versioned::tests::Foo& in_inFoo, ::aidl::android::aidl::versioned::tests::Foo* in_inoutFoo, ::aidl::android::aidl::versioned::tests::Foo* out_outFoo, int32_t in_value, int32_t* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus returnsLengthOfFooArray(const std::vector<::aidl::android::aidl::versioned::tests::Foo>& in_foos, int32_t* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getInterfaceVersion(int32_t* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getInterfaceHash(std::string* _aidl_return) = 0;
-private:
-  static std::shared_ptr<IFooInterface> default_impl;
 };
 class IFooInterfaceDefault : public IFooInterface {
 public:
