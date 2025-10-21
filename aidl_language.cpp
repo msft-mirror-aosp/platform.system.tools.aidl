@@ -175,7 +175,6 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "JavaDerive",
        CONTEXT_TYPE_STRUCTURED_PARCELABLE | CONTEXT_TYPE_UNION | CONTEXT_TYPE_ENUM,
        {{"toString", kBooleanType}, {"equals", kBooleanType}}},
-      {AidlAnnotation::Type::JAVA_DEFAULT, "JavaDefault", CONTEXT_TYPE_INTERFACE, {}},
       {AidlAnnotation::Type::JAVA_DELEGATOR, "JavaDelegator", CONTEXT_TYPE_INTERFACE, {}},
       {AidlAnnotation::Type::JAVA_ONLY_IMMUTABLE,
        "JavaOnlyImmutable",
@@ -577,10 +576,6 @@ bool AidlAnnotatable::JavaDerive(const std::string& method) const {
     return annotation->ParamValue<bool>(method).value_or(false);
   }
   return false;
-}
-
-bool AidlAnnotatable::IsJavaDefault() const {
-  return GetAnnotation(annotations_, AidlAnnotation::Type::JAVA_DEFAULT);
 }
 
 bool AidlAnnotatable::IsJavaDelegator() const {

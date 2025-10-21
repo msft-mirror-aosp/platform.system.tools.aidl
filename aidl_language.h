@@ -369,7 +369,6 @@ class AidlAnnotatable : public AidlCommentable {
   bool IsFixedSize() const;
   bool IsStableApiParcelable(Options::Language lang) const;
   bool JavaDerive(const std::string& method) const;
-  bool IsJavaDefault() const;
   bool IsJavaDelegator() const;
   std::string GetDescriptor() const;
 
