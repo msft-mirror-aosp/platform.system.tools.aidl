@@ -216,7 +216,7 @@ static const std::map<std::string, uint32_t> codeNameToVersion = {
     {"Tiramisu", SDK_VERSION_Tiramisu},
     {"UpsideDownCake", SDK_VERSION_UpsideDownCake},
     {"VanillaIceCream", SDK_VERSION_VanillaIceCream},
-    {"Baklava", SDK_VERSION_current},
+    {"Baklava", SDK_VERSION_Baklava},
     // this is an alias for the latest in-development platform version
     {"current", SDK_VERSION_current},
     // this is an alias for use of all APIs, including those not in any API surface
