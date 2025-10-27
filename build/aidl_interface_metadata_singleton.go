@@ -35,7 +35,8 @@ var (
 			`echo "\"versions\": [${versions}]" && ` +
 			`echo '}' ` +
 			`;} >> ${out}`,
-		Description: "AIDL metadata: ${out}",
+		Description:     "AIDL metadata: ${out}",
+		SandboxDisabled: true,
 	}, "name", "stability", "types", "hashes", "has_development", "use_unfrozen", "versions")
 
 	joinJsonObjectsToArrayRule = pctx.StaticRule("joinJsonObjectsToArrayRule", blueprint.RuleParams{
@@ -50,7 +51,8 @@ var (
 			"done && " +
 			// Remove the last comma, replacing it with the closing bracket.
 			"sed -i '$$d' ${out} && echo ']' >> ${out}",
-		Description: "Joining JSON objects into array ${out}",
+		Description:     "Joining JSON objects into array ${out}",
+		SandboxDisabled: true,
 	}, "files")
 )
 

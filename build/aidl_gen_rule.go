@@ -31,8 +31,9 @@ import (
 
 var (
 	aidlDirPrepareRule = pctx.StaticRule("aidlDirPrepareRule", blueprint.RuleParams{
-		Command:     `mkdir -p "${outDir}" && touch ${out} # ${in}`,
-		Description: "create ${out}",
+		Command:         `mkdir -p "${outDir}" && touch ${out} # ${in}`,
+		Description:     "create ${out}",
+		SandboxDisabled: true,
 	}, "outDir")
 
 	aidlCppRule = pctx.StaticRule("aidlCppRule", blueprint.RuleParams{
@@ -46,37 +47,41 @@ var (
 			`( [ -z "${stagingHeaders}" ] || rsync --checksum ${stagingHeaders} ${fullHeaderDir} ) && ` +
 			`sed -i 's/\/gen\/staging\//\/gen\//g' ${out}.d && ` +
 			`rm ${outStagingFile} ${outStagingFile}.d ${stagingHeaders}`,
-		Depfile:     "${out}.d",
-		Deps:        blueprint.DepsGCC,
-		CommandDeps: []string{"${aidlCmd}"},
-		Restat:      true,
-		Description: "AIDL ${lang} ${in}",
+		Depfile:         "${out}.d",
+		Deps:            blueprint.DepsGCC,
+		CommandDeps:     []string{"${aidlCmd}"},
+		Restat:          true,
+		Description:     "AIDL ${lang} ${in}",
+		SandboxDisabled: true,
 	}, "imports", "nextImports", "lang", "headerDir", "outDir", "optionalFlags", "stagingHeaders", "outStagingFile",
 		"fullHeaderDir")
 
 	aidlJavaRule = pctx.StaticRule("aidlJavaRule", blueprint.RuleParams{
 		Command: `${aidlCmd} --lang=java ${optionalFlags} --ninja -d ${out}.d ` +
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
-		Depfile:     "${out}.d",
-		Deps:        blueprint.DepsGCC,
-		CommandDeps: []string{"${aidlCmd}"},
-		Restat:      true,
-		Description: "AIDL Java ${in}",
+		Depfile:         "${out}.d",
+		Deps:            blueprint.DepsGCC,
+		CommandDeps:     []string{"${aidlCmd}"},
+		Restat:          true,
+		Description:     "AIDL Java ${in}",
+		SandboxDisabled: true,
 	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlRustRule = pctx.StaticRule("aidlRustRule", blueprint.RuleParams{
 		Command: `${aidlCmd} --lang=rust ${optionalFlags} --ninja -d ${out}.d ` +
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
-		Depfile:     "${out}.d",
-		Deps:        blueprint.DepsGCC,
-		CommandDeps: []string{"${aidlCmd}"},
-		Restat:      true,
-		Description: "AIDL Rust ${in}",
+		Depfile:         "${out}.d",
+		Deps:            blueprint.DepsGCC,
+		CommandDeps:     []string{"${aidlCmd}"},
+		Restat:          true,
+		Description:     "AIDL Rust ${in}",
+		SandboxDisabled: true,
 	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlPhonyRule = pctx.StaticRule("aidlPhonyRule", blueprint.RuleParams{
-		Command:     `touch ${out}`,
-		Description: "create ${out}",
+		Command:         `touch ${out}`,
+		Description:     "create ${out}",
+		SandboxDisabled: true,
 	})
 )
 

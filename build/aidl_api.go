@@ -36,20 +36,23 @@ var (
 		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
 			`${aidlCmd} --dumpapi ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
 			`${aidlHashGen} ${outDir} ${latestVersion} ${hashFile}`,
-		CommandDeps: []string{"${aidlCmd}", "${aidlHashGen}"},
+		CommandDeps:     []string{"${aidlCmd}", "${aidlHashGen}"},
+		SandboxDisabled: true,
 	}, "optionalFlags", "imports", "outDir", "hashFile", "latestVersion")
 
 	aidlCheckApiRule = pctx.StaticRule("aidlCheckApiRule", blueprint.RuleParams{
 		Command: `(${aidlCmd} ${optionalFlags} --checkapi=${checkApiLevel} ${imports} ${old} ${new} && touch ${out}) || ` +
 			`(cat ${messageFile} && exit 1)`,
-		CommandDeps: []string{"${aidlCmd}"},
-		Description: "AIDL CHECK API: ${new} against ${old}",
+		CommandDeps:     []string{"${aidlCmd}"},
+		Description:     "AIDL CHECK API: ${new} against ${old}",
+		SandboxDisabled: true,
 	}, "optionalFlags", "imports", "old", "new", "messageFile", "checkApiLevel")
 
 	aidlVerifyHashRule = pctx.StaticRule("aidlVerifyHashRule", blueprint.RuleParams{
 		Command: `if [ $$(cd '${apiDir}' && { find ./ -name "*.aidl" -print0 | LC_ALL=C sort -z | xargs -0 sha1sum && echo ${version}; } | sha1sum | cut -d " " -f 1) = $$(tail -1 '${hashFile}') ]; then ` +
 			`touch ${out}; else cat '${messageFile}' && exit 1; fi`,
-		Description: "Verify ${apiDir} files have not been modified",
+		Description:     "Verify ${apiDir} files have not been modified",
+		SandboxDisabled: true,
 	}, "apiDir", "version", "messageFile", "hashFile")
 )
 
@@ -296,6 +299,7 @@ func (m *aidlInterface) makeApiDumpAsVersion(
 	moduleDir := android.PathForModuleSrc(ctx).String()
 	targetDir := filepath.Join(moduleDir, m.apiDir(), version)
 	rb := android.NewRuleBuilder(pctx, ctx)
+	rb.SandboxDisabled()
 	transitive := ctx.Config().IsEnvTrue("AIDL_TRANSITIVE_FREEZE")
 	if creatingNewVersion {
 		// We are asked to create a new version. But before doing that, check if the given
@@ -445,6 +449,7 @@ func (m *aidlInterface) checkEquality(ctx android.ModuleContext, oldDump apiDump
 	}
 	formattedMessageFile := android.PathForModuleOut(ctx, "message_check_equality.txt")
 	rb := android.NewRuleBuilder(pctx, ctx)
+	rb.SandboxDisabled()
 	rb.Command().Text("sed").Flag(" s/%s/" + m.ModuleBase.Name() + "/g ").Input(messageFile).Text(" > ").Output(formattedMessageFile)
 	rb.Build("format_message_"+m.ModuleBase.Name(), "")
 
@@ -502,6 +507,7 @@ func (m *aidlInterface) getLatestImportVersions(ctx android.ModuleContext) map[s
 func (m *aidlInterface) checkForDevelopment(ctx android.ModuleContext, latestVersionDump *apiDump, totDump apiDump) android.Path {
 	hasDevPath := android.PathForModuleOut(ctx, "has_development")
 	rb := android.NewRuleBuilder(pctx, ctx)
+	rb.SandboxDisabled()
 	rb.Command().Text("rm -f " + hasDevPath.String())
 	if latestVersionDump != nil {
 		current_imports := m.getImports(currentVersion)
@@ -604,6 +610,7 @@ func (m *aidlInterface) generateApiBuildActions(ctx android.ModuleContext) {
 		// The "current" directory might not exist, in case when the interface is first created.
 		// Instruct user to create one by executing `m <name>-update-api`.
 		rb := android.NewRuleBuilder(pctx, ctx)
+		rb.SandboxDisabled()
 		rb.Command().Text(fmt.Sprintf(`echo "API dump for the current version of AIDL interface %s does not exist."`, m.ModuleBase.Name()))
 		rb.Command().Text(fmt.Sprintf(`echo "Run the command \"m %s-update-api\" or add \"unstable: true\" to the build rule for the interface if it does not need to be versioned"`, m.ModuleBase.Name()))
 		// This file will never be created. Otherwise, the build will pass simply by running 'm; m'.

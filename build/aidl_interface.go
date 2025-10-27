@@ -1285,6 +1285,7 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 
 	preprocessed := android.PathForModuleOut(ctx, version, "preprocessed.aidl")
 	rb := android.NewRuleBuilder(pctx, ctx)
+	rb.SandboxDisabled()
 	srcs, root_dir := i.srcsForVersion(ctx, version)
 
 	if len(srcs) == 0 {
