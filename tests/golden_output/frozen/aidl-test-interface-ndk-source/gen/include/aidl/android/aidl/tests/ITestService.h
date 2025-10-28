@@ -127,10 +127,6 @@ public:
       static std::shared_ptr<IFoo> fromBinder(const ::ndk::SpAIBinder& binder);
       static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IFoo>& instance);
       static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IFoo>* instance);
-      static bool setDefaultImpl(const std::shared_ptr<IFoo>& impl);
-      static const std::shared_ptr<IFoo>& getDefaultImpl();
-    private:
-      static std::shared_ptr<IFoo> default_impl;
     };
     class IFooDefault : public IFoo {
     public:
@@ -349,11 +345,7 @@ public:
         static std::shared_ptr<INestedNoPrefixInterface> fromBinder(const ::ndk::SpAIBinder& binder);
         static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<INestedNoPrefixInterface>& instance);
         static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<INestedNoPrefixInterface>* instance);
-        static bool setDefaultImpl(const std::shared_ptr<INestedNoPrefixInterface>& impl);
-        static const std::shared_ptr<INestedNoPrefixInterface>& getDefaultImpl();
         virtual ::ndk::ScopedAStatus foo() = 0;
-      private:
-        static std::shared_ptr<INestedNoPrefixInterface> default_impl;
       };
       class INestedNoPrefixInterfaceDefault : public INestedNoPrefixInterface {
       public:
@@ -381,11 +373,7 @@ public:
       static std::shared_ptr<INoPrefixInterface> fromBinder(const ::ndk::SpAIBinder& binder);
       static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<INoPrefixInterface>& instance);
       static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<INoPrefixInterface>* instance);
-      static bool setDefaultImpl(const std::shared_ptr<INoPrefixInterface>& impl);
-      static const std::shared_ptr<INoPrefixInterface>& getDefaultImpl();
       virtual ::ndk::ScopedAStatus foo() = 0;
-    private:
-      static std::shared_ptr<INoPrefixInterface> default_impl;
     };
     class INoPrefixInterfaceDefault : public INoPrefixInterface {
     public:
@@ -640,8 +628,6 @@ public:
   static std::shared_ptr<ITestService> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<ITestService>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<ITestService>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<ITestService>& impl);
-  static const std::shared_ptr<ITestService>& getDefaultImpl();
   virtual ::ndk::ScopedAStatus UnimplementedMethod(int32_t in_arg, int32_t* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus Deprecated() __attribute__((deprecated("to make sure we have something in system/tools/aidl which does a compile check of deprecated and make sure this is reflected in goldens"))) = 0;
   virtual ::ndk::ScopedAStatus TestOneway() = 0;
@@ -713,8 +699,6 @@ public:
   virtual ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) = 0;
-private:
-  static std::shared_ptr<ITestService> default_impl;
 };
 class ITestServiceDefault : public ITestService {
 public:

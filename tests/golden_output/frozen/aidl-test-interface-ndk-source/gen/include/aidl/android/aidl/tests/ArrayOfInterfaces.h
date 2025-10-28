@@ -54,10 +54,6 @@ public:
     static std::shared_ptr<IEmptyInterface> fromBinder(const ::ndk::SpAIBinder& binder);
     static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IEmptyInterface>& instance);
     static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IEmptyInterface>* instance);
-    static bool setDefaultImpl(const std::shared_ptr<IEmptyInterface>& impl);
-    static const std::shared_ptr<IEmptyInterface>& getDefaultImpl();
-  private:
-    static std::shared_ptr<IEmptyInterface> default_impl;
   };
   class IEmptyInterfaceDefault : public IEmptyInterface {
   public:
@@ -92,11 +88,7 @@ public:
     static std::shared_ptr<IMyInterface> fromBinder(const ::ndk::SpAIBinder& binder);
     static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IMyInterface>& instance);
     static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IMyInterface>* instance);
-    static bool setDefaultImpl(const std::shared_ptr<IMyInterface>& impl);
-    static const std::shared_ptr<IMyInterface>& getDefaultImpl();
     virtual ::ndk::ScopedAStatus methodWithInterfaces(const std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& in_iface, const std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& in_nullable_iface, const std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>& in_iface_array_in, std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* out_iface_array_out, std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* in_iface_array_inout, const std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>& in_nullable_iface_array_in, std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* out_nullable_iface_array_out, std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* in_nullable_iface_array_inout, std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* _aidl_return) = 0;
-  private:
-    static std::shared_ptr<IMyInterface> default_impl;
   };
   class IMyInterfaceDefault : public IMyInterface {
   public:

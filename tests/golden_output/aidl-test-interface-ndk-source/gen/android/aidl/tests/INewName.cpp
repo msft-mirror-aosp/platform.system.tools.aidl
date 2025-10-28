@@ -73,10 +73,6 @@ BpNewName::~BpNewName() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INewName::getDefaultImpl()) {
-    _aidl_status = INewName::getDefaultImpl()->RealName(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -135,21 +131,6 @@ binder_status_t INewName::readFromParcel(const AParcel* parcel, std::shared_ptr<
   *instance = INewName::fromBinder(binder);
   return STATUS_OK;
 }
-bool INewName::setDefaultImpl(const std::shared_ptr<INewName>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!INewName::default_impl);
-  if (impl) {
-    INewName::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<INewName>& INewName::getDefaultImpl() {
-  return INewName::default_impl;
-}
-std::shared_ptr<INewName> INewName::default_impl = nullptr;
 ::ndk::ScopedAStatus INewNameDefault::RealName(std::string* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

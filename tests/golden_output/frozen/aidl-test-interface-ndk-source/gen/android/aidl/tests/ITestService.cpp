@@ -1520,10 +1520,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->UnimplementedMethod(in_arg, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1558,10 +1554,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->Deprecated();
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1593,15 +1585,10 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->TestOneway();
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_error:
   _aidl_status.set(AStatus_fromStatus(_aidl_ret_status));
-  _aidl_status_return:
   return _aidl_status;
 }
 ::ndk::ScopedAStatus BpTestService::RepeatBoolean(bool in_token, bool* _aidl_return) {
@@ -1627,10 +1614,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatBoolean(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1668,10 +1651,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatByte(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1709,10 +1688,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatChar(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1750,10 +1725,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatInt(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1791,10 +1762,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatLong(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1832,10 +1799,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatFloat(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1873,10 +1836,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatDouble(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1914,10 +1873,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatString(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1955,10 +1910,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatByteEnum(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1996,10 +1947,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatIntEnum(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2037,10 +1984,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatLongEnum(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2081,10 +2024,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseBoolean(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2128,10 +2067,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseByte(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2175,10 +2110,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseChar(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2222,10 +2153,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseInt(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2269,10 +2196,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseLong(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2316,10 +2239,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseFloat(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2363,10 +2282,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseDouble(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2410,10 +2325,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseString(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2457,10 +2368,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseByteEnum(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2504,10 +2411,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseIntEnum(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2551,10 +2454,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseLongEnum(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2595,10 +2494,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetOtherTestService(in_name, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2639,10 +2534,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->SetOtherTestService(in_name, in_service, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2683,10 +2574,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->VerifyName(in_service, in_name, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2724,10 +2611,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetInterfaceArray(in_names, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2768,10 +2651,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->VerifyNamesWithInterfaceArray(in_services, in_names, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2809,10 +2688,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetNullableInterfaceArray(in_names, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2853,10 +2728,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->VerifyNamesWithNullableInterfaceArray(in_services, in_names, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2894,10 +2765,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetInterfaceList(in_names, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2938,10 +2805,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->VerifyNamesWithInterfaceList(in_services, in_names, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -2979,10 +2842,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseStringList(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3023,10 +2882,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatParcelFileDescriptor(in_read, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3067,10 +2922,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseParcelFileDescriptorArray(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3111,10 +2962,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ThrowServiceException(in_code);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3149,10 +2996,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableIntArray(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3190,10 +3033,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableByteEnumArray(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3231,10 +3070,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableIntEnumArray(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3272,10 +3107,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableLongEnumArray(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3313,10 +3144,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableString(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3354,10 +3181,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableStringList(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3395,10 +3218,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableParcelable(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3436,10 +3255,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableParcelableArray(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3477,10 +3292,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableParcelableList(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3518,10 +3329,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->TakesAnIBinder(in_input);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3556,10 +3363,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->TakesANullableIBinder(in_input);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3594,10 +3397,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->TakesAnIBinderList(in_input);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3632,10 +3431,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->TakesANullableIBinderList(in_input);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3670,10 +3465,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatUtf8CppString(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3711,10 +3502,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatNullableUtf8CppString(in_token, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3755,10 +3542,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseUtf8CppString(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3802,10 +3585,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseNullableUtf8CppString(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3846,10 +3625,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseUtf8CppStringList(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3890,10 +3665,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetCallback(in_return_null, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3931,10 +3702,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->FillOutStructuredParcelable(in_parcel);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -3972,10 +3739,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatExtendableParcelable(in_ep, out_ep2);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4013,10 +3776,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatExtendableParcelableVintf(in_ep, out_ep2);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4054,10 +3813,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseList(in_list, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4098,10 +3853,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseIBinderArray(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4145,10 +3896,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseNullableIBinderArray(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4189,10 +3936,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->RepeatSimpleParcelable(in_input, out_repeat, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4236,10 +3979,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->ReverseSimpleParcelables(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4277,10 +4016,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetOldNameInterface(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4315,10 +4050,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetNewNameInterface(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4356,10 +4087,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetUnionTags(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4394,10 +4121,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetCppJavaTests(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4432,10 +4155,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->getBackendType(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4470,10 +4189,6 @@ BpTestService::~BpTestService() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITestService::getDefaultImpl()) {
-    _aidl_status = ITestService::getDefaultImpl()->GetCircular(out_cp, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -4538,21 +4253,6 @@ binder_status_t ITestService::readFromParcel(const AParcel* parcel, std::shared_
   *instance = ITestService::fromBinder(binder);
   return STATUS_OK;
 }
-bool ITestService::setDefaultImpl(const std::shared_ptr<ITestService>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!ITestService::default_impl);
-  if (impl) {
-    ITestService::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ITestService>& ITestService::getDefaultImpl() {
-  return ITestService::default_impl;
-}
-std::shared_ptr<ITestService> ITestService::default_impl = nullptr;
 ::ndk::ScopedAStatus ITestServiceDefault::UnimplementedMethod(int32_t /*in_arg*/, int32_t* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
@@ -5233,21 +4933,6 @@ binder_status_t ITestService::CompilerChecks::IFoo::readFromParcel(const AParcel
   *instance = IFoo::fromBinder(binder);
   return STATUS_OK;
 }
-bool ITestService::CompilerChecks::IFoo::setDefaultImpl(const std::shared_ptr<IFoo>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IFoo::default_impl);
-  if (impl) {
-    IFoo::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ITestService::CompilerChecks::IFoo>& ITestService::CompilerChecks::IFoo::getDefaultImpl() {
-  return IFoo::default_impl;
-}
-std::shared_ptr<ITestService::CompilerChecks::IFoo> ITestService::CompilerChecks::IFoo::default_impl = nullptr;
 ::ndk::SpAIBinder ITestService::CompilerChecks::IFooDefault::asBinder() {
   return ::ndk::SpAIBinder();
 }
@@ -5408,10 +5093,6 @@ ITestService::CompilerChecks::BpNoPrefixInterface::~BpNoPrefixInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INoPrefixInterface::getDefaultImpl()) {
-    _aidl_status = INoPrefixInterface::getDefaultImpl()->foo();
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -5467,21 +5148,6 @@ binder_status_t ITestService::CompilerChecks::INoPrefixInterface::readFromParcel
   *instance = INoPrefixInterface::fromBinder(binder);
   return STATUS_OK;
 }
-bool ITestService::CompilerChecks::INoPrefixInterface::setDefaultImpl(const std::shared_ptr<INoPrefixInterface>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!INoPrefixInterface::default_impl);
-  if (impl) {
-    INoPrefixInterface::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface>& ITestService::CompilerChecks::INoPrefixInterface::getDefaultImpl() {
-  return INoPrefixInterface::default_impl;
-}
-std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::default_impl = nullptr;
 ::ndk::ScopedAStatus ITestService::CompilerChecks::INoPrefixInterfaceDefault::foo() {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
@@ -5586,10 +5252,6 @@ ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::~Bp
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && INestedNoPrefixInterface::getDefaultImpl()) {
-    _aidl_status = INestedNoPrefixInterface::getDefaultImpl()->foo();
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -5645,21 +5307,6 @@ binder_status_t ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefi
   *instance = INestedNoPrefixInterface::fromBinder(binder);
   return STATUS_OK;
 }
-bool ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::setDefaultImpl(const std::shared_ptr<INestedNoPrefixInterface>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!INestedNoPrefixInterface::default_impl);
-  if (impl) {
-    INestedNoPrefixInterface::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface>& ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::getDefaultImpl() {
-  return INestedNoPrefixInterface::default_impl;
-}
-std::shared_ptr<ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface> ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterface::default_impl = nullptr;
 ::ndk::ScopedAStatus ITestService::CompilerChecks::INoPrefixInterface::INestedNoPrefixInterfaceDefault::foo() {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

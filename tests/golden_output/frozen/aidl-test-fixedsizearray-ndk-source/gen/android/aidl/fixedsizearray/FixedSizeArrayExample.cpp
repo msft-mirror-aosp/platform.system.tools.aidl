@@ -828,10 +828,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->RepeatBytes(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -871,10 +867,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->RepeatInts(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -914,10 +906,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->RepeatBinders(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -957,10 +945,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->RepeatParcelables(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1000,10 +984,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dBytes(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1043,10 +1023,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dInts(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1086,10 +1062,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dBinders(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1129,10 +1101,6 @@ FixedSizeArrayExample::BpRepeatFixedSizeArray::~BpRepeatFixedSizeArray() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IRepeatFixedSizeArray::getDefaultImpl()) {
-    _aidl_status = IRepeatFixedSizeArray::getDefaultImpl()->Repeat2dParcelables(in_input, out_repeated, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1194,21 +1162,6 @@ binder_status_t FixedSizeArrayExample::IRepeatFixedSizeArray::readFromParcel(con
   *instance = IRepeatFixedSizeArray::fromBinder(binder);
   return STATUS_OK;
 }
-bool FixedSizeArrayExample::IRepeatFixedSizeArray::setDefaultImpl(const std::shared_ptr<IRepeatFixedSizeArray>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IRepeatFixedSizeArray::default_impl);
-  if (impl) {
-    IRepeatFixedSizeArray::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<FixedSizeArrayExample::IRepeatFixedSizeArray>& FixedSizeArrayExample::IRepeatFixedSizeArray::getDefaultImpl() {
-  return IRepeatFixedSizeArray::default_impl;
-}
-std::shared_ptr<FixedSizeArrayExample::IRepeatFixedSizeArray> FixedSizeArrayExample::IRepeatFixedSizeArray::default_impl = nullptr;
 ::ndk::ScopedAStatus FixedSizeArrayExample::IRepeatFixedSizeArrayDefault::RepeatBytes(const std::array<uint8_t, 3>& /*in_input*/, std::array<uint8_t, 3>* /*out_repeated*/, std::array<uint8_t, 3>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
@@ -1369,21 +1322,6 @@ binder_status_t FixedSizeArrayExample::IEmptyInterface::readFromParcel(const APa
   *instance = IEmptyInterface::fromBinder(binder);
   return STATUS_OK;
 }
-bool FixedSizeArrayExample::IEmptyInterface::setDefaultImpl(const std::shared_ptr<IEmptyInterface>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IEmptyInterface::default_impl);
-  if (impl) {
-    IEmptyInterface::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<FixedSizeArrayExample::IEmptyInterface>& FixedSizeArrayExample::IEmptyInterface::getDefaultImpl() {
-  return IEmptyInterface::default_impl;
-}
-std::shared_ptr<FixedSizeArrayExample::IEmptyInterface> FixedSizeArrayExample::IEmptyInterface::default_impl = nullptr;
 ::ndk::SpAIBinder FixedSizeArrayExample::IEmptyInterfaceDefault::asBinder() {
   return ::ndk::SpAIBinder();
 }

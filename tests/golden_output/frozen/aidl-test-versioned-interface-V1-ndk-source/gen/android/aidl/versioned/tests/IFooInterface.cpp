@@ -170,10 +170,6 @@ BpFooInterface::~BpFooInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
-    _aidl_status = IFooInterface::getDefaultImpl()->originalApi();
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -207,10 +203,6 @@ BpFooInterface::~BpFooInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
-    _aidl_status = IFooInterface::getDefaultImpl()->acceptUnionAndReturnString(in_u, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -253,10 +245,6 @@ BpFooInterface::~BpFooInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
-    _aidl_status = IFooInterface::getDefaultImpl()->ignoreParcelablesAndRepeatInt(in_inFoo, in_inoutFoo, out_outFoo, in_value, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -299,10 +287,6 @@ BpFooInterface::~BpFooInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
-    _aidl_status = IFooInterface::getDefaultImpl()->returnsLengthOfFooArray(in_foos, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -341,10 +325,6 @@ BpFooInterface::~BpFooInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
-    _aidl_status = IFooInterface::getDefaultImpl()->getInterfaceVersion(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -385,10 +365,6 @@ BpFooInterface::~BpFooInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IFooInterface::getDefaultImpl()) {
-    _aidl_status = IFooInterface::getDefaultImpl()->getInterfaceHash(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -456,21 +432,6 @@ binder_status_t IFooInterface::readFromParcel(const AParcel* parcel, std::shared
   *instance = IFooInterface::fromBinder(binder);
   return STATUS_OK;
 }
-bool IFooInterface::setDefaultImpl(const std::shared_ptr<IFooInterface>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IFooInterface::default_impl);
-  if (impl) {
-    IFooInterface::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<IFooInterface>& IFooInterface::getDefaultImpl() {
-  return IFooInterface::default_impl;
-}
-std::shared_ptr<IFooInterface> IFooInterface::default_impl = nullptr;
 ::ndk::ScopedAStatus IFooInterfaceDefault::originalApi() {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

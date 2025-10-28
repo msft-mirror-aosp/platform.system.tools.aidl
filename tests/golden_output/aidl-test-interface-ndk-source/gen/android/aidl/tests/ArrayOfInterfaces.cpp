@@ -113,21 +113,6 @@ binder_status_t ArrayOfInterfaces::IEmptyInterface::readFromParcel(const AParcel
   *instance = IEmptyInterface::fromBinder(binder);
   return STATUS_OK;
 }
-bool ArrayOfInterfaces::IEmptyInterface::setDefaultImpl(const std::shared_ptr<IEmptyInterface>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IEmptyInterface::default_impl);
-  if (impl) {
-    IEmptyInterface::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ArrayOfInterfaces::IEmptyInterface>& ArrayOfInterfaces::IEmptyInterface::getDefaultImpl() {
-  return IEmptyInterface::default_impl;
-}
-std::shared_ptr<ArrayOfInterfaces::IEmptyInterface> ArrayOfInterfaces::IEmptyInterface::default_impl = nullptr;
 ::ndk::SpAIBinder ArrayOfInterfaces::IEmptyInterfaceDefault::asBinder() {
   return ::ndk::SpAIBinder();
 }
@@ -264,10 +249,6 @@ ArrayOfInterfaces::BpMyInterface::~BpMyInterface() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyInterface::getDefaultImpl()) {
-    _aidl_status = IMyInterface::getDefaultImpl()->methodWithInterfaces(in_iface, in_nullable_iface, in_iface_array_in, out_iface_array_out, in_iface_array_inout, in_nullable_iface_array_in, out_nullable_iface_array_out, in_nullable_iface_array_inout, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -338,21 +319,6 @@ binder_status_t ArrayOfInterfaces::IMyInterface::readFromParcel(const AParcel* p
   *instance = IMyInterface::fromBinder(binder);
   return STATUS_OK;
 }
-bool ArrayOfInterfaces::IMyInterface::setDefaultImpl(const std::shared_ptr<IMyInterface>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IMyInterface::default_impl);
-  if (impl) {
-    IMyInterface::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ArrayOfInterfaces::IMyInterface>& ArrayOfInterfaces::IMyInterface::getDefaultImpl() {
-  return IMyInterface::default_impl;
-}
-std::shared_ptr<ArrayOfInterfaces::IMyInterface> ArrayOfInterfaces::IMyInterface::default_impl = nullptr;
 ::ndk::ScopedAStatus ArrayOfInterfaces::IMyInterfaceDefault::methodWithInterfaces(const std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& /*in_iface*/, const std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>& /*in_nullable_iface*/, const std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>& /*in_iface_array_in*/, std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* /*out_iface_array_out*/, std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>* /*in_iface_array_inout*/, const std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>& /*in_nullable_iface_array_in*/, std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* /*out_nullable_iface_array_out*/, std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* /*in_nullable_iface_array_inout*/, std::optional<std::vector<std::shared_ptr<::aidl::android::aidl::tests::ArrayOfInterfaces::IEmptyInterface>>>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

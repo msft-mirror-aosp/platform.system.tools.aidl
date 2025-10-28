@@ -36,11 +36,7 @@ public:
   static std::shared_ptr<INewName> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<INewName>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<INewName>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<INewName>& impl);
-  static const std::shared_ptr<INewName>& getDefaultImpl();
   virtual ::ndk::ScopedAStatus RealName(std::string* _aidl_return) = 0;
-private:
-  static std::shared_ptr<INewName> default_impl;
 };
 class INewNameDefault : public INewName {
 public:

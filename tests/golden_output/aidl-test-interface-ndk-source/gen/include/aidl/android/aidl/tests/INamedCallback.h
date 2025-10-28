@@ -36,11 +36,7 @@ public:
   static std::shared_ptr<INamedCallback> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<INamedCallback>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<INamedCallback>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<INamedCallback>& impl);
-  static const std::shared_ptr<INamedCallback>& getDefaultImpl();
   virtual ::ndk::ScopedAStatus GetName(std::string* _aidl_return) = 0;
-private:
-  static std::shared_ptr<INamedCallback> default_impl;
 };
 class INamedCallbackDefault : public INamedCallback {
 public:
