@@ -27,12 +27,6 @@ declare_binder_interface! {
 #[deprecated = "test"]
 pub trait IDeprecated: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.IDeprecated" }
-  fn getDefaultImpl() -> IDeprecatedDefaultRef where Self: Sized {
-    DEFAULT_IMPL.lock().unwrap().clone()
-  }
-  fn setDefaultImpl(d: IDeprecatedDefaultRef) -> IDeprecatedDefaultRef where Self: Sized {
-    std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IDeprecatedAsyncServer + Send + Sync)> {
     None
   }
@@ -87,12 +81,8 @@ impl BnDeprecated {
     }
   }
 }
-pub trait IDeprecatedDefault: Send + Sync {
-}
 pub mod transactions {
 }
-pub type IDeprecatedDefaultRef = Option<std::sync::Arc<dyn IDeprecatedDefault>>;
-static DEFAULT_IMPL: std::sync::Mutex<IDeprecatedDefaultRef> = std::sync::Mutex::new(None);
 impl BpDeprecated {
 }
 impl IDeprecated for BpDeprecated {

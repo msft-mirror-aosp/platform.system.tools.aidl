@@ -32,12 +32,6 @@ pub trait INestedService: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.nested.INestedService" }
   fn r#flipStatus<'a, 'l1, >(&'a self, _arg_p: &'l1 crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result>;
   fn r#flipStatusWithCallback<'a, 'l1, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>) -> binder::Result<()>;
-  fn getDefaultImpl() -> INestedServiceDefaultRef where Self: Sized {
-    DEFAULT_IMPL.lock().unwrap().clone()
-  }
-  fn setDefaultImpl(d: INestedServiceDefaultRef) -> INestedServiceDefaultRef where Self: Sized {
-    std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INestedServiceAsyncServer + Send + Sync)> {
     None
   }
@@ -106,20 +100,10 @@ impl BnNestedService {
     }
   }
 }
-pub trait INestedServiceDefault: Send + Sync {
-  fn r#flipStatus<'a, 'l1, >(&'a self, _arg_p: &'l1 crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#flipStatusWithCallback<'a, 'l1, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-}
 pub mod transactions {
   pub const r#flipStatus: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
   pub const r#flipStatusWithCallback: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
 }
-pub type INestedServiceDefaultRef = Option<std::sync::Arc<dyn INestedServiceDefault>>;
-static DEFAULT_IMPL: std::sync::Mutex<INestedServiceDefaultRef> = std::sync::Mutex::new(None);
 impl BpNestedService {
   fn build_parcel_flipStatus(&self, _arg_p: &crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
@@ -127,11 +111,6 @@ impl BpNestedService {
     Ok(aidl_data)
   }
   fn read_response_flipStatus(&self, _arg_p: &crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as INestedService>::getDefaultImpl() {
-        return _aidl_default_impl.r#flipStatus(_arg_p);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -145,11 +124,6 @@ impl BpNestedService {
     Ok(aidl_data)
   }
   fn read_response_flipStatusWithCallback(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as INestedService>::getDefaultImpl() {
-        return _aidl_default_impl.r#flipStatusWithCallback(_arg_status, _arg_cb);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -286,12 +260,6 @@ pub mod r#ICallback {
   pub trait ICallback: binder::Interface + Send {
     fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.nested.INestedService.ICallback" }
     fn r#done<'a, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::Result<()>;
-    fn getDefaultImpl() -> ICallbackDefaultRef where Self: Sized {
-      DEFAULT_IMPL.lock().unwrap().clone()
-    }
-    fn setDefaultImpl(d: ICallbackDefaultRef) -> ICallbackDefaultRef where Self: Sized {
-      std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-    }
     fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ICallbackAsyncServer + Send + Sync)> {
       None
     }
@@ -352,16 +320,9 @@ pub mod r#ICallback {
       }
     }
   }
-  pub trait ICallbackDefault: Send + Sync {
-    fn r#done<'a, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::Result<()> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-  }
   pub mod transactions {
     pub const r#done: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
   }
-  pub type ICallbackDefaultRef = Option<std::sync::Arc<dyn ICallbackDefault>>;
-  static DEFAULT_IMPL: std::sync::Mutex<ICallbackDefaultRef> = std::sync::Mutex::new(None);
   impl BpCallback {
     fn build_parcel_done(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::Result<binder::binder_impl::Parcel> {
       let mut aidl_data = self.binder.prepare_transact()?;
@@ -369,11 +330,6 @@ pub mod r#ICallback {
       Ok(aidl_data)
     }
     fn read_response_done(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as ICallback>::getDefaultImpl() {
-          return _aidl_default_impl.r#done(_arg_status);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }

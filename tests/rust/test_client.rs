@@ -29,7 +29,7 @@ use aidl_test_interface::aidl::android::aidl::tests::unions::EnumUnion::EnumUnio
 use aidl_test_interface::aidl::android::aidl::tests::INewName::{self, BpNewName};
 use aidl_test_interface::aidl::android::aidl::tests::IOldName::{self, BpOldName};
 use aidl_test_interface::aidl::android::aidl::tests::ITestService::{
-    self, BpTestService, Empty::Empty, ITestServiceDefault, ITestServiceDefaultRef,
+    self, BpTestService, Empty::Empty,
 };
 use aidl_test_interface::aidl::android::aidl::tests::{
     extension::ExtendableParcelable::ExtendableParcelable, extension::MyExt::MyExt,
@@ -994,30 +994,6 @@ fn test_get_union_tags() {
 fn test_unions() {
     assert_eq!(Union::Union::default(), Union::Union::Ns(vec![]));
     assert_eq!(EnumUnion::default(), EnumUnion::IntEnum(IntEnum::FOO));
-}
-
-const EXPECTED_ARG_VALUE: i32 = 100;
-const EXPECTED_RETURN_VALUE: i32 = 200;
-
-struct TestDefaultImpl;
-
-impl binder::Interface for TestDefaultImpl {}
-
-impl ITestServiceDefault for TestDefaultImpl {
-    fn UnimplementedMethod(&self, arg: i32) -> binder::Result<i32> {
-        assert_eq!(arg, EXPECTED_ARG_VALUE);
-        Ok(EXPECTED_RETURN_VALUE)
-    }
-}
-
-#[test]
-fn test_default_impl() {
-    let service = get_test_service();
-    let di: ITestServiceDefaultRef = Some(Arc::new(TestDefaultImpl));
-    <BpTestService as ITestService::ITestService>::setDefaultImpl(di);
-
-    let result = service.UnimplementedMethod(EXPECTED_ARG_VALUE);
-    assert_eq!(result, Ok(EXPECTED_RETURN_VALUE));
 }
 
 #[test]

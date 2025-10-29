@@ -401,12 +401,6 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#Repeat2dInts<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[i32; 3]; 2], _arg_repeated: &'l2 mut [[i32; 3]; 2]) -> binder::Result<[[i32; 3]; 2]>;
     fn r#Repeat2dBinders<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[binder::SpIBinder; 3]; 2], _arg_repeated: &'l2 mut [[Option<binder::SpIBinder>; 3]; 2]) -> binder::Result<[[binder::SpIBinder; 3]; 2]>;
     fn r#Repeat2dParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &'l2 mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]>;
-    fn getDefaultImpl() -> IRepeatFixedSizeArrayDefaultRef where Self: Sized {
-      DEFAULT_IMPL.lock().unwrap().clone()
-    }
-    fn setDefaultImpl(d: IRepeatFixedSizeArrayDefaultRef) -> IRepeatFixedSizeArrayDefaultRef where Self: Sized {
-      std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-    }
     fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IRepeatFixedSizeArrayAsyncServer + Send + Sync)> {
       None
     }
@@ -523,32 +517,6 @@ pub mod r#IRepeatFixedSizeArray {
       }
     }
   }
-  pub trait IRepeatFixedSizeArrayDefault: Send + Sync {
-    fn r#RepeatBytes<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [u8; 3], _arg_repeated: &'l2 mut [u8; 3]) -> binder::Result<[u8; 3]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#RepeatInts<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [i32; 3], _arg_repeated: &'l2 mut [i32; 3]) -> binder::Result<[i32; 3]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#RepeatBinders<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [binder::SpIBinder; 3], _arg_repeated: &'l2 mut [Option<binder::SpIBinder>; 3]) -> binder::Result<[binder::SpIBinder; 3]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#RepeatParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _arg_repeated: &'l2 mut [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]) -> binder::Result<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#Repeat2dBytes<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[u8; 3]; 2], _arg_repeated: &'l2 mut [[u8; 3]; 2]) -> binder::Result<[[u8; 3]; 2]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#Repeat2dInts<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[i32; 3]; 2], _arg_repeated: &'l2 mut [[i32; 3]; 2]) -> binder::Result<[[i32; 3]; 2]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#Repeat2dBinders<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[binder::SpIBinder; 3]; 2], _arg_repeated: &'l2 mut [[Option<binder::SpIBinder>; 3]; 2]) -> binder::Result<[[binder::SpIBinder; 3]; 2]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#Repeat2dParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &'l2 mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-  }
   pub mod transactions {
     pub const r#RepeatBytes: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
     pub const r#RepeatInts: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
@@ -559,8 +527,6 @@ pub mod r#IRepeatFixedSizeArray {
     pub const r#Repeat2dBinders: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 6;
     pub const r#Repeat2dParcelables: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 7;
   }
-  pub type IRepeatFixedSizeArrayDefaultRef = Option<std::sync::Arc<dyn IRepeatFixedSizeArrayDefault>>;
-  static DEFAULT_IMPL: std::sync::Mutex<IRepeatFixedSizeArrayDefaultRef> = std::sync::Mutex::new(None);
   impl BpRepeatFixedSizeArray {
     fn build_parcel_RepeatBytes(&self, _arg_input: &[u8; 3], _arg_repeated: &mut [u8; 3]) -> binder::Result<binder::binder_impl::Parcel> {
       let mut aidl_data = self.binder.prepare_transact()?;
@@ -568,11 +534,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_RepeatBytes(&self, _arg_input: &[u8; 3], _arg_repeated: &mut [u8; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[u8; 3]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#RepeatBytes(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -586,11 +547,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_RepeatInts(&self, _arg_input: &[i32; 3], _arg_repeated: &mut [i32; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[i32; 3]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#RepeatInts(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -604,11 +560,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_RepeatBinders(&self, _arg_input: &[binder::SpIBinder; 3], _arg_repeated: &mut [Option<binder::SpIBinder>; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[binder::SpIBinder; 3]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#RepeatBinders(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -622,11 +573,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_RepeatParcelables(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _arg_repeated: &mut [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#RepeatParcelables(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -640,11 +586,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_Repeat2dBytes(&self, _arg_input: &[[u8; 3]; 2], _arg_repeated: &mut [[u8; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[u8; 3]; 2]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#Repeat2dBytes(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -658,11 +599,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_Repeat2dInts(&self, _arg_input: &[[i32; 3]; 2], _arg_repeated: &mut [[i32; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[i32; 3]; 2]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#Repeat2dInts(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -676,11 +612,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_Repeat2dBinders(&self, _arg_input: &[[binder::SpIBinder; 3]; 2], _arg_repeated: &mut [[Option<binder::SpIBinder>; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[binder::SpIBinder; 3]; 2]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#Repeat2dBinders(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -694,11 +625,6 @@ pub mod r#IRepeatFixedSizeArray {
       Ok(aidl_data)
     }
     fn read_response_Repeat2dParcelables(&self, _arg_input: &[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IRepeatFixedSizeArray>::getDefaultImpl() {
-          return _aidl_default_impl.r#Repeat2dParcelables(_arg_input, _arg_repeated);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1066,12 +992,6 @@ pub mod r#IEmptyInterface {
   }
   pub trait IEmptyInterface: binder::Interface + Send {
     fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.fixedsizearray.FixedSizeArrayExample.IEmptyInterface" }
-    fn getDefaultImpl() -> IEmptyInterfaceDefaultRef where Self: Sized {
-      DEFAULT_IMPL.lock().unwrap().clone()
-    }
-    fn setDefaultImpl(d: IEmptyInterfaceDefaultRef) -> IEmptyInterfaceDefaultRef where Self: Sized {
-      std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-    }
     fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IEmptyInterfaceAsyncServer + Send + Sync)> {
       None
     }
@@ -1124,12 +1044,8 @@ pub mod r#IEmptyInterface {
       }
     }
   }
-  pub trait IEmptyInterfaceDefault: Send + Sync {
-  }
   pub mod transactions {
   }
-  pub type IEmptyInterfaceDefaultRef = Option<std::sync::Arc<dyn IEmptyInterfaceDefault>>;
-  static DEFAULT_IMPL: std::sync::Mutex<IEmptyInterfaceDefaultRef> = std::sync::Mutex::new(None);
   impl BpEmptyInterface {
   }
   impl IEmptyInterface for BpEmptyInterface {

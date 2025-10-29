@@ -171,12 +171,6 @@ pub trait ITestService: binder::Interface + Send {
   fn r#GetCppJavaTests<'a, >(&'a self) -> binder::Result<Option<binder::SpIBinder>>;
   fn r#getBackendType<'a, >(&'a self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType>;
   fn r#GetCircular<'a, 'l1, >(&'a self, _arg_cp: &'l1 mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>;
-  fn getDefaultImpl() -> ITestServiceDefaultRef where Self: Sized {
-    DEFAULT_IMPL.lock().unwrap().clone()
-  }
-  fn setDefaultImpl(d: ITestServiceDefaultRef) -> ITestServiceDefaultRef where Self: Sized {
-    std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ITestServiceAsyncServer + Send + Sync)> {
     None
   }
@@ -799,221 +793,6 @@ impl BnTestService {
     }
   }
 }
-pub trait ITestServiceDefault: Send + Sync {
-  fn r#UnimplementedMethod<'a, >(&'a self, _arg_arg: i32) -> binder::Result<i32> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#Deprecated<'a, >(&'a self) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#TestOneway<'a, >(&'a self) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatBoolean<'a, >(&'a self, _arg_token: bool) -> binder::Result<bool> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatByte<'a, >(&'a self, _arg_token: i8) -> binder::Result<i8> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatChar<'a, >(&'a self, _arg_token: u16) -> binder::Result<u16> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatInt<'a, >(&'a self, _arg_token: i32) -> binder::Result<i32> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatLong<'a, >(&'a self, _arg_token: i64) -> binder::Result<i64> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatFloat<'a, >(&'a self, _arg_token: f32) -> binder::Result<f32> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatDouble<'a, >(&'a self, _arg_token: f64) -> binder::Result<f64> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatString<'a, 'l1, >(&'a self, _arg_token: &'l1 str) -> binder::Result<String> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatByteEnum<'a, >(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatIntEnum<'a, >(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatLongEnum<'a, >(&'a self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseBoolean<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [bool], _arg_repeated: &'l2 mut Vec<bool>) -> binder::Result<Vec<bool>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseByte<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [u8], _arg_repeated: &'l2 mut Vec<u8>) -> binder::Result<Vec<u8>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseChar<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [u16], _arg_repeated: &'l2 mut Vec<u16>) -> binder::Result<Vec<u16>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseInt<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [i32], _arg_repeated: &'l2 mut Vec<i32>) -> binder::Result<Vec<i32>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseLong<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [i64], _arg_repeated: &'l2 mut Vec<i64>) -> binder::Result<Vec<i64>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseFloat<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [f32], _arg_repeated: &'l2 mut Vec<f32>) -> binder::Result<Vec<f32>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseDouble<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [f64], _arg_repeated: &'l2 mut Vec<f64>) -> binder::Result<Vec<f64>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseString<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [String], _arg_repeated: &'l2 mut Vec<String>) -> binder::Result<Vec<String>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseByteEnum<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum], _arg_repeated: &'l2 mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseIntEnum<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum], _arg_repeated: &'l2 mut Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseLongEnum<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum], _arg_repeated: &'l2 mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetOtherTestService<'a, 'l1, >(&'a self, _arg_name: &'l1 str) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#SetOtherTestService<'a, 'l1, 'l2, >(&'a self, _arg_name: &'l1 str, _arg_service: &'l2 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>) -> binder::Result<bool> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#VerifyName<'a, 'l1, 'l2, >(&'a self, _arg_service: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>, _arg_name: &'l2 str) -> binder::Result<bool> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetInterfaceArray<'a, 'l1, >(&'a self, _arg_names: &'l1 [String]) -> binder::Result<Vec<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#VerifyNamesWithInterfaceArray<'a, 'l1, 'l2, >(&'a self, _arg_services: &'l1 [binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>], _arg_names: &'l2 [String]) -> binder::Result<bool> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetNullableInterfaceArray<'a, 'l1, >(&'a self, _arg_names: Option<&'l1 [Option<String>]>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#VerifyNamesWithNullableInterfaceArray<'a, 'l1, 'l2, >(&'a self, _arg_services: Option<&'l1 [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&'l2 [Option<String>]>) -> binder::Result<bool> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetInterfaceList<'a, 'l1, >(&'a self, _arg_names: Option<&'l1 [Option<String>]>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#VerifyNamesWithInterfaceList<'a, 'l1, 'l2, >(&'a self, _arg_services: Option<&'l1 [Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&'l2 [Option<String>]>) -> binder::Result<bool> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseStringList<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [String], _arg_repeated: &'l2 mut Vec<String>) -> binder::Result<Vec<String>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatParcelFileDescriptor<'a, 'l1, >(&'a self, _arg_read: &'l1 binder::ParcelFileDescriptor) -> binder::Result<binder::ParcelFileDescriptor> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseParcelFileDescriptorArray<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [binder::ParcelFileDescriptor], _arg_repeated: &'l2 mut Vec<Option<binder::ParcelFileDescriptor>>) -> binder::Result<Vec<binder::ParcelFileDescriptor>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ThrowServiceException<'a, >(&'a self, _arg_code: i32) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableIntArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [i32]>) -> binder::Result<Option<Vec<i32>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableByteEnumArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum]>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableIntEnumArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum]>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableLongEnumArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum]>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableString<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 str>) -> binder::Result<Option<String>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableStringList<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<String>]>) -> binder::Result<Option<Vec<Option<String>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableParcelable<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>) -> binder::Result<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableParcelableArray<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>) -> binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableParcelableList<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>) -> binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#TakesAnIBinder<'a, 'l1, >(&'a self, _arg_input: &'l1 binder::SpIBinder) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#TakesANullableIBinder<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 binder::SpIBinder>) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#TakesAnIBinderList<'a, 'l1, >(&'a self, _arg_input: &'l1 [binder::SpIBinder]) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#TakesANullableIBinderList<'a, 'l1, >(&'a self, _arg_input: Option<&'l1 [Option<binder::SpIBinder>]>) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatUtf8CppString<'a, 'l1, >(&'a self, _arg_token: &'l1 str) -> binder::Result<String> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatNullableUtf8CppString<'a, 'l1, >(&'a self, _arg_token: Option<&'l1 str>) -> binder::Result<Option<String>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseUtf8CppString<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [String], _arg_repeated: &'l2 mut Vec<String>) -> binder::Result<Vec<String>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseNullableUtf8CppString<'a, 'l1, 'l2, >(&'a self, _arg_input: Option<&'l1 [Option<String>]>, _arg_repeated: &'l2 mut Option<Vec<Option<String>>>) -> binder::Result<Option<Vec<Option<String>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseUtf8CppStringList<'a, 'l1, 'l2, >(&'a self, _arg_input: Option<&'l1 [Option<String>]>, _arg_repeated: &'l2 mut Option<Vec<Option<String>>>) -> binder::Result<Option<Vec<Option<String>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetCallback<'a, >(&'a self, _arg_return_null: bool) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#FillOutStructuredParcelable<'a, 'l1, >(&'a self, _arg_parcel: &'l1 mut crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatExtendableParcelable<'a, 'l1, 'l2, >(&'a self, _arg_ep: &'l1 crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _arg_ep2: &'l2 mut crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatExtendableParcelableVintf<'a, 'l1, 'l2, >(&'a self, _arg_ep: &'l1 crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _arg_ep2: &'l2 mut crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseList<'a, 'l1, >(&'a self, _arg_list: &'l1 crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseIBinderArray<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [binder::SpIBinder], _arg_repeated: &'l2 mut Vec<Option<binder::SpIBinder>>) -> binder::Result<Vec<binder::SpIBinder>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseNullableIBinderArray<'a, 'l1, 'l2, >(&'a self, _arg_input: Option<&'l1 [Option<binder::SpIBinder>]>, _arg_repeated: &'l2 mut Option<Vec<Option<binder::SpIBinder>>>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#RepeatSimpleParcelable<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 simple_parcelable::SimpleParcelable, _arg_repeat: &'l2 mut simple_parcelable::SimpleParcelable) -> binder::Result<simple_parcelable::SimpleParcelable> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ReverseSimpleParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [simple_parcelable::SimpleParcelable], _arg_repeated: &'l2 mut Vec<simple_parcelable::SimpleParcelable>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetOldNameInterface<'a, >(&'a self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetNewNameInterface<'a, >(&'a self) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetUnionTags<'a, 'l1, >(&'a self, _arg_input: &'l1 [crate::mangled::_7_android_4_aidl_5_tests_5_Union]) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetCppJavaTests<'a, >(&'a self) -> binder::Result<Option<binder::SpIBinder>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#getBackendType<'a, >(&'a self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#GetCircular<'a, 'l1, >(&'a self, _arg_cp: &'l1 mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-}
 pub mod transactions {
   pub const r#UnimplementedMethod: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
   pub const r#Deprecated: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
@@ -1087,8 +866,6 @@ pub mod transactions {
   pub const r#getBackendType: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 69;
   pub const r#GetCircular: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 70;
 }
-pub type ITestServiceDefaultRef = Option<std::sync::Arc<dyn ITestServiceDefault>>;
-static DEFAULT_IMPL: std::sync::Mutex<ITestServiceDefaultRef> = std::sync::Mutex::new(None);
 pub const r#CONSTANT: i32 = 42;
 pub const r#CONSTANT2: i32 = -42;
 pub const r#CONSTANT3: i32 = 42;
@@ -1187,11 +964,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_UnimplementedMethod(&self, _arg_arg: i32, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#UnimplementedMethod(_arg_arg);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1204,11 +976,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_Deprecated(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#Deprecated();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1220,11 +987,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_TestOneway(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#TestOneway();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     Ok(())
   }
@@ -1235,11 +997,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatBoolean(&self, _arg_token: bool, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<bool> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatBoolean(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1253,11 +1010,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatByte(&self, _arg_token: i8, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i8> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatByte(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1271,11 +1023,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatChar(&self, _arg_token: u16, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<u16> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatChar(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1289,11 +1036,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatInt(&self, _arg_token: i32, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatInt(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1307,11 +1049,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatLong(&self, _arg_token: i64, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i64> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatLong(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1325,11 +1062,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatFloat(&self, _arg_token: f32, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<f32> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatFloat(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1343,11 +1075,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatDouble(&self, _arg_token: f64, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<f64> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatDouble(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1361,11 +1088,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatString(&self, _arg_token: &str, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<String> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatString(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1379,11 +1101,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatByteEnum(&self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatByteEnum(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1397,11 +1114,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatIntEnum(&self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatIntEnum(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1415,11 +1127,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatLongEnum(&self, _arg_token: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatLongEnum(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1434,11 +1141,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseBoolean(&self, _arg_input: &[bool], _arg_repeated: &mut Vec<bool>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<bool>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseBoolean(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1454,11 +1156,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseByte(&self, _arg_input: &[u8], _arg_repeated: &mut Vec<u8>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<u8>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseByte(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1474,11 +1171,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseChar(&self, _arg_input: &[u16], _arg_repeated: &mut Vec<u16>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<u16>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseChar(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1494,11 +1186,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseInt(&self, _arg_input: &[i32], _arg_repeated: &mut Vec<i32>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<i32>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseInt(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1514,11 +1201,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseLong(&self, _arg_input: &[i64], _arg_repeated: &mut Vec<i64>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<i64>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseLong(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1534,11 +1216,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseFloat(&self, _arg_input: &[f32], _arg_repeated: &mut Vec<f32>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<f32>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseFloat(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1554,11 +1231,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseDouble(&self, _arg_input: &[f64], _arg_repeated: &mut Vec<f64>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<f64>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseDouble(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1574,11 +1246,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseString(&self, _arg_input: &[String], _arg_repeated: &mut Vec<String>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<String>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseString(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1594,11 +1261,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseByteEnum(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum], _arg_repeated: &mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseByteEnum(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1614,11 +1276,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseIntEnum(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum], _arg_repeated: &mut Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseIntEnum(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1634,11 +1291,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseLongEnum(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum], _arg_repeated: &mut Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseLongEnum(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1653,11 +1305,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetOtherTestService(&self, _arg_name: &str, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetOtherTestService(_arg_name);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1672,11 +1319,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_SetOtherTestService(&self, _arg_name: &str, _arg_service: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<bool> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#SetOtherTestService(_arg_name, _arg_service);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1691,11 +1333,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_VerifyName(&self, _arg_service: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>, _arg_name: &str, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<bool> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#VerifyName(_arg_service, _arg_name);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1709,11 +1346,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetInterfaceArray(&self, _arg_names: &[String], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetInterfaceArray(_arg_names);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1728,11 +1360,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_VerifyNamesWithInterfaceArray(&self, _arg_services: &[binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>], _arg_names: &[String], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<bool> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#VerifyNamesWithInterfaceArray(_arg_services, _arg_names);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1746,11 +1373,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetNullableInterfaceArray(&self, _arg_names: Option<&[Option<String>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetNullableInterfaceArray(_arg_names);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1765,11 +1387,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_VerifyNamesWithNullableInterfaceArray(&self, _arg_services: Option<&[Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&[Option<String>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<bool> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#VerifyNamesWithNullableInterfaceArray(_arg_services, _arg_names);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1783,11 +1400,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetInterfaceList(&self, _arg_names: Option<&[Option<String>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetInterfaceList(_arg_names);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1802,11 +1414,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_VerifyNamesWithInterfaceList(&self, _arg_services: Option<&[Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>]>, _arg_names: Option<&[Option<String>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<bool> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#VerifyNamesWithInterfaceList(_arg_services, _arg_names);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1820,11 +1427,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseStringList(&self, _arg_input: &[String], _arg_repeated: &mut Vec<String>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<String>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseStringList(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1839,11 +1441,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatParcelFileDescriptor(&self, _arg_read: &binder::ParcelFileDescriptor, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<binder::ParcelFileDescriptor> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatParcelFileDescriptor(_arg_read);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1858,11 +1455,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseParcelFileDescriptorArray(&self, _arg_input: &[binder::ParcelFileDescriptor], _arg_repeated: &mut Vec<Option<binder::ParcelFileDescriptor>>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<binder::ParcelFileDescriptor>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseParcelFileDescriptorArray(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1877,11 +1469,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ThrowServiceException(&self, _arg_code: i32, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ThrowServiceException(_arg_code);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1894,11 +1481,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableIntArray(&self, _arg_input: Option<&[i32]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<i32>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableIntArray(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1912,11 +1494,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableByteEnumArray(&self, _arg_input: Option<&[crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableByteEnumArray(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1930,11 +1507,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableIntEnumArray(&self, _arg_input: Option<&[crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableIntEnumArray(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1948,11 +1520,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableLongEnumArray(&self, _arg_input: Option<&[crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableLongEnumArray(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1966,11 +1533,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableString(&self, _arg_input: Option<&str>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<String>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableString(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -1984,11 +1546,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableStringList(&self, _arg_input: Option<&[Option<String>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<String>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableStringList(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2002,11 +1559,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableParcelable(&self, _arg_input: Option<&crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableParcelable(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2020,11 +1572,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableParcelableArray(&self, _arg_input: Option<&[Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableParcelableArray(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2038,11 +1585,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableParcelableList(&self, _arg_input: Option<&[Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<crate::mangled::_7_android_4_aidl_5_tests_12_ITestService_5_Empty>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableParcelableList(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2056,11 +1598,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_TakesAnIBinder(&self, _arg_input: &binder::SpIBinder, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#TakesAnIBinder(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2073,11 +1610,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_TakesANullableIBinder(&self, _arg_input: Option<&binder::SpIBinder>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#TakesANullableIBinder(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2090,11 +1622,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_TakesAnIBinderList(&self, _arg_input: &[binder::SpIBinder], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#TakesAnIBinderList(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2107,11 +1634,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_TakesANullableIBinderList(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#TakesANullableIBinderList(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2124,11 +1646,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatUtf8CppString(&self, _arg_token: &str, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<String> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatUtf8CppString(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2142,11 +1659,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatNullableUtf8CppString(&self, _arg_token: Option<&str>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<String>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatNullableUtf8CppString(_arg_token);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2161,11 +1673,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseUtf8CppString(&self, _arg_input: &[String], _arg_repeated: &mut Vec<String>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<String>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseUtf8CppString(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2181,11 +1688,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseNullableUtf8CppString(&self, _arg_input: Option<&[Option<String>]>, _arg_repeated: &mut Option<Vec<Option<String>>>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<String>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseNullableUtf8CppString(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2200,11 +1702,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseUtf8CppStringList(&self, _arg_input: Option<&[Option<String>]>, _arg_repeated: &mut Option<Vec<Option<String>>>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<String>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseUtf8CppStringList(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2219,11 +1716,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetCallback(&self, _arg_return_null: bool, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_14_INamedCallback>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetCallback(_arg_return_null);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2237,11 +1729,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_FillOutStructuredParcelable(&self, _arg_parcel: &mut crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#FillOutStructuredParcelable(_arg_parcel);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2255,11 +1742,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatExtendableParcelable(&self, _arg_ep: &crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _arg_ep2: &mut crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatExtendableParcelable(_arg_ep, _arg_ep2);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2273,11 +1755,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatExtendableParcelableVintf(&self, _arg_ep: &crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _arg_ep2: &mut crate::mangled::_7_android_4_aidl_5_tests_9_extension_20_ExtendableParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatExtendableParcelableVintf(_arg_ep, _arg_ep2);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2291,11 +1768,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseList(&self, _arg_list: &crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_13_RecursiveList> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseList(_arg_list);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2310,11 +1782,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseIBinderArray(&self, _arg_input: &[binder::SpIBinder], _arg_repeated: &mut Vec<Option<binder::SpIBinder>>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<binder::SpIBinder>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseIBinderArray(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2330,11 +1797,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseNullableIBinderArray(&self, _arg_input: Option<&[Option<binder::SpIBinder>]>, _arg_repeated: &mut Option<Vec<Option<binder::SpIBinder>>>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<Vec<Option<binder::SpIBinder>>>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseNullableIBinderArray(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2349,11 +1811,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_RepeatSimpleParcelable(&self, _arg_input: &simple_parcelable::SimpleParcelable, _arg_repeat: &mut simple_parcelable::SimpleParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<simple_parcelable::SimpleParcelable> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#RepeatSimpleParcelable(_arg_input, _arg_repeat);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2369,11 +1826,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_ReverseSimpleParcelables(&self, _arg_input: &[simple_parcelable::SimpleParcelable], _arg_repeated: &mut Vec<simple_parcelable::SimpleParcelable>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<simple_parcelable::SimpleParcelable>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#ReverseSimpleParcelables(_arg_input, _arg_repeated);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2387,11 +1839,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetOldNameInterface(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_IOldName>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetOldNameInterface();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2404,11 +1851,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetNewNameInterface(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_8_INewName>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetNewNameInterface();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2422,11 +1864,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetUnionTags(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_5_tests_5_Union], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Vec<crate::mangled::_7_android_4_aidl_5_tests_5_Union_3_Tag>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetUnionTags(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2439,11 +1876,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetCppJavaTests(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<binder::SpIBinder>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetCppJavaTests();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2456,11 +1888,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_getBackendType(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#getBackendType();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -2473,11 +1900,6 @@ impl BpTestService {
     Ok(aidl_data)
   }
   fn read_response_GetCircular(&self, _arg_cp: &mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITestService>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetCircular(_arg_cp);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -4929,12 +4351,6 @@ pub mod r#CompilerChecks {
     }
     pub trait IFoo: binder::Interface + Send {
       fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.Foo" }
-      fn getDefaultImpl() -> IFooDefaultRef where Self: Sized {
-        DEFAULT_IMPL.lock().unwrap().clone()
-      }
-      fn setDefaultImpl(d: IFooDefaultRef) -> IFooDefaultRef where Self: Sized {
-        std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-      }
       fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IFooAsyncServer + Send + Sync)> {
         None
       }
@@ -4987,12 +4403,8 @@ pub mod r#CompilerChecks {
         }
       }
     }
-    pub trait IFooDefault: Send + Sync {
-    }
     pub mod transactions {
     }
-    pub type IFooDefaultRef = Option<std::sync::Arc<dyn IFooDefault>>;
-    static DEFAULT_IMPL: std::sync::Mutex<IFooDefaultRef> = std::sync::Mutex::new(None);
     impl BpFoo {
     }
     impl IFoo for BpFoo {
@@ -5125,12 +4537,6 @@ pub mod r#CompilerChecks {
     pub trait INoPrefixInterface: binder::Interface + Send {
       fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface" }
       fn r#foo<'a, >(&'a self) -> binder::Result<()>;
-      fn getDefaultImpl() -> INoPrefixInterfaceDefaultRef where Self: Sized {
-        DEFAULT_IMPL.lock().unwrap().clone()
-      }
-      fn setDefaultImpl(d: INoPrefixInterfaceDefaultRef) -> INoPrefixInterfaceDefaultRef where Self: Sized {
-        std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-      }
       fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INoPrefixInterfaceAsyncServer + Send + Sync)> {
         None
       }
@@ -5191,27 +4597,15 @@ pub mod r#CompilerChecks {
         }
       }
     }
-    pub trait INoPrefixInterfaceDefault: Send + Sync {
-      fn r#foo<'a, >(&'a self) -> binder::Result<()> {
-        Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-      }
-    }
     pub mod transactions {
       pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
     }
-    pub type INoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INoPrefixInterfaceDefault>>;
-    static DEFAULT_IMPL: std::sync::Mutex<INoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
     impl BpNoPrefixInterface {
       fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
         let mut aidl_data = self.binder.prepare_transact()?;
         Ok(aidl_data)
       }
       fn read_response_foo(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-        if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-          if let Some(_aidl_default_impl) = <Self as INoPrefixInterface>::getDefaultImpl() {
-            return _aidl_default_impl.r#foo();
-          }
-        }
         let _aidl_reply = _aidl_reply?;
         let _aidl_status: binder::Status = _aidl_reply.read()?;
         if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -5309,12 +4703,6 @@ pub mod r#CompilerChecks {
       pub trait INestedNoPrefixInterface: binder::Interface + Send {
         fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface" }
         fn r#foo<'a, >(&'a self) -> binder::Result<()>;
-        fn getDefaultImpl() -> INestedNoPrefixInterfaceDefaultRef where Self: Sized {
-          DEFAULT_IMPL.lock().unwrap().clone()
-        }
-        fn setDefaultImpl(d: INestedNoPrefixInterfaceDefaultRef) -> INestedNoPrefixInterfaceDefaultRef where Self: Sized {
-          std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-        }
         fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INestedNoPrefixInterfaceAsyncServer + Send + Sync)> {
           None
         }
@@ -5375,27 +4763,15 @@ pub mod r#CompilerChecks {
           }
         }
       }
-      pub trait INestedNoPrefixInterfaceDefault: Send + Sync {
-        fn r#foo<'a, >(&'a self) -> binder::Result<()> {
-          Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-        }
-      }
       pub mod transactions {
         pub const r#foo: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
       }
-      pub type INestedNoPrefixInterfaceDefaultRef = Option<std::sync::Arc<dyn INestedNoPrefixInterfaceDefault>>;
-      static DEFAULT_IMPL: std::sync::Mutex<INestedNoPrefixInterfaceDefaultRef> = std::sync::Mutex::new(None);
       impl BpNestedNoPrefixInterface {
         fn build_parcel_foo(&self) -> binder::Result<binder::binder_impl::Parcel> {
           let mut aidl_data = self.binder.prepare_transact()?;
           Ok(aidl_data)
         }
         fn read_response_foo(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-          if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-            if let Some(_aidl_default_impl) = <Self as INestedNoPrefixInterface>::getDefaultImpl() {
-              return _aidl_default_impl.r#foo();
-            }
-          }
           let _aidl_reply = _aidl_reply?;
           let _aidl_status: binder::Status = _aidl_reply.read()?;
           if !_aidl_status.is_ok() { return Err(_aidl_status); }

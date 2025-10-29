@@ -46,12 +46,6 @@ pub trait ITrunkStableTest: binder::Interface + Send {
   fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     Ok(HASH.into())
   }
-  fn getDefaultImpl() -> ITrunkStableTestDefaultRef where Self: Sized {
-    DEFAULT_IMPL.lock().unwrap().clone()
-  }
-  fn setDefaultImpl(d: ITrunkStableTestDefaultRef) -> ITrunkStableTestDefaultRef where Self: Sized {
-    std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ITrunkStableTestAsyncServer + Send + Sync)> {
     None
   }
@@ -150,23 +144,6 @@ impl BnTrunkStableTest {
     }
   }
 }
-pub trait ITrunkStableTestDefault: Send + Sync {
-  fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-}
 pub mod transactions {
   pub const r#repeatParcelable: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
   pub const r#repeatEnum: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
@@ -176,8 +153,6 @@ pub mod transactions {
   pub const r#getInterfaceVersion: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777214;
   pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
 }
-pub type ITrunkStableTestDefaultRef = Option<std::sync::Arc<dyn ITrunkStableTestDefault>>;
-static DEFAULT_IMPL: std::sync::Mutex<ITrunkStableTestDefaultRef> = std::sync::Mutex::new(None);
 pub const VERSION: i32 = 2;
 pub const HASH: &str = "notfrozen";
 impl BpTrunkStableTest {
@@ -187,11 +162,6 @@ impl BpTrunkStableTest {
     Ok(aidl_data)
   }
   fn read_response_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITrunkStableTest>::getDefaultImpl() {
-        return _aidl_default_impl.r#repeatParcelable(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -204,11 +174,6 @@ impl BpTrunkStableTest {
     Ok(aidl_data)
   }
   fn read_response_repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITrunkStableTest>::getDefaultImpl() {
-        return _aidl_default_impl.r#repeatEnum(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -221,11 +186,6 @@ impl BpTrunkStableTest {
     Ok(aidl_data)
   }
   fn read_response_repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITrunkStableTest>::getDefaultImpl() {
-        return _aidl_default_impl.r#repeatUnion(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -238,11 +198,6 @@ impl BpTrunkStableTest {
     Ok(aidl_data)
   }
   fn read_response_callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITrunkStableTest>::getDefaultImpl() {
-        return _aidl_default_impl.r#callMyCallback(_arg_cb);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -254,11 +209,6 @@ impl BpTrunkStableTest {
     Ok(aidl_data)
   }
   fn read_response_repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as ITrunkStableTest>::getDefaultImpl() {
-        return _aidl_default_impl.r#repeatOtherParcelable(_arg_input);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -698,12 +648,6 @@ pub mod r#IMyCallback {
     fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
       Ok(HASH.into())
     }
-    fn getDefaultImpl() -> IMyCallbackDefaultRef where Self: Sized {
-      DEFAULT_IMPL.lock().unwrap().clone()
-    }
-    fn setDefaultImpl(d: IMyCallbackDefaultRef) -> IMyCallbackDefaultRef where Self: Sized {
-      std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-    }
     fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IMyCallbackAsyncServer + Send + Sync)> {
       None
     }
@@ -794,20 +738,6 @@ pub mod r#IMyCallback {
       }
     }
   }
-  pub trait IMyCallbackDefault: Send + Sync {
-    fn r#repeatParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
-      Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-  }
   pub mod transactions {
     pub const r#repeatParcelable: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
     pub const r#repeatEnum: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
@@ -816,8 +746,6 @@ pub mod r#IMyCallback {
     pub const r#getInterfaceVersion: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777214;
     pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
   }
-  pub type IMyCallbackDefaultRef = Option<std::sync::Arc<dyn IMyCallbackDefault>>;
-  static DEFAULT_IMPL: std::sync::Mutex<IMyCallbackDefaultRef> = std::sync::Mutex::new(None);
   pub const VERSION: i32 = 2;
   pub const HASH: &str = "notfrozen";
   impl BpMyCallback {
@@ -827,11 +755,6 @@ pub mod r#IMyCallback {
       Ok(aidl_data)
     }
     fn read_response_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IMyCallback>::getDefaultImpl() {
-          return _aidl_default_impl.r#repeatParcelable(_arg_input);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -844,11 +767,6 @@ pub mod r#IMyCallback {
       Ok(aidl_data)
     }
     fn read_response_repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IMyCallback>::getDefaultImpl() {
-          return _aidl_default_impl.r#repeatEnum(_arg_input);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -861,11 +779,6 @@ pub mod r#IMyCallback {
       Ok(aidl_data)
     }
     fn read_response_repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IMyCallback>::getDefaultImpl() {
-          return _aidl_default_impl.r#repeatUnion(_arg_input);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -878,11 +791,6 @@ pub mod r#IMyCallback {
       Ok(aidl_data)
     }
     fn read_response_repeatOtherParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
-      if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-        if let Some(_aidl_default_impl) = <Self as IMyCallback>::getDefaultImpl() {
-          return _aidl_default_impl.r#repeatOtherParcelable(_arg_input);
-        }
-      }
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
