@@ -32,7 +32,7 @@ import (
 	"android/soong/rust"
 )
 
-//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+//go:generate go run ../../../../build/blueprint/gobtools/codegen
 
 const (
 	aidlInterfaceSuffix       = "_interface"

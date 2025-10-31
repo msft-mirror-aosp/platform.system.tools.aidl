@@ -29,7 +29,7 @@ import (
 	"android/soong/android"
 )
 
-//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+//go:generate go run ../../../../build/blueprint/gobtools/codegen
 
 var (
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{

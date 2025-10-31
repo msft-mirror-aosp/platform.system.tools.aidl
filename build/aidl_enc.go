@@ -5,7 +5,10 @@ package aidl
 import (
 	"android/soong/android"
 	"bytes"
+	"fmt"
 	"github.com/google/blueprint/gobtools"
+	"github.com/google/blueprint/proptools"
+	"reflect"
 )
 
 // begin of aidl_api.go
@@ -66,6 +69,155 @@ func (r aidlApiInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) error {
 		return err
 	}
 	return err
+}
+
+func (r aidlApiInfo) CustomHash(hasher *proptools.Hasher) error {
+	hasher.WriteString(":aidl.aidlApiInfo")
+	hasher.WriteInt(7)
+	hasher.WriteString(":.string")
+	hasher.WriteString(r.Name)
+	hasher.WriteString(":.bool")
+	if r.Unstable {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":aidl.android.Paths")
+	hasher.WriteString(":.[]Path")
+	hasher.WriteInt(len(r.CheckApiTimestamps))
+	for val1 := 0; val1 < len(r.CheckApiTimestamps); val1++ {
+		hasher.WriteString("android/soong/android:android.Path")
+		val2 := r.CheckApiTimestamps[val1] == nil
+		if val2 {
+			hasher.WriteByte(0)
+		} else {
+			if v := reflect.ValueOf(r.CheckApiTimestamps[val1]); v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					panic(fmt.Errorf("nil pointer is not supported in interface"))
+				} else {
+					val3 := r.CheckApiTimestamps[val1] == nil
+					if val3 {
+						hasher.WriteByte(0)
+					} else {
+						val4 := func(hasher *proptools.Hasher) error {
+							return r.CheckApiTimestamps[val1].(proptools.CustomHash).CustomHash(hasher)
+						}
+						if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val4); err != nil {
+							return err
+						}
+					}
+				}
+			} else {
+				r.CheckApiTimestamps[val1].(proptools.CustomHash).CustomHash(hasher)
+			}
+		}
+	}
+	hasher.WriteString(":aidl.android.Paths")
+	hasher.WriteString(":.[]Path")
+	hasher.WriteInt(len(r.CheckHashTimestamps))
+	for val5 := 0; val5 < len(r.CheckHashTimestamps); val5++ {
+		hasher.WriteString("android/soong/android:android.Path")
+		val6 := r.CheckHashTimestamps[val5] == nil
+		if val6 {
+			hasher.WriteByte(0)
+		} else {
+			if v := reflect.ValueOf(r.CheckHashTimestamps[val5]); v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					panic(fmt.Errorf("nil pointer is not supported in interface"))
+				} else {
+					val7 := r.CheckHashTimestamps[val5] == nil
+					if val7 {
+						hasher.WriteByte(0)
+					} else {
+						val8 := func(hasher *proptools.Hasher) error {
+							return r.CheckHashTimestamps[val5].(proptools.CustomHash).CustomHash(hasher)
+						}
+						if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val8); err != nil {
+							return err
+						}
+					}
+				}
+			} else {
+				r.CheckHashTimestamps[val5].(proptools.CustomHash).CustomHash(hasher)
+			}
+		}
+	}
+	hasher.WriteString(":aidl.android.Path")
+	val9 := r.UpdateApiScript == nil
+	if val9 {
+		hasher.WriteByte(0)
+	} else {
+		if v := reflect.ValueOf(r.UpdateApiScript); v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				panic(fmt.Errorf("nil pointer is not supported in interface"))
+			} else {
+				val10 := r.UpdateApiScript == nil
+				if val10 {
+					hasher.WriteByte(0)
+				} else {
+					val11 := func(hasher *proptools.Hasher) error {
+						return r.UpdateApiScript.(proptools.CustomHash).CustomHash(hasher)
+					}
+					if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val11); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			r.UpdateApiScript.(proptools.CustomHash).CustomHash(hasher)
+		}
+	}
+	hasher.WriteString(":aidl.android.Path")
+	val12 := r.FreezeApiScript == nil
+	if val12 {
+		hasher.WriteByte(0)
+	} else {
+		if v := reflect.ValueOf(r.FreezeApiScript); v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				panic(fmt.Errorf("nil pointer is not supported in interface"))
+			} else {
+				val13 := r.FreezeApiScript == nil
+				if val13 {
+					hasher.WriteByte(0)
+				} else {
+					val14 := func(hasher *proptools.Hasher) error {
+						return r.FreezeApiScript.(proptools.CustomHash).CustomHash(hasher)
+					}
+					if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val14); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			r.FreezeApiScript.(proptools.CustomHash).CustomHash(hasher)
+		}
+	}
+	hasher.WriteString(":aidl.android.Path")
+	val15 := r.HasDevelopment == nil
+	if val15 {
+		hasher.WriteByte(0)
+	} else {
+		if v := reflect.ValueOf(r.HasDevelopment); v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				panic(fmt.Errorf("nil pointer is not supported in interface"))
+			} else {
+				val16 := r.HasDevelopment == nil
+				if val16 {
+					hasher.WriteByte(0)
+				} else {
+					val17 := func(hasher *proptools.Hasher) error {
+						return r.HasDevelopment.(proptools.CustomHash).CustomHash(hasher)
+					}
+					if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val17); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			r.HasDevelopment.(proptools.CustomHash).CustomHash(hasher)
+		}
+	}
+	return nil
 }
 
 func (r *aidlApiInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) error {
@@ -187,6 +339,88 @@ func (r AidlGenruleInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) erro
 		}
 	}
 	return err
+}
+
+func (r AidlGenruleInfo) CustomHash(hasher *proptools.Hasher) error {
+	hasher.WriteString(":aidl.AidlGenruleInfo")
+	hasher.WriteInt(4)
+	hasher.WriteString(":.string")
+	hasher.WriteString(r.BaseName)
+	hasher.WriteString(":aidl.android.Path")
+	val1 := r.HashFile == nil
+	if val1 {
+		hasher.WriteByte(0)
+	} else {
+		if v := reflect.ValueOf(r.HashFile); v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				panic(fmt.Errorf("nil pointer is not supported in interface"))
+			} else {
+				val2 := r.HashFile == nil
+				if val2 {
+					hasher.WriteByte(0)
+				} else {
+					val3 := func(hasher *proptools.Hasher) error { return r.HashFile.(proptools.CustomHash).CustomHash(hasher) }
+					if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val3); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			r.HashFile.(proptools.CustomHash).CustomHash(hasher)
+		}
+	}
+	hasher.WriteString(":aidl.android.Path")
+	val4 := r.OutDir == nil
+	if val4 {
+		hasher.WriteByte(0)
+	} else {
+		if v := reflect.ValueOf(r.OutDir); v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				panic(fmt.Errorf("nil pointer is not supported in interface"))
+			} else {
+				val5 := r.OutDir == nil
+				if val5 {
+					hasher.WriteByte(0)
+				} else {
+					val6 := func(hasher *proptools.Hasher) error { return r.OutDir.(proptools.CustomHash).CustomHash(hasher) }
+					if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val6); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			r.OutDir.(proptools.CustomHash).CustomHash(hasher)
+		}
+	}
+	hasher.WriteString(":aidl.android.Paths")
+	hasher.WriteString(":.[]Path")
+	hasher.WriteInt(len(r.Outputs))
+	for val7 := 0; val7 < len(r.Outputs); val7++ {
+		hasher.WriteString("android/soong/android:android.Path")
+		val8 := r.Outputs[val7] == nil
+		if val8 {
+			hasher.WriteByte(0)
+		} else {
+			if v := reflect.ValueOf(r.Outputs[val7]); v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					panic(fmt.Errorf("nil pointer is not supported in interface"))
+				} else {
+					val9 := r.Outputs[val7] == nil
+					if val9 {
+						hasher.WriteByte(0)
+					} else {
+						val10 := func(hasher *proptools.Hasher) error { return r.Outputs[val7].(proptools.CustomHash).CustomHash(hasher) }
+						if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val10); err != nil {
+							return err
+						}
+					}
+				}
+			} else {
+				r.Outputs[val7].(proptools.CustomHash).CustomHash(hasher)
+			}
+		}
+	}
+	return nil
 }
 
 func (r *AidlGenruleInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) error {
@@ -311,6 +545,71 @@ func (r AidlInterfaceInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) er
 		}
 	}
 	return err
+}
+
+func (r AidlInterfaceInfo) CustomHash(hasher *proptools.Hasher) error {
+	hasher.WriteString(":aidl.AidlInterfaceInfo")
+	hasher.WriteInt(6)
+	if err := r.AidlInterfaceImportsInfo.CustomHash(hasher); err != nil {
+		return err
+	}
+	hasher.WriteString(":.string")
+	hasher.WriteString(r.Stability)
+	hasher.WriteString(":.[]string")
+	hasher.WriteInt(len(r.ComputedTypes))
+	for val1 := 0; val1 < len(r.ComputedTypes); val1++ {
+		hasher.WriteString(":.string")
+		hasher.WriteString(r.ComputedTypes[val1])
+	}
+	hasher.WriteString(":.bool")
+	if r.UseUnfrozen {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.map[string]android.WritablePath")
+	hasher.WriteInt(len(r.Preprocessed))
+	val2 := make([]string, 0, len(r.Preprocessed))
+	for val4 := range r.Preprocessed {
+		val2 = append(val2, val4)
+	}
+	proptools.SortOrdered(val2)
+	for _, val3 := range val2 {
+		hasher.WriteString(":.string")
+		hasher.WriteString(val3)
+		hasher.WriteString(":aidl.android.WritablePath")
+		val5 := r.Preprocessed[val3] == nil
+		if val5 {
+			hasher.WriteByte(0)
+		} else {
+			if v := reflect.ValueOf(r.Preprocessed[val3]); v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					panic(fmt.Errorf("nil pointer is not supported in interface"))
+				} else {
+					val6 := r.Preprocessed[val3] == nil
+					if val6 {
+						hasher.WriteByte(0)
+					} else {
+						val7 := func(hasher *proptools.Hasher) error {
+							return r.Preprocessed[val3].(proptools.CustomHash).CustomHash(hasher)
+						}
+						if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val7); err != nil {
+							return err
+						}
+					}
+				}
+			} else {
+				r.Preprocessed[val3].(proptools.CustomHash).CustomHash(hasher)
+			}
+		}
+	}
+	hasher.WriteString(":.[]string")
+	hasher.WriteInt(len(r.IncludeDirs))
+	for val8 := 0; val8 < len(r.IncludeDirs); val8++ {
+		hasher.WriteString(":.string")
+		hasher.WriteString(r.IncludeDirs[val8])
+	}
+	return nil
 }
 
 func (r *AidlInterfaceInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) error {
@@ -489,6 +788,91 @@ func (r AidlInterfaceImportsInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buf
 		return err
 	}
 	return err
+}
+
+func (r AidlInterfaceImportsInfo) CustomHash(hasher *proptools.Hasher) error {
+	hasher.WriteString(":aidl.AidlInterfaceImportsInfo")
+	hasher.WriteInt(14)
+	hasher.WriteString(":.string")
+	hasher.WriteString(r.Name)
+	hasher.WriteString(":.map[string][]string")
+	hasher.WriteInt(len(r.Imports))
+	val1 := make([]string, 0, len(r.Imports))
+	for val3 := range r.Imports {
+		val1 = append(val1, val3)
+	}
+	proptools.SortOrdered(val1)
+	for _, val2 := range val1 {
+		hasher.WriteString(":.string")
+		hasher.WriteString(val2)
+		hasher.WriteString(":.[]string")
+		hasher.WriteInt(len(r.Imports[val2]))
+		for val4 := 0; val4 < len(r.Imports[val2]); val4++ {
+			hasher.WriteString(":.string")
+			hasher.WriteString(r.Imports[val2][val4])
+		}
+	}
+	hasher.WriteString(":.bool")
+	if r.Unstable {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.[]string")
+	hasher.WriteInt(len(r.Versions))
+	for val5 := 0; val5 < len(r.Versions); val5++ {
+		hasher.WriteString(":.string")
+		hasher.WriteString(r.Versions[val5])
+	}
+	hasher.WriteString(":.string")
+	hasher.WriteString(r.LatestVersion)
+	hasher.WriteString(":.string")
+	hasher.WriteString(r.NextVersion)
+	hasher.WriteString(":.bool")
+	if r.HasVersion {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.bool")
+	if r.Frozen {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.bool")
+	if r.ExplicitlyUnFrozen {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.bool")
+	if r.ShouldGenerateCppBackend {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.bool")
+	if r.ShouldGenerateJavaBackend {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.bool")
+	if r.ShouldGenerateNdkBackend {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.bool")
+	if r.ShouldGenerateRustBackend {
+		hasher.WriteByte(1)
+	} else {
+		hasher.WriteByte(0)
+	}
+	hasher.WriteString(":.string")
+	hasher.WriteString(r.Owner)
+	return nil
 }
 
 func (r *AidlInterfaceImportsInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) error {
