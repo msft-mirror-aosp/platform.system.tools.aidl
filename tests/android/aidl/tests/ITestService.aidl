@@ -42,7 +42,6 @@ import android.aidl.tests.extension.ExtendableParcelable;
  */
 @SensitiveData
 // interface comment 3
-@JavaDefault
 // interface comment 4
 @JavaDelegator
 interface ITestService {
