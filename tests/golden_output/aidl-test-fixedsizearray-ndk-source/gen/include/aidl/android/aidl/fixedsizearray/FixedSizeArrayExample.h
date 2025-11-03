@@ -92,8 +92,6 @@ public:
     static std::shared_ptr<IRepeatFixedSizeArray> fromBinder(const ::ndk::SpAIBinder& binder);
     static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IRepeatFixedSizeArray>& instance);
     static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IRepeatFixedSizeArray>* instance);
-    static bool setDefaultImpl(const std::shared_ptr<IRepeatFixedSizeArray>& impl);
-    static const std::shared_ptr<IRepeatFixedSizeArray>& getDefaultImpl();
     virtual ::ndk::ScopedAStatus RepeatBytes(const std::array<uint8_t, 3>& in_input, std::array<uint8_t, 3>* out_repeated, std::array<uint8_t, 3>* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus RepeatInts(const std::array<int32_t, 3>& in_input, std::array<int32_t, 3>* out_repeated, std::array<int32_t, 3>* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus RepeatBinders(const std::array<::ndk::SpAIBinder, 3>& in_input, std::array<::ndk::SpAIBinder, 3>* out_repeated, std::array<::ndk::SpAIBinder, 3>* _aidl_return) = 0;
@@ -102,8 +100,6 @@ public:
     virtual ::ndk::ScopedAStatus Repeat2dInts(const std::array<std::array<int32_t, 3>, 2>& in_input, std::array<std::array<int32_t, 3>, 2>* out_repeated, std::array<std::array<int32_t, 3>, 2>* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus Repeat2dBinders(const std::array<std::array<::ndk::SpAIBinder, 3>, 2>& in_input, std::array<std::array<::ndk::SpAIBinder, 3>, 2>* out_repeated, std::array<std::array<::ndk::SpAIBinder, 3>, 2>* _aidl_return) = 0;
     virtual ::ndk::ScopedAStatus Repeat2dParcelables(const std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>& in_input, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* out_repeated, std::array<std::array<::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::IntParcelable, 3>, 2>* _aidl_return) = 0;
-  private:
-    static std::shared_ptr<IRepeatFixedSizeArray> default_impl;
   };
   class IRepeatFixedSizeArrayDefault : public IRepeatFixedSizeArray {
   public:
@@ -165,10 +161,6 @@ public:
     static std::shared_ptr<IEmptyInterface> fromBinder(const ::ndk::SpAIBinder& binder);
     static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IEmptyInterface>& instance);
     static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IEmptyInterface>* instance);
-    static bool setDefaultImpl(const std::shared_ptr<IEmptyInterface>& impl);
-    static const std::shared_ptr<IEmptyInterface>& getDefaultImpl();
-  private:
-    static std::shared_ptr<IEmptyInterface> default_impl;
   };
   class IEmptyInterfaceDefault : public IEmptyInterface {
   public:

@@ -30,12 +30,6 @@ declare_binder_interface! {
 pub trait INamedCallback: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.INamedCallback" }
   fn r#GetName<'a, >(&'a self) -> binder::Result<String>;
-  fn getDefaultImpl() -> INamedCallbackDefaultRef where Self: Sized {
-    DEFAULT_IMPL.lock().unwrap().clone()
-  }
-  fn setDefaultImpl(d: INamedCallbackDefaultRef) -> INamedCallbackDefaultRef where Self: Sized {
-    std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INamedCallbackAsyncServer + Send + Sync)> {
     None
   }
@@ -96,27 +90,15 @@ impl BnNamedCallback {
     }
   }
 }
-pub trait INamedCallbackDefault: Send + Sync {
-  fn r#GetName<'a, >(&'a self) -> binder::Result<String> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-}
 pub mod transactions {
   pub const r#GetName: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
 }
-pub type INamedCallbackDefaultRef = Option<std::sync::Arc<dyn INamedCallbackDefault>>;
-static DEFAULT_IMPL: std::sync::Mutex<INamedCallbackDefaultRef> = std::sync::Mutex::new(None);
 impl BpNamedCallback {
   fn build_parcel_GetName(&self) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
     Ok(aidl_data)
   }
   fn read_response_GetName(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<String> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as INamedCallback>::getDefaultImpl() {
-        return _aidl_default_impl.r#GetName();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }

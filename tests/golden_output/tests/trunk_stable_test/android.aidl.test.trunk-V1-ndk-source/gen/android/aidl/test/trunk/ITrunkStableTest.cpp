@@ -280,10 +280,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
-    _aidl_status = ITrunkStableTest::getDefaultImpl()->repeatParcelable(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -339,10 +335,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
-    _aidl_status = ITrunkStableTest::getDefaultImpl()->repeatEnum(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -398,10 +390,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
-    _aidl_status = ITrunkStableTest::getDefaultImpl()->repeatUnion(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -457,10 +445,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
-    _aidl_status = ITrunkStableTest::getDefaultImpl()->callMyCallback(in_cb);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -513,10 +497,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
-    _aidl_status = ITrunkStableTest::getDefaultImpl()->getInterfaceVersion(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -575,10 +555,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ITrunkStableTest::getDefaultImpl()) {
-    _aidl_status = ITrunkStableTest::getDefaultImpl()->getInterfaceHash(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -661,21 +637,6 @@ binder_status_t ITrunkStableTest::readFromParcel(const AParcel* parcel, std::sha
   *instance = ITrunkStableTest::fromBinder(binder);
   return STATUS_OK;
 }
-bool ITrunkStableTest::setDefaultImpl(const std::shared_ptr<ITrunkStableTest>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!ITrunkStableTest::default_impl);
-  if (impl) {
-    ITrunkStableTest::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ITrunkStableTest>& ITrunkStableTest::getDefaultImpl() {
-  return ITrunkStableTest::default_impl;
-}
-std::shared_ptr<ITrunkStableTest> ITrunkStableTest::default_impl = nullptr;
 ::ndk::ScopedAStatus ITrunkStableTestDefault::repeatParcelable(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& /*in_input*/, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
@@ -1053,10 +1014,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
-    _aidl_status = IMyCallback::getDefaultImpl()->repeatParcelable(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1112,10 +1069,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
-    _aidl_status = IMyCallback::getDefaultImpl()->repeatEnum(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1171,10 +1124,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
-    _aidl_status = IMyCallback::getDefaultImpl()->repeatUnion(in_input, _aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1231,10 +1180,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
-    _aidl_status = IMyCallback::getDefaultImpl()->getInterfaceVersion(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1293,10 +1238,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && IMyCallback::getDefaultImpl()) {
-    _aidl_status = IMyCallback::getDefaultImpl()->getInterfaceHash(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -1379,21 +1320,6 @@ binder_status_t ITrunkStableTest::IMyCallback::readFromParcel(const AParcel* par
   *instance = IMyCallback::fromBinder(binder);
   return STATUS_OK;
 }
-bool ITrunkStableTest::IMyCallback::setDefaultImpl(const std::shared_ptr<IMyCallback>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!IMyCallback::default_impl);
-  if (impl) {
-    IMyCallback::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ITrunkStableTest::IMyCallback>& ITrunkStableTest::IMyCallback::getDefaultImpl() {
-  return IMyCallback::default_impl;
-}
-std::shared_ptr<ITrunkStableTest::IMyCallback> ITrunkStableTest::IMyCallback::default_impl = nullptr;
 ::ndk::ScopedAStatus ITrunkStableTest::IMyCallbackDefault::repeatParcelable(const ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& /*in_input*/, ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

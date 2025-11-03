@@ -46,12 +46,6 @@ pub trait IFooInterface: binder::Interface + Send {
   fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     Ok(HASH.into())
   }
-  fn getDefaultImpl() -> IFooInterfaceDefaultRef where Self: Sized {
-    DEFAULT_IMPL.lock().unwrap().clone()
-  }
-  fn setDefaultImpl(d: IFooInterfaceDefaultRef) -> IFooInterfaceDefaultRef where Self: Sized {
-    std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IFooInterfaceAsyncServer + Send + Sync)> {
     None
   }
@@ -150,23 +144,6 @@ impl BnFooInterface {
     }
   }
 }
-pub trait IFooInterfaceDefault: Send + Sync {
-  fn r#originalApi<'a, >(&'a self) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#acceptUnionAndReturnString<'a, 'l1, >(&'a self, _arg_u: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion) -> binder::Result<String> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#ignoreParcelablesAndRepeatInt<'a, 'l1, 'l2, 'l3, >(&'a self, _arg_inFoo: &'l1 crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &'l2 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &'l3 mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32) -> binder::Result<i32> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#returnsLengthOfFooArray<'a, 'l1, >(&'a self, _arg_foos: &'l1 [crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo]) -> binder::Result<i32> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-  fn r#newApi<'a, >(&'a self) -> binder::Result<()> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-}
 pub mod transactions {
   pub const r#originalApi: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
   pub const r#acceptUnionAndReturnString: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
@@ -176,8 +153,6 @@ pub mod transactions {
   pub const r#getInterfaceVersion: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777214;
   pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
 }
-pub type IFooInterfaceDefaultRef = Option<std::sync::Arc<dyn IFooInterfaceDefault>>;
-static DEFAULT_IMPL: std::sync::Mutex<IFooInterfaceDefaultRef> = std::sync::Mutex::new(None);
 pub const VERSION: i32 = 3;
 pub const HASH: &str = "70d76c61eb0c82288e924862c10b910d1b7d8cf8";
 impl BpFooInterface {
@@ -186,11 +161,6 @@ impl BpFooInterface {
     Ok(aidl_data)
   }
   fn read_response_originalApi(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as IFooInterface>::getDefaultImpl() {
-        return _aidl_default_impl.r#originalApi();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -202,11 +172,6 @@ impl BpFooInterface {
     Ok(aidl_data)
   }
   fn read_response_acceptUnionAndReturnString(&self, _arg_u: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_8_BazUnion, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<String> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as IFooInterface>::getDefaultImpl() {
-        return _aidl_default_impl.r#acceptUnionAndReturnString(_arg_u);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -221,11 +186,6 @@ impl BpFooInterface {
     Ok(aidl_data)
   }
   fn read_response_ignoreParcelablesAndRepeatInt(&self, _arg_inFoo: &crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_inoutFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_outFoo: &mut crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo, _arg_value: i32, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as IFooInterface>::getDefaultImpl() {
-        return _aidl_default_impl.r#ignoreParcelablesAndRepeatInt(_arg_inFoo, _arg_inoutFoo, _arg_outFoo, _arg_value);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -240,11 +200,6 @@ impl BpFooInterface {
     Ok(aidl_data)
   }
   fn read_response_returnsLengthOfFooArray(&self, _arg_foos: &[crate::mangled::_7_android_4_aidl_9_versioned_5_tests_3_Foo], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as IFooInterface>::getDefaultImpl() {
-        return _aidl_default_impl.r#returnsLengthOfFooArray(_arg_foos);
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -256,11 +211,6 @@ impl BpFooInterface {
     Ok(aidl_data)
   }
   fn read_response_newApi(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as IFooInterface>::getDefaultImpl() {
-        return _aidl_default_impl.r#newApi();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }

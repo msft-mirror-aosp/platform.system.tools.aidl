@@ -822,36 +822,14 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
     }
   }
 
-  // If the transaction returns false, which means UNKNOWN_TRANSACTION, fall back to the local
-  // method in the default impl, if set before. Otherwise, throw a RuntimeException if the interface
-  // is versioned. We can't throw the exception for unversioned interface because that would be an
-  // app breaking change.
-  if (iface.IsJavaDefault() || options.Version() > 0) {
+  if (options.Version() > 0) {
     out << "if (!_status) {\n";
     out.Indent();
-
-    if (iface.IsJavaDefault()) {
-      out << "if (getDefaultImpl() != null) {\n";
-      out.Indent();
-      if (is_void) {
-        out << "getDefaultImpl()." << method.GetName() << "("
-            << ArgList(method, &AidlArgument::GetName) << ");\n";
-        out << "return;\n";
-      } else {
-        out << "return getDefaultImpl()." << method.GetName() << "("
-            << ArgList(method, &AidlArgument::GetName) << ");\n";
-      }
-      out.Dedent();
-      out << "}\n";
-    }
-
     // TODO(b/274144762): we shouldn't have different behavior for versioned interfaces
     // also this set to false for all exceptions, not just unimplemented methods.
-    if (options.Version() > 0) {
-      out << "throw new android.os.RemoteException(\"Method " << method.GetName()
-          << " is unimplemented.\");\n";
-    }
-
+    // However, this is done now for backwards compatibility.
+    out << "throw new android.os.RemoteException(\"Method " << method.GetName()
+        << " is unimplemented.\");\n";
     out.Dedent();
     out << "}\n";
   }
@@ -1011,13 +989,6 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
            << "      data.writeInterfaceToken(DESCRIPTOR);\n"
            << "      boolean _status = mRemote.transact(Stub." << transactCodeName << ", "
            << "data, reply, 0);\n";
-      if (iface.IsJavaDefault()) {
-        code << "      if (!_status) {\n"
-             << "        if (getDefaultImpl() != null) {\n"
-             << "          return getDefaultImpl().getInterfaceVersion();\n"
-             << "        }\n"
-             << "      }\n";
-      }
       code << "      reply.readException();\n"
            << "      mCachedVersion = reply.readInt();\n"
            << "    } finally {\n"
@@ -1044,13 +1015,6 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
            << "      data.writeInterfaceToken(DESCRIPTOR);\n"
            << "      boolean _status = mRemote.transact(Stub." << transactCodeName << ", "
            << "data, reply, 0);\n";
-      if (iface.IsJavaDefault()) {
-        code << "      if (!_status) {\n"
-             << "        if (getDefaultImpl() != null) {\n"
-             << "          return getDefaultImpl().getInterfaceHash();\n"
-             << "        }\n"
-             << "      }\n";
-      }
       code << "      reply.readException();\n"
            << "      mCachedHash = reply.readString();\n"
            << "    } finally {\n"
@@ -1404,41 +1368,6 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   GenerateParcelHelpers(*writer, *iface, typenames, options);
   writer->Close();
   interface->elements.push_back(std::make_shared<LiteralClassElement>(code));
-
-  if (iface->IsJavaDefault()) {
-    // additional static methods for the default impl set/get to the
-    // stub class. Can't add them to the interface as the generated java files
-    // may be compiled with Java < 1.7 where static interface method isn't
-    // supported.
-    // TODO(b/111417145) make this conditional depending on the Java language
-    // version requested
-    const string i_name = iface->GetCanonicalName();
-    stub->elements.emplace_back(std::make_shared<LiteralClassElement>(
-        StringPrintf("public static boolean setDefaultImpl(%s impl) {\n"
-                     "  // Only one user of this interface can use this function\n"
-                     "  // at a time. This is a heuristic to detect if two different\n"
-                     "  // users in the same process use this function.\n"
-                     "  if (Stub.Proxy.sDefaultImpl != null) {\n"
-                     "    throw new IllegalStateException(\"setDefaultImpl() called twice\");\n"
-                     "  }\n"
-                     "  if (impl != null) {\n"
-                     "    Stub.Proxy.sDefaultImpl = impl;\n"
-                     "    return true;\n"
-                     "  }\n"
-                     "  return false;\n"
-                     "}\n",
-                     i_name.c_str())));
-    stub->elements.emplace_back(
-        std::make_shared<LiteralClassElement>(StringPrintf("public static %s getDefaultImpl() {\n"
-                                                           "  return Stub.Proxy.sDefaultImpl;\n"
-                                                           "}\n",
-                                                           i_name.c_str())));
-
-    // the static field is defined in the proxy class, not in the interface class
-    // because all fields in an interface class are by default final.
-    proxy->elements.emplace_back(std::make_shared<LiteralClassElement>(
-        StringPrintf("public static %s sDefaultImpl;\n", i_name.c_str())));
-  }
 
   stub->Finish();
 

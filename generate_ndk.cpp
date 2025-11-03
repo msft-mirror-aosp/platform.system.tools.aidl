@@ -566,15 +566,6 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
   // If the method is not implmented in the server side but the client has
   // provided the default implementation, call it instead of failing hard.
   const std::string iface = ClassName(defined_type, ClassNames::INTERFACE);
-  out << "if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ";
-  out << iface << "::getDefaultImpl()) {\n";
-  out.Indent();
-  out << "_aidl_status = " << iface << "::getDefaultImpl()->" << method.GetName() << "(";
-  out << NdkArgList(types, method, FormatArgNameOnly) << ");\n";
-  out << "goto _aidl_status_return;\n";
-  out.Dedent();
-  out << "}\n";
-
   StatusCheckGoto(out);
 
   if (!method.IsOneway()) {
@@ -604,7 +595,9 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
 
   out << "_aidl_error:\n";
   out << "_aidl_status.set(AStatus_fromStatus(_aidl_ret_status));\n";
-  out << "_aidl_status_return:\n";
+  if (!method.IsOneway()) {
+    out << "_aidl_status_return:\n";
+  }
   if (options.GenLog()) {
     out << cpp::GenLogAfterExecute(q_name, defined_type, method, "_aidl_status", "_aidl_return",
                                    false /* isServer */, true /* isNdk */);
@@ -918,33 +911,6 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "}\n";
 
-  // defintion for static member setDefaultImpl
-  out << "bool " << q_name << "::setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl) {\n";
-  out.Indent();
-  out << "// Only one user of this interface can use this function\n";
-  out << "// at a time. This is a heuristic to detect if two different\n";
-  out << "// users in the same process use this function.\n";
-  out << "assert(!" << clazz << "::default_impl);\n";
-  out << "if (impl) {\n";
-  out.Indent();
-  out << clazz << "::default_impl = impl;\n";
-  out << "return true;\n";
-  out.Dedent();
-  out << "}\n";
-  out << "return false;\n";
-  out.Dedent();
-  out << "}\n";
-
-  // definition for static member getDefaultImpl
-  out << "const std::shared_ptr<" << q_name << ">& " << q_name << "::getDefaultImpl() {\n";
-  out.Indent();
-  out << "return " << clazz << "::default_impl;\n";
-  out.Dedent();
-  out << "}\n";
-
-  // definition for the static field default_impl
-  out << "std::shared_ptr<" << q_name << "> " << q_name << "::default_impl = nullptr;\n";
-
   // default implementation for the <Name>Default class members
   const std::string defaultClazz = q_name + "Default";
   for (const auto& method : defined_type.GetMethods()) {
@@ -1212,19 +1178,11 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<" << clazz
       << ">* instance);";
   out << "\n";
-  out << "static bool setDefaultImpl(const std::shared_ptr<" << clazz << ">& impl);";
-  out << "\n";
-  out << "static const std::shared_ptr<" << clazz << ">& getDefaultImpl();";
-  out << "\n";
   for (const auto& method : defined_type.GetMethods()) {
     out << "virtual " << NdkMethodDecl(types, *method);
     cpp::GenerateDeprecated(out, *method);
     out << " = 0;\n";
   }
-  out.Dedent();
-  out << "private:\n";
-  out.Indent();
-  out << "static std::shared_ptr<" << clazz << "> default_impl;\n";
   out.Dedent();
   out << "};\n";
 

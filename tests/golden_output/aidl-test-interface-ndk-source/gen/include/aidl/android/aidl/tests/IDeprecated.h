@@ -35,10 +35,6 @@ public:
   static std::shared_ptr<IDeprecated> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<IDeprecated>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<IDeprecated>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<IDeprecated>& impl);
-  static const std::shared_ptr<IDeprecated>& getDefaultImpl();
-private:
-  static std::shared_ptr<IDeprecated> default_impl;
 };
 class __attribute__((deprecated("test"))) IDeprecatedDefault : public IDeprecated {
 public:

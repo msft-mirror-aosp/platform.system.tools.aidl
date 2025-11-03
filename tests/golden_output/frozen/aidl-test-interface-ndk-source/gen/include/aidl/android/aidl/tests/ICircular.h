@@ -40,11 +40,7 @@ public:
   static std::shared_ptr<ICircular> fromBinder(const ::ndk::SpAIBinder& binder);
   static binder_status_t writeToParcel(AParcel* parcel, const std::shared_ptr<ICircular>& instance);
   static binder_status_t readFromParcel(const AParcel* parcel, std::shared_ptr<ICircular>* instance);
-  static bool setDefaultImpl(const std::shared_ptr<ICircular>& impl);
-  static const std::shared_ptr<ICircular>& getDefaultImpl();
   virtual ::ndk::ScopedAStatus GetTestService(std::shared_ptr<::aidl::android::aidl::tests::ITestService>* _aidl_return) = 0;
-private:
-  static std::shared_ptr<ICircular> default_impl;
 };
 class ICircularDefault : public ICircular {
 public:

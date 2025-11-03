@@ -26,8 +26,9 @@ import (
 
 var (
 	aidlRustGlueRule = pctx.StaticRule("aidlRustGlueRule", blueprint.RuleParams{
-		Command:     `${aidlRustGlueCmd} ${out} ${root} ${in} ${imports}`,
-		CommandDeps: []string{"${aidlRustGlueCmd}"},
+		Command:         `${aidlRustGlueCmd} ${out} ${root} ${in} ${imports}`,
+		CommandDeps:     []string{"${aidlRustGlueCmd}"},
+		SandboxDisabled: true,
 	}, "root", "imports")
 )
 

@@ -857,27 +857,6 @@ public class TestServiceClient {
     }
 
     @Test
-    public void testDefaultImpl() throws RemoteException {
-      final int expectedArg = 100;
-      final int expectedReturnValue = 200;
-
-      boolean success = ITestService.Stub.setDefaultImpl(new ITestService.Default() {
-        @Override
-        public int UnimplementedMethod(int arg) throws RemoteException {
-          if (arg != expectedArg) {
-            throw new RemoteException("Argument for UnimplementedMethod is expected "
-                + " to be " + expectedArg + ", but got " + arg);
-          }
-          return expectedReturnValue;
-        }
-      });
-      assertThat(success, is(true));
-
-      int ret = service.UnimplementedMethod(expectedArg);
-      assertThat(ret, is(expectedReturnValue));
-    }
-
-    @Test
     public void testToString() {
         ParcelableForToString p = new ParcelableForToString();
         p.intValue = 10;

@@ -85,10 +85,6 @@ BpCircular::~BpCircular() {}
     | static_cast<int>(FLAG_PRIVATE_LOCAL)
     #endif  // BINDER_STABILITY_SUPPORT
     );
-  if (_aidl_ret_status == STATUS_UNKNOWN_TRANSACTION && ICircular::getDefaultImpl()) {
-    _aidl_status = ICircular::getDefaultImpl()->GetTestService(_aidl_return);
-    goto _aidl_status_return;
-  }
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
   _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
@@ -147,21 +143,6 @@ binder_status_t ICircular::readFromParcel(const AParcel* parcel, std::shared_ptr
   *instance = ICircular::fromBinder(binder);
   return STATUS_OK;
 }
-bool ICircular::setDefaultImpl(const std::shared_ptr<ICircular>& impl) {
-  // Only one user of this interface can use this function
-  // at a time. This is a heuristic to detect if two different
-  // users in the same process use this function.
-  assert(!ICircular::default_impl);
-  if (impl) {
-    ICircular::default_impl = impl;
-    return true;
-  }
-  return false;
-}
-const std::shared_ptr<ICircular>& ICircular::getDefaultImpl() {
-  return ICircular::default_impl;
-}
-std::shared_ptr<ICircular> ICircular::default_impl = nullptr;
 ::ndk::ScopedAStatus ICircularDefault::GetTestService(std::shared_ptr<::aidl::android::aidl::tests::ITestService>* /*_aidl_return*/) {
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));

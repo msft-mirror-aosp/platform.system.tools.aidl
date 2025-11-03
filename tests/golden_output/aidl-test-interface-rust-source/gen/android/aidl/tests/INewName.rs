@@ -30,12 +30,6 @@ declare_binder_interface! {
 pub trait INewName: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "android.aidl.tests.IOldName" }
   fn r#RealName<'a, >(&'a self) -> binder::Result<String>;
-  fn getDefaultImpl() -> INewNameDefaultRef where Self: Sized {
-    DEFAULT_IMPL.lock().unwrap().clone()
-  }
-  fn setDefaultImpl(d: INewNameDefaultRef) -> INewNameDefaultRef where Self: Sized {
-    std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)
-  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn INewNameAsyncServer + Send + Sync)> {
     None
   }
@@ -96,27 +90,15 @@ impl BnNewName {
     }
   }
 }
-pub trait INewNameDefault: Send + Sync {
-  fn r#RealName<'a, >(&'a self) -> binder::Result<String> {
-    Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-  }
-}
 pub mod transactions {
   pub const r#RealName: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
 }
-pub type INewNameDefaultRef = Option<std::sync::Arc<dyn INewNameDefault>>;
-static DEFAULT_IMPL: std::sync::Mutex<INewNameDefaultRef> = std::sync::Mutex::new(None);
 impl BpNewName {
   fn build_parcel_RealName(&self) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
     Ok(aidl_data)
   }
   fn read_response_RealName(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<String> {
-    if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
-      if let Some(_aidl_default_impl) = <Self as INewName>::getDefaultImpl() {
-        return _aidl_default_impl.r#RealName();
-      }
-    }
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }

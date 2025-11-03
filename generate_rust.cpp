@@ -189,8 +189,7 @@ string BuildMethod(const AidlMethod& method, const AidlTypenames& typenames,
 
 void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
                                  const AidlMethod& method, const AidlTypenames& typenames,
-                                 const Options& options, const std::string& default_trait_name,
-                                 bool is_vintf_stability) {
+                                 const Options& options, bool is_vintf_stability) {
   string parameters = "&self";
   vector<string> lifetimes;
   for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
@@ -243,24 +242,6 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
              "binder::StatusCode>) -> binder::Result<" +
              return_type + "> {\n";
   out.Indent();
-
-  // Check for UNKNOWN_TRANSACTION and call the default impl
-  if (method.IsUserDefined()) {
-    string default_args;
-    for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
-      if (!default_args.empty()) {
-        default_args += ", ";
-      }
-      default_args += kArgumentPrefix;
-      default_args += arg->GetName();
-    }
-    out << "if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {\n";
-    out << "  if let Some(_aidl_default_impl) = <Self as " << default_trait_name
-        << ">::getDefaultImpl() {\n";
-    out << "    return _aidl_default_impl.r#" << method.GetName() << "(" << default_args << ");\n";
-    out << "  }\n";
-    out << "}\n";
-  }
 
   // Return all other errors
   out << "let _aidl_reply = _aidl_reply?;\n";
@@ -721,17 +702,6 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
     }
   }
 
-  // Emit the default implementation code inside the trait
-  auto default_trait_name = ClassName(*iface, cpp::ClassNames::DEFAULT_IMPL);
-  auto default_ref_name = default_trait_name + "Ref";
-  *code_writer << "fn getDefaultImpl()"
-               << " -> " << default_ref_name << " where Self: Sized {\n";
-  *code_writer << "  DEFAULT_IMPL.lock().unwrap().clone()\n";
-  *code_writer << "}\n";
-  *code_writer << "fn setDefaultImpl(d: " << default_ref_name << ")"
-               << " -> " << default_ref_name << " where Self: Sized {\n";
-  *code_writer << "  std::mem::replace(&mut *DEFAULT_IMPL.lock().unwrap(), d)\n";
-  *code_writer << "}\n";
   *code_writer << "fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn "
                << trait_name_async_server << " + Send + Sync)> {\n";
   *code_writer << "  None\n";
@@ -922,24 +892,6 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   code_writer->Dedent();
   *code_writer << "}\n";
 
-  // Emit the default trait
-  *code_writer << "pub trait " << default_trait_name << ": Send + Sync {\n";
-  code_writer->Indent();
-  for (const auto& method : iface->GetMethods()) {
-    if (!method->IsUserDefined()) {
-      continue;
-    }
-
-    // Generate the default method
-    *code_writer << BuildMethod(*method, typenames, iface->IsVintfStability()) << " {\n";
-    code_writer->Indent();
-    *code_writer << "Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())\n";
-    code_writer->Dedent();
-    *code_writer << "}\n";
-  }
-  code_writer->Dedent();
-  *code_writer << "}\n";
-
   // Generate the transaction code constants
   // The constants get their own sub-module to avoid conflicts
   *code_writer << "pub mod transactions {\n";
@@ -953,12 +905,6 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   }
   code_writer->Dedent();
   *code_writer << "}\n";
-
-  // Emit the default implementation code outside the trait
-  *code_writer << "pub type " << default_ref_name << " = Option<std::sync::Arc<dyn "
-               << default_trait_name << ">>;\n";
-  *code_writer << "static DEFAULT_IMPL: std::sync::Mutex<" << default_ref_name
-               << "> = std::sync::Mutex::new(None);\n";
 
   // Emit the interface constants
   GenerateConstantDeclarations(*code_writer, *iface, typenames);
@@ -993,7 +939,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer << "impl " << client_name << " {\n";
   code_writer->Indent();
   for (const auto& method : iface->GetMethods()) {
-    GenerateClientMethodHelpers(*code_writer, *iface, *method, typenames, options, trait_name,
+    GenerateClientMethodHelpers(*code_writer, *iface, *method, typenames, options,
                                 iface->IsVintfStability());
   }
   code_writer->Dedent();
