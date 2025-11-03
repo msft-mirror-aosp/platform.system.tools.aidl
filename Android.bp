@@ -38,7 +38,9 @@ cc_defaults {
         "-Werror",
         "-Wextra",
     ],
-    tidy: true,
+    // clang-tidy, to avoid reverts:
+    // disable while in postsubmit, enable if in presubmit
+    tidy: false,
     tidy_checks: [
         "-bugprone-argument-comment",
         "-bugprone-branch-clone",
