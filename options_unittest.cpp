@@ -482,6 +482,17 @@ TEST(OptionsTests, AcceptVCodeNameAsMinSdkVersion) {
   EXPECT_EQ(35u, options->GetMinSdkVersion());
 }
 
+TEST(OptionsTests, AcceptBCodeNameAsMinSdkVersion) {
+  const char* args[] = {
+      "aidl",      "--lang=java", "--min_sdk_version=Baklava",
+      "--out=out", "input.aidl",  nullptr,
+  };
+  auto options = GetOptions(args);
+  EXPECT_TRUE(options->Ok());
+  // Baklava corresponds to SDK version 36.
+  EXPECT_EQ(36u, options->GetMinSdkVersion());
+}
+
 TEST(OptionsTest, DefaultMinSdkVersion) {
   const char* args[] = {
       "aidl", "--lang=java", "--out=out", "input.aidl", nullptr,
