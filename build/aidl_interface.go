@@ -97,6 +97,7 @@ func isAidlGeneratedModule(module android.Module) bool {
 
 // AidlVersionInfo keeps the *-source module for each (aidl_interface & lang) and the list of
 // not-frozen versions (which shouldn't be used by other modules)
+// @auto-generate: gob
 type AidlVersionInfo struct {
 	notFrozen            []string
 	requireFrozenReasons []string

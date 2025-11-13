@@ -478,8 +478,157 @@ func (r AidlGenruleInfo) GetTypeId() int16 {
 
 // begin of aidl_interface.go
 func init() {
+	AidlVersionInfoGobRegId = gobtools.RegisterType(func() gobtools.CustomDec { return new(AidlVersionInfo) })
 	AidlInterfaceInfoGobRegId = gobtools.RegisterType(func() gobtools.CustomDec { return new(AidlInterfaceInfo) })
 	AidlInterfaceImportsInfoGobRegId = gobtools.RegisterType(func() gobtools.CustomDec { return new(AidlInterfaceImportsInfo) })
+}
+
+func (r AidlVersionInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) error {
+	var err error
+
+	if r.notFrozen == nil {
+		if err = gobtools.EncodeInt(buf, -1); err != nil {
+			return err
+		}
+	} else {
+		if err = gobtools.EncodeInt(buf, len(r.notFrozen)); err != nil {
+			return err
+		}
+		for val1 := 0; val1 < len(r.notFrozen); val1++ {
+			if err = gobtools.EncodeString(buf, r.notFrozen[val1]); err != nil {
+				return err
+			}
+		}
+	}
+
+	if r.requireFrozenReasons == nil {
+		if err = gobtools.EncodeInt(buf, -1); err != nil {
+			return err
+		}
+	} else {
+		if err = gobtools.EncodeInt(buf, len(r.requireFrozenReasons)); err != nil {
+			return err
+		}
+		for val2 := 0; val2 < len(r.requireFrozenReasons); val2++ {
+			if err = gobtools.EncodeString(buf, r.requireFrozenReasons[val2]); err != nil {
+				return err
+			}
+		}
+	}
+
+	if r.sourceMap == nil {
+		if err = gobtools.EncodeInt(buf, -1); err != nil {
+			return err
+		}
+	} else {
+		if err = gobtools.EncodeInt(buf, len(r.sourceMap)); err != nil {
+			return err
+		}
+		for val3, val4 := range r.sourceMap {
+			if err = gobtools.EncodeString(buf, val3); err != nil {
+				return err
+			}
+			if err = gobtools.EncodeString(buf, val4); err != nil {
+				return err
+			}
+		}
+	}
+	return err
+}
+
+func (r AidlVersionInfo) CustomHash(hasher *proptools.Hasher) error {
+	hasher.WriteString(":aidl.AidlVersionInfo")
+	hasher.WriteInt(3)
+	hasher.WriteString(":.[]string")
+	hasher.WriteInt(len(r.notFrozen))
+	for val1 := 0; val1 < len(r.notFrozen); val1++ {
+		hasher.WriteString(":.string")
+		hasher.WriteString(r.notFrozen[val1])
+	}
+	hasher.WriteString(":.[]string")
+	hasher.WriteInt(len(r.requireFrozenReasons))
+	for val2 := 0; val2 < len(r.requireFrozenReasons); val2++ {
+		hasher.WriteString(":.string")
+		hasher.WriteString(r.requireFrozenReasons[val2])
+	}
+	hasher.WriteString(":.map[string]string")
+	hasher.WriteInt(len(r.sourceMap))
+	val3 := make([]string, 0, len(r.sourceMap))
+	for val5 := range r.sourceMap {
+		val3 = append(val3, val5)
+	}
+	proptools.SortOrdered(val3)
+	for _, val4 := range val3 {
+		hasher.WriteString(":.string")
+		hasher.WriteString(val4)
+		hasher.WriteString(":.string")
+		hasher.WriteString(r.sourceMap[val4])
+	}
+	return nil
+}
+
+func (r *AidlVersionInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) error {
+	var err error
+
+	var val2 int
+	err = gobtools.DecodeInt(buf, &val2)
+	if err != nil {
+		return err
+	}
+	if val2 != -1 {
+		r.notFrozen = make([]string, val2)
+		for val3 := 0; val3 < int(val2); val3++ {
+			err = gobtools.DecodeString(buf, &r.notFrozen[val3])
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	var val6 int
+	err = gobtools.DecodeInt(buf, &val6)
+	if err != nil {
+		return err
+	}
+	if val6 != -1 {
+		r.requireFrozenReasons = make([]string, val6)
+		for val7 := 0; val7 < int(val6); val7++ {
+			err = gobtools.DecodeString(buf, &r.requireFrozenReasons[val7])
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	var val9 int
+	err = gobtools.DecodeInt(buf, &val9)
+	if err != nil {
+		return err
+	}
+	if val9 != -1 {
+		r.sourceMap = make(map[string]string, val9)
+		for val10 := 0; val10 < int(val9); val10++ {
+			var val11 string
+			var val12 string
+			err = gobtools.DecodeString(buf, &val11)
+			if err != nil {
+				return err
+			}
+			err = gobtools.DecodeString(buf, &val12)
+			if err != nil {
+				return err
+			}
+			r.sourceMap[val11] = val12
+		}
+	}
+
+	return err
+}
+
+var AidlVersionInfoGobRegId int16
+
+func (r AidlVersionInfo) GetTypeId() int16 {
+	return AidlVersionInfoGobRegId
 }
 
 func (r AidlInterfaceInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) error {
