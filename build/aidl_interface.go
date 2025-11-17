@@ -32,7 +32,7 @@ import (
 	"android/soong/rust"
 )
 
-//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+//go:generate go run ../../../../build/blueprint/gobtools/codegen
 
 const (
 	aidlInterfaceSuffix       = "_interface"
@@ -97,6 +97,7 @@ func isAidlGeneratedModule(module android.Module) bool {
 
 // AidlVersionInfo keeps the *-source module for each (aidl_interface & lang) and the list of
 // not-frozen versions (which shouldn't be used by other modules)
+// @auto-generate: gob
 type AidlVersionInfo struct {
 	notFrozen            []string
 	requireFrozenReasons []string
