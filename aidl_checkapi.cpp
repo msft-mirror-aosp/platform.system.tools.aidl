@@ -30,6 +30,7 @@
 
 #include "aidl_dumpapi.h"
 #include "aidl_language.h"
+#include "aidl_to_cpp_common.h"
 #include "aidl_typenames.h"
 #include "code_writer.h"
 #include "io_delegate.h"
@@ -303,7 +304,7 @@ static bool EvaluatesToZero(const AidlEnumDeclaration& enum_decl, const AidlCons
   return value->ValueString(enum_decl.GetBackingType(), AidlConstantValueDecorator) == "0";
 }
 
-static bool are_compatible_parcelables(const AidlParcelable& older, const AidlTypenames&,
+static bool are_compatible_parcelables(const AidlParcelable& older, const AidlTypenames& old_types,
                                        const AidlParcelable& newer,
                                        const AidlTypenames& new_types) {
   const auto& old_fields = older.GetFields();
@@ -314,11 +315,22 @@ static bool are_compatible_parcelables(const AidlParcelable& older, const AidlTy
                       << old_fields.size() << " to " << new_fields.size() << ".";
     return false;
   }
-  if (newer.IsFixedSize() && old_fields.size() != new_fields.size()) {
-    AIDL_ERROR(newer) << "Number of fields in " << older.GetCanonicalName() << " is changed from "
-                      << old_fields.size() << " to " << new_fields.size()
-                      << ". This is an incompatible change for FixedSize types.";
-    return false;
+  if (newer.IsFixedSize() && older.IsFixedSize()) {
+    auto old_size = android::aidl::cpp::SizeOfDefinedType(older, old_types);
+    auto new_size = android::aidl::cpp::SizeOfDefinedType(newer, new_types);
+
+    if (old_size == std::nullopt || new_size == std::nullopt) {
+      AIDL_ERROR(newer) << "Could not determine size for @FixedSize parcelable "
+                        << older.GetCanonicalName();
+      return false;
+    }
+
+    if (*old_size != *new_size) {
+      AIDL_ERROR(newer) << "Size of FixedSize parcelable " << older.GetCanonicalName()
+                        << " is changed from " << *old_size << " to " << *new_size
+                        << ". This is an incompatible change.";
+      return false;
+    }
   }
 
   // android.net.UidRangeParcel should be frozen to prevent breakage in legacy (b/186720556)
