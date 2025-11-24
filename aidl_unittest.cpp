@@ -1412,8 +1412,36 @@ TEST_P(AidlTest, InvalidConstString) {
                       }
                    )",
                            typenames_, GetLanguage(), &error));
-  EXPECT_EQ(expected_stderr, GetCapturedStderr());
-  EXPECT_EQ(AidlError::BAD_TYPE, error);
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, InvalidConstStringEnumerator) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/Foo.aidl:2.43-56: Found invalid character '\\' at index 4 in string constant "
+      "'\"test\\\"test\"'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/Foo.aidl",
+                           R"(package p;
+                           enum Foo {BAR = "test\"test",})",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
+}
+
+TEST_P(AidlTest, InvalidConstStringExpression) {
+  AidlError error;
+  const string expected_stderr =
+      "ERROR: p/Foo.aidl:2.43-56: Found invalid character '\\' at index 4 in string constant "
+      "'\"test\\\"test\"'\n";
+  CaptureStderr();
+  EXPECT_EQ(nullptr, Parse("p/Foo.aidl",
+                           R"(package p;
+                           enum Foo {BAR = "test\"test" + "",})",
+                           typenames_, GetLanguage(), &error));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr(expected_stderr));
+  EXPECT_EQ(AidlError::PARSE_ERROR, error);
 }
 
 TEST_F(AidlTest, InvalidCharLiteral) {
