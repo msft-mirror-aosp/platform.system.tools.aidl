@@ -3987,8 +3987,8 @@ TEST_F(AidlTestIncompatibleChanges, ChangedConstValue) {
 
 TEST_F(AidlTestIncompatibleChanges, FixedSizeAddedField) {
   const string expected_stderr =
-      "ERROR: new/p/Foo.aidl:1.33-37: Number of fields in p.Foo is changed from 1 to 2. "
-      "This is an incompatible change for FixedSize types.\n";
+      "ERROR: new/p/Foo.aidl:1.33-37: Size of FixedSize parcelable p.Foo is changed from 4 to 8. "
+      "This is an incompatible change.\n";
   io_delegate_.SetFileContents("old/p/Foo.aidl",
                                "package p; @FixedSize parcelable Foo { int A = 1; }");
   io_delegate_.SetFileContents("new/p/Foo.aidl",
@@ -6063,6 +6063,28 @@ TEST_P(AidlTypeParamTest, ArraySupportedTypes) {
 
 TEST_P(AidlTypeParamTest, ParcelableFieldTypes) {
   Run("{}", kFieldSupportExpectations);
+}
+
+TEST_F(AidlTest, CheckApiForFixedSizeUnion) {
+  Options options = Options::From("aidl --checkapi base new");
+  // Test case 1: Size of the union changes. Should fail.
+  io_delegate_.SetFileContents("base/p/Union.aidl", "package p; @FixedSize union Union { int a; }");
+  io_delegate_.SetFileContents("new/p/Union.aidl",
+                               "package p; @FixedSize union Union { int a; double b; }");
+
+  CaptureStderr();
+  EXPECT_FALSE(::android::aidl::check_api(options, io_delegate_));
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Size of FixedSize parcelable p.Union is changed from "
+                                             "8 to 16. This is an incompatible change.\n"));
+
+  // Test case 2: Size of the union does not change. Should pass.
+  io_delegate_.SetFileContents("base/p/Union.aidl", "package p; @FixedSize union Union { int a; }");
+  io_delegate_.SetFileContents("new/p/Union.aidl",
+                               "package p; @FixedSize union Union { int a; byte b; int c;}");
+
+  CaptureStderr();
+  EXPECT_TRUE(::android::aidl::check_api(options, io_delegate_));
+  EXPECT_EQ("", GetCapturedStderr());
 }
 
 }  // namespace aidl
