@@ -226,6 +226,8 @@ const AidlDefinedType* AidlTypenames::TryGetDefinedType(const std::string& type_
 std::vector<const AidlDefinedType*> AidlTypenames::AllDefinedTypes() const {
   std::vector<const AidlDefinedType*> res;
   for (const auto& doc : AllDocuments()) {
+    // Don't include the imported types from the preprocessed files
+    if (doc->IsPreprocessed()) continue;
     VisitTopDown(
         [&](const AidlNode& node) {
           if (auto defined_type = AidlCast<AidlDefinedType>(node); defined_type) {
