@@ -740,6 +740,23 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
   if (!AidlAnnotatable::CheckValid(typenames)) {
     return false;
   }
+
+  if (IsFixedSizeArray()) {
+    for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
+      if (!dim->Evaluate()) {
+        return false;
+      }
+      if (dim->GetType() > AidlConstantValue::Type::INT32) {
+        AIDL_ERROR(this) << "Array size must be a positive number: " << dim->Literal();
+        return false;
+      }
+      auto value = dim->EvaluatedValue<int32_t>();
+      if (value < 0) {
+        AIDL_ERROR(this) << "Array size must be a positive number: " << value;
+        return false;
+      }
+    }
+  }
   if (IsGeneric()) {
     const auto& types = GetTypeParameters();
     for (const auto& arg : types) {
@@ -886,23 +903,6 @@ bool AidlTypeSpecifier::CheckValid(const AidlTypenames& typenames) const {
     if (IsHeapNullable()) {
       if (!defined_type || IsArray() || !defined_type->AsParcelable()) {
         AIDL_ERROR(this) << "@nullable(heap=true) is available to parcelables.";
-        return false;
-      }
-    }
-  }
-
-  if (IsFixedSizeArray()) {
-    for (const auto& dim : std::get<FixedSizeArray>(GetArray()).dimensions) {
-      if (!dim->Evaluate()) {
-        return false;
-      }
-      if (dim->GetType() > AidlConstantValue::Type::INT32) {
-        AIDL_ERROR(this) << "Array size must be a positive number: " << dim->Literal();
-        return false;
-      }
-      auto value = dim->EvaluatedValue<int32_t>();
-      if (value < 0) {
-        AIDL_ERROR(this) << "Array size must be a positive number: " << value;
         return false;
       }
     }
