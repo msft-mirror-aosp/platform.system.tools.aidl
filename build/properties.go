@@ -110,6 +110,7 @@ type rustProperties struct {
 	Apex_available     []string
 	Min_sdk_version    *string
 	Features           []string
+	Split_all_variants *bool
 }
 
 type phonyProperties struct {
