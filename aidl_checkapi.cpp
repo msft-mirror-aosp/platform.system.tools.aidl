@@ -501,6 +501,10 @@ bool check_api(const Options& options, const IoDelegate& io_delegate) {
   AIDL_FATAL_IF(options.InputFiles().size() != 2, AIDL_LOCATION_HERE)
       << "--checkapi requires two inputs "
       << "but got " << options.InputFiles().size();
+  if (options.InputFiles().at(0) == options.InputFiles().at(1)) {
+    AIDL_ERROR(options.InputFiles().at(0)) << "No use in checkapi with the same files.";
+    return false;
+  }
   auto old_tns = LoadApiDump(options, io_delegate, options.InputFiles().at(0));
   if (!old_tns.ok()) {
     return false;
