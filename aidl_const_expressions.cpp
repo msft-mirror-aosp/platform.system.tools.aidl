@@ -614,7 +614,7 @@ AidlConstantValue* AidlConstantValue::String(const AidlLocation& location, const
     if (!isValidLiteralChar(value[i])) {
       AIDL_ERROR(location) << "Found invalid character '" << value[i] << "' at index " << i - 1
                            << " in string constant '" << value << "'";
-      return new AidlConstantValue(location, Type::ERROR, value);
+      return nullptr;
     }
   }
 

@@ -465,6 +465,10 @@ const_expr
   }
  | C_STR {
     $$ = AidlConstantValue::String(loc(@1), $1->GetText());
+    if ($$ == nullptr) {
+      ps->AddError();
+      $$ = AidlConstantValue::String(loc(@1), "\"\"");
+    }
     delete $1;
   }
  | qualified_name {
