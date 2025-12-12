@@ -138,7 +138,6 @@ TEST_F(AidlNdkTrunkStableTest, RepeatUnionNewField) {
   MyUnion in_test = MyUnion::make<MyUnion::c>(12);
   MyUnion out;
   auto status = service_->repeatUnion(in_test, &out);
-  ASSERT_TRUE(status.isOk()) << status;
   if (kUseUnfrozen) {
     ASSERT_TRUE(status.isOk()) << status;
     EXPECT_EQ(in_test, out);
