@@ -264,21 +264,19 @@ int32_t BpTrunkStableTest::getInterfaceVersion() {
 
 
 std::string BpTrunkStableTest::getInterfaceHash() {
-  ::android::RpcMutexLockGuard lockGuard(cached_hash_mutex_);
-  if (cached_hash_ == "-1") {
-    ::android::Parcel data;
-    ::android::Parcel reply;
-    data.writeInterfaceToken(getInterfaceDescriptor());
-    ::android::status_t err = remote()->transact(BnTrunkStableTest::TRANSACTION_getInterfaceHash, data, &reply);
-    if (err == ::android::OK) {
-      ::android::binder::Status _aidl_status;
-      err = _aidl_status.readFromParcel(reply);
-      if (err == ::android::OK && _aidl_status.isOk()) {
-        reply.readUtf8FromUtf16(&cached_hash_);
-      }
+  ::std::string hash;
+  ::android::Parcel data;
+  ::android::Parcel reply;
+  data.writeInterfaceToken(getInterfaceDescriptor());
+  ::android::status_t err = remote()->transact(BnTrunkStableTest::TRANSACTION_getInterfaceHash, data, &reply);
+  if (err == ::android::OK) {
+    ::android::binder::Status _aidl_status;
+    err = _aidl_status.readFromParcel(reply);
+    if (err == ::android::OK && _aidl_status.isOk()) {
+      reply.readUtf8FromUtf16(&hash);
     }
   }
-  return cached_hash_;
+  return hash;
 }
 
 }  // namespace trunk
@@ -864,21 +862,19 @@ int32_t ITrunkStableTest::BpMyCallback::getInterfaceVersion() {
 
 
 std::string ITrunkStableTest::BpMyCallback::getInterfaceHash() {
-  ::android::RpcMutexLockGuard lockGuard(cached_hash_mutex_);
-  if (cached_hash_ == "-1") {
-    ::android::Parcel data;
-    ::android::Parcel reply;
-    data.writeInterfaceToken(getInterfaceDescriptor());
-    ::android::status_t err = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_getInterfaceHash, data, &reply);
-    if (err == ::android::OK) {
-      ::android::binder::Status _aidl_status;
-      err = _aidl_status.readFromParcel(reply);
-      if (err == ::android::OK && _aidl_status.isOk()) {
-        reply.readUtf8FromUtf16(&cached_hash_);
-      }
+  ::std::string hash;
+  ::android::Parcel data;
+  ::android::Parcel reply;
+  data.writeInterfaceToken(getInterfaceDescriptor());
+  ::android::status_t err = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_getInterfaceHash, data, &reply);
+  if (err == ::android::OK) {
+    ::android::binder::Status _aidl_status;
+    err = _aidl_status.readFromParcel(reply);
+    if (err == ::android::OK && _aidl_status.isOk()) {
+      reply.readUtf8FromUtf16(&hash);
     }
   }
-  return cached_hash_;
+  return hash;
 }
 
 }  // namespace trunk

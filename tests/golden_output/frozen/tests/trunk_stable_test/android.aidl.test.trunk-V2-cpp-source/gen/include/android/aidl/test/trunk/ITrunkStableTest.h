@@ -302,8 +302,6 @@ public:
     static std::function<void(const TransactionLog&)> logFunc;
   private:
     int32_t cached_version_ = -1;
-    std::string cached_hash_ = "-1";
-    ::android::RpcMutex cached_hash_mutex_;
   };  // class BpMyCallback
   class LIBBINDER_EXPORTED BnMyCallback : public ::android::BnInterface<IMyCallback> {
   public:

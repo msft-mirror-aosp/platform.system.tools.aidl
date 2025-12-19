@@ -47,8 +47,6 @@ public:
   static std::function<void(const TransactionLog&)> logFunc;
 private:
   int32_t cached_version_ = -1;
-  std::string cached_hash_ = "-1";
-  ::android::RpcMutex cached_hash_mutex_;
 };  // class BpTrunkStableTest
 }  // namespace trunk
 }  // namespace test
