@@ -1560,6 +1560,7 @@ void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
   derives.insert(derives.begin(), "Debug");
   if (parcel->IsFixedSize()) {
     derives.push_back("zerocopy::Immutable");
+    derives.push_back("zerocopy::TryFromBytes");
   }
 
   *code_writer << "#[derive(" << Join(derives, ", ") << ")]\n";

@@ -35,7 +35,7 @@ impl binder::binder_impl::ParcelableMetadata for r#FixedSize {
   fn get_descriptor() -> &'static str { "android.aidl.tests.FixedSize" }
 }
 pub mod r#FixedParcelable {
-  #[derive(Debug, zerocopy::Immutable)]
+  #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(C, align(8))]
   pub struct r#FixedParcelable {
     pub r#booleanValue: bool,
@@ -212,7 +212,7 @@ pub mod r#FixedParcelable {
   }
 }
 pub mod r#ExplicitPaddingParcelable {
-  #[derive(Debug, zerocopy::Immutable)]
+  #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(C, align(8))]
   pub struct r#ExplicitPaddingParcelable {
     pub r#byteValue: i8,
@@ -323,7 +323,7 @@ pub mod r#ExplicitPaddingParcelable {
   }
 }
 pub mod r#EmptyParcelable {
-  #[derive(Debug, zerocopy::Immutable)]
+  #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(C, align(1))]
   pub struct r#EmptyParcelable {
     _unused: u8,
@@ -372,7 +372,7 @@ pub mod r#EmptyParcelable {
   }
 }
 pub mod r#FixedUnion {
-  #[derive(Debug, zerocopy::Immutable)]
+  #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u64, align(8))]
   pub enum r#FixedUnion {
     BooleanValue(bool),
@@ -711,7 +711,7 @@ pub mod r#FixedUnion {
   }
 }
 pub mod r#FixedUnionNoPadding {
-  #[derive(Debug, zerocopy::Immutable)]
+  #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u8, align(1))]
   pub enum r#FixedUnionNoPadding {
     ByteValue(i8),
@@ -807,7 +807,7 @@ pub mod r#FixedUnionNoPadding {
   }
 }
 pub mod r#FixedUnionSmallPadding {
-  #[derive(Debug, zerocopy::Immutable)]
+  #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u16, align(2))]
   pub enum r#FixedUnionSmallPadding {
     CharValue(u16),
@@ -903,7 +903,7 @@ pub mod r#FixedUnionSmallPadding {
   }
 }
 pub mod r#FixedUnionLongPadding {
-  #[derive(Debug, zerocopy::Immutable)]
+  #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u64, align(8))]
   pub enum r#FixedUnionLongPadding {
     LongValue(i64),
