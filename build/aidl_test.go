@@ -161,6 +161,12 @@ func _testAidl(t *testing.T, bp string, customizers ...android.FixturePreparer) 
 			recovery_available: true,
 			srcs: [""],
 		}
+		rust_library {
+			name: "libzerocopy",
+			crate_name: "zerocopy",
+			recovery_available: true,
+			srcs: [""],
+		}
 		rust_proc_macro {
 			name: "libasync_trait",
 			crate_name: "async_trait",
