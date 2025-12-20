@@ -11,7 +11,7 @@
 #![allow(non_upper_case_globals)]
 use binder::declare_binder_enum;
 declare_binder_enum! {
-  #[repr(C, align(1))]
+  #[repr(align(1))]
   r#ByteEnum : [i8; 3] {
     r#FOO = 1,
     r#BAR = 2,
