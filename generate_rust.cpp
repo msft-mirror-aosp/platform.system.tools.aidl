@@ -1237,8 +1237,11 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
     AIDL_FATAL_IF(alignment == std::nullopt, *parcel);
     auto tag = std::to_string(*alignment * 8);
     // This repr may use a tag larger than u8 to make sure the tag padding takes into account that
-    // the overall alignment is computed as if i64/f64 were always 8-byte aligned
-    out << "#[repr(C, u" << tag << ", align(" << std::to_string(*alignment) << "))]\n";
+    // the overall alignment is computed as if i64/f64 were always 8-byte aligned.
+    //
+    // The `#[repr(Int)]` attribute is sufficient here for a stable ABI
+    // (per https://doc.rust-lang.org/reference/type-layout.html#primitive-representations).
+    out << "#[repr(u" << tag << ", align(" << std::to_string(*alignment) << "))]\n";
   }
   out << "pub enum r#" << parcel->GetName() << " {\n";
   out.Indent();
