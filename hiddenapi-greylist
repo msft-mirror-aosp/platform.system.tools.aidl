@@ -374,7 +374,7 @@
 "android.service.notification.IConditionListener",
 "android.service.notification.IConditionProvider",
 "android.service.notification.INotificationListener",
-"android.service.notification.IStatusBarNotificationHolder",
+
 "android.service.oemlock.IOemLockService",
 "android.service.persistentdata.IPersistentDataBlockService",
 "android.service.quicksettings.IQSService",
