@@ -30,8 +30,6 @@ public:
   std::string getInterfaceHash() override;
 private:
   int32_t cached_version_ = -1;
-  std::string cached_hash_ = "-1";
-  ::android::RpcMutex cached_hash_mutex_;
 };  // class BpFooInterface
 }  // namespace tests
 }  // namespace versioned
