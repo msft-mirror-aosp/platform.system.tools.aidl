@@ -339,22 +339,20 @@ void GenerateClientMetaTransaction(CodeWriter& out, const AidlInterface& interfa
   }
   if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
     out << "std::string " << bp_name << "::" << kGetInterfaceHash << "() {\n"
-        << "  ::android::RpcMutexLockGuard lockGuard(cached_hash_mutex_);\n"
-        << "  if (cached_hash_ == \"-1\") {\n"
-        << "    ::android::Parcel data;\n"
-        << "    ::android::Parcel reply;\n"
-        << "    data.writeInterfaceToken(getInterfaceDescriptor());\n"
-        << "    ::android::status_t err = remote()->transact("
-        << GetTransactionIdFor(bn_name, method) << ", data, &reply);\n"
-        << "    if (err == ::android::OK) {\n"
-        << "      ::android::binder::Status _aidl_status;\n"
-        << "      err = _aidl_status.readFromParcel(reply);\n"
-        << "      if (err == ::android::OK && _aidl_status.isOk()) {\n"
-        << "        reply.readUtf8FromUtf16(&cached_hash_);\n"
-        << "      }\n"
+        << "  ::std::string hash;\n"
+        << "  ::android::Parcel data;\n"
+        << "  ::android::Parcel reply;\n"
+        << "  data.writeInterfaceToken(getInterfaceDescriptor());\n"
+        << "  ::android::status_t err = remote()->transact(" << GetTransactionIdFor(bn_name, method)
+        << ", data, &reply);\n"
+        << "  if (err == ::android::OK) {\n"
+        << "    ::android::binder::Status _aidl_status;\n"
+        << "    err = _aidl_status.readFromParcel(reply);\n"
+        << "    if (err == ::android::OK && _aidl_status.isOk()) {\n"
+        << "      reply.readUtf8FromUtf16(&hash);\n"
         << "    }\n"
         << "  }\n"
-        << "  return cached_hash_;\n"
+        << "  return hash;\n"
         << "}\n";
   }
 }
@@ -796,10 +794,6 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
     out.Indent();
     if (options.Version() > 0) {
       out << "int32_t cached_version_ = -1;\n";
-    }
-    if (!options.Hash().empty()) {
-      out << "std::string cached_hash_ = \"-1\";\n";
-      out << "::android::RpcMutex cached_hash_mutex_;\n";
     }
     out.Dedent();
   }
