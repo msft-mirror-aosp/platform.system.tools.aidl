@@ -11,7 +11,7 @@
 #![allow(non_upper_case_globals)]
 use binder::declare_binder_enum;
 declare_binder_enum! {
-  #[repr(C, align(4))]
+  #[repr(align(4))]
   r#IntEnum : [i32; 7] {
     r#ZERO = 0,
     r#ONE = 1,

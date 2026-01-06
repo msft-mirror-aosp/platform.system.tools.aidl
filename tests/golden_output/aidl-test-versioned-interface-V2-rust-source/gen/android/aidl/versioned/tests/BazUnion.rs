@@ -59,7 +59,7 @@ pub mod r#Tag {
   #![allow(non_upper_case_globals)]
   use binder::declare_binder_enum;
   declare_binder_enum! {
-    #[repr(C, align(4))]
+    #[repr(align(4))]
     r#Tag : [i32; 2] {
       r#intNum = 0,
       r#longNum = 1,

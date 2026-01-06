@@ -1492,7 +1492,8 @@ void GenerateRustEnumDeclaration(CodeWriter* code_writer, const AidlEnumDeclarat
   AIDL_FATAL_IF(alignment == std::nullopt, *enum_decl);
   // u64 is aligned to 4 bytes on x86 which may underalign the whole struct if it's the backing type
   // so we need to set the alignment manually as if u64 were aligned to 8 bytes.
-  *code_writer << "#[repr(C, align(" << std::to_string(*alignment) << "))]\n";
+  // There is no `#[repr(C)]` here because the macro includes it.
+  *code_writer << "#[repr(align(" << std::to_string(*alignment) << "))]\n";
   *code_writer << "r#" << enum_decl->GetName() << " : [" << backing_type << "; "
                << std::to_string(enum_decl->GetEnumerators().size()) << "] {\n";
   code_writer->Indent();

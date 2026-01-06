@@ -448,7 +448,7 @@ pub mod r#FixedUnion {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
-      #[repr(C, align(1))]
+      #[repr(align(1))]
       r#Tag : [i8; 10] {
         r#booleanValue = 0,
         r#byteValue = 1,
@@ -519,7 +519,7 @@ pub mod r#FixedUnionNoPadding {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
-      #[repr(C, align(1))]
+      #[repr(align(1))]
       r#Tag : [i8; 1] {
         r#byteValue = 0,
       }
@@ -581,7 +581,7 @@ pub mod r#FixedUnionSmallPadding {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
-      #[repr(C, align(1))]
+      #[repr(align(1))]
       r#Tag : [i8; 1] {
         r#charValue = 0,
       }
@@ -643,7 +643,7 @@ pub mod r#FixedUnionLongPadding {
     #![allow(non_upper_case_globals)]
     use binder::declare_binder_enum;
     declare_binder_enum! {
-      #[repr(C, align(1))]
+      #[repr(align(1))]
       r#Tag : [i8; 1] {
         r#longValue = 0,
       }
