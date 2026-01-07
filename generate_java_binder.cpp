@@ -752,6 +752,9 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
   bool is_void = method.GetType().GetName() == "void";
 
   out << GenerateComments(method);
+  for (const auto& a : JavaAnnotationsFor(method, AnnotationPlacement::SUBCLASS)) {
+    out << a << "\n";
+  }
   out << "@Override public " << JavaSignatureOf(method.GetType()) << " " << method.GetName() << "("
       << ArgList(method, FormatArgForDecl) << ") throws android.os.RemoteException\n{\n";
   out.Indent();
@@ -1125,6 +1128,7 @@ static shared_ptr<ClassElement> GenerateDefaultImplMethod(const AidlMethod& meth
   default_method->modifiers = PUBLIC | OVERRIDE;
   default_method->returnType = JavaSignatureOf(method.GetType());
   default_method->name = method.GetName();
+  default_method->annotations = JavaAnnotationsFor(method, AnnotationPlacement::SUBCLASS);
   default_method->statements = std::make_shared<StatementBlock>();
   for (const auto& arg : method.GetArguments()) {
     default_method->parameters.push_back(
@@ -1193,6 +1197,7 @@ static shared_ptr<ClassElement> GenerateDelegatorMethod(const AidlMethod& method
   delegator_method->modifiers = PUBLIC | OVERRIDE;
   delegator_method->returnType = JavaSignatureOf(method.GetType());
   delegator_method->name = method.GetName();
+  delegator_method->annotations = JavaAnnotationsFor(method, AnnotationPlacement::SUBCLASS);
   delegator_method->statements = std::make_shared<StatementBlock>();
   std::vector<std::string> argNames;
   for (const auto& arg : method.GetArguments()) {
