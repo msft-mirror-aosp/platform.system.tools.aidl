@@ -12,6 +12,7 @@ package android.aidl.tests;
 public interface IDeprecated extends android.os.IInterface
 {
   /** Default implementation for IDeprecated. */
+  @Deprecated
   public static class Default implements android.aidl.tests.IDeprecated
   {
     @Override
@@ -20,6 +21,7 @@ public interface IDeprecated extends android.os.IInterface
     }
   }
   /** Local-side IPC implementation stub class. */
+  @Deprecated
   public static abstract class Stub extends android.os.Binder implements android.aidl.tests.IDeprecated
   {
     /** Construct the stub and attach it to the interface. */
@@ -78,6 +80,7 @@ public interface IDeprecated extends android.os.IInterface
         }
       }
     }
+    @Deprecated
     private static class Proxy implements android.aidl.tests.IDeprecated
     {
       private android.os.IBinder mRemote;

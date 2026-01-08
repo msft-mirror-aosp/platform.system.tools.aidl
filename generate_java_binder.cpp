@@ -124,6 +124,9 @@ StubClass::StubClass(const AidlInterface* interfaceType, const Options& options)
   all_method_count = 0;  // Will be set when outlining may be enabled.
 
   this->comment = "/** Local-side IPC implementation stub class. */";
+  if (interfaceType->IsDeprecated()) {
+    this->annotations.push_back("@Deprecated");
+  }
   this->modifiers = PUBLIC | ABSTRACT | STATIC;
   this->what = Class::CLASS;
   this->type = interfaceType->GetCanonicalName() + ".Stub";
@@ -387,6 +390,9 @@ class ProxyClass : public Class {
 };
 
 ProxyClass::ProxyClass(const AidlInterface* interfaceType, const Options& options) : Class() {
+  if (interfaceType->IsDeprecated()) {
+    this->annotations.push_back("@Deprecated");
+  }
   this->modifiers = PRIVATE | STATIC;
   this->what = Class::CLASS;
   this->type = interfaceType->GetCanonicalName() + ".Stub.Proxy";
@@ -1144,6 +1150,9 @@ static shared_ptr<Class> GenerateDefaultImplClass(const AidlInterface& iface,
                                                   const Options& options) {
   auto default_class = std::make_shared<Class>();
   default_class->comment = "/** Default implementation for " + iface.GetName() + ". */";
+  if (iface.IsDeprecated()) {
+    default_class->annotations.push_back("@Deprecated");
+  }
   default_class->modifiers = PUBLIC | STATIC;
   default_class->what = Class::CLASS;
   default_class->type = iface.GetCanonicalName() + ".Default";
@@ -1216,6 +1225,9 @@ static shared_ptr<Class> GenerateDelegatorClass(const AidlInterface& iface,
                                                 const Options& options) {
   auto delegator_class = std::make_shared<Class>();
   delegator_class->comment = "/** Delegator implementation for " + iface.GetName() + ". */";
+  if (iface.IsDeprecated()) {
+    delegator_class->annotations.push_back("@Deprecated");
+  }
   delegator_class->modifiers = PUBLIC | STATIC;
   delegator_class->what = Class::CLASS;
   delegator_class->type = iface.GetCanonicalName() + ".Delegator";
