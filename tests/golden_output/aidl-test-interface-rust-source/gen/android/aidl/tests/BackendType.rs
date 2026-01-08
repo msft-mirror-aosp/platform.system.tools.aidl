@@ -11,7 +11,7 @@
 #![allow(non_upper_case_globals)]
 use binder::declare_binder_enum;
 declare_binder_enum! {
-  #[repr(C, align(1))]
+  #[repr(align(1))]
   r#BackendType : [i8; 4] {
     r#CPP = 0,
     r#JAVA = 1,

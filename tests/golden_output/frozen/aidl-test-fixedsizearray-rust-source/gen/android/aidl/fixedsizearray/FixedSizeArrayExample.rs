@@ -913,7 +913,7 @@ pub mod r#ByteEnum {
   #![allow(non_upper_case_globals)]
   use binder::declare_binder_enum;
   declare_binder_enum! {
-    #[repr(C, align(1))]
+    #[repr(align(1))]
     r#ByteEnum : [i8; 1] {
       r#A = 0,
     }
@@ -923,7 +923,7 @@ pub mod r#IntEnum {
   #![allow(non_upper_case_globals)]
   use binder::declare_binder_enum;
   declare_binder_enum! {
-    #[repr(C, align(4))]
+    #[repr(align(4))]
     r#IntEnum : [i32; 1] {
       r#A = 0,
     }
@@ -933,7 +933,7 @@ pub mod r#LongEnum {
   #![allow(non_upper_case_globals)]
   use binder::declare_binder_enum;
   declare_binder_enum! {
-    #[repr(C, align(8))]
+    #[repr(align(8))]
     r#LongEnum : [i64; 1] {
       r#A = 0,
     }
