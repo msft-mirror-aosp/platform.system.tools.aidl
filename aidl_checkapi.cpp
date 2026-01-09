@@ -316,8 +316,10 @@ static bool are_compatible_parcelables(const AidlParcelable& older, const AidlTy
     return false;
   }
   if (newer.IsFixedSize() && older.IsFixedSize()) {
-    auto old_size = android::aidl::cpp::SizeOfDefinedType(older, old_types);
-    auto new_size = android::aidl::cpp::SizeOfDefinedType(newer, new_types);
+    // SizeOfDefinedType of FixedSize types is not supported for the cpp
+    // backend, so just assume this is the ndk backend for checkapi
+    auto old_size = android::aidl::cpp::SizeOfDefinedType(older, old_types, Options::Language::NDK);
+    auto new_size = android::aidl::cpp::SizeOfDefinedType(newer, new_types, Options::Language::NDK);
 
     if (old_size == std::nullopt || new_size == std::nullopt) {
       AIDL_ERROR(newer) << "Could not determine size for @FixedSize parcelable "

@@ -1265,7 +1265,7 @@ void GenerateParcelFields(CodeWriter& out, const AidlStructuredParcelable& decl,
 void GenerateParcelFields(CodeWriter& out, const AidlUnionDecl& decl,
                           const AidlTypenames& typenames) {
   UnionWriter uw{decl, typenames, &CppNameOf, &ConstantValueDecorator};
-  uw.PublicFields(out);
+  uw.PublicFields(out, Options::Language::CPP);
 }
 
 template <typename ParcelableType>
@@ -1283,7 +1283,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
 
   GenerateNestedTypeDecls(out, parcel, typenames, options);
   GenerateParcelFields(out, parcel, typenames);
-  GenerateParcelableComparisonOperators(out, parcel);
+  GenerateParcelableComparisonOperators(out, parcel, options.TargetLanguage());
   GenerateConstantDeclarations(out, parcel, typenames);
 
   if (parcel.IsVintfStability()) {
@@ -1309,7 +1309,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const ParcelableType& parcel,
     out << "private:\n";
     out.Indent();
     UnionWriter uw{*decl, typenames, &CppNameOf, &ConstantValueDecorator};
-    uw.PrivateFields(out);
+    uw.PrivateFields(out, options.TargetLanguage());
     out.Dedent();
   }
 
@@ -1426,7 +1426,7 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlDefinedType& defined_type
 
     void Visit(const AidlUnionDecl& union_decl) override {
       AddParcelableCommonHeaders();
-      auto union_headers = cpp::UnionWriter::GetHeaders(union_decl);
+      auto union_headers = cpp::UnionWriter::GetHeaders(union_decl, Options::Language::CPP);
       includes.insert(std::begin(union_headers), std::end(union_headers));
     }
 

@@ -360,10 +360,12 @@ std::string TemplateDecl(const AidlParcelable& defined_type) {
   return decl;
 }
 
-void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable& parcelable) {
+void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable& parcelable,
+                                           Options::Language language) {
   std::set<string> operators{"<", ">", "==", ">=", "<=", "!="};
 
-  if (parcelable.AsUnionDeclaration() && parcelable.IsFixedSize()) {
+  if (parcelable.AsUnionDeclaration() && parcelable.IsFixedSize() &&
+      language != Options::Language::CPP) {
     auto name = parcelable.GetName();
     auto max_tag = parcelable.GetFields().back()->GetName();
     auto min_tag = parcelable.GetFields().front()->GetName();
@@ -510,7 +512,8 @@ std::string GetDeprecatedAttribute(const AidlCommentable& type) {
   return "";
 }
 
-std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
+std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
+                                  Options::Language language) {
   static map<string, size_t> alignment = {
       {"boolean", 1}, {"byte", 1}, {"char", 2}, {"double", 8},
       {"float", 4},   {"int", 4},  {"long", 8},
@@ -527,18 +530,19 @@ std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypen
   }
   const AidlDefinedType* defined_type = type.GetDefinedType();
   AIDL_FATAL_IF(defined_type == nullptr, type);
-  return AlignmentOfDefinedType(*defined_type, typenames);
+  return AlignmentOfDefinedType(*defined_type, typenames, language);
 }
 
 std::optional<size_t> AlignmentOfDefinedType(const AidlDefinedType& defined_type,
-                                             const AidlTypenames& typenames) {
-  if (!defined_type.IsFixedSize()) {
+                                             const AidlTypenames& typenames,
+                                             Options::Language language) {
+  if (!defined_type.IsFixedSize() || language == Options::Language::CPP) {
     return std::nullopt;
   }
   // Overall alignment is the maximum alignment of all fields
   size_t align = 1;
   for (const auto& variable : defined_type.GetFields()) {
-    auto field_alignment = cpp::AlignmentOf(variable->GetType(), typenames);
+    auto field_alignment = cpp::AlignmentOf(variable->GetType(), typenames, language);
     AIDL_FATAL_IF(field_alignment == std::nullopt, defined_type);
     if (*field_alignment > align) {
       align = *field_alignment;
@@ -547,7 +551,8 @@ std::optional<size_t> AlignmentOfDefinedType(const AidlDefinedType& defined_type
   return align;
 }
 
-std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames) {
+std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
+                             Options::Language language) {
   static map<string, size_t> sizes = {
       {"boolean", 1}, {"byte", 1}, {"char", 2}, {"double", 8},
       {"float", 4},   {"int", 4},  {"long", 8},
@@ -573,7 +578,7 @@ std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames&
   }
   const AidlDefinedType* defined_type = type.GetDefinedType();
   AIDL_FATAL_IF(defined_type == nullptr, type);
-  auto defined_type_size = SizeOfDefinedType(*defined_type, typenames);
+  auto defined_type_size = SizeOfDefinedType(*defined_type, typenames, language);
   if (defined_type_size) {
     return *defined_type_size * dims;
   }
@@ -585,8 +590,9 @@ size_t AlignTo(size_t val, size_t align) {
 }
 
 std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
-                                        const AidlTypenames& typenames) {
-  if (!defined_type.IsFixedSize()) {
+                                        const AidlTypenames& typenames,
+                                        Options::Language language) {
+  if (!defined_type.IsFixedSize() || language == Options::Language::CPP) {
     return std::nullopt;
   }
   if (auto union_decl = defined_type.AsUnionDeclaration(); union_decl) {
@@ -594,14 +600,14 @@ std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
     size_t size = 0;
     for (const auto& variable : union_decl->GetFields()) {
       const auto& var_type = variable->GetType();
-      auto field_size = cpp::SizeOf(var_type, typenames);
+      auto field_size = cpp::SizeOf(var_type, typenames, language);
       AIDL_FATAL_IF(field_size == std::nullopt, var_type);
       if (*field_size > size) {
         size = *field_size;
       }
     }
     // union tag size is 1 byte plus padding based on overall alignment
-    auto align = cpp::AlignmentOfDefinedType(defined_type, typenames);
+    auto align = cpp::AlignmentOfDefinedType(defined_type, typenames, language);
     AIDL_FATAL_IF(align == std::nullopt, defined_type);
     size_t tag_size = AlignTo(1, *align);
     // Size of the union is largest field size plus its padding and the tag size
@@ -613,17 +619,17 @@ std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
   for (const auto& variable : defined_type.GetFields()) {
     // add padding for the previous field based off of the alignment of the current field
     const auto& var_type = variable->GetType();
-    auto alignment = cpp::AlignmentOf(var_type, typenames);
+    auto alignment = cpp::AlignmentOf(var_type, typenames, language);
     AIDL_FATAL_IF(alignment == std::nullopt, var_type);
     res = AlignTo(res, *alignment);
 
     // add the size of the current field itself
-    auto var_size = cpp::SizeOf(var_type, typenames);
+    auto var_size = cpp::SizeOf(var_type, typenames, language);
     AIDL_FATAL_IF(var_size == std::nullopt, var_type);
     res += *var_size;
   }
   // add padding for the last field based off of the alignment of the overall struct
-  auto parcelable_alignment = cpp::AlignmentOfDefinedType(defined_type, typenames);
+  auto parcelable_alignment = cpp::AlignmentOfDefinedType(defined_type, typenames, language);
   AIDL_FATAL_IF(parcelable_alignment == std::nullopt, defined_type);
   res = AlignTo(res, *parcelable_alignment);
 
@@ -634,14 +640,15 @@ std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
   return res;
 }
 
-std::set<std::string> UnionWriter::GetHeaders(const AidlUnionDecl& decl) {
+std::set<std::string> UnionWriter::GetHeaders(const AidlUnionDecl& decl,
+                                              Options::Language language) {
   std::set<std::string> union_headers = {
       "cassert",      // __assert for logging
       "type_traits",  // std::is_same_v
       "utility",      // std::mode/forward for value
       "variant",      // union's impl
   };
-  if (decl.IsFixedSize()) {
+  if (decl.IsFixedSize() && language != Options::Language::CPP) {
     union_headers.insert("tuple");  // fixed-sized union's typelist
   }
   return union_headers;
@@ -663,15 +670,15 @@ std::set<std::string> UnionWriter::GetHeaders(const AidlUnionDecl& decl) {
 //   } _value;
 // };
 
-void UnionWriter::PrivateFields(CodeWriter& out) const {
-  if (decl.IsFixedSize()) {
+void UnionWriter::PrivateFields(CodeWriter& out, Options::Language language) const {
+  if (decl.IsFixedSize() && language != Options::Language::CPP) {
     AIDL_FATAL_IF(decl.GetFields().empty(), decl) << "Union '" << decl.GetName() << "' is empty.";
     const auto& first_field = decl.GetFields()[0];
     const auto& default_name = first_field->GetName();
     const auto& default_value = name_of(first_field->GetType(), typenames) + "(" +
                                 first_field->ValueString(decorator) + ")";
 
-    auto alignment = AlignmentOfDefinedType(decl, typenames);
+    auto alignment = AlignmentOfDefinedType(decl, typenames, language);
 
     out << "Tag _tag = " << default_name << ";\n";
     if (alignment && *alignment > 1) {
@@ -687,8 +694,8 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
     for (const auto& f : decl.GetFields()) {
       const auto& fn = f->GetName();
       out << name_of(f->GetType(), typenames) << " " << fn;
-      if (decl.IsFixedSize()) {
-        auto alignment = AlignmentOf(f->GetType(), typenames);
+      if (decl.IsFixedSize() && language != Options::Language::CPP) {
+        auto alignment = AlignmentOf(f->GetType(), typenames, language);
         if (alignment) {
           out << " __attribute__((aligned (" << std::to_string(*alignment) << ")))";
         }
@@ -709,7 +716,7 @@ void UnionWriter::PrivateFields(CodeWriter& out) const {
   }
 }
 
-void UnionWriter::PublicFields(CodeWriter& out) const {
+void UnionWriter::PublicFields(CodeWriter& out, Options::Language language) const {
   out << "// Expose tag symbols for legacy code\n";
   for (const auto& f : decl.GetFields()) {
     out << "static const inline Tag";
@@ -724,7 +731,7 @@ void UnionWriter::PublicFields(CodeWriter& out) const {
   }
   auto typelist = Join(field_types, ", ");
 
-  if (decl.IsFixedSize()) {
+  if (decl.IsFixedSize() && language != Options::Language::CPP) {
     constexpr auto tmpl = R"--(
 template <Tag _Tag>
 using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<{1}>>::type;

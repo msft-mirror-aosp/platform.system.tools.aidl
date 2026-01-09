@@ -329,7 +329,7 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlTypenames& types,
       includes.insert("android/binder_interface_utils.h");
       includes.insert("android/binder_parcelable_utils.h");
       includes.insert("android/binder_to_string.h");  // used by toString()
-      auto union_headers = cpp::UnionWriter::GetHeaders(union_decl);
+      auto union_headers = cpp::UnionWriter::GetHeaders(union_decl, Options::Language::NDK);
       includes.insert(std::begin(union_headers), std::end(union_headers));
     }
 
@@ -1243,7 +1243,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
     cpp::GenerateDeprecated(out, *variable);
     out << " " << variable->GetName();
     if (defined_type.IsFixedSize()) {
-      auto alignment = cpp::AlignmentOf(type, types);
+      auto alignment = cpp::AlignmentOf(type, types, options.TargetLanguage());
       if (alignment) {
         out << " __attribute__((aligned (" << std::to_string(*alignment) << ")))";
       }
@@ -1274,7 +1274,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "binder_status_t writeToParcel(AParcel* parcel) const;\n";
   out << "\n";
 
-  cpp::GenerateParcelableComparisonOperators(out, defined_type);
+  cpp::GenerateParcelableComparisonOperators(out, defined_type, options.TargetLanguage());
 
   out << "static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::"
       << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL") << ";\n";
@@ -1290,7 +1290,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
     for (const auto& variable : defined_type.GetFields()) {
       const auto& var_type = variable->GetType();
       // Assert the offset of each field within the struct
-      auto alignment = cpp::AlignmentOf(var_type, types);
+      auto alignment = cpp::AlignmentOf(var_type, types, options.TargetLanguage());
       AIDL_FATAL_IF(alignment == std::nullopt, var_type);
       variable_offset = cpp::AlignTo(variable_offset, *alignment);
       out << "static_assert(offsetof(" << defined_type.GetName() << ", " << variable->GetName()
@@ -1298,21 +1298,22 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
 
       // Assert the size of each field
       std::string cpp_type = NdkNameOf(types, var_type, StorageMode::STACK);
-      auto variable_size = cpp::SizeOf(var_type, types);
+      auto variable_size = cpp::SizeOf(var_type, types, options.TargetLanguage());
       AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
       out << "static_assert(sizeof(" << cpp_type << ") == " << std::to_string(*variable_size)
           << ");\n";
 
       variable_offset += *variable_size;
     }
-    auto parcelable_alignment = cpp::AlignmentOfDefinedType(defined_type, types);
+    auto parcelable_alignment =
+        cpp::AlignmentOfDefinedType(defined_type, types, options.TargetLanguage());
     AIDL_FATAL_IF(parcelable_alignment == std::nullopt, defined_type);
     // Assert the alignment of the struct. Since we asserted the field offsets, this also ensures
     // fields have the right alignment
     out << "static_assert(alignof(" << defined_type.GetName()
         << ") == " << std::to_string(*parcelable_alignment) << ");\n";
 
-    auto parcelable_size = cpp::SizeOfDefinedType(defined_type, types);
+    auto parcelable_size = cpp::SizeOfDefinedType(defined_type, types, options.TargetLanguage());
     AIDL_FATAL_IF(parcelable_size == std::nullopt, defined_type);
     // Assert the size of the struct
     out << "static_assert(sizeof(" << defined_type.GetName()
@@ -1440,13 +1441,13 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "static const char* descriptor;\n";
   out << "\n";
   GenerateNestedTypeDecls(out, types, defined_type, options);
-  uw.PublicFields(out);
+  uw.PublicFields(out, options.TargetLanguage());
 
   out << "binder_status_t readFromParcel(const AParcel* _parcel);\n";
   out << "binder_status_t writeToParcel(AParcel* _parcel) const;\n";
   out << "\n";
 
-  cpp::GenerateParcelableComparisonOperators(out, defined_type);
+  cpp::GenerateParcelableComparisonOperators(out, defined_type, options.TargetLanguage());
 
   out << "static const ::ndk::parcelable_stability_t _aidl_stability = ::ndk::"
       << (defined_type.IsVintfStability() ? "STABILITY_VINTF" : "STABILITY_LOCAL") << ";\n";
@@ -1455,17 +1456,17 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
   out.Dedent();
   out << "private:\n";
   out.Indent();
-  uw.PrivateFields(out);
+  uw.PrivateFields(out, options.TargetLanguage());
   out.Dedent();
   out << "};\n";
   if (defined_type.IsFixedSize()) {
-    auto alignment = cpp::AlignmentOfDefinedType(defined_type, types);
+    auto alignment = cpp::AlignmentOfDefinedType(defined_type, types, options.TargetLanguage());
     AIDL_FATAL_IF(alignment == std::nullopt, defined_type);
     for (const auto& variable : defined_type.GetFields()) {
       // Assert the size of each union variant
       const auto& var_type = variable->GetType();
       std::string cpp_type = NdkNameOf(types, var_type, StorageMode::STACK);
-      auto variable_size = cpp::SizeOf(var_type, types);
+      auto variable_size = cpp::SizeOf(var_type, types, options.TargetLanguage());
       AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
       out << "static_assert(sizeof(" << cpp_type << ") == " << std::to_string(*variable_size)
           << ");\n";
@@ -1474,7 +1475,7 @@ void GenerateParcelClassDecl(CodeWriter& out, const AidlTypenames& types,
     out << "static_assert(alignof(" << clazz << ") == " << std::to_string(*alignment) << ");\n";
 
     // Assert the size of the tagged union, taking the tag and its padding into account
-    auto union_size = cpp::SizeOfDefinedType(defined_type, types);
+    auto union_size = cpp::SizeOfDefinedType(defined_type, types, options.TargetLanguage());
     AIDL_FATAL_IF(union_size == std::nullopt, defined_type);
     out << "static_assert(sizeof(" << clazz << ") == " << std::to_string(*union_size) << ");\n";
   }
