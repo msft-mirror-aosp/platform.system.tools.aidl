@@ -47,17 +47,23 @@ string ClassName(const AidlDefinedType& defined_type, ClassNames type);
 
 // Returns the alignment of known types and enum backing types or nullopt for
 // non-FixedSize parcelables.
-std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames);
+// Returns a nullopt for defined types with @FixedSize in the cpp backend.
+// Useful for the ndk and rust backends
+std::optional<size_t> AlignmentOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
+                                  Options::Language language);
 std::optional<size_t> AlignmentOfDefinedType(const AidlDefinedType& defined_type,
-                                             const AidlTypenames& typenames);
+                                             const AidlTypenames& typenames,
+                                             Options::Language language);
 
 size_t AlignTo(size_t val, size_t align);
 
 // Return the size of known types and enum backing types or nullopt for
-// non-FixedSize parcelables.
-std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames);
+// non-FixedSize parcelables and nullopt for FixedSize parcelables in the cpp
+// backend.
+std::optional<size_t> SizeOf(const AidlTypeSpecifier& type, const AidlTypenames& typenames,
+                             Options::Language language);
 std::optional<size_t> SizeOfDefinedType(const AidlDefinedType& defined_type,
-                                        const AidlTypenames& typenames);
+                                        const AidlTypenames& typenames, Options::Language language);
 
 // Generate the relative path to a header file.  If |use_os_sep| we'll use the
 // operating system specific path separator rather than C++'s expected '/' when
@@ -103,7 +109,8 @@ std::string GenerateEnumValues(const AidlEnumDeclaration& enum_decl,
                                const std::vector<std::string>& enclosing_namespaces_of_enum_decl);
 std::string TemplateDecl(const AidlParcelable& defined_type);
 
-void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable& parcelable);
+void GenerateParcelableComparisonOperators(CodeWriter& out, const AidlParcelable& parcelable,
+                                           Options::Language language);
 
 void GenerateToString(CodeWriter& out, const AidlStructuredParcelable& parcelable);
 void GenerateToString(CodeWriter& out, const AidlUnionDecl& parcelable);
@@ -133,10 +140,12 @@ struct UnionWriter {
   const std::function<std::string(const AidlTypeSpecifier&, const AidlTypenames&)> name_of;
   const ::ConstantValueDecorator& decorator;
 
-  static std::set<std::string> GetHeaders(const AidlUnionDecl&);
+  // language is required because we generate different code for @FixedSize
+  // only in the ndk and rust backends. In the cpp backend @FixedSize is a no-op.
+  static std::set<std::string> GetHeaders(const AidlUnionDecl&, Options::Language language);
 
-  void PrivateFields(CodeWriter& out) const;
-  void PublicFields(CodeWriter& out) const;
+  void PrivateFields(CodeWriter& out, Options::Language language) const;
+  void PublicFields(CodeWriter& out, Options::Language language) const;
   void ReadFromParcel(CodeWriter& out, const ParcelWriterContext&) const;
   void WriteToParcel(CodeWriter& out, const ParcelWriterContext&) const;
 };
