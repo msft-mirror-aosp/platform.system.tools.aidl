@@ -1239,8 +1239,11 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
     AIDL_FATAL_IF(alignment == std::nullopt, *parcel);
     auto tag = std::to_string(*alignment * 8);
     // This repr may use a tag larger than u8 to make sure the tag padding takes into account that
-    // the overall alignment is computed as if i64/f64 were always 8-byte aligned
-    out << "#[repr(C, u" << tag << ", align(" << std::to_string(*alignment) << "))]\n";
+    // the overall alignment is computed as if i64/f64 were always 8-byte aligned.
+    //
+    // The `#[repr(Int)]` attribute is sufficient here for a stable ABI
+    // (per https://doc.rust-lang.org/reference/type-layout.html#primitive-representations).
+    out << "#[repr(u" << tag << ", align(" << std::to_string(*alignment) << "))]\n";
   }
   out << "pub enum r#" << parcel->GetName() << " {\n";
   out.Indent();
@@ -1460,6 +1463,94 @@ void GenerateMetadataTrait(CodeWriter& out, const ParcelableType* parcel) {
   out << "}\n";
 }
 
+void GenerateWriteToTrait(CodeWriter& out, const AidlStructuredParcelable* parcel) {
+  if (!parcel->IsFixedSize()) {
+    return;
+  }
+
+  out << "impl";
+  WriteParams(out, parcel);
+  out << " binder::WriteTo for r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << " {\n";
+  out.Indent();
+
+  for (const auto& method : {"write_to", "write_to_volatile"}) {
+    out << "#[inline]\n";
+    out << "unsafe fn " << method << "(&self, _target: *mut Self) {\n";
+    out.Indent();
+    out << "// SAFETY: We assume that `_target` points to a valid value"
+        << " of type `" << parcel->GetName() << "`\n"
+        << "// which implies that all of its fields are correctly aligned"
+        << " and have valid values.\n";
+    out << "unsafe {\n";
+    out.Indent();
+    for (const auto& variable : parcel->GetFields()) {
+      out << "binder::WriteTo::" << method << "(&self.r#" << variable->GetName()
+          << ", &raw mut (*_target).r#" << variable->GetName() << ");\n";
+    }
+    out.Dedent();
+    out << "}\n";
+    out.Dedent();
+    out << "}\n";
+  }
+
+  out.Dedent();
+  out << "}\n";
+}
+
+void GenerateWriteToTrait(CodeWriter& out, const AidlUnionDecl* parcel) {
+  if (!parcel->IsFixedSize()) {
+    return;
+  }
+
+  out << "impl";
+  WriteParams(out, parcel);
+  out << " binder::WriteTo for r#" << parcel->GetName();
+  WriteParams(out, parcel);
+  out << " {\n";
+  out.Indent();
+
+  for (const auto& method : {"write_to", "write_to_volatile"}) {
+    // From the Rust reference:
+    //   The representation of a primitive representation enum is a `repr(C)` union of
+    //   `repr(C)` structs for each variant with a field. The first field of each struct in
+    //   the union is the primitive representation version of the enum with all fields removed
+    //   (“the tag”) and the remaining fields are the fields of that variant.
+    //
+    // This means that we can copy the tag from offset 0, then match on the
+    // actual variant and copy that separately.
+    out << "#[inline]\n";
+    out << "unsafe fn " << method << "(&self, target: *mut Self) {\n";
+    out.Indent();
+    out << "// SAFETY: Per the Rust reference, the tag is always at offset 0\n";
+    out << "// and matches the primitive type.\n";
+    out << "// We assume that `target` is a correctly aligned pointer.\n";
+    out << "unsafe { self.tag()." << method << "(target.cast()) };\n";
+    out << "match self {\n";
+    out.Indent();
+    for (const auto& variable : parcel->GetFields()) {
+      out << "Self::r#" << variable->GetCapitalizedName() << "(payload) => {\n";
+      out.Indent();
+      out << "// SAFETY: `payload` is the data inside the current variant of `self`.\n";
+      out << "let offset = unsafe { (&raw const payload).byte_offset_from(&raw const self) };\n";
+      out << "// SAFETY: If `target` is correctly aligned and valid,\n";
+      out << "// then `payload` should be as well.\n";
+      out << "unsafe { binder::WriteTo::" << method
+          << "(payload, target.byte_offset(offset).cast()) };\n";
+      out.Dedent();
+      out << "}\n";
+    }
+    out.Dedent();
+    out << "}\n";
+    out.Dedent();
+    out << "}\n";
+  }
+
+  out.Dedent();
+  out << "}\n";
+}
+
 template <typename ParcelableType>
 void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
                         const AidlTypenames& typenames) {
@@ -1469,6 +1560,10 @@ void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
   // ParcelFileDescriptor doesn't support any of the others because
   // it's a newtype over std::fs::File which only implements Debug
   derives.insert(derives.begin(), "Debug");
+  if (parcel->IsFixedSize()) {
+    derives.push_back("zerocopy::Immutable");
+    derives.push_back("zerocopy::TryFromBytes");
+  }
 
   *code_writer << "#[derive(" << Join(derives, ", ") << ")]\n";
   GenerateParcelBody(*code_writer, parcel, typenames);
@@ -1476,6 +1571,7 @@ void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
   GenerateParcelDefault(*code_writer, parcel, typenames);
   GenerateParcelableTrait(*code_writer, parcel, typenames);
   GenerateMetadataTrait(*code_writer, parcel);
+  GenerateWriteToTrait(*code_writer, parcel);
 }
 
 void GenerateRustEnumDeclaration(CodeWriter* code_writer, const AidlEnumDeclaration* enum_decl,
