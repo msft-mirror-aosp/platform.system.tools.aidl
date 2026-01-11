@@ -198,6 +198,7 @@ TEST_F(AidlTest, ConfirmPersistableBundlesNonEmpty) {
   non_empty_bundle.putDoubleVector(String16("test_double_vector"), {2.2, 5.4});
   non_empty_bundle.putStringVector(String16("test_string_vector"),
                                    {String16("hello"), String16("world!")});
+  non_empty_bundle.putByteVector(String16("test_byte_vector"), {1, 2, 3, 4});
   PersistableBundle nested_bundle;
   nested_bundle.putInt(String16("test_nested_int"), 345);
   non_empty_bundle.putPersistableBundle(String16("test_persistable_bundle"),
