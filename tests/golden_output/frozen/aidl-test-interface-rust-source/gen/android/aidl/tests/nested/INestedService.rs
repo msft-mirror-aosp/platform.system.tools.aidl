@@ -60,6 +60,7 @@ impl BnNestedService {
     }
     impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
       fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+      #[cfg(feature = "std")]
       fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
     }
     impl<T, R> INestedService for Wrapper<T, R>
@@ -286,6 +287,7 @@ pub mod r#ICallback {
       }
       impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
         fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+        #[cfg(feature = "std")]
         fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
       }
       impl<T, R> ICallback for Wrapper<T, R>
