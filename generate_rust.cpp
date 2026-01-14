@@ -792,6 +792,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
                   "Send + Sync + 'static {\n";
   code_writer->Indent();
   *code_writer << "fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }\n";
+  *code_writer << "#[cfg(feature = \"std\")]\n";
   *code_writer
       << "fn dump(&self, _writer: &mut dyn std::io::Write, _args: "
          "&[&std::ffi::CStr]) -> "

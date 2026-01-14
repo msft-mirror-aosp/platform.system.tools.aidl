@@ -109,6 +109,7 @@ type rustProperties struct {
 	Stem               *string
 	Apex_available     []string
 	Min_sdk_version    *string
+	Features           []string
 }
 
 type phonyProperties struct {

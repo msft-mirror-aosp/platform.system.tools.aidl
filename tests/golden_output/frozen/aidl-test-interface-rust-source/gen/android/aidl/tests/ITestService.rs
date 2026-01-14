@@ -339,6 +339,7 @@ impl BnTestService {
     }
     impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
       fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+      #[cfg(feature = "std")]
       fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
     }
     impl<T, R> ITestService for Wrapper<T, R>
@@ -4375,6 +4376,7 @@ pub mod r#CompilerChecks {
         }
         impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
           fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+          #[cfg(feature = "std")]
           fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
         }
         impl<T, R> IFoo for Wrapper<T, R>
@@ -4563,6 +4565,7 @@ pub mod r#CompilerChecks {
         }
         impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
           fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+          #[cfg(feature = "std")]
           fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
         }
         impl<T, R> INoPrefixInterface for Wrapper<T, R>
@@ -4729,6 +4732,7 @@ pub mod r#CompilerChecks {
           }
           impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
             fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
+            #[cfg(feature = "std")]
             fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
           }
           impl<T, R> INestedNoPrefixInterface for Wrapper<T, R>
