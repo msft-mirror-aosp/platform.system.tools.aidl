@@ -35,6 +35,7 @@ public interface ITestService extends android.os.IInterface
      * @deprecated to make sure we have something in system/tools/aidl which does a compile check
      *     of deprecated and make sure this is reflected in goldens
      */
+    @Deprecated
     @Override public void Deprecated() throws android.os.RemoteException
     {
     }
@@ -349,6 +350,7 @@ public interface ITestService extends android.os.IInterface
      * @deprecated to make sure we have something in system/tools/aidl which does a compile check
      *     of deprecated and make sure this is reflected in goldens
      */
+    @Deprecated
     @Override public void Deprecated() throws android.os.RemoteException
     {
       mImpl.Deprecated();
@@ -1919,6 +1921,7 @@ public interface ITestService extends android.os.IInterface
        * @deprecated to make sure we have something in system/tools/aidl which does a compile check
        *     of deprecated and make sure this is reflected in goldens
        */
+      @Deprecated
       @Override public void Deprecated() throws android.os.RemoteException
       {
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
