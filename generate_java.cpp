@@ -1017,7 +1017,8 @@ std::optional<std::string> JavaPermissionAnnotation(const AidlAnnotatable& a) {
 }
 
 struct JavaAnnotationsVisitor : AidlVisitor {
-  JavaAnnotationsVisitor(std::vector<std::string>& result) : result(result) {}
+  JavaAnnotationsVisitor(std::vector<std::string>& result, AnnotationPlacement where)
+      : result(result), where(where) {}
   void Visit(const AidlTypeSpecifier& t) override { result = GenerateJavaAnnotations(t); }
   void Visit(const AidlInterface& t) override { ForDefinedType(t); }
   void Visit(const AidlParcelable& t) override { ForDefinedType(t); }
@@ -1033,28 +1034,36 @@ struct JavaAnnotationsVisitor : AidlVisitor {
   void Visit(const AidlConstantDeclaration& c) override { ForMember(c); }
   void Visit(const AidlVariableDeclaration& v) override { ForMember(v); }
   std::vector<std::string>& result;
+  AnnotationPlacement where;
 
   void ForDefinedType(const AidlDefinedType& t) {
-    result = GenerateJavaAnnotations(t);
+    if (where != AnnotationPlacement::SUBCLASS) {
+      result = GenerateJavaAnnotations(t);
+    }
     if (t.IsDeprecated()) {
       result.push_back("@Deprecated");
     }
   }
   template <typename Member>
   void ForMember(const Member& t) {
-    result = GenerateJavaAnnotations(t.GetType());
+    if (where != AnnotationPlacement::SUBCLASS) {
+      result = GenerateJavaAnnotations(t.GetType());
+    }
     if (t.IsDeprecated()) {
       result.push_back("@Deprecated");
     }
-    if (auto permission_annotation = JavaPermissionAnnotation(t.GetType()); permission_annotation) {
-      result.push_back(*permission_annotation);
+    if (where != AnnotationPlacement::SUBCLASS) {
+      if (auto permission_annotation = JavaPermissionAnnotation(t.GetType());
+          permission_annotation) {
+        result.push_back(*permission_annotation);
+      }
     }
   }
 };
 
-std::vector<std::string> JavaAnnotationsFor(const AidlNode& a) {
+std::vector<std::string> JavaAnnotationsFor(const AidlNode& a, AnnotationPlacement where) {
   std::vector<std::string> result;
-  JavaAnnotationsVisitor visitor{result};
+  JavaAnnotationsVisitor visitor{result, where};
   a.DispatchVisit(visitor);
   return result;
 }

@@ -45,7 +45,14 @@ std::string GenerateComments(const AidlCommentable& node);
 
 std::string GenerateAnnotations(const AidlNode& node);
 
-std::vector<std::string> JavaAnnotationsFor(const AidlNode& a);
+enum class AnnotationPlacement {
+  DEFINITION,
+  // We only copy some annotations to subclasses since adding all annotations to subclasses
+  // breaks certain API checks in Android.
+  SUBCLASS,
+};
+std::vector<std::string> JavaAnnotationsFor(
+    const AidlNode& a, AnnotationPlacement where = AnnotationPlacement::DEFINITION);
 
 std::optional<std::string> JavaPermissionAnnotation(const AidlAnnotatable& a);
 
