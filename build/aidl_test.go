@@ -1196,6 +1196,7 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 					enabled: true,
 				},
 			},
+			split_all_variants: true,
 		}
 	`)
 	// Even though there is no version, generated modules have version(V1) unless it isn't an unstable interface.
@@ -1219,6 +1220,7 @@ func TestNativeOutputIsAlwaysVersioned(t *testing.T) {
 					enabled: true,
 				},
 			},
+			split_all_variants: true,
 		}
 	`, withFiles(map[string][]byte{
 		"aidl_api/foo/1/foo.1.aidl": nil,
@@ -1255,7 +1257,7 @@ func TestImports(t *testing.T) {
 			],
 			imports: [
 				"bar",
-			]
+			],
 		}
 	`)
 
@@ -1342,6 +1344,7 @@ func TestImports(t *testing.T) {
 		aidl_interface {
 			name: "foo",
 			defaults: ["foo-defaults"],
+			split_all_variants: true,
 		}
 		aidl_interface {
 			name: "bar.1",
@@ -1513,6 +1516,7 @@ func TestRecoveryAvailable(t *testing.T) {
 			name: "myiface",
 			recovery_available: true,
 			srcs: ["IFoo.aidl"],
+			split_all_variants: true,
 		}
 	`)
 	ctx.ModuleForTests(t, "myiface-V1-ndk", "android_recovery_arm64_armv8-a_shared")
