@@ -2414,3 +2414,24 @@ func TestAidlUseUnfrozenOverrideTrue(t *testing.T) {
 		rule.Args["optionalFlags"],
 		"-previous")
 }
+
+func TestAidlInterfaceIdeInfoModuleType(t *testing.T) {
+	t.Parallel()
+	bp := `
+	aidl_interface {
+		name: "foo",
+		srcs: ["IFoo.aidl"],
+		backend: { java: { enabled: true } },
+	}`
+	ctx, _ := testAidl(t, bp, setReleaseEnv())
+	module := ctx.ModuleForTests(t, "foo-V1-java", "android_common").Module()
+	ideInfo := getIdeInfo(ctx, module)
+	android.AssertStringEquals(t, "IdeInfo.ModuleType should be equal to", "aidl_interface", ideInfo.ModuleType)
+}
+
+func getIdeInfo(ctx android.OtherModuleProviderContext, module android.Module) android.IdeInfo {
+	if info, ok := android.OtherModuleProvider(ctx, module, android.CommonModuleInfoProvider); ok && info.IdeInfo != nil {
+		return *info.IdeInfo
+	}
+	return android.IdeInfo{}
+}
