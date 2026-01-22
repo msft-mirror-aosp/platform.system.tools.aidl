@@ -2446,9 +2446,24 @@ func TestAidlInterfaceIdeInfoAidlSrcs(t *testing.T) {
 	module := ctx.ModuleForTests(t, "foo-V1-java", "android_common").Module()
 	ideInfo := getIdeInfo(ctx, module)
 	expected := []string{"IFoo.aidl", "IBar.aidl"}
-	if !reflect.DeepEqual(ideInfo.Aidl_srcs, expected) {
-		t.Errorf("IdeInfo.Aidl_srcs Imported_aars = %v, want %v", ideInfo.Aidl_srcs, expected)
+	if !reflect.DeepEqual(ideInfo.Aidl.Srcs, expected) {
+		t.Errorf("IdeInfo.Aidl.Srcs Imported_aars = %v, want %v", ideInfo.Aidl.Srcs, expected)
 	}
+}
+
+func TestAidlInterfaceIdeInfoAidlStability(t *testing.T) {
+	t.Parallel()
+	bp := `
+	aidl_interface {
+		name: "foo",
+		srcs: ["IFoo.aidl", "IBar.aidl"],
+		stability: "vintf",
+		backend: { java: { enabled: true } },
+	}`
+	ctx, _ := testAidl(t, bp, setReleaseEnv())
+	module := ctx.ModuleForTests(t, "foo-V1-java", "android_common").Module()
+	ideInfo := getIdeInfo(ctx, module)
+	android.AssertStringEquals(t, "IdeInfo.Aidl.Stability should be equal to", "vintf", ideInfo.Aidl.Stability)
 }
 
 func getIdeInfo(ctx android.OtherModuleProviderContext, module android.Module) android.IdeInfo {

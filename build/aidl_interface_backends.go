@@ -64,6 +64,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	genTrace := i.genTrace(lang)
 	aidlFlags := i.flagsForAidlGenRule(version)
 
+	stability := i.properties.Stability
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppSourceGen),
 	}, &aidlGenProperties{
@@ -71,7 +72,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 		AidlRoot:            aidlRoot,
 		Imports:             i.getImportsForVersion(version),
 		Headers:             i.properties.Headers,
-		Stability:           i.properties.Stability,
+		Stability:           stability,
 		Min_sdk_version:     i.minSdkVersion(lang),
 		Lang:                lang,
 		BaseName:            i.ModuleBase.Name(),
@@ -147,7 +148,7 @@ func addCppLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versio
 	langProps.Aidl_internal_props.Version = version
 	langProps.Aidl_internal_props.Imports = i.getImportsForVersion(version)
 
-	mctx.CreateModule(wrapLibraryFactory(aidlCcModuleFactory), langProps, &ccProperties{
+	mctx.CreateModule(wrapLibraryFactory(aidlCcModuleFactory, stability), langProps, &ccProperties{
 		Name: proptools.StringPtr(cppModuleGen),
 		Enabled: android.CreateSelectOsToBool(map[string]*bool{
 			"":       nil,
@@ -201,13 +202,14 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 		return ""
 	}
 
+	stability := i.properties.Stability
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(cppAnalyzerSourceGen),
 	}, &aidlGenProperties{
 		Srcs:                srcs,
 		AidlRoot:            aidlRoot,
 		Imports:             i.getImportsForVersion(version),
-		Stability:           i.properties.Stability,
+		Stability:           stability,
 		Min_sdk_version:     i.minSdkVersion(langCpp),
 		Lang:                langCppAnalyzer,
 		BaseName:            i.ModuleBase.Name(),
@@ -261,7 +263,7 @@ func addCppAnalyzerLibrary(mctx android.DefaultableHookContext, i *aidlInterface
 		Target:                    targetProp,
 	}
 
-	mctx.CreateModule(wrapLibraryFactory(cc.BinaryFactory), props)
+	mctx.CreateModule(wrapLibraryFactory(cc.BinaryFactory, stability), props)
 	return cppAnalyzerModuleGen
 }
 
@@ -286,6 +288,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		minSdkVersion = proptools.StringPtr(android.SdkSpecFrom(mctx, *sdkVersion).ApiLevel.String())
 	}
 
+	stability := i.properties.Stability
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(javaSourceGen),
 	}, &aidlGenProperties{
@@ -293,7 +296,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		AidlRoot:            aidlRoot,
 		Imports:             i.getImportsForVersion(version),
 		Headers:             i.properties.Headers,
-		Stability:           i.properties.Stability,
+		Stability:           stability,
 		Min_sdk_version:     minSdkVersion,
 		Platform_apis:       proptools.Bool(i.properties.Backend.Java.Platform_apis),
 		Lang:                langJava,
@@ -314,7 +317,7 @@ func addJavaLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	langProps.Aidl_internal_props.Version = version
 	langProps.Aidl_internal_props.Imports = i.getImportsForVersion(version)
 
-	mctx.CreateModule(wrapLibraryFactory(aidlJavaModuleFactory), &javaProperties{
+	mctx.CreateModule(wrapLibraryFactory(aidlJavaModuleFactory, stability), &javaProperties{
 		Name:            proptools.StringPtr(javaModuleGen),
 		Installable:     proptools.BoolPtr(true),
 		Defaults:        []string{"aidl-java-module-defaults"},
@@ -343,6 +346,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		return ""
 	}
 
+	stability := i.properties.Stability
 	mctx.CreateModule(aidlGenFactory, &nameProperties{
 		Name: proptools.StringPtr(rustSourceGen),
 	}, &aidlGenProperties{
@@ -350,7 +354,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		AidlRoot:            aidlRoot,
 		Imports:             i.getImportsForVersion(version),
 		Headers:             i.properties.Headers,
-		Stability:           i.properties.Stability,
+		Stability:           stability,
 		Min_sdk_version:     i.minSdkVersion(langRust),
 		Lang:                langRust,
 		GenTrace:            i.genTrace(langRust),
@@ -367,7 +371,7 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 	versionedRustName := fixRustName(i.versionedName(version))
 	rustCrateName := fixRustName(i.ModuleBase.Name())
 
-	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory), &rustProperties{
+	mctx.CreateModule(wrapLibraryFactory(aidlRustLibraryFactory, stability), &rustProperties{
 		Name: proptools.StringPtr(rustModuleGen),
 		Enabled: android.CreateSelectOsToBool(map[string]*bool{
 			"darwin": proptools.BoolPtr(false),
