@@ -59,67 +59,73 @@ public:
     static const inline Tag doubleValue = Tag::doubleValue;
     static const inline Tag enumValue = Tag::enumValue;
 
-    template <Tag _Tag>
-    using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<bool, int8_t, char16_t, int32_t, int64_t, float, std::array<int32_t, 3>, std::array<std::array<int64_t, 2>, 3>, double, ::android::aidl::tests::LongEnum>>::type;
-    template <Tag _Tag, typename _Type>
-    static FixedUnion make(_Type&& _arg) {
-      FixedUnion _inst;
-      _inst.set<_Tag>(std::forward<_Type>(_arg));
-      return _inst;
+    template<typename _Tp>
+    static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, FixedUnion>;
+
+    FixedUnion() : _value(std::in_place_index<static_cast<size_t>(booleanValue)>, bool(false)) { }
+
+    template <typename _Tp, typename = std::enable_if_t<
+        _not_self<_Tp> &&
+        std::is_constructible_v<std::variant<bool, int8_t, char16_t, int32_t, int64_t, float, std::array<int32_t, 3>, std::array<std::array<int64_t, 2>, 3>, double, ::android::aidl::tests::LongEnum>, _Tp>
+      >>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    constexpr FixedUnion(_Tp&& _arg)
+        : _value(std::forward<_Tp>(_arg)) {}
+
+    template <size_t _Np, typename... _Tp>
+    constexpr explicit FixedUnion(std::in_place_index_t<_Np>, _Tp&&... _args)
+        : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {}
+
+    template <Tag _tag, typename... _Tp>
+    static FixedUnion make(_Tp&&... _args) {
+      return FixedUnion(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
     }
-    constexpr Tag getTag() const {
-      return _tag;
+
+    template <Tag _tag, typename _Tp, typename... _Up>
+    static FixedUnion make(std::initializer_list<_Tp> _il, _Up&&... _args) {
+      return FixedUnion(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
     }
-    template <Tag _Tag>
-    const _at<_Tag>& get() const {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    Tag getTag() const {
+      return static_cast<Tag>(_value.index());
     }
-    template <Tag _Tag>
-    _at<_Tag>& get() {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    template <Tag _tag>
+    const auto& get() const {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    template <Tag _Tag, typename _Type>
-    void set(_Type&& _arg) {
-      _tag = _Tag;
-      get<_Tag>() = std::forward<_Type>(_arg);
+
+    template <Tag _tag>
+    auto& get() {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    static int _cmp(const FixedUnion& _lhs, const FixedUnion& _rhs) {
-      return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<enumValue>(_lhs, _rhs);
+
+    template <Tag _tag, typename... _Tp>
+    void set(_Tp&&... _args) {
+      _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
     }
-    template <Tag _Tag>
-    static int _cmp_value_at(const FixedUnion& _lhs, const FixedUnion& _rhs) {
-      if constexpr (_Tag == booleanValue) {
-        return _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>());
-      } else {
-        return (_lhs.getTag() == _Tag)
-          ? _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>())
-          : _cmp_value_at<static_cast<Tag>(static_cast<size_t>(_Tag)-1)>(_lhs, _rhs);
-      }
+
+    inline bool operator==(const FixedUnion& _rhs) const {
+      return _value == _rhs._value;
     }
-    template <typename _Type>
-    static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {
-      return (_lhs == _rhs) ? 0 : (_lhs < _rhs) ? -1 : 1;
+    inline bool operator<(const FixedUnion& _rhs) const {
+      return _value < _rhs._value;
     }
-    inline bool operator!=(const FixedUnion&_rhs) const {
-      return _cmp(*this, _rhs) != 0;
+    inline bool operator!=(const FixedUnion& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator<(const FixedUnion&_rhs) const {
-      return _cmp(*this, _rhs) < 0;
+    inline bool operator>(const FixedUnion& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator<=(const FixedUnion&_rhs) const {
-      return _cmp(*this, _rhs) <= 0;
+    inline bool operator>=(const FixedUnion& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator==(const FixedUnion&_rhs) const {
-      return _cmp(*this, _rhs) == 0;
+    inline bool operator<=(const FixedUnion& _rhs) const {
+      return !(_rhs < *this);
     }
-    inline bool operator>(const FixedUnion&_rhs) const {
-      return _cmp(*this, _rhs) > 0;
-    }
-    inline bool operator>=(const FixedUnion&_rhs) const {
-      return _cmp(*this, _rhs) >= 0;
-    }
+
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
@@ -145,22 +151,7 @@ public:
       return os.str();
     }
   private:
-    Tag _tag = booleanValue;
-    uint8_t _zero_pad[7] __attribute__((unused)) = {};
-    union _value_t {
-      _value_t() {}
-      ~_value_t() {}
-      bool booleanValue __attribute__((aligned (1))) = bool(false);
-      int8_t byteValue __attribute__((aligned (1)));
-      char16_t charValue __attribute__((aligned (2)));
-      int32_t intValue __attribute__((aligned (4)));
-      int64_t longValue __attribute__((aligned (8)));
-      float floatValue __attribute__((aligned (4)));
-      std::array<int32_t, 3> intArray __attribute__((aligned (4)));
-      std::array<std::array<int64_t, 2>, 3> multiDimensionLongArray __attribute__((aligned (8)));
-      double doubleValue __attribute__((aligned (8)));
-      ::android::aidl::tests::LongEnum enumValue __attribute__((aligned (8)));
-    } _value;
+    std::variant<bool, int8_t, char16_t, int32_t, int64_t, float, std::array<int32_t, 3>, std::array<std::array<int64_t, 2>, 3>, double, ::android::aidl::tests::LongEnum> _value;
   };  // class FixedUnion
   class LIBBINDER_EXPORTED EmptyParcelable : public ::android::Parcelable {
   public:
@@ -310,67 +301,73 @@ public:
     // Expose tag symbols for legacy code
     static const inline Tag byteValue = Tag::byteValue;
 
-    template <Tag _Tag>
-    using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<int8_t>>::type;
-    template <Tag _Tag, typename _Type>
-    static FixedUnionNoPadding make(_Type&& _arg) {
-      FixedUnionNoPadding _inst;
-      _inst.set<_Tag>(std::forward<_Type>(_arg));
-      return _inst;
+    template<typename _Tp>
+    static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, FixedUnionNoPadding>;
+
+    FixedUnionNoPadding() : _value(std::in_place_index<static_cast<size_t>(byteValue)>, int8_t(0)) { }
+
+    template <typename _Tp, typename = std::enable_if_t<
+        _not_self<_Tp> &&
+        std::is_constructible_v<std::variant<int8_t>, _Tp>
+      >>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    constexpr FixedUnionNoPadding(_Tp&& _arg)
+        : _value(std::forward<_Tp>(_arg)) {}
+
+    template <size_t _Np, typename... _Tp>
+    constexpr explicit FixedUnionNoPadding(std::in_place_index_t<_Np>, _Tp&&... _args)
+        : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {}
+
+    template <Tag _tag, typename... _Tp>
+    static FixedUnionNoPadding make(_Tp&&... _args) {
+      return FixedUnionNoPadding(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
     }
-    constexpr Tag getTag() const {
-      return _tag;
+
+    template <Tag _tag, typename _Tp, typename... _Up>
+    static FixedUnionNoPadding make(std::initializer_list<_Tp> _il, _Up&&... _args) {
+      return FixedUnionNoPadding(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
     }
-    template <Tag _Tag>
-    const _at<_Tag>& get() const {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    Tag getTag() const {
+      return static_cast<Tag>(_value.index());
     }
-    template <Tag _Tag>
-    _at<_Tag>& get() {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    template <Tag _tag>
+    const auto& get() const {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    template <Tag _Tag, typename _Type>
-    void set(_Type&& _arg) {
-      _tag = _Tag;
-      get<_Tag>() = std::forward<_Type>(_arg);
+
+    template <Tag _tag>
+    auto& get() {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    static int _cmp(const FixedUnionNoPadding& _lhs, const FixedUnionNoPadding& _rhs) {
-      return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<byteValue>(_lhs, _rhs);
+
+    template <Tag _tag, typename... _Tp>
+    void set(_Tp&&... _args) {
+      _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
     }
-    template <Tag _Tag>
-    static int _cmp_value_at(const FixedUnionNoPadding& _lhs, const FixedUnionNoPadding& _rhs) {
-      if constexpr (_Tag == byteValue) {
-        return _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>());
-      } else {
-        return (_lhs.getTag() == _Tag)
-          ? _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>())
-          : _cmp_value_at<static_cast<Tag>(static_cast<size_t>(_Tag)-1)>(_lhs, _rhs);
-      }
+
+    inline bool operator==(const FixedUnionNoPadding& _rhs) const {
+      return _value == _rhs._value;
     }
-    template <typename _Type>
-    static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {
-      return (_lhs == _rhs) ? 0 : (_lhs < _rhs) ? -1 : 1;
+    inline bool operator<(const FixedUnionNoPadding& _rhs) const {
+      return _value < _rhs._value;
     }
-    inline bool operator!=(const FixedUnionNoPadding&_rhs) const {
-      return _cmp(*this, _rhs) != 0;
+    inline bool operator!=(const FixedUnionNoPadding& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator<(const FixedUnionNoPadding&_rhs) const {
-      return _cmp(*this, _rhs) < 0;
+    inline bool operator>(const FixedUnionNoPadding& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator<=(const FixedUnionNoPadding&_rhs) const {
-      return _cmp(*this, _rhs) <= 0;
+    inline bool operator>=(const FixedUnionNoPadding& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator==(const FixedUnionNoPadding&_rhs) const {
-      return _cmp(*this, _rhs) == 0;
+    inline bool operator<=(const FixedUnionNoPadding& _rhs) const {
+      return !(_rhs < *this);
     }
-    inline bool operator>(const FixedUnionNoPadding&_rhs) const {
-      return _cmp(*this, _rhs) > 0;
-    }
-    inline bool operator>=(const FixedUnionNoPadding&_rhs) const {
-      return _cmp(*this, _rhs) >= 0;
-    }
+
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
@@ -387,12 +384,7 @@ public:
       return os.str();
     }
   private:
-    Tag _tag = byteValue;
-    union _value_t {
-      _value_t() {}
-      ~_value_t() {}
-      int8_t byteValue __attribute__((aligned (1))) = int8_t(0);
-    } _value;
+    std::variant<int8_t> _value;
   };  // class FixedUnionNoPadding
   class LIBBINDER_EXPORTED FixedUnionSmallPadding : public ::android::Parcelable {
   public:
@@ -402,67 +394,73 @@ public:
     // Expose tag symbols for legacy code
     static const inline Tag charValue = Tag::charValue;
 
-    template <Tag _Tag>
-    using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<char16_t>>::type;
-    template <Tag _Tag, typename _Type>
-    static FixedUnionSmallPadding make(_Type&& _arg) {
-      FixedUnionSmallPadding _inst;
-      _inst.set<_Tag>(std::forward<_Type>(_arg));
-      return _inst;
+    template<typename _Tp>
+    static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, FixedUnionSmallPadding>;
+
+    FixedUnionSmallPadding() : _value(std::in_place_index<static_cast<size_t>(charValue)>, char16_t('\0')) { }
+
+    template <typename _Tp, typename = std::enable_if_t<
+        _not_self<_Tp> &&
+        std::is_constructible_v<std::variant<char16_t>, _Tp>
+      >>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    constexpr FixedUnionSmallPadding(_Tp&& _arg)
+        : _value(std::forward<_Tp>(_arg)) {}
+
+    template <size_t _Np, typename... _Tp>
+    constexpr explicit FixedUnionSmallPadding(std::in_place_index_t<_Np>, _Tp&&... _args)
+        : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {}
+
+    template <Tag _tag, typename... _Tp>
+    static FixedUnionSmallPadding make(_Tp&&... _args) {
+      return FixedUnionSmallPadding(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
     }
-    constexpr Tag getTag() const {
-      return _tag;
+
+    template <Tag _tag, typename _Tp, typename... _Up>
+    static FixedUnionSmallPadding make(std::initializer_list<_Tp> _il, _Up&&... _args) {
+      return FixedUnionSmallPadding(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
     }
-    template <Tag _Tag>
-    const _at<_Tag>& get() const {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    Tag getTag() const {
+      return static_cast<Tag>(_value.index());
     }
-    template <Tag _Tag>
-    _at<_Tag>& get() {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    template <Tag _tag>
+    const auto& get() const {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    template <Tag _Tag, typename _Type>
-    void set(_Type&& _arg) {
-      _tag = _Tag;
-      get<_Tag>() = std::forward<_Type>(_arg);
+
+    template <Tag _tag>
+    auto& get() {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    static int _cmp(const FixedUnionSmallPadding& _lhs, const FixedUnionSmallPadding& _rhs) {
-      return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<charValue>(_lhs, _rhs);
+
+    template <Tag _tag, typename... _Tp>
+    void set(_Tp&&... _args) {
+      _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
     }
-    template <Tag _Tag>
-    static int _cmp_value_at(const FixedUnionSmallPadding& _lhs, const FixedUnionSmallPadding& _rhs) {
-      if constexpr (_Tag == charValue) {
-        return _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>());
-      } else {
-        return (_lhs.getTag() == _Tag)
-          ? _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>())
-          : _cmp_value_at<static_cast<Tag>(static_cast<size_t>(_Tag)-1)>(_lhs, _rhs);
-      }
+
+    inline bool operator==(const FixedUnionSmallPadding& _rhs) const {
+      return _value == _rhs._value;
     }
-    template <typename _Type>
-    static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {
-      return (_lhs == _rhs) ? 0 : (_lhs < _rhs) ? -1 : 1;
+    inline bool operator<(const FixedUnionSmallPadding& _rhs) const {
+      return _value < _rhs._value;
     }
-    inline bool operator!=(const FixedUnionSmallPadding&_rhs) const {
-      return _cmp(*this, _rhs) != 0;
+    inline bool operator!=(const FixedUnionSmallPadding& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator<(const FixedUnionSmallPadding&_rhs) const {
-      return _cmp(*this, _rhs) < 0;
+    inline bool operator>(const FixedUnionSmallPadding& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator<=(const FixedUnionSmallPadding&_rhs) const {
-      return _cmp(*this, _rhs) <= 0;
+    inline bool operator>=(const FixedUnionSmallPadding& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator==(const FixedUnionSmallPadding&_rhs) const {
-      return _cmp(*this, _rhs) == 0;
+    inline bool operator<=(const FixedUnionSmallPadding& _rhs) const {
+      return !(_rhs < *this);
     }
-    inline bool operator>(const FixedUnionSmallPadding&_rhs) const {
-      return _cmp(*this, _rhs) > 0;
-    }
-    inline bool operator>=(const FixedUnionSmallPadding&_rhs) const {
-      return _cmp(*this, _rhs) >= 0;
-    }
+
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
@@ -479,13 +477,7 @@ public:
       return os.str();
     }
   private:
-    Tag _tag = charValue;
-    uint8_t _zero_pad[1] __attribute__((unused)) = {};
-    union _value_t {
-      _value_t() {}
-      ~_value_t() {}
-      char16_t charValue __attribute__((aligned (2))) = char16_t('\0');
-    } _value;
+    std::variant<char16_t> _value;
   };  // class FixedUnionSmallPadding
   class LIBBINDER_EXPORTED FixedUnionLongPadding : public ::android::Parcelable {
   public:
@@ -495,67 +487,73 @@ public:
     // Expose tag symbols for legacy code
     static const inline Tag longValue = Tag::longValue;
 
-    template <Tag _Tag>
-    using _at = typename std::tuple_element<static_cast<size_t>(_Tag), std::tuple<int64_t>>::type;
-    template <Tag _Tag, typename _Type>
-    static FixedUnionLongPadding make(_Type&& _arg) {
-      FixedUnionLongPadding _inst;
-      _inst.set<_Tag>(std::forward<_Type>(_arg));
-      return _inst;
+    template<typename _Tp>
+    static constexpr bool _not_self = !std::is_same_v<std::remove_cv_t<std::remove_reference_t<_Tp>>, FixedUnionLongPadding>;
+
+    FixedUnionLongPadding() : _value(std::in_place_index<static_cast<size_t>(longValue)>, int64_t(0L)) { }
+
+    template <typename _Tp, typename = std::enable_if_t<
+        _not_self<_Tp> &&
+        std::is_constructible_v<std::variant<int64_t>, _Tp>
+      >>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    constexpr FixedUnionLongPadding(_Tp&& _arg)
+        : _value(std::forward<_Tp>(_arg)) {}
+
+    template <size_t _Np, typename... _Tp>
+    constexpr explicit FixedUnionLongPadding(std::in_place_index_t<_Np>, _Tp&&... _args)
+        : _value(std::in_place_index<_Np>, std::forward<_Tp>(_args)...) {}
+
+    template <Tag _tag, typename... _Tp>
+    static FixedUnionLongPadding make(_Tp&&... _args) {
+      return FixedUnionLongPadding(std::in_place_index<static_cast<size_t>(_tag)>, std::forward<_Tp>(_args)...);
     }
-    constexpr Tag getTag() const {
-      return _tag;
+
+    template <Tag _tag, typename _Tp, typename... _Up>
+    static FixedUnionLongPadding make(std::initializer_list<_Tp> _il, _Up&&... _args) {
+      return FixedUnionLongPadding(std::in_place_index<static_cast<size_t>(_tag)>, std::move(_il), std::forward<_Up>(_args)...);
     }
-    template <Tag _Tag>
-    const _at<_Tag>& get() const {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    Tag getTag() const {
+      return static_cast<Tag>(_value.index());
     }
-    template <Tag _Tag>
-    _at<_Tag>& get() {
-      if (_Tag != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
-      return *(_at<_Tag>*)(&_value);
+
+    template <Tag _tag>
+    const auto& get() const {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    template <Tag _Tag, typename _Type>
-    void set(_Type&& _arg) {
-      _tag = _Tag;
-      get<_Tag>() = std::forward<_Type>(_arg);
+
+    template <Tag _tag>
+    auto& get() {
+      if (getTag() != _tag) { __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "bad access: a wrong tag"); }
+      return std::get<static_cast<size_t>(_tag)>(_value);
     }
-    static int _cmp(const FixedUnionLongPadding& _lhs, const FixedUnionLongPadding& _rhs) {
-      return _cmp_value(_lhs.getTag(), _rhs.getTag()) || _cmp_value_at<longValue>(_lhs, _rhs);
+
+    template <Tag _tag, typename... _Tp>
+    void set(_Tp&&... _args) {
+      _value.emplace<static_cast<size_t>(_tag)>(std::forward<_Tp>(_args)...);
     }
-    template <Tag _Tag>
-    static int _cmp_value_at(const FixedUnionLongPadding& _lhs, const FixedUnionLongPadding& _rhs) {
-      if constexpr (_Tag == longValue) {
-        return _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>());
-      } else {
-        return (_lhs.getTag() == _Tag)
-          ? _cmp_value(_lhs.get<_Tag>(), _rhs.get<_Tag>())
-          : _cmp_value_at<static_cast<Tag>(static_cast<size_t>(_Tag)-1)>(_lhs, _rhs);
-      }
+
+    inline bool operator==(const FixedUnionLongPadding& _rhs) const {
+      return _value == _rhs._value;
     }
-    template <typename _Type>
-    static int _cmp_value(const _Type& _lhs, const _Type& _rhs) {
-      return (_lhs == _rhs) ? 0 : (_lhs < _rhs) ? -1 : 1;
+    inline bool operator<(const FixedUnionLongPadding& _rhs) const {
+      return _value < _rhs._value;
     }
-    inline bool operator!=(const FixedUnionLongPadding&_rhs) const {
-      return _cmp(*this, _rhs) != 0;
+    inline bool operator!=(const FixedUnionLongPadding& _rhs) const {
+      return !(*this == _rhs);
     }
-    inline bool operator<(const FixedUnionLongPadding&_rhs) const {
-      return _cmp(*this, _rhs) < 0;
+    inline bool operator>(const FixedUnionLongPadding& _rhs) const {
+      return _rhs < *this;
     }
-    inline bool operator<=(const FixedUnionLongPadding&_rhs) const {
-      return _cmp(*this, _rhs) <= 0;
+    inline bool operator>=(const FixedUnionLongPadding& _rhs) const {
+      return !(*this < _rhs);
     }
-    inline bool operator==(const FixedUnionLongPadding&_rhs) const {
-      return _cmp(*this, _rhs) == 0;
+    inline bool operator<=(const FixedUnionLongPadding& _rhs) const {
+      return !(_rhs < *this);
     }
-    inline bool operator>(const FixedUnionLongPadding&_rhs) const {
-      return _cmp(*this, _rhs) > 0;
-    }
-    inline bool operator>=(const FixedUnionLongPadding&_rhs) const {
-      return _cmp(*this, _rhs) >= 0;
-    }
+
     ::android::status_t readFromParcel(const ::android::Parcel* _aidl_parcel) final;
     ::android::status_t writeToParcel(::android::Parcel* _aidl_parcel) const final;
     static const ::android::String16& getParcelableDescriptor() {
@@ -572,13 +570,7 @@ public:
       return os.str();
     }
   private:
-    Tag _tag = longValue;
-    uint8_t _zero_pad[7] __attribute__((unused)) = {};
-    union _value_t {
-      _value_t() {}
-      ~_value_t() {}
-      int64_t longValue __attribute__((aligned (8))) = int64_t(0L);
-    } _value;
+    std::variant<int64_t> _value;
   };  // class FixedUnionLongPadding
   inline bool operator==(const FixedSize&) const {
     return std::tie() == std::tie();
