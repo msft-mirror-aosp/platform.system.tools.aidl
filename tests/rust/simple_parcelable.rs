@@ -16,11 +16,20 @@
 
 //! Rust implementation of `SimpleParcelable`.
 
+// This library is used as an additional rust lib for a no_std enabled AIDL interface.
+#![no_std]
+
+extern crate alloc;
+
 use binder::{
     binder_impl::{BorrowedParcel, UnstructuredParcelable},
     impl_deserialize_for_unstructured_parcelable, impl_serialize_for_unstructured_parcelable,
     StatusCode,
 };
+
+use alloc::string::String;
+use core::result::Result;
+use core::result::Result::Ok;
 
 /// Rust implementation of `SimpleParcelable`.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]

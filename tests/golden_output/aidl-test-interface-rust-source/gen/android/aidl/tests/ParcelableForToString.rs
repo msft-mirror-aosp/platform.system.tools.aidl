@@ -8,29 +8,30 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
+use alloc::boxed::Box;
 #[derive(Debug)]
 pub struct r#ParcelableForToString {
   pub r#intValue: i32,
-  pub r#intArray: Vec<i32>,
+  pub r#intArray: alloc::vec::Vec<i32>,
   pub r#longValue: i64,
-  pub r#longArray: Vec<i64>,
+  pub r#longArray: alloc::vec::Vec<i64>,
   pub r#doubleValue: f64,
-  pub r#doubleArray: Vec<f64>,
+  pub r#doubleArray: alloc::vec::Vec<f64>,
   pub r#floatValue: f32,
-  pub r#floatArray: Vec<f32>,
+  pub r#floatArray: alloc::vec::Vec<f32>,
   pub r#byteValue: i8,
-  pub r#byteArray: Vec<u8>,
+  pub r#byteArray: alloc::vec::Vec<u8>,
   pub r#booleanValue: bool,
-  pub r#booleanArray: Vec<bool>,
-  pub r#stringValue: String,
-  pub r#stringArray: Vec<String>,
-  pub r#stringList: Vec<String>,
+  pub r#booleanArray: alloc::vec::Vec<bool>,
+  pub r#stringValue: alloc::string::String,
+  pub r#stringArray: alloc::vec::Vec<alloc::string::String>,
+  pub r#stringList: alloc::vec::Vec<alloc::string::String>,
   pub r#parcelableValue: crate::mangled::_7_android_4_aidl_5_tests_26_OtherParcelableForToString,
-  pub r#parcelableArray: Vec<crate::mangled::_7_android_4_aidl_5_tests_26_OtherParcelableForToString>,
+  pub r#parcelableArray: alloc::vec::Vec<crate::mangled::_7_android_4_aidl_5_tests_26_OtherParcelableForToString>,
   pub r#enumValue: crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum,
-  pub r#enumArray: Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>,
-  pub r#nullArray: Vec<String>,
-  pub r#nullList: Vec<String>,
+  pub r#enumArray: alloc::vec::Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>,
+  pub r#nullArray: alloc::vec::Vec<alloc::string::String>,
+  pub r#nullList: alloc::vec::Vec<alloc::string::String>,
   pub r#parcelableGeneric: crate::mangled::_7_android_4_aidl_5_tests_27_GenericStructuredParcelable<i32,crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable,crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum,>,
   pub r#unionValue: crate::mangled::_7_android_4_aidl_5_tests_5_Union,
 }
@@ -64,7 +65,7 @@ impl Default for r#ParcelableForToString {
   }
 }
 impl binder::Parcelable for r#ParcelableForToString {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       subparcel.write(&self.r#intValue)?;
       subparcel.write(&self.r#intArray)?;
@@ -92,7 +93,7 @@ impl binder::Parcelable for r#ParcelableForToString {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       if subparcel.has_more_data() {
         self.r#intValue = subparcel.read()?;
