@@ -20,11 +20,8 @@ CPP_TEST_V1_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_v1_client/aidl_t
 NDK_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_service_ndk/aidl_test_service_ndk%s'
 NDK_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_client_ndk/aidl_test_client_ndk%s'
 RUST_TEST_CLIENT_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_client/aidl_test_rust_client%s'
-RUST_TEST_CLIENT_WITH_NOSTD_DEPS_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_client/aidl_test_rust_client_with_nostd_deps%s'
 RUST_TEST_SERVICE_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service/aidl_test_rust_service%s'
-RUST_TEST_SERVICE_WITH_NOSTD_DEPS_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service/aidl_test_rust_service_with_nostd_deps%s'
 RUST_TEST_SERVICE_ASYNC_FOR_BITNESS = ' /data/nativetest%s/aidl_test_rust_service_async/aidl_test_rust_service_async%s'
-RUST_NO_STD_DEPS_SUFFIX = "_with_nostd_deps"
 
 # From AidlTestsJava.java
 INSTRUMENTATION_SUCCESS_PATTERN = r'TEST SUCCESS\n$'
@@ -255,45 +252,27 @@ def getprop(host, prop):
     return host.run('getprop "%s"' % prop).stdout.strip()
 
 class RustClient:
-  def __init__(self, host, bitness, no_std_deps=False):
-    self.name = "%s_bit_rust_client%s" % (
-            pretty_bitness(bitness),
-            RUST_NO_STD_DEPS_SUFFIX if no_std_deps else '',
-        )
-    self.host = host
-    self.binary = (
-        RUST_TEST_CLIENT_WITH_NOSTD_DEPS_FOR_BITNESS
-        if no_std_deps
-        else RUST_TEST_CLIENT_FOR_BITNESS
-    ) % bitness
-
-  def cleanup(self):
-    self.host.run('killall %s' % self.binary, ignore_status=True)
-
-  def run(self):
-    result = self.host.run(self.binary, ignore_status=True)
-    print(result.printable_string())
-    if result.exit_status:
-      raise ShellResultFail(result)
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_rust_client" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = RUST_TEST_CLIENT_FOR_BITNESS % bitness
+    def cleanup(self):
+        self.host.run('killall %s' % self.binary, ignore_status=True)
+    def run(self):
+        result = self.host.run(self.binary, ignore_status=True)
+        print(result.printable_string())
+        if result.exit_status:
+            raise ShellResultFail(result)
 
 class RustServer:
-  def __init__(self, host, bitness, no_std_deps=False):
-    self.name = "%s_bit_rust_server%s" % (
-        pretty_bitness(bitness),
-        RUST_NO_STD_DEPS_SUFFIX if no_std_deps else '',
-    )
-    self.host = host
-    self.binary = (
-        RUST_TEST_SERVICE_WITH_NOSTD_DEPS_FOR_BITNESS
-        if no_std_deps
-        else RUST_TEST_SERVICE_FOR_BITNESS
-    ) % bitness
-
-  def cleanup(self):
-    self.host.run('killall %s' % self.binary, ignore_status=True)
-
-  def run(self):
-    return self.host.run(self.binary, background=self.name)
+    def __init__(self, host, bitness):
+        self.name = "%s_bit_rust_server" % pretty_bitness(bitness)
+        self.host = host
+        self.binary = RUST_TEST_SERVICE_FOR_BITNESS % bitness
+    def cleanup(self):
+        self.host.run('killall %s' % self.binary, ignore_status=True)
+    def run(self):
+        return self.host.run(self.binary, background=self.name)
 
 class RustAsyncServer:
     def __init__(self, host, bitness):
@@ -362,9 +341,7 @@ if __name__ == '__main__':
         servers += [JavaServer(host, bitness)]
 
         clients += [RustClient(host, bitness)]
-        clients += [RustClient(host, bitness, no_std_deps=True)]
         servers += [RustServer(host, bitness)]
-        servers += [RustServer(host, bitness, no_std_deps=True)]
         servers += [RustAsyncServer(host, bitness)]
 
     for client in clients:

@@ -238,7 +238,7 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
   auto return_type =
       RustNameOf(method.GetType(), typenames, StorageMode::VALUE, is_vintf_stability);
   out << "fn read_response_" + method.GetName() + "(" + parameters +
-             ", _aidl_reply: core::result::Result<binder::binder_impl::Parcel, "
+             ", _aidl_reply: std::result::Result<binder::binder_impl::Parcel, "
              "binder::StatusCode>) -> binder::Result<" +
              return_type + "> {\n";
   out.Indent();
@@ -261,13 +261,10 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
 
       if (!method.IsUserDefined()) {
         if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
-          out << "self.cached_version.store(_aidl_return, core::sync::atomic::Ordering::Relaxed);\n";
+          out << "self.cached_version.store(_aidl_return, std::sync::atomic::Ordering::Relaxed);\n";
         }
         if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
-          out << "{\n";
-          out << "  let mut _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());\n";
-          out << "  *_aidl_hash_lock = Some(_aidl_return.clone());\n";
-          out << "}\n";
+          out << "*self.cached_hash.lock().unwrap() = Some(_aidl_return.clone());\n";
         }
       }
     }
@@ -295,25 +292,25 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
     if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       // Check if the version is in the cache
       out << "let _aidl_version = "
-             "self.cached_version.load(core::sync::atomic::Ordering::Relaxed);\n";
+             "self.cached_version.load(std::sync::atomic::Ordering::Relaxed);\n";
       switch (kind) {
         case MethodKind::NORMAL:
         case MethodKind::ASYNC:
           out << "if _aidl_version != -1 { return Ok(_aidl_version); }\n";
           break;
         case MethodKind::BOXED_FUTURE:
-          out << "if _aidl_version != -1 { return Box::pin(core::future::ready(Ok(_aidl_version))); "
+          out << "if _aidl_version != -1 { return Box::pin(std::future::ready(Ok(_aidl_version))); "
                  "}\n";
           break;
         case MethodKind::READY_FUTURE:
-          out << "if _aidl_version != -1 { return core::future::ready(Ok(_aidl_version)); }\n";
+          out << "if _aidl_version != -1 { return std::future::ready(Ok(_aidl_version)); }\n";
           break;
       }
     }
 
     if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
       out << "{\n";
-      out << "  let _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());\n";
+      out << "  let _aidl_hash_lock = self.cached_hash.lock().unwrap();\n";
       out << "  if let Some(ref _aidl_hash) = *_aidl_hash_lock {\n";
       switch (kind) {
         case MethodKind::NORMAL:
@@ -321,10 +318,10 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
           out << "    return Ok(_aidl_hash.clone());\n";
           break;
         case MethodKind::BOXED_FUTURE:
-          out << "    return Box::pin(core::future::ready(Ok(_aidl_hash.clone())));\n";
+          out << "    return Box::pin(std::future::ready(Ok(_aidl_hash.clone())));\n";
           break;
         case MethodKind::READY_FUTURE:
-          out << "    return core::future::ready(Ok(_aidl_hash.clone()));\n";
+          out << "    return std::future::ready(Ok(_aidl_hash.clone()));\n";
           break;
       }
       out << "  }\n";
@@ -374,7 +371,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
           method.IsUserDefined()) {
         out << "if (true) {\n";
         out << " return "
-               "core::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_"
+               "std::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_"
                "TRANSACTION)));\n";
         out << "} else {\n";
         out.Indent();
@@ -384,14 +381,14 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
                  build_parcel_args + ") {\n";
       out.Indent();
       out << "Ok(_aidl_data) => _aidl_data,\n";
-      out << "Err(err) => return core::future::ready(Err(err)),\n";
+      out << "Err(err) => return std::future::ready(Err(err)),\n";
       out.Dedent();
       out << "};\n";
       // Submit transaction.
       out << "let _aidl_reply = self.binder.submit_transact(transactions::r#" << method.GetName()
           << ", _aidl_data, " << transact_flags << ");\n";
       // Deserialize response.
-      out << "core::future::ready(self.read_response_" + method.GetName() + "(" +
+      out << "std::future::ready(self.read_response_" + method.GetName() + "(" +
                  read_response_args + "))\n";
       break;
     case MethodKind::BOXED_FUTURE:
@@ -399,7 +396,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
           method.IsUserDefined()) {
         out << "if (true) {\n";
         out << " return "
-               "Box::pin(core::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_"
+               "Box::pin(std::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_"
                "TRANSACTION))));\n";
         out << "} else {\n";
         out.Indent();
@@ -409,7 +406,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
                  build_parcel_args + ") {\n";
       out.Indent();
       out << "Ok(_aidl_data) => _aidl_data,\n";
-      out << "Err(err) => return Box::pin(core::future::ready(Err(err))),\n";
+      out << "Err(err) => return Box::pin(std::future::ready(Err(err))),\n";
       out.Dedent();
       out << "};\n";
       // Submit transaction.
@@ -558,7 +555,7 @@ void GenerateServerItems(CodeWriter& out, const AidlInterface* iface,
       << ", "
          "_aidl_code: binder::binder_impl::TransactionCode, "
          "_aidl_data: &binder::binder_impl::BorrowedParcel<'_>, "
-         "_aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), "
+         "_aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), "
          "binder::StatusCode> "
          "{\n";
   out.Indent();
@@ -615,7 +612,6 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer << "#![allow(non_snake_case)]\n";
   // Import IBinderInternal for transact()
   *code_writer << "#[allow(unused_imports)] use binder::binder_impl::IBinderInternal;\n";
-  *code_writer << "use alloc::boxed::Box;\n";
   *code_writer << "#[cfg(any(android_vndk, not(android_ndk)))]\n";
   *code_writer << "const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = "
                   "binder::binder_impl::FLAG_PRIVATE_LOCAL;\n";
@@ -645,13 +641,14 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   if (options.Version() > 0) {
     string comma = options.Hash().empty() ? "" : ",";
     *code_writer << "cached_version: "
-                    "core::sync::atomic::AtomicI32 = "
-                    "core::sync::atomic::AtomicI32::new(-1)"
+                    "std::sync::atomic::AtomicI32 = "
+                    "std::sync::atomic::AtomicI32::new(-1)"
                  << comma << "\n";
   }
   if (!options.Hash().empty()) {
-    *code_writer << "cached_hash: binder::binder_impl::Mutex<Option<alloc::string::String>> = "
-                    "binder::binder_impl::Mutex::new(None)\n";
+    *code_writer << "cached_hash: "
+                    "std::sync::Mutex<Option<String>> = "
+                    "std::sync::Mutex::new(None)\n";
   }
   code_writer->Dedent();
   *code_writer << "},\n";
@@ -799,7 +796,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer
       << "fn dump(&self, _writer: &mut dyn std::io::Write, _args: "
          "&[&std::ffi::CStr]) -> "
-         "core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }\n";
+         "std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }\n";
   code_writer->Dedent();
   *code_writer << "}\n";
   *code_writer << "impl<T, R> " << trait_name << " for Wrapper<T, R>\n";
@@ -1078,7 +1075,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
       out << "pub r#" << variable->GetName() << ": " << field_type << ",\n";
     }
     for (const auto& unused_param : FreeParams(parcel)) {
-      out << "_phantom_" << unused_param << ": core::marker::PhantomData<" << unused_param << ">,\n";
+      out << "_phantom_" << unused_param << ": std::marker::PhantomData<" << unused_param << ">,\n";
     }
   }
   out.Dedent();
@@ -1091,7 +1088,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
       auto alignment = cpp::AlignmentOf(var_type, typenames, Options::Language::RUST);
       AIDL_FATAL_IF(alignment == std::nullopt, var_type);
       variable_offset = cpp::AlignTo(variable_offset, *alignment);
-      out << "static_assertions::const_assert_eq!(core::mem::offset_of!(" << parcel->GetName()
+      out << "static_assertions::const_assert_eq!(std::mem::offset_of!(" << parcel->GetName()
           << ", r#" << variable->GetName() << "), " << std::to_string(variable_offset) << ");\n";
 
       // Assert the size of each field
@@ -1099,7 +1096,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
       AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
       std::string rust_type = RustNameOf(var_type, typenames, StorageMode::PARCELABLE_FIELD,
                                          parcel->IsVintfStability());
-      out << "static_assertions::const_assert_eq!(core::mem::size_of::<" << rust_type << ">(), "
+      out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << rust_type << ">(), "
           << std::to_string(*variable_size) << ");\n";
 
       variable_offset += *variable_size;
@@ -1108,13 +1105,13 @@ void GenerateParcelBody(CodeWriter& out, const AidlStructuredParcelable* parcel,
     auto parcelable_alignment =
         cpp::AlignmentOfDefinedType(*parcel, typenames, Options::Language::RUST);
     AIDL_FATAL_IF(parcelable_alignment == std::nullopt, *parcel);
-    out << "static_assertions::const_assert_eq!(core::mem::align_of::<" << parcel->GetName()
+    out << "static_assertions::const_assert_eq!(std::mem::align_of::<" << parcel->GetName()
         << ">(), " << std::to_string(*parcelable_alignment) << ");\n";
 
     // Assert the size of the struct
     auto parcelable_size = cpp::SizeOfDefinedType(*parcel, typenames, Options::Language::RUST);
     AIDL_FATAL_IF(parcelable_size == std::nullopt, *parcel);
-    out << "static_assertions::const_assert_eq!(core::mem::size_of::<" << parcel->GetName()
+    out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << parcel->GetName()
         << ">(), " << std::to_string(*parcelable_size) << ");\n";
   }
 }
@@ -1271,7 +1268,7 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
     out.Indent();
     out << "// SAFETY: The first byte of a union is the tag.\n";
     out << "// All bitpatterns are valid for `Tag`.\n";
-    out << "unsafe { core::mem::transmute_copy::<Self, Tag::Tag>(self) }\n";
+    out << "unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }\n";
     out.Dedent();
     out << "}\n";
     out.Dedent();
@@ -1284,25 +1281,25 @@ void GenerateParcelBody(CodeWriter& out, const AidlUnionDecl* parcel,
       // Assert the size of each enum variant's payload
       auto variable_size = cpp::SizeOf(var_type, typenames, Options::Language::RUST);
       AIDL_FATAL_IF(variable_size == std::nullopt, var_type);
-      out << "static_assertions::const_assert_eq!(core::mem::size_of::<" << rust_type << ">(), "
+      out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << rust_type << ">(), "
           << std::to_string(*variable_size) << ");\n";
     }
     for (const auto& variable : parcel->GetFields()) {
       // Assert that the tag is the right tag.
       out << "static_assertions::const_assert_eq!(" << parcel->GetName()
           << "::" << variable->GetCapitalizedName()
-          << "(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#"
+          << "(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#"
           << variable->GetName() << ".get());\n";
     }
     // Assert the alignment of the enum
     AIDL_FATAL_IF(alignment == std::nullopt, *parcel);
-    out << "static_assertions::const_assert_eq!(core::mem::align_of::<" << parcel->GetName()
+    out << "static_assertions::const_assert_eq!(std::mem::align_of::<" << parcel->GetName()
         << ">(), " << std::to_string(*alignment) << ");\n";
 
     // Assert the size of the enum, taking into the tag and its padding into account
     auto union_size = cpp::SizeOfDefinedType(*parcel, typenames, Options::Language::RUST);
     AIDL_FATAL_IF(union_size == std::nullopt, *parcel);
-    out << "static_assertions::const_assert_eq!(core::mem::size_of::<" << parcel->GetName()
+    out << "static_assertions::const_assert_eq!(std::mem::size_of::<" << parcel->GetName()
         << ">(), " << std::to_string(*union_size) << ");\n";
   }
 }
@@ -1419,7 +1416,7 @@ void GenerateParcelableTrait(CodeWriter& out, const ParcelableType* parcel,
   out.Indent();
 
   out << "fn write_to_parcel(&self, "
-         "parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), "
+         "parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), "
          "binder::StatusCode> "
          "{\n";
   out.Indent();
@@ -1428,7 +1425,7 @@ void GenerateParcelableTrait(CodeWriter& out, const ParcelableType* parcel,
   out << "}\n";
 
   out << "fn read_from_parcel(&mut self, "
-         "parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), "
+         "parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), "
          "binder::StatusCode> {\n";
   out.Indent();
   GenerateParcelDeserializeBody(out, parcel, typenames);
@@ -1569,7 +1566,6 @@ void GenerateRustParcel(CodeWriter* code_writer, const ParcelableType* parcel,
     derives.push_back("zerocopy::TryFromBytes");
   }
 
-  *code_writer << "use alloc::boxed::Box;\n";
   *code_writer << "#[derive(" << Join(derives, ", ") << ")]\n";
   GenerateParcelBody(*code_writer, parcel, typenames);
   GenerateConstantDeclarations(*code_writer, *parcel, typenames);

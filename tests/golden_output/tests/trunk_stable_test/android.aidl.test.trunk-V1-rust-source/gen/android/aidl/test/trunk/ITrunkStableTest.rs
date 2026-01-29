@@ -11,7 +11,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
-use alloc::boxed::Box;
 #[cfg(any(android_vndk, not(android_ndk)))]
 const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
 #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -21,8 +20,8 @@ declare_binder_interface! {
   ITrunkStableTest["android.aidl.test.trunk.ITrunkStableTest"] {
     native: BnTrunkStableTest(on_transact),
     proxy: BpTrunkStableTest {
-      cached_version: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(-1),
-      cached_hash: binder::binder_impl::Mutex<Option<alloc::string::String>> = binder::binder_impl::Mutex::new(None)
+      cached_version: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1),
+      cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
     },
     async: ITrunkStableTestAsync(try_into_local_async),
     functionNames : [
@@ -42,7 +41,7 @@ pub trait ITrunkStableTest: binder::Interface + Send {
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     Ok(VERSION)
   }
-  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<alloc::string::String> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     Ok(HASH.into())
   }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ITrunkStableTestAsyncServer + Send + Sync)> {
@@ -58,7 +57,7 @@ pub trait ITrunkStableTestAsync<P>: binder::Interface + Send {
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
     Box::pin(async move { Ok(VERSION) })
   }
-  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<alloc::string::String>> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     Box::pin(async move { Ok(HASH.into()) })
   }
 }
@@ -84,7 +83,7 @@ impl BnTrunkStableTest {
     impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
       fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
       #[cfg(feature = "std")]
-      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
     }
     impl<T, R> ITrunkStableTest for Wrapper<T, R>
     where
@@ -152,7 +151,7 @@ impl BpTrunkStableTest {
     aidl_data.write(_arg_input)?;
     Ok(aidl_data)
   }
-  fn read_response_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+  fn read_response_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -164,7 +163,7 @@ impl BpTrunkStableTest {
     aidl_data.write(&_arg_input)?;
     Ok(aidl_data)
   }
-  fn read_response_repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+  fn read_response_repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -176,7 +175,7 @@ impl BpTrunkStableTest {
     aidl_data.write(_arg_input)?;
     Ok(aidl_data)
   }
-  fn read_response_repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+  fn read_response_repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -188,7 +187,7 @@ impl BpTrunkStableTest {
     aidl_data.write(_arg_cb)?;
     Ok(aidl_data)
   }
-  fn read_response_callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
+  fn read_response_callMyCallback(&self, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -198,27 +197,24 @@ impl BpTrunkStableTest {
     let mut aidl_data = self.binder.prepare_transact()?;
     Ok(aidl_data)
   }
-  fn read_response_getInterfaceVersion(&self, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
+  fn read_response_getInterfaceVersion(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
     let _aidl_return: i32 = _aidl_reply.read()?;
-    self.cached_version.store(_aidl_return, core::sync::atomic::Ordering::Relaxed);
+    self.cached_version.store(_aidl_return, std::sync::atomic::Ordering::Relaxed);
     Ok(_aidl_return)
   }
   fn build_parcel_getInterfaceHash(&self) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
     Ok(aidl_data)
   }
-  fn read_response_getInterfaceHash(&self, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<alloc::string::String> {
+  fn read_response_getInterfaceHash(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<String> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
-    let _aidl_return: alloc::string::String = _aidl_reply.read()?;
-    {
-      let mut _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());
-      *_aidl_hash_lock = Some(_aidl_return.clone());
-    }
+    let _aidl_return: String = _aidl_reply.read()?;
+    *self.cached_hash.lock().unwrap() = Some(_aidl_return.clone());
     Ok(_aidl_return)
   }
 }
@@ -244,15 +240,15 @@ impl ITrunkStableTest for BpTrunkStableTest {
     self.read_response_callMyCallback(_arg_cb, _aidl_reply)
   }
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
-    let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
+    let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
     if _aidl_version != -1 { return Ok(_aidl_version); }
     let _aidl_data = self.build_parcel_getInterfaceVersion()?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL);
     self.read_response_getInterfaceVersion(_aidl_reply)
   }
-  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<alloc::string::String> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
     {
-      let _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());
+      let _aidl_hash_lock = self.cached_hash.lock().unwrap();
       if let Some(ref _aidl_hash) = *_aidl_hash_lock {
         return Ok(_aidl_hash.clone());
       }
@@ -266,7 +262,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
   fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
     let _aidl_data = match self.build_parcel_repeatParcelable(_arg_input) {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -279,7 +275,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
   fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
     let _aidl_data = match self.build_parcel_repeatEnum(_arg_input) {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -292,7 +288,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
   fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
     let _aidl_data = match self.build_parcel_repeatUnion(_arg_input) {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -305,7 +301,7 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
   fn r#callMyCallback<'a, >(&'a self, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
     let _aidl_data = match self.build_parcel_callMyCallback(_arg_cb) {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -316,11 +312,11 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     )
   }
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
-    let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
-    if _aidl_version != -1 { return Box::pin(core::future::ready(Ok(_aidl_version))); }
+    let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
+    if _aidl_version != -1 { return Box::pin(std::future::ready(Ok(_aidl_version))); }
     let _aidl_data = match self.build_parcel_getInterfaceVersion() {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -330,16 +326,16 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
       }
     )
   }
-  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<alloc::string::String>> {
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
     {
-      let _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());
+      let _aidl_hash_lock = self.cached_hash.lock().unwrap();
       if let Some(ref _aidl_hash) = *_aidl_hash_lock {
-        return Box::pin(core::future::ready(Ok(_aidl_hash.clone())));
+        return Box::pin(std::future::ready(Ok(_aidl_hash.clone())));
       }
     }
     let _aidl_data = match self.build_parcel_getInterfaceHash() {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -356,9 +352,9 @@ impl ITrunkStableTest for binder::binder_impl::Binder<BnTrunkStableTest> {
   fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> { self.0.r#repeatUnion(_arg_input) }
   fn r#callMyCallback<'a, 'l1, >(&'a self, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_11_IMyCallback>) -> binder::Result<()> { self.0.r#callMyCallback(_arg_cb) }
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
-  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<alloc::string::String> { self.0.r#getInterfaceHash() }
+  fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
 }
-fn on_transact(_aidl_service: &dyn ITrunkStableTest, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
+fn on_transact(_aidl_service: &dyn ITrunkStableTest, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {
     transactions::r#repeatParcelable => {
       let _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable = _aidl_data.read()?;
@@ -433,7 +429,6 @@ fn on_transact(_aidl_service: &dyn ITrunkStableTest, _aidl_code: binder::binder_
   }
 }
 pub mod r#MyParcelable {
-  use alloc::boxed::Box;
   #[derive(Debug)]
   pub struct r#MyParcelable {
     pub r#a: i32,
@@ -448,14 +443,14 @@ pub mod r#MyParcelable {
     }
   }
   impl binder::Parcelable for r#MyParcelable {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         subparcel.write(&self.r#a)?;
         subparcel.write(&self.r#b)?;
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         if subparcel.has_more_data() {
           self.r#a = subparcel.read()?;
@@ -486,7 +481,6 @@ pub mod r#MyEnum {
   }
 }
 pub mod r#MyUnion {
-  use alloc::boxed::Box;
   #[derive(Debug)]
   pub enum r#MyUnion {
     A(i32),
@@ -498,7 +492,7 @@ pub mod r#MyUnion {
     }
   }
   impl binder::Parcelable for r#MyUnion {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       match self {
         Self::A(v) => {
           parcel.write(&0i32)?;
@@ -510,7 +504,7 @@ pub mod r#MyUnion {
         }
       }
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       let tag: i32 = parcel.read()?;
       match tag {
         0 => {
@@ -550,7 +544,6 @@ pub mod r#IMyCallback {
   #![allow(non_upper_case_globals)]
   #![allow(non_snake_case)]
   #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
-  use alloc::boxed::Box;
   #[cfg(any(android_vndk, not(android_ndk)))]
   const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
   #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -560,8 +553,8 @@ pub mod r#IMyCallback {
     IMyCallback["android.aidl.test.trunk.ITrunkStableTest.IMyCallback"] {
       native: BnMyCallback(on_transact),
       proxy: BpMyCallback {
-        cached_version: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(-1),
-        cached_hash: binder::binder_impl::Mutex<Option<alloc::string::String>> = binder::binder_impl::Mutex::new(None)
+        cached_version: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1),
+        cached_hash: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None)
       },
       async: IMyCallbackAsync(try_into_local_async),
       functionNames : [
@@ -579,7 +572,7 @@ pub mod r#IMyCallback {
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
       Ok(VERSION)
     }
-    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<alloc::string::String> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
       Ok(HASH.into())
     }
     fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn IMyCallbackAsyncServer + Send + Sync)> {
@@ -594,7 +587,7 @@ pub mod r#IMyCallback {
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
       Box::pin(async move { Ok(VERSION) })
     }
-    fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<alloc::string::String>> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
       Box::pin(async move { Ok(HASH.into()) })
     }
   }
@@ -619,7 +612,7 @@ pub mod r#IMyCallback {
       impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
         fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
         #[cfg(feature = "std")]
-        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
       }
       impl<T, R> IMyCallback for Wrapper<T, R>
       where
@@ -680,7 +673,7 @@ pub mod r#IMyCallback {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
+    fn read_response_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -692,7 +685,7 @@ pub mod r#IMyCallback {
       aidl_data.write(&_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
+    fn read_response_repeatEnum(&self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -704,7 +697,7 @@ pub mod r#IMyCallback {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
+    fn read_response_repeatUnion(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -715,27 +708,24 @@ pub mod r#IMyCallback {
       let mut aidl_data = self.binder.prepare_transact()?;
       Ok(aidl_data)
     }
-    fn read_response_getInterfaceVersion(&self, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
+    fn read_response_getInterfaceVersion(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
       let _aidl_return: i32 = _aidl_reply.read()?;
-      self.cached_version.store(_aidl_return, core::sync::atomic::Ordering::Relaxed);
+      self.cached_version.store(_aidl_return, std::sync::atomic::Ordering::Relaxed);
       Ok(_aidl_return)
     }
     fn build_parcel_getInterfaceHash(&self) -> binder::Result<binder::binder_impl::Parcel> {
       let mut aidl_data = self.binder.prepare_transact()?;
       Ok(aidl_data)
     }
-    fn read_response_getInterfaceHash(&self, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<alloc::string::String> {
+    fn read_response_getInterfaceHash(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<String> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
-      let _aidl_return: alloc::string::String = _aidl_reply.read()?;
-      {
-        let mut _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());
-        *_aidl_hash_lock = Some(_aidl_return.clone());
-      }
+      let _aidl_return: String = _aidl_reply.read()?;
+      *self.cached_hash.lock().unwrap() = Some(_aidl_return.clone());
       Ok(_aidl_return)
     }
   }
@@ -756,15 +746,15 @@ pub mod r#IMyCallback {
       self.read_response_repeatUnion(_arg_input, _aidl_reply)
     }
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
-      let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
+      let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
       if _aidl_version != -1 { return Ok(_aidl_version); }
       let _aidl_data = self.build_parcel_getInterfaceVersion()?;
       let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, FLAG_PRIVATE_LOCAL);
       self.read_response_getInterfaceVersion(_aidl_reply)
     }
-    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<alloc::string::String> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> {
       {
-        let _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());
+        let _aidl_hash_lock = self.cached_hash.lock().unwrap();
         if let Some(ref _aidl_hash) = *_aidl_hash_lock {
           return Ok(_aidl_hash.clone());
         }
@@ -778,7 +768,7 @@ pub mod r#IMyCallback {
     fn r#repeatParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable>> {
       let _aidl_data = match self.build_parcel_repeatParcelable(_arg_input) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(core::future::ready(Err(err))),
+        Err(err) => return Box::pin(std::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -791,7 +781,7 @@ pub mod r#IMyCallback {
     fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum>> {
       let _aidl_data = match self.build_parcel_repeatEnum(_arg_input) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(core::future::ready(Err(err))),
+        Err(err) => return Box::pin(std::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -804,7 +794,7 @@ pub mod r#IMyCallback {
     fn r#repeatUnion<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion>> {
       let _aidl_data = match self.build_parcel_repeatUnion(_arg_input) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(core::future::ready(Err(err))),
+        Err(err) => return Box::pin(std::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -815,11 +805,11 @@ pub mod r#IMyCallback {
       )
     }
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
-      let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
-      if _aidl_version != -1 { return Box::pin(core::future::ready(Ok(_aidl_version))); }
+      let _aidl_version = self.cached_version.load(std::sync::atomic::Ordering::Relaxed);
+      if _aidl_version != -1 { return Box::pin(std::future::ready(Ok(_aidl_version))); }
       let _aidl_data = match self.build_parcel_getInterfaceVersion() {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(core::future::ready(Err(err))),
+        Err(err) => return Box::pin(std::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -829,16 +819,16 @@ pub mod r#IMyCallback {
         }
       )
     }
-    fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<alloc::string::String>> {
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<String>> {
       {
-        let _aidl_hash_lock = binder::binder_impl::panic_if_poisoned!(self.cached_hash.lock());
+        let _aidl_hash_lock = self.cached_hash.lock().unwrap();
         if let Some(ref _aidl_hash) = *_aidl_hash_lock {
-          return Box::pin(core::future::ready(Ok(_aidl_hash.clone())));
+          return Box::pin(std::future::ready(Ok(_aidl_hash.clone())));
         }
       }
       let _aidl_data = match self.build_parcel_getInterfaceHash() {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(core::future::ready(Err(err))),
+        Err(err) => return Box::pin(std::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -854,9 +844,9 @@ pub mod r#IMyCallback {
     fn r#repeatEnum<'a, >(&'a self, _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_6_MyEnum> { self.0.r#repeatEnum(_arg_input) }
     fn r#repeatUnion<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_7_MyUnion> { self.0.r#repeatUnion(_arg_input) }
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
-    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<alloc::string::String> { self.0.r#getInterfaceHash() }
+    fn r#getInterfaceHash<'a, >(&'a self) -> binder::Result<String> { self.0.r#getInterfaceHash() }
   }
-  fn on_transact(_aidl_service: &dyn IMyCallback, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
+  fn on_transact(_aidl_service: &dyn IMyCallback, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
     match _aidl_code {
       transactions::r#repeatParcelable => {
         let _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable = _aidl_data.read()?;

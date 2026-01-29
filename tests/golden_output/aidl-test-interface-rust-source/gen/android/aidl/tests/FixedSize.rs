@@ -8,7 +8,6 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
-use alloc::boxed::Box;
 #[derive(Debug)]
 pub struct r#FixedSize {
 }
@@ -19,12 +18,12 @@ impl Default for r#FixedSize {
   }
 }
 impl binder::Parcelable for r#FixedSize {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       Ok(())
     })
@@ -36,7 +35,6 @@ impl binder::binder_impl::ParcelableMetadata for r#FixedSize {
   fn get_descriptor() -> &'static str { "android.aidl.tests.FixedSize" }
 }
 pub mod r#FixedParcelable {
-  use alloc::boxed::Box;
   #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(C, align(8))]
   pub struct r#FixedParcelable {
@@ -54,34 +52,34 @@ pub mod r#FixedParcelable {
     pub r#parcelableArray: [crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_15_EmptyParcelable; 3],
     pub r#unionArray: [crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion; 4],
   }
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#booleanValue), 0);
-  static_assertions::const_assert_eq!(core::mem::size_of::<bool>(), 1);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#byteValue), 1);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i8>(), 1);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#charValue), 2);
-  static_assertions::const_assert_eq!(core::mem::size_of::<u16>(), 2);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#intValue), 4);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i32>(), 4);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#longValue), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i64>(), 8);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#floatValue), 16);
-  static_assertions::const_assert_eq!(core::mem::size_of::<f32>(), 4);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#intArray), 20);
-  static_assertions::const_assert_eq!(core::mem::size_of::<[i32; 3]>(), 12);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#multiDimensionLongArray), 32);
-  static_assertions::const_assert_eq!(core::mem::size_of::<[[i64; 2]; 3]>(), 48);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#doubleValue), 80);
-  static_assertions::const_assert_eq!(core::mem::size_of::<f64>(), 8);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#enumValue), 88);
-  static_assertions::const_assert_eq!(core::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#parcelableValue), 96);
-  static_assertions::const_assert_eq!(core::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion>(), 56);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#parcelableArray), 152);
-  static_assertions::const_assert_eq!(core::mem::size_of::<[crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_15_EmptyParcelable; 3]>(), 3);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(FixedParcelable, r#unionArray), 160);
-  static_assertions::const_assert_eq!(core::mem::size_of::<[crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion; 4]>(), 224);
-  static_assertions::const_assert_eq!(core::mem::align_of::<FixedParcelable>(), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<FixedParcelable>(), 384);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#booleanValue), 0);
+  static_assertions::const_assert_eq!(std::mem::size_of::<bool>(), 1);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#byteValue), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#charValue), 2);
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#intValue), 4);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#longValue), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#floatValue), 16);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#intArray), 20);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[i32; 3]>(), 12);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#multiDimensionLongArray), 32);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[[i64; 2]; 3]>(), 48);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#doubleValue), 80);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#enumValue), 88);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#parcelableValue), 96);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion>(), 56);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#parcelableArray), 152);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_15_EmptyParcelable; 3]>(), 3);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(FixedParcelable, r#unionArray), 160);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[crate::mangled::_7_android_4_aidl_5_tests_9_FixedSize_10_FixedUnion; 4]>(), 224);
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedParcelable>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedParcelable>(), 384);
   impl Default for r#FixedParcelable {
     fn default() -> Self {
       Self {
@@ -102,7 +100,7 @@ pub mod r#FixedParcelable {
     }
   }
   impl binder::Parcelable for r#FixedParcelable {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         subparcel.write(&self.r#booleanValue)?;
         subparcel.write(&self.r#byteValue)?;
@@ -120,7 +118,7 @@ pub mod r#FixedParcelable {
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         if subparcel.has_more_data() {
           self.r#booleanValue = subparcel.read()?;
@@ -214,7 +212,6 @@ pub mod r#FixedParcelable {
   }
 }
 pub mod r#ExplicitPaddingParcelable {
-  use alloc::boxed::Box;
   #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(C, align(8))]
   pub struct r#ExplicitPaddingParcelable {
@@ -227,20 +224,20 @@ pub mod r#ExplicitPaddingParcelable {
     pub r#intValue: i32,
     pub r#enumValue: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum,
   }
-  static_assertions::const_assert_eq!(core::mem::offset_of!(ExplicitPaddingParcelable, r#byteValue), 0);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i8>(), 1);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(ExplicitPaddingParcelable, r#longValue), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i64>(), 8);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(ExplicitPaddingParcelable, r#charValue), 16);
-  static_assertions::const_assert_eq!(core::mem::size_of::<u16>(), 2);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(ExplicitPaddingParcelable, r#doubleValue), 24);
-  static_assertions::const_assert_eq!(core::mem::size_of::<f64>(), 8);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(ExplicitPaddingParcelable, r#intValue), 32);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i32>(), 4);
-  static_assertions::const_assert_eq!(core::mem::offset_of!(ExplicitPaddingParcelable, r#enumValue), 40);
-  static_assertions::const_assert_eq!(core::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
-  static_assertions::const_assert_eq!(core::mem::align_of::<ExplicitPaddingParcelable>(), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<ExplicitPaddingParcelable>(), 48);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#byteValue), 0);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#longValue), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#charValue), 16);
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#doubleValue), 24);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#intValue), 32);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::offset_of!(ExplicitPaddingParcelable, r#enumValue), 40);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
+  static_assertions::const_assert_eq!(std::mem::align_of::<ExplicitPaddingParcelable>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<ExplicitPaddingParcelable>(), 48);
   impl Default for r#ExplicitPaddingParcelable {
     fn default() -> Self {
       Self {
@@ -256,7 +253,7 @@ pub mod r#ExplicitPaddingParcelable {
     }
   }
   impl binder::Parcelable for r#ExplicitPaddingParcelable {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         subparcel.write(&self.r#byteValue)?;
         subparcel.write(&self.r#longValue)?;
@@ -267,7 +264,7 @@ pub mod r#ExplicitPaddingParcelable {
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         if subparcel.has_more_data() {
           self.r#byteValue = subparcel.read()?;
@@ -326,14 +323,13 @@ pub mod r#ExplicitPaddingParcelable {
   }
 }
 pub mod r#EmptyParcelable {
-  use alloc::boxed::Box;
   #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(C, align(1))]
   pub struct r#EmptyParcelable {
     _unused: u8,
   }
-  static_assertions::const_assert_eq!(core::mem::align_of::<EmptyParcelable>(), 1);
-  static_assertions::const_assert_eq!(core::mem::size_of::<EmptyParcelable>(), 1);
+  static_assertions::const_assert_eq!(std::mem::align_of::<EmptyParcelable>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<EmptyParcelable>(), 1);
   impl Default for r#EmptyParcelable {
     fn default() -> Self {
       Self {
@@ -342,12 +338,12 @@ pub mod r#EmptyParcelable {
     }
   }
   impl binder::Parcelable for r#EmptyParcelable {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         Ok(())
       })
@@ -376,7 +372,6 @@ pub mod r#EmptyParcelable {
   }
 }
 pub mod r#FixedUnion {
-  use alloc::boxed::Box;
   #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u64, align(8))]
   pub enum r#FixedUnion {
@@ -396,38 +391,38 @@ pub mod r#FixedUnion {
     pub const fn tag(&self) -> Tag::Tag {
       // SAFETY: The first byte of a union is the tag.
       // All bitpatterns are valid for `Tag`.
-      unsafe { core::mem::transmute_copy::<Self, Tag::Tag>(self) }
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
     }
   }
-  static_assertions::const_assert_eq!(core::mem::size_of::<bool>(), 1);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i8>(), 1);
-  static_assertions::const_assert_eq!(core::mem::size_of::<u16>(), 2);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i32>(), 4);
-  static_assertions::const_assert_eq!(core::mem::size_of::<i64>(), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<f32>(), 4);
-  static_assertions::const_assert_eq!(core::mem::size_of::<[i32; 3]>(), 12);
-  static_assertions::const_assert_eq!(core::mem::size_of::<[[i64; 2]; 3]>(), 48);
-  static_assertions::const_assert_eq!(core::mem::size_of::<f64>(), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
-  static_assertions::const_assert_eq!(FixedUnion::BooleanValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#booleanValue.get());
-  static_assertions::const_assert_eq!(FixedUnion::ByteValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#byteValue.get());
-  static_assertions::const_assert_eq!(FixedUnion::CharValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#charValue.get());
-  static_assertions::const_assert_eq!(FixedUnion::IntValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#intValue.get());
-  static_assertions::const_assert_eq!(FixedUnion::LongValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#longValue.get());
-  static_assertions::const_assert_eq!(FixedUnion::FloatValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#floatValue.get());
-  static_assertions::const_assert_eq!(FixedUnion::IntArray(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#intArray.get());
-  static_assertions::const_assert_eq!(FixedUnion::MultiDimensionLongArray(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#multiDimensionLongArray.get());
-  static_assertions::const_assert_eq!(FixedUnion::DoubleValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#doubleValue.get());
-  static_assertions::const_assert_eq!(FixedUnion::EnumValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#enumValue.get());
-  static_assertions::const_assert_eq!(core::mem::align_of::<FixedUnion>(), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<FixedUnion>(), 56);
+  static_assertions::const_assert_eq!(std::mem::size_of::<bool>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f32>(), 4);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[i32; 3]>(), 12);
+  static_assertions::const_assert_eq!(std::mem::size_of::<[[i64; 2]; 3]>(), 48);
+  static_assertions::const_assert_eq!(std::mem::size_of::<f64>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>(), 8);
+  static_assertions::const_assert_eq!(FixedUnion::BooleanValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#booleanValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::ByteValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#byteValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::CharValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#charValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::IntValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#intValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::LongValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#longValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::FloatValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#floatValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::IntArray(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#intArray.get());
+  static_assertions::const_assert_eq!(FixedUnion::MultiDimensionLongArray(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#multiDimensionLongArray.get());
+  static_assertions::const_assert_eq!(FixedUnion::DoubleValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#doubleValue.get());
+  static_assertions::const_assert_eq!(FixedUnion::EnumValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#enumValue.get());
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnion>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnion>(), 56);
   impl Default for r#FixedUnion {
     fn default() -> Self {
       Self::BooleanValue(false)
     }
   }
   impl binder::Parcelable for r#FixedUnion {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       match self {
         Self::BooleanValue(v) => {
           parcel.write(&0i32)?;
@@ -471,7 +466,7 @@ pub mod r#FixedUnion {
         }
       }
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       let tag: i32 = parcel.read()?;
       match tag {
         0 => {
@@ -716,7 +711,6 @@ pub mod r#FixedUnion {
   }
 }
 pub mod r#FixedUnionNoPadding {
-  use alloc::boxed::Box;
   #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u8, align(1))]
   pub enum r#FixedUnionNoPadding {
@@ -727,20 +721,20 @@ pub mod r#FixedUnionNoPadding {
     pub const fn tag(&self) -> Tag::Tag {
       // SAFETY: The first byte of a union is the tag.
       // All bitpatterns are valid for `Tag`.
-      unsafe { core::mem::transmute_copy::<Self, Tag::Tag>(self) }
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
     }
   }
-  static_assertions::const_assert_eq!(core::mem::size_of::<i8>(), 1);
-  static_assertions::const_assert_eq!(FixedUnionNoPadding::ByteValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#byteValue.get());
-  static_assertions::const_assert_eq!(core::mem::align_of::<FixedUnionNoPadding>(), 1);
-  static_assertions::const_assert_eq!(core::mem::size_of::<FixedUnionNoPadding>(), 2);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i8>(), 1);
+  static_assertions::const_assert_eq!(FixedUnionNoPadding::ByteValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#byteValue.get());
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionNoPadding>(), 1);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionNoPadding>(), 2);
   impl Default for r#FixedUnionNoPadding {
     fn default() -> Self {
       Self::ByteValue(0)
     }
   }
   impl binder::Parcelable for r#FixedUnionNoPadding {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       match self {
         Self::ByteValue(v) => {
           parcel.write(&0i32)?;
@@ -748,7 +742,7 @@ pub mod r#FixedUnionNoPadding {
         }
       }
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       let tag: i32 = parcel.read()?;
       match tag {
         0 => {
@@ -813,7 +807,6 @@ pub mod r#FixedUnionNoPadding {
   }
 }
 pub mod r#FixedUnionSmallPadding {
-  use alloc::boxed::Box;
   #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u16, align(2))]
   pub enum r#FixedUnionSmallPadding {
@@ -824,20 +817,20 @@ pub mod r#FixedUnionSmallPadding {
     pub const fn tag(&self) -> Tag::Tag {
       // SAFETY: The first byte of a union is the tag.
       // All bitpatterns are valid for `Tag`.
-      unsafe { core::mem::transmute_copy::<Self, Tag::Tag>(self) }
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
     }
   }
-  static_assertions::const_assert_eq!(core::mem::size_of::<u16>(), 2);
-  static_assertions::const_assert_eq!(FixedUnionSmallPadding::CharValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#charValue.get());
-  static_assertions::const_assert_eq!(core::mem::align_of::<FixedUnionSmallPadding>(), 2);
-  static_assertions::const_assert_eq!(core::mem::size_of::<FixedUnionSmallPadding>(), 4);
+  static_assertions::const_assert_eq!(std::mem::size_of::<u16>(), 2);
+  static_assertions::const_assert_eq!(FixedUnionSmallPadding::CharValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#charValue.get());
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionSmallPadding>(), 2);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionSmallPadding>(), 4);
   impl Default for r#FixedUnionSmallPadding {
     fn default() -> Self {
       Self::CharValue('\0' as u16)
     }
   }
   impl binder::Parcelable for r#FixedUnionSmallPadding {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       match self {
         Self::CharValue(v) => {
           parcel.write(&0i32)?;
@@ -845,7 +838,7 @@ pub mod r#FixedUnionSmallPadding {
         }
       }
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       let tag: i32 = parcel.read()?;
       match tag {
         0 => {
@@ -910,7 +903,6 @@ pub mod r#FixedUnionSmallPadding {
   }
 }
 pub mod r#FixedUnionLongPadding {
-  use alloc::boxed::Box;
   #[derive(Debug, zerocopy::Immutable, zerocopy::TryFromBytes)]
   #[repr(u64, align(8))]
   pub enum r#FixedUnionLongPadding {
@@ -921,20 +913,20 @@ pub mod r#FixedUnionLongPadding {
     pub const fn tag(&self) -> Tag::Tag {
       // SAFETY: The first byte of a union is the tag.
       // All bitpatterns are valid for `Tag`.
-      unsafe { core::mem::transmute_copy::<Self, Tag::Tag>(self) }
+      unsafe { std::mem::transmute_copy::<Self, Tag::Tag>(self) }
     }
   }
-  static_assertions::const_assert_eq!(core::mem::size_of::<i64>(), 8);
-  static_assertions::const_assert_eq!(FixedUnionLongPadding::LongValue(unsafe { core::mem::zeroed() }).tag().get(), Tag::Tag::r#longValue.get());
-  static_assertions::const_assert_eq!(core::mem::align_of::<FixedUnionLongPadding>(), 8);
-  static_assertions::const_assert_eq!(core::mem::size_of::<FixedUnionLongPadding>(), 16);
+  static_assertions::const_assert_eq!(std::mem::size_of::<i64>(), 8);
+  static_assertions::const_assert_eq!(FixedUnionLongPadding::LongValue(unsafe { std::mem::zeroed() }).tag().get(), Tag::Tag::r#longValue.get());
+  static_assertions::const_assert_eq!(std::mem::align_of::<FixedUnionLongPadding>(), 8);
+  static_assertions::const_assert_eq!(std::mem::size_of::<FixedUnionLongPadding>(), 16);
   impl Default for r#FixedUnionLongPadding {
     fn default() -> Self {
       Self::LongValue(0)
     }
   }
   impl binder::Parcelable for r#FixedUnionLongPadding {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       match self {
         Self::LongValue(v) => {
           parcel.write(&0i32)?;
@@ -942,7 +934,7 @@ pub mod r#FixedUnionLongPadding {
         }
       }
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       let tag: i32 = parcel.read()?;
       match tag {
         0 => {

@@ -8,11 +8,10 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
-use alloc::boxed::Box;
 #[derive(Debug)]
 pub struct r#MyExtLike {
   pub r#a: i32,
-  pub r#b: alloc::string::String,
+  pub r#b: String,
 }
 impl Default for r#MyExtLike {
   fn default() -> Self {
@@ -23,14 +22,14 @@ impl Default for r#MyExtLike {
   }
 }
 impl binder::Parcelable for r#MyExtLike {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       subparcel.write(&self.r#a)?;
       subparcel.write(&self.r#b)?;
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       if subparcel.has_more_data() {
         self.r#a = subparcel.read()?;
