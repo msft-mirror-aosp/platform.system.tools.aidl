@@ -8,6 +8,7 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
+use alloc::boxed::Box;
 #[derive(Debug)]
 pub enum r#BazUnion {
   IntNum(i32),
@@ -19,7 +20,7 @@ impl Default for r#BazUnion {
   }
 }
 impl binder::Parcelable for r#BazUnion {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     match self {
       Self::IntNum(v) => {
         parcel.write(&0i32)?;
@@ -31,7 +32,7 @@ impl binder::Parcelable for r#BazUnion {
       }
     }
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     let tag: i32 = parcel.read()?;
     match tag {
       0 => {

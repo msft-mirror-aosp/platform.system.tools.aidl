@@ -11,6 +11,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+use alloc::boxed::Box;
 #[cfg(any(android_vndk, not(android_ndk)))]
 const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
 #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -57,7 +58,7 @@ impl BnCircular {
     impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
       fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
       #[cfg(feature = "std")]
-      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
     }
     impl<T, R> ICircular for Wrapper<T, R>
     where
@@ -99,7 +100,7 @@ impl BpCircular {
     let mut aidl_data = self.binder.prepare_transact()?;
     Ok(aidl_data)
   }
-  fn read_response_GetTestService(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
+  fn read_response_GetTestService(&self, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -118,7 +119,7 @@ impl<P: binder::BinderAsyncPool> ICircularAsync<P> for BpCircular {
   fn r#GetTestService<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>>> {
     let _aidl_data = match self.build_parcel_GetTestService() {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(std::future::ready(Err(err))),
+      Err(err) => return Box::pin(core::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -132,7 +133,7 @@ impl<P: binder::BinderAsyncPool> ICircularAsync<P> for BpCircular {
 impl ICircular for binder::binder_impl::Binder<BnCircular> {
   fn r#GetTestService<'a, >(&'a self) -> binder::Result<Option<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_12_ITestService>>> { self.0.r#GetTestService() }
 }
-fn on_transact(_aidl_service: &dyn ICircular, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
+fn on_transact(_aidl_service: &dyn ICircular, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
   match _aidl_code {
     transactions::r#GetTestService => {
       let _aidl_return = _aidl_service.r#GetTestService();
