@@ -11,7 +11,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
-use alloc::boxed::Box;
 #[cfg(any(android_vndk, not(android_ndk)))]
 const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
 #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -62,7 +61,7 @@ impl BnNestedService {
     impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
       fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
       #[cfg(feature = "std")]
-      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
     }
     impl<T, R> INestedService for Wrapper<T, R>
     where
@@ -112,7 +111,7 @@ impl BpNestedService {
     aidl_data.write(_arg_p)?;
     Ok(aidl_data)
   }
-  fn read_response_flipStatus(&self, _arg_p: &crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result> {
+  fn read_response_flipStatus(&self, _arg_p: &crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -125,7 +124,7 @@ impl BpNestedService {
     aidl_data.write(_arg_cb)?;
     Ok(aidl_data)
   }
-  fn read_response_flipStatusWithCallback(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
+  fn read_response_flipStatusWithCallback(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
     let _aidl_reply = _aidl_reply?;
     let _aidl_status: binder::Status = _aidl_reply.read()?;
     if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -148,7 +147,7 @@ impl<P: binder::BinderAsyncPool> INestedServiceAsync<P> for BpNestedService {
   fn r#flipStatus<'a, >(&'a self, _arg_p: &'a crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result>> {
     let _aidl_data = match self.build_parcel_flipStatus(_arg_p) {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -161,7 +160,7 @@ impl<P: binder::BinderAsyncPool> INestedServiceAsync<P> for BpNestedService {
   fn r#flipStatusWithCallback<'a, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &'a binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>) -> binder::BoxFuture<'a, binder::Result<()>> {
     let _aidl_data = match self.build_parcel_flipStatusWithCallback(_arg_status, _arg_cb) {
       Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
+      Err(err) => return Box::pin(std::future::ready(Err(err))),
     };
     let binder = self.binder.clone();
     P::spawn(
@@ -176,7 +175,7 @@ impl INestedService for binder::binder_impl::Binder<BnNestedService> {
   fn r#flipStatus<'a, 'l1, >(&'a self, _arg_p: &'l1 crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_6_Result> { self.0.r#flipStatus(_arg_p) }
   fn r#flipStatusWithCallback<'a, 'l1, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _arg_cb: &'l1 binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_6_nested_14_INestedService_9_ICallback>) -> binder::Result<()> { self.0.r#flipStatusWithCallback(_arg_status, _arg_cb) }
 }
-fn on_transact(_aidl_service: &dyn INestedService, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
+fn on_transact(_aidl_service: &dyn INestedService, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {
     transactions::r#flipStatus => {
       let _arg_p: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested = _aidl_data.read()?;
@@ -206,7 +205,6 @@ fn on_transact(_aidl_service: &dyn INestedService, _aidl_code: binder::binder_im
   }
 }
 pub mod r#Result {
-  use alloc::boxed::Box;
   #[derive(Debug, PartialEq)]
   pub struct r#Result {
     pub r#status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status,
@@ -219,13 +217,13 @@ pub mod r#Result {
     }
   }
   impl binder::Parcelable for r#Result {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         subparcel.write(&self.r#status)?;
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         if subparcel.has_more_data() {
           self.r#status = subparcel.read()?;
@@ -244,7 +242,6 @@ pub mod r#ICallback {
   #![allow(non_upper_case_globals)]
   #![allow(non_snake_case)]
   #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
-  use alloc::boxed::Box;
   #[cfg(any(android_vndk, not(android_ndk)))]
   const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
   #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -291,7 +288,7 @@ pub mod r#ICallback {
       impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
         fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
         #[cfg(feature = "std")]
-        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
       }
       impl<T, R> ICallback for Wrapper<T, R>
       where
@@ -334,7 +331,7 @@ pub mod r#ICallback {
       aidl_data.write(&_arg_status)?;
       Ok(aidl_data)
     }
-    fn read_response_done(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
+    fn read_response_done(&self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<()> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -352,7 +349,7 @@ pub mod r#ICallback {
     fn r#done<'a, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::BoxFuture<'a, binder::Result<()>> {
       let _aidl_data = match self.build_parcel_done(_arg_status) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(core::future::ready(Err(err))),
+        Err(err) => return Box::pin(std::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -366,7 +363,7 @@ pub mod r#ICallback {
   impl ICallback for binder::binder_impl::Binder<BnCallback> {
     fn r#done<'a, >(&'a self, _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status) -> binder::Result<()> { self.0.r#done(_arg_status) }
   }
-  fn on_transact(_aidl_service: &dyn ICallback, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
+  fn on_transact(_aidl_service: &dyn ICallback, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
     match _aidl_code {
       transactions::r#done => {
         let _arg_status: crate::mangled::_7_android_4_aidl_5_tests_6_nested_20_ParcelableWithNested_6_Status = _aidl_data.read()?;

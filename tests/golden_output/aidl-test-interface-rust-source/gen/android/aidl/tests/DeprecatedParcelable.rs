@@ -8,7 +8,6 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
-use alloc::boxed::Box;
 #[derive(Debug)]
 #[deprecated = "test"]
 pub struct r#DeprecatedParcelable {
@@ -20,12 +19,12 @@ impl Default for r#DeprecatedParcelable {
   }
 }
 impl binder::Parcelable for r#DeprecatedParcelable {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       Ok(())
     })

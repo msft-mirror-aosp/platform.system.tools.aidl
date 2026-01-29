@@ -16,8 +16,6 @@
 
 //! Test Rust client for the AIDL compiler.
 
-extern crate libc;
-
 use ::binder::{binder_impl::Parcel, Parcelable};
 use aidl_test_fixedsizearray::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::{
     FixedSizeArrayExample,
@@ -64,8 +62,6 @@ use simple_parcelable::SimpleParcelable;
 
 use std::fs::File;
 use std::io::{Read, Write};
-#[cfg(feature = "use_nostd_binder")]
-use std::os::fd::IntoRawFd;
 use std::os::fd::{FromRawFd, OwnedFd};
 use std::sync::{Arc, Mutex};
 
@@ -461,34 +457,8 @@ fn build_pipe() -> (OwnedFd, OwnedFd) {
 ///
 /// This is needed because `File` is currently the way to read and write
 /// to pipes using the `Read` and `Write` traits.
-#[cfg(not(feature = "use_nostd_binder"))]
 fn file_from_pfd(fd: &binder::ParcelFileDescriptor) -> File {
     fd.as_ref().try_clone().expect("failed to clone file descriptor").into()
-}
-
-#[cfg(feature = "use_nostd_binder")]
-fn file_from_pfd(fd: &binder::ParcelFileDescriptor) -> File {
-    // Safety: The parameter passed to dup() is guaranteed to be valid
-    // and open because it's the fd associated with a ParcelFileDescriptor.
-    // The returned dup_fd is guaranteed to be valid because dup() returned without an error.
-    // It's suitable for transferring ownership and constructing a File because
-    // there is no other entity that could own it.
-    unsafe {
-        let dup_fd = libc::dup(fd.as_raw_fd());
-        assert!(dup_fd >= 0, "dup() error");
-        File::from_raw_fd(dup_fd)
-    }
-}
-
-#[cfg(feature = "use_nostd_binder")]
-fn new_parcel_fd(fd: OwnedFd) -> binder::ParcelFileDescriptor {
-    // Safety: OwnedFd is guaranteed to produce a valid raw file descriptor.
-    unsafe { binder::ParcelFileDescriptor::from_raw_fd(fd.into_raw_fd()) }
-}
-
-#[cfg(not(feature = "use_nostd_binder"))]
-fn new_parcel_fd(fd: OwnedFd) -> binder::ParcelFileDescriptor {
-    binder::ParcelFileDescriptor::new(fd)
 }
 
 #[test]
@@ -497,7 +467,7 @@ fn test_parcel_file_descriptor() {
     let (read_fd, write_fd) = build_pipe();
     let mut read_file = File::from(read_fd);
 
-    let write_pfd = new_parcel_fd(write_fd);
+    let write_pfd = binder::ParcelFileDescriptor::new(write_fd);
     let result_pfd = service
         .RepeatParcelFileDescriptor(&write_pfd)
         .expect("error calling RepeatParcelFileDescriptor");
@@ -515,7 +485,8 @@ fn test_parcel_file_descriptor_array() {
     let service = get_test_service();
 
     let (read_fd, write_fd) = build_pipe();
-    let input = [new_parcel_fd(read_fd), new_parcel_fd(write_fd)];
+    let input =
+        [binder::ParcelFileDescriptor::new(read_fd), binder::ParcelFileDescriptor::new(write_fd)];
 
     let mut repeated = vec![];
 

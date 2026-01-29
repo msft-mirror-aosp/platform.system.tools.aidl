@@ -8,7 +8,6 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
-use alloc::boxed::Box;
 #[derive(Debug, Clone, PartialEq)]
 pub enum r#EnumUnion {
   IntEnum(crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum),
@@ -22,7 +21,7 @@ impl Default for r#EnumUnion {
   }
 }
 impl binder::Parcelable for r#EnumUnion {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     match self {
       Self::IntEnum(v) => {
         parcel.write(&0i32)?;
@@ -38,7 +37,7 @@ impl binder::Parcelable for r#EnumUnion {
       }
     }
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
     let tag: i32 = parcel.read()?;
     match tag {
       0 => {

@@ -519,9 +519,6 @@ type aidlInterfaceProperties struct {
 
 			// Generate mockall mocks of AIDL interfaces.
 			Gen_mockall *bool
-
-			// Whether to allow for the generation of a no_std variant.
-			Enable_no_std *bool
 		}
 	}
 

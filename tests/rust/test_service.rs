@@ -16,8 +16,6 @@
 
 //! Test Rust service for the AIDL compiler.
 
-extern crate libc;
-
 use aidl_test_fixedsizearray::aidl::android::aidl::fixedsizearray::FixedSizeArrayExample::{
     IRepeatFixedSizeArray, IntParcelable::IntParcelable,
 };
@@ -53,18 +51,6 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 fn dup_fd(fd: &ParcelFileDescriptor) -> ParcelFileDescriptor {
-    // Safety: The parameter passed to dup() is guaranteed to be valid
-    // and open because it's the fd associated with a ParcelFileDescriptor.
-    // The returned dup_fd is guaranteed to be valid because dup() returned without an error.
-    // It's suitable for transferring ownership and constructing a new ParcelFileDescriptor
-    // because there is no other entity that could own it.
-    #[cfg(feature = "use_nostd_binder")]
-    unsafe {
-        let dup_fd = libc::dup(fd.as_raw_fd());
-        assert!(dup_fd >= 0, "dup() error");
-        ParcelFileDescriptor::from_raw_fd(dup_fd)
-    }
-    #[cfg(not(feature = "use_nostd_binder"))]
     ParcelFileDescriptor::new(fd.as_ref().try_clone().unwrap())
 }
 

@@ -11,7 +11,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
-use alloc::boxed::Box;
 #[cfg(any(android_vndk, not(android_ndk)))]
 const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
 #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -55,7 +54,7 @@ impl BnDeprecated {
     impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
       fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
       #[cfg(feature = "std")]
-      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+      fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
     }
     impl<T, R> IDeprecated for Wrapper<T, R>
     where
@@ -93,7 +92,7 @@ impl<P: binder::BinderAsyncPool> IDeprecatedAsync<P> for BpDeprecated {
 }
 impl IDeprecated for binder::binder_impl::Binder<BnDeprecated> {
 }
-fn on_transact(_aidl_service: &dyn IDeprecated, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
+fn on_transact(_aidl_service: &dyn IDeprecated, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
   match _aidl_code {
     _ => Err(binder::StatusCode::UNKNOWN_TRANSACTION)
   }

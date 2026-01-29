@@ -5826,14 +5826,14 @@ TEST_F(AidlTest, RustNameOf_PfdFixedArray) {
 TEST_F(AidlTest, RustNameOf_PfdDynamicArray) {
   auto pfd = typenames_.MakeResolvedType(AIDL_LOCATION_HERE, "ParcelFileDescriptor", true);
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::PARCELABLE_FIELD, false),
-            "alloc::vec::Vec<binder::ParcelFileDescriptor>");
+            "Vec<binder::ParcelFileDescriptor>");
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::DEFAULT_VALUE, false),
-            "alloc::vec::Vec<Option<binder::ParcelFileDescriptor>>");
+            "Vec<Option<binder::ParcelFileDescriptor>>");
   // we use UNSIZED_ARGUMENT mode for input argument of dynamic array
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::UNSIZED_ARGUMENT, false),
             "&[binder::ParcelFileDescriptor]");
   EXPECT_EQ(rust::RustNameOf(*pfd, typenames_, rust::StorageMode::VALUE, false),
-            "alloc::vec::Vec<binder::ParcelFileDescriptor>");
+            "Vec<binder::ParcelFileDescriptor>");
 }
 
 struct TypeParam {

@@ -38,7 +38,6 @@ aidl_interface {
         },
         rust: {
             enabled: true,
-            enable_no_std: true,
         },
     },
     versions_with_info: [

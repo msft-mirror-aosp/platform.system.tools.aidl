@@ -385,10 +385,6 @@ func addRustLibrary(mctx android.DefaultableHookContext, i *aidlInterface, versi
 		Rustlibs:           i.properties.Backend.Rust.Additional_rustlibs,
 		Features:           []string{"std"},
 		Split_all_variants: proptools.BoolPtr(i.SplitAllVariants()),
-		No_std: &rust.VariantLibraryProperties{
-			Enabled:  proptools.BoolPtr(proptools.Bool(i.properties.Backend.Rust.Enable_no_std)),
-			Features: proptools.NewSimpleConfigurable([]string{}),
-		},
 	}, &rust.SourceProviderProperties{
 		Source_stem: proptools.StringPtr(versionedRustName),
 	}, &aidlRustSourceProviderProperties{
