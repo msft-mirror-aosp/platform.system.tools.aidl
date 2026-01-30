@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -2427,6 +2428,27 @@ func TestAidlInterfaceIdeInfoModuleType(t *testing.T) {
 	module := ctx.ModuleForTests(t, "foo-V1-java", "android_common").Module()
 	ideInfo := getIdeInfo(ctx, module)
 	android.AssertStringEquals(t, "IdeInfo.ModuleType should be equal to", "aidl_interface", ideInfo.ModuleType)
+}
+
+func TestAidlInterfaceIdeInfoAidlSrcs(t *testing.T) {
+	t.Parallel()
+	bp := `
+	filegroup {
+		name: "foo_aidl_srcs",
+		srcs: ["IFoo.aidl"],
+	}
+	aidl_interface {
+		name: "foo",
+		srcs: [":foo_aidl_srcs", "IBar.aidl"],
+		backend: { java: { enabled: true } },
+	}`
+	ctx, _ := testAidl(t, bp, setReleaseEnv())
+	module := ctx.ModuleForTests(t, "foo-V1-java", "android_common").Module()
+	ideInfo := getIdeInfo(ctx, module)
+	expected := []string{"IFoo.aidl", "IBar.aidl"}
+	if !reflect.DeepEqual(ideInfo.Aidl_srcs, expected) {
+		t.Errorf("IdeInfo.Aidl_srcs Imported_aars = %v, want %v", ideInfo.Aidl_srcs, expected)
+	}
 }
 
 func getIdeInfo(ctx android.OtherModuleProviderContext, module android.Module) android.IdeInfo {

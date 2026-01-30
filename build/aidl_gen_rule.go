@@ -91,6 +91,7 @@ type AidlGenruleInfo struct {
 	HashFile android.Path
 	OutDir   android.Path
 	Outputs  android.Paths
+	Srcs     android.Paths
 }
 
 var AidlGenruleInfoProvider = blueprint.NewProvider[AidlGenruleInfo]()
@@ -203,6 +204,7 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		HashFile: g.hashFile,
 		OutDir:   g.genOutDir,
 		Outputs:  g.genOutputs.Paths(),
+		Srcs:     srcs,
 	})
 }
 

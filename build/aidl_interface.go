@@ -78,6 +78,11 @@ type AidlGeneratedModuleProperties struct{}
 
 func (p *AidlGeneratedModuleProperties) PopulateIdeInfo(ctx android.BaseModuleContext, ideInfo *android.IdeInfo) {
 	ideInfo.ModuleType = "aidl_interface"
+	ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
+		if info, ok := android.OtherModuleProvider(ctx, dep, AidlGenruleInfoProvider); ok {
+			ideInfo.Aidl_srcs = append(ideInfo.Aidl_srcs, info.Srcs.Strings()...)
+		}
+	})
 }
 
 func wrapLibraryFactory(factory func() android.Module) func() android.Module {
