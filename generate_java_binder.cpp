@@ -369,7 +369,7 @@ ProxyClass::ProxyClass(const AidlInterface* interfaceType, const Options& option
   if (interfaceType->IsDeprecated()) {
     this->annotations.push_back("@Deprecated");
   }
-  this->modifiers = PRIVATE | STATIC;
+  this->modifiers = PRIVATE | STATIC | FINAL;
   this->what = Class::CLASS;
   this->type = interfaceType->GetCanonicalName() + ".Stub.Proxy";
   this->interfaces.push_back(interfaceType->GetCanonicalName());
@@ -1022,7 +1022,7 @@ static void GenerateInterfaceDescriptors(const Options& options, const AidlInter
                                          std::shared_ptr<ProxyClass> proxy) {
   // and the proxy-side method returning the descriptor directly
   auto getDesc = std::make_shared<Method>();
-  getDesc->modifiers = PUBLIC;
+  getDesc->modifiers = PUBLIC | FINAL;
   getDesc->returnType = "java.lang.String";
   getDesc->name = "getInterfaceDescriptor";
   getDesc->statements = std::make_shared<StatementBlock>();

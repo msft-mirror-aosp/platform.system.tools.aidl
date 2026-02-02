@@ -111,7 +111,7 @@ public interface INestedService extends android.os.IInterface
       }
       return true;
     }
-    private static class Proxy implements android.aidl.tests.nested.INestedService
+    private static final class Proxy implements android.aidl.tests.nested.INestedService
     {
       private android.os.IBinder mRemote;
       Proxy(android.os.IBinder remote)
@@ -122,7 +122,7 @@ public interface INestedService extends android.os.IInterface
       {
         return mRemote;
       }
-      public java.lang.String getInterfaceDescriptor()
+      public final java.lang.String getInterfaceDescriptor()
       {
         return DESCRIPTOR;
       }
@@ -303,7 +303,7 @@ public interface INestedService extends android.os.IInterface
         }
         return true;
       }
-      private static class Proxy implements android.aidl.tests.nested.INestedService.ICallback
+      private static final class Proxy implements android.aidl.tests.nested.INestedService.ICallback
       {
         private android.os.IBinder mRemote;
         Proxy(android.os.IBinder remote)
@@ -314,7 +314,7 @@ public interface INestedService extends android.os.IInterface
         {
           return mRemote;
         }
-        public java.lang.String getInterfaceDescriptor()
+        public final java.lang.String getInterfaceDescriptor()
         {
           return DESCRIPTOR;
         }

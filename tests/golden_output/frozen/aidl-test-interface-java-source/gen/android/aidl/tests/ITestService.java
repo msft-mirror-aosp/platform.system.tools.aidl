@@ -1867,7 +1867,7 @@ public interface ITestService extends android.os.IInterface
       }
       return true;
     }
-    private static class Proxy implements android.aidl.tests.ITestService
+    private static final class Proxy implements android.aidl.tests.ITestService
     {
       private android.os.IBinder mRemote;
       Proxy(android.os.IBinder remote)
@@ -1878,7 +1878,7 @@ public interface ITestService extends android.os.IInterface
       {
         return mRemote;
       }
-      public java.lang.String getInterfaceDescriptor()
+      public final java.lang.String getInterfaceDescriptor()
       {
         return DESCRIPTOR;
       }
@@ -3827,7 +3827,7 @@ public interface ITestService extends android.os.IInterface
             }
           }
         }
-        private static class Proxy implements android.aidl.tests.ITestService.CompilerChecks.Foo
+        private static final class Proxy implements android.aidl.tests.ITestService.CompilerChecks.Foo
         {
           private android.os.IBinder mRemote;
           Proxy(android.os.IBinder remote)
@@ -3838,7 +3838,7 @@ public interface ITestService extends android.os.IInterface
           {
             return mRemote;
           }
-          public java.lang.String getInterfaceDescriptor()
+          public final java.lang.String getInterfaceDescriptor()
           {
             return DESCRIPTOR;
           }
@@ -4121,7 +4121,7 @@ public interface ITestService extends android.os.IInterface
           }
           return true;
         }
-        private static class Proxy implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface
+        private static final class Proxy implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface
         {
           private android.os.IBinder mRemote;
           Proxy(android.os.IBinder remote)
@@ -4132,7 +4132,7 @@ public interface ITestService extends android.os.IInterface
           {
             return mRemote;
           }
-          public java.lang.String getInterfaceDescriptor()
+          public final java.lang.String getInterfaceDescriptor()
           {
             return DESCRIPTOR;
           }
@@ -4284,7 +4284,7 @@ public interface ITestService extends android.os.IInterface
             }
             return true;
           }
-          private static class Proxy implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface
+          private static final class Proxy implements android.aidl.tests.ITestService.CompilerChecks.NoPrefixInterface.NestedNoPrefixInterface
           {
             private android.os.IBinder mRemote;
             Proxy(android.os.IBinder remote)
@@ -4295,7 +4295,7 @@ public interface ITestService extends android.os.IInterface
             {
               return mRemote;
             }
-            public java.lang.String getInterfaceDescriptor()
+            public final java.lang.String getInterfaceDescriptor()
             {
               return DESCRIPTOR;
             }

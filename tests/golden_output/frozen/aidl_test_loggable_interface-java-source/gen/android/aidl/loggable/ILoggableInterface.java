@@ -144,7 +144,7 @@ public interface ILoggableInterface extends android.os.IInterface
       }
       return true;
     }
-    private static class Proxy implements android.aidl.loggable.ILoggableInterface
+    private static final class Proxy implements android.aidl.loggable.ILoggableInterface
     {
       private android.os.IBinder mRemote;
       Proxy(android.os.IBinder remote)
@@ -155,7 +155,7 @@ public interface ILoggableInterface extends android.os.IInterface
       {
         return mRemote;
       }
-      public java.lang.String getInterfaceDescriptor()
+      public final java.lang.String getInterfaceDescriptor()
       {
         return DESCRIPTOR;
       }
@@ -305,7 +305,7 @@ public interface ILoggableInterface extends android.os.IInterface
         }
         return true;
       }
-      private static class Proxy implements android.aidl.loggable.ILoggableInterface.ISub
+      private static final class Proxy implements android.aidl.loggable.ILoggableInterface.ISub
       {
         private android.os.IBinder mRemote;
         Proxy(android.os.IBinder remote)
@@ -316,7 +316,7 @@ public interface ILoggableInterface extends android.os.IInterface
         {
           return mRemote;
         }
-        public java.lang.String getInterfaceDescriptor()
+        public final java.lang.String getInterfaceDescriptor()
         {
           return DESCRIPTOR;
         }
