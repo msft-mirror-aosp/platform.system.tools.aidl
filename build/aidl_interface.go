@@ -74,13 +74,32 @@ func registerPostDepsMutators(ctx android.RegisterMutatorsContext) {
 }
 
 // A marker struct for AIDL-generated library modules
-type AidlGeneratedModuleProperties struct{}
+type AidlGeneratedModuleProperties struct {
+	Stability *string
+}
 
-func wrapLibraryFactory(factory func() android.Module) func() android.Module {
+func (p *AidlGeneratedModuleProperties) PopulateIdeInfo(ctx android.BaseModuleContext, ideInfo *android.IdeInfo) {
+	ideInfo.ModuleType = "aidl_interface"
+	if ideInfo.Aidl == nil {
+		ideInfo.Aidl = &android.AidlIdeInfo{}
+	}
+	ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
+		if info, ok := android.OtherModuleProvider(ctx, dep, AidlGenruleInfoProvider); ok {
+			ideInfo.Aidl.Srcs = append(ideInfo.Aidl.Srcs, info.Srcs.Strings()...)
+		}
+	})
+	if p.Stability != nil {
+		ideInfo.Aidl.Stability = *p.Stability
+	}
+}
+
+func wrapLibraryFactory(factory func() android.Module, stability *string) func() android.Module {
 	return func() android.Module {
 		m := factory()
 		// put a marker struct for AIDL-generated modules
-		m.AddProperties(&AidlGeneratedModuleProperties{})
+		m.AddProperties(&AidlGeneratedModuleProperties{
+			Stability: stability,
+		})
 		return m
 	}
 }
