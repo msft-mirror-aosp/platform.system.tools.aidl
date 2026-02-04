@@ -112,7 +112,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
           }
         }
       }
-      private static class Proxy implements android.aidl.tests.ArrayOfInterfaces.IEmptyInterface
+      private static final class Proxy implements android.aidl.tests.ArrayOfInterfaces.IEmptyInterface
       {
         private android.os.IBinder mRemote;
         Proxy(android.os.IBinder remote)
@@ -123,7 +123,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         {
           return mRemote;
         }
-        public java.lang.String getInterfaceDescriptor()
+        public final java.lang.String getInterfaceDescriptor()
         {
           return DESCRIPTOR;
         }
@@ -255,7 +255,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         }
         return true;
       }
-      private static class Proxy implements android.aidl.tests.ArrayOfInterfaces.IMyInterface
+      private static final class Proxy implements android.aidl.tests.ArrayOfInterfaces.IMyInterface
       {
         private android.os.IBinder mRemote;
         Proxy(android.os.IBinder remote)
@@ -266,7 +266,7 @@ public class ArrayOfInterfaces implements android.os.Parcelable
         {
           return mRemote;
         }
-        public java.lang.String getInterfaceDescriptor()
+        public final java.lang.String getInterfaceDescriptor()
         {
           return DESCRIPTOR;
         }

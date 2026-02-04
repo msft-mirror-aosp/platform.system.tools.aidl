@@ -93,7 +93,7 @@ public interface IBaz extends android.os.IInterface
       }
       return true;
     }
-    private static class Proxy implements android.aidl.tests.immutable.IBaz
+    private static final class Proxy implements android.aidl.tests.immutable.IBaz
     {
       private android.os.IBinder mRemote;
       Proxy(android.os.IBinder remote)
@@ -104,7 +104,7 @@ public interface IBaz extends android.os.IInterface
       {
         return mRemote;
       }
-      public java.lang.String getInterfaceDescriptor()
+      public final java.lang.String getInterfaceDescriptor()
       {
         return DESCRIPTOR;
       }
