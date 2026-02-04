@@ -338,12 +338,27 @@ func (r AidlGenruleInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) erro
 			}
 		}
 	}
+
+	if r.Srcs == nil {
+		if err = gobtools.EncodeInt(buf, -1); err != nil {
+			return err
+		}
+	} else {
+		if err = gobtools.EncodeInt(buf, len(r.Srcs)); err != nil {
+			return err
+		}
+		for val2 := 0; val2 < len(r.Srcs); val2++ {
+			if err = gobtools.EncodeInterface(ctx, buf, r.Srcs[val2]); err != nil {
+				return err
+			}
+		}
+	}
 	return err
 }
 
 func (r AidlGenruleInfo) CustomHash(hasher *proptools.Hasher) error {
 	hasher.WriteString(":aidl.AidlGenruleInfo")
-	hasher.WriteInt(4)
+	hasher.WriteInt(5)
 	hasher.WriteString(":.string")
 	hasher.WriteString(r.BaseName)
 	hasher.WriteString(":aidl.android.Path")
@@ -420,6 +435,34 @@ func (r AidlGenruleInfo) CustomHash(hasher *proptools.Hasher) error {
 			}
 		}
 	}
+	hasher.WriteString(":aidl.android.Paths")
+	hasher.WriteString(":.[]Path")
+	hasher.WriteInt(len(r.Srcs))
+	for val11 := 0; val11 < len(r.Srcs); val11++ {
+		hasher.WriteString("android/soong/android:android.Path")
+		val12 := r.Srcs[val11] == nil
+		if val12 {
+			hasher.WriteByte(0)
+		} else {
+			if v := reflect.ValueOf(r.Srcs[val11]); v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					panic(fmt.Errorf("nil pointer is not supported in interface"))
+				} else {
+					val13 := r.Srcs[val11] == nil
+					if val13 {
+						hasher.WriteByte(0)
+					} else {
+						val14 := func(hasher *proptools.Hasher) error { return r.Srcs[val11].(proptools.CustomHash).CustomHash(hasher) }
+						if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val14); err != nil {
+							return err
+						}
+					}
+				}
+			} else {
+				r.Srcs[val11].(proptools.CustomHash).CustomHash(hasher)
+			}
+		}
+	}
 	return nil
 }
 
@@ -461,6 +504,24 @@ func (r *AidlGenruleInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) err
 				r.Outputs[val9] = nil
 			} else {
 				r.Outputs[val9] = val11.(android.Path)
+			}
+		}
+	}
+
+	var val14 int
+	err = gobtools.DecodeInt(buf, &val14)
+	if err != nil {
+		return err
+	}
+	if val14 != -1 {
+		r.Srcs = make([]android.Path, val14)
+		for val15 := 0; val15 < int(val14); val15++ {
+			if val17, err := gobtools.DecodeInterface(ctx, buf); err != nil {
+				return err
+			} else if val17 == nil {
+				r.Srcs[val15] = nil
+			} else {
+				r.Srcs[val15] = val17.(android.Path)
 			}
 		}
 	}
