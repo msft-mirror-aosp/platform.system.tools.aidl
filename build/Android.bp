@@ -77,6 +77,7 @@ cc_defaults {
 
 java_defaults {
     name: "aidl-java-module-defaults",
+    java_version: "21",
 }
 
 rust_defaults {
