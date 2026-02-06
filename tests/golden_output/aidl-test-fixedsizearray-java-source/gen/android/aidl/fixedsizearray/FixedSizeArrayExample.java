@@ -545,7 +545,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
         }
         return true;
       }
-      private static class Proxy implements android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray
+      private static final class Proxy implements android.aidl.fixedsizearray.FixedSizeArrayExample.IRepeatFixedSizeArray
       {
         private android.os.IBinder mRemote;
         Proxy(android.os.IBinder remote)
@@ -556,7 +556,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
         {
           return mRemote;
         }
-        public java.lang.String getInterfaceDescriptor()
+        public final java.lang.String getInterfaceDescriptor()
         {
           return DESCRIPTOR;
         }
@@ -850,7 +850,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
           }
         }
       }
-      private static class Proxy implements android.aidl.fixedsizearray.FixedSizeArrayExample.IEmptyInterface
+      private static final class Proxy implements android.aidl.fixedsizearray.FixedSizeArrayExample.IEmptyInterface
       {
         private android.os.IBinder mRemote;
         Proxy(android.os.IBinder remote)
@@ -861,7 +861,7 @@ public class FixedSizeArrayExample implements android.os.Parcelable
         {
           return mRemote;
         }
-        public java.lang.String getInterfaceDescriptor()
+        public final java.lang.String getInterfaceDescriptor()
         {
           return DESCRIPTOR;
         }

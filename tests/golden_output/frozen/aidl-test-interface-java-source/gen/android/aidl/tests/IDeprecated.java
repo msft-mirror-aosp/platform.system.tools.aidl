@@ -76,7 +76,7 @@ public interface IDeprecated extends android.os.IInterface
       }
     }
     @Deprecated
-    private static class Proxy implements android.aidl.tests.IDeprecated
+    private static final class Proxy implements android.aidl.tests.IDeprecated
     {
       private android.os.IBinder mRemote;
       Proxy(android.os.IBinder remote)
@@ -87,7 +87,7 @@ public interface IDeprecated extends android.os.IInterface
       {
         return mRemote;
       }
-      public java.lang.String getInterfaceDescriptor()
+      public final java.lang.String getInterfaceDescriptor()
       {
         return DESCRIPTOR;
       }

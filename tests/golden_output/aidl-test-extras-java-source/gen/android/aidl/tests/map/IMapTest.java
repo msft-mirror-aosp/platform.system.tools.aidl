@@ -443,7 +443,7 @@ public interface IMapTest extends android.os.IInterface
       }
       return true;
     }
-    private static class Proxy implements android.aidl.tests.map.IMapTest
+    private static final class Proxy implements android.aidl.tests.map.IMapTest
     {
       private android.os.IBinder mRemote;
       Proxy(android.os.IBinder remote)
@@ -454,7 +454,7 @@ public interface IMapTest extends android.os.IInterface
       {
         return mRemote;
       }
-      public java.lang.String getInterfaceDescriptor()
+      public final java.lang.String getInterfaceDescriptor()
       {
         return DESCRIPTOR;
       }
