@@ -8,6 +8,7 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
+use alloc::boxed::Box;
 #[derive(Debug)]
 pub struct r#DeeplyNested {
 }
@@ -18,12 +19,12 @@ impl Default for r#DeeplyNested {
   }
 }
 impl binder::Parcelable for r#DeeplyNested {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       Ok(())
     })
@@ -35,6 +36,7 @@ impl binder::binder_impl::ParcelableMetadata for r#DeeplyNested {
   fn get_descriptor() -> &'static str { "android.aidl.tests.nested.DeeplyNested" }
 }
 pub mod r#A {
+  use alloc::boxed::Box;
   #[derive(Debug)]
   pub struct r#A {
     pub r#e: crate::mangled::_7_android_4_aidl_5_tests_6_nested_12_DeeplyNested_1_B_1_C_1_D_1_E,
@@ -47,13 +49,13 @@ pub mod r#A {
     }
   }
   impl binder::Parcelable for r#A {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         subparcel.write(&self.r#e)?;
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         if subparcel.has_more_data() {
           self.r#e = subparcel.read()?;
@@ -69,6 +71,7 @@ pub mod r#A {
   }
 }
 pub mod r#B {
+  use alloc::boxed::Box;
   #[derive(Debug)]
   pub struct r#B {
   }
@@ -79,12 +82,12 @@ pub mod r#B {
     }
   }
   impl binder::Parcelable for r#B {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         Ok(())
       })
@@ -96,6 +99,7 @@ pub mod r#B {
     fn get_descriptor() -> &'static str { "android.aidl.tests.nested.DeeplyNested.B" }
   }
   pub mod r#C {
+    use alloc::boxed::Box;
     #[derive(Debug)]
     pub struct r#C {
     }
@@ -106,12 +110,12 @@ pub mod r#B {
       }
     }
     impl binder::Parcelable for r#C {
-      fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+      fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
         parcel.sized_write(|subparcel| {
           Ok(())
         })
       }
-      fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+      fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
         parcel.sized_read(|subparcel| {
           Ok(())
         })
@@ -123,6 +127,7 @@ pub mod r#B {
       fn get_descriptor() -> &'static str { "android.aidl.tests.nested.DeeplyNested.B.C" }
     }
     pub mod r#D {
+      use alloc::boxed::Box;
       #[derive(Debug)]
       pub struct r#D {
       }
@@ -133,12 +138,12 @@ pub mod r#B {
         }
       }
       impl binder::Parcelable for r#D {
-        fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+        fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
           parcel.sized_write(|subparcel| {
             Ok(())
           })
         }
-        fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+        fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
           parcel.sized_read(|subparcel| {
             Ok(())
           })

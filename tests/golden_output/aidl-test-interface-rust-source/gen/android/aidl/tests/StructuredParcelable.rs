@@ -8,18 +8,19 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
+use alloc::boxed::Box;
 #[derive(Debug, Clone, PartialEq)]
 pub struct r#StructuredParcelable {
-  pub r#shouldContainThreeFs: Vec<i32>,
+  pub r#shouldContainThreeFs: alloc::vec::Vec<i32>,
   pub r#f: i32,
-  pub r#shouldBeJerry: String,
+  pub r#shouldBeJerry: alloc::string::String,
   pub r#shouldBeByteBar: crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum,
   pub r#shouldBeIntBar: crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum,
   pub r#shouldBeLongBar: crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum,
-  pub r#shouldContainTwoByteFoos: Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>,
-  pub r#shouldContainTwoIntFoos: Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>,
-  pub r#shouldContainTwoLongFoos: Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>,
-  pub r#stringDefaultsToFoo: String,
+  pub r#shouldContainTwoByteFoos: alloc::vec::Vec<crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum>,
+  pub r#shouldContainTwoIntFoos: alloc::vec::Vec<crate::mangled::_7_android_4_aidl_5_tests_7_IntEnum>,
+  pub r#shouldContainTwoLongFoos: alloc::vec::Vec<crate::mangled::_7_android_4_aidl_5_tests_8_LongEnum>,
+  pub r#stringDefaultsToFoo: alloc::string::String,
   pub r#byteDefaultsToFour: i8,
   pub r#intDefaultsToFive: i32,
   pub r#longDefaultsToNegativeSeven: i64,
@@ -27,8 +28,8 @@ pub struct r#StructuredParcelable {
   pub r#charDefaultsToC: u16,
   pub r#floatDefaultsToPi: f32,
   pub r#doubleWithDefault: f64,
-  pub r#arrayDefaultsTo123: Vec<i32>,
-  pub r#arrayDefaultsToEmpty: Vec<i32>,
+  pub r#arrayDefaultsTo123: alloc::vec::Vec<i32>,
+  pub r#arrayDefaultsToEmpty: alloc::vec::Vec<i32>,
   pub r#boolDefault: bool,
   pub r#byteDefault: i8,
   pub r#intDefault: i32,
@@ -36,20 +37,20 @@ pub struct r#StructuredParcelable {
   pub r#floatDefault: f32,
   pub r#doubleDefault: f64,
   pub r#checkDoubleFromFloat: f64,
-  pub r#checkStringArray1: Vec<String>,
-  pub r#checkStringArray2: Vec<String>,
+  pub r#checkStringArray1: alloc::vec::Vec<alloc::string::String>,
+  pub r#checkStringArray2: alloc::vec::Vec<alloc::string::String>,
   pub r#int32_min: i32,
   pub r#int32_max: i32,
   pub r#int64_max: i64,
   pub r#hexInt32_neg_1: i32,
   pub r#ibinder: Option<binder::SpIBinder>,
   pub r#empty: crate::mangled::_7_android_4_aidl_5_tests_20_StructuredParcelable_5_Empty,
-  pub r#int8_t_large: Vec<u8>,
-  pub r#int32_t_large: Vec<i32>,
-  pub r#int64_t_large: Vec<i64>,
-  pub r#int8_1: Vec<u8>,
-  pub r#int32_1: Vec<i32>,
-  pub r#int64_1: Vec<i64>,
+  pub r#int8_t_large: alloc::vec::Vec<u8>,
+  pub r#int32_t_large: alloc::vec::Vec<i32>,
+  pub r#int64_t_large: alloc::vec::Vec<i64>,
+  pub r#int8_1: alloc::vec::Vec<u8>,
+  pub r#int32_1: alloc::vec::Vec<i32>,
+  pub r#int64_1: alloc::vec::Vec<i64>,
   pub r#hexInt32_pos_1: i32,
   pub r#hexInt64_pos_1: i32,
   pub r#const_exprs_1: crate::mangled::_7_android_4_aidl_5_tests_22_ConstantExpressionEnum,
@@ -62,8 +63,8 @@ pub struct r#StructuredParcelable {
   pub r#const_exprs_8: crate::mangled::_7_android_4_aidl_5_tests_22_ConstantExpressionEnum,
   pub r#const_exprs_9: crate::mangled::_7_android_4_aidl_5_tests_22_ConstantExpressionEnum,
   pub r#const_exprs_10: crate::mangled::_7_android_4_aidl_5_tests_22_ConstantExpressionEnum,
-  pub r#addString1: String,
-  pub r#addString2: String,
+  pub r#addString1: alloc::string::String,
+  pub r#addString2: alloc::string::String,
   pub r#shouldSetBit0AndBit2: i32,
   pub r#u: Option<crate::mangled::_7_android_4_aidl_5_tests_5_Union>,
   pub r#shouldBeConstS1: Option<crate::mangled::_7_android_4_aidl_5_tests_5_Union>,
@@ -92,8 +93,8 @@ impl Default for r#StructuredParcelable {
       r#charDefaultsToC: 'C' as u16,
       r#floatDefaultsToPi: 3.140000f32,
       r#doubleWithDefault: -314000000000000000.000000f64,
-      r#arrayDefaultsTo123: vec![1, 2, 3],
-      r#arrayDefaultsToEmpty: vec![],
+      r#arrayDefaultsTo123: alloc::vec![1, 2, 3],
+      r#arrayDefaultsToEmpty: alloc::vec![],
       r#boolDefault: false,
       r#byteDefault: 0,
       r#intDefault: 0,
@@ -101,20 +102,20 @@ impl Default for r#StructuredParcelable {
       r#floatDefault: 0.000000f32,
       r#doubleDefault: 0.000000f64,
       r#checkDoubleFromFloat: 3.140000f64,
-      r#checkStringArray1: vec!["a".into(), "b".into()],
-      r#checkStringArray2: vec!["a".into(), "b".into()],
+      r#checkStringArray1: alloc::vec!["a".into(), "b".into()],
+      r#checkStringArray2: alloc::vec!["a".into(), "b".into()],
       r#int32_min: -2147483648,
       r#int32_max: 2147483647,
       r#int64_max: 9223372036854775807,
       r#hexInt32_neg_1: -1,
       r#ibinder: Default::default(),
       r#empty: Default::default(),
-      r#int8_t_large: vec![255, 192],
-      r#int32_t_large: vec![-1, -1073741824],
-      r#int64_t_large: vec![-1, -4611686018427387904],
-      r#int8_1: vec![1, 1, 1, 1, 1],
-      r#int32_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      r#int64_1: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      r#int8_t_large: alloc::vec![255, 192],
+      r#int32_t_large: alloc::vec![-1, -1073741824],
+      r#int64_t_large: alloc::vec![-1, -4611686018427387904],
+      r#int8_1: alloc::vec![1, 1, 1, 1, 1],
+      r#int32_1: alloc::vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      r#int64_1: alloc::vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       r#hexInt32_pos_1: 1,
       r#hexInt64_pos_1: 1,
       r#const_exprs_1: Default::default(),
@@ -137,7 +138,7 @@ impl Default for r#StructuredParcelable {
   }
 }
 impl binder::Parcelable for r#StructuredParcelable {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       subparcel.write(&self.r#shouldContainThreeFs)?;
       subparcel.write(&self.r#f)?;
@@ -200,7 +201,7 @@ impl binder::Parcelable for r#StructuredParcelable {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       if subparcel.has_more_data() {
         self.r#shouldContainThreeFs = subparcel.read()?;
@@ -386,6 +387,7 @@ impl binder::binder_impl::ParcelableMetadata for r#StructuredParcelable {
   fn get_descriptor() -> &'static str { "android.aidl.tests.StructuredParcelable" }
 }
 pub mod r#Empty {
+  use alloc::boxed::Box;
   #[derive(Debug, Clone, PartialEq)]
   pub struct r#Empty {
   }
@@ -396,12 +398,12 @@ pub mod r#Empty {
     }
   }
   impl binder::Parcelable for r#Empty {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         Ok(())
       })

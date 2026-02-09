@@ -16,6 +16,8 @@ package aidl
 
 import (
 	"github.com/google/blueprint/proptools"
+
+	"android/soong/rust"
 )
 
 type nameProperties struct {
@@ -111,6 +113,7 @@ type rustProperties struct {
 	Min_sdk_version    *string
 	Features           []string
 	Split_all_variants *bool
+	No_std             *rust.VariantLibraryProperties
 }
 
 type phonyProperties struct {
