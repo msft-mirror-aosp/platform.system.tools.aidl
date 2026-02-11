@@ -50,7 +50,7 @@ std::string ConstantValueDecoratorInternal(
     const auto& values = std::get<std::vector<std::string>>(raw_value);
     std::string value = "[" + Join(values, ", ") + "]";
     if (type.IsDynamicArray()) {
-      value = "vec!" + value;
+      value = "alloc::vec!" + value;
     }
     if (!type.IsFromWithinArray() && type.IsNullable()) {
       value = "Some(" + value + ")";
@@ -147,7 +147,7 @@ std::string GetRustName(const AidlTypeSpecifier& type, const AidlTypenames& type
       {"long", "i64"},
       {"float", "f32"},
       {"double", "f64"},
-      {"String", "String"},
+      {"String", "alloc::string::String"},
       {"IBinder", "binder::SpIBinder"},
       {"ParcelFileDescriptor", "binder::ParcelFileDescriptor"},
   };
@@ -284,7 +284,7 @@ std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typen
         rust_name = "[" + rust_name + "; " + std::to_string(*it) + "]";
       }
     } else {
-      rust_name = "Vec<" + rust_name + ">";
+      rust_name = "alloc::vec::Vec<" + rust_name + ">";
     }
   } else {
     rust_name = GetRustName(type, typenames, mode, is_vintf_stability);
@@ -303,7 +303,7 @@ std::string RustNameOf(const AidlTypeSpecifier& type, const AidlTypenames& typen
        (mode == StorageMode::DEFAULT_VALUE || mode == StorageMode::OUT_ARGUMENT ||
         mode == StorageMode::PARCELABLE_FIELD))) {
     if (type.IsHeapNullable()) {
-      rust_name = "Option<Box<" + rust_name + ">>";
+      rust_name = "Option<alloc::boxed::Box<" + rust_name + ">>";
     } else {
       rust_name = "Option<" + rust_name + ">";
     }

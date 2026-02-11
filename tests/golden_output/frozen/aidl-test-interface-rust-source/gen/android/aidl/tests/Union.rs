@@ -8,24 +8,25 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
+use alloc::boxed::Box;
 #[derive(Debug, Clone, PartialEq)]
 pub enum r#Union {
-  Ns(Vec<i32>),
+  Ns(alloc::vec::Vec<i32>),
   N(i32),
   M(i32),
-  S(String),
+  S(alloc::string::String),
   Ibinder(Option<binder::SpIBinder>),
-  Ss(Vec<String>),
+  Ss(alloc::vec::Vec<alloc::string::String>),
   Be(crate::mangled::_7_android_4_aidl_5_tests_8_ByteEnum),
 }
 pub const r#S1: &str = "a string constant in union";
 impl Default for r#Union {
   fn default() -> Self {
-    Self::Ns(vec![])
+    Self::Ns(alloc::vec![])
   }
 }
 impl binder::Parcelable for r#Union {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     match self {
       Self::Ns(v) => {
         parcel.write(&0i32)?;
@@ -57,11 +58,11 @@ impl binder::Parcelable for r#Union {
       }
     }
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     let tag: i32 = parcel.read()?;
     match tag {
       0 => {
-        let value: Vec<i32> = parcel.read()?;
+        let value: alloc::vec::Vec<i32> = parcel.read()?;
         *self = Self::Ns(value);
         Ok(())
       }
@@ -76,7 +77,7 @@ impl binder::Parcelable for r#Union {
         Ok(())
       }
       3 => {
-        let value: String = parcel.read()?;
+        let value: alloc::string::String = parcel.read()?;
         *self = Self::S(value);
         Ok(())
       }
@@ -86,7 +87,7 @@ impl binder::Parcelable for r#Union {
         Ok(())
       }
       5 => {
-        let value: Vec<String> = parcel.read()?;
+        let value: alloc::vec::Vec<alloc::string::String> = parcel.read()?;
         *self = Self::Ss(value);
         Ok(())
       }
