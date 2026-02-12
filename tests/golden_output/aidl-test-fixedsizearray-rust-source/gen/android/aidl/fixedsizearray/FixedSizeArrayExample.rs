@@ -8,6 +8,7 @@
  */
 #![forbid(unsafe_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
+use alloc::boxed::Box;
 #[derive(Debug, PartialEq)]
 pub struct r#FixedSizeArrayExample {
   pub r#int2x3: [[i32; 3]; 2],
@@ -18,7 +19,7 @@ pub struct r#FixedSizeArrayExample {
   pub r#longArray: [i64; 2],
   pub r#floatArray: [f32; 2],
   pub r#doubleArray: [f64; 2],
-  pub r#stringArray: [String; 2],
+  pub r#stringArray: [alloc::string::String; 2],
   pub r#byteEnumArray: [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_ByteEnum; 2],
   pub r#intEnumArray: [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_7_IntEnum; 2],
   pub r#longEnumArray: [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_LongEnum; 2],
@@ -30,7 +31,7 @@ pub struct r#FixedSizeArrayExample {
   pub r#longMatrix: [[i64; 2]; 2],
   pub r#floatMatrix: [[f32; 2]; 2],
   pub r#doubleMatrix: [[f64; 2]; 2],
-  pub r#stringMatrix: [[String; 2]; 2],
+  pub r#stringMatrix: [[alloc::string::String; 2]; 2],
   pub r#byteEnumMatrix: [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_ByteEnum; 2]; 2],
   pub r#intEnumMatrix: [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_7_IntEnum; 2]; 2],
   pub r#longEnumMatrix: [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_LongEnum; 2]; 2],
@@ -42,7 +43,7 @@ pub struct r#FixedSizeArrayExample {
   pub r#longNullableArray: Option<[i64; 2]>,
   pub r#floatNullableArray: Option<[f32; 2]>,
   pub r#doubleNullableArray: Option<[f64; 2]>,
-  pub r#stringNullableArray: Option<[Option<String>; 2]>,
+  pub r#stringNullableArray: Option<[Option<alloc::string::String>; 2]>,
   pub r#byteEnumNullableArray: Option<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_ByteEnum; 2]>,
   pub r#intEnumNullableArray: Option<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_7_IntEnum; 2]>,
   pub r#longEnumNullableArray: Option<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_LongEnum; 2]>,
@@ -57,7 +58,7 @@ pub struct r#FixedSizeArrayExample {
   pub r#longNullableMatrix: Option<[[i64; 2]; 2]>,
   pub r#floatNullableMatrix: Option<[[f32; 2]; 2]>,
   pub r#doubleNullableMatrix: Option<[[f64; 2]; 2]>,
-  pub r#stringNullableMatrix: Option<[[Option<String>; 2]; 2]>,
+  pub r#stringNullableMatrix: Option<[[Option<alloc::string::String>; 2]; 2]>,
   pub r#byteEnumNullableMatrix: Option<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_ByteEnum; 2]; 2]>,
   pub r#intEnumNullableMatrix: Option<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_7_IntEnum; 2]; 2]>,
   pub r#longEnumNullableMatrix: Option<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_8_LongEnum; 2]; 2]>,
@@ -128,7 +129,7 @@ impl Default for r#FixedSizeArrayExample {
   }
 }
 impl binder::Parcelable for r#FixedSizeArrayExample {
-  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_write(|subparcel| {
       subparcel.write(&self.r#int2x3)?;
       subparcel.write(&self.r#boolArray)?;
@@ -188,7 +189,7 @@ impl binder::Parcelable for r#FixedSizeArrayExample {
       Ok(())
     })
   }
-  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+  fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
     parcel.sized_read(|subparcel| {
       if subparcel.has_more_data() {
         self.r#int2x3 = subparcel.read()?;
@@ -368,6 +369,7 @@ pub mod r#IRepeatFixedSizeArray {
   #![allow(non_upper_case_globals)]
   #![allow(non_snake_case)]
   #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+  use alloc::boxed::Box;
   #[cfg(any(android_vndk, not(android_ndk)))]
   const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
   #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -442,7 +444,7 @@ pub mod r#IRepeatFixedSizeArray {
       impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
         fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
         #[cfg(feature = "std")]
-        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
       }
       impl<T, R> IRepeatFixedSizeArray for Wrapper<T, R>
       where
@@ -534,7 +536,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_RepeatBytes(&self, _arg_input: &[u8; 3], _arg_repeated: &mut [u8; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[u8; 3]> {
+    fn read_response_RepeatBytes(&self, _arg_input: &[u8; 3], _arg_repeated: &mut [u8; 3], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[u8; 3]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -547,7 +549,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_RepeatInts(&self, _arg_input: &[i32; 3], _arg_repeated: &mut [i32; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[i32; 3]> {
+    fn read_response_RepeatInts(&self, _arg_input: &[i32; 3], _arg_repeated: &mut [i32; 3], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[i32; 3]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -560,7 +562,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_RepeatBinders(&self, _arg_input: &[binder::SpIBinder; 3], _arg_repeated: &mut [Option<binder::SpIBinder>; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[binder::SpIBinder; 3]> {
+    fn read_response_RepeatBinders(&self, _arg_input: &[binder::SpIBinder; 3], _arg_repeated: &mut [Option<binder::SpIBinder>; 3], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[binder::SpIBinder; 3]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -573,7 +575,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_RepeatParcelables(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _arg_repeated: &mut [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]> {
+    fn read_response_RepeatParcelables(&self, _arg_input: &[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _arg_repeated: &mut [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -586,7 +588,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_Repeat2dBytes(&self, _arg_input: &[[u8; 3]; 2], _arg_repeated: &mut [[u8; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[u8; 3]; 2]> {
+    fn read_response_Repeat2dBytes(&self, _arg_input: &[[u8; 3]; 2], _arg_repeated: &mut [[u8; 3]; 2], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[u8; 3]; 2]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -599,7 +601,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_Repeat2dInts(&self, _arg_input: &[[i32; 3]; 2], _arg_repeated: &mut [[i32; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[i32; 3]; 2]> {
+    fn read_response_Repeat2dInts(&self, _arg_input: &[[i32; 3]; 2], _arg_repeated: &mut [[i32; 3]; 2], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[i32; 3]; 2]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -612,7 +614,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_Repeat2dBinders(&self, _arg_input: &[[binder::SpIBinder; 3]; 2], _arg_repeated: &mut [[Option<binder::SpIBinder>; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[binder::SpIBinder; 3]; 2]> {
+    fn read_response_Repeat2dBinders(&self, _arg_input: &[[binder::SpIBinder; 3]; 2], _arg_repeated: &mut [[Option<binder::SpIBinder>; 3]; 2], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[binder::SpIBinder; 3]; 2]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -625,7 +627,7 @@ pub mod r#IRepeatFixedSizeArray {
       aidl_data.write(_arg_input)?;
       Ok(aidl_data)
     }
-    fn read_response_Repeat2dParcelables(&self, _arg_input: &[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]> {
+    fn read_response_Repeat2dParcelables(&self, _arg_input: &[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]> {
       let _aidl_reply = _aidl_reply?;
       let _aidl_status: binder::Status = _aidl_reply.read()?;
       if !_aidl_status.is_ok() { return Err(_aidl_status); }
@@ -680,7 +682,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#RepeatBytes<'a, >(&'a self, _arg_input: &'a [u8; 3], _arg_repeated: &'a mut [u8; 3]) -> binder::BoxFuture<'a, binder::Result<[u8; 3]>> {
       let _aidl_data = match self.build_parcel_RepeatBytes(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -693,7 +695,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#RepeatInts<'a, >(&'a self, _arg_input: &'a [i32; 3], _arg_repeated: &'a mut [i32; 3]) -> binder::BoxFuture<'a, binder::Result<[i32; 3]>> {
       let _aidl_data = match self.build_parcel_RepeatInts(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -706,7 +708,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#RepeatBinders<'a, >(&'a self, _arg_input: &'a [binder::SpIBinder; 3], _arg_repeated: &'a mut [Option<binder::SpIBinder>; 3]) -> binder::BoxFuture<'a, binder::Result<[binder::SpIBinder; 3]>> {
       let _aidl_data = match self.build_parcel_RepeatBinders(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -719,7 +721,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#RepeatParcelables<'a, >(&'a self, _arg_input: &'a [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3], _arg_repeated: &'a mut [crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]) -> binder::BoxFuture<'a, binder::Result<[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]>> {
       let _aidl_data = match self.build_parcel_RepeatParcelables(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -732,7 +734,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#Repeat2dBytes<'a, >(&'a self, _arg_input: &'a [[u8; 3]; 2], _arg_repeated: &'a mut [[u8; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[u8; 3]; 2]>> {
       let _aidl_data = match self.build_parcel_Repeat2dBytes(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -745,7 +747,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#Repeat2dInts<'a, >(&'a self, _arg_input: &'a [[i32; 3]; 2], _arg_repeated: &'a mut [[i32; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[i32; 3]; 2]>> {
       let _aidl_data = match self.build_parcel_Repeat2dInts(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -758,7 +760,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#Repeat2dBinders<'a, >(&'a self, _arg_input: &'a [[binder::SpIBinder; 3]; 2], _arg_repeated: &'a mut [[Option<binder::SpIBinder>; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[binder::SpIBinder; 3]; 2]>> {
       let _aidl_data = match self.build_parcel_Repeat2dBinders(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -771,7 +773,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#Repeat2dParcelables<'a, >(&'a self, _arg_input: &'a [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &'a mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]) -> binder::BoxFuture<'a, binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]>> {
       let _aidl_data = match self.build_parcel_Repeat2dParcelables(_arg_input, _arg_repeated) {
         Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(std::future::ready(Err(err))),
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
       };
       let binder = self.binder.clone();
       P::spawn(
@@ -792,7 +794,7 @@ pub mod r#IRepeatFixedSizeArray {
     fn r#Repeat2dBinders<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[binder::SpIBinder; 3]; 2], _arg_repeated: &'l2 mut [[Option<binder::SpIBinder>; 3]; 2]) -> binder::Result<[[binder::SpIBinder; 3]; 2]> { self.0.r#Repeat2dBinders(_arg_input, _arg_repeated) }
     fn r#Repeat2dParcelables<'a, 'l1, 'l2, >(&'a self, _arg_input: &'l1 [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2], _arg_repeated: &'l2 mut [[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]) -> binder::Result<[[crate::mangled::_7_android_4_aidl_14_fixedsizearray_21_FixedSizeArrayExample_13_IntParcelable; 3]; 2]> { self.0.r#Repeat2dParcelables(_arg_input, _arg_repeated) }
   }
-  fn on_transact(_aidl_service: &dyn IRepeatFixedSizeArray, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
+  fn on_transact(_aidl_service: &dyn IRepeatFixedSizeArray, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
     match _aidl_code {
       transactions::r#RepeatBytes => {
         let _arg_input: [u8; 3] = _aidl_data.read()?;
@@ -941,6 +943,7 @@ pub mod r#LongEnum {
   }
 }
 pub mod r#IntParcelable {
+  use alloc::boxed::Box;
   #[derive(Debug, Clone, Copy, PartialEq)]
   pub struct r#IntParcelable {
     pub r#value: i32,
@@ -953,13 +956,13 @@ pub mod r#IntParcelable {
     }
   }
   impl binder::Parcelable for r#IntParcelable {
-    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn write_to_parcel(&self, parcel: &mut binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_write(|subparcel| {
         subparcel.write(&self.r#value)?;
         Ok(())
       })
     }
-    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> std::result::Result<(), binder::StatusCode> {
+    fn read_from_parcel(&mut self, parcel: &binder::binder_impl::BorrowedParcel) -> core::result::Result<(), binder::StatusCode> {
       parcel.sized_read(|subparcel| {
         if subparcel.has_more_data() {
           self.r#value = subparcel.read()?;
@@ -978,6 +981,7 @@ pub mod r#IEmptyInterface {
   #![allow(non_upper_case_globals)]
   #![allow(non_snake_case)]
   #[allow(unused_imports)] use binder::binder_impl::IBinderInternal;
+  use alloc::boxed::Box;
   #[cfg(any(android_vndk, not(android_ndk)))]
   const FLAG_PRIVATE_LOCAL: binder::binder_impl::TransactionFlags = binder::binder_impl::FLAG_PRIVATE_LOCAL;
   #[cfg(not(any(android_vndk, not(android_ndk))))]
@@ -1018,7 +1022,7 @@ pub mod r#IEmptyInterface {
       impl<T, R> binder::Interface for Wrapper<T, R> where T: binder::Interface, R: Send + Sync + 'static {
         fn as_binder(&self) -> binder::SpIBinder { self._inner.as_binder() }
         #[cfg(feature = "std")]
-        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> std::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
+        fn dump(&self, _writer: &mut dyn std::io::Write, _args: &[&std::ffi::CStr]) -> core::result::Result<(), binder::StatusCode> { self._inner.dump(_writer, _args) }
       }
       impl<T, R> IEmptyInterface for Wrapper<T, R>
       where
@@ -1056,7 +1060,7 @@ pub mod r#IEmptyInterface {
   }
   impl IEmptyInterface for binder::binder_impl::Binder<BnEmptyInterface> {
   }
-  fn on_transact(_aidl_service: &dyn IEmptyInterface, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> std::result::Result<(), binder::StatusCode> {
+  fn on_transact(_aidl_service: &dyn IEmptyInterface, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
     match _aidl_code {
       _ => Err(binder::StatusCode::UNKNOWN_TRANSACTION)
     }
