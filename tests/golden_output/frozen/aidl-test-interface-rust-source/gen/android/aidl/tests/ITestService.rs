@@ -21,6 +21,7 @@ declare_binder_interface! {
   ITestService["android.aidl.tests.ITestService"] {
     native: BnTestService(on_transact),
     proxy: BpTestService {
+      cached_version: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(-1)
     },
     async: ITestServiceAsync(try_into_local_async),
     functionNames : [
@@ -172,6 +173,9 @@ pub trait ITestService: binder::Interface + Send {
   fn r#GetCppJavaTests<'a, >(&'a self) -> binder::Result<Option<binder::SpIBinder>>;
   fn r#getBackendType<'a, >(&'a self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType>;
   fn r#GetCircular<'a, 'l1, >(&'a self, _arg_cp: &'l1 mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>;
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
+    Ok(VERSION)
+  }
   fn try_as_async_server<'a>(&'a self) -> Option<&'a (dyn ITestServiceAsyncServer + Send + Sync)> {
     None
   }
@@ -250,6 +254,9 @@ pub trait ITestServiceAsync<P>: binder::Interface + Send {
   fn r#GetCppJavaTests<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<Option<binder::SpIBinder>>>;
   fn r#getBackendType<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType>>;
   fn r#GetCircular<'a, >(&'a self, _arg_cp: &'a mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::BoxFuture<'a, binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>>>;
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+    Box::pin(async move { Ok(VERSION) })
+  }
 }
 #[::async_trait::async_trait]
 pub trait ITestServiceAsyncServer: binder::Interface + Send {
@@ -867,6 +874,7 @@ pub mod transactions {
   pub const r#GetCppJavaTests: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 68;
   pub const r#getBackendType: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 69;
   pub const r#GetCircular: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 70;
+  pub const r#getInterfaceVersion: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777214;
 }
 pub const r#CONSTANT: i32 = 42;
 pub const r#CONSTANT2: i32 = -42;
@@ -958,6 +966,7 @@ pub const r#A54: i32 = 1;
 pub const r#A55: i32 = 1;
 pub const r#A56: i32 = 1;
 pub const r#A57: i32 = 1;
+pub const VERSION: i32 = 12;
 impl BpTestService {
   fn build_parcel_UnimplementedMethod(&self, _arg_arg: i32) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
@@ -1909,6 +1918,19 @@ impl BpTestService {
     _aidl_reply.read_onto(_arg_cp)?;
     Ok(_aidl_return)
   }
+  fn build_parcel_getInterfaceVersion(&self) -> binder::Result<binder::binder_impl::Parcel> {
+    let mut aidl_data = self.binder.prepare_transact()?;
+    aidl_data.mark_sensitive();
+    Ok(aidl_data)
+  }
+  fn read_response_getInterfaceVersion(&self, _aidl_reply: core::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
+    let _aidl_reply = _aidl_reply?;
+    let _aidl_status: binder::Status = _aidl_reply.read()?;
+    if !_aidl_status.is_ok() { return Err(_aidl_status); }
+    let _aidl_return: i32 = _aidl_reply.read()?;
+    self.cached_version.store(_aidl_return, core::sync::atomic::Ordering::Relaxed);
+    Ok(_aidl_return)
+  }
 }
 impl ITestService for BpTestService {
   fn r#UnimplementedMethod<'a, >(&'a self, _arg_arg: i32) -> binder::Result<i32> {
@@ -2265,6 +2287,13 @@ impl ITestService for BpTestService {
     let _aidl_data = self.build_parcel_GetCircular(_arg_cp)?;
     let _aidl_reply = self.binder.submit_transact(transactions::r#GetCircular, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
     self.read_response_GetCircular(_arg_cp, _aidl_reply)
+  }
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
+    let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
+    if _aidl_version != -1 { return Ok(_aidl_version); }
+    let _aidl_data = self.build_parcel_getInterfaceVersion()?;
+    let _aidl_reply = self.binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL);
+    self.read_response_getInterfaceVersion(_aidl_reply)
   }
 }
 impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
@@ -3191,6 +3220,21 @@ impl<P: binder::BinderAsyncPool> ITestServiceAsync<P> for BpTestService {
       }
     )
   }
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+    let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
+    if _aidl_version != -1 { return Box::pin(core::future::ready(Ok(_aidl_version))); }
+    let _aidl_data = match self.build_parcel_getInterfaceVersion() {
+      Ok(_aidl_data) => _aidl_data,
+      Err(err) => return Box::pin(core::future::ready(Err(err))),
+    };
+    let binder = self.binder.clone();
+    P::spawn(
+      move || binder.submit_transact(transactions::r#getInterfaceVersion, _aidl_data, binder::binder_impl::FLAG_CLEAR_BUF | FLAG_PRIVATE_LOCAL),
+      move |_aidl_reply| async move {
+        self.read_response_getInterfaceVersion(_aidl_reply)
+      }
+    )
+  }
 }
 impl ITestService for binder::binder_impl::Binder<BnTestService> {
   fn r#UnimplementedMethod<'a, >(&'a self, _arg_arg: i32) -> binder::Result<i32> { self.0.r#UnimplementedMethod(_arg_arg) }
@@ -3264,6 +3308,7 @@ impl ITestService for binder::binder_impl::Binder<BnTestService> {
   fn r#GetCppJavaTests<'a, >(&'a self) -> binder::Result<Option<binder::SpIBinder>> { self.0.r#GetCppJavaTests() }
   fn r#getBackendType<'a, >(&'a self) -> binder::Result<crate::mangled::_7_android_4_aidl_5_tests_11_BackendType> { self.0.r#getBackendType() }
   fn r#GetCircular<'a, 'l1, >(&'a self, _arg_cp: &'l1 mut crate::mangled::_7_android_4_aidl_5_tests_18_CircularParcelable) -> binder::Result<binder::Strong<dyn crate::mangled::_7_android_4_aidl_5_tests_9_ICircular>> { self.0.r#GetCircular(_arg_cp) }
+  fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> { self.0.r#getInterfaceVersion() }
 }
 fn on_transact(_aidl_service: &dyn ITestService, _aidl_code: binder::binder_impl::TransactionCode, _aidl_data: &binder::binder_impl::BorrowedParcel<'_>, _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>) -> core::result::Result<(), binder::StatusCode> {
   match _aidl_code {
@@ -4161,6 +4206,17 @@ fn on_transact(_aidl_service: &dyn ITestService, _aidl_code: binder::binder_impl
           _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
           _aidl_reply.write(_aidl_return)?;
           _aidl_reply.write(&_arg_cp)?;
+        }
+        Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
+      }
+      Ok(())
+    }
+    transactions::r#getInterfaceVersion => {
+      let _aidl_return = _aidl_service.r#getInterfaceVersion();
+      match &_aidl_return {
+        Ok(_aidl_return) => {
+          _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
+          _aidl_reply.write(_aidl_return)?;
         }
         Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
       }

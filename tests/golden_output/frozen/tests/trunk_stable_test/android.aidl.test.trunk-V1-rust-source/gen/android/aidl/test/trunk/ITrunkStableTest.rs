@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=rust --structured --version 1 --hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-rust-source/gen/android/aidl/test/trunk/ITrunkStableTest.rs.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-rust-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=rust --structured --version 1 --hash c294a8f61da748b69ce6a09db92094e68c67614a -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-rust-source/gen/android/aidl/test/trunk/ITrunkStableTest.rs.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V1-rust-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -145,7 +145,7 @@ pub mod transactions {
   pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
 }
 pub const VERSION: i32 = 1;
-pub const HASH: &str = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+pub const HASH: &str = "c294a8f61da748b69ce6a09db92094e68c67614a";
 impl BpTrunkStableTest {
   fn build_parcel_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
@@ -673,7 +673,7 @@ pub mod r#IMyCallback {
     pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
   }
   pub const VERSION: i32 = 1;
-  pub const HASH: &str = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+  pub const HASH: &str = "c294a8f61da748b69ce6a09db92094e68c67614a";
   impl BpMyCallback {
     fn build_parcel_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<binder::binder_impl::Parcel> {
       let mut aidl_data = self.binder.prepare_transact()?;

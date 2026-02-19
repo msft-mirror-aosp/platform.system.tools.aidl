@@ -563,6 +563,10 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
         valid_type = false;
       }
 
+      if (!defined_type->VersionSpecificCheckValid(options.Version())) {
+        valid_type = false;
+      }
+
       if (!valid_type) {
         return AidlError::BAD_TYPE;
       }
@@ -612,7 +616,7 @@ AidlError load_and_validate_aidl(const std::string& input_file_name, const Optio
     virtual void Visit(const AidlInterface& const_interface) {
       // TODO: we do not have mutable visitor infrastructure.
       AidlInterface* interface = const_cast<AidlInterface*>(&const_interface);
-      if (mOptions->Version() > 0) {
+      if (auto ver = interface->Version(*mOptions); ver.has_value()) {
         auto ret = mTypenames->MakeResolvedType(AIDL_LOCATION_HERE, "int", false);
         vector<unique_ptr<AidlArgument>>* args = new vector<unique_ptr<AidlArgument>>();
         auto method = std::make_unique<AidlMethod>(AIDL_LOCATION_HERE, false, ret.release(),

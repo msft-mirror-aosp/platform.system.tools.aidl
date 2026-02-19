@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version platform_apis --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen/android/aidl/test/trunk/ITrunkStableTest.java.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version platform_apis --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen/android/aidl/test/trunk/ITrunkStableTest.java.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -15,11 +15,8 @@ public interface ITrunkStableTest extends android.os.IInterface
    * getInterfaceVersion} returns as that is the version of the interface
    * that the remote object is implementing.
    */
-  public static final int VERSION = true ? 1 : 2;
-  // Interface is being downgraded to the last frozen version due to
-  // RELEASE_AIDL_USE_UNFROZEN. See
-  // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
-  public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+  public static final int VERSION = 2;
+  public static final String HASH = "notfrozen";
   /** Default implementation for ITrunkStableTest. */
   public static class Default implements android.aidl.test.trunk.ITrunkStableTest
   {
@@ -185,9 +182,6 @@ public interface ITrunkStableTest extends android.os.IInterface
         }
         case TRANSACTION_repeatOtherParcelable:
         {
-          if (true) {
-            throw new android.os.RemoteException("Method repeatOtherParcelable is unimplemented.");
-          }
           android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable _arg0;
           _arg0 = data.readTypedObject(android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable.CREATOR);
           data.enforceNoDataAvail();
@@ -303,9 +297,6 @@ public interface ITrunkStableTest extends android.os.IInterface
       }
       @Override public android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable repeatOtherParcelable(android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable input) throws android.os.RemoteException
       {
-        if (true) {
-          throw new android.os.RemoteException("Method repeatOtherParcelable is unimplemented.");
-        }
         android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
         android.os.Parcel _reply = android.os.Parcel.obtain();
         android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable _result;
@@ -406,9 +397,7 @@ public interface ITrunkStableTest extends android.os.IInterface
       _aidl_parcel.writeInt(0);
       _aidl_parcel.writeInt(a);
       _aidl_parcel.writeInt(b);
-      if (false) {;
-        _aidl_parcel.writeInt(c);
-      };
+      _aidl_parcel.writeInt(c);
       int _aidl_end_pos = _aidl_parcel.dataPosition();
       _aidl_parcel.setDataPosition(_aidl_start_pos);
       _aidl_parcel.writeInt(_aidl_end_pos - _aidl_start_pos);
@@ -425,9 +414,7 @@ public interface ITrunkStableTest extends android.os.IInterface
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
         b = _aidl_parcel.readInt();
         if (_aidl_parcel.dataPosition() - _aidl_start_pos >= _aidl_parcelable_size) return;
-        if (false) {;
-          c = _aidl_parcel.readInt();
-        };
+        c = _aidl_parcel.readInt();
       } finally {
         if (_aidl_start_pos > (Integer.MAX_VALUE - _aidl_parcelable_size)) {
           throw new android.os.BadParcelableException("Overflow in the size of parcelable");
@@ -544,7 +531,6 @@ public interface ITrunkStableTest extends android.os.IInterface
         _aidl_parcel.writeInt(getB());
         break;
       case c:
-        if (true) throw new IllegalArgumentException("union: unknown tag: " + _tag);
         _aidl_parcel.writeInt(getC());
         break;
       }
@@ -565,7 +551,6 @@ public interface ITrunkStableTest extends android.os.IInterface
         _set(_aidl_tag, _aidl_value);
         return; }
       case c: {
-        if (true) throw new IllegalArgumentException("union: unknown tag: " + _tag);
         int _aidl_value;
         _aidl_value = _aidl_parcel.readInt();
         _set(_aidl_tag, _aidl_value);
@@ -616,11 +601,8 @@ public interface ITrunkStableTest extends android.os.IInterface
      * getInterfaceVersion} returns as that is the version of the interface
      * that the remote object is implementing.
      */
-    public static final int VERSION = true ? 1 : 2;
-    // Interface is being downgraded to the last frozen version due to
-    // RELEASE_AIDL_USE_UNFROZEN. See
-    // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
-    public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+    public static final int VERSION = 2;
+    public static final String HASH = "notfrozen";
     /** Default implementation for IMyCallback. */
     public static class Default implements android.aidl.test.trunk.ITrunkStableTest.IMyCallback
     {
@@ -770,9 +752,6 @@ public interface ITrunkStableTest extends android.os.IInterface
           }
           case TRANSACTION_repeatOtherParcelable:
           {
-            if (true) {
-              throw new android.os.RemoteException("Method repeatOtherParcelable is unimplemented.");
-            }
             android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable _arg0;
             _arg0 = data.readTypedObject(android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable.CREATOR);
             data.enforceNoDataAvail();
@@ -870,9 +849,6 @@ public interface ITrunkStableTest extends android.os.IInterface
         }
         @Override public android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable repeatOtherParcelable(android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable input) throws android.os.RemoteException
         {
-          if (true) {
-            throw new android.os.RemoteException("Method repeatOtherParcelable is unimplemented.");
-          }
           android.os.Parcel _data = android.os.Parcel.obtain(asBinder());
           android.os.Parcel _reply = android.os.Parcel.obtain();
           android.aidl.test.trunk.ITrunkStableTest.MyOtherParcelable _result;

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=ndk -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-ndk-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -171,7 +171,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_onTransact
       break;
     }
     case (FIRST_CALL_TRANSACTION + 4 /*repeatOtherParcelable*/): {
-      if (true) break;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable _aidl_return;
 
@@ -519,10 +518,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  if (true) {
-    _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;
-    goto _aidl_error;
-  }
   _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 
@@ -809,15 +804,13 @@ binder_status_t ITrunkStableTest::MyParcelable::readFromParcel(const AParcel* _a
   _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &b);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  if (false) {
-    if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
-      AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
-      return _aidl_ret_status;
-    }
-    _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &c);
-    if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
-
+  if (AParcel_getDataPosition(_aidl_parcel) - _aidl_start_pos >= _aidl_parcelable_size) {
+    AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
+    return _aidl_ret_status;
   }
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_parcel, &c);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos + _aidl_parcelable_size);
   return _aidl_ret_status;
 }
@@ -833,11 +826,9 @@ binder_status_t ITrunkStableTest::MyParcelable::writeToParcel(AParcel* _aidl_par
   _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, b);
   if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  if (false) {
-    _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, c);
-    if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
+  _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_parcel, c);
+  if (_aidl_ret_status != STATUS_OK) return _aidl_ret_status;
 
-  }
   int32_t _aidl_end_pos = AParcel_getDataPosition(_aidl_parcel);
   AParcel_setDataPosition(_aidl_parcel, _aidl_start_pos);
   AParcel_writeInt32(_aidl_parcel, _aidl_end_pos - _aidl_start_pos);
@@ -883,7 +874,6 @@ binder_status_t ITrunkStableTest::MyUnion::readFromParcel(const AParcel* _parcel
     }
     return STATUS_OK; }
   case c: {
-    if (true) return STATUS_BAD_VALUE;
     int32_t _aidl_value;
     if ((_aidl_ret_status = ::ndk::AParcel_readData(_parcel, &_aidl_value)) != STATUS_OK) return _aidl_ret_status;
     if constexpr (std::is_trivially_copyable_v<int32_t>) {
@@ -902,7 +892,7 @@ binder_status_t ITrunkStableTest::MyUnion::writeToParcel(AParcel* _parcel) const
   switch (getTag()) {
   case a: return ::ndk::AParcel_writeData(_parcel, get<a>());
   case b: return ::ndk::AParcel_writeData(_parcel, get<b>());
-  case c: return true ? STATUS_BAD_VALUE : ::ndk::AParcel_writeData(_parcel, get<c>());
+  case c: return ::ndk::AParcel_writeData(_parcel, get<c>());
   }
   __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
 }
@@ -1035,7 +1025,6 @@ static binder_status_t _aidl_android_aidl_test_trunk_ITrunkStableTest_IMyCallbac
       break;
     }
     case (FIRST_CALL_TRANSACTION + 3 /*repeatOtherParcelable*/): {
-      if (true) break;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable in_input;
       ::aidl::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable _aidl_return;
 
@@ -1331,10 +1320,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("in_input", ::android::internal::ToString(in_input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  if (true) {
-    _aidl_ret_status = STATUS_UNKNOWN_TRANSACTION;
-    goto _aidl_error;
-  }
   _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
   if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
 

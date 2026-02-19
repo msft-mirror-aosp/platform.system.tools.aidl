@@ -553,6 +553,7 @@ public:
   enum : int32_t { A55 = 1 };
   enum : int32_t { A56 = 1 };
   enum : int32_t { A57 = 1 };
+  static inline const int32_t version = 12;
   static constexpr uint32_t TRANSACTION_UnimplementedMethod = FIRST_CALL_TRANSACTION + 0;
   static constexpr uint32_t TRANSACTION_Deprecated = FIRST_CALL_TRANSACTION + 1;
   static constexpr uint32_t TRANSACTION_TestOneway = FIRST_CALL_TRANSACTION + 2;
@@ -699,6 +700,7 @@ public:
   virtual ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) = 0;
   virtual ::ndk::ScopedAStatus GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) = 0;
+  virtual ::ndk::ScopedAStatus getInterfaceVersion(int32_t* _aidl_return) = 0;
 };
 class ITestServiceDefault : public ITestService {
 public:
@@ -773,6 +775,7 @@ public:
   ::ndk::ScopedAStatus GetCppJavaTests(::ndk::SpAIBinder* _aidl_return) override;
   ::ndk::ScopedAStatus getBackendType(::aidl::android::aidl::tests::BackendType* _aidl_return) override;
   ::ndk::ScopedAStatus GetCircular(::aidl::android::aidl::tests::CircularParcelable* out_cp, std::shared_ptr<::aidl::android::aidl::tests::ICircular>* _aidl_return) override;
+  ::ndk::ScopedAStatus getInterfaceVersion(int32_t* _aidl_return) override;
   ::ndk::SpAIBinder asBinder() override;
   bool isRemote() override;
 };

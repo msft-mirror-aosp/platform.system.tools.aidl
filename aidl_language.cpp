@@ -223,6 +223,10 @@ const std::vector<AidlAnnotation::Schema>& AidlAnnotation::AllSchemas() {
        "PropagateAllowBlocking",
        CONTEXT_METHOD,
        {}},
+      {AidlAnnotation::Type::VERSION_SUPPORT,
+       "VersionSupport",
+       CONTEXT_TYPE_INTERFACE,
+       {{"version", kIntType, /* required= */ true}}},
   };
   return kSchemas;
 }
@@ -498,6 +502,13 @@ bool AidlAnnotatable::IsJavaOnlyImmutable() const {
 
 bool AidlAnnotatable::IsFixedSize() const {
   return GetAnnotation(annotations_, AidlAnnotation::Type::FIXED_SIZE);
+}
+
+std::optional<int> AidlAnnotatable::GetVersionSupportVersion() const {
+  if (const auto* ann = GetAnnotation(annotations_, AidlAnnotation::Type::VERSION_SUPPORT)) {
+    return ann->ParamValue<int32_t>("version");
+  }
+  return std::nullopt;
 }
 
 const AidlAnnotation* AidlAnnotatable::UnsupportedAppUsage() const {
@@ -1627,6 +1638,19 @@ bool AidlDefinedType::LanguageSpecificCheckValid(Options::Language lang) const {
   return v.success;
 }
 
+bool AidlDefinedType::VersionSpecificCheckValid(int version) const {
+  struct Visitor : AidlVisitor {
+    Visitor(int version) : version(version) {}
+    void Visit(const AidlInterface& type) override {
+      success = success && type.VersionSpecificCheckValid(version);
+    }
+    int version;
+    bool success = true;
+  } v(version);
+  VisitTopDown(v, *this);
+  return v.success;
+}
+
 AidlEnumerator::AidlEnumerator(const AidlLocation& location, const std::string& name,
                                AidlConstantValue* value, const Comments& comments)
     : AidlCommentable(location, comments),
@@ -1843,6 +1867,20 @@ bool AidlInterface::CheckValidPermissionAnnotations(const AidlMethod& m) const {
   return true;
 }
 
+bool AidlInterface::VersionSpecificCheckValid(int version) const {
+  if (version > 0) {
+    std::optional<int> ver = GetVersionSupportVersion();
+    if (ver.has_value() && version != ver.value()) {
+      AIDL_ERROR(this) << "The version declared in the @VersionSupport version variable ("
+                       << std::to_string(ver.value())
+                       << ") must match the actual version of the interface ("
+                       << std::to_string(version) << ").";
+      return false;
+    }
+  }
+  return true;
+}
+
 bool AidlInterface::UsesPermissions() const {
   if (EnforceExpression()) {
     return true;
@@ -1861,6 +1899,14 @@ std::string AidlInterface::GetDescriptor() const {
     return annotatedDescriptor;
   }
   return GetCanonicalName();
+}
+
+std::optional<int> AidlInterface::Version(const Options& options) const {
+  std::optional<int> ver = GetVersionSupportVersion();
+  if (!ver.has_value() && options.Version() > 0) {
+    ver = options.Version();
+  }
+  return ver;
 }
 
 AidlDocument::AidlDocument(const AidlLocation& location, const Comments& comments,

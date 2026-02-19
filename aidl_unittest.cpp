@@ -1,18 +1,3 @@
-/*
- * Copyright (C) 2015, The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 #include "aidl.h"
 
@@ -1985,7 +1970,7 @@ TEST_P(AidlTest, MultipleAnnotationsOnTypeParameter) {
                         "@VintfStability."));
 }
 
-TEST_F(AidlTest, ApiDumpWithAnnotatedTypeParameters) {
+TEST_P(AidlTest, ApiDumpWithAnnotatedTypeParameters) {
   io_delegate_.SetFileContents("foo/bar/Generic.aidl",
                                "package foo.bar;\n"
                                "parcelable Generic<@FixedSize T, @VintfStability U> {}\n");
@@ -2002,6 +1987,63 @@ TEST_F(AidlTest, ApiDumpWithAnnotatedTypeParameters) {
                                      "parcelable Generic<@FixedSize T, @VintfStability U> {\n"
                                      "}\n"),
             actual);
+}
+
+TEST_P(AidlTest, VersionSupport) {
+  AidlTypenames typenames;
+  auto parse_result =
+      Parse("p/IFoo.aidl", "package p; @VersionSupport(version=1) interface IFoo {}", typenames,
+            GetLanguage());
+  ASSERT_NE(nullptr, parse_result);
+  const AidlInterface* iface = parse_result->AsInterface();
+  ASSERT_NE(nullptr, iface);
+  Options options = Options::From("aidl p/IFoo.aidl -I . --lang=cpp -o out -h out");
+
+  EXPECT_TRUE(iface->Version(options).has_value());
+  EXPECT_EQ(1, iface->Version(options).value());
+}
+
+TEST_P(AidlTest, VersionSupportMisspelled) {
+  AidlTypenames typenames;
+  CaptureStderr();
+  auto parse_result = Parse("p/IFoo.aidl", "package p; @VersionSupport(ver=1) interface IFoo {}",
+                            typenames, GetLanguage());
+  EXPECT_EQ(nullptr, parse_result);
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Parameter ver not supported for annotation VersionSupport."));
+}
+
+TEST_P(AidlTest, VersionSupportMissingParam) {
+  AidlTypenames typenames;
+  CaptureStderr();
+  auto parse_result = Parse("p/IFoo.aidl", "package p; @VersionSupport interface IFoo {}",
+                            typenames, GetLanguage());
+  EXPECT_EQ(nullptr, parse_result);
+  EXPECT_THAT(GetCapturedStderr(), HasSubstr("Missing 'version' on @VersionSupport."));
+}
+
+TEST_P(AidlTest, VersionSupportInvalidType) {
+  AidlTypenames typenames;
+  CaptureStderr();
+  auto parse_result =
+      Parse("p/IFoo.aidl", "package p; @VersionSupport(version=\"1\") interface IFoo {}", typenames,
+            GetLanguage());
+  EXPECT_EQ(nullptr, parse_result);
+  EXPECT_THAT(GetCapturedStderr(),
+              HasSubstr("Invalid value for parameter version on annotation VersionSupport."));
+}
+
+TEST_P(AidlTest, VersionSupportWrongVersion) {
+  io_delegate_.SetFileContents("IFoo.aidl", "@VersionSupport(version=12) interface IFoo {}");
+  Options options = Options::From("aidl IFoo.aidl -I . --lang=cpp --version 1 -o out -h out");
+
+  const string expected_stderr =
+      "ERROR: IFoo.aidl:1.28-38: The version declared in the @VersionSupport version variable (12) "
+      "must match the actual version of the interface (1).\n";
+
+  CaptureStderr();
+  EXPECT_FALSE(compile_aidl(options, io_delegate_));
+  EXPECT_EQ(expected_stderr, GetCapturedStderr());
 }
 
 TEST_F(AidlTest, RejectInvalidAnnotationOnTypeParameter) {
@@ -3415,6 +3457,40 @@ TEST_F(AidlTestCompatibleChanges, ReorderedAnnatations) {
                                "@JavaPassthrough(annotation=\"Bob\")"
                                "@JavaPassthrough(annotation=\"Alice\")"
                                "parcelable Foo {}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
+TEST_F(AidlTestCompatibleChanges, AddVersionSupportAnnotation) {
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
+                               "@VersionSupport(version=1)"
+                               "interface IFoo {}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
+TEST_F(AidlTestCompatibleChanges, ModifyVersionSupportAnnotation) {
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
+                               "@VersionSupport(version=1)"
+                               "interface IFoo {}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
+                               "@VersionSupport(version=2)"
+                               "interface IFoo {}");
+  EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
+}
+
+TEST_F(AidlTestCompatibleChanges, RemoveVersionSupportAnnotation) {
+  io_delegate_.SetFileContents("old/p/IFoo.aidl",
+                               "package p;"
+                               "@VersionSupport(version=1)"
+                               "interface IFoo {}");
+  io_delegate_.SetFileContents("new/p/IFoo.aidl",
+                               "package p;"
+                               "interface IFoo {}");
   EXPECT_TRUE(::android::aidl::check_api(options_, io_delegate_));
 }
 

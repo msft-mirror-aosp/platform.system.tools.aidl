@@ -17,6 +17,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.aidl.test.trunk;
+@VersionSupport(version=2)
 interface ITrunkStableTest {
   android.aidl.test.trunk.ITrunkStableTest.MyParcelable repeatParcelable(in android.aidl.test.trunk.ITrunkStableTest.MyParcelable input);
   android.aidl.test.trunk.ITrunkStableTest.MyEnum repeatEnum(in android.aidl.test.trunk.ITrunkStableTest.MyEnum input);

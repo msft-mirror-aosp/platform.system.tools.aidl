@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -44,11 +44,8 @@ class LIBBINDER_EXPORTED ITrunkStableTest : public ::android::IInterface {
 public:
   typedef ITrunkStableTestDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TrunkStableTest)
-  // Interface is being downgraded to the last frozen version due to
-  // RELEASE_AIDL_USE_UNFROZEN. See
-  // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
-  static inline const int32_t VERSION = true ? 1 : 2;
-  static inline const std::string HASH = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
+  static inline const int32_t VERSION = 2;
+  static inline const std::string HASH = "notfrozen";
   class LIBBINDER_EXPORTED MyParcelable : public ::android::Parcelable {
   public:
     int32_t a = 0;
@@ -238,11 +235,8 @@ public:
   public:
     typedef IMyCallbackDelegator DefaultDelegator;
     DECLARE_META_INTERFACE(MyCallback)
-    // Interface is being downgraded to the last frozen version due to
-    // RELEASE_AIDL_USE_UNFROZEN. See
-    // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
-    static inline const int32_t VERSION = true ? 1 : 2;
-    static inline const std::string HASH = true ? "88311b9118fb6fe9eff4a2ca19121de0587f6d5f" : "notfrozen";
+    static inline const int32_t VERSION = 2;
+    static inline const std::string HASH = "notfrozen";
     virtual ::android::binder::Status repeatParcelable(const ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable& input, ::android::aidl::test::trunk::ITrunkStableTest::MyParcelable* _aidl_return) = 0;
     virtual ::android::binder::Status repeatEnum(::android::aidl::test::trunk::ITrunkStableTest::MyEnum input, ::android::aidl::test::trunk::ITrunkStableTest::MyEnum* _aidl_return) = 0;
     virtual ::android::binder::Status repeatUnion(const ::android::aidl::test::trunk::ITrunkStableTest::MyUnion& input, ::android::aidl::test::trunk::ITrunkStableTest::MyUnion* _aidl_return) = 0;

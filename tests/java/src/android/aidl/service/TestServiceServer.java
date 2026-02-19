@@ -150,6 +150,11 @@ public class TestServiceServer extends ITestService.Stub {
   }
 
   @Override
+  public int getInterfaceVersion() {
+    return super.VERSION;
+  }
+
+  @Override
   public int UnimplementedMethod(int arg) throws RemoteException {
     throw new UnsupportedOperationException();
   }

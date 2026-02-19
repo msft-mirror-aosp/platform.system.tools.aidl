@@ -70,6 +70,7 @@ class LIBBINDER_EXPORTED ITestService : public ::android::IInterface {
 public:
   typedef ITestServiceDelegator DefaultDelegator;
   DECLARE_META_INTERFACE(TestService)
+  static inline const int32_t VERSION = 12;
   class LIBBINDER_EXPORTED Empty : public ::android::Parcelable {
   public:
     inline bool operator==(const Empty&) const {
@@ -621,6 +622,7 @@ public:
   virtual ::android::binder::Status GetCppJavaTests(::android::sp<::android::IBinder>* _aidl_return) = 0;
   virtual ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* _aidl_return) = 0;
   virtual ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) = 0;
+  virtual int32_t getInterfaceVersion() = 0;
 };  // class ITestService
 
 class LIBBINDER_EXPORTED ITestServiceDefault : public ITestService {
@@ -840,6 +842,9 @@ public:
   }
   ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* /*cp*/, ::android::sp<::android::aidl::tests::ICircular>* /*_aidl_return*/) override {
     return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);
+  }
+  int32_t getInterfaceVersion() override {
+    return 0;
   }
 };  // class ITestServiceDefault
 }  // namespace tests
