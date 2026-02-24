@@ -36,8 +36,8 @@ public interface IProtectedInterface extends android.os.IInterface
       }
       mEnforcer = enforcer;
     }
-    @Deprecated
     /** Default constructor. */
+    @Deprecated
     public Stub() {
       this(android.os.PermissionEnforcer.fromContext(
          android.app.ActivityThread.currentSystemContext()));
