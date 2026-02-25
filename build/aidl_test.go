@@ -1891,7 +1891,8 @@ func TestExplicitAidlModuleImport(t *testing.T) {
 				versions: [
 					"1",
 				],
-				imports: ["bar-`+importVersion+`"]
+				imports: ["bar-`+importVersion+`"],
+				split_all_variants: true,
 			}
 
 			aidl_interface {
