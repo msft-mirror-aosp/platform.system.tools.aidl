@@ -292,8 +292,8 @@ void StubClass::MakeConstructors(const AidlInterface* interfaceType) {
 
   // Setup a default constructor for permissions interfaces.
   if (interfaceType->UsesPermissions()) {
-    code << "@Deprecated\n";
     code << "/** Default constructor. */\n";
+    code << "@Deprecated\n";
     code << "public Stub() {\n";
     code.Indent();
     code << "this(android.os.PermissionEnforcer.fromContext(\n";
