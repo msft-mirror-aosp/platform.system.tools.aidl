@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/nested/INestedService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/nested/INestedService.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/nested/INestedService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/nested/INestedService.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -36,7 +36,6 @@ BpNestedService::BpNestedService(const ::android::sp<::android::IBinder>& _aidl_
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::INestedService::flipStatus::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -71,7 +70,6 @@ BpNestedService::BpNestedService(const ::android::sp<::android::IBinder>& _aidl_
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::INestedService::flipStatusWithCallback::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -142,7 +140,6 @@ BnNestedService::BnNestedService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::INestedService::flipStatus::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_p);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -173,7 +170,6 @@ BnNestedService::BnNestedService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::INestedService::flipStatusWithCallback::cppServer");
     _aidl_ret_status = _aidl_data.readByte(reinterpret_cast<int8_t *>(&in_status));
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -288,7 +284,6 @@ INestedService::BpCallback::BpCallback(const ::android::sp<::android::IBinder>& 
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICallback::done::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -353,7 +348,6 @@ INestedService::BnCallback::BnCallback()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICallback::done::cppServer");
     _aidl_ret_status = _aidl_data.readByte(reinterpret_cast<int8_t *>(&in_status));
     if (((_aidl_ret_status) != (::android::OK))) {
       break;

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -t --min_sdk_version current -pout/soong/.intermediates/system/tools/aidl/aidl-test-interface_interface/preprocessed.aidl --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-cpp-java-test-interface-cpp-source/gen/staging/android/aidl/tests/ICppJavaTests.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-cpp-java-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-cpp-java-test-interface-cpp-source/gen/staging -Iframeworks/native/aidl/binder -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ICppJavaTests.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation --min_sdk_version current -pout/soong/.intermediates/system/tools/aidl/aidl-test-interface_interface/preprocessed.aidl --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-cpp-java-test-interface-cpp-source/gen/staging/android/aidl/tests/ICppJavaTests.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-cpp-java-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-cpp-java-test-interface-cpp-source/gen/staging -Iframeworks/native/aidl/binder -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ICppJavaTests.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -33,7 +33,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatBadParcelable::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -68,7 +67,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatGenericParcelable::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -107,7 +105,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatPersistableBundle::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -142,7 +139,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReversePersistableBundles::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -185,7 +181,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseUnion::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -224,7 +219,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseNamedCallbackList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -263,7 +257,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatFileDescriptor::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -298,7 +291,6 @@ BpCppJavaTests::BpCppJavaTests(const ::android::sp<::android::IBinder>& _aidl_im
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseFileDescriptorArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -381,7 +373,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatBadParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -413,7 +404,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatGenericParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -448,7 +438,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatPersistableBundle::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -480,7 +469,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReversePersistableBundles::cppServer");
     _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -520,7 +508,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseUnion::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -556,7 +543,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseNamedCallbackList::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -591,7 +577,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::RepeatFileDescriptor::cppServer");
     _aidl_ret_status = _aidl_data.readUniqueFileDescriptor(&in_read);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -623,7 +608,6 @@ BnCppJavaTests::BnCppJavaTests()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ICppJavaTests::ReverseFileDescriptorArray::cppServer");
     _aidl_ret_status = _aidl_data.readUniqueFileDescriptorVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;

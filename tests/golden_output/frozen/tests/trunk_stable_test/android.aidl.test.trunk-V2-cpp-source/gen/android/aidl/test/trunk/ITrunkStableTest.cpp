@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash c294a8f61da748b69ce6a09db92094e68c67614a --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen --min_sdk_version current --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash c294a8f61da748b69ce6a09db92094e68c67614a --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -40,7 +40,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatParcelable::cppClient");
   BpTrunkStableTest::TransactionLog _transaction_log;
   if (BpTrunkStableTest::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -94,7 +93,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatEnum::cppClient");
   BpTrunkStableTest::TransactionLog _transaction_log;
   if (BpTrunkStableTest::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -148,7 +146,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatUnion::cppClient");
   BpTrunkStableTest::TransactionLog _transaction_log;
   if (BpTrunkStableTest::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -202,7 +199,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::callMyCallback::cppClient");
   BpTrunkStableTest::TransactionLog _transaction_log;
   if (BpTrunkStableTest::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("cb", ::android::internal::ToString(cb));
@@ -251,7 +247,6 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatOtherParcelable::cppClient");
   BpTrunkStableTest::TransactionLog _transaction_log;
   if (BpTrunkStableTest::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -384,7 +379,6 @@ BnTrunkStableTest::BnTrunkStableTest()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -434,7 +428,6 @@ BnTrunkStableTest::BnTrunkStableTest()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatEnum::cppServer");
     _aidl_ret_status = _aidl_data.readByte(reinterpret_cast<int8_t *>(&in_input));
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -484,7 +477,6 @@ BnTrunkStableTest::BnTrunkStableTest()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatUnion::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -533,7 +525,6 @@ BnTrunkStableTest::BnTrunkStableTest()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::callMyCallback::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinder(&in_cb);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -582,7 +573,6 @@ BnTrunkStableTest::BnTrunkStableTest()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITrunkStableTest::repeatOtherParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -828,7 +818,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatParcelable::cppClient");
   ITrunkStableTest::BpMyCallback::TransactionLog _transaction_log;
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -882,7 +871,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatEnum::cppClient");
   ITrunkStableTest::BpMyCallback::TransactionLog _transaction_log;
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -936,7 +924,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatUnion::cppClient");
   ITrunkStableTest::BpMyCallback::TransactionLog _transaction_log;
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -990,7 +977,6 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatOtherParcelable::cppClient");
   ITrunkStableTest::BpMyCallback::TransactionLog _transaction_log;
   if (ITrunkStableTest::BpMyCallback::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
@@ -1122,7 +1108,6 @@ ITrunkStableTest::BnMyCallback::BnMyCallback()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -1172,7 +1157,6 @@ ITrunkStableTest::BnMyCallback::BnMyCallback()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatEnum::cppServer");
     _aidl_ret_status = _aidl_data.readByte(reinterpret_cast<int8_t *>(&in_input));
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -1222,7 +1206,6 @@ ITrunkStableTest::BnMyCallback::BnMyCallback()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatUnion::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -1276,7 +1259,6 @@ ITrunkStableTest::BnMyCallback::BnMyCallback()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::IMyCallback::repeatOtherParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging/android/aidl/tests/ITestService.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl-test-interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/tests/ITestService.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -46,7 +46,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::UnimplementedMethod::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -82,7 +81,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::Deprecated::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -109,7 +107,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   _aidl_data.markForBinder(remoteStrong());
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TestOneway::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -130,7 +127,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatBoolean::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -166,7 +162,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatByte::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -202,7 +197,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatChar::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -238,7 +232,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatInt::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -274,7 +267,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatLong::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -310,7 +302,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatFloat::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -346,7 +337,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatDouble::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -382,7 +372,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatString::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -418,7 +407,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatByteEnum::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -454,7 +442,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatIntEnum::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -490,7 +477,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatLongEnum::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -526,7 +512,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseBoolean::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -570,7 +555,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseByte::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -614,7 +598,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseChar::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -658,7 +641,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseInt::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -702,7 +684,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseLong::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -746,7 +727,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseFloat::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -790,7 +770,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseDouble::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -834,7 +813,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseString::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -878,7 +856,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseByteEnum::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -922,7 +899,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseIntEnum::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -966,7 +942,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseLongEnum::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1010,7 +985,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetOtherTestService::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1046,7 +1020,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::SetOtherTestService::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1086,7 +1059,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyName::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1126,7 +1098,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetInterfaceArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1162,7 +1133,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyNamesWithInterfaceArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1202,7 +1172,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetNullableInterfaceArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1238,7 +1207,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyNamesWithNullableInterfaceArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1278,7 +1246,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetInterfaceList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1314,7 +1281,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyNamesWithInterfaceList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1354,7 +1320,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseStringList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1394,7 +1359,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatParcelFileDescriptor::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1430,7 +1394,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseParcelFileDescriptorArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1474,7 +1437,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ThrowServiceException::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1506,7 +1468,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableIntArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1542,7 +1503,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableByteEnumArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1578,7 +1538,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableIntEnumArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1614,7 +1573,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableLongEnumArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1650,7 +1608,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableString::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1686,7 +1643,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableStringList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1722,7 +1678,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableParcelable::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1758,7 +1713,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableParcelableArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1794,7 +1748,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableParcelableList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1830,7 +1783,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesAnIBinder::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1862,7 +1814,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesANullableIBinder::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1894,7 +1845,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesAnIBinderList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1926,7 +1876,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesANullableIBinderList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1958,7 +1907,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatUtf8CppString::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -1994,7 +1942,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableUtf8CppString::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2030,7 +1977,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseUtf8CppString::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2074,7 +2020,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseNullableUtf8CppString::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2118,7 +2063,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseUtf8CppStringList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2158,7 +2102,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCallback::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2194,7 +2137,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::FillOutStructuredParcelable::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2230,7 +2172,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatExtendableParcelable::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2266,7 +2207,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatExtendableParcelableVintf::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2302,7 +2242,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseList::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2338,7 +2277,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseIBinderArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2382,7 +2320,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseNullableIBinderArray::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2426,7 +2363,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatSimpleParcelable::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2466,7 +2402,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseSimpleParcelables::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2510,7 +2445,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetOldNameInterface::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2542,7 +2476,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetNewNameInterface::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2574,7 +2507,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetUnionTags::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2610,7 +2542,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCppJavaTests::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2642,7 +2573,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::getBackendType::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2674,7 +2604,6 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCircular::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -2833,7 +2762,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::UnimplementedMethod::cppServer");
     _aidl_ret_status = _aidl_data.readInt32(&in_arg);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -2862,7 +2790,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::Deprecated::cppServer");
     ::android::binder::Status _aidl_status(Deprecated());
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -2879,7 +2806,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TestOneway::cppServer");
     ::android::binder::Status _aidl_status(TestOneway());
   }
   break;
@@ -2891,7 +2817,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatBoolean::cppServer");
     _aidl_ret_status = _aidl_data.readBool(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -2922,7 +2847,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatByte::cppServer");
     _aidl_ret_status = _aidl_data.readByte(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -2953,7 +2877,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatChar::cppServer");
     _aidl_ret_status = _aidl_data.readChar(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -2984,7 +2907,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatInt::cppServer");
     _aidl_ret_status = _aidl_data.readInt32(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3015,7 +2937,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatLong::cppServer");
     _aidl_ret_status = _aidl_data.readInt64(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3046,7 +2967,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatFloat::cppServer");
     _aidl_ret_status = _aidl_data.readFloat(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3077,7 +2997,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatDouble::cppServer");
     _aidl_ret_status = _aidl_data.readDouble(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3108,7 +3027,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatString::cppServer");
     _aidl_ret_status = _aidl_data.readString16(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3139,7 +3057,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatByteEnum::cppServer");
     _aidl_ret_status = _aidl_data.readByte(reinterpret_cast<int8_t *>(&in_token));
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3170,7 +3087,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatIntEnum::cppServer");
     _aidl_ret_status = _aidl_data.readInt32(reinterpret_cast<int32_t *>(&in_token));
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3201,7 +3117,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatLongEnum::cppServer");
     _aidl_ret_status = _aidl_data.readInt64(reinterpret_cast<int64_t *>(&in_token));
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3233,7 +3148,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseBoolean::cppServer");
     _aidl_ret_status = _aidl_data.readBoolVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3273,7 +3187,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseByte::cppServer");
     _aidl_ret_status = _aidl_data.readByteVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3313,7 +3226,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseChar::cppServer");
     _aidl_ret_status = _aidl_data.readCharVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3353,7 +3265,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseInt::cppServer");
     _aidl_ret_status = _aidl_data.readInt32Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3393,7 +3304,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseLong::cppServer");
     _aidl_ret_status = _aidl_data.readInt64Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3433,7 +3343,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseFloat::cppServer");
     _aidl_ret_status = _aidl_data.readFloatVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3473,7 +3382,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseDouble::cppServer");
     _aidl_ret_status = _aidl_data.readDoubleVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3513,7 +3421,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseString::cppServer");
     _aidl_ret_status = _aidl_data.readString16Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3553,7 +3460,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseByteEnum::cppServer");
     _aidl_ret_status = _aidl_data.readEnumVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3593,7 +3499,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseIntEnum::cppServer");
     _aidl_ret_status = _aidl_data.readEnumVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3633,7 +3538,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseLongEnum::cppServer");
     _aidl_ret_status = _aidl_data.readEnumVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3672,7 +3576,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetOtherTestService::cppServer");
     _aidl_ret_status = _aidl_data.readString16(&in_name);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3704,7 +3607,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::SetOtherTestService::cppServer");
     _aidl_ret_status = _aidl_data.readString16(&in_name);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3740,7 +3642,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyName::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinder(&in_service);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3775,7 +3676,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetInterfaceArray::cppServer");
     _aidl_ret_status = _aidl_data.readString16Vector(&in_names);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3807,7 +3707,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyNamesWithInterfaceArray::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_services);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3842,7 +3741,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetNullableInterfaceArray::cppServer");
     _aidl_ret_status = _aidl_data.readString16Vector(&in_names);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3874,7 +3772,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyNamesWithNullableInterfaceArray::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_services);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3909,7 +3806,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetInterfaceList::cppServer");
     _aidl_ret_status = _aidl_data.readString16Vector(&in_names);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3941,7 +3837,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::VerifyNamesWithInterfaceList::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_services);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -3977,7 +3872,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseStringList::cppServer");
     _aidl_ret_status = _aidl_data.readString16Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4012,7 +3906,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatParcelFileDescriptor::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_read);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4044,7 +3937,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseParcelFileDescriptorArray::cppServer");
     _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4082,7 +3974,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ThrowServiceException::cppServer");
     _aidl_ret_status = _aidl_data.readInt32(&in_code);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4109,7 +4000,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableIntArray::cppServer");
     _aidl_ret_status = _aidl_data.readInt32Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4140,7 +4030,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableByteEnumArray::cppServer");
     _aidl_ret_status = _aidl_data.readEnumVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4171,7 +4060,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableIntEnumArray::cppServer");
     _aidl_ret_status = _aidl_data.readEnumVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4202,7 +4090,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableLongEnumArray::cppServer");
     _aidl_ret_status = _aidl_data.readEnumVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4233,7 +4120,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableString::cppServer");
     _aidl_ret_status = _aidl_data.readString16(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4264,7 +4150,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableStringList::cppServer");
     _aidl_ret_status = _aidl_data.readString16Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4295,7 +4180,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4326,7 +4210,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableParcelableArray::cppServer");
     _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4357,7 +4240,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableParcelableList::cppServer");
     _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4387,7 +4269,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesAnIBinder::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinder(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4413,7 +4294,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesANullableIBinder::cppServer");
     _aidl_ret_status = _aidl_data.readNullableStrongBinder(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4439,7 +4319,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesAnIBinderList::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4465,7 +4344,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::TakesANullableIBinderList::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4492,7 +4370,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatUtf8CppString::cppServer");
     _aidl_ret_status = _aidl_data.readUtf8FromUtf16(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4523,7 +4400,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatNullableUtf8CppString::cppServer");
     _aidl_ret_status = _aidl_data.readUtf8FromUtf16(&in_token);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4555,7 +4431,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseUtf8CppString::cppServer");
     _aidl_ret_status = _aidl_data.readUtf8VectorFromUtf16Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4595,7 +4470,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseNullableUtf8CppString::cppServer");
     _aidl_ret_status = _aidl_data.readUtf8VectorFromUtf16Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4635,7 +4509,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseUtf8CppStringList::cppServer");
     _aidl_ret_status = _aidl_data.readUtf8VectorFromUtf16Vector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4670,7 +4543,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCallback::cppServer");
     _aidl_ret_status = _aidl_data.readBool(&in_return_null);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4700,7 +4572,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::FillOutStructuredParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_parcel);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4731,7 +4602,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatExtendableParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_ep);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4762,7 +4632,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatExtendableParcelableVintf::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_ep);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4793,7 +4662,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseList::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_list);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4825,7 +4693,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseIBinderArray::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4865,7 +4732,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseNullableIBinderArray::cppServer");
     _aidl_ret_status = _aidl_data.readStrongBinderVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4905,7 +4771,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::RepeatSimpleParcelable::cppServer");
     _aidl_ret_status = _aidl_data.readParcelable(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4941,7 +4806,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::ReverseSimpleParcelables::cppServer");
     _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -4979,7 +4843,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetOldNameInterface::cppServer");
     ::android::binder::Status _aidl_status(GetOldNameInterface(&_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -5001,7 +4864,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetNewNameInterface::cppServer");
     ::android::binder::Status _aidl_status(GetNewNameInterface(&_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -5024,7 +4886,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetUnionTags::cppServer");
     _aidl_ret_status = _aidl_data.readParcelableVector(&in_input);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -5054,7 +4915,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCppJavaTests::cppServer");
     ::android::binder::Status _aidl_status(GetCppJavaTests(&_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -5076,7 +4936,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::getBackendType::cppServer");
     ::android::binder::Status _aidl_status(getBackendType(&_aidl_return));
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -5099,7 +4958,6 @@ BnTestService::BnTestService()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ITestService::GetCircular::cppServer");
     if (auto st = _aidl_data.enforceNoDataAvail(); !st.isOk()) {
       _aidl_ret_status = st.writeToParcel(_aidl_reply);
       break;
@@ -5603,7 +5461,6 @@ ITestService::CompilerChecks::BpNoPrefixInterface::BpNoPrefixInterface(const ::a
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NoPrefixInterface::foo::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -5661,7 +5518,6 @@ ITestService::CompilerChecks::BnNoPrefixInterface::BnNoPrefixInterface()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NoPrefixInterface::foo::cppServer");
     ::android::binder::Status _aidl_status(foo());
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
@@ -5746,7 +5602,6 @@ ITestService::CompilerChecks::INoPrefixInterface::BpNestedNoPrefixInterface::BpN
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NestedNoPrefixInterface::foo::cppClient");
   _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
@@ -5804,7 +5659,6 @@ ITestService::CompilerChecks::INoPrefixInterface::BnNestedNoPrefixInterface::BnN
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::NestedNoPrefixInterface::foo::cppServer");
     ::android::binder::Status _aidl_status(foo());
     _aidl_ret_status = _aidl_status.writeToParcel(_aidl_reply);
     if (((_aidl_ret_status) != (::android::OK))) {
