@@ -30,6 +30,12 @@ import (
 //go:generate go run ../../../../build/blueprint/gobtools/codegen
 
 var (
+	mkdir       = android.Mkdir
+	rm          = android.Rm
+	sed         = android.Sed
+	tail        = android.Tail
+	cpIfChanged = android.CpIfChanged
+
 	aidlDirPrepareRule = pctx.StaticRule("aidlDirPrepareRule", blueprint.RuleParams{
 		Command:         `mkdir -p "${outDir}" && touch ${out} # ${in}`,
 		Description:     "create ${out}",
@@ -37,45 +43,42 @@ var (
 	}, "outDir")
 
 	aidlCppRule = pctx.StaticRule("aidlCppRule", blueprint.RuleParams{
-		Command: `mkdir -p "${headerDir}" && ` +
-			`mkdir -p "${outDir}/staging" && ` +
-			`mkdir -p "${headerDir}/staging" && ` +
-			`${aidlCmd} --lang=${lang} ${optionalFlags} --ninja -d ${outStagingFile}.d ` +
-			`-h ${headerDir}/staging -o ${outDir}/staging ${imports} ${nextImports} ${in} && ` +
-			`rsync --checksum ${outStagingFile}.d ${out}.d && ` +
-			`rsync --checksum ${outStagingFile} ${out} && ` +
-			`( [ -z "${stagingHeaders}" ] || rsync --checksum ${stagingHeaders} ${fullHeaderDir} ) && ` +
-			`sed -i 's/\/gen\/staging\//\/gen\//g' ${out}.d && ` +
-			`rm ${outStagingFile} ${outStagingFile}.d ${stagingHeaders}`,
-		Depfile:         "${out}.d",
-		Deps:            blueprint.DepsGCC,
-		CommandDeps:     []string{"${aidlCmd}"},
-		Restat:          true,
-		Description:     "AIDL ${lang} ${in}",
-		SandboxDisabled: true,
+		Command2: blueprint.NewCommand(
+			mkdir, ` -p "${headerDir}" && `,
+			mkdir, ` -p "${outDir}/staging" && `,
+			mkdir, ` -p "${headerDir}/staging" && `,
+			aidlCmd, ` --lang=${lang} ${optionalFlags} --ninja -d ${outStagingFile}.d `,
+			`-h ${headerDir}/staging -o ${outDir}/staging ${imports} ${nextImports} ${in} && `,
+			cpIfChanged, ` ${outStagingFile}.d ${out}.d && `,
+			cpIfChanged, ` ${outStagingFile} ${out} && `,
+			`( [ -z "${stagingHeaders}" ] || `, cpIfChanged, ` ${stagingHeaders} ${fullHeaderDir} ) && `,
+			sed, ` -i 's/\/gen\/staging\//\/gen\//g' ${out}.d && `,
+			rm, ` ${outStagingFile} ${outStagingFile}.d ${stagingHeaders}`,
+		),
+		CommandDepsTools: []*blueprint.HostTool{&tail},
+		Restat:           true,
+		Description:      "AIDL ${lang} ${in}",
 	}, "imports", "nextImports", "lang", "headerDir", "outDir", "optionalFlags", "stagingHeaders", "outStagingFile",
 		"fullHeaderDir")
 
 	aidlJavaRule = pctx.StaticRule("aidlJavaRule", blueprint.RuleParams{
-		Command: `${aidlCmd} --lang=java ${optionalFlags} --ninja -d ${out}.d ` +
+		Command2: blueprint.NewCommand(
+			aidlCmd, ` --lang=java ${optionalFlags} --ninja -d ${out}.d `,
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
-		Depfile:         "${out}.d",
-		Deps:            blueprint.DepsGCC,
-		CommandDeps:     []string{"${aidlCmd}"},
-		Restat:          true,
-		Description:     "AIDL Java ${in}",
-		SandboxDisabled: true,
+		),
+		CommandDepsTools: []*blueprint.HostTool{&tail},
+		Restat:           true,
+		Description:      "AIDL Java ${in}",
 	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlRustRule = pctx.StaticRule("aidlRustRule", blueprint.RuleParams{
-		Command: `${aidlCmd} --lang=rust ${optionalFlags} --ninja -d ${out}.d ` +
+		Command2: blueprint.NewCommand(
+			aidlCmd, ` --lang=rust ${optionalFlags} --ninja -d ${out}.d `,
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
-		Depfile:         "${out}.d",
-		Deps:            blueprint.DepsGCC,
-		CommandDeps:     []string{"${aidlCmd}"},
-		Restat:          true,
-		Description:     "AIDL Rust ${in}",
-		SandboxDisabled: true,
+		),
+		CommandDepsTools: []*blueprint.HostTool{&tail},
+		Restat:           true,
+		Description:      "AIDL Rust ${in}",
 	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlPhonyRule = pctx.StaticRule("aidlPhonyRule", blueprint.RuleParams{
@@ -165,6 +168,8 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	g.implicitInputs = append(g.implicitInputs, genDirTimestamp)
 	g.implicitInputs = append(g.implicitInputs, g.deps.implicits...)
 	g.implicitInputs = append(g.implicitInputs, g.deps.preprocessed...)
+	// Even though we generate one action per aidl file, the aidl files may depend on each other.
+	g.implicitInputs = append(g.implicitInputs, srcs...)
 
 	g.nextImportFlags = strings.Join(wrap("-N", nextImports, ""), " ")
 	g.importFlags = strings.Join(wrap("-I", g.deps.imports, ""), " ")
@@ -221,6 +226,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 		ext = "cpp"
 	}
 	outFile := android.PathForModuleGen(ctx, pathtools.ReplaceExtension(relPath, ext))
+	outDepfile := android.PathForModuleGen(ctx, pathtools.ReplaceExtension(relPath, ext+".d"))
 	outStagingFile := android.PathForModuleGen(ctx, pathtools.ReplaceExtension("staging/"+relPath, ext))
 	implicits := g.implicitInputs
 
@@ -247,7 +253,11 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 		if !strings.HasPrefix(baseDir, ctx.Config().SoongOutDir()) {
 			hashFile := android.ExistentPathForSource(ctx, baseDir, ".hash")
 			if hashFile.Valid() {
-				hash = "$$(tail -1 '" + hashFile.Path().String() + "')"
+				tail, _, err := tail.GetValueAndDeps(ctx.Config())
+				if err != nil {
+					ctx.ModuleErrorf("%s", err)
+				}
+				hash = "$$(" + tail + " -1 '" + hashFile.Path().String() + "')"
 				implicits = append(implicits, hashFile.Path())
 
 				g.hashFile = hashFile.Path()
@@ -299,7 +309,11 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 		}
 		hashFile := android.ExistentPathForSource(ctx, previousApiDir, ".hash")
 		if hashFile.Valid() {
-			previousHash := "$$(tail -1 '" + hashFile.Path().String() + "')"
+			tail, _, err := tail.GetValueAndDeps(ctx.Config())
+			if err != nil {
+				ctx.ModuleErrorf("%s", err)
+			}
+			previousHash := "$$(" + tail + " -1 '" + hashFile.Path().String() + "')"
 			implicits = append(implicits, hashFile.Path())
 			optionalFlags = append(optionalFlags, "--previous_hash "+previousHash)
 		} else {
@@ -310,10 +324,11 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 	var headers android.WritablePaths
 	if g.properties.Lang == langJava {
 		ctx.Build(pctx, android.BuildParams{
-			Rule:      aidlJavaRule,
-			Input:     src,
-			Implicits: implicits,
-			Output:    outFile,
+			Rule:           aidlJavaRule,
+			Input:          src,
+			Implicits:      implicits,
+			Output:         outFile,
+			ImplicitOutput: outDepfile,
 			Args: map[string]string{
 				"imports":       g.importFlags,
 				"nextImports":   g.nextImportFlags,
@@ -323,10 +338,11 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 		})
 	} else if g.properties.Lang == langRust {
 		ctx.Build(pctx, android.BuildParams{
-			Rule:      aidlRustRule,
-			Input:     src,
-			Implicits: implicits,
-			Output:    outFile,
+			Rule:           aidlRustRule,
+			Input:          src,
+			Implicits:      implicits,
+			Output:         outFile,
+			ImplicitOutput: outDepfile,
 			Args: map[string]string{
 				"imports":       g.importFlags,
 				"nextImports":   g.nextImportFlags,
@@ -376,6 +392,7 @@ func (g *aidlGenRule) generateBuildActionsForSingleAidl(ctx android.ModuleContex
 			Input:           src,
 			Implicits:       implicits,
 			Output:          outFile,
+			ImplicitOutput:  outDepfile,
 			ImplicitOutputs: headers,
 			Args: map[string]string{
 				"imports":        g.importFlags,
