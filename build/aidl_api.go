@@ -377,6 +377,7 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 		case interfaceDepTag:
 			iface := expectOtherModuleProvider(ctx, dep, AidlInterfaceInfoProvider)
 			deps.imports = append(deps.imports, iface.IncludeDirs...)
+			deps.implicits = append(deps.implicits, iface.IncludeDirDeps...)
 		case apiDepTag:
 			apiInfo := expectOtherModuleProvider(ctx, dep, aidlApiProvider)
 			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date

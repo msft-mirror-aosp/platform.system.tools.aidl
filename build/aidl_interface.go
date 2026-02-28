@@ -52,6 +52,10 @@ const (
 
 var pctx = android.NewPackageContext("android/aidl")
 
+var (
+	aidlCmd = pctx.HostTool("aidl")
+)
+
 func init() {
 	pctx.Import("android/soong/android")
 	pctx.HostBinToolVariable("aidlCmd", "aidl")
@@ -262,11 +266,12 @@ func isRelativePath(path string) bool {
 // @auto-generate: gob
 type AidlInterfaceInfo struct {
 	AidlInterfaceImportsInfo
-	Stability     string
-	ComputedTypes []string
-	UseUnfrozen   bool
-	Preprocessed  map[string]android.WritablePath
-	IncludeDirs   []string
+	Stability      string
+	ComputedTypes  []string
+	UseUnfrozen    bool
+	Preprocessed   map[string]android.WritablePath
+	IncludeDirs    []string
+	IncludeDirDeps android.Paths
 }
 
 var AidlInterfaceInfoProvider = blueprint.NewProvider[AidlInterfaceInfo]()
@@ -1235,13 +1240,30 @@ func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 
 	importsInfo, _ := android.ModuleProvider(ctx, AidlInterfaceImportsInfoProvider)
 
+	includeDirs := i.properties.Include_dirs
+	includeDirDeps := make(android.Paths, 0, len(includeDirs))
+	for _, i := range includeDirs {
+		phony := ctx.CreateNinjaPhonyOnce(fmt.Sprintf("aidl_include_dir_%s", strings.ReplaceAll(i, "/", "_")), []string{
+			i + "/**/*.aidl",
+		})
+		includeDirDeps = append(includeDirDeps, phony)
+	}
+	// Also add the current directory as an include directory because the aidl compiler will
+	// implicitly pick up referenced source files.
+	myDir := filepath.Join(ctx.ModuleDir(), i.properties.Local_include_dir)
+	phony := ctx.CreateNinjaPhonyOnce(fmt.Sprintf("aidl_include_dir_%s", strings.ReplaceAll(myDir, "/", "_")), []string{
+		myDir + "/**/*.aidl",
+	})
+	includeDirDeps = append(includeDirDeps, phony)
+
 	android.SetProvider(ctx, AidlInterfaceInfoProvider, AidlInterfaceInfo{
 		AidlInterfaceImportsInfo: importsInfo,
 		Stability:                proptools.StringDefault(i.properties.Stability, ""),
 		ComputedTypes:            i.computedTypes,
 		UseUnfrozen:              useUnfrozen(ctx, &i.properties.Always_use_unfrozen),
 		Preprocessed:             i.preprocessed,
-		IncludeDirs:              i.properties.Include_dirs,
+		IncludeDirs:              includeDirs,
+		IncludeDirDeps:           includeDirDeps,
 	})
 }
 

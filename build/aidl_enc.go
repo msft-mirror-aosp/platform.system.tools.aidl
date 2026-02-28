@@ -754,12 +754,27 @@ func (r AidlInterfaceInfo) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) er
 			}
 		}
 	}
+
+	if r.IncludeDirDeps == nil {
+		if err = gobtools.EncodeInt(buf, -1); err != nil {
+			return err
+		}
+	} else {
+		if err = gobtools.EncodeInt(buf, len(r.IncludeDirDeps)); err != nil {
+			return err
+		}
+		for val5 := 0; val5 < len(r.IncludeDirDeps); val5++ {
+			if err = gobtools.EncodeInterface(ctx, buf, r.IncludeDirDeps[val5]); err != nil {
+				return err
+			}
+		}
+	}
 	return err
 }
 
 func (r AidlInterfaceInfo) CustomHash(hasher *proptools.Hasher) error {
 	hasher.WriteString(":aidl.AidlInterfaceInfo")
-	hasher.WriteInt(6)
+	hasher.WriteInt(7)
 	if err := r.AidlInterfaceImportsInfo.CustomHash(hasher); err != nil {
 		return err
 	}
@@ -818,6 +833,36 @@ func (r AidlInterfaceInfo) CustomHash(hasher *proptools.Hasher) error {
 	for val8 := 0; val8 < len(r.IncludeDirs); val8++ {
 		hasher.WriteString(":.string")
 		hasher.WriteString(r.IncludeDirs[val8])
+	}
+	hasher.WriteString(":aidl.android.Paths")
+	hasher.WriteString(":.[]Path")
+	hasher.WriteInt(len(r.IncludeDirDeps))
+	for val9 := 0; val9 < len(r.IncludeDirDeps); val9++ {
+		hasher.WriteString("android/soong/android:android.Path")
+		val10 := r.IncludeDirDeps[val9] == nil
+		if val10 {
+			hasher.WriteByte(0)
+		} else {
+			if v := reflect.ValueOf(r.IncludeDirDeps[val9]); v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					panic(fmt.Errorf("nil pointer is not supported in interface"))
+				} else {
+					val11 := r.IncludeDirDeps[val9] == nil
+					if val11 {
+						hasher.WriteByte(0)
+					} else {
+						val12 := func(hasher *proptools.Hasher) error {
+							return r.IncludeDirDeps[val9].(proptools.CustomHash).CustomHash(hasher)
+						}
+						if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val12); err != nil {
+							return err
+						}
+					}
+				}
+			} else {
+				r.IncludeDirDeps[val9].(proptools.CustomHash).CustomHash(hasher)
+			}
+		}
 	}
 	return nil
 }
@@ -890,6 +935,24 @@ func (r *AidlInterfaceInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) e
 			err = gobtools.DecodeString(buf, &r.IncludeDirs[val17])
 			if err != nil {
 				return err
+			}
+		}
+	}
+
+	var val21 int
+	err = gobtools.DecodeInt(buf, &val21)
+	if err != nil {
+		return err
+	}
+	if val21 != -1 {
+		r.IncludeDirDeps = make([]android.Path, val21)
+		for val22 := 0; val22 < int(val21); val22++ {
+			if val24, err := gobtools.DecodeInterface(ctx, buf); err != nil {
+				return err
+			} else if val24 == nil {
+				r.IncludeDirDeps[val22] = nil
+			} else {
+				r.IncludeDirDeps[val22] = val24.(android.Path)
 			}
 		}
 	}
