@@ -55,7 +55,7 @@ var (
 			sed, ` -i 's/\/gen\/staging\//\/gen\//g' ${out}.d && `,
 			rm, ` ${outStagingFile} ${outStagingFile}.d ${stagingHeaders}`,
 		),
-		CommandDepsTools: []*blueprint.HostTool{&tail},
+		CommandDepsTools: []blueprint.HostTool{tail},
 		Restat:           true,
 		Description:      "AIDL ${lang} ${in}",
 	}, "imports", "nextImports", "lang", "headerDir", "outDir", "optionalFlags", "stagingHeaders", "outStagingFile",
@@ -66,7 +66,7 @@ var (
 			aidlCmd, ` --lang=java ${optionalFlags} --ninja -d ${out}.d `,
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		),
-		CommandDepsTools: []*blueprint.HostTool{&tail},
+		CommandDepsTools: []blueprint.HostTool{tail},
 		Restat:           true,
 		Description:      "AIDL Java ${in}",
 	}, "imports", "nextImports", "outDir", "optionalFlags")
@@ -76,7 +76,7 @@ var (
 			aidlCmd, ` --lang=rust ${optionalFlags} --ninja -d ${out}.d `,
 			`-o ${outDir} ${imports} ${nextImports} ${in}`,
 		),
-		CommandDepsTools: []*blueprint.HostTool{&tail},
+		CommandDepsTools: []blueprint.HostTool{tail},
 		Restat:           true,
 		Description:      "AIDL Rust ${in}",
 	}, "imports", "nextImports", "outDir", "optionalFlags")
