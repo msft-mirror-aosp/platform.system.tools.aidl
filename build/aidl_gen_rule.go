@@ -15,6 +15,7 @@
 package aidl
 
 import (
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -164,12 +165,24 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		return
 	}
 
+	// This phony saves 1.8GB of ninja file size
+	allSrcsPhony := android.PathForPhony(ctx, fmt.Sprintf(
+		"%s_%s_%s_all_srcs",
+		strings.ReplaceAll(ctx.ModuleDir(), "/", "_"),
+		ctx.ModuleName(),
+		ctx.ModuleSubDir()))
+	ctx.Build(pctx, android.BuildParams{
+		Rule:   blueprint.Phony,
+		Output: allSrcsPhony,
+		Inputs: srcs,
+	})
+
 	genDirTimestamp := android.PathForModuleGen(ctx, "timestamp") // $out/gen/timestamp
 	g.implicitInputs = append(g.implicitInputs, genDirTimestamp)
 	g.implicitInputs = append(g.implicitInputs, g.deps.implicits...)
 	g.implicitInputs = append(g.implicitInputs, g.deps.preprocessed...)
 	// Even though we generate one action per aidl file, the aidl files may depend on each other.
-	g.implicitInputs = append(g.implicitInputs, srcs...)
+	g.implicitInputs = append(g.implicitInputs, allSrcsPhony)
 
 	g.nextImportFlags = strings.Join(wrap("-N", nextImports, ""), " ")
 	g.importFlags = strings.Join(wrap("-I", g.deps.imports, ""), " ")
