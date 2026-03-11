@@ -1,6 +1,5 @@
 package android.aidl.test.trunk;
 
-@VersionSupport(version=2)
 interface ITrunkStableTest {
     parcelable MyParcelable {
         int a;

@@ -112,14 +112,4 @@ TEST_F(AidlNdkVersionedInterfaceTest, ErrorWhenCallingV2Api) {
   EXPECT_EQ(status.getStatus(), STATUS_UNKNOWN_TRANSACTION);
 }
 
-TEST_F(AidlNdkVersionedInterfaceTest, TestVersionSupport) {
-  ndk::SpAIBinder testServiceBinder =
-      ndk::SpAIBinder(AServiceManager_waitForService(ITestService::descriptor));
-  auto service = ITestService::fromBinder(testServiceBinder);
-  int32_t version = 0;
-  auto status = service->getInterfaceVersion(&version);
-  EXPECT_TRUE(status.isOk()) << status.getDescription();
-  EXPECT_EQ(12, version);
-}
-
 }  // namespace

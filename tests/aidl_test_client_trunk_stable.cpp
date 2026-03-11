@@ -83,12 +83,12 @@ TEST_F(TrunkInterfaceTest, getInterfaceHash) {
     EXPECT_EQ("notfrozen", ITrunkStableTest::HASH);
 #else
     // linked against V1 explicitly
-    EXPECT_EQ("c294a8f61da748b69ce6a09db92094e68c67614a", ITrunkStableTest::HASH);
+    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", ITrunkStableTest::HASH);
 #endif
   } else {
-    EXPECT_EQ("c294a8f61da748b69ce6a09db92094e68c67614a", service->getInterfaceHash());
+    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", service->getInterfaceHash());
     // Check the local hash as well
-    EXPECT_EQ("c294a8f61da748b69ce6a09db92094e68c67614a", ITrunkStableTest::HASH);
+    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", ITrunkStableTest::HASH);
   }
 }
 

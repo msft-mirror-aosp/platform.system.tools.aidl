@@ -260,7 +260,7 @@ void GenerateClientMethodHelpers(CodeWriter& out, const AidlInterface& iface,
       return_val = "_aidl_return";
 
       if (!method.IsUserDefined()) {
-        if (method.GetName() == kGetInterfaceVersion && (iface.Version(options).has_value())) {
+        if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
           out << "self.cached_version.store(_aidl_return, core::sync::atomic::Ordering::Relaxed);\n";
         }
         if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
@@ -292,7 +292,7 @@ void GenerateClientMethod(CodeWriter& out, const AidlInterface& iface, const Aid
   out.Indent();
 
   if (!method.IsUserDefined()) {
-    if (method.GetName() == kGetInterfaceVersion && (iface.Version(options).has_value())) {
+    if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       // Check if the version is in the cache
       out << "let _aidl_version = "
              "self.cached_version.load(core::sync::atomic::Ordering::Relaxed);\n";
@@ -642,7 +642,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   *code_writer << "native: " << server_name << "(on_transact),\n";
   *code_writer << "proxy: " << client_name << " {\n";
   code_writer->Indent();
-  if (iface->Version(options).has_value()) {
+  if (options.Version() > 0) {
     string comma = options.Hash().empty() ? "" : ",";
     *code_writer << "cached_version: "
                     "core::sync::atomic::AtomicI32 = "
@@ -695,7 +695,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
       // Generate default implementations for meta methods
       *code_writer << BuildMethod(*method, typenames, iface->IsVintfStability()) << " {\n";
       code_writer->Indent();
-      if (method->GetName() == kGetInterfaceVersion && (iface->Version(options).has_value())) {
+      if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
         *code_writer << "Ok(VERSION)\n";
       } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
         *code_writer << "Ok(HASH.into())\n";
@@ -738,7 +738,7 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
                                   MethodKind::BOXED_FUTURE)
                    << " {\n";
       code_writer->Indent();
-      if (method->GetName() == kGetInterfaceVersion && (iface->Version(options).has_value())) {
+      if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
         *code_writer << "Box::pin(async move { Ok(VERSION) })\n";
       } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
         *code_writer << "Box::pin(async move { Ok(HASH.into()) })\n";
@@ -917,14 +917,14 @@ void GenerateRustInterface(CodeWriter* code_writer, const AidlInterface* iface,
   // These need to be top-level item constants instead of associated consts
   // because the latter are incompatible with trait objects, see
   // https://doc.rust-lang.org/reference/items/traits.html#object-safety
-  if (auto ver = iface->Version(options); ver.has_value()) {
-    std::string version = std::to_string(ver.value());
+  if (options.Version() > 0) {
     if (options.IsLatestUnfrozenVersion()) {
       *code_writer << kDowngradeComment;
       *code_writer << "pub const VERSION: i32 = if true {"
-                   << std::to_string(options.PreviousVersion()) << "} else {" << version << "};\n";
+                   << std::to_string(options.PreviousVersion()) << "} else {"
+                   << std::to_string(options.Version()) << "};\n";
     } else {
-      *code_writer << "pub const VERSION: i32 = " << version << ";\n";
+      *code_writer << "pub const VERSION: i32 = " << std::to_string(options.Version()) << ";\n";
     }
   }
   if (!options.Hash().empty() || options.IsLatestUnfrozenVersion()) {

@@ -91,9 +91,6 @@ public:
   ::android::binder::Status GetCppJavaTests(::android::sp<::android::IBinder>* _aidl_return) override;
   ::android::binder::Status getBackendType(::android::aidl::tests::BackendType* _aidl_return) override;
   ::android::binder::Status GetCircular(::android::aidl::tests::CircularParcelable* cp, ::android::sp<::android::aidl::tests::ICircular>* _aidl_return) override;
-  int32_t getInterfaceVersion() override;
-private:
-  int32_t cached_version_ = -1;
 };  // class BpTestService
 }  // namespace tests
 }  // namespace aidl

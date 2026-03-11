@@ -1047,9 +1047,4 @@ public class TestServiceClient {
         assertArrayEquals(input, output);
       }
     }
-
-    @Test
-    public void testVersionSupport() throws RemoteException {
-      assertEquals(12, service.getInterfaceVersion());
-    }
 }

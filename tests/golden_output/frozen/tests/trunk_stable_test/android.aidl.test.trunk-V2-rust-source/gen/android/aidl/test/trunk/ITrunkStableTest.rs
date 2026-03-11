@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=rust -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-rust-source/gen/android/aidl/test/trunk/ITrunkStableTest.rs.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-rust-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=rust -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-rust-source/gen/android/aidl/test/trunk/ITrunkStableTest.rs.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-rust-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -155,8 +155,11 @@ pub mod transactions {
   pub const r#getInterfaceVersion: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777214;
   pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
 }
-pub const VERSION: i32 = 2;
-pub const HASH: &str = "notfrozen";
+// Interface is being downgraded to the last frozen version due to
+// RELEASE_AIDL_USE_UNFROZEN. See
+// https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
+pub const VERSION: i32 = if true {1} else {2};
+pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
 impl BpTrunkStableTest {
   fn build_parcel_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<binder::binder_impl::Parcel> {
     let mut aidl_data = self.binder.prepare_transact()?;
@@ -267,9 +270,13 @@ impl ITrunkStableTest for BpTrunkStableTest {
     self.read_response_callMyCallback(_arg_cb, _aidl_reply)
   }
   fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
-    let _aidl_data = self.build_parcel_repeatOtherParcelable(_arg_input)?;
-    let _aidl_reply = self.binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL);
-    self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
+    if (true) {
+     return Err(binder::Status::from(binder::StatusCode::UNKNOWN_TRANSACTION));
+    } else {
+      let _aidl_data = self.build_parcel_repeatOtherParcelable(_arg_input)?;
+      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL);
+      self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
+    }
   }
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
     let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
@@ -344,17 +351,21 @@ impl<P: binder::BinderAsyncPool> ITrunkStableTestAsync<P> for BpTrunkStableTest 
     )
   }
   fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
-    let _aidl_data = match self.build_parcel_repeatOtherParcelable(_arg_input) {
-      Ok(_aidl_data) => _aidl_data,
-      Err(err) => return Box::pin(core::future::ready(Err(err))),
-    };
-    let binder = self.binder.clone();
-    P::spawn(
-      move || binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL),
-      move |_aidl_reply| async move {
-        self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
-      }
-    )
+    if (true) {
+     return Box::pin(core::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_TRANSACTION))));
+    } else {
+      let _aidl_data = match self.build_parcel_repeatOtherParcelable(_arg_input) {
+        Ok(_aidl_data) => _aidl_data,
+        Err(err) => return Box::pin(core::future::ready(Err(err))),
+      };
+      let binder = self.binder.clone();
+      P::spawn(
+        move || binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL),
+        move |_aidl_reply| async move {
+          self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
+        }
+      )
+    }
   }
   fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
     let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
@@ -450,16 +461,20 @@ fn on_transact(_aidl_service: &dyn ITrunkStableTest, _aidl_code: binder::binder_
       Ok(())
     }
     transactions::r#repeatOtherParcelable => {
-      let _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable = _aidl_data.read()?;
-      let _aidl_return = _aidl_service.r#repeatOtherParcelable(&_arg_input);
-      match &_aidl_return {
-        Ok(_aidl_return) => {
-          _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
-          _aidl_reply.write(_aidl_return)?;
+      if (true) {
+        Err(binder::StatusCode::UNKNOWN_TRANSACTION)
+      } else {
+        let _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable = _aidl_data.read()?;
+        let _aidl_return = _aidl_service.r#repeatOtherParcelable(&_arg_input);
+        match &_aidl_return {
+          Ok(_aidl_return) => {
+            _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
+            _aidl_reply.write(_aidl_return)?;
+          }
+          Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
         }
-        Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
+        Ok(())
       }
-      Ok(())
     }
     transactions::r#getInterfaceVersion => {
       let _aidl_return = _aidl_service.r#getInterfaceVersion();
@@ -508,7 +523,9 @@ pub mod r#MyParcelable {
       parcel.sized_write(|subparcel| {
         subparcel.write(&self.r#a)?;
         subparcel.write(&self.r#b)?;
-        subparcel.write(&self.r#c)?;
+        if (false) {
+          subparcel.write(&self.r#c)?;
+        }
         Ok(())
       })
     }
@@ -520,8 +537,10 @@ pub mod r#MyParcelable {
         if subparcel.has_more_data() {
           self.r#b = subparcel.read()?;
         }
-        if subparcel.has_more_data() {
-          self.r#c = subparcel.read()?;
+        if (false) {
+          if subparcel.has_more_data() {
+            self.r#c = subparcel.read()?;
+          }
         }
         Ok(())
       })
@@ -571,8 +590,12 @@ pub mod r#MyUnion {
           parcel.write(v)
         }
         Self::C(v) => {
-          parcel.write(&2i32)?;
-          parcel.write(v)
+          if (true) {
+            Err(binder::StatusCode::BAD_VALUE)
+          } else {
+            parcel.write(&2i32)?;
+            parcel.write(v)
+          }
         }
       }
     }
@@ -590,9 +613,13 @@ pub mod r#MyUnion {
           Ok(())
         }
         2 => {
-          let value: i32 = parcel.read()?;
-          *self = Self::C(value);
-          Ok(())
+          if (true) {
+            Err(binder::StatusCode::BAD_VALUE)
+          } else {
+            let value: i32 = parcel.read()?;
+            *self = Self::C(value);
+            Ok(())
+          }
         }
         _ => {
           Err(binder::StatusCode::BAD_VALUE)
@@ -755,8 +782,11 @@ pub mod r#IMyCallback {
     pub const r#getInterfaceVersion: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777214;
     pub const r#getInterfaceHash: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 16777213;
   }
-  pub const VERSION: i32 = 2;
-  pub const HASH: &str = "notfrozen";
+  // Interface is being downgraded to the last frozen version due to
+  // RELEASE_AIDL_USE_UNFROZEN. See
+  // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
+  pub const VERSION: i32 = if true {1} else {2};
+  pub const HASH: &str = if true {"88311b9118fb6fe9eff4a2ca19121de0587f6d5f"} else {"notfrozen"};
   impl BpMyCallback {
     fn build_parcel_repeatParcelable(&self, _arg_input: &crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_12_MyParcelable) -> binder::Result<binder::binder_impl::Parcel> {
       let mut aidl_data = self.binder.prepare_transact()?;
@@ -851,9 +881,13 @@ pub mod r#IMyCallback {
       self.read_response_repeatUnion(_arg_input, _aidl_reply)
     }
     fn r#repeatOtherParcelable<'a, 'l1, >(&'a self, _arg_input: &'l1 crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable> {
-      let _aidl_data = self.build_parcel_repeatOtherParcelable(_arg_input)?;
-      let _aidl_reply = self.binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL);
-      self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
+      if (true) {
+       return Err(binder::Status::from(binder::StatusCode::UNKNOWN_TRANSACTION));
+      } else {
+        let _aidl_data = self.build_parcel_repeatOtherParcelable(_arg_input)?;
+        let _aidl_reply = self.binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL);
+        self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
+      }
     }
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::Result<i32> {
       let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
@@ -915,17 +949,21 @@ pub mod r#IMyCallback {
       )
     }
     fn r#repeatOtherParcelable<'a, >(&'a self, _arg_input: &'a crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable) -> binder::BoxFuture<'a, binder::Result<crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable>> {
-      let _aidl_data = match self.build_parcel_repeatOtherParcelable(_arg_input) {
-        Ok(_aidl_data) => _aidl_data,
-        Err(err) => return Box::pin(core::future::ready(Err(err))),
-      };
-      let binder = self.binder.clone();
-      P::spawn(
-        move || binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL),
-        move |_aidl_reply| async move {
-          self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
-        }
-      )
+      if (true) {
+       return Box::pin(core::future::ready(Err(binder::Status::from(binder::StatusCode::UNKNOWN_TRANSACTION))));
+      } else {
+        let _aidl_data = match self.build_parcel_repeatOtherParcelable(_arg_input) {
+          Ok(_aidl_data) => _aidl_data,
+          Err(err) => return Box::pin(core::future::ready(Err(err))),
+        };
+        let binder = self.binder.clone();
+        P::spawn(
+          move || binder.submit_transact(transactions::r#repeatOtherParcelable, _aidl_data, FLAG_PRIVATE_LOCAL),
+          move |_aidl_reply| async move {
+            self.read_response_repeatOtherParcelable(_arg_input, _aidl_reply)
+          }
+        )
+      }
     }
     fn r#getInterfaceVersion<'a, >(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
       let _aidl_version = self.cached_version.load(core::sync::atomic::Ordering::Relaxed);
@@ -1009,16 +1047,20 @@ pub mod r#IMyCallback {
         Ok(())
       }
       transactions::r#repeatOtherParcelable => {
-        let _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable = _aidl_data.read()?;
-        let _aidl_return = _aidl_service.r#repeatOtherParcelable(&_arg_input);
-        match &_aidl_return {
-          Ok(_aidl_return) => {
-            _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
-            _aidl_reply.write(_aidl_return)?;
+        if (true) {
+          Err(binder::StatusCode::UNKNOWN_TRANSACTION)
+        } else {
+          let _arg_input: crate::mangled::_7_android_4_aidl_4_test_5_trunk_16_ITrunkStableTest_17_MyOtherParcelable = _aidl_data.read()?;
+          let _aidl_return = _aidl_service.r#repeatOtherParcelable(&_arg_input);
+          match &_aidl_return {
+            Ok(_aidl_return) => {
+              _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
+              _aidl_reply.write(_aidl_return)?;
+            }
+            Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
           }
-          Err(_aidl_status) => _aidl_reply.write(_aidl_status)?
+          Ok(())
         }
-        Ok(())
       }
       transactions::r#getInterfaceVersion => {
         let _aidl_return = _aidl_service.r#getInterfaceVersion();

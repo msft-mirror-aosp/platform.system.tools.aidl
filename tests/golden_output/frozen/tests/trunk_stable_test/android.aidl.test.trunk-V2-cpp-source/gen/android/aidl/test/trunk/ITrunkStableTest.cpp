@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version current --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f --log --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging/android/aidl/test/trunk/ITrunkStableTest.cpp.d -h out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-cpp-source/gen/staging -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -257,15 +257,19 @@ std::function<void(const BpTrunkStableTest::TransactionLog&)> BpTrunkStableTest:
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
+  if (true) {
+    _aidl_ret_status = ::android::UNKNOWN_TRANSACTION;
+  } else {
+    _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
+    if (((_aidl_ret_status) != (::android::OK))) {
+      goto _aidl_error;
+    }
+    _aidl_ret_status = _aidl_data.writeParcelable(input);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      goto _aidl_error;
+    }
+    _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatOtherParcelable, _aidl_data, &_aidl_reply, 0);
   }
-  _aidl_ret_status = _aidl_data.writeParcelable(input);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = remote()->transact(BnTrunkStableTest::TRANSACTION_repeatOtherParcelable, _aidl_data, &_aidl_reply, 0);
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -568,6 +572,10 @@ BnTrunkStableTest::BnTrunkStableTest()
   break;
   case BnTrunkStableTest::TRANSACTION_repeatOtherParcelable:
   {
+    if (true) {
+      _aidl_ret_status = ::android::UNKNOWN_TRANSACTION;
+      break;
+    }
     ::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable in_input;
     ::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {
@@ -690,9 +698,11 @@ namespace trunk {
     _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
     return _aidl_ret_status;
   }
-  _aidl_ret_status = _aidl_parcel->readInt32(&c);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    return _aidl_ret_status;
+  if (false) {
+    _aidl_ret_status = _aidl_parcel->readInt32(&c);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      return _aidl_ret_status;
+    }
   }
   _aidl_parcel->setDataPosition(_aidl_start_pos + _aidl_parcelable_size);
   return _aidl_ret_status;
@@ -709,9 +719,11 @@ namespace trunk {
   if (((_aidl_ret_status) != (::android::OK))) {
     return _aidl_ret_status;
   }
-  _aidl_ret_status = _aidl_parcel->writeInt32(c);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    return _aidl_ret_status;
+  if (false) {
+    _aidl_ret_status = _aidl_parcel->writeInt32(c);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      return _aidl_ret_status;
+    }
   }
   size_t _aidl_end_pos = _aidl_parcel->dataPosition();
   _aidl_parcel->setDataPosition(_aidl_start_pos);
@@ -755,6 +767,7 @@ namespace trunk {
     }
     return ::android::OK; }
   case c: {
+    if (true) return ::android::BAD_VALUE;
     int32_t _aidl_value;
     if ((_aidl_ret_status = _aidl_parcel->readInt32(&_aidl_value)) != ::android::OK) return _aidl_ret_status;
     if constexpr (std::is_trivially_copyable_v<int32_t>) {
@@ -773,7 +786,7 @@ namespace trunk {
   switch (getTag()) {
   case a: return _aidl_parcel->writeInt32(get<a>());
   case b: return _aidl_parcel->writeInt32(get<b>());
-  case c: return _aidl_parcel->writeInt32(get<c>());
+  case c: return true ? ::android::BAD_VALUE : _aidl_parcel->writeInt32(get<c>());
   }
   __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "can't reach here");
 }
@@ -983,15 +996,19 @@ std::function<void(const ITrunkStableTest::BpMyCallback::TransactionLog&)> ITrun
     _transaction_log.input_args.emplace_back("input", ::android::internal::ToString(input));
   }
   auto _log_start = std::chrono::steady_clock::now();
-  _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
+  if (true) {
+    _aidl_ret_status = ::android::UNKNOWN_TRANSACTION;
+  } else {
+    _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
+    if (((_aidl_ret_status) != (::android::OK))) {
+      goto _aidl_error;
+    }
+    _aidl_ret_status = _aidl_data.writeParcelable(input);
+    if (((_aidl_ret_status) != (::android::OK))) {
+      goto _aidl_error;
+    }
+    _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatOtherParcelable, _aidl_data, &_aidl_reply, 0);
   }
-  _aidl_ret_status = _aidl_data.writeParcelable(input);
-  if (((_aidl_ret_status) != (::android::OK))) {
-    goto _aidl_error;
-  }
-  _aidl_ret_status = remote()->transact(ITrunkStableTest::BnMyCallback::TRANSACTION_repeatOtherParcelable, _aidl_data, &_aidl_reply, 0);
   if (((_aidl_ret_status) != (::android::OK))) {
     goto _aidl_error;
   }
@@ -1249,6 +1266,10 @@ ITrunkStableTest::BnMyCallback::BnMyCallback()
   break;
   case BnMyCallback::TRANSACTION_repeatOtherParcelable:
   {
+    if (true) {
+      _aidl_ret_status = ::android::UNKNOWN_TRANSACTION;
+      break;
+    }
     ::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable in_input;
     ::android::aidl::test::trunk::ITrunkStableTest::MyOtherParcelable _aidl_return;
     if (!(_aidl_data.checkInterface(this))) {

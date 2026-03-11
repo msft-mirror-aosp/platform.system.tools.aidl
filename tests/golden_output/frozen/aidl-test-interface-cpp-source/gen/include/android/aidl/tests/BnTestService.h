@@ -95,10 +95,8 @@ public:
   static constexpr uint32_t TRANSACTION_GetCppJavaTests = ::android::IBinder::FIRST_CALL_TRANSACTION + 68;
   static constexpr uint32_t TRANSACTION_getBackendType = ::android::IBinder::FIRST_CALL_TRANSACTION + 69;
   static constexpr uint32_t TRANSACTION_GetCircular = ::android::IBinder::FIRST_CALL_TRANSACTION + 70;
-  static constexpr uint32_t TRANSACTION_getInterfaceVersion = ::android::IBinder::FIRST_CALL_TRANSACTION + 16777214;
   explicit BnTestService();
   ::android::status_t onTransact(uint32_t _aidl_code, const ::android::Parcel& _aidl_data, ::android::Parcel* _aidl_reply, uint32_t _aidl_flags) override;
-  int32_t getInterfaceVersion() override;
 };  // class BnTestService
 
 class LIBBINDER_EXPORTED ITestServiceDelegator : public BnTestService {
@@ -346,11 +344,6 @@ public:
       *_aidl_return = ::android::sp<::android::aidl::tests::ICircularDelegator>::cast(delegate(*_aidl_return));
     }
     return _status;
-  }
-  int32_t getInterfaceVersion() override {
-    int32_t _delegator_ver = BnTestService::getInterfaceVersion();
-    int32_t _impl_ver = _aidl_delegate->getInterfaceVersion();
-    return _delegator_ver < _impl_ver ? _delegator_ver : _impl_ver;
   }
 private:
   ::android::sp<ITestService> _aidl_delegate;

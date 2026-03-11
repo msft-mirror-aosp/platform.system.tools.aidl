@@ -387,7 +387,7 @@ ProxyClass::ProxyClass(const AidlInterface* interfaceType, const Options& option
   ctor->statements->Add(std::make_shared<Assignment>(mRemote, remote));
   this->elements.push_back(ctor);
 
-  if (interfaceType->Version(options).has_value()) {
+  if (options.Version() > 0) {
     std::ostringstream code;
     code << "private int mCachedVersion = -1;\n";
     this->elements.emplace_back(std::make_shared<LiteralClassElement>(code.str()));
@@ -807,7 +807,7 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
     }
   }
 
-  if (iface.Version(options).has_value()) {
+  if (options.Version() > 0) {
     out << "if (!_status) {\n";
     out.Indent();
     // TODO(b/274144762): we shouldn't have different behavior for versioned interfaces
@@ -901,7 +901,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
   if (method.IsUserDefined()) {
     decl = GenerateInterfaceMethod(iface, method);
   } else {
-    if (method.GetName() == kGetInterfaceVersion && (iface.Version(options).has_value())) {
+    if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       std::ostringstream code;
       code << "public int " << kGetInterfaceVersion << "() "
            << "throws android.os.RemoteException;\n";
@@ -929,7 +929,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
       GeneratePermissionMethod(iface, method, stubClass);
     }
   } else {
-    if (method.GetName() == kGetInterfaceVersion && (iface.Version(options).has_value())) {
+    if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       auto ifStatement = std::make_shared<IfStatement>();
       ifStatement->expression = std::make_shared<LiteralExpression>("code == " + transactCodeName);
       std::ostringstream code;
@@ -958,7 +958,7 @@ static void GenerateMethods(const AidlInterface& iface, const AidlMethod& method
   if (method.IsUserDefined()) {
     GenerateProxyMethod(code, iface, method, transactCodeName, oneway, typenames, options);
   } else {
-    if (method.GetName() == kGetInterfaceVersion && (iface.Version(options).has_value())) {
+    if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
       code << "@Override\n"
            << "public int " << kGetInterfaceVersion << "()"
            << " throws "
@@ -1139,7 +1139,7 @@ static shared_ptr<Class> GenerateDefaultImplClass(const AidlInterface& iface,
       // them on the remote side causes a compilation error. But if the remote
       // side somehow managed to not implement it, that's an error and we
       // report the case by returning an invalid value here.
-      if (m->GetName() == kGetInterfaceVersion && (iface.Version(options).has_value())) {
+      if (m->GetName() == kGetInterfaceVersion && options.Version() > 0) {
         std::ostringstream code;
         code << "@Override\n"
              << "public int " << kGetInterfaceVersion << "() {\n"
@@ -1223,7 +1223,7 @@ static shared_ptr<Class> GenerateDelegatorClass(const AidlInterface& iface,
                                               "();\n"
                                               "}\n"));
   }
-  if (iface.Version(options).has_value()) {
+  if (options.Version() > 0) {
     delegator_class->elements.emplace_back(
         std::make_shared<LiteralClassElement>("@Override\n"
                                               "public int " +
@@ -1273,7 +1273,7 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   interface->interfaces.push_back("android.os.IInterface");
   interface->annotations = JavaAnnotationsFor(*iface);
 
-  if (auto ver = iface->Version(options); ver.has_value()) {
+  if (options.Version()) {
     std::ostringstream code;
     code << "/**\n"
          << " * The version of this interface that the caller is built against.\n"
@@ -1282,11 +1282,10 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
          << " * that the remote object is implementing.\n"
          << " */\n"
          << "public static final int VERSION = ";
-    std::string version = std::to_string(ver.value());
     if (options.IsLatestUnfrozenVersion()) {
-      code << "true ? " << options.PreviousVersion() << " : " << version << ";\n";
+      code << "true ? " << options.PreviousVersion() << " : " << options.Version() << ";\n";
     } else {
-      code << version << ";\n";
+      code << options.Version() << ";\n";
     }
 
     interface->elements.emplace_back(std::make_shared<LiteralClassElement>(code.str()));

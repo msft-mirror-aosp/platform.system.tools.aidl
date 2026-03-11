@@ -44,7 +44,6 @@ import android.aidl.tests.extension.ExtendableParcelable;
 // interface comment 3
 // interface comment 4
 @JavaDelegator
-@VersionSupport(version=12)
 interface ITestService {
     // Test that constants are accessible
 
