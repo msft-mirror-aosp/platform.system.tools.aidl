@@ -169,7 +169,7 @@ public interface IFooInterface extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_originalApi, _data, _reply, 0);
           if (!_status) {
-            throw new android.os.RemoteException("Method originalApi is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
         }
@@ -188,7 +188,7 @@ public interface IFooInterface extends android.os.IInterface
           _data.writeTypedObject(u, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_acceptUnionAndReturnString, _data, _reply, 0);
           if (!_status) {
-            throw new android.os.RemoteException("Method acceptUnionAndReturnString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readString();
@@ -211,7 +211,7 @@ public interface IFooInterface extends android.os.IInterface
           _data.writeInt(value);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ignoreParcelablesAndRepeatInt, _data, _reply, 0);
           if (!_status) {
-            throw new android.os.RemoteException("Method ignoreParcelablesAndRepeatInt is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readInt();
@@ -238,7 +238,7 @@ public interface IFooInterface extends android.os.IInterface
           _data.writeTypedArray(foos, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_returnsLengthOfFooArray, _data, _reply, 0);
           if (!_status) {
-            throw new android.os.RemoteException("Method returnsLengthOfFooArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readInt();
