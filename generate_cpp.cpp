@@ -313,7 +313,7 @@ void GenerateClientMetaTransaction(CodeWriter& out, const AidlInterface& interfa
   AIDL_FATAL_IF(method.IsUserDefined(), method);
   const string bp_name = GetQualifiedName(interface, ClassNames::CLIENT);
   const string bn_name = GetQualifiedName(interface, ClassNames::SERVER);
-  if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
+  if (method.GetName() == kGetInterfaceVersion && (interface.Version(options).has_value())) {
     // Note: race condition can happen here, but no locking is required
     // because 1) writing an interger is atomic and 2) this transaction
     // will always return the same value, i.e., competing threads will
@@ -560,7 +560,7 @@ void GenerateServerMetaTransaction(CodeWriter& out, const AidlInterface& interfa
   AIDL_FATAL_IF(method.IsUserDefined(), method);
 
   string iface = ClassName(interface, ClassNames::INTERFACE);
-  if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
+  if (method.GetName() == kGetInterfaceVersion && (interface.Version(options).has_value())) {
     out << "_aidl_data.checkInterface(this);\n"
         << "_aidl_reply->writeNoException();\n";
     out << "_aidl_reply->writeInt32(" << iface << "::VERSION);\n";
@@ -716,7 +716,7 @@ void GenerateServerSource(CodeWriter& out, const AidlInterface& interface,
 
   GenerateServerOnTransact(out, interface, typenames, options);
 
-  if (options.Version() > 0) {
+  if (interface.Version(options).has_value()) {
     out << "int32_t " << q_name << "::" << kGetInterfaceVersion << "() {\n"
         << "  return " << i_name << "::VERSION;\n"
         << "}\n";
@@ -776,7 +776,8 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
       out << " override";
       GenerateDeprecated(out, *method);
       out << ";\n";
-    } else if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    } else if (method->GetName() == kGetInterfaceVersion &&
+               (interface.Version(options).has_value())) {
       out << "int32_t " << method->GetName() << "() override;\n";
     } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
       out << "std::string " << method->GetName() << "() override;\n";
@@ -789,10 +790,10 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlInterface& interface,
   }
   out.Dedent();
 
-  if (options.Version() > 0 || !options.Hash().empty()) {
+  if (interface.Version(options).has_value() || !options.Hash().empty()) {
     out << "private:\n";
     out.Indent();
-    if (options.Version() > 0) {
+    if (interface.Version(options).has_value()) {
       out << "int32_t cached_version_ = -1;\n";
     }
     out.Dedent();
@@ -877,7 +878,7 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
   out << std::format("{} onTransact(uint32_t {}, const {}& {}, {}* {}, uint32_t {}) override;\n",
                      kAndroidStatusLiteral, kCodeVarName, kAndroidParcelLiteral, kDataVarName,
                      kAndroidParcelLiteral, kReplyVarName, kFlagsVarName);
-  if (options.Version() > 0) {
+  if (interface.Version(options).has_value()) {
     out << "int32_t " << kGetInterfaceVersion << "() override;\n";
   }
   if (!options.Hash().empty()) {
@@ -954,7 +955,8 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlInterface& interface,
       }
       out.Dedent();
       out << "}\n";
-    } else if (method->GetName() == kGetInterfaceVersion && options.Version()) {
+    } else if (method->GetName() == kGetInterfaceVersion &&
+               interface.Version(options).has_value()) {
       out << "int32_t " << kGetInterfaceVersion << "()"
           << " override {\n";
       out.Indent();
@@ -1052,14 +1054,14 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
   out.Indent();
   out << "typedef " << ClassName(interface, ClassNames::DELEGATOR_IMPL) << " DefaultDelegator;\n";
   out << "DECLARE_META_INTERFACE(" << ClassName(interface, ClassNames::BASE) << ")\n";
-  if (options.Version() > 0) {
+  if (auto ver = interface.Version(options); ver.has_value()) {
+    std::string version = std::to_string(ver.value());
     if (options.IsLatestUnfrozenVersion()) {
       out << kDowngradeComment;
       out << "static inline const int32_t VERSION = true ? "
-          << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
-          << ";\n";
+          << std::to_string(options.PreviousVersion()) << " : " << version << ";\n";
     } else {
-      out << "static inline const int32_t VERSION = " << std::to_string(options.Version()) << ";\n";
+      out << "static inline const int32_t VERSION = " << version << ";\n";
     }
   }
   if (!options.Hash().empty()) {
@@ -1078,7 +1080,8 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
       GenerateMethodDecl(out, typenames, *method, /*clazz=*/"");
       GenerateDeprecated(out, *method);
       out << " = 0;\n";
-    } else if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    } else if (method->GetName() == kGetInterfaceVersion &&
+               (interface.Version(options).has_value())) {
       out << "virtual int32_t " << method->GetName() << "() = 0;\n";
     } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
       out << "virtual std::string " << method->GetName() << "() = 0;\n";
@@ -1115,7 +1118,8 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlInterface& interface,
       out << " {\n"
           << "  return ::android::binder::Status::fromStatusT(::android::UNKNOWN_TRANSACTION);\n"
           << "}\n";
-    } else if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    } else if (method->GetName() == kGetInterfaceVersion &&
+               (interface.Version(options).has_value())) {
       out << "int32_t " << kGetInterfaceVersion << "() override {\n"
           << "  return 0;\n"
           << "}\n";

@@ -27,6 +27,7 @@ class BnTestService : public ::ndk::BnCInterface<ITestService> {
 public:
   BnTestService();
   virtual ~BnTestService();
+  ::ndk::ScopedAStatus getInterfaceVersion(int32_t* _aidl_return) final;
 protected:
   ::ndk::SpAIBinder createBinder() override;
 private:
@@ -34,6 +35,13 @@ private:
 class ITestServiceDelegator : public BnTestService {
 public:
   explicit ITestServiceDelegator(const std::shared_ptr<ITestService> &impl) : _impl(impl) {
+     int32_t _impl_ver = 0;
+     if (!impl->getInterfaceVersion(&_impl_ver).isOk()) {;
+        __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Delegator failed to get version of the implementation.");
+     }
+     if (_impl_ver != ITestService::version) {
+        __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Mismatched versions of delegator and implementation is not allowed.");
+     }
   }
 
   ::ndk::ScopedAStatus UnimplementedMethod(int32_t in_arg, int32_t* _aidl_return) override {

@@ -1026,6 +1026,13 @@ fn test_unions() {
 }
 
 #[test]
+fn test_version_support() {
+    let service = get_test_service();
+    let version = service.getInterfaceVersion();
+    assert_eq!(version, Ok(12)); // this is set by @VersionSupport(version=12)
+}
+
+#[test]
 fn test_versioned_interface_version() {
     let service: binder::Strong<dyn IFooInterface::IFooInterface> = binder::wait_for_interface(
         <BpFooInterface as IFooInterface::IFooInterface>::get_descriptor(),
@@ -1478,7 +1485,7 @@ fn test_trunk_stable_hash() {
     if version == 1 {
         assert_eq!(
             hash.as_ref().map(String::as_str),
-            Ok("88311b9118fb6fe9eff4a2ca19121de0587f6d5f")
+            Ok("c294a8f61da748b69ce6a09db92094e68c67614a")
         );
         // Check local values of version and hash
         assert_eq!(
@@ -1487,7 +1494,7 @@ fn test_trunk_stable_hash() {
         );
         assert_eq!(
             android_aidl_test_trunk::aidl::android::aidl::test::trunk::ITrunkStableTest::HASH,
-            "88311b9118fb6fe9eff4a2ca19121de0587f6d5f"
+            "c294a8f61da748b69ce6a09db92094e68c67614a"
         );
     } else {
         assert_eq!(hash.as_ref().map(String::as_str), Ok("notfrozen"));
