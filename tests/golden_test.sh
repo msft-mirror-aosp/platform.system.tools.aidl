@@ -112,7 +112,7 @@ function _golden_test() {
         mkdir -p "$golden"
         cp -r "$built/gen" "$golden"
       else
-        diff -rN "$built/gen" "$golden/gen" || e=1
+        diff -rN "$golden/gen" "$built/gen" || e=1
       fi
     done
   else
@@ -133,7 +133,7 @@ function _golden_test() {
         echo update does not support multiple files as arguments.
         exit 1
       else
-        diff -N --unified=0 "$file" "$golden_file" || e=1
+        diff -N --unified=0 "$golden_file" "$file" || e=1
       fi
     done
   fi
