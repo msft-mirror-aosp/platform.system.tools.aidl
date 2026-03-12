@@ -498,7 +498,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
         << "return _aidl_status;\n";
     out.Dedent();
     out << "}\n";
-  } else if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
+  } else if (method.GetName() == kGetInterfaceVersion &&
+             (defined_type.Version(options).has_value())) {
     out << "if (" << kCachedVersion << " != -1) {\n";
     out.Indent();
     out << "*_aidl_return = " << kCachedVersion << ";\n"
@@ -582,7 +583,8 @@ static void GenerateClientMethodDefinition(CodeWriter& out, const AidlTypenames&
     StatusCheckGoto(out);
     if (method.GetName() == kGetInterfaceHash && !options.Hash().empty()) {
       out << kCachedHash << " = *_aidl_return;\n";
-    } else if (method.GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    } else if (method.GetName() == kGetInterfaceVersion &&
+               (defined_type.Version(options).has_value())) {
       out << kCachedVersion << " = *_aidl_return;\n";
     }
   }
@@ -822,7 +824,7 @@ void GenerateServerSource(CodeWriter& out, const AidlTypenames& types,
     if (method->IsUserDefined()) {
       continue;
     }
-    if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    if (method->GetName() == kGetInterfaceVersion && (defined_type.Version(options).has_value())) {
       out << NdkMethodDecl(types, *method, q_name) << " {\n";
       out.Indent();
       out << "*_aidl_return = " << iface << "::" << kVersion << ";\n";
@@ -924,7 +926,8 @@ void GenerateInterfaceSource(CodeWriter& out, const AidlTypenames& types,
       out.Dedent();
       out << "}\n";
     } else {
-      if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+      if (method->GetName() == kGetInterfaceVersion &&
+          (defined_type.Version(options).has_value())) {
         out << "::ndk::ScopedAStatus " << defaultClazz << "::" << method->GetName() << "("
             << "int32_t* _aidl_return) {\n";
         out.Indent();
@@ -977,7 +980,7 @@ void GenerateClientClassDecl(CodeWriter& out, const AidlTypenames& types,
     out << ";\n";
   }
 
-  if (options.Version() > 0) {
+  if (defined_type.Version(options).has_value()) {
     out << "int32_t " << kCachedVersion << " = -1;\n";
   }
 
@@ -1026,7 +1029,7 @@ void GenerateDelegatorClassDecl(CodeWriter& out, const AidlTypenames& types,
   out.Indent();
   out << "explicit " << clazz << "(const std::shared_ptr<" << iface << "> &impl)"
       << " : " << kDelegateImplVarName << "(impl) {\n";
-  if (options.Version() > 0) {
+  if (defined_type.Version(options).has_value()) {
     // TODO(b/222347502) If we need to support mismatched versions of delegator and
     // impl, this check will be removed. The NDK backend can't override the
     // getInterface* meta methods because they are marked "final". Removing
@@ -1082,7 +1085,7 @@ void GenerateServerClassDecl(CodeWriter& out, const AidlTypenames& types,
     if (method->IsUserDefined()) {
       continue;
     }
-    if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    if (method->GetName() == kGetInterfaceVersion && (defined_type.Version(options).has_value())) {
       out << NdkMethodDecl(types, *method) << " final;\n";
     } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
       out << NdkMethodDecl(types, *method) << " final;\n";
@@ -1144,15 +1147,14 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "\n";
   GenerateNestedTypeDecls(out, types, defined_type, options);
   GenerateConstantDeclarations(out, types, defined_type);
-  if (options.Version() > 0) {
+  if (auto ver = defined_type.Version(options); ver.has_value()) {
+    std::string version = std::to_string(ver.value());
     if (options.IsLatestUnfrozenVersion()) {
       out << kDowngradeComment;
       out << "static inline const int32_t " << kVersion << " = true ? "
-          << std::to_string(options.PreviousVersion()) << " : " << std::to_string(options.Version())
-          << ";\n";
+          << std::to_string(options.PreviousVersion()) << " : " << version << ";\n";
     } else {
-      out << "static inline const int32_t " << kVersion << " = "
-          << std::to_string(options.Version()) << ";\n";
+      out << "static inline const int32_t " << kVersion << " = " << version << ";\n";
     }
   }
   if (!options.Hash().empty()) {
@@ -1197,7 +1199,8 @@ void GenerateInterfaceClassDecl(CodeWriter& out, const AidlTypenames& types,
       out << NdkMethodDecl(types, *method) << " override";
       cpp::GenerateDeprecated(out, *method);
       out << ";\n";
-    } else if (method->GetName() == kGetInterfaceVersion && options.Version() > 0) {
+    } else if (method->GetName() == kGetInterfaceVersion &&
+               (defined_type.Version(options).has_value())) {
       out << NdkMethodDecl(types, *method) << " override;\n";
     } else if (method->GetName() == kGetInterfaceHash && !options.Hash().empty()) {
       out << NdkMethodDecl(types, *method) << " override;\n";

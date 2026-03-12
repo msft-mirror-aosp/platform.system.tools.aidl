@@ -70,8 +70,8 @@ public class TrunkStableTests {
   @Test
   public void testGetInterfaceHash() throws RemoteException {
     if (mRemoteVersion == 1) {
-      assertThat(service.getInterfaceHash(), is("88311b9118fb6fe9eff4a2ca19121de0587f6d5f"));
-      assertThat(ITrunkStableTest.HASH, is("88311b9118fb6fe9eff4a2ca19121de0587f6d5f"));
+      assertThat(service.getInterfaceHash(), is("c294a8f61da748b69ce6a09db92094e68c67614a"));
+      assertThat(ITrunkStableTest.HASH, is("c294a8f61da748b69ce6a09db92094e68c67614a"));
     } else {
       assertThat(service.getInterfaceHash(), is("notfrozen"));
       assertThat(ITrunkStableTest.HASH, is("notfrozen"));

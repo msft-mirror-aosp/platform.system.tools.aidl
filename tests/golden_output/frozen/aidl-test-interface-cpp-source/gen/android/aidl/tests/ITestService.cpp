@@ -2703,6 +2703,24 @@ BpTestService::BpTestService(const ::android::sp<::android::IBinder>& _aidl_impl
   return _aidl_status;
 }
 
+int32_t BpTestService::getInterfaceVersion() {
+  if (cached_version_ == -1) {
+    ::android::Parcel data;
+    ::android::Parcel reply;
+    data.writeInterfaceToken(getInterfaceDescriptor());
+    ::android::status_t err = remote()->transact(BnTestService::TRANSACTION_getInterfaceVersion, data, &reply);
+    if (err == ::android::OK) {
+      ::android::binder::Status _aidl_status;
+      err = _aidl_status.readFromParcel(reply);
+      if (err == ::android::OK && _aidl_status.isOk()) {
+        cached_version_ = reply.readInt32();
+      }
+    }
+  }
+  return cached_version_;
+}
+
+
 }  // namespace tests
 }  // namespace aidl
 }  // namespace android
@@ -5104,6 +5122,13 @@ BnTestService::BnTestService()
     }
   }
   break;
+  case BnTestService::TRANSACTION_getInterfaceVersion:
+  {
+    _aidl_data.checkInterface(this);
+    _aidl_reply->writeNoException();
+    _aidl_reply->writeInt32(ITestService::VERSION);
+  }
+  break;
   default:
   {
     _aidl_ret_status = ::android::BBinder::onTransact(_aidl_code, _aidl_data, _aidl_reply, _aidl_flags);
@@ -5118,6 +5143,9 @@ BnTestService::BnTestService()
 
 #pragma clang diagnostic pop
 
+int32_t BnTestService::getInterfaceVersion() {
+  return ITestService::VERSION;
+}
 }  // namespace tests
 }  // namespace aidl
 }  // namespace android

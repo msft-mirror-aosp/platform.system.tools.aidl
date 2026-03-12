@@ -1411,6 +1411,20 @@ static binder_status_t _aidl_android_aidl_tests_ITestService_onTransact(AIBinder
 
       break;
     }
+    case (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/): {
+      int32_t _aidl_return;
+
+      ::ndk::ScopedAStatus _aidl_status = _aidl_impl->getInterfaceVersion(&_aidl_return);
+      _aidl_ret_status = AParcel_writeStatusHeader(_aidl_out, _aidl_status.get());
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      if (!AStatus_isOk(_aidl_status.get())) break;
+
+      _aidl_ret_status = ::ndk::AParcel_writeData(_aidl_out, _aidl_return);
+      if (_aidl_ret_status != STATUS_OK) break;
+
+      break;
+    }
   }
   return _aidl_ret_status;
 }
@@ -4206,6 +4220,46 @@ BpTestService::~BpTestService() {}
   _aidl_status_return:
   return _aidl_status;
 }
+::ndk::ScopedAStatus BpTestService::getInterfaceVersion(int32_t* _aidl_return) {
+  binder_status_t _aidl_ret_status = STATUS_OK;
+  ::ndk::ScopedAStatus _aidl_status;
+  if (_aidl_cached_version != -1) {
+    *_aidl_return = _aidl_cached_version;
+    _aidl_status.set(AStatus_fromStatus(_aidl_ret_status));
+    return _aidl_status;
+  }
+  ::ndk::ScopedAParcel _aidl_in;
+  ::ndk::ScopedAParcel _aidl_out;
+
+  _aidl_ret_status = AIBinder_prepareTransaction(asBinderReference().get(), _aidl_in.getR());
+  AParcel_markSensitive(_aidl_in.get());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AIBinder_transact(
+    asBinderReference().get(),
+    (FIRST_CALL_TRANSACTION + 16777214 /*getInterfaceVersion*/),
+    _aidl_in.getR(),
+    _aidl_out.getR(),
+    FLAG_CLEAR_BUF
+    #ifdef BINDER_STABILITY_SUPPORT
+    | static_cast<int>(FLAG_PRIVATE_LOCAL)
+    #endif  // BINDER_STABILITY_SUPPORT
+    );
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_ret_status = AParcel_readStatusHeader(_aidl_out.get(), _aidl_status.getR());
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  if (!AStatus_isOk(_aidl_status.get())) goto _aidl_status_return;
+  _aidl_ret_status = ::ndk::AParcel_readData(_aidl_out.get(), _aidl_return);
+  if (_aidl_ret_status != STATUS_OK) goto _aidl_error;
+
+  _aidl_cached_version = *_aidl_return;
+  _aidl_error:
+  _aidl_status.set(AStatus_fromStatus(_aidl_ret_status));
+  _aidl_status_return:
+  return _aidl_status;
+}
 // Source for BnTestService
 BnTestService::BnTestService() {}
 BnTestService::~BnTestService() {}
@@ -4215,6 +4269,10 @@ BnTestService::~BnTestService() {}
   AIBinder_markCompilationUnitStability(binder);
   #endif  // BINDER_STABILITY_SUPPORT
   return ::ndk::SpAIBinder(binder);
+}
+::ndk::ScopedAStatus BnTestService::getInterfaceVersion(int32_t* _aidl_return) {
+  *_aidl_return = ITestService::version;
+  return ::ndk::ScopedAStatus(AStatus_newOk());
 }
 // Source for ITestService
 const char* ITestService::descriptor = "android.aidl.tests.ITestService";
@@ -4607,6 +4665,10 @@ binder_status_t ITestService::readFromParcel(const AParcel* parcel, std::shared_
   ::ndk::ScopedAStatus _aidl_status;
   _aidl_status.set(AStatus_fromStatus(STATUS_UNKNOWN_TRANSACTION));
   return _aidl_status;
+}
+::ndk::ScopedAStatus ITestServiceDefault::getInterfaceVersion(int32_t* _aidl_return) {
+  *_aidl_return = 0;
+  return ::ndk::ScopedAStatus(AStatus_newOk());
 }
 ::ndk::SpAIBinder ITestServiceDefault::asBinder() {
   return ::ndk::SpAIBinder();

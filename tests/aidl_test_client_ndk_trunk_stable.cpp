@@ -79,9 +79,9 @@ TEST_F(AidlNdkTrunkStableTest, GetInterfaceHash) {
     // Check the local hash as well
     EXPECT_EQ("notfrozen", ITrunkStableTest::hash);
   } else {
-    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", hash);
+    EXPECT_EQ("c294a8f61da748b69ce6a09db92094e68c67614a", hash);
     // Check the local hash as well
-    EXPECT_EQ("88311b9118fb6fe9eff4a2ca19121de0587f6d5f", ITrunkStableTest::hash);
+    EXPECT_EQ("c294a8f61da748b69ce6a09db92094e68c67614a", ITrunkStableTest::hash);
   }
 }
 

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version platform_apis --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash 88311b9118fb6fe9eff4a2ca19121de0587f6d5f --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen/android/aidl/test/trunk/ITrunkStableTest.java.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=java -Weverything -Wno-missing-permission-annotation -Werror --structured --version 2 --hash notfrozen -t --min_sdk_version platform_apis --previous_api_dir=system/tools/aidl/tests/trunk_stable_test/aidl_api/android.aidl.test.trunk/1 --previous_hash c294a8f61da748b69ce6a09db92094e68c67614a --ninja -d out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen/android/aidl/test/trunk/ITrunkStableTest.java.d -o out/soong/.intermediates/system/tools/aidl/tests/trunk_stable_test/android.aidl.test.trunk-V2-java-source/gen -Nsystem/tools/aidl/tests/trunk_stable_test system/tools/aidl/tests/trunk_stable_test/android/aidl/test/trunk/ITrunkStableTest.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -19,7 +19,7 @@ public interface ITrunkStableTest extends android.os.IInterface
   // Interface is being downgraded to the last frozen version due to
   // RELEASE_AIDL_USE_UNFROZEN. See
   // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
-  public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+  public static final String HASH = "c294a8f61da748b69ce6a09db92094e68c67614a";
   /** Default implementation for ITrunkStableTest. */
   public static class Default implements android.aidl.test.trunk.ITrunkStableTest
   {
@@ -620,7 +620,7 @@ public interface ITrunkStableTest extends android.os.IInterface
     // Interface is being downgraded to the last frozen version due to
     // RELEASE_AIDL_USE_UNFROZEN. See
     // https://source.android.com/docs/core/architecture/aidl/stable-aidl#flag-based-development
-    public static final String HASH = "88311b9118fb6fe9eff4a2ca19121de0587f6d5f";
+    public static final String HASH = "c294a8f61da748b69ce6a09db92094e68c67614a";
     /** Default implementation for IMyCallback. */
     public static class Default implements android.aidl.test.trunk.ITrunkStableTest.IMyCallback
     {

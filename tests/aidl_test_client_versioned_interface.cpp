@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#include <android/aidl/tests/ITestService.h>
 #include <android/aidl/versioned/tests/BnFooInterface.h>
 #include <android/aidl/versioned/tests/IFooInterface.h>
+
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <gtest/gtest.h>
@@ -106,4 +108,10 @@ TEST_F(VersionedInterfaceTest, newerDelegatorReturnsImplHash) {
 TEST_F(VersionedInterfaceTest, errorWhenCallingV2Api) {
   auto status = versioned->newApi();
   EXPECT_EQ(::android::UNKNOWN_TRANSACTION, status.transactionError()) << status;
+}
+
+TEST_F(VersionedInterfaceTest, TestVersionSupport) {
+  auto service = android::waitForService<ITestService>(ITestService::descriptor);
+  ASSERT_NE(nullptr, versioned);
+  EXPECT_EQ(12, service->getInterfaceVersion());
 }

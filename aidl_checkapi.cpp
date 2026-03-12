@@ -106,6 +106,7 @@ static vector<string> get_strict_annotations(const AidlAnnotatable& node) {
       // @RustDerive doesn't affect read/write
       AidlAnnotation::Type::RUST_DERIVE,
       AidlAnnotation::Type::SUPPRESS_WARNINGS,
+      AidlAnnotation::Type::VERSION_SUPPORT,
   };
   vector<string> annotations;
   for (const auto& annotation : node.GetAnnotations()) {
@@ -249,6 +250,15 @@ static bool are_compatible_interfaces(const AidlInterface& older, const AidlInte
   for (const auto& old_m : older.AsInterface()->GetMethods()) {
     const auto found = new_methods.find(old_m->Signature());
     if (found == new_methods.end()) {
+      // ignore the getInterfaceVersion method here.
+      // The only way it shows up for --checkapi is with the
+      // @VersionSupport annotation. It's not a problem to remove/add
+      // the annotation with Stable AIDL because the getInterfaceVersion
+      // still be generated - although not for use with checkapi because
+      // it doesn't get the versions passed to it.
+      if (old_m->GetLocation().IsInternal() && old_m->GetId() == kGetInterfaceVersionId) {
+        continue;
+      }
       AIDL_ERROR(old_m) << "Removed or changed method: " << older.GetCanonicalName() << "."
                         << old_m->Signature();
       compatible = false;

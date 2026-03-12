@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <regex>
 #include <string>
 #include <unordered_set>
@@ -252,6 +253,7 @@ class AidlAnnotation : public AidlNode {
     PERMISSION_NONE,
     PERMISSION_MANUAL,
     PROPAGATE_ALLOW_BLOCKING,
+    VERSION_SUPPORT,
   };
 
   using TargetContext = uint16_t;
@@ -367,6 +369,7 @@ class AidlAnnotatable : public AidlCommentable {
   bool IsVintfStability() const;
   bool IsJavaOnlyImmutable() const;
   bool IsFixedSize() const;
+  std::optional<int> GetVersionSupportVersion() const;
   bool IsStableApiParcelable(Options::Language lang) const;
   bool JavaDerive(const std::string& method) const;
   bool IsJavaDelegator() const;
@@ -1016,6 +1019,7 @@ class AidlDefinedType : public AidlMember, public AidlScope {
   }
   virtual bool CheckValid(const AidlTypenames& typenames) const;
   bool LanguageSpecificCheckValid(Options::Language lang) const;
+  bool VersionSpecificCheckValid(int version) const;
   AidlStructuredParcelable* AsStructuredParcelable() {
     return const_cast<AidlStructuredParcelable*>(
         const_cast<const AidlDefinedType*>(this)->AsStructuredParcelable());
@@ -1275,10 +1279,12 @@ class AidlInterface final : public AidlDefinedType {
 
   bool CheckValid(const AidlTypenames& typenames) const override;
   bool CheckValidPermissionAnnotations(const AidlMethod& m) const;
+  bool VersionSpecificCheckValid(int version) const;
   bool UsesPermissions() const;
   std::string GetDescriptor() const;
   void DispatchVisit(AidlVisitor& v) const override { v.Visit(*this); }
   bool HasOnewayAnnotation() const { return oneway_annotation_; }
+  std::optional<int> Version(const Options& options) const;
 
  private:
   bool oneway_annotation_;
