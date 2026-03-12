@@ -1030,10 +1030,8 @@ void GenerateDelegatorClassDecl(CodeWriter& out, const AidlTypenames& types,
   out << "explicit " << clazz << "(const std::shared_ptr<" << iface << "> &impl)"
       << " : " << kDelegateImplVarName << "(impl) {\n";
   if (defined_type.Version(options).has_value()) {
-    // TODO(b/222347502) If we need to support mismatched versions of delegator and
-    // impl, this check will be removed. The NDK backend can't override the
-    // getInterface* meta methods because they are marked "final". Removing
-    // "final" changes the ABI and breaks prebuilts.
+    // Mismatched versions of delegator and implementation are not supported because getInterface*
+    // methods are final and changing them would break ABI. See b/222347502 for context.
     out << "   int32_t _impl_ver = 0;\n";
     out << "   if (!impl->" << kGetInterfaceVersion << "(&_impl_ver).isOk()) {;\n";
     out << "      __assert2(__FILE__, __LINE__, __PRETTY_FUNCTION__, \"Delegator failed to get "
@@ -1117,8 +1115,7 @@ void GenerateServerHeader(CodeWriter& out, const AidlTypenames& types,
   out << "#include <android/binder_ibinder.h>\n";
   // Needed for *Delegator classes while delegator version is required to be
   // the same as the implementation version
-  // TODO(b/222347502) If we ever need to support mismatched versions of delegator and
-  // impl, this include can be removed.
+  // See b/222347502 for context.
   out << "#include <cassert>\n\n";
   // TODO(b/31559095) bionic on host should define __assert2
   out << "#ifndef __BIONIC__\n#ifndef __assert2\n#define __assert2(a,b,c,d) "
