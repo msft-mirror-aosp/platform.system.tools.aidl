@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror -t --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-cpp-source/gen/staging/android/aidl/loggable/ILoggableInterface.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/loggable/ILoggableInterface.aidl
+ * Using: out/host/linux-x86/bin/aidl --lang=cpp -Weverything -Wno-missing-permission-annotation -Werror --min_sdk_version current --log --ninja -d out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-cpp-source/gen/staging/android/aidl/loggable/ILoggableInterface.cpp.d -h out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-cpp-source/gen/include/staging -o out/soong/.intermediates/system/tools/aidl/aidl_test_loggable_interface-cpp-source/gen/staging -Nsystem/tools/aidl/tests system/tools/aidl/tests/android/aidl/loggable/ILoggableInterface.aidl
  *
  * DO NOT CHECK THIS FILE INTO A CODE TREE (e.g. git, etc..).
  * ALWAYS GENERATE THIS FILE FROM UPDATED AIDL COMPILER
@@ -37,7 +37,6 @@ std::function<void(const BpLoggableInterface::TransactionLog&)> BpLoggableInterf
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ILoggableInterface::LogThis::cppClient");
   BpLoggableInterface::TransactionLog _transaction_log;
   if (BpLoggableInterface::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("boolValue", ::android::internal::ToString(boolValue));
@@ -301,7 +300,6 @@ BnLoggableInterface::BnLoggableInterface()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ILoggableInterface::LogThis::cppServer");
     _aidl_ret_status = _aidl_data.readBool(&in_boolValue);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
@@ -545,7 +543,6 @@ std::function<void(const ILoggableInterface::BpSub::TransactionLog&)> ILoggableI
   ::android::Parcel _aidl_reply;
   ::android::status_t _aidl_ret_status = ::android::OK;
   ::android::binder::Status _aidl_status;
-  ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ISub::Log::cppClient");
   ILoggableInterface::BpSub::TransactionLog _transaction_log;
   if (ILoggableInterface::BpSub::logFunc != nullptr) {
     _transaction_log.input_args.emplace_back("value", ::android::internal::ToString(value));
@@ -628,7 +625,6 @@ ILoggableInterface::BnSub::BnSub()
       _aidl_ret_status = ::android::BAD_TYPE;
       break;
     }
-    ::android::binder::ScopedTrace _aidl_trace(ATRACE_TAG_AIDL, "AIDL::cpp::ISub::Log::cppServer");
     _aidl_ret_status = _aidl_data.readInt32(&in_value);
     if (((_aidl_ret_status) != (::android::OK))) {
       break;
