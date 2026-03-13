@@ -17,7 +17,7 @@ package {
 }
 
 blueprint_go_binary {
-    name: "aidl_verify_hash",
+    name: "aidl_hash_tool",
     srcs: ["main.go"],
     deps: ["soong-response"],
 }

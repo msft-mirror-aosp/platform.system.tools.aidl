@@ -32,15 +32,18 @@ import (
 //go:generate go run ../../../../build/blueprint/gobtools/codegen
 
 var (
-	aidlVerifyHashTool = pctx.HostTool("aidl_verify_hash")
+	aidlHashTool = pctx.HostTool("aidl_hash_tool")
 
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{
-		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
-			`${aidlCmd} --dumpapi ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
-			`${aidlHashGen} ${outDir} ${latestVersion} ${hashFile}`,
-		CommandDeps:     []string{"${aidlCmd}", "${aidlHashGen}"},
-		SandboxDisabled: true,
-	}, "optionalFlags", "imports", "outDir", "hashFile", "latestVersion")
+		Command2: blueprint.NewCommand(
+			android.Rm, ` -rf "${outDir}" && `,
+			android.Mkdir, ` -p "${outDir}" && `,
+			aidlCmd, ` --dumpapi ${imports} ${optionalFlags} --out ${outDir} ${in} && `,
+			aidlHashTool, ` gen_hash ${outDir}.rsp ${outDir} ${latestVersion} ${hashFile}`,
+		),
+		Rspfile:        "${outDir}.rsp",
+		RspfileContent: "${apiFiles}",
+	}, "optionalFlags", "imports", "outDir", "hashFile", "latestVersion", "apiFiles")
 
 	aidlCheckApiRule = pctx.StaticRule("aidlCheckApiRule", blueprint.RuleParams{
 		Command: `(${aidlCmd} ${optionalFlags} --checkapi=${checkApiLevel} ${imports} ${old} ${new} && touch ${out}) || ` +
@@ -52,7 +55,7 @@ var (
 
 	aidlVerifyHashRule = pctx.StaticRule("aidlVerifyHashRule", blueprint.RuleParams{
 		Command2: blueprint.NewCommand(
-			aidlVerifyHashTool, ` '${out}.rsp' '${apiDir}' '${version}' '${hashFile}' '${out}' '${messageFile}'`,
+			aidlHashTool, ` verify_hash '${out}.rsp' '${apiDir}' '${version}' '${hashFile}' '${out}' '${messageFile}'`,
 		),
 		CommandDeps:    []string{"${hashFile}", "${messageFile}"},
 		Description:    "Verify ${apiDir} files have not been modified",
@@ -153,13 +156,14 @@ func (m *aidlInterface) createApiDumpFromSource(ctx android.ModuleContext) apiDu
 		Rule:      aidlDumpApiRule,
 		Outputs:   append(apiFiles, hashFile),
 		Inputs:    srcs,
-		Implicits: deps.preprocessed,
+		Implicits: slices.Concat(deps.preprocessed, deps.implicits),
 		Args: map[string]string{
 			"optionalFlags": strings.Join(optionalFlags, " "),
 			"imports":       strings.Join(wrap("-I", imports, ""), " "),
 			"outDir":        apiDir.String(),
 			"hashFile":      hashFile.String(),
 			"latestVersion": versionForHashGen(version),
+			"apiFiles":      strings.Join(apiFiles.Strings(), " "),
 		},
 	})
 	return apiDump{version, apiDir, apiFiles.Paths(), android.OptionalPathForPath(hashFile)}
@@ -368,6 +372,12 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 	var deps deps
 	if m, ok := ctx.Module().(*aidlInterface); ok {
 		deps.imports = append(deps.imports, m.properties.Include_dirs...)
+		for _, i := range m.properties.Include_dirs {
+			phony := ctx.CreateNinjaPhonyOnce(fmt.Sprintf("aidl_include_dir_%s", strings.ReplaceAll(i, "/", "_")), []string{
+				i + "/**/*.aidl",
+			})
+			deps.implicits = append(deps.implicits, phony)
+		}
 	}
 	ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
 		switch ctx.OtherModuleDependencyTag(dep).(type) {
@@ -697,7 +707,7 @@ func (m *aidlInterface) generateApiBuildActions(ctx android.ModuleContext) {
 }
 
 func versionForHashGen(ver string) string {
-	// aidlHashGen uses the version before current version. If it has never been frozen, return 'latest-version'.
+	// The hash generation uses the version before current version. If it has never been frozen, return 'latest-version'.
 	verInt, _ := strconv.Atoi(ver)
 	if verInt > 1 {
 		return strconv.Itoa(verInt - 1)
