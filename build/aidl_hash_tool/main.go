@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -30,34 +31,75 @@ import (
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s <input_list_file> <api_dir> <version> <hash_file> <out> <message_file>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s <command> ...\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "commands:\n")
+		fmt.Fprintf(os.Stderr, "  gen_hash <input_list_file> <api_dir> <version> <out>: Generates a hash and writes it to out\n")
+		fmt.Fprintf(os.Stderr, "  verify_hash <input_list_file> <api_dir> <version> <hash_file> <out> <message_file>: Verifies a hash matches the one in the hash_file, and touches out if so.\n")
 	}
 	flag.Parse()
 	args := flag.Args()
 
-	if len(args) != 6 {
+	if len(args) < 4 {
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	inputListFile := args[0]
-	apiDir := args[1]
-	version := args[2]
-	hashFile := args[3]
-	outFile := args[4]
-	messageFile := args[5]
+	command := args[0]
+	inputListFile := args[1]
+	apiDir := args[2]
+	version := args[3]
 
-	// 1. Read and sort .aidl files from inputListFile
+	// Read and .aidl files from inputListFile
 	f := must2(os.Open(inputListFile))
 	files := must2(response.ReadRspFile(f))
 	must(f.Close())
+
+	switch command {
+	case "gen_hash":
+		if len(args) != 5 {
+			flag.Usage()
+			os.Exit(1)
+		}
+		out := args[4]
+		hash := create_hash(apiDir, version, files)
+		must(os.WriteFile(out, []byte(hash+"\n"), 0666))
+	case "verify_hash":
+		if len(args) != 7 {
+			flag.Usage()
+			os.Exit(1)
+		}
+		hashFile := args[4]
+		outFile := args[5]
+		messageFile := args[6]
+
+		actualHash := create_hash(apiDir, version, files)
+
+		expectedHash := readLastLine(hashFile)
+
+		if actualHash == expectedHash {
+			// update mtime of timestamp file
+			must(os.WriteFile(outFile, []byte{}, 0666))
+		} else {
+			fmt.Print(string(must2(os.ReadFile(messageFile))))
+			os.Exit(1)
+		}
+	default:
+		flag.Usage()
+		os.Exit(1)
+	}
+}
+
+// create_hash returns a hash of all files under apiDir in the format that has historically
+// been used for aidl api dumps.
+func create_hash(apiDir string, version string, files []string) string {
+	// Make the files relative to apiDir and start with ./. The files must be in this exact format.
+	files = slices.Clone(files)
 	for i, f := range files {
 		rel := must2(filepath.Rel(apiDir, f))
 		files[i] = "./" + rel
 	}
 	sort.Strings(files)
-
-	// 2. Compute hashes of files and combine with version. This has to be careful to match
+	// Compute hashes of files and combine with version. This has to be careful to match
 	// the exact hash format that was used historically with this shell command:
 	// cd '${apiDir}' && { find ./ -name "*.aidl" -print0 | LC_ALL=C sort -z | xargs -0 sha1sum && echo ${version}; } | sha1sum | cut -d " " -f 1
 	h := sha1.New()
@@ -69,19 +111,7 @@ func main() {
 		fmt.Fprintf(h, "%x  %s\n", fh.Sum(nil), file)
 	}
 	fmt.Fprintln(h, version)
-
-	actualHash := fmt.Sprintf("%x", h.Sum(nil))
-
-	// 3. Read expected hash (last line of hashFile)
-	expectedHash := readLastLine(hashFile)
-
-	// 4. Compare and act
-	if actualHash == expectedHash {
-		must(os.WriteFile(outFile, []byte{}, 0666))
-	} else {
-		fmt.Print(string(must2(os.ReadFile(messageFile))))
-		os.Exit(1)
-	}
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func readLastLine(path string) string {
