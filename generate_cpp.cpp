@@ -662,11 +662,9 @@ void GenerateServerSource(CodeWriter& out, const AidlInterface& interface,
   const string bn_name = ClassName(interface, ClassNames::SERVER);
   const string q_name = GetQualifiedName(interface, ClassNames::SERVER);
 
-  // If tracing is off, don't populate this array.
-  vector<std::string> functionNames;
-  if (options.GenTraces()) {
-    functionNames = GetFunctionNames(interface);
-  }
+  // This array is used to map transaction codes to function names. It is used for tracing and
+  // native binder stats.
+  vector<std::string> functionNames = GetFunctionNames(interface);
 
   std::string transactionCodeData;
   if (functionNames.empty()) {
@@ -1405,9 +1403,10 @@ void GenerateHeaderIncludes(CodeWriter& out, const AidlDefinedType& defined_type
       includes.insert(kStatusHeader);         // Status
       includes.insert(kStrongPointerHeader);  // sp<>
 
-      if (options.GenTraces()) {
-        includes.insert(kTraceHeader);
-      }
+      // TODO(b/394661050): Remove this header and fix deps. Tracing in AIDL generated code is
+      // turned off by default. Some interfaces inherited from the generated code use other tracing
+      // functions and types which depend on this header.
+      includes.insert(kTraceHeader);
 
       // For a nested interface, client/server classes are declared the same header as well.
       if (iface.GetParentType()) {

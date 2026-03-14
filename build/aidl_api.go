@@ -32,6 +32,8 @@ import (
 //go:generate go run ../../../../build/blueprint/gobtools/codegen
 
 var (
+	aidlVerifyHashTool = pctx.HostTool("aidl_verify_hash")
+
 	aidlDumpApiRule = pctx.StaticRule("aidlDumpApiRule", blueprint.RuleParams{
 		Command: `rm -rf "${outDir}" && mkdir -p "${outDir}" && ` +
 			`${aidlCmd} --dumpapi ${imports} ${optionalFlags} --out ${outDir} ${in} && ` +
@@ -49,10 +51,13 @@ var (
 	}, "optionalFlags", "imports", "old", "new", "messageFile", "checkApiLevel")
 
 	aidlVerifyHashRule = pctx.StaticRule("aidlVerifyHashRule", blueprint.RuleParams{
-		Command: `if [ $$(cd '${apiDir}' && { find ./ -name "*.aidl" -print0 | LC_ALL=C sort -z | xargs -0 sha1sum && echo ${version}; } | sha1sum | cut -d " " -f 1) = $$(tail -1 '${hashFile}') ]; then ` +
-			`touch ${out}; else cat '${messageFile}' && exit 1; fi`,
-		Description:     "Verify ${apiDir} files have not been modified",
-		SandboxDisabled: true,
+		Command2: blueprint.NewCommand(
+			aidlVerifyHashTool, ` '${out}.rsp' '${apiDir}' '${version}' '${hashFile}' '${out}' '${messageFile}'`,
+		),
+		CommandDeps:    []string{"${hashFile}", "${messageFile}"},
+		Description:    "Verify ${apiDir} files have not been modified",
+		Rspfile:        "${out}.rsp",
+		RspfileContent: "${in}",
 	}, "apiDir", "version", "messageFile", "hashFile")
 )
 
@@ -462,14 +467,10 @@ func (m *aidlInterface) checkIntegrity(ctx android.ModuleContext, dump apiDump) 
 	timestampFile := android.PathForModuleOut(ctx, "checkhash_"+version+".timestamp")
 	messageFile := android.PathForSource(ctx, "system/tools/aidl/build/message_check_integrity.txt")
 
-	var implicits android.Paths
-	implicits = append(implicits, dump.files...)
-	implicits = append(implicits, dump.hashFile.Path())
-	implicits = append(implicits, messageFile)
 	ctx.Build(pctx, android.BuildParams{
-		Rule:      aidlVerifyHashRule,
-		Implicits: implicits,
-		Output:    timestampFile,
+		Rule:   aidlVerifyHashRule,
+		Inputs: dump.files,
+		Output: timestampFile,
 		Args: map[string]string{
 			"apiDir":      dump.dir.String(),
 			"version":     versionForHashGen(version),
