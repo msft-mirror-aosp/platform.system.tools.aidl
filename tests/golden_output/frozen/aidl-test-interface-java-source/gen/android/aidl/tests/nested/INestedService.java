@@ -163,11 +163,6 @@ public interface INestedService extends android.os.IInterface
     }
     static final int TRANSACTION_flipStatus = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     static final int TRANSACTION_flipStatusWithCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 1;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.nested.INestedService";
@@ -335,11 +330,6 @@ public interface INestedService extends android.os.IInterface
         }
       }
       static final int TRANSACTION_done = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-      /** @hide */
-      public int getMaxTransactionId()
-      {
-        return 0;
-      }
     }
     /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.tests.nested.INestedService.ICallback";

@@ -165,11 +165,6 @@ public interface IProtectedInterface extends android.os.IInterface
     protected void Method2_enforcePermission() throws SecurityException {
       mEnforcer.enforcePermission(android.Manifest.permission.ACCESS_FINE_LOCATION, getCallingPid(), getCallingUid());
     }
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 1;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.IProtectedInterface";

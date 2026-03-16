@@ -430,11 +430,6 @@ public interface ICppJavaTests extends android.os.IInterface
     static final int TRANSACTION_ReverseNamedCallbackList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
     static final int TRANSACTION_RepeatFileDescriptor = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
     static final int TRANSACTION_ReverseFileDescriptorArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 7;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ICppJavaTests";

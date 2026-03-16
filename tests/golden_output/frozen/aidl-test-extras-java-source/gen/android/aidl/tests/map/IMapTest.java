@@ -803,11 +803,6 @@ public interface IMapTest extends android.os.IInterface
     static final int TRANSACTION_repeatStringArrayMap = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
     static final int TRANSACTION_repeatInterfaceMap = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
     static final int TRANSACTION_repeatIbinderMap = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 7;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.map.IMapTest";
