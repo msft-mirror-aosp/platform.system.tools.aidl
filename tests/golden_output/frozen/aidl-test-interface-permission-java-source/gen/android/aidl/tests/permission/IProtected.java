@@ -325,11 +325,6 @@ public interface IProtected extends android.os.IInterface
     static final int TRANSACTION_Grant = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
     static final int TRANSACTION_Revoke = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
     static final int TRANSACTION_RevokeAll = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 6;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.IProtected";

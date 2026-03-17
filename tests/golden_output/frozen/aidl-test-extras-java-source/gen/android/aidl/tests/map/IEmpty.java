@@ -87,11 +87,6 @@ public interface IEmpty extends android.os.IInterface
         return DESCRIPTOR;
       }
     }
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 0;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.map.IEmpty";
