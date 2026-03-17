@@ -35,12 +35,15 @@ var (
 	rm          = android.Rm
 	sed         = android.Sed
 	tail        = android.Tail
+	touch       = android.Touch
 	cpIfChanged = android.CpIfChanged
 
 	aidlDirPrepareRule = pctx.StaticRule("aidlDirPrepareRule", blueprint.RuleParams{
-		Command:         `mkdir -p "${outDir}" && touch ${out} # ${in}`,
-		Description:     "create ${out}",
-		SandboxDisabled: true,
+		Command2: blueprint.NewCommand(
+			mkdir, ` -p "${outDir}" && `,
+			touch, ` ${out} # ${in}`,
+		),
+		Description: "create ${out}",
 	}, "outDir")
 
 	aidlCppRule = pctx.StaticRule("aidlCppRule", blueprint.RuleParams{
@@ -83,9 +86,8 @@ var (
 	}, "imports", "nextImports", "outDir", "optionalFlags")
 
 	aidlPhonyRule = pctx.StaticRule("aidlPhonyRule", blueprint.RuleParams{
-		Command:         `touch ${out}`,
-		Description:     "create ${out}",
-		SandboxDisabled: true,
+		Command2:    blueprint.NewCommand(touch, ` ${out}`),
+		Description: "create ${out}",
 	})
 )
 
@@ -200,7 +202,8 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	// be able to check the generated header files for changes
 	ctx.SetOutputFiles(g.genHeaderDeps, "headers")
 
-	// This is to clean genOutDir before generating any file
+	// This is to clean genOutDir before generating any file. Not necessary in action sandboxed
+	// builds, as those will always see clean input directories, but kept for non-sandboxed builds.
 	ctx.Build(pctx, android.BuildParams{
 		Rule:   aidlDirPrepareRule,
 		Inputs: srcs,
@@ -210,7 +213,7 @@ func (g *aidlGenRule) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		},
 	})
 
-	// This is to trigger genrule alone
+	// This is to trigger genrule alone. Used by golden_test.sh
 	ctx.Build(pctx, android.BuildParams{
 		Rule:   aidlPhonyRule,
 		Output: android.PathForModuleOut(ctx, "timestamp"), // $out/timestamp
