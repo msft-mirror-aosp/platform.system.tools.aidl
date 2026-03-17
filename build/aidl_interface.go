@@ -1243,18 +1243,12 @@ func (i *aidlInterface) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	includeDirs := i.properties.Include_dirs
 	includeDirDeps := make(android.Paths, 0, len(includeDirs))
 	for _, i := range includeDirs {
-		phony := ctx.CreateNinjaPhonyOnce(fmt.Sprintf("aidl_include_dir_%s", strings.ReplaceAll(i, "/", "_")), []string{
-			i + "/**/*.aidl",
-		})
-		includeDirDeps = append(includeDirDeps, phony)
+		includeDirDeps = append(includeDirDeps, createAidlIncludeDirPhony(ctx, i))
 	}
 	// Also add the current directory as an include directory because the aidl compiler will
 	// implicitly pick up referenced source files.
 	myDir := filepath.Join(ctx.ModuleDir(), i.properties.Local_include_dir)
-	phony := ctx.CreateNinjaPhonyOnce(fmt.Sprintf("aidl_include_dir_%s", strings.ReplaceAll(myDir, "/", "_")), []string{
-		myDir + "/**/*.aidl",
-	})
-	includeDirDeps = append(includeDirDeps, phony)
+	includeDirDeps = append(includeDirDeps, createAidlIncludeDirPhony(ctx, myDir))
 
 	android.SetProvider(ctx, AidlInterfaceInfoProvider, AidlInterfaceInfo{
 		AidlInterfaceImportsInfo: importsInfo,
@@ -1330,7 +1324,6 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 
 	preprocessed := android.PathForModuleOut(ctx, version, "preprocessed.aidl")
 	rb := android.NewRuleBuilder(pctx, ctx)
-	rb.SandboxDisabled()
 	srcs, root_dir := i.srcsForVersion(ctx, version)
 
 	if len(srcs) == 0 {
@@ -1352,6 +1345,14 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 	}
 	preprocessCommand.FlagForEachInput("-p", deps.preprocessed)
 	preprocessCommand.FlagForEachArg("-I", imports)
+	preprocessCommand.Implicits(deps.implicits)
+	for _, i := range i.properties.Include_dirs {
+		preprocessCommand.Implicit(createAidlIncludeDirPhony(ctx, i))
+	}
+	// Also add the current directory as an include directory because the aidl compiler will
+	// implicitly pick up referenced source files.
+	myDir := filepath.Join(ctx.ModuleDir(), i.properties.Local_include_dir)
+	preprocessCommand.Implicit(createAidlIncludeDirPhony(ctx, myDir))
 	preprocessCommand.Inputs(paths)
 	name := i.BaseModuleName()
 	if version != "" {
@@ -1363,6 +1364,7 @@ func (i *aidlInterface) buildPreprocessed(ctx android.ModuleContext, version str
 
 func (i *aidlInterface) DepsMutator(ctx android.BottomUpMutatorContext) {
 	ctx.AddReverseDependency(ctx.Module(), nil, aidlMetadataSingletonName)
+	ctx.AddHostToolDependencies("aidl")
 }
 
 func AidlInterfaceFactory() android.Module {
@@ -1372,4 +1374,10 @@ func AidlInterfaceFactory() android.Module {
 	android.InitDefaultableModule(i)
 	i.SetDefaultableHook(func(ctx android.DefaultableHookContext) { aidlInterfaceHook(ctx, i) })
 	return i
+}
+
+func createAidlIncludeDirPhony(ctx android.ModuleContext, dir string) android.Path {
+	return ctx.CreateNinjaPhonyOnce(fmt.Sprintf("aidl_include_dir_%s", strings.ReplaceAll(dir, "/", "_")), []string{
+		filepath.Join(dir, "**/*.aidl"),
+	})
 }

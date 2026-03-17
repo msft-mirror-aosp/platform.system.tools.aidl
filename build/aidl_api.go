@@ -373,10 +373,7 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 	if m, ok := ctx.Module().(*aidlInterface); ok {
 		deps.imports = append(deps.imports, m.properties.Include_dirs...)
 		for _, i := range m.properties.Include_dirs {
-			phony := ctx.CreateNinjaPhonyOnce(fmt.Sprintf("aidl_include_dir_%s", strings.ReplaceAll(i, "/", "_")), []string{
-				i + "/**/*.aidl",
-			})
-			deps.implicits = append(deps.implicits, phony)
+			deps.implicits = append(deps.implicits, createAidlIncludeDirPhony(ctx, i))
 		}
 	}
 	ctx.VisitDirectDepsProxy(func(dep android.ModuleProxy) {
@@ -398,7 +395,9 @@ func getDeps(ctx android.ModuleContext, versionedImports map[string]string) deps
 			// add imported module's checkapiTimestamps as implicits to make sure that imported apiDump is up-to-date
 			deps.implicits = append(deps.implicits, apiInfo.CheckApiTimestamps...)
 			deps.implicits = append(deps.implicits, apiInfo.CheckHashTimestamps...)
-			deps.implicits = append(deps.implicits, apiInfo.HasDevelopment)
+			if apiInfo.HasDevelopment != nil {
+				deps.implicits = append(deps.implicits, apiInfo.HasDevelopment)
+			}
 		case interfaceHeadersDepTag:
 			aidlLibraryInfo, ok := android.OtherModuleProvider(ctx, dep, aidl_library.AidlLibraryProvider)
 			if !ok {
