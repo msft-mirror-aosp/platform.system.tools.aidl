@@ -138,11 +138,6 @@ public interface IProtected extends android.os.IInterface
     protected void ProtectedWithSourceAttribution_enforcePermission() throws SecurityException {
       mEnforcer.enforcePermissionAllOf(PERMISSIONS_ProtectedWithSourceAttribution, getCallingPid(), getCallingUid());
     }
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 0;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.permission.platform.IProtected";

@@ -1249,18 +1249,6 @@ static shared_ptr<Class> GenerateDelegatorClass(const AidlInterface& iface,
   return delegator_class;
 }
 
-static shared_ptr<ClassElement> GenerateMaxTransactionId(int max_transaction_id) {
-  auto getMaxTransactionId = std::make_shared<Method>();
-  getMaxTransactionId->comment = "/** @hide */";
-  getMaxTransactionId->modifiers = PUBLIC;
-  getMaxTransactionId->returnType = "int";
-  getMaxTransactionId->name = "getMaxTransactionId";
-  getMaxTransactionId->statements = std::make_shared<StatementBlock>();
-  getMaxTransactionId->statements->Add(std::make_shared<ReturnStatement>(
-      std::make_shared<LiteralExpression>(std::to_string(max_transaction_id))));
-  return getMaxTransactionId;
-}
-
 std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
                                               const AidlTypenames& typenames,
                                               const Options& options) {
@@ -1337,11 +1325,6 @@ std::unique_ptr<Class> GenerateInterfaceClass(const AidlInterface* iface,
   for (const auto& item : iface->GetMethods()) {
     GenerateMethods(*iface, *item, interface.get(), stub, proxy, item->GetId(), typenames, options);
     max_transaction_id = std::max(max_transaction_id, item->GetId());
-  }
-
-  // getMaxTransactionId
-  if (options.GenTransactionNames() || options.GenTraces()) {
-    stub->elements.push_back(GenerateMaxTransactionId(max_transaction_id));
   }
 
   // all the nested types

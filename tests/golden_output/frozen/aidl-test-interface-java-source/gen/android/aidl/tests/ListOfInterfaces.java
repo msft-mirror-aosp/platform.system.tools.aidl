@@ -128,11 +128,6 @@ public class ListOfInterfaces implements android.os.Parcelable
           return DESCRIPTOR;
         }
       }
-      /** @hide */
-      public int getMaxTransactionId()
-      {
-        return 0;
-      }
     }
     /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ListOfInterfaces.IEmptyInterface";
@@ -285,11 +280,6 @@ public class ListOfInterfaces implements android.os.Parcelable
         }
       }
       static final int TRANSACTION_methodWithInterfaces = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-      /** @hide */
-      public int getMaxTransactionId()
-      {
-        return 0;
-      }
     }
     /** @hide */
     public static final java.lang.String DESCRIPTOR = "android.aidl.tests.ListOfInterfaces.IMyInterface";

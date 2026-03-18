@@ -190,11 +190,6 @@ public interface IFaz extends android.os.IInterface
     static final int TRANSACTION_getPair = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
     static final int TRANSACTION_getPair2 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
     static final int TRANSACTION_getPair3 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-    /** @hide */
-    public int getMaxTransactionId()
-    {
-      return 2;
-    }
   }
   /** @hide */
   public static final java.lang.String DESCRIPTOR = "android.aidl.tests.generic.IFaz";
