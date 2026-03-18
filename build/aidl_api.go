@@ -46,11 +46,12 @@ var (
 	}, "optionalFlags", "imports", "outDir", "hashFile", "latestVersion", "apiFiles")
 
 	aidlCheckApiRule = pctx.StaticRule("aidlCheckApiRule", blueprint.RuleParams{
-		Command: `(${aidlCmd} ${optionalFlags} --checkapi=${checkApiLevel} ${imports} ${old} ${new} && touch ${out}) || ` +
-			`(cat ${messageFile} && exit 1)`,
-		CommandDeps:     []string{"${aidlCmd}"},
-		Description:     "AIDL CHECK API: ${new} against ${old}",
-		SandboxDisabled: true,
+		Command2: blueprint.NewCommand(
+			`(`, aidlCmd, ` ${optionalFlags} --checkapi=${checkApiLevel} ${imports} ${old} ${new} && `,
+			android.Touch, ` ${out}) || `,
+			`(`, android.Cat, ` ${messageFile} && exit 1)`,
+		),
+		Description: "AIDL CHECK API: ${new} against ${old}",
 	}, "optionalFlags", "imports", "old", "new", "messageFile", "checkApiLevel")
 
 	aidlVerifyHashRule = pctx.StaticRule("aidlVerifyHashRule", blueprint.RuleParams{
