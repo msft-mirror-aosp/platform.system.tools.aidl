@@ -805,23 +805,37 @@ bool compile_aidl(const Options& options, const IoDelegate& io_delegate) {
       return false;
     }
   }
+  AidlTypenames typenames;
+  vector<string> imported_files;
 
+  // Load and validate all input files before doing any additional checks
+  // and generating output files.
+  // Some checks like SizeOfDefinedType and error messages rely on valid and
+  // resolved types and constant expressions that may be dependencies from the
+  // other input files.
   for (const string& input_file : options.InputFiles()) {
-    AidlTypenames typenames;
-
-    vector<string> imported_files;
-
     AidlError aidl_err = internals::load_and_validate_aidl(input_file, options, io_delegate,
                                                            &typenames, &imported_files);
     if (aidl_err != AidlError::OK) {
       return false;
     }
-
+  }
+  for (const string& input_file : options.InputFiles()) {
     if (options.IsLatestUnfrozenVersion()) {
       internals::markNewAdditions(typenames, previous_typenames_result.value());
     }
 
-    for (const auto& defined_type : typenames.MainDocument().DefinedTypes()) {
+    AidlDocument const* document;
+    auto clean_path = android::aidl::IoDelegate::CleanPath(input_file);
+    for (const auto& doc : typenames.AllDocuments()) {
+      if (doc->GetLocation().GetFile() == clean_path) {
+        document = doc.get();
+      }
+    }
+    AIDL_FATAL_IF(document == nullptr, input_file)
+        << "Failed to find a document for input file: " << input_file;
+
+    for (const auto& defined_type : document->DefinedTypes()) {
       AIDL_FATAL_IF(defined_type == nullptr, input_file);
 
       string output_file_name = options.OutputFile();
