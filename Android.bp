@@ -240,7 +240,7 @@ cc_fuzz {
         cc: [
             "aidl-bugs@google.com",
         ],
-        triage_assignee: "smoreland@google.com",
+        triage_assignee: "devinmoore@google.com",
         use_for_presubmit: true,
     },
 
