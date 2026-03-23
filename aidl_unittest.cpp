@@ -3156,6 +3156,23 @@ TEST_F(AidlTest, MultipleInputFilesRust) {
   }
 }
 
+TEST_P(AidlTest, MultipleFilesWithFixedSizeDependencies) {
+  io_delegate_.SetFileContents("FmqData.aidl",
+                               "@VintfStability @FixedSize parcelable FmqData {\n"
+                               "  const int DATA_CAPACITY = 32;\n"
+                               "  int data_size;\n"
+                               "  byte[DATA_CAPACITY] data;\n"
+                               "}");
+  io_delegate_.SetFileContents("FmqResult.aidl",
+                               "@VintfStability @FixedSize parcelable FmqResult {\n"
+                               "   FmqData data;"
+                               "}");
+  Options options = Options::From("aidl -I . --lang=" + to_string(GetLanguage()) +
+                                  " --structured --stability=vintf FmqResult.aidl FmqData.aidl");
+
+  EXPECT_TRUE(compile_aidl(options, io_delegate_));
+}
+
 TEST_F(AidlTest, ConflictWithMetaTransactionGetVersion) {
   const string expected_stderr =
       "ERROR: p/IFoo.aidl:1.31-51:  method getInterfaceVersion() is reserved for internal use.\n";
