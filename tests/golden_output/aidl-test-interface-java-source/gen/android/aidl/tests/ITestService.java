@@ -1930,7 +1930,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(arg);
           boolean _status = mRemote.transact(Stub.TRANSACTION_UnimplementedMethod, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method UnimplementedMethod is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readInt();
@@ -1955,7 +1955,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_Deprecated, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method Deprecated is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
         }
@@ -1972,7 +1972,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_TestOneway, _data, null, android.os.IBinder.FLAG_ONEWAY | android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method TestOneway is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
         }
         finally {
@@ -1991,7 +1991,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeBoolean(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatBoolean, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatBoolean is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readBoolean();
@@ -2013,7 +2013,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeByte(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatByte, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatByte is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readByte();
@@ -2035,7 +2035,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(((int)token));
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatChar, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatChar is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = (char)_reply.readInt();
@@ -2057,7 +2057,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatInt, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatInt is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readInt();
@@ -2079,7 +2079,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeLong(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatLong, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatLong is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readLong();
@@ -2101,7 +2101,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeFloat(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatFloat, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatFloat is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readFloat();
@@ -2123,7 +2123,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeDouble(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatDouble, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatDouble is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readDouble();
@@ -2145,7 +2145,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeString(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readString();
@@ -2167,7 +2167,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeByte(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatByteEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatByteEnum is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readByte();
@@ -2189,7 +2189,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatIntEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatIntEnum is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readInt();
@@ -2211,7 +2211,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeLong(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatLongEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatLongEnum is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readLong();
@@ -2235,7 +2235,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseBoolean, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseBoolean is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createBooleanArray();
@@ -2259,7 +2259,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseByte, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseByte is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createByteArray();
@@ -2283,7 +2283,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseChar, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseChar is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createCharArray();
@@ -2307,7 +2307,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseInt, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseInt is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createIntArray();
@@ -2331,7 +2331,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseLong, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseLong is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createLongArray();
@@ -2355,7 +2355,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseFloat, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseFloat is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createFloatArray();
@@ -2379,7 +2379,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseDouble, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseDouble is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createDoubleArray();
@@ -2403,7 +2403,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createStringArray();
@@ -2427,7 +2427,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseByteEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseByteEnum is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createByteArray();
@@ -2451,7 +2451,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseIntEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseIntEnum is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createIntArray();
@@ -2475,7 +2475,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseLongEnum, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseLongEnum is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createLongArray();
@@ -2500,7 +2500,7 @@ public interface ITestService extends android.os.IInterface
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetOtherTestService, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           _reply.setPropagateAllowBlocking();
           if (!_status) {
-            throw new android.os.RemoteException("Method GetOtherTestService is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = android.aidl.tests.INamedCallback.Stub.asInterface(_reply.readStrongBinder());
@@ -2524,7 +2524,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStrongInterface(service);
           boolean _status = mRemote.transact(Stub.TRANSACTION_SetOtherTestService, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method SetOtherTestService is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readBoolean();
@@ -2547,7 +2547,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeString(name);
           boolean _status = mRemote.transact(Stub.TRANSACTION_VerifyName, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method VerifyName is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readBoolean();
@@ -2569,7 +2569,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringArray(names);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetInterfaceArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetInterfaceArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createInterfaceArray(android.aidl.tests.INamedCallback[]::new, android.aidl.tests.INamedCallback.Stub::asInterface);
@@ -2592,7 +2592,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringArray(names);
           boolean _status = mRemote.transact(Stub.TRANSACTION_VerifyNamesWithInterfaceArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method VerifyNamesWithInterfaceArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readBoolean();
@@ -2614,7 +2614,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringArray(names);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetNullableInterfaceArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetNullableInterfaceArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createInterfaceArray(android.aidl.tests.INamedCallback[]::new, android.aidl.tests.INamedCallback.Stub::asInterface);
@@ -2637,7 +2637,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringArray(names);
           boolean _status = mRemote.transact(Stub.TRANSACTION_VerifyNamesWithNullableInterfaceArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method VerifyNamesWithNullableInterfaceArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readBoolean();
@@ -2659,7 +2659,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringArray(names);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetInterfaceList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetInterfaceList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createInterfaceArrayList(android.aidl.tests.INamedCallback.Stub::asInterface);
@@ -2682,7 +2682,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringArray(names);
           boolean _status = mRemote.transact(Stub.TRANSACTION_VerifyNamesWithInterfaceList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method VerifyNamesWithInterfaceList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readBoolean();
@@ -2705,7 +2705,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringList(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseStringList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseStringList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createStringArrayList();
@@ -2728,7 +2728,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedObject(read, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatParcelFileDescriptor, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatParcelFileDescriptor is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readTypedObject(android.os.ParcelFileDescriptor.CREATOR);
@@ -2751,7 +2751,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseParcelFileDescriptorArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseParcelFileDescriptorArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createTypedArray(android.os.ParcelFileDescriptor.CREATOR);
@@ -2774,7 +2774,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(code);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ThrowServiceException, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ThrowServiceException is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
         }
@@ -2795,7 +2795,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeIntArray(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableIntArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableIntArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createIntArray();
@@ -2817,7 +2817,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeByteArray(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableByteEnumArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableByteEnumArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createByteArray();
@@ -2839,7 +2839,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeIntArray(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableIntEnumArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableIntEnumArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createIntArray();
@@ -2861,7 +2861,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeLongArray(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableLongEnumArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableLongEnumArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createLongArray();
@@ -2883,7 +2883,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeString(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readString();
@@ -2905,7 +2905,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringList(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableStringList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableStringList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createStringArrayList();
@@ -2927,7 +2927,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedObject(input, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableParcelable, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableParcelable is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readTypedObject(android.aidl.tests.ITestService.Empty.CREATOR);
@@ -2949,7 +2949,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedArray(input, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableParcelableArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableParcelableArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createTypedArray(android.aidl.tests.ITestService.Empty.CREATOR);
@@ -2971,7 +2971,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedList(input, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableParcelableList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableParcelableList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createTypedArrayList(android.aidl.tests.ITestService.Empty.CREATOR);
@@ -2992,7 +2992,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStrongBinder(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_TakesAnIBinder, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method TakesAnIBinder is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
         }
@@ -3011,7 +3011,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStrongBinder(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_TakesANullableIBinder, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method TakesANullableIBinder is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
         }
@@ -3030,7 +3030,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeBinderList(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_TakesAnIBinderList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method TakesAnIBinderList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
         }
@@ -3049,7 +3049,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeBinderList(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_TakesANullableIBinderList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method TakesANullableIBinderList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
         }
@@ -3070,7 +3070,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeString(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatUtf8CppString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatUtf8CppString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readString();
@@ -3092,7 +3092,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeString(token);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatNullableUtf8CppString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatNullableUtf8CppString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readString();
@@ -3115,7 +3115,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseUtf8CppString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseUtf8CppString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createStringArray();
@@ -3139,7 +3139,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseNullableUtf8CppString, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseNullableUtf8CppString is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createStringArray();
@@ -3162,7 +3162,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeStringList(input);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseUtf8CppStringList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseUtf8CppStringList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createStringArrayList();
@@ -3186,7 +3186,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeBoolean(return_null);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetCallback, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetCallback is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = android.aidl.tests.INamedCallback.Stub.asInterface(_reply.readStrongBinder());
@@ -3209,7 +3209,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedObject(parcel, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_FillOutStructuredParcelable, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method FillOutStructuredParcelable is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           if ((0!=_reply.readInt())) {
@@ -3232,7 +3232,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedObject(ep, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatExtendableParcelable, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatExtendableParcelable is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           if ((0!=_reply.readInt())) {
@@ -3255,7 +3255,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedObject(ep, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatExtendableParcelableVintf, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatExtendableParcelableVintf is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           if ((0!=_reply.readInt())) {
@@ -3278,7 +3278,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedObject(list, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseList, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseList is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readTypedObject(android.aidl.tests.RecursiveList.CREATOR);
@@ -3301,7 +3301,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseIBinderArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseIBinderArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createBinderArray();
@@ -3325,7 +3325,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseNullableIBinderArray, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseNullableIBinderArray is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createBinderArray();
@@ -3348,7 +3348,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedObject(input, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_RepeatSimpleParcelable, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method RepeatSimpleParcelable is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readTypedObject(android.aidl.tests.SimpleParcelable.CREATOR);
@@ -3374,7 +3374,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInt(repeated.length);
           boolean _status = mRemote.transact(Stub.TRANSACTION_ReverseSimpleParcelables, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method ReverseSimpleParcelables is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createTypedArray(android.aidl.tests.SimpleParcelable.CREATOR);
@@ -3396,7 +3396,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetOldNameInterface, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetOldNameInterface is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = android.aidl.tests.IOldName.Stub.asInterface(_reply.readStrongBinder());
@@ -3417,7 +3417,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetNewNameInterface, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetNewNameInterface is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = android.aidl.tests.INewName.Stub.asInterface(_reply.readStrongBinder());
@@ -3439,7 +3439,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeTypedArray(input, 0);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetUnionTags, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetUnionTags is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.createIntArray();
@@ -3461,7 +3461,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetCppJavaTests, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetCppJavaTests is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readStrongBinder();
@@ -3482,7 +3482,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_getBackendType, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method getBackendType is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = _reply.readByte();
@@ -3503,7 +3503,7 @@ public interface ITestService extends android.os.IInterface
           _data.writeInterfaceToken(DESCRIPTOR);
           boolean _status = mRemote.transact(Stub.TRANSACTION_GetCircular, _data, _reply, android.os.IBinder.FLAG_CLEAR_BUF);
           if (!_status) {
-            throw new android.os.RemoteException("Method GetCircular is unimplemented.");
+            throw new android.os.RemoteException("Unimplemented");
           }
           _reply.readException();
           _result = android.aidl.tests.ICircular.Stub.asInterface(_reply.readStrongBinder());

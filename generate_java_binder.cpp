@@ -567,9 +567,8 @@ static void GenerateStubCode(const AidlMethod& method, bool oneway,
       auto if_statement = std::make_shared<IfStatement>();
       if_statement->expression = std::make_shared<LiteralExpression>("true");
       if_statement->statements = std::make_shared<StatementBlock>();
-      if_statement->statements->Add(
-          std::make_shared<LiteralExpression>("throw new android.os.RemoteException(\"Method " +
-                                              method.GetName() + " is unimplemented.\")"));
+      if_statement->statements->Add(std::make_shared<LiteralExpression>(
+          "throw new android.os.RemoteException(\"Unimplemented\")"));
       statements->Add(if_statement);
     }
     for (const std::unique_ptr<AidlArgument>& arg : method.GetArguments()) {
@@ -743,8 +742,7 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
 
   if (method.IsNew() && ShouldForceDowngradeFor(CommunicationSide::WRITE)) {
     out << "if (true) {\n";
-    out << "  throw new android.os.RemoteException(\"Method " + method.GetName() +
-               " is unimplemented.\");\n";
+    out << "  throw new android.os.RemoteException(\"Unimplemented\");\n";
     out << "}\n";
   }
 
@@ -813,8 +811,7 @@ static void GenerateProxyMethod(CodeWriter& out, const AidlInterface& iface,
     // TODO(b/274144762): we shouldn't have different behavior for versioned interfaces
     // also this set to false for all exceptions, not just unimplemented methods.
     // However, this is done now for backwards compatibility.
-    out << "throw new android.os.RemoteException(\"Method " << method.GetName()
-        << " is unimplemented.\");\n";
+    out << "throw new android.os.RemoteException(\"Unimplemented\");\n";
     out.Dedent();
     out << "}\n";
   }
