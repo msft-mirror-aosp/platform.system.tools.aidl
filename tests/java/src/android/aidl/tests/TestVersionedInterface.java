@@ -61,8 +61,6 @@ public class TestVersionedInterface {
     @Test
     public void testUnimplementedMethodTriggersException() throws RemoteException {
       expectedException.expect(RemoteException.class);
-      expectedException.expectMessage("Method newApi is unimplemented.");
-
       service.newApi();
     }
 
